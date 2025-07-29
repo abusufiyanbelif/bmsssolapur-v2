@@ -7,6 +7,7 @@ import { Menu, Package2, Users } from "lucide-react";
 import { Nav } from "./nav";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState } from "react";
+import { Footer } from "./footer";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
@@ -74,6 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                     {children}
                 </main>
+                <Footer />
             </div>
             <RoleSwitcherDialog open={isRoleSwitcherOpen} onOpenChange={handleRoleSwitcherChange} />
         </div>
