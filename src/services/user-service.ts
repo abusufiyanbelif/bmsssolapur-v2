@@ -13,7 +13,7 @@ import {
   getDocs,
   Timestamp,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, isConfigValid } from './firebase';
 
 const USERS_COLLECTION = 'users';
 
@@ -55,6 +55,7 @@ export interface User {
 
 // Function to create or update a user
 export const createUser = async (user: Omit<User, 'id' | 'createdAt'> & { id?: string }) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
     const newUser: User = { 
@@ -71,7 +72,11 @@ export const createUser = async (user: Omit<User, 'id' | 'createdAt'> & { id?: s
 };
 
 // Function to get a user by ID
-export const getUser = async (id: string) => {
+export const getUser = async (id: string): Promise<User | null> => {
+  if (!isConfigValid) {
+    console.warn("Firebase is not configured. Skipping user fetch.");
+    return null;
+  }
   try {
     const userDoc = await getDoc(doc(db, USERS_COLLECTION, id));
     if (userDoc.exists()) {
@@ -86,6 +91,7 @@ export const getUser = async (id: string) => {
 
 // Function to update a user
 export const updateUser = async (id: string, updates: Partial<User>) => {
+    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
         await updateDoc(userRef, updates);
@@ -97,6 +103,7 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
 
 // Function to delete a user
 export const deleteUser = async (id: string) => {
+    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
         await deleteDoc(userRef);
@@ -107,7 +114,11 @@ export const deleteUser = async (id: string) => {
 }
 
 // Function to get all users
-export const getAllUsers = async () => {
+export const getAllUsers = async (): Promise<User[]> => {
+    if (!isConfigValid) {
+      console.warn("Firebase is not configured. Skipping fetching all users.");
+      return [];
+    }
     try {
         const usersQuery = query(collection(db, USERS_COLLECTION));
         const querySnapshot = await getDocs(usersQuery);
