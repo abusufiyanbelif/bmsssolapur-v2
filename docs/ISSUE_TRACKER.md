@@ -15,7 +15,7 @@ When a new issue is identified, add a new row to the "Open Issues" table. Once t
 | 02 | 2024-07-29    | AI Assistant| OTP Login via Twilio is not functional. | **Blocked** | Twilio Account SID, Auth Token, and Verify Service SID |
 | 03 | 2024-07-29    | AI Assistant| Email sending via Nodemailer is not functional. | **Blocked** | SMTP Host, Port, User, and Password |
 | 04 | 2024-07-29    | AI Assistant| Core business logic for donation/lead management is not implemented. | In Progress | User guidance on specific workflows (e.g., verification process) |
-|    |               |             |             |        |                |
+| 05 | 2024-07-29    | AI Assistant| The authenticated user home page (`/home`) is static. It needs to be made dynamic to show real user data. | **To Do** | Guidance on what specific data to show for Donors and Beneficiaries. |
 
 
 ---
