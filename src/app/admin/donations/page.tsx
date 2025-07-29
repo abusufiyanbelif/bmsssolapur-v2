@@ -21,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -33,6 +34,14 @@ export default function DonationsPage() {
     const [donations, setDonations] = useState<Donation[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
+
+    const handleFeatureInProgress = () => {
+        toast({
+            title: "In Progress",
+            description: "This feature is currently in development and will be available soon.",
+        });
+    };
 
     useEffect(() => {
         const fetchDonations = async () => {
@@ -123,7 +132,7 @@ export default function DonationsPage() {
                             </TableCell>
                             <TableCell className="text-right">
                                 {donation.status === "Pending verification" && (
-                                     <Button variant="outline" size="sm">Verify</Button>
+                                     <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>Verify</Button>
                                 )}
                                 {donation.status === "Verified" && (
                                     <DropdownMenu>
@@ -134,10 +143,10 @@ export default function DonationsPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleFeatureInProgress}>
                                                Allocate to Lead
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleFeatureInProgress}>
                                                 Split Donation
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>

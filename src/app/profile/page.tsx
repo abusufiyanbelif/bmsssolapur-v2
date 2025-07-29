@@ -1,4 +1,6 @@
 
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
@@ -6,8 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
+  const { toast } = useToast();
+
+  const handleFeatureInProgress = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
+    toast({
+        title: "In Progress",
+        description: "This feature is currently in development and will be available soon.",
+    });
+  };
+
+  const handleSwitchChange = () => {
+    handleFeatureInProgress();
+  }
+
   // Placeholder user data
   const user = {
     name: "Aisha Khan",
@@ -35,7 +52,7 @@ export default function ProfilePage() {
                     <CardDescription>{user.email}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button className="w-full">Edit Profile</Button>
+                    <Button className="w-full" onClick={handleFeatureInProgress}>Edit Profile</Button>
                 </CardContent>
             </Card>
         </div>
@@ -60,7 +77,7 @@ export default function ProfilePage() {
                             <Input id="secondaryPhone" defaultValue={user.secondaryPhone} />
                         </div>
                     )}
-                     <Button>Save Changes</Button>
+                     <Button onClick={handleFeatureInProgress}>Save Changes</Button>
                 </CardContent>
             </Card>
 
@@ -77,7 +94,7 @@ export default function ProfilePage() {
                                 Receive a gentle reminder on the 1st of every month.
                             </p>
                         </div>
-                        <Switch id="monthly-reminder" />
+                        <Switch id="monthly-reminder" onCheckedChange={handleSwitchChange} />
                     </div>
                 </CardContent>
             </Card>

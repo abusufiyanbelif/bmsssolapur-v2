@@ -19,6 +19,7 @@ import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX } f
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -36,6 +37,14 @@ export default function LeadsPage() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
+
+    const handleFeatureInProgress = () => {
+        toast({
+            title: "In Progress",
+            description: "This feature is currently in development and will be available soon.",
+        });
+    };
 
     useEffect(() => {
         const fetchLeads = async () => {
@@ -127,7 +136,7 @@ export default function LeadsPage() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="outline" size="sm">View/Edit</Button>
+                                    <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>View/Edit</Button>
                                 </TableCell>
                             </TableRow>
                         );

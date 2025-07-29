@@ -1,6 +1,10 @@
+
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const metrics = [
   {
@@ -42,12 +46,21 @@ const metrics = [
 ];
 
 export default function DashboardPage() {
+  const { toast } = useToast();
+
+  const handleFeatureInProgress = () => {
+    toast({
+        title: "In Progress",
+        description: "This feature is currently in development and will be available soon.",
+    });
+  };
+
   return (
     <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          <Button>
+          <Button onClick={handleFeatureInProgress}>
             <Send className="mr-2 h-4 w-4" />
             Test Notifications
           </Button>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +14,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
+  const { toast } = useToast();
+
+  const handleFeatureInProgress = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent form submission
+    toast({
+        title: "In Progress",
+        description: "This feature is currently in development and will be available soon.",
+    });
+  };
+
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
       <Card className="w-full max-w-sm">
@@ -56,12 +68,12 @@ export default function LoginPage() {
                     <Label htmlFor="otp">One-Time Password (OTP)</Label>
                     <Input id="otp" type="text" placeholder="Enter your OTP" />
                     </div>
-                    <Button type="submit" className="w-full">
+                    <Button type="submit" className="w-full" onClick={handleFeatureInProgress}>
                         <LogIn className="mr-2 h-4 w-4" />
                         Login with OTP
                     </Button>
                     <div className="text-center">
-                        <Button variant="link" size="sm" type="button">Send OTP</Button>
+                        <Button variant="link" size="sm" type="button" onClick={handleFeatureInProgress}>Send OTP</Button>
                     </div>
                 </form>
             </TabsContent>
@@ -85,12 +97,12 @@ export default function LoginPage() {
                     <Label htmlFor="password">Password</Label>
                     <Input id="password" type="password" placeholder="Enter your password" />
                     </div>
-                    <Button type="submit" className="w-full">
+                    <Button type="submit" className="w-full" onClick={handleFeatureInProgress}>
                         <LogIn className="mr-2 h-4 w-4" />
                         Login with Password
                     </Button>
                      <div className="text-center">
-                        <Button variant="link" size="sm" type="button">Forgot Password?</Button>
+                        <Button variant="link" size="sm" type="button" onClick={handleFeatureInProgress}>Forgot Password?</Button>
                     </div>
                 </form>
             </TabsContent>
