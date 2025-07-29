@@ -11,6 +11,7 @@ interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
+    user?: User; // For hardcoded user case
 }
 
 const isEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
@@ -26,6 +27,22 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         return { success: false, error: "Identifier and password are required." };
     }
     
+    // Hardcoded super admin user for guaranteed access
+    if (identifier === 'admin' && password === 'admin') {
+        const hardcodedAdminUser: User = {
+            id: 'hardcoded-admin',
+            name: "Super Admin (Hardcoded)",
+            email: "admin@internal.app",
+            phone: "0000000000",
+            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+            privileges: ["all"],
+            groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"],
+            createdAt: Timestamp.now()
+        };
+        return { success: true, user: hardcodedAdminUser };
+    }
+
+
     // For this prototype, we'll use a simple password check for all users.
     // In a real application, you would use Firebase Authentication
     // with password hashing or other secure methods.
@@ -42,9 +59,14 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             }
         } else {
             // Assume it's a phone number
-            user = await getUserByPhone(identifier);
-             if (!user) {
-                return { success: false, error: "User with this phone number not found." };
+            const phoneRegex = /^[0-9]{10}$/;
+            if (phoneRegex.test(identifier)) {
+                user = await getUserByPhone(identifier);
+                if (!user) {
+                    return { success: false, error: "User with this phone number not found." };
+                }
+            } else {
+                return { success: false, error: "Invalid identifier. Please use a valid email or 10-digit phone number." };
             }
         }
         

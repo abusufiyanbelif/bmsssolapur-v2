@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/services/firebase";
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "firebase/auth";
 import { Separator } from "@/components/ui/separator";
+import { User } from "@/services/user-service";
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="mr-2 h-4 w-4">
@@ -30,14 +31,17 @@ export default function LoginPage() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
 
-  const onSuccessfulLogin = (data: {userId?: string}) => {
+  const onSuccessfulLogin = (data: {userId?: string, user?: User}) => {
     toast({
       title: "Login Successful",
       description: "Welcome back! Please select your role to continue.",
     });
     // Clear any previous role selection
     localStorage.removeItem('activeRole'); 
-    if (data.userId) {
+    
+    if (data.user) { // Handle hardcoded user case
+        localStorage.setItem('userId', data.user.id!);
+    } else if (data.userId) { // Handle DB user case
       localStorage.setItem('userId', data.userId);
     }
     
@@ -52,8 +56,8 @@ export default function LoginPage() {
     const formData = new FormData(event.currentTarget);
     const result = await handleLogin(formData);
 
-    if (result.success && result.userId) {
-      onSuccessfulLogin({userId: result.userId});
+    if (result.success) {
+      onSuccessfulLogin({userId: result.userId, user: result.user});
     } else {
       toast({
         variant: "destructive",
@@ -97,8 +101,8 @@ export default function LoginPage() {
       
       const result = await handleVerifyOtp(formData);
 
-       if (result.success && result.userId) {
-            onSuccessfulLogin({userId: result.userId});
+       if (result.success) {
+            onSuccessfulLogin({userId: result.userId, user: result.user});
         } else {
             toast({
                 variant: "destructive",
@@ -191,8 +195,8 @@ export default function LoginPage() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="identifier">Email or Phone</Label>
-                      <Input id="identifier" name="identifier" type="text" placeholder="user@example.com or 9876543210" required />
+                      <Label htmlFor="identifier">Email, Phone, or Username</Label>
+                      <Input id="identifier" name="identifier" type="text" placeholder="e.g. admin or user@example.com" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>

@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "./nav";
 import type { User as UserType } from "@/services/user-service";
 import { getUser } from "@/services/user-service";
+import { Timestamp } from "firebase/firestore";
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -42,13 +43,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         avatar: "https://placehold.co/100x100.png",
         createdAt: new Date() as any,
     };
+    
+    const hardcodedAdminUser: UserType = {
+        id: 'hardcoded-admin',
+        name: "Super Admin (Hardcoded)",
+        email: "admin@internal.app",
+        phone: "0000000000",
+        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+        privileges: ["all"],
+        groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"],
+        createdAt: Timestamp.now()
+    };
 
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; }>(guestUser);
     
     useEffect(() => {
         const checkUser = async () => {
             const storedUserId = localStorage.getItem('userId');
-            if (storedUserId && storedUserId !== guestUser.id) {
+
+            if (storedUserId === 'hardcoded-admin') {
+                const savedRole = localStorage.getItem('activeRole');
+                const activeRole = savedRole || hardcodedAdminUser.roles[0];
+                setUser({
+                    ...hardcodedAdminUser,
+                    isLoggedIn: true,
+                    activeRole: activeRole,
+                    initials: 'SA',
+                    avatar: `https://placehold.co/100x100.png?text=SA`
+                });
+
+            } else if (storedUserId && storedUserId !== guestUser.id) {
                 const fetchedUser = await getUser(storedUserId);
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
