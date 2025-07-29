@@ -1,8 +1,8 @@
 
 "use server";
 
-import { getAllLeads, Lead } from "@/services/lead-service";
-import { query, collection, where, getDocs } from "firebase/firestore";
+import { Lead } from "@/services/lead-service";
+import { query, collection, where, getDocs, Timestamp } from "firebase/firestore";
 import { db, isConfigValid } from "@/services/firebase";
 
 /**
@@ -16,19 +16,33 @@ export async function getOpenLeads(): Promise<Lead[]> {
     }
     try {
         const leadsCollection = collection(db, 'leads');
-        // We need to create a composite index for this query in Firestore.
-        // The error message in the Firebase console will guide you.
-        // It will look something like: verifiedStatus ASC, status ASC
-        const q = query(
+        
+        // Firestore does not support the '!=' (not equal) operator in queries in a way that
+        // scales and can be automatically indexed. 
+        // To get leads that are not 'Closed', we must query for the other statuses ('Pending' and 'Partial')
+        // and merge the results.
+        const q1 = query(
             leadsCollection, 
             where("verifiedStatus", "==", "Verified"),
-            where("status", "!=", "Closed")
+            where("status", "==", "Pending")
+        );
+        const q2 = query(
+            leadsCollection, 
+            where("verifiedStatus", "==", "Verified"),
+            where("status", "==", "Partial")
         );
         
-        const querySnapshot = await getDocs(q);
+        const [pendingSnapshot, partialSnapshot] = await Promise.all([
+            getDocs(q1),
+            getDocs(q2)
+        ]);
+
         const leads: Lead[] = [];
-        querySnapshot.forEach((doc) => {
-            leads.push({ id: doc.id, ...doc.data() } as Lead);
+        pendingSnapshot.forEach((doc) => {
+            leads.push({ id: doc.id, ...(doc.data() as Omit<Lead, 'id'>) });
+        });
+        partialSnapshot.forEach((doc) => {
+            leads.push({ id: doc.id, ...(doc.data() as Omit<Lead, 'id'>) });
         });
 
         // Sort by most recently created first
@@ -37,9 +51,9 @@ export async function getOpenLeads(): Promise<Lead[]> {
         return leads;
     } catch (error) {
         console.error("Error fetching open leads: ", error);
-        // It's likely the composite index is missing. Log a helpful message.
+        // It's likely a composite index is missing if another error occurs.
         if (error instanceof Error && error.message.includes('requires an index')) {
-            console.error("Firestore composite index missing. Please create a composite index on 'leads' collection with 'verifiedStatus' (ascending) and 'status' (ascending).");
+            console.error("Firestore composite index missing. Please create a composite index on 'leads' collection with 'verifiedStatus' (ascending) and 'status' (ascending). The link in the error message will help you do this.");
         }
         // Return an empty array or rethrow, depending on desired error handling.
         return [];
