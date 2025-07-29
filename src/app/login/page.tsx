@@ -4,6 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function LoginPage() {
   return (
@@ -19,7 +26,17 @@ export default function LoginPage() {
           <form className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="+91 12345 67890" required />
+              <div className="flex gap-2">
+                 <Select defaultValue="+91">
+                    <SelectTrigger className="w-[80px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="+91">+91 (IN)</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Input id="phone" type="tel" placeholder="12345 67890" maxLength={10} required />
+              </div>
             </div>
              <div className="space-y-2">
               <Label htmlFor="otp">One-Time Password (OTP)</Label>
