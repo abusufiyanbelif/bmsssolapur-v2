@@ -27,46 +27,41 @@ export default function UserHomePage() {
 
   useEffect(() => {
     const initializeUser = async () => {
+      setLoading(true);
       const storedUserId = localStorage.getItem('userId');
       const storedRole = localStorage.getItem('activeRole');
+      
       if (storedUserId) {
           const fetchedUser = await getUser(storedUserId);
-          setUser(fetchedUser);
-          setActiveRole(storedRole || (fetchedUser?.roles ? fetchedUser.roles[0] : null));
+          if (fetchedUser) {
+            setUser(fetchedUser);
+            const currentRole = storedRole || (fetchedUser.roles ? fetchedUser.roles[0] : null)
+            setActiveRole(currentRole);
+
+             try {
+                if (currentRole === 'Donor') {
+                const donorDonations = await getDonationsByUserId(fetchedUser.id!);
+                setDonations(donorDonations.slice(0, 3)); // Get latest 3
+                } else if (currentRole === 'Beneficiary') {
+                const beneficiaryCases = await getLeadsByBeneficiaryId(fetchedUser.id!);
+                setCases(beneficiaryCases.slice(0, 3)); // Get latest 3
+                }
+            } catch (e) {
+                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+                setError(`Failed to load dashboard data: ${errorMessage}`);
+                console.error(e);
+            }
+
+          } else {
+             setError("User not found.");
+          }
       } else {
-          setLoading(false);
           setError("No logged in user found.");
       }
+       setLoading(false);
     };
     initializeUser();
   }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user || !activeRole) return;
-
-      setLoading(true);
-      setError(null);
-      try {
-        if (activeRole === 'Donor') {
-          const donorDonations = await getDonationsByUserId(user.id!);
-          setDonations(donorDonations.slice(0, 3)); // Get latest 3
-        } else if (activeRole === 'Beneficiary') {
-          const beneficiaryCases = await getLeadsByBeneficiaryId(user.id!);
-          setCases(beneficiaryCases.slice(0, 3)); // Get latest 3
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-        setError(`Failed to load dashboard data: ${errorMessage}`);
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if(user && activeRole) {
-        fetchData();
-    }
-  }, [user, activeRole]);
 
   const renderContent = () => {
     if (loading) {
