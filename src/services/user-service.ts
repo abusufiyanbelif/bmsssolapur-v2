@@ -16,6 +16,19 @@ import { db } from './firebase';
 
 const USERS_COLLECTION = 'users';
 
+export type UserRole = 
+  | 'Guest'
+  | 'Donor'
+  | 'Beneficiary'
+  | 'Referral'
+  | 'Super Admin'
+  | 'Admin' // General Admin
+  | 'Founder'
+  | 'Co-Founder'
+  | 'Finance'
+  | 'Member of Organization';
+
+
 export interface User {
   id?: string;
   name: string;
@@ -24,9 +37,9 @@ export interface User {
   secondaryPhone?: string; // For account recovery
   aadhaarNumber?: string; // Mandated for Admins
   panNumber?: string; // Mandated for Admins
-  roles: string[]; // User can have multiple roles
-  privileges?: string[];
-  groups?: string[];
+  roles: UserRole[]; // User can have multiple roles
+  privileges?: string[]; // e.g. 'CanVerifyDonations'
+  groups?: string[]; // e.g. 'FinanceTeam'
   createdAt: Date;
 }
 
@@ -86,7 +99,7 @@ export const getAllUsers = async () => {
         const querySnapshot = await getDocs(usersQuery);
         const users: User[] = [];
         querySnapshot.forEach((doc) => {
-            users.push(doc.data() as User);
+            users.push({ id: doc.id, ...(doc.data() as Omit<User, 'id'>) });
         });
         return users;
     } catch (error) {

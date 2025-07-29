@@ -2,7 +2,7 @@
  * @fileOverview A service to seed the database with initial data.
  */
 
-import { createUser, User } from './user-service';
+import { createUser, User, UserRole } from './user-service';
 import { createOrganization, Organization } from './organization-service';
 import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -13,14 +13,14 @@ const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
     { name: "Super Admin", email: "admin@baitulmalsolapur.org", phone: "1111111111", roles: ["Super Admin"], privileges: ["Super Admin"] },
     
     // Admins (Founders and Members)
-    { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Founder"], privileges: ["Admin"] },
-    { name: "Maaz Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", roles: ["Finance Team"], privileges: ["Admin"] },
-    { name: "Abu Rehan Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", roles: ["Co-Founder"], privileges: ["Admin"] },
-    { name: "Nayyar Ahmed Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", roles: ["Member of Organization"], privileges: ["Admin"] },
-    { name: "Arif Baig", email: "arif.baig@example.com", phone: "9225747045", roles: ["Member of Organization"], privileges: ["Admin"] },
-    { name: "Mazhar Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", roles: ["Member of Organization"], privileges: ["Admin"] },
-    { name: "Mujahid Chabukswar", email: "mujahid.chabukswar@example.com", phone: "8087420544", roles: ["Member of Organization"], privileges: ["Admin"] },
-    { name: "Muddasir", email: "muddasir@example.com", phone: "7385557820", roles: ["Member of Organization"], privileges: ["Admin"] },
+    { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Admin"], privileges: ["Admin"], groups: ["Founder"] },
+    { name: "Maaz Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", roles: ["Admin", "Finance"], privileges: ["Admin"], groups: ["Finance Team"] },
+    { name: "Abu Rehan Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", roles: ["Admin"], privileges: ["Admin"], groups: ["Co-Founder"] },
+    { name: "Nayyar Ahmed Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", roles: ["Admin"], privileges: ["Admin"], groups: ["Member of Organization"] },
+    { name: "Arif Baig", email: "arif.baig@example.com", phone: "9225747045", roles: ["Admin"], privileges: ["Admin"], groups: ["Member of Organization"] },
+    { name: "Mazhar Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", roles: ["Admin"], privileges: ["Admin"], groups: ["Member of Organization"] },
+    { name: "Mujahid Chabukswar", email: "mujahid.chabukswar@example.com", phone: "8087420544", roles: ["Admin"], privileges: ["Admin"], groups: ["Member of Organization"] },
+    { name: "Muddasir", email: "muddasir@example.com", phone: "7385557820", roles: ["Admin"], privileges: ["Admin"], groups: ["Member of Organization"] },
     
     // Generic Donor for Anonymous Donations
     { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [] },

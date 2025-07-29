@@ -44,7 +44,7 @@ const allNavItems: NavItem[] = [
     { href: "/admin/donations", label: "Donations", icon: Banknote, roles: ["Admin", "Super Admin"], subRoles: ["Finance Admin", "Super Admin"] },
     
     // Super Admin
-    { href: "/admin/user-management", label: "User Management", icon: UserPlus, roles: ["Super Admin"] },
+    { href: "/admin/user-management", label: "User Management", icon: UserCog, roles: ["Super Admin"] },
     { href: "/admin/role-assignment", label: "Role Assignment", icon: Lock, roles: ["Super Admin"] },
     { href: "/admin/logs", label: "All Logs", icon: BookText, roles: ["Super Admin"] },
     { href: "/admin/app-settings", label: "App Settings", icon: Settings, roles: ["Super Admin"] },
