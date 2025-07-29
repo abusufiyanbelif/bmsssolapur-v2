@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { KeyRound, LogIn, MessageSquare, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin } from "./actions";
 import { useRouter } from "next/navigation";
 import { auth } from "@/services/firebase";
@@ -30,14 +30,23 @@ export default function LoginPage() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
 
-  const onSuccessfulLogin = (userId: string) => {
+  const onSuccessfulLogin = (data: {userId?: string, user?: any}) => {
     toast({
       title: "Login Successful",
       description: "Welcome back! Please select your role to continue.",
     });
     // Clear any previous role selection
     localStorage.removeItem('activeRole'); 
-    localStorage.setItem('userId', userId);
+    if (data.userId) {
+      localStorage.setItem('userId', data.userId);
+    }
+    if (data.user) {
+      // For hardcoded user, pass the full object via session storage for the app-shell to pick up.
+      // This avoids needing a DB record for a temporary test user.
+      sessionStorage.setItem('hardcodedUser', JSON.stringify(data.user));
+      // Still set a user ID for consistency in other parts of the app
+      localStorage.setItem('userId', data.user.id);
+    }
     
     // Use router to navigate, letting app-shell handle the role switching logic
     router.push('/home'); 
@@ -50,8 +59,8 @@ export default function LoginPage() {
     const formData = new FormData(event.currentTarget);
     const result = await handleLogin(formData);
 
-    if (result.success && result.userId) {
-      onSuccessfulLogin(result.userId);
+    if (result.success) {
+      onSuccessfulLogin({userId: result.userId, user: result.user});
     } else {
       toast({
         variant: "destructive",
@@ -96,7 +105,7 @@ export default function LoginPage() {
       const result = await handleVerifyOtp(formData);
 
        if (result.success && result.userId) {
-            onSuccessfulLogin(result.userId);
+            onSuccessfulLogin({userId: result.userId});
         } else {
             toast({
                 variant: "destructive",
@@ -118,7 +127,7 @@ export default function LoginPage() {
         const serverResult = await handleGoogleLogin(firebaseUser);
         
         if(serverResult.success && serverResult.userId) {
-            onSuccessfulLogin(serverResult.userId);
+            onSuccessfulLogin({userId: serverResult.userId});
         } else {
              toast({
                 variant: "destructive",
@@ -189,8 +198,8 @@ export default function LoginPage() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number (10 digits)</Label>
-                      <Input id="phone" name="phone" type="tel" placeholder="9876543210" maxLength={10} required defaultValue="7887646583" />
+                      <Label htmlFor="phone">Phone or Username</Label>
+                      <Input id="phone" name="phone" type="text" placeholder="e.g., 7887646583 or admin" required defaultValue="admin" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>

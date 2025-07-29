@@ -6,26 +6,41 @@ import { db, isConfigValid } from '@/services/firebase';
 import { User, getUserByPhone, getUserByEmail, createUser } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
-import { seedDatabase } from '@/services/seed-service';
 
 interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
+    user?: User; // For hardcoded user login
 }
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
     if (!isConfigValid) {
         return { success: false, error: "Firebase is not configured. Cannot process login." };
     }
-    const phone = formData.get("phone") as string;
+    const identifier = formData.get("phone") as string;
     const password = formData.get("password") as string;
 
-    if (!phone || !password) {
-        return { success: false, error: "Phone and password are required." };
+    if (!identifier || !password) {
+        return { success: false, error: "Identifier and password are required." };
     }
     
-    // For this prototype, we'll use a simple password check.
+    // Special hardcoded admin login for testing
+    if (identifier === 'admin' && password === 'admin') {
+        const hardcodedAdminUser: User = {
+            id: 'hardcoded_admin_id',
+            name: "Hardcoded Admin",
+            email: "admin@internal.app",
+            phone: "0000000000",
+            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+            privileges: ["all"],
+            groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"],
+            createdAt: Timestamp.now(),
+        };
+        return { success: true, user: hardcodedAdminUser };
+    }
+
+    // For this prototype, we'll use a simple password check for other users.
     // In a real application, you would use Firebase Authentication
     // with password hashing or other secure methods.
     if (password !== 'admin') {
@@ -33,7 +48,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     }
 
     try {
-        const user = await getUserByPhone(phone);
+        const user = await getUserByPhone(identifier);
 
         if (!user) {
             return { success: false, error: "User with this phone number not found." };
