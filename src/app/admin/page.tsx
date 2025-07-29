@@ -1,70 +1,64 @@
-
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { getAllDonations } from "@/services/donation-service";
+import { getAllLeads } from "@/services/lead-service";
 
-const metrics = [
-  {
-    title: "Total Raised",
-    value: "₹50,000",
-    icon: TrendingUp,
-    description: "Total donations received.",
-  },
-  {
-    title: "Total Distributed",
-    value: "₹32,000",
-    icon: HandCoins,
-    description: "Total funds given to leads.",
-  },
-  {
-    title: "Pending to Disburse",
-    value: "₹18,000",
-    icon: Hourglass,
-    description: "Available funds for distribution.",
-  },
-  {
-    title: "Total Beneficiaries Helped",
-    value: "12 leads",
-    icon: Users,
-    description: "Total number of cases managed.",
-  },
-  {
-    title: "Cases Fully Closed",
-    value: "8",
-    icon: CheckCircle,
-    description: "Leads where help is complete.",
-  },
-  {
-    title: "Cases Pending",
-    value: "4",
-    icon: PiggyBank,
-    description: "Leads awaiting assistance.",
-  },
-];
+export default async function DashboardPage() {
 
-export default function DashboardPage() {
-  const { toast } = useToast();
+  const allDonations = await getAllDonations();
+  const allLeads = await getAllLeads();
 
-  const handleFeatureInProgress = () => {
-    toast({
-        title: "In Progress",
-        description: "This feature is currently in development and will be available soon.",
-    });
-  };
+  const totalRaised = allDonations.reduce((acc, d) => d.status === 'Verified' || d.status === 'Allocated' ? acc + d.amount : acc, 0);
+  const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+  const pendingToDisburse = totalRaised - totalDistributed;
+  const beneficiariesHelped = allLeads.length;
+  const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+  const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
+
+  const metrics = [
+    {
+      title: "Total Verified Funds",
+      value: `₹${totalRaised.toLocaleString()}`,
+      icon: TrendingUp,
+      description: "Total verified donations received.",
+    },
+    {
+      title: "Total Distributed",
+      value: `₹${totalDistributed.toLocaleString()}`,
+      icon: HandCoins,
+      description: "Total funds given to leads.",
+    },
+    {
+      title: "Available for Disbursement",
+      value: `₹${pendingToDisburse.toLocaleString()}`,
+      icon: Hourglass,
+      description: "Available funds for distribution.",
+    },
+    {
+      title: "Total Beneficiaries",
+      value: `${beneficiariesHelped} leads`,
+      icon: Users,
+      description: "Total number of cases managed.",
+    },
+    {
+      title: "Cases Fully Closed",
+      value: casesClosed.toString(),
+      icon: CheckCircle,
+      description: "Leads where help is complete.",
+    },
+    {
+      title: "Cases Open",
+      value: casesPending.toString(),
+      icon: PiggyBank,
+      description: "Leads awaiting assistance.",
+    },
+  ];
 
   return (
     <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h2>
-        <div className="flex items-center space-x-2">
-          <Button onClick={handleFeatureInProgress}>
-            <Send className="mr-2 h-4 w-4" />
-            Test Notifications
-          </Button>
-        </div>
       </div>
       <div className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

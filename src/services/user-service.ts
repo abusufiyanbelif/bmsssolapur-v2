@@ -11,6 +11,7 @@ import {
   deleteDoc,
   query,
   getDocs,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -49,14 +50,18 @@ export interface User {
   roles: UserRole[]; // A user can have multiple roles
   privileges?: Privilege[]; // Specific permissions granted to the user, often derived from roles
   groups?: string[]; // e.g., 'Founders', 'Finance Team', for organizational purposes
-  createdAt: Date;
+  createdAt: Timestamp;
 }
 
 // Function to create or update a user
-export const createUser = async (user: User) => {
+export const createUser = async (user: Omit<User, 'id' | 'createdAt'> & { id?: string }) => {
   try {
-    const userRef = doc(collection(db, USERS_COLLECTION));
-    const newUser = { ...user, id: userRef.id, createdAt: new Date() };
+    const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
+    const newUser: User = { 
+        ...user, 
+        id: userRef.id,
+        createdAt: Timestamp.now()
+    };
     await setDoc(userRef, newUser);
     return newUser;
   } catch (error) {
@@ -70,7 +75,7 @@ export const getUser = async (id: string) => {
   try {
     const userDoc = await getDoc(doc(db, USERS_COLLECTION, id));
     if (userDoc.exists()) {
-      return userDoc.data() as User;
+      return { id: userDoc.id, ...userDoc.data() } as User;
     }
     return null;
   } catch (error) {

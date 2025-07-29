@@ -1,47 +1,15 @@
 
+'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { type DonationStatus } from "@/services/donation-service";
+import { Download, Loader2, AlertCircle } from "lucide-react";
+import { type Donation, type DonationStatus, getAllDonations } from "@/services/donation-service";
 import { cn } from "@/lib/utils";
-
-// In a real app, this data would be fetched for the logged-in user
-const userDonations = [
-  {
-    id: "don-1",
-    date: "2024-07-20",
-    amount: 5000,
-    type: "Zakat",
-    status: "Verified",
-    lead: "Education for Orphans"
-  },
-  {
-    id: "don-2",
-    date: "2024-07-18",
-    amount: 1000,
-    type: "Sadaqah",
-    status: "Pending verification",
-    lead: "Hospital Bill for Patient X"
-  },
-  {
-    id: "don-3",
-    date: "2024-06-15",
-    amount: 2500,
-    type: "Fitr",
-    status: "Allocated",
-    lead: "Community Iftar Program"
-  },
-   {
-    id: "don-4",
-    date: "2024-06-01",
-    amount: 750,
-    type: "Sadaqah",
-    status: "Failed/Incomplete",
-    lead: "N/A"
-  },
-];
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -52,10 +20,107 @@ const statusColors: Record<DonationStatus, string> = {
 
 
 export default function MyDonationsPage() {
-  // A real implementation would have a function here to handle receipt download
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // In a real app, you would get the logged-in user's ID here
+  const userId = "user_placeholder_id_12345";
+
+  useEffect(() => {
+    const fetchDonations = async () => {
+      try {
+        setLoading(true);
+        // This fetches all donations. In a real app, this service would
+        // be updated to fetch only donations for the logged-in user.
+        const allDonations = await getAllDonations();
+        const userDonations = allDonations.filter(d => d.donorId === userId);
+        userDonations.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        setDonations(userDonations);
+        setError(null);
+      } catch (e) {
+        setError("Failed to fetch donation history.");
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDonations();
+  }, [userId]);
+  
   const handleDownloadReceipt = () => {
-    // Placeholder functionality
     alert("Receipt download functionality is in progress.");
+  }
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+          <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="ml-2">Loading your donations...</p>
+          </div>
+      );
+    }
+
+    if (error) {
+        return (
+            <Alert variant="destructive" className="my-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
+
+    if (donations.length === 0) {
+        return (
+            <div className="text-center py-10">
+                <p className="text-muted-foreground">You have not made any donations yet.</p>
+            </div>
+        )
+    }
+
+    return (
+       <Table>
+          <TableHeader>
+              <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Purpose</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+          </TableHeader>
+          <TableBody>
+              {donations.map((donation) => (
+                  <TableRow key={donation.id}>
+                      <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                      <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
+                      <TableCell>{donation.type}</TableCell>
+                      <TableCell>{donation.purpose || 'N/A'}</TableCell>
+                      <TableCell>
+                          <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
+                              {donation.status}
+                          </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                          <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={handleDownloadReceipt}
+                              disabled={donation.status !== 'Verified' && donation.status !== 'Allocated'}
+                          >
+                              <Download className="mr-2 h-4 w-4" />
+                              Receipt
+                          </Button>
+                      </TableCell>
+                  </TableRow>
+              ))}
+          </TableBody>
+      </Table>
+    );
   }
   
   return (
@@ -69,44 +134,7 @@ export default function MyDonationsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Supported Cause</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {userDonations.map((donation) => (
-                        <TableRow key={donation.id}>
-                            <TableCell>{donation.date}</TableCell>
-                            <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
-                            <TableCell>{donation.type}</TableCell>
-                            <TableCell>{donation.lead}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[donation.status as DonationStatus])}>
-                                    {donation.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={handleDownloadReceipt}
-                                    disabled={donation.status !== 'Verified' && donation.status !== 'Allocated'}
-                                >
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Receipt
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+            {renderContent()}
         </CardContent>
       </Card>
     </div>
