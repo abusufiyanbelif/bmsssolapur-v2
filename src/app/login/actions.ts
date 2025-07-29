@@ -6,12 +6,28 @@ import { db, isConfigValid } from '@/services/firebase';
 import { User, getUserByPhone, getUserByEmail, createUser } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
+import { seedDatabase } from '@/services/seed-service';
 
 interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
 }
+
+export async function triggerSeed(): Promise<{ message: string }> {
+    console.log("Login page loaded, triggering database seed...");
+    try {
+        await seedDatabase();
+        const message = "Database seeding initiated in the background.";
+        console.log(message);
+        return { message };
+    } catch(e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred during seeding.";
+        console.error("Seeding trigger failed:", error);
+        return { message: `Seeding trigger failed: ${error}` };
+    }
+}
+
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
     if (!isConfigValid) {
@@ -134,13 +150,12 @@ export async function handleGoogleLogin(firebaseUser: {
 
     if (!appUser) {
       // User doesn't exist, create a new one
-      const newUser: Omit<User, 'id'> = {
+      const newUser: Omit<User, 'id' | 'createdAt'> = {
         name: firebaseUser.displayName || 'Google User',
         email: firebaseUser.email,
         // Use a placeholder phone number; the user can update it in their profile
         phone: firebaseUser.phoneNumber || Date.now().toString().slice(-10),
         roles: ['Donor'], // Default role for new sign-ups
-        createdAt: Timestamp.now(),
       };
       // Use the Firebase UID as the document ID for our user record
       appUser = await createUser({ ...newUser, id: firebaseUser.uid });
