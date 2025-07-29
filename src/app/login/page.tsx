@@ -39,6 +39,7 @@ export default function LoginPage() {
     
     // Use router to navigate, letting app-shell handle the role switching logic
     router.push('/home'); 
+    router.refresh(); // force a refresh to re-trigger the effect in app-shell
   }
 
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -69,11 +70,10 @@ export default function LoginPage() {
           return;
       }
       
-      const fullPhoneNumber = `+91${phoneNumber}`;
-      setOtpPhoneNumber(fullPhoneNumber);
+      setOtpPhoneNumber(phoneNumber);
       setIsOtpSending(true);
 
-      const result = await handleSendOtp(fullPhoneNumber);
+      const result = await handleSendOtp(phoneNumber);
       
       if (result.success) {
           toast({ title: "OTP Sent", description: "An OTP has been sent to your phone." });
@@ -131,17 +131,9 @@ export default function LoginPage() {
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
                     <div className="space-y-2">
-                    <Label htmlFor="phone-otp">Phone Number</Label>
+                    <Label htmlFor="phone-otp">Phone Number (10 digits)</Label>
                     <div className="flex gap-2">
-                        <Select defaultValue="+91">
-                            <SelectTrigger className="w-[80px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="+91">+91 (IN)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Input id="phone-otp" name="phone-otp" type="tel" placeholder="12345 67890" maxLength={10} required disabled={isOtpSent || isOtpSending} />
+                        <Input id="phone-otp" name="phone-otp" type="tel" placeholder="9876543210" maxLength={10} required disabled={isOtpSent || isOtpSending} />
                     </div>
                     </div>
                     
@@ -168,18 +160,8 @@ export default function LoginPage() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="phone-password">Phone Number</Label>
-                      <div className="flex gap-2">
-                          <Select defaultValue="+91" name="countryCode">
-                              <SelectTrigger className="w-[80px]">
-                                  <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="+91">+91 (IN)</SelectItem>
-                              </SelectContent>
-                          </Select>
-                          <Input id="phone-password" name="phone" type="tel" placeholder="12345 67890" maxLength={10} required defaultValue="7887646583" />
-                      </div>
+                      <Label htmlFor="phone-password">Phone Number (10 digits)</Label>
+                      <Input id="phone-password" name="phone" type="tel" placeholder="9876543210" maxLength={10} required defaultValue="7887646583" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>

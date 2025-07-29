@@ -34,7 +34,7 @@ const allRoles: Exclude<UserRole, 'Guest'>[] = [
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
-  phone: z.string().length(10, "Phone number must be exactly 10 digits."),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
