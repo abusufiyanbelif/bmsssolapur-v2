@@ -14,11 +14,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
 
     // In a real app, this would come from your authentication context.
-    // For now, we simulate a user who is logged in and has an active role.
+    // We now default to a logged-out 'Guest' user.
     const [user, setUser] = useState({
-        isLoggedIn: true, // Set to true to simulate a logged-in user
+        isLoggedIn: false, // Set to false to simulate a logged-out user (Guest)
         roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-        activeRole: "Donor", // Change this to test different roles
+        activeRole: "Guest", // Default role is Guest
     });
 
     const handleRoleChange = (newRole: string) => {
@@ -39,6 +39,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     const activeRole = user.isLoggedIn ? user.activeRole : "Guest";
+
+    // This is a simulation function for logging in, you can trigger it from a button or effect.
+    // For demonstration, you might call this from a temporary button or a useEffect hook.
+    const simulateLogin = () => {
+        setUser({
+            isLoggedIn: true,
+            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+            activeRole: "Super Admin", // Default to Super Admin on login for this demo
+        });
+    };
 
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -86,11 +96,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             />
                         </SheetContent>
                     </Sheet>
-                     <div className="w-full flex-1 flex justify-end">
+                     <div className="w-full flex-1 flex justify-end gap-2">
+                        {/* A temporary button to simulate logging in. You can remove this later. */}
+                        {!user.isLoggedIn && <Button onClick={simulateLogin}>Login (Simulated)</Button>}
                         {user.isLoggedIn && user.roles.length > 1 && (
                              <Button variant="outline" onClick={() => handleOpenRoleSwitcher()}>
                                 <Users className="mr-2 h-4 w-4" />
-                                Switch Role
+                                Switch Role ({user.activeRole})
                             </Button>
                         )}
                     </div>
