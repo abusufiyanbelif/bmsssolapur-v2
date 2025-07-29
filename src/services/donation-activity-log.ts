@@ -1,5 +1,7 @@
+
 /**
  * @fileOverview Service for logging donation-related activities.
+ * @deprecated This file is deprecated. Use the centralized activity-log-service.ts instead.
  */
 
 import { collection, addDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
@@ -22,6 +24,7 @@ interface ActivityLog {
  * @param activity A short description of the activity.
  * @param details An object containing details about the activity.
  * @param performedBy The ID of the user performing the action.
+ * @deprecated Use logActivity from activity-log-service.ts
  */
 export const logDonationActivity = async (
   donationId: string,

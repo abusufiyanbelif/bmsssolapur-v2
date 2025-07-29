@@ -28,7 +28,7 @@ export default function ProfilePage() {
     handleFeatureInProgress();
   }
 
-  // Placeholder user data
+  // Placeholder user data - in a real app, this would come from an auth context
   const user = {
     id: "user_placeholder_id_12345",
     name: "Aisha Khan",
@@ -121,7 +121,7 @@ export default function ProfilePage() {
                             <CardDescription>A log of actions you have performed in the system.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                           <p>Activity feed not yet implemented.</p>
+                           <ActivityFeed userId={user.id} />
                         </CardContent>
                     </Card>
                 </TabsContent>

@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Donation service for interacting with Firestore.
  */
@@ -14,7 +15,8 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { logDonationActivity } from './donation-activity-log';
+import { logActivity } from './activity-log-service';
+import { getUser } from './user-service';
 
 const DONATIONS_COLLECTION = 'donations';
 
@@ -47,8 +49,9 @@ export interface Donation {
 }
 
 // Function to create a donation
-export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>, performedBy?: string) => {
+export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>, adminUserId: string) => {
   try {
+    const adminUser = await getUser(adminUserId);
     const donationRef = doc(collection(db, DONATIONS_COLLECTION));
     const newDonation: Donation = {
         ...donation,
@@ -56,7 +59,22 @@ export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'
         createdAt: Timestamp.now()
     };
     await setDoc(donationRef, newDonation);
-    await logDonationActivity(newDonation.id!, 'Donation Created', { details: `Donation of ${newDonation.amount} from ${newDonation.donorName} created.` }, performedBy);
+    
+    if (adminUser) {
+        await logActivity({
+            userId: adminUser.id!,
+            userName: adminUser.name,
+            userEmail: adminUser.email,
+            role: 'Admin', // Assuming only admins can create donations this way
+            activity: 'Donation Created',
+            details: { 
+                donationId: newDonation.id!,
+                donorName: newDonation.donorName,
+                amount: newDonation.amount
+            },
+        });
+    }
+
     return newDonation;
   } catch (error) {
     console.error('Error creating donation: ', error);
@@ -79,17 +97,41 @@ export const getDonation = async (id: string) => {
 };
 
 // Function to update a donation
-export const updateDonation = async (id: string, updates: Partial<Donation>, performedBy?: string) => {
+export const updateDonation = async (id: string, updates: Partial<Donation>, performedByUserId: string) => {
     try {
+        const adminUser = await getUser(performedByUserId);
         const donationRef = doc(db, DONATIONS_COLLECTION, id);
         const originalDonation = await getDonation(id);
 
         await updateDoc(donationRef, updates);
 
-        if(updates.status && originalDonation?.status !== updates.status) {
-            await logDonationActivity(id, 'Status Changed', { from: originalDonation?.status, to: updates.status }, performedBy);
-        } else {
-             await logDonationActivity(id, 'Donation Updated', { updates: Object.keys(updates).join(', ') }, performedBy);
+        if(adminUser && originalDonation) {
+            if(updates.status && originalDonation.status !== updates.status) {
+                await logActivity({
+                    userId: adminUser.id!,
+                    userName: adminUser.name,
+                    userEmail: adminUser.email,
+                    role: 'Admin',
+                    activity: 'Status Changed',
+                    details: { 
+                        donationId: id,
+                        from: originalDonation.status,
+                        to: updates.status
+                    }
+                });
+            } else {
+                 await logActivity({
+                    userId: adminUser.id!,
+                    userName: adminUser.name,
+                    userEmail: adminUser.email,
+                    role: 'Admin',
+                    activity: 'Donation Updated',
+                    details: { 
+                        donationId: id,
+                        updates: Object.keys(updates).join(', ')
+                    }
+                 });
+            }
         }
 
     } catch (error) {

@@ -8,6 +8,7 @@ import { Nav } from "./nav";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState } from "react";
 import { Footer } from "./footer";
+import { logActivity } from "@/services/activity-log-service";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
@@ -17,13 +18,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // We now default to a logged-out 'Guest' user.
     const [user, setUser] = useState({
         isLoggedIn: false, // Set to false to simulate a logged-out user (Guest)
+        id: "guest_user_id",
+        name: "Guest",
+        email: "guest@example.com",
         roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
         activeRole: "Guest", // Default role is Guest
     });
 
     const handleRoleChange = (newRole: string) => {
+        const previousRole = user.activeRole;
         setUser(currentUser => ({...currentUser, activeRole: newRole}));
         setRequiredRole(null); // Reset required role after switching
+
+        // Log the role switch activity
+        if (user.isLoggedIn) {
+            logActivity({
+                userId: user.id,
+                userName: user.name,
+                userEmail: user.email,
+                role: newRole,
+                activity: "Switched Role",
+                details: { from: previousRole, to: newRole },
+            });
+        }
     };
 
     const handleOpenRoleSwitcher = (requiredRoleName: string | null = null) => {
@@ -45,6 +62,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const simulateLogin = () => {
         setUser({
             isLoggedIn: true,
+            id: "user_placeholder_id_12345", // A consistent ID for the logged in user
+            name: "Aisha Khan",
+            email: "aisha.khan@example.com",
             roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
             activeRole: "Super Admin", // Default to Super Admin on login for this demo
         });
