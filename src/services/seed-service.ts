@@ -41,13 +41,14 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     upiId: "maaz9145@okhdfcbank"
 };
 
-const seedUsers = async () => {
+export type UserSeedResult = { name: string; phone: string; status: 'Created' | 'Skipped (already exists)' };
+
+const seedUsers = async (): Promise<UserSeedResult[]> => {
     if (!isConfigValid) {
         throw new Error("Firebase is not configured. Cannot seed users.");
     }
     console.log('Seeding users...');
-    let createdCount = 0;
-    let skippedCount = 0;
+    const results: UserSeedResult[] = [];
 
     for (const userData of usersToSeed) {
         // Find existing user by phone to avoid duplicates
@@ -59,26 +60,26 @@ const seedUsers = async () => {
                 ...userData,
                 createdAt: Timestamp.now()
             });
-            createdCount++;
+            results.push({ name: userData.name, phone: userData.phone, status: 'Created' });
         } else {
-            skippedCount++;
+            results.push({ name: userData.name, phone: userData.phone, status: 'Skipped (already exists)' });
         }
     }
 
-    const statusMessage = `User seeding complete. Created: ${createdCount}, Skipped: ${skippedCount}.`;
-    console.log(statusMessage);
-    return statusMessage;
+    console.log('User seeding process finished.');
+    return results;
 };
 
-const seedOrganization = async () => {
+const seedOrganization = async (): Promise<string> => {
     if (!isConfigValid) {
         throw new Error("Firebase is not configured. Cannot seed organization.");
     }
     const orgsCollection = collection(db, 'organizations');
     const snapshot = await getDocs(orgsCollection);
     if (!snapshot.empty) {
-        console.log('Organizations collection already has documents. Skipping organization seeding.');
-        return 'Organization already exists. Skipped seeding.';
+        const msg = 'Organization already exists. Skipped seeding.';
+        console.log(msg);
+        return msg;
     }
     
     console.log('Seeding organization...');
@@ -87,27 +88,27 @@ const seedOrganization = async () => {
 };
 
 
-export const seedDatabase = async (): Promise<{userStatus: string, orgStatus: string, error?: string}> => {
+export const seedDatabase = async (): Promise<{userResults: UserSeedResult[], orgStatus: string, error?: string}> => {
     console.log('Attempting to seed database...');
     if (!isConfigValid) {
         const errorMsg = "Firebase is not configured. Aborting seed.";
         console.error(errorMsg);
         return {
-            userStatus: 'Failed',
+            userResults: [],
             orgStatus: 'Failed',
             error: errorMsg,
         }
     }
     try {
-        const userStatus = await seedUsers();
+        const userResults = await seedUsers();
         const orgStatus = await seedOrganization();
         console.log('Database seeding process completed.');
-        return { userStatus, orgStatus };
+        return { userResults, orgStatus };
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred during seeding.';
         console.error('Error seeding database:', errorMsg);
         return {
-            userStatus: 'Failed',
+            userResults: [],
             orgStatus: 'Failed',
             error: errorMsg,
         };
