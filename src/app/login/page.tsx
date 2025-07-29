@@ -45,7 +45,12 @@ export default function LoginPage() {
         description: "Welcome back!",
       });
       localStorage.setItem('userId', result.userId);
-      router.push('/home');
+      // Give localStorage a moment to update before reloading the page to trigger the app shell's user check.
+      setTimeout(() => {
+        router.push('/home');
+        // A full reload might be better to ensure all states are reset and re-initialized.
+        // window.location.href = '/home';
+      }, 100);
     } else {
       toast({
         variant: "destructive",
@@ -119,12 +124,12 @@ export default function LoginPage() {
                                   <SelectItem value="+91">+91 (IN)</SelectItem>
                               </SelectContent>
                           </Select>
-                          <Input id="phone-password" name="phone" type="tel" placeholder="12345 67890" maxLength={10} required />
+                          <Input id="phone-password" name="phone" type="tel" placeholder="12345 67890" maxLength={10} required defaultValue="7887646583" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
-                      <Input id="password" name="password" type="password" placeholder="Enter your password" required />
+                      <Input id="password" name="password" type="password" placeholder="Enter your password" required defaultValue="admin" />
                     </div>
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? (
@@ -145,5 +150,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
