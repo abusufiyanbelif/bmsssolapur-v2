@@ -47,10 +47,21 @@ This document tracks the features and changes requested for the project.
 - **Categories**: 'Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'
 - **Purposes**: 'Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use'
 - **Anonymous Donations**: Implemented a feature to allow for anonymous donations, linking them to a predefined "Anonymous Donor" profile.
+- **Traceability**: Donations can be linked to specific leads they helped fund via an `allocatedToLeadId`.
 
 ### Leads/Cases Management
-- **Leads Table**: Created a "Leads" table in Firestore to track help cases.
-- **Lead Statuses**: "Pending", "Partially Closed", "Closed".
+- **Leads Table**: Created a "Leads" table in Firestore to track help cases with the following fields:
+    - `Lead ID`: Unique case ID.
+    - `Name`: Optional name of the recipient (can be "Anonymous").
+    - `Category`: Zakat / Sadaqah / Fitr etc.
+    - `Amount Requested`: The requested help amount.
+    - `Amount Given`: Total funds given so far.
+    - `Status`: "Pending", "Partial", "Closed".
+    - `Notes`: Details about the need.
+    - `Date Created`: Timestamp when the lead was logged.
+    - `Admin Added By`: ID of the admin who entered the lead.
+- **Lead Statuses**: "Pending", "Partial", "Closed".
+- **Permissions**: Only users with "Admin" or "Super Admin" privileges can add or update leads.
 
 ### Fund Flow Dashboard & Reporting
 - **Summary Dashboard**: Admin view with key metrics.

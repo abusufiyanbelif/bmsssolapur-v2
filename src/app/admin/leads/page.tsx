@@ -22,7 +22,7 @@ import Link from "next/link";
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-    "Partially Closed": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
 };
 

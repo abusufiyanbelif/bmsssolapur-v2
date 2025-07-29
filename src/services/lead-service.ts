@@ -19,7 +19,7 @@ import { DonationType } from './donation-service';
 
 const LEADS_COLLECTION = 'leads';
 
-export type LeadStatus = 'Pending' | 'Partially Closed' | 'Closed';
+export type LeadStatus = 'Pending' | 'Partial' | 'Closed';
 
 export interface Lead {
   id?: string;
@@ -32,10 +32,11 @@ export interface Lead {
   notes?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  addedByAdminId?: string; // ID of the admin who created the lead
 }
 
 // Function to create a lead
-export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status'>) => {
+export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status'>, adminId: string) => {
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
     const newLead: Omit<Lead, 'id'> & { id: string } = {
@@ -45,6 +46,7 @@ export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'upda
       status: 'Pending',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
+      addedByAdminId: adminId,
     };
     await setDoc(leadRef, newLead);
     return newLead;
