@@ -20,6 +20,7 @@ const DONATIONS_COLLECTION = 'donations';
 
 export type DonationStatus = 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Allocated';
 export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah';
+export type DonationPurpose = 'Education' | 'Deen' | 'Hospital' | 'Loan and Relief Fund' | 'To Organization Use';
 
 export interface Donation {
   id?: string;
@@ -27,6 +28,7 @@ export interface Donation {
   donorName: string;
   amount: number;
   type: DonationType;
+  purpose?: DonationPurpose;
   status: DonationStatus;
   paymentScreenshotUrl?: string; // URL to the uploaded screenshot
   transactionId?: string;

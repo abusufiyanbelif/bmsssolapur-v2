@@ -17,6 +17,7 @@ import { getAllDonations, type Donation, type DonationStatus } from "@/services/
 import { format } from "date-fns";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -86,6 +87,7 @@ export default function DonationsPage() {
                         <TableHead>Donor</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Type</TableHead>
+                        <TableHead>Purpose</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -97,6 +99,7 @@ export default function DonationsPage() {
                             <TableCell className="font-medium">{donation.donorName}</TableCell>
                             <TableCell>${donation.amount.toFixed(2)}</TableCell>
                             <TableCell>{donation.type}</TableCell>
+                            <TableCell>{donation.purpose || 'N/A'}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
                                     {donation.status}
