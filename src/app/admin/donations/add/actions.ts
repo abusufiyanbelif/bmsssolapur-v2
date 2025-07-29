@@ -1,0 +1,57 @@
+"use server";
+
+import { createDonation, Donation } from "@/services/donation-service";
+import { revalidatePath } from "next/cache";
+
+interface FormState {
+    success: boolean;
+    error?: string;
+    donation?: Donation;
+}
+
+// In a real app, you would upload the file to a storage service like Firebase Storage
+// and get a URL. For this prototype, we'll just acknowledge the file was received.
+async function handleFileUpload(file: File): Promise<string> {
+    console.log(`Received file: ${file.name}, size: ${file.size} bytes`);
+    // Placeholder for file upload logic
+    return `https://placehold.co/600x400.png?text=screenshot-placeholder`;
+}
+
+export async function handleAddDonation(
+  formData: FormData
+): Promise<FormState> {
+  const rawFormData = Object.fromEntries(formData.entries());
+
+  try {
+    const screenshotFile = rawFormData.paymentScreenshot as File;
+    const paymentScreenshotUrl = await handleFileUpload(screenshotFile);
+    
+    const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
+        donorId: rawFormData.donorId as string,
+        donorName: rawFormData.donorName as string,
+        isAnonymous: rawFormData.isAnonymous === 'true',
+        amount: parseFloat(rawFormData.amount as string),
+        type: rawFormData.type as any, // Cast to any to satisfy DonationType enum
+        purpose: rawFormData.purpose as any, // Cast to any for optional field
+        status: "Pending verification",
+        transactionId: rawFormData.transactionId as string,
+        paymentScreenshotUrl: paymentScreenshotUrl,
+    };
+
+    const newDonation = await createDonation(newDonationData);
+    
+    revalidatePath("/admin/donations");
+
+    return {
+      success: true,
+      donation: newDonation,
+    };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    console.error("Error adding donation:", error);
+    return {
+      success: false,
+      error: error,
+    };
+  }
+}

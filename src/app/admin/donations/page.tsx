@@ -15,9 +15,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -75,6 +76,12 @@ export default function DonationsPage() {
             return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">No donations found.</p>
+                     <Button asChild className="mt-4">
+                        <Link href="/admin/donations/add">
+                           <PlusCircle className="mr-2" />
+                           Add First Donation
+                        </Link>
+                    </Button>
                 </div>
             )
         }
@@ -129,7 +136,15 @@ export default function DonationsPage() {
 
   return (
     <div className="flex-1 space-y-4">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Donation Management</h2>
+        <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-bold tracking-tight font-headline">Donation Management</h2>
+            <Button asChild>
+                <Link href="/admin/donations/add">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Donation
+                </Link>
+            </Button>
+        </div>
         <Card>
             <CardHeader>
                 <CardTitle>All Donations</CardTitle>

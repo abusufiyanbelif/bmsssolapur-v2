@@ -19,23 +19,31 @@ const navItems = [
 export function Nav() {
     const pathname = usePathname();
 
+    const isDonationRoute = pathname === '/admin/donations' || pathname === '/admin/donations/add';
+
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {navItems.map((item) => (
-                <Link
-                    key={item.label}
-                    href={item.href}
-                    className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                        {
-                            "bg-muted text-primary": pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/'),
-                        }
-                    )}
-                >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                </Link>
-            ))}
+            {navItems.map((item) => {
+                const isActive = item.href === '/admin/donations' 
+                    ? isDonationRoute
+                    : pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
+
+                return (
+                    <Link
+                        key={item.label}
+                        href={item.href}
+                        className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                            {
+                                "bg-muted text-primary": isActive,
+                            }
+                        )}
+                    >
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
+                    </Link>
+                );
+            })}
         </nav>
     );
 }
