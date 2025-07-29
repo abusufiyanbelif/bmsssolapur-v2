@@ -17,17 +17,26 @@ import { db } from './firebase';
 const USERS_COLLECTION = 'users';
 
 export type UserRole = 
-  | 'Guest'
-  | 'Donor'
-  | 'Beneficiary'
-  | 'Referral'
-  | 'Super Admin'
-  | 'Admin' // General Admin
-  | 'Founder'
-  | 'Co-Founder'
-  | 'Finance'
-  | 'Member of Organization';
+  | 'Guest'           // Public user, not logged in
+  | 'Donor'           // Logged-in user who can donate
+  | 'Beneficiary'     // Logged-in user who can receive aid
+  | 'Referral'        // A user who refers beneficiaries (future role)
+  | 'Admin'           // A staff member with operational privileges
+  | 'Finance Admin'   // An admin with specific financial privileges
+  | 'Super Admin';    // A user with all privileges
 
+// A list of granular permissions
+export type Privilege =
+  | 'all' // Super Admin privilege
+  | 'canManageUsers'
+  | 'canManageRoles'
+  | 'canManageLeads'
+  | 'canVerifyLeads'
+  | 'canManageDonations'
+  | 'canVerifyDonations'
+  | 'canViewFinancials'
+  | 'canExportData'
+  | 'canManageSettings';
 
 export interface User {
   id?: string;
@@ -37,9 +46,9 @@ export interface User {
   secondaryPhone?: string; // For account recovery
   aadhaarNumber?: string; // Mandated for Admins
   panNumber?: string; // Mandated for Admins
-  roles: UserRole[]; // User can have multiple roles
-  privileges?: string[]; // e.g. 'CanVerifyDonations'
-  groups?: string[]; // e.g. 'FinanceTeam'
+  roles: UserRole[]; // A user can have multiple roles
+  privileges?: Privilege[]; // Specific permissions granted to the user, often derived from roles
+  groups?: string[]; // e.g., 'Founders', 'Finance Team', for organizational purposes
   createdAt: Date;
 }
 

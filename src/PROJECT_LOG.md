@@ -32,13 +32,16 @@ This document tracks the features and changes requested for the project.
 - **Organization Page**: Created a public page at `/organization` to display verifiable details of the registered organization.
 - **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
 - **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.
-- **User Profile**: Created a page (`/profile`) for users to manage their settings, including notification preferences.
+- **User Profile**: Created a page (`/profile`) for users to manage their settings, including notification preferences and viewing their activity history.
 - **Admin Dashboard**: Created at `/admin` to show key stats.
 - **Donation Management**: Created a page at `/admin/donations` to list all donations with their status.
 
 ### User Roles & Permissions
 
-- Defined user roles: Guest, Donor, Beneficiary, Referral, Super Admin, Admin (with sub-categories: Normal admin, Founder, Co-founder, Finance).
+- **Defined a clear RBAC model**:
+  - **Privileges**: Granular permissions for individual actions (e.g., `canVerifyDonations`).
+  - **Roles**: Collections of privileges that define a user's capabilities (e.g., `Finance Admin`, `Super Admin`).
+  - **Groups**: Collections of users for organizational purposes (e.g., `Founders`, `Finance Team`).
 - **Flexible Roles**: Users can hold multiple roles (e.g., a Donor can also be a Beneficiary) and can switch between profiles.
 - Added Privileges and Groups to the user model.
 
