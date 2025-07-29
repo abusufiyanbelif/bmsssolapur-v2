@@ -14,7 +14,11 @@ export default function ProfilePage() {
     email: "aisha.khan@example.com",
     avatar: "https://placehold.co/100x100.png",
     initials: "AK",
+    secondaryPhone: "9876543210",
+    role: "Super Admin", // To determine if secondary phone field should show
   };
+
+  const isAdmin = user.role === "Admin" || user.role === "Super Admin";
 
   return (
     <div className="flex-1 space-y-4">
@@ -50,6 +54,12 @@ export default function ProfilePage() {
                         <Label htmlFor="email">Email Address</Label>
                         <Input id="email" type="email" defaultValue={user.email} />
                     </div>
+                    {isAdmin && (
+                         <div className="space-y-2">
+                            <Label htmlFor="secondaryPhone">Secondary Phone (for Account Recovery)</Label>
+                            <Input id="secondaryPhone" defaultValue={user.secondaryPhone} />
+                        </div>
+                    )}
                      <Button>Save Changes</Button>
                 </CardContent>
             </Card>

@@ -20,6 +20,7 @@ export interface User {
   id?: string;
   name: string;
   phone: string;
+  secondaryPhone?: string; // For account recovery
   role: string; // Changed to string to be more flexible
   privileges?: string[];
   groups?: string[];
