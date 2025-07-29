@@ -8,10 +8,12 @@ This document tracks the features and changes requested for the project.
 - **OTP Login**: The Twilio integration for sending OTPs via SMS is built but requires a live Account SID, Auth Token, and Verify Service SID to be functional.
 - **Email Notifications**: The Nodemailer setup for sending emails is ready but needs valid SMTP credentials (host, user, password) to be enabled.
 
-### Pending Feature Development (In Progress)
-- **Core Business Logic**: The foundational services for creating users, donations, and leads are in place. The next step is to build the UI and workflows for admins to manage them (e.g., verifying a donation, allocating funds to a lead).
-- **Dynamic User Home Page**: The authenticated user's home page (`/home`) is currently static. The next major task is to make this page dynamic by fetching and displaying real, user-specific data (e.g., a donor's donation history, a beneficiary's case status).
-
+### Core Features (Complete)
+- **User Management**: Admins can create, view, and manage users with multiple roles from the `/admin/user-management` dashboard.
+- **Lead/Case Management**: Admins can create new help cases (leads) for beneficiaries from the `/admin/leads` dashboard. Beneficiaries can submit their own help requests from the `/request-help` page.
+- **Donation Management**: Admins can manually record new donations from the `/admin/donations` dashboard.
+- **Dynamic User Dashboards**: The user home page (`/home`) and specific pages like `/my-donations` and `/my-cases` now dynamically load and display data relevant to the logged-in user's active role.
+- **Authentication**: A robust login system is in place, supporting both password and OTP methods. A role-switcher dialog correctly prompts users with multiple roles to select a profile for their session.
 
 ---
 
