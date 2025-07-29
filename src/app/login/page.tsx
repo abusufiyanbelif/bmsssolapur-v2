@@ -37,7 +37,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="otp" className="w-full">
+          <Tabs defaultValue="password" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="otp">
                 <MessageSquare className="mr-2" />

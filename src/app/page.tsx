@@ -22,7 +22,7 @@ const staticQuotes: QuoteType[] = [
   },
   {
     text: "You will never attain righteousness until you donate some of what you cherish. And whatever you give is certainly known to Allah.",
-    source: "Quran, Surah Al- عمران (3:92)"
+    source: "Quran, Surah Al- Imran (3:92)"
   }
 ];
 
