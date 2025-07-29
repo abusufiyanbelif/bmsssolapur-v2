@@ -98,23 +98,12 @@ const allNavItems: Record<string, NavItem[]> = {
 export function Nav() {
     const pathname = usePathname();
 
-    // In a real app, you would get this from your authentication context.
-    const user = {
-        isLoggedIn: true, // Set to true to simulate a logged-in user
-        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-        activeRole: "Super Admin", // Change this to test different roles
-    };
+    // In a real app, this would come from your authentication context.
+    // For now, this is just for demonstration purposes. The actual user
+    // state is managed in app-shell.tsx
+    const activeRole = "Super Admin";
     
-    let navItems: NavItem[] = [];
-    let currentRole = 'Guest';
-
-    if (user.isLoggedIn) {
-        currentRole = user.activeRole;
-        navItems = allNavItems[currentRole] || [];
-    } else {
-        navItems = guestNavItems;
-    }
-
+    let navItems: NavItem[] = allNavItems[activeRole] || guestNavItems;
 
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">

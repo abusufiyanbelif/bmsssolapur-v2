@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -107,6 +108,8 @@ const DialogDescription = React.forwardRef<
   />
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
+
+export type DialogProps = DialogPrimitive.DialogProps
 
 export {
   Dialog,

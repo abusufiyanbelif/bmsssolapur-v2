@@ -1,10 +1,29 @@
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Package2 } from "lucide-react";
+import { Menu, Package2, Users } from "lucide-react";
 import { Nav } from "./nav";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
+import { useState } from "react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+    const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
+
+    // In a real app, this would come from your authentication context.
+    const user = {
+        isLoggedIn: true, // Set to true to simulate a logged-in user
+        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+        activeRole: "Super Admin", // Change this to test different roles
+    };
+
+    const handleOpenRoleSwitcher = () => setIsRoleSwitcherOpen(true);
+    const handleRoleSwitcherChange = (open: boolean) => {
+        setIsRoleSwitcherOpen(open);
+        // Add logic to handle role change if necessary
+    };
+
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-card md:block">
@@ -43,16 +62,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <Nav />
                         </SheetContent>
                     </Sheet>
-                     <div className="w-full flex-1">
-                        {/* Can add a search bar here if needed */}
+                     <div className="w-full flex-1 flex justify-end">
+                        {user.isLoggedIn && user.roles.length > 1 && (
+                             <Button variant="outline" onClick={handleOpenRoleSwitcher}>
+                                <Users className="mr-2 h-4 w-4" />
+                                Switch Role
+                            </Button>
+                        )}
                     </div>
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                     {children}
                 </main>
             </div>
-            {/* We will trigger this based on auth state later */}
-            <RoleSwitcherDialog />
+            <RoleSwitcherDialog open={isRoleSwitcherOpen} onOpenChange={handleRoleSwitcherChange} />
         </div>
     )
 }

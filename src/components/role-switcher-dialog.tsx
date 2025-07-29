@@ -8,7 +8,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogProps
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,8 +35,9 @@ const roleMap: Record<string, { icon: LucideIcon; description: string }> = {
     }
 };
 
-export function RoleSwitcherDialog() {
-  const [isOpen, setIsOpen] = useState(true); // Default to open for demonstration
+interface RoleSwitcherDialogProps extends DialogProps {}
+
+export function RoleSwitcherDialog({ open, onOpenChange }: RoleSwitcherDialogProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   // In a real app, this would come from the user's profile after they log in
@@ -44,17 +46,19 @@ export function RoleSwitcherDialog() {
     availableRoles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
   };
 
-  const handleSelectRole = () => {
+  const handleContinue = () => {
     if (selectedRole) {
         // Here you would typically set the role in your app's state/context
         // and navigate the user to the appropriate dashboard.
         console.log(`Continuing as ${selectedRole}`);
-        setIsOpen(false);
+        if (onOpenChange) {
+            onOpenChange(false);
+        }
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Select Your Profile</DialogTitle>
@@ -89,7 +93,7 @@ export function RoleSwitcherDialog() {
             })}
         </div>
         <DialogFooter>
-            <Button onClick={handleSelectRole} disabled={!selectedRole} className="w-full">
+            <Button onClick={handleContinue} disabled={!selectedRole} className="w-full">
                 Continue as {selectedRole || '...'}
             </Button>
         </DialogFooter>
