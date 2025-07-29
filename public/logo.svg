@@ -1,11 +1,32 @@
-<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:hsl(155 100% 22%);"/>
-      <stop offset="100%" style="stop-color:hsl(155 100% 32%);"/>
-    </linearGradient>
+    <!-- Path for the upper text -->
+    <path id="upper" d="M 64,256 A 192,192 0 0 1 448,256"/>
+    <!-- Path for the lower text -->
+    <path id="lower" d="M 448,256 A 192,192 0 0 1 64,256"/>
   </defs>
-  <path d="M 50,5 A 45,45 0 1 0 50,95 A 45,45 0 0 0 50,5 Z M 50,15 A 35,35 0 1 1 50,85 A 35,35 0 0 1 50,15 Z" fill="url(#logo-gradient)"/>
-  <path d="M 50 25 C 60 40, 60 60, 50 75 C 45 70, 40 60, 40 50 C 40 40, 45 30, 50 25 Z" fill="hsl(48 90% 47%)" transform="rotate(15, 50, 50)"/>
-  <path d="M 50 50 C 55 55, 60 65, 50 75" stroke="hsl(48 90% 47%)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Outer dark green circle -->
+  <circle cx="256" cy="256" r="250" fill="hsl(155, 100%, 12%)"/>
+  
+  <!-- Text along the paths -->
+  <text font-size="38" font-family="sans-serif" fill="white" font-weight="bold" letter-spacing="4">
+    <textPath href="#upper" startOffset="50%" text-anchor="middle">
+      BAITUL MAL SAMAJIK SANSTHA
+    </textPath>
+    <textPath href="#lower" startOffset="50%" text-anchor="middle">
+      SOLAPUR
+    </textPath>
+  </text>
+  
+  <!-- Divider dots -->
+  <circle cx="90" cy="256" r="6" fill="white"/>
+  <circle cx="422" cy="256" r="6" fill="white"/>
+  
+  <!-- Hands -->
+  <path d="M 196,352 Q 176,322 176,282 C 176,242 196,212 216,212 Q 236,212 256,242" fill="hsl(155, 60%, 45%)"/>
+  <path d="M 316,352 Q 336,322 336,282 C 336,242 316,212 296,212 Q 276,212 256,242" fill="hsl(48, 90%, 50%)"/>
+  
+  <!-- Heart -->
+  <path d="M 256,180 L 276,200 A 20,20 0,0,1 256,225 A 20,20 0,0,1 236,200 Z" fill="hsl(48, 90%, 50%)"/>
 </svg>
