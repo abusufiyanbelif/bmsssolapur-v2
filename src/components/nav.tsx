@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation"
 import { 
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, Lock, BookText,
-    Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2
+    Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
+    Database
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
