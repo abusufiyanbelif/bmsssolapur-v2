@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus } from "@/services/donation-service";
 import { format } from "date-fns";
@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -35,6 +36,7 @@ export default function DonationsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
+    const isMobile = useIsMobile();
 
     const handleFeatureInProgress = () => {
         toast({
@@ -62,6 +64,110 @@ export default function DonationsPage() {
 
         fetchDonations();
     }, []);
+
+    const renderDesktopTable = () => (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Donor</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Purpose</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {donations.map((donation) => (
+                    <TableRow key={donation.id}>
+                        <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                        <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                                <span>{donation.donorName}</span>
+                                {donation.isAnonymous && (
+                                    <Badge variant="secondary">Anonymous</Badge>
+                                )}
+                            </div>
+                        </TableCell>
+                        <TableCell>₹{donation.amount.toFixed(2)}</TableCell>
+                        <TableCell>{donation.type}</TableCell>
+                        <TableCell>{donation.purpose || 'N/A'}</TableCell>
+                        <TableCell>
+                            <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
+                                {donation.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            {renderActions(donation)}
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
+
+    const renderMobileCards = () => (
+        <div className="space-y-4">
+            {donations.map(donation => (
+                <Card key={donation.id}>
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                             <div>
+                                <CardTitle className="text-lg">₹{donation.amount.toFixed(2)}</CardTitle>
+                                <CardDescription>{donation.donorName}</CardDescription>
+                            </div>
+                             <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
+                                {donation.status}
+                            </Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Date</span>
+                            <span>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Category</span>
+                            <span>{donation.type}</span>
+                        </div>
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground">Purpose</span>
+                            <span>{donation.purpose || 'N/A'}</span>
+                        </div>
+                        {donation.isAnonymous && <Badge variant="secondary">Anonymous</Badge>}
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                       {renderActions(donation)}
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    );
+    
+    const renderActions = (donation: Donation) => {
+        if (donation.status === "Pending verification") {
+            return <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>Verify</Button>;
+        }
+        if (donation.status === "Verified") {
+            return (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleFeatureInProgress}>Allocate to Lead</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleFeatureInProgress}>Split Donation</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            );
+        }
+        return null;
+    }
+
 
     const renderContent = () => {
         if (loading) {
@@ -97,67 +203,7 @@ export default function DonationsPage() {
             )
         }
 
-        return (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Donor</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Purpose</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {donations.map((donation) => (
-                        <TableRow key={donation.id}>
-                            <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
-                            <TableCell className="font-medium">
-                                <div className="flex items-center gap-2">
-                                    <span>{donation.donorName}</span>
-                                    {donation.isAnonymous && (
-                                        <Badge variant="secondary">Anonymous</Badge>
-                                    )}
-                                </div>
-                            </TableCell>
-                            <TableCell>₹{donation.amount.toFixed(2)}</TableCell>
-                            <TableCell>{donation.type}</TableCell>
-                            <TableCell>{donation.purpose || 'N/A'}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
-                                    {donation.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                {donation.status === "Pending verification" && (
-                                     <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>Verify</Button>
-                                )}
-                                {donation.status === "Verified" && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Open menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={handleFeatureInProgress}>
-                                               Allocate to Lead
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={handleFeatureInProgress}>
-                                                Split Donation
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        );
+        return isMobile ? renderMobileCards() : renderDesktopTable();
     }
 
   return (

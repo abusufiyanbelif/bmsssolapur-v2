@@ -1,6 +1,6 @@
 
 'use client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -12,7 +12,7 @@ import { FilePlus2, Loader2, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -25,6 +25,7 @@ export default function MyCasesPage() {
     const [cases, setCases] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string |null>(null);
+    const isMobile = useIsMobile();
 
     // In a real app, this ID would come from the logged-in user's context.
     const userId = "beneficiary_user_placeholder_id";
@@ -48,6 +49,81 @@ export default function MyCasesPage() {
         }
         fetchCases();
     }, [userId]);
+    
+    const renderDesktopTable = () => (
+         <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Date Submitted</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[30%]">Funding Progress</TableHead>
+                    <TableHead className="text-right">Amount Requested</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {cases.map((caseItem) => {
+                    const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
+                    return (
+                        <TableRow key={caseItem.id}>
+                            <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                            <TableCell>{caseItem.category}</TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
+                                    {caseItem.status}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex flex-col gap-2">
+                                    <Progress value={progress}  />
+                                    <span className="text-xs text-muted-foreground">
+                                        ₹{caseItem.helpGiven.toLocaleString()} / ₹{caseItem.helpRequested.toLocaleString()}
+                                    </span>
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">₹{caseItem.helpRequested.toLocaleString()}</TableCell>
+                        </TableRow>
+                    )
+                })}
+            </TableBody>
+        </Table>
+    );
+
+    const renderMobileCards = () => (
+        <div className="space-y-4">
+            {cases.map(caseItem => {
+                const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
+                return (
+                    <Card key={caseItem.id}>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-lg">For: {caseItem.category}</CardTitle>
+                                    <CardDescription>Submitted: {format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
+                                </div>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
+                                    {caseItem.status}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                    <span className="font-semibold">Funding Goal</span>
+                                    <span className="font-semibold">₹{caseItem.helpRequested.toLocaleString()}</span>
+                                </div>
+                                <Progress value={progress} />
+                                <div className="flex justify-between text-xs mt-2 text-muted-foreground">
+                                    <span>Raised: ₹{caseItem.helpGiven.toLocaleString()}</span>
+                                    <span>{progress.toFixed(0)}%</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+            })}
+        </div>
+    );
 
     const renderContent = () => {
         if (loading) {
@@ -77,44 +153,7 @@ export default function MyCasesPage() {
             )
         }
 
-        return (
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Date Submitted</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[30%]">Funding Progress</TableHead>
-                        <TableHead className="text-right">Amount Requested</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {cases.map((caseItem) => {
-                        const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
-                        return (
-                            <TableRow key={caseItem.id}>
-                                <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
-                                <TableCell>{caseItem.category}</TableCell>
-                                <TableCell>
-                                    <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
-                                        {caseItem.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col gap-2">
-                                        <Progress value={progress}  />
-                                        <span className="text-xs text-muted-foreground">
-                                            ₹{caseItem.helpGiven.toLocaleString()} / ₹{caseItem.helpRequested.toLocaleString()}
-                                        </span>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right font-semibold">₹{caseItem.helpRequested.toLocaleString()}</TableCell>
-                            </TableRow>
-                        )
-                    })}
-                </TableBody>
-            </Table>
-        );
+        return isMobile ? renderMobileCards() : renderDesktopTable();
     }
 
   return (

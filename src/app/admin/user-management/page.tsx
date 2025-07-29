@@ -13,19 +13,21 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
+    const isMobile = useIsMobile();
 
     const handleFeatureInProgress = () => {
         toast({
@@ -53,6 +55,86 @@ export default function UserManagementPage() {
 
         fetchUsers();
     }, []);
+
+    const renderDesktopTable = () => (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Roles</TableHead>
+                    <TableHead>Groups</TableHead>
+                    <TableHead>Joined On</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {users.map((user) => (
+                    <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell>
+                            <div className="flex flex-col">
+                                <span>{user.phone}</span>
+                                <span className="text-xs text-muted-foreground">{user.email}</span>
+                            </div>
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
+                            </div>
+                        </TableCell>
+                            <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                                {user.groups?.length ? user.groups.map(group => <Badge key={group} variant="outline">{group}</Badge>) : 'N/A'}
+                            </div>
+                        </TableCell>
+                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
+                        <TableCell className="text-right">
+                            <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>
+                                <UserCog className="mr-2 h-3 w-3" /> Manage
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
+
+    const renderMobileCards = () => (
+        <div className="space-y-4">
+            {users.map(user => (
+                <Card key={user.id}>
+                    <CardHeader>
+                        <CardTitle className="text-lg">{user.name}</CardTitle>
+                        <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                        <div>
+                            <h4 className="font-semibold mb-2">Roles</h4>
+                             <div className="flex flex-wrap gap-1">
+                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
+                            </div>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-2">Groups</h4>
+                            <div className="flex flex-wrap gap-1">
+                                {user.groups?.length ? user.groups.map(group => <Badge key={group} variant="outline">{group}</Badge>) : 'N/A'}
+                            </div>
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground pt-2">
+                             <span>Joined On</span>
+                             <span>{format(user.createdAt, "dd MMM yyyy")}</span>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                        <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>
+                            <UserCog className="mr-2 h-3 w-3" /> Manage User
+                        </Button>
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    );
 
     const renderContent = () => {
         if (loading) {
@@ -86,49 +168,7 @@ export default function UserManagementPage() {
             )
         }
 
-        return (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Roles</TableHead>
-                        <TableHead>Groups</TableHead>
-                        <TableHead>Joined On</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {users.map((user) => (
-                        <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.name}</TableCell>
-                            <TableCell>
-                                <div className="flex flex-col">
-                                    <span>{user.phone}</span>
-                                    <span className="text-xs text-muted-foreground">{user.email}</span>
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex flex-wrap gap-1">
-                                    {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
-                                </div>
-                            </TableCell>
-                             <TableCell>
-                                <div className="flex flex-wrap gap-1">
-                                    {user.groups?.length ? user.groups.map(group => <Badge key={group} variant="outline">{group}</Badge>) : 'N/A'}
-                                </div>
-                            </TableCell>
-                            <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>
-                                    <UserCog className="mr-2 h-3 w-3" /> Manage
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        );
+        return isMobile ? renderMobileCards() : renderDesktopTable();
     }
 
   return (

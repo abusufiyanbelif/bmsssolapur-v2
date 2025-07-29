@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -11,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { format } from "date-fns";
@@ -20,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -38,6 +40,7 @@ export default function LeadsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
+    const isMobile = useIsMobile();
 
     const handleFeatureInProgress = () => {
         toast({
@@ -65,6 +68,98 @@ export default function LeadsPage() {
 
         fetchLeads();
     }, []);
+
+    const renderDesktopTable = () => (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Date Created</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Amount Requested</TableHead>
+                    <TableHead>Amount Given</TableHead>
+                    <TableHead>Case Status</TableHead>
+                    <TableHead>Verification</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {leads.map((lead) => {
+                    const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+                    return (
+                        <TableRow key={lead.id}>
+                            <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
+                            <TableCell className="font-medium">{lead.name}</TableCell>
+                            <TableCell>{lead.category}</TableCell>
+                            <TableCell>₹{lead.helpRequested.toFixed(2)}</TableCell>
+                            <TableCell>₹{lead.helpGiven.toFixed(2)}</TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                    {lead.status}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
+                                    <verifConfig.icon className="mr-1 h-3 w-3" />
+                                    {lead.verifiedStatus}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>View/Edit</Button>
+                            </TableCell>
+                        </TableRow>
+                    );
+                })}
+            </TableBody>
+        </Table>
+    );
+
+    const renderMobileCards = () => (
+        <div className="space-y-4">
+            {leads.map((lead) => {
+                 const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+                return (
+                    <Card key={lead.id}>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
+                                    <CardDescription>For: {lead.category}</CardDescription>
+                                </div>
+                                 <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
+                                    <verifConfig.icon className="mr-1 h-3 w-3" />
+                                    {lead.verifiedStatus}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                           <div className="flex justify-between">
+                                <span className="text-muted-foreground">Amount Requested</span>
+                                <span>₹{lead.helpRequested.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Amount Given</span>
+                                <span>₹{lead.helpGiven.toFixed(2)}</span>
+                            </div>
+                             <div className="flex justify-between">
+                                <span className="text-muted-foreground">Case Status</span>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                    {lead.status}
+                                </Badge>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Date Created</span>
+                                <span>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</span>
+                            </div>
+                        </CardContent>
+                         <CardFooter className="flex justify-end">
+                            <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>View/Edit</Button>
+                        </CardFooter>
+                    </Card>
+                );
+            })}
+        </div>
+    );
 
     const renderContent = () => {
         if (loading) {
@@ -100,50 +195,7 @@ export default function LeadsPage() {
             )
         }
 
-        return (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Date Created</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Amount Requested</TableHead>
-                        <TableHead>Amount Given</TableHead>
-                        <TableHead>Case Status</TableHead>
-                        <TableHead>Verification</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {leads.map((lead) => {
-                        const verifConfig = verificationStatusConfig[lead.verifiedStatus];
-                        return (
-                            <TableRow key={lead.id}>
-                                <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
-                                <TableCell className="font-medium">{lead.name}</TableCell>
-                                <TableCell>{lead.category}</TableCell>
-                                <TableCell>₹{lead.helpRequested.toFixed(2)}</TableCell>
-                                <TableCell>₹{lead.helpGiven.toFixed(2)}</TableCell>
-                                <TableCell>
-                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
-                                        {lead.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
-                                        <verifConfig.icon className="mr-1 h-3 w-3" />
-                                        {lead.verifiedStatus}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>View/Edit</Button>
-                                </TableCell>
-                            </TableRow>
-                        );
-                    })}
-                </TableBody>
-            </Table>
-        );
+        return isMobile ? renderMobileCards() : renderDesktopTable();
     }
 
   return (

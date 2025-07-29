@@ -1,6 +1,6 @@
 
 'use client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -23,6 +24,7 @@ export default function MyDonationsPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   // In a real app, you would get the logged-in user's ID here
   const userId = "user_placeholder_id_12345";
@@ -52,6 +54,84 @@ export default function MyDonationsPage() {
   const handleDownloadReceipt = () => {
     alert("Receipt download functionality is in progress.");
   }
+  
+  const renderReceiptButton = (donation: Donation) => (
+      <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleDownloadReceipt}
+          disabled={donation.status !== 'Verified' && donation.status !== 'Allocated'}
+      >
+          <Download className="mr-2 h-4 w-4" />
+          Receipt
+      </Button>
+  );
+
+  const renderDesktopTable = () => (
+     <Table>
+        <TableHeader>
+            <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Purpose</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            {donations.map((donation) => (
+                <TableRow key={donation.id}>
+                    <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                    <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
+                    <TableCell>{donation.type}</TableCell>
+                    <TableCell>{donation.purpose || 'N/A'}</TableCell>
+                    <TableCell>
+                        <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
+                            {donation.status}
+                        </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        {renderReceiptButton(donation)}
+                    </TableCell>
+                </TableRow>
+            ))}
+        </TableBody>
+    </Table>
+  );
+
+  const renderMobileCards = () => (
+      <div className="space-y-4">
+          {donations.map(donation => (
+               <Card key={donation.id}>
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                             <div>
+                                <CardTitle className="text-lg">₹{donation.amount.toFixed(2)}</CardTitle>
+                                <CardDescription>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
+                            </div>
+                             <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
+                                {donation.status}
+                            </Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Category</span>
+                            <span>{donation.type}</span>
+                        </div>
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground">Purpose</span>
+                            <span>{donation.purpose || 'N/A'}</span>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                       {renderReceiptButton(donation)}
+                    </CardFooter>
+                </Card>
+          ))}
+      </div>
+  );
 
   const renderContent = () => {
     if (loading) {
@@ -81,46 +161,7 @@ export default function MyDonationsPage() {
         )
     }
 
-    return (
-       <Table>
-          <TableHeader>
-              <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Purpose</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-          </TableHeader>
-          <TableBody>
-              {donations.map((donation) => (
-                  <TableRow key={donation.id}>
-                      <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
-                      <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
-                      <TableCell>{donation.type}</TableCell>
-                      <TableCell>{donation.purpose || 'N/A'}</TableCell>
-                      <TableCell>
-                          <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
-                              {donation.status}
-                          </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                          <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={handleDownloadReceipt}
-                              disabled={donation.status !== 'Verified' && donation.status !== 'Allocated'}
-                          >
-                              <Download className="mr-2 h-4 w-4" />
-                              Receipt
-                          </Button>
-                      </TableCell>
-                  </TableRow>
-              ))}
-          </TableBody>
-      </Table>
-    );
+    return isMobile ? renderMobileCards() : renderDesktopTable();
   }
   
   return (
