@@ -14,34 +14,45 @@ import { getLeadsByBeneficiaryId, Lead } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { getUser, User as UserType } from "@/services/user-service";
 
-
-// Mock user data - in a real app, this would come from an auth context.
-const mockUser = {
-  id: "user_placeholder_id_12345",
-  name: "Aisha Khan",
-  activeRole: "Donor", // Can be 'Donor' or 'Beneficiary' to test different views
-};
-const mockBeneficiaryId = "beneficiary_user_placeholder_id";
 
 export default function UserHomePage() {
-  const [user, setUser] = useState(mockUser); // This would be replaced by auth context
+  const [user, setUser] = useState<UserType | null>(null);
+  const [activeRole, setActiveRole] = useState<string | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [cases, setCases] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const initializeUser = async () => {
+      const storedUserId = localStorage.getItem('userId');
+      const storedRole = localStorage.getItem('activeRole');
+      if (storedUserId) {
+          const fetchedUser = await getUser(storedUserId);
+          setUser(fetchedUser);
+          setActiveRole(storedRole || (fetchedUser?.roles ? fetchedUser.roles[0] : null));
+      } else {
+          setLoading(false);
+          setError("No logged in user found.");
+      }
+    };
+    initializeUser();
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
+      if (!user || !activeRole) return;
+
       setLoading(true);
       setError(null);
       try {
-        if (user.activeRole === 'Donor') {
-          const donorDonations = await getDonationsByUserId(user.id);
+        if (activeRole === 'Donor') {
+          const donorDonations = await getDonationsByUserId(user.id!);
           setDonations(donorDonations.slice(0, 3)); // Get latest 3
-        } else if (user.activeRole === 'Beneficiary') {
-          // Note: Using a different ID for beneficiary for demonstration
-          const beneficiaryCases = await getLeadsByBeneficiaryId(mockBeneficiaryId);
+        } else if (activeRole === 'Beneficiary') {
+          const beneficiaryCases = await getLeadsByBeneficiaryId(user.id!);
           setCases(beneficiaryCases.slice(0, 3)); // Get latest 3
         }
       } catch (e) {
@@ -52,12 +63,14 @@ export default function UserHomePage() {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [user.activeRole, user.id]);
+    if(user && activeRole) {
+        fetchData();
+    }
+  }, [user, activeRole]);
 
   const renderContent = () => {
     if (loading) {
-      return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin" /></div>;
+      return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
     }
     if (error) {
       return (
@@ -68,21 +81,35 @@ export default function UserHomePage() {
         </Alert>
       );
     }
-    if (user.activeRole === 'Donor') {
+    if (!user || !activeRole) {
+       return (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Not Logged In</AlertTitle>
+          <AlertDescription>Please log in to view your dashboard.</AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (activeRole === 'Donor') {
       return <DonorDashboard donations={donations} />;
     }
-    if (user.activeRole === 'Beneficiary') {
+    if (activeRole === 'Beneficiary') {
       return <BeneficiaryDashboard cases={cases} />;
     }
-    return null;
+    return <p>You do not have a role that has a default dashboard. Please select a role from your profile.</p>;
   };
   
   return (
     <div className="flex-1 space-y-6">
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Welcome, {user.name}!</h2>
+        <h2 className="text-3xl font-bold tracking-tight font-headline">Welcome, {user?.name || "Guest"}!</h2>
         <p className="text-muted-foreground">
-          You are currently viewing the dashboard as a <span className="font-semibold text-primary">{user.activeRole}</span>.
+          {activeRole ? (
+            <>You are currently viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.</>
+          ) : (
+            "Please log in to continue."
+          )}
         </p>
       </div>
       {renderContent()}

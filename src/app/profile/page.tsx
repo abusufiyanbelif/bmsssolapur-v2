@@ -22,11 +22,21 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // In a real app, this would be from an auth context
-  const userId = "user_placeholder_id_12345"; 
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+        setUserId(storedUserId);
+    } else {
+        setError("You must be logged in to view your profile.");
+        setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
     const fetchUser = async () => {
       try {
         setLoading(true);

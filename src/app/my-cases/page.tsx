@@ -26,15 +26,27 @@ export default function MyCasesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string |null>(null);
     const isMobile = useIsMobile();
-
-    // In a real app, this ID would come from the logged-in user's context.
-    const userId = "beneficiary_user_placeholder_id";
+    const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
+        const storedUserId = localStorage.getItem('userId');
+        if (storedUserId) {
+            setUserId(storedUserId);
+        } else {
+            setError("You must be logged in to view your cases.");
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!userId) return;
+
         const fetchCases = async () => {
             try {
                 setLoading(true);
                 const userCases = await getLeadsByBeneficiaryId(userId);
+                // Sort by most recent first
+                userCases.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                 setCases(userCases);
             } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";

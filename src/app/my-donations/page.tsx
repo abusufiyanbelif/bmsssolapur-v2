@@ -27,16 +27,27 @@ export default function MyDonationsPage() {
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
-
-  // In a real app, you would get the logged-in user's ID here
-  // For this prototype, we're using a placeholder.
-  const userId = "user_placeholder_id_12345";
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+        setError("You must be logged in to view your donations.");
+        setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    
     const fetchDonations = async () => {
       try {
         setLoading(true);
         const userDonations = await getDonationsByUserId(userId);
+        // Sort by most recent first
+        userDonations.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
         setDonations(userDonations);
         setError(null);
       } catch (e) {
