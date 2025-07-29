@@ -7,8 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { type DonationType, type DonationPurpose } from "@/services/donation-service";
+import { getInspirationalQuotes, type Quote as QuoteType } from "@/ai/flows/get-inspirational-quotes-flow";
 
-const quotes = [
+const staticQuotes: QuoteType[] = [
   {
     text: "Those who in charity spend of their goods by night and by day, in secret and in public, have their reward with their Lord: on them shall be no fear, nor shall they grieve.",
     source: "Quran, 2:274"
@@ -32,6 +33,19 @@ const donationCategories: (DonationType | DonationPurpose)[] = [
 export default async function LandingPage() {
   const openLeads = await getOpenLeads();
   const featuredLeads = openLeads.slice(0, 3);
+  
+  let quotes: QuoteType[];
+  try {
+    quotes = await getInspirationalQuotes();
+    if(quotes.length === 0) {
+        // Fallback if AI returns empty array
+        quotes = staticQuotes;
+    }
+  } catch (error) {
+    console.error("Failed to fetch dynamic quotes, using fallback.", error);
+    quotes = staticQuotes;
+  }
+
 
   return (
     <div className="flex flex-col">
@@ -146,6 +160,11 @@ export default async function LandingPage() {
                         </CardFooter>
                     </Card>
                 ))}
+            </div>
+             <div className="text-center mt-12">
+                <Button asChild variant="secondary">
+                    <Link href="/quotes">View All Quotes <ArrowRight className="ml-2" /></Link>
+                </Button>
             </div>
         </div>
       </section>
