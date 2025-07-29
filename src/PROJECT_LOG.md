@@ -66,6 +66,7 @@ This document tracks the features and changes requested for the project.
     - `Verification Notes`: Comments from the reviewers.
 - **Lead Statuses**: "Pending", "Partial", "Closed".
 - **Permissions**: Only users with "Admin" or "Super Admin" privileges can add or update leads.
+- **Business Rule**: Leads must have a `Verified Status` of "Verified" before any funds can be allocated to them. Leads without a verification document cannot be approved.
 
 ### Fund Flow Dashboard & Reporting
 - **Summary Dashboard**: Admin view with key metrics.

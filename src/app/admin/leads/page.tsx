@@ -13,9 +13,9 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllLeads, type Lead, type LeadStatus } from "@/services/lead-service";
+import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -24,6 +24,12 @@ const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
+};
+
+const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; icon: React.ElementType }> = {
+    "Pending": { color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30", icon: ShieldAlert },
+    "Verified": { color: "bg-green-500/20 text-green-700 border-green-500/30", icon: ShieldCheck },
+    "Rejected": { color: "bg-red-500/20 text-red-700 border-red-500/30", icon: ShieldX },
 };
 
 export default function LeadsPage() {
@@ -92,30 +98,40 @@ export default function LeadsPage() {
                         <TableHead>Date Created</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Category</TableHead>
-                        <TableHead>Help Requested</TableHead>
-                        <TableHead>Help Given</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Amount Requested</TableHead>
+                        <TableHead>Amount Given</TableHead>
+                        <TableHead>Case Status</TableHead>
+                        <TableHead>Verification</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {leads.map((lead) => (
-                        <TableRow key={lead.id}>
-                            <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
-                            <TableCell className="font-medium">{lead.name}</TableCell>
-                            <TableCell>{lead.category}</TableCell>
-                            <TableCell>₹{lead.helpRequested.toFixed(2)}</TableCell>
-                            <TableCell>₹{lead.helpGiven.toFixed(2)}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
-                                    {lead.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="outline" size="sm">View/Edit</Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                    {leads.map((lead) => {
+                        const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+                        return (
+                            <TableRow key={lead.id}>
+                                <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
+                                <TableCell className="font-medium">{lead.name}</TableCell>
+                                <TableCell>{lead.category}</TableCell>
+                                <TableCell>₹{lead.helpRequested.toFixed(2)}</TableCell>
+                                <TableCell>₹{lead.helpGiven.toFixed(2)}</TableCell>
+                                <TableCell>
+                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                        {lead.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
+                                        <verifConfig.icon className="mr-1 h-3 w-3" />
+                                        {lead.verifiedStatus}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm">View/Edit</Button>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
         );
