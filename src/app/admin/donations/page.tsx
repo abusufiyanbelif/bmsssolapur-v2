@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -111,7 +112,7 @@ export default function DonationsPage() {
                                     )}
                                 </div>
                             </TableCell>
-                            <TableCell>${donation.amount.toFixed(2)}</TableCell>
+                            <TableCell>₹{donation.amount.toFixed(2)}</TableCell>
                             <TableCell>{donation.type}</TableCell>
                             <TableCell>{donation.purpose || 'N/A'}</TableCell>
                             <TableCell>
