@@ -39,7 +39,7 @@ This document tracks the features and changes requested for the project.
 ### User Roles & Permissions
 
 - Defined user roles: Guest, Donor, Beneficiary, Referral, Super Admin, Admin (with sub-categories: Normal admin, Founder, Co-founder, Finance).
-- **Flexible Roles**: Users can hold multiple roles (e.g., a Donor can also be a Beneficiary).
+- **Flexible Roles**: Users can hold multiple roles (e.g., a Donor can also be a Beneficiary) and can switch between profiles.
 - Added Privileges and Groups to the user model.
 
 ### Donation Management

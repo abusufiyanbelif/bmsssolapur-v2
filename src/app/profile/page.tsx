@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -50,6 +51,11 @@ export default function ProfilePage() {
                     </Avatar>
                     <CardTitle>{user.name}</CardTitle>
                     <CardDescription>{user.email}</CardDescription>
+                     <div className="flex flex-wrap justify-center gap-2 pt-2">
+                        {user.roles.map(role => (
+                            <Badge key={role} variant="secondary">{role}</Badge>
+                        ))}
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Button className="w-full" onClick={handleFeatureInProgress}>Edit Profile</Button>
