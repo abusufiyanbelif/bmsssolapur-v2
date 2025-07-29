@@ -35,22 +35,17 @@ const roleMap: Record<string, { icon: LucideIcon; description: string }> = {
     }
 };
 
-interface RoleSwitcherDialogProps extends DialogProps {}
+interface RoleSwitcherDialogProps extends DialogProps {
+    availableRoles: string[];
+    onRoleChange: (newRole: string) => void;
+}
 
-export function RoleSwitcherDialog({ open, onOpenChange }: RoleSwitcherDialogProps) {
+export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleChange }: RoleSwitcherDialogProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-
-  // In a real app, this would come from the user's profile after they log in
-  const user = {
-    name: "Abusufiyan Belif",
-    availableRoles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-  };
 
   const handleContinue = () => {
     if (selectedRole) {
-        // Here you would typically set the role in your app's state/context
-        // and navigate the user to the appropriate dashboard.
-        console.log(`Continuing as ${selectedRole}`);
+        onRoleChange(selectedRole);
         if (onOpenChange) {
             onOpenChange(false);
         }
@@ -67,7 +62,7 @@ export function RoleSwitcherDialog({ open, onOpenChange }: RoleSwitcherDialogPro
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-            {user.availableRoles.map(roleName => {
+            {availableRoles.map(roleName => {
                 const roleInfo = roleMap[roleName];
                 if (!roleInfo) return null;
                 const Icon = roleInfo.icon;

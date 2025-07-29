@@ -13,17 +13,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
 
     // In a real app, this would come from your authentication context.
-    const user = {
-        isLoggedIn: true, // Set to true to simulate a logged-in user
+    // For now, we simulate a user who is logged in and has an active role.
+    // To simulate a guest user, set isLoggedIn to false.
+    const [user, setUser] = useState({
+        isLoggedIn: true,
         roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
         activeRole: "Super Admin", // Change this to test different roles
-    };
+    });
 
     const handleOpenRoleSwitcher = () => setIsRoleSwitcherOpen(true);
-    const handleRoleSwitcherChange = (open: boolean) => {
-        setIsRoleSwitcherOpen(open);
-        // Add logic to handle role change if necessary
+    
+    const handleRoleChange = (newRole: string) => {
+        setUser(currentUser => ({...currentUser, activeRole: newRole}));
     };
+
+    const handleOpenChange = (open: boolean) => {
+        setIsRoleSwitcherOpen(open);
+    };
+
+    const activeRole = user.isLoggedIn ? user.activeRole : "Guest";
 
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -36,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </a>
                     </div>
                     <div className="flex-1">
-                        <Nav />
+                        <Nav activeRole={activeRole} />
                     </div>
                 </div>
             </div>
@@ -60,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     <span className="font-headline">Baitul Mal Samajik Sanstha (Solapur)</span>
                                 </a>
                             </div>
-                            <Nav />
+                            <Nav activeRole={activeRole} />
                         </SheetContent>
                     </Sheet>
                      <div className="w-full flex-1 flex justify-end">
@@ -77,7 +85,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </main>
                 <Footer />
             </div>
-            <RoleSwitcherDialog open={isRoleSwitcherOpen} onOpenChange={handleRoleSwitcherChange} />
+            {user.isLoggedIn && (
+                 <RoleSwitcherDialog 
+                    open={isRoleSwitcherOpen} 
+                    onOpenChange={handleOpenChange} 
+                    availableRoles={user.roles}
+                    onRoleChange={handleRoleChange}
+                />
+            )}
         </div>
     )
 }

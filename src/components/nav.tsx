@@ -95,13 +95,8 @@ const allNavItems: Record<string, NavItem[]> = {
     'Super Admin': superAdminNavItems,
 }
 
-export function Nav() {
+export function Nav({ activeRole }: { activeRole: string }) {
     const pathname = usePathname();
-
-    // In a real app, this would come from your authentication context.
-    // For now, this is just for demonstration purposes. The actual user
-    // state is managed in app-shell.tsx
-    const activeRole = "Super Admin";
     
     let navItems: NavItem[] = allNavItems[activeRole] || guestNavItems;
 
