@@ -3,12 +3,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Package2, Users } from "lucide-react";
+import { Menu, Users } from "lucide-react";
 import { Nav } from "./nav";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
+import { Logo } from "./logo";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
@@ -76,8 +77,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="flex h-full max-h-screen flex-col gap-2">
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                         <a href="/" className="flex items-center gap-2 font-semibold">
-                            <Package2 className="h-6 w-6 text-primary" />
-                            <span className="font-headline">Baitul Mal Samajik Sanstha (Solapur)</span>
+                            <Logo className="h-8 w-8" />
+                            <span className="font-headline text-sm">Baitul Mal Samajik Sanstha</span>
                         </a>
                     </div>
                     <div className="flex-1">
@@ -105,8 +106,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <SheetContent side="left" className="flex flex-col p-0">
                             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                                 <a href="/" className="flex items-center gap-2 font-semibold">
-                                    <Package2 className="h-6 w-6 text-primary" />
-                                    <span className="font-headline">Baitul Mal Samajik Sanstha (Solapur)</span>
+                                    <Logo className="h-8 w-8" />
+                                    <span className="font-headline text-sm">Baitul Mal Samajik Sanstha</span>
                                 </a>
                             </div>
                             <Nav 
@@ -117,7 +118,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </SheetContent>
                     </Sheet>
                      <div className="w-full flex-1 flex justify-end gap-2">
-                        {/* A temporary button to simulate logging in was here. It's removed as the nav link is now present. */}
                         {user.isLoggedIn && (
                              <Button variant="outline" onClick={() => handleOpenRoleSwitcher()}>
                                 <Users className="mr-2 h-4 w-4" />

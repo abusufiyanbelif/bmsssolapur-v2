@@ -1,7 +1,8 @@
 
 import Link from 'next/link';
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, Shield, Building } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
+import { Logo } from './logo';
 
 export function Footer() {
   return (
@@ -12,7 +13,7 @@ export function Footer() {
           {/* Column 1: Organization Info */}
           <div className="space-y-4">
              <div className="flex items-center gap-3">
-                <Image src="https://placehold.co/48x48/000000/000000.png" alt="Organization Logo" width={48} height={48} className="rounded-md" data-ai-hint="logo placeholder" />
+                <Logo className="h-12 w-12" />
                 <h3 className="text-xl font-bold font-headline text-foreground">Baitul Mal Samajik Sanstha (Solapur)</h3>
              </div>
             <p className="text-sm text-muted-foreground">
