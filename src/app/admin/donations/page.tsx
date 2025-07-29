@@ -96,7 +96,7 @@ export default function DonationsPage() {
                     {donations.map((donation) => (
                         <TableRow key={donation.id}>
                             <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
-                            <TableCell className="font-medium">{donation.donorName}</TableCell>
+                            <TableCell className="font-medium">{donation.isAnonymous ? "Anonymous Donor" : donation.donorName}</TableCell>
                             <TableCell>${donation.amount.toFixed(2)}</TableCell>
                             <TableCell>{donation.type}</TableCell>
                             <TableCell>{donation.purpose || 'N/A'}</TableCell>
