@@ -15,9 +15,9 @@ export function Footer() {
              <div className="flex items-center gap-3">
                 <Logo width={48} height={48} />
                 <h3 className="text-xl font-bold font-headline text-foreground">
-                    <span className="text-primary">Baitul Mal</span><br/>
-                    <span className="text-accent">Samajik Sanstha</span><br/>
-                    <span className="text-primary">(Solapur)</span>
+                    <span className="text-primary font-bold">Baitul Mal</span><br/>
+                    <span className="text-accent font-bold">Samajik Sanstha</span><br/>
+                    <span className="text-primary font-bold">(Solapur)</span>
                 </h3>
              </div>
             <p className="text-sm text-muted-foreground">

@@ -53,9 +53,9 @@ export default async function LandingPage() {
       <section className="flex flex-col items-center justify-center min-h-[calc(80vh-150px)] text-center p-4 bg-background">
         <div className="max-w-4xl">
            <h1 className="text-5xl font-bold tracking-tighter font-headline sm:text-6xl md:text-7xl">
-            <span className="text-primary">Baitul Mal</span>{' '}
-            <span className="text-accent">Samajik Sanstha</span>{' '}
-            <span className="text-primary">(Solapur)</span>
+            <span className="text-primary font-bold">Baitul Mal</span>{' '}
+            <span className="text-accent font-bold">Samajik Sanstha</span>{' '}
+            <span className="text-primary font-bold">(Solapur)</span>
           </h1>
           <p className="mt-4 text-lg text-muted-foreground md:text-xl">
             A non-profit organization dedicated to serving the community through various social welfare activities, guided by Islamic principles of charity and compassion.
