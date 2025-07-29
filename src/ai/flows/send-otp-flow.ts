@@ -1,26 +1,20 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for sending OTPs.
  *
  * - sendOtp - A function that handles sending an OTP.
- * - SendOtpInput - The input type for the sendOtp function.
- * - SendOtpOutput - The return type for the sendOtp function.
  */
 
 import { ai } from '@/ai/genkit';
 import { sendOtp as sendOtpService } from '@/services/twilio';
-import { z } from 'genkit';
+import { 
+    SendOtpInput, 
+    SendOtpInputSchema, 
+    SendOtpOutput,
+    SendOtpOutputSchema 
+} from '@/ai/schemas';
 
-export const SendOtpInputSchema = z.object({
-  phoneNumber: z.string().describe('The phone number to send the OTP to.'),
-});
-export type SendOtpInput = z.infer<typeof SendOtpInputSchema>;
-
-export const SendOtpOutputSchema = z.object({
-  success: z.boolean().describe('Whether the OTP was sent successfully.'),
-  error: z.string().optional().describe('The error message if the OTP failed to send.'),
-});
-export type SendOtpOutput = z.infer<typeof SendOtpOutputSchema>;
 
 export async function sendOtp(input: SendOtpInput): Promise<SendOtpOutput> {
   return sendOtpFlow(input);
