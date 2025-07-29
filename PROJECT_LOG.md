@@ -1,0 +1,33 @@
+# Project Log - Baitul Mal Samajik Sanstha (Solapur)
+
+This document tracks the features and changes requested for the project.
+
+## Initial Setup & Configuration
+
+- **Development Mode**: AI assistant to write all code on behalf of the user.
+- **Application Name**: Set to "Baitul Mal Samajik Sanstha (Solapur)".
+- **Technology Stack**: 
+  - **Frontend**: Next.js with React and TypeScript.
+  - **UI**: ShadCN UI.
+  - **Styling**: Tailwind CSS.
+  - **Generative AI**: Genkit with Google AI models.
+- **Backend Platform**: Firebase (Serverless).
+  - **Project ID**: baitul-mal-connect.
+- **Firebase Services**:
+  - Firestore for users, leads, and donations.
+  - Firebase Authentication.
+  - An `activityLogService.ts` for logging user actions.
+  - A `seedService.ts` to populate the database with initial data, including a "Super Admin" user.
+
+## Feature Implementation
+
+### AI-Powered Features (Genkit Flows)
+
+- **Email**: Created a Genkit flow (`send-email-flow.ts`) using Nodemailer to send emails.
+- **OTP**: Created Genkit flows for sending (`send-otp-flow.ts`) and verifying (`verify-otp-flow.ts`) one-time passwords via Twilio.
+
+### User Interface
+
+- **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
+- **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.
+- **Configuration Validator**: Created a page (`/validator`) with an AI-powered tool to validate Firebase and external service configurations for potential issues.
