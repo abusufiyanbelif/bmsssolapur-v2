@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
-import { Logo } from './logo';
 
 export function Footer() {
   return (
@@ -13,7 +12,6 @@ export function Footer() {
           {/* Column 1: Organization Info */}
           <div className="space-y-4">
              <div className="flex items-center gap-3">
-                <Logo width={48} height={48} />
                 <h3 className="text-xl font-bold font-headline text-foreground">
                     <span className="text-primary font-bold">Baitul Mal</span><br/>
                     <span className="text-accent font-bold">Samajik Sanstha</span><br/>
