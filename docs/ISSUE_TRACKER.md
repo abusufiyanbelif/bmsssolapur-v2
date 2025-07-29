@@ -10,10 +10,13 @@ When a new issue is identified, add a new row to the "Open Issues" table. Once t
 
 ## Open Issues
 
-| ID | Date Reported | Reported By | Description | Status |
-| -- | ------------- | ----------- | ----------- | ------ |
-| 01 | 2024-07-29    | User        | Initial project setup did not account for public-facing pages for non-authenticated users. | In Progress |
-|    |               |             |             |        |
+| ID | Date Reported | Reported By | Description | Status | Required Input |
+| -- | ------------- | ----------- | ----------- | ------ | -------------- |
+| 01 | 2024-07-29    | AI Assistant| Firebase services (Auth, Firestore) are not connected. | **Blocked** | Firebase Web App Config |
+| 02 | 2024-07-29    | AI Assistant| OTP Login via Twilio is not functional. | **Blocked** | Twilio Account SID, Auth Token, and Verify Service SID |
+| 03 | 2024-07-29    | AI Assistant| Email sending via Nodemailer is not functional. | **Blocked** | SMTP Host, Port, User, and Password |
+| 04 | 2024-07-29    | AI Assistant| Core business logic for donation/lead management is not implemented. | In Progress | User guidance on specific workflows (e.g., verification process) |
+|    |               |             |             |        |                |
 
 
 ---
@@ -24,4 +27,3 @@ When a new issue is identified, add a new row to the "Open Issues" table. Once t
 | -- | ------------- | ----------- | ----------- | ---------- | ----------- | ------------- |
 |    |               |             |             |            |             |               |
 |    |               |             |             |            |             |               |
-
