@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/page.tsx
 
 "use client";
@@ -21,6 +20,7 @@ import { Loader2, AlertCircle, PlusCircle, UserCog } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Link from "next/link";
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -88,7 +88,7 @@ export default function UserManagementPage() {
                                 {user.groups?.length ? user.groups.map(group => <Badge key={group} variant="outline">{group}</Badge>) : 'N/A'}
                             </div>
                         </TableCell>
-                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                             <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>
                                 <UserCog className="mr-2 h-3 w-3" /> Manage
@@ -123,7 +123,7 @@ export default function UserManagementPage() {
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">
                              <span>Joined On</span>
-                             <span>{format(user.createdAt, "dd MMM yyyy")}</span>
+                             <span>{format(user.createdAt.toDate(), "dd MMM yyyy")}</span>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
@@ -160,10 +160,12 @@ export default function UserManagementPage() {
             return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">No users found.</p>
-                     <Button className="mt-4" onClick={handleFeatureInProgress}>
+                     <Button asChild className="mt-4">
+                        <Link href="/admin/user-management/add">
                            <PlusCircle className="mr-2" />
                            Add First User
-                     </Button>
+                        </Link>
+                    </Button>
                 </div>
             )
         }
@@ -175,9 +177,11 @@ export default function UserManagementPage() {
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline">User Management</h2>
-            <Button onClick={handleFeatureInProgress}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add User
+            <Button asChild>
+                <Link href="/admin/user-management/add">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add User
+                </Link>
             </Button>
         </div>
         <Card>
