@@ -26,7 +26,6 @@ const allNavItems: NavItem[] = [
     { href: "/", label: "Home", icon: Home, allowedRoles: ["Guest"] },
     { href: "/campaigns", label: "Approved Campaigns", icon: Megaphone, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
-    { href: "/login", label: "Login / Register", icon: LogIn, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (for non-admins)
     { href: "/home", label: "Home", icon: Home, allowedRoles: ["Donor", "Beneficiary"] },
