@@ -30,3 +30,15 @@ This document tracks the features and changes requested for the project.
 
 - **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
 - **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.
+- **User Profile**: Created a page (`/profile`) for users to manage their settings, including notification preferences.
+
+### User Roles & Permissions
+
+- Defined user roles: Donor, Beneficiary, Referral, Super Admin, Admin (with sub-categories).
+
+## Optional Add-Ons (Later Stages)
+
+- PDF donation receipt (auto-send)
+- Donation target tracker (e.g., Zakat obligation calculator)
+- Anonymous donation toggle
+- Multilingual UI (Arabic, Urdu, English, Hindi, Marathi)
