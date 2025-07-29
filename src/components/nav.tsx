@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { 
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, Lock, BookText,
-    Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit
+    Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, Database
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -51,6 +51,7 @@ const allNavItems: NavItem[] = [
     { href: "/admin/maintenance", label: "Maintenance Toggle", icon: Wrench, allowedRoles: ["Super Admin"] },
     { href: "/admin/export", label: "Data Export", icon: Download, allowedRoles: ["Super Admin"] },
     { href: "/admin/module-visibility", label: "Module Visibility", icon: Eye, allowedRoles: ["Super Admin"] },
+    { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"]},
     
     // Shared / Profile (Visible to all logged-in users)
     { href: "/profile", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin"] },

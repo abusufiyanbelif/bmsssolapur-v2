@@ -4,7 +4,7 @@
 
 import { createUser, User, UserRole } from './user-service';
 import { createOrganization, Organization } from './organization-service';
-import { db } from './firebase';
+import { db, isConfigValid } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
@@ -24,6 +24,10 @@ const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
     
     // Generic Donor for Anonymous Donations
     { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [] },
+
+    // Generic users for testing roles
+    { name: "Aisha Khan", email: "aisha.khan@example.com", phone: "1234567890", roles: ["Donor", "Beneficiary"], privileges: [] },
+    { name: "Beneficiary User", email: "beneficiary@example.com", phone: "0987654321", roles: ["Beneficiary"], privileges: [] },
 ];
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -39,42 +43,73 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 };
 
 const seedUsers = async () => {
+    if (!isConfigValid) {
+        throw new Error("Firebase is not configured. Cannot seed users.");
+    }
     const usersCollection = collection(db, 'users');
     const snapshot = await getDocs(usersCollection);
     if (!snapshot.empty) {
         console.log('Users collection already has documents. Skipping user seeding.');
-        return;
+        return 'Users already exist. Skipped seeding.';
     }
 
     console.log('Seeding users...');
     for (const userData of usersToSeed) {
-        await createUser({
-            ...userData,
-            createdAt: new Date(),
-        } as User);
+        // Find existing user by phone to avoid duplicates if re-run
+        const q = query(collection(db, 'users'), where("phone", "==", userData.phone));
+        const existingUsers = await getDocs(q);
+        if (existingUsers.empty) {
+            await createUser({
+                ...userData,
+                createdAt: new Date(),
+            } as User);
+        } else {
+            console.log(`User with phone ${userData.phone} already exists. Skipping.`);
+        }
     }
+    return 'Users seeded successfully.';
 };
 
 const seedOrganization = async () => {
+    if (!isConfigValid) {
+        throw new Error("Firebase is not configured. Cannot seed organization.");
+    }
     const orgsCollection = collection(db, 'organizations');
     const snapshot = await getDocs(orgsCollection);
     if (!snapshot.empty) {
         console.log('Organizations collection already has documents. Skipping organization seeding.');
-        return;
+        return 'Organization already exists. Skipped seeding.';
     }
     
     console.log('Seeding organization...');
     await createOrganization(organizationToSeed);
+    return 'Organization seeded successfully.';
 };
 
 
-export const seedDatabase = async () => {
-    console.log('Seeding database...');
+export const seedDatabase = async (): Promise<{userStatus: string, orgStatus: string, error?: string}> => {
+    console.log('Attempting to seed database...');
+    if (!isConfigValid) {
+        const errorMsg = "Firebase is not configured. Aborting seed.";
+        console.error(errorMsg);
+        return {
+            userStatus: 'Failed',
+            orgStatus: 'Failed',
+            error: errorMsg,
+        }
+    }
     try {
-        await seedUsers();
-        await seedOrganization();
-        console.log('Database seeded successfully.');
+        const userStatus = await seedUsers();
+        const orgStatus = await seedOrganization();
+        console.log('Database seeding process completed.');
+        return { userStatus, orgStatus };
     } catch (error) {
-        console.error('Error seeding database:', error);
+        const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred during seeding.';
+        console.error('Error seeding database:', errorMsg);
+        return {
+            userStatus: 'Failed',
+            orgStatus: 'Failed',
+            error: errorMsg,
+        };
     }
 };
