@@ -5,7 +5,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LogIn, LogOut, Menu, Users } from "lucide-react";
-import { Nav } from "./nav";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState } from "react";
 import { Footer } from "./footer";
@@ -63,19 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const activeRole = user.isLoggedIn ? user.activeRole : "Guest";
 
-    // This is a simulation function for logging in, you can trigger it from a button or effect.
-    // For demonstration, you might call this from a temporary button or a useEffect hook.
-    const simulateLogin = () => {
-        setUser({
-            isLoggedIn: true,
-            id: "user_placeholder_id_12345", // A consistent ID for the logged in user
-            name: "Aisha Khan",
-            email: "aisha.khan@example.com",
-            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-            activeRole: "Super Admin", // Default to Super Admin on login for this demo
-        });
-    };
-    
+    // This is a simulation function for logging out.
     const simulateLogout = () => {
         setUser({
             isLoggedIn: false,
@@ -152,10 +139,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </>
                         ) : (
                              <>
-                                {/* This is a temporary login button for demonstration */}
-                                <Button variant="outline" onClick={simulateLogin}>
-                                    Simulate Login
-                                </Button>
                                 {pathname !== '/login' && (
                                      <Button asChild>
                                         <Link href="/login">

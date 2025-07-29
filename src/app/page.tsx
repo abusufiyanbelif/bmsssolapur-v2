@@ -1,4 +1,5 @@
 
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HeartHandshake, Quote, BookOpenCheck } from "lucide-react";
@@ -8,19 +9,20 @@ import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { type DonationType, type DonationPurpose } from "@/services/donation-service";
 import { getInspirationalQuotes, type Quote as QuoteType } from "@/ai/flows/get-inspirational-quotes-flow";
+import { Lead } from "@/services/lead-service";
 
 const staticQuotes: QuoteType[] = [
-  {
-    text: "Those who in charity spend of their goods by night and by day, in secret and in public, have their reward with their Lord: on them shall be no fear, nor shall they grieve.",
-    source: "Quran, 2:274"
+    {
+    text: "Indeed, those who believe and do righteous deeds and establish prayer and give zakah will have their reward with their Lord, and there will be no fear concerning them, nor will they grieve.",
+    source: "Quran, Surah Al-Baqarah (2:277)"
   },
   {
-    text: "The believer's shade on the Day of Resurrection will be his charity.",
-    source: "Hadith, Tirmidhi"
+    text: "Allah is in the assistance of His servant as long as His servant is in the assistance of his brother.",
+    source: "Hadith (Sahih Muslim)"
   },
   {
-    text: "When a man dies, his deeds come to an end except for three things: Sadaqah Jariyah (ceaseless charity); a knowledge which is beneficial, or a virtuous descendant who prays for him (for the deceased).",
-    source: "Hadith, Muslim"
+    text: "You will never attain righteousness until you donate some of what you cherish. And whatever you give is certainly known to Allah.",
+    source: "Quran, Surah Al- عمران (3:92)"
   }
 ];
 
@@ -31,13 +33,19 @@ const donationCategories: (DonationType | DonationPurpose)[] = [
 
 
 export default async function LandingPage() {
-  const openLeads = await getOpenLeads();
-  const featuredLeads = openLeads.slice(0, 3);
-  
-  let quotes: QuoteType[];
+  let openLeads: Lead[] = [];
+  let quotes: QuoteType[] = [];
+
   try {
-    quotes = await getInspirationalQuotes();
-    if(quotes.length === 0) {
+    openLeads = await getOpenLeads();
+  } catch (error) {
+    console.error("Failed to fetch open leads, using empty array as fallback.", error);
+    openLeads = [];
+  }
+  
+  try {
+    quotes = await getInspirationalQuotes(3);
+    if(!quotes || quotes.length === 0) {
         // Fallback if AI returns empty array
         quotes = staticQuotes;
     }
@@ -45,6 +53,8 @@ export default async function LandingPage() {
     console.error("Failed to fetch dynamic quotes, using fallback.", error);
     quotes = staticQuotes;
   }
+
+  const featuredLeads = openLeads.slice(0, 3);
 
 
   return (
