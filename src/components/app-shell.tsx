@@ -75,8 +75,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <a href="/" className="flex items-center gap-2 font-semibold">
             <Logo width={32} height={32} />
             <span className="font-headline text-sm font-bold">
-                <span className="text-primary">Baitul Mal</span>{' '}
-                <span className="text-accent">Samajik Sanstha</span>
+                <span className="text-primary">BM</span>{' '}
+                <span className="text-accent">SS</span>{' '}
+                 <span className="text-primary">Solapur</span>
             </span>
         </a>
     );
