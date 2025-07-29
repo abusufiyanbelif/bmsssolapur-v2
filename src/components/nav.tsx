@@ -7,7 +7,7 @@ import { Home, Settings, Share2, ShieldCheck, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-    { href: "/", label: "Dashboard", icon: Home },
+    { href: "/admin", label: "Dashboard", icon: Home },
     { href: "/services", label: "Services Summary", icon: Settings },
     { href: "/dependencies", label: "Dependency Map", icon: Share2 },
     { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
@@ -26,7 +26,7 @@ export function Nav() {
                     className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                         {
-                            "bg-muted text-primary": pathname === item.href,
+                            "bg-muted text-primary": pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/'),
                         }
                     )}
                 >
