@@ -15,10 +15,10 @@ export default function ProfilePage() {
     avatar: "https://placehold.co/100x100.png",
     initials: "AK",
     secondaryPhone: "9876543210",
-    role: "Super Admin", // To determine if secondary phone field should show
+    roles: ["Super Admin", "Donor"], // Example of multiple roles
   };
 
-  const isAdmin = user.role === "Admin" || user.role === "Super Admin";
+  const isAdmin = user.roles.includes("Admin") || user.roles.includes("Super Admin");
 
   return (
     <div className="flex-1 space-y-4">

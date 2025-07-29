@@ -47,9 +47,9 @@ const guestNavItems: NavItem[] = [
 
 const donorNavItems: NavItem[] = [
     { href: "/home", label: "Home", icon: Home },
-    { href: "/approved-leads", label: "Approved Leads", icon: FileCheck },
+    { href: "/campaigns", label: "Approved Leads", icon: FileCheck },
     { href: "/my-donations", label: "My Donations", icon: HandHeart },
-    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/profile", label: "Settings", icon: Settings },
     { href: "/reminders", label: "Reminders", icon: BadgePercent },
 ];
 
@@ -58,22 +58,21 @@ const beneficiaryNavItems: NavItem[] = [
     { href: "/my-cases", label: "My Cases", icon: FileText },
     { href: "/upload-documents", label: "Upload Documents", icon: Upload },
     { href: "/case-status", label: "Case Status", icon: FileCheck },
-    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/profile", label: "Settings", icon: Settings },
 ];
 
 const adminNavItems: NavItem[] = [
     { href: "/admin", label: "Dashboard", icon: Home },
     { href: "/admin/leads", label: "All Leads", icon: Users },
     { href: "/admin/donations", label: "Donations", icon: Banknote, subRoles: ["Finance Admin"] },
-    { href: "/profile", label: "Settings", icon: Settings },
+    { href: "/profile", label: "Profile", icon: UserCog },
 ];
 
 const superAdminNavItems: NavItem[] = [
     { href: "/admin", label: "Dashboard", icon: Home },
     { href: "/admin/leads", label: "All Leads", icon: Users },
-    { href: "/admin/donations", label: "Donations", icon: Banknote, subRoles: ["Finance Admin"] },
-    { href: "/profile", label: "Profile", icon: UserCog },
-    { href: "/admin/user-management", label: "User Management", icon: UserCog },
+    { href: "/admin/donations", label: "Donations", icon: Banknote },
+    { href: "/admin/user-management", label: "User Management", icon: UserPlus },
     { href: "/admin/role-assignment", label: "Role Assignment", icon: Lock },
     { href: "/admin/logs", label: "All Logs", icon: BookText },
     { href: "/admin/app-settings", label: "App Settings", icon: Settings },
@@ -84,10 +83,11 @@ const superAdminNavItems: NavItem[] = [
     { href: "/dependencies", label: "Dependency Map", icon: Share2 },
     { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
     { href: "/personas", label: "AI Personas", icon: BrainCircuit },
+    { href: "/profile", label: "Profile", icon: UserCog },
 ];
 
 
-const allNavItems = {
+const allNavItems: Record<string, NavItem[]> = {
     'Guest': guestNavItems,
     'Donor': donorNavItems,
     'Beneficiary': beneficiaryNavItems,
@@ -98,27 +98,30 @@ const allNavItems = {
 export function Nav() {
     const pathname = usePathname();
 
-    // In a real app, you would get the user's role from your authentication context.
-    // We can simulate different roles by changing the value here.
-    // e.g., 'Super Admin', 'Admin', 'Donor', 'Beneficiary', 'Guest'
-    const userRole: keyof typeof allNavItems = "Guest"; 
+    // In a real app, you would get this from your authentication context.
+    const user = {
+        isLoggedIn: true, // Set to true to simulate a logged-in user
+        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+        activeRole: "Super Admin", // Change this to test different roles
+    };
+    
+    let navItems: NavItem[] = [];
+    let currentRole = 'Guest';
 
-    const navItems = allNavItems[userRole] || [];
-
-    // Special case for root path when user is not a guest
-    if (userRole !== 'Guest' && pathname === '/') {
-        // In a real app, you might redirect to the user's specific dashboard
-        // For now, we do nothing to prevent wrong highlighting.
+    if (user.isLoggedIn) {
+        currentRole = user.activeRole;
+        navItems = allNavItems[currentRole] || [];
+    } else {
+        navItems = guestNavItems;
     }
 
 
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">
             {navItems.map((item) => {
-                const isActive = (
-                    (pathname.startsWith(item.href) && item.href !== '/') ||
-                    (pathname === item.href)
-                );
+                // Determine if the link is active
+                const isActive = (item.href === '/' && pathname === '/') || 
+                                 (item.href !== '/' && pathname.startsWith(item.href));
                 
                 // A real implementation would also check sub-roles here
                 // if (item.subRoles && !currentUser.subRoles.some(r => item.subRoles.includes(r))) {
