@@ -5,7 +5,7 @@
 import { createUser, User, UserRole } from './user-service';
 import { createOrganization, Organization } from './organization-service';
 import { db, isConfigValid } from './firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 
 const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
     // Super Admins
@@ -59,10 +59,7 @@ const seedUsers = async () => {
         const q = query(collection(db, 'users'), where("phone", "==", userData.phone));
         const existingUsers = await getDocs(q);
         if (existingUsers.empty) {
-            await createUser({
-                ...userData,
-                createdAt: new Date(),
-            } as User);
+            await createUser(userData);
         } else {
             console.log(`User with phone ${userData.phone} already exists. Skipping.`);
         }
