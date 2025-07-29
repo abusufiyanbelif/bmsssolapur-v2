@@ -71,15 +71,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         });
     };
 
+    const HeaderTitle = () => (
+        <a href="/" className="flex items-center gap-2 font-semibold">
+            <Logo width={32} height={32} />
+            <span className="font-headline text-sm font-bold">
+                <span className="text-primary">Baitul Mal</span>{' '}
+                <span className="text-accent">Samajik Sanstha</span>
+            </span>
+        </a>
+    );
+
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-card md:block">
                 <div className="flex h-full max-h-screen flex-col gap-2">
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                        <a href="/" className="flex items-center gap-2 font-semibold">
-                            <Logo width={32} height={32} />
-                            <span className="font-headline text-sm">Baitul Mal Samajik Sanstha</span>
-                        </a>
+                        <HeaderTitle />
                     </div>
                     <div className="flex-1">
                         <Nav 
@@ -105,10 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col p-0">
                             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                                <a href="/" className="flex items-center gap-2 font-semibold">
-                                    <Logo width={32} height={32} />
-                                    <span className="font-headline text-sm">Baitul Mal Samajik Sanstha</span>
-                                </a>
+                               <HeaderTitle />
                             </div>
                             <Nav 
                                 userRoles={user.isLoggedIn ? user.roles : ["Guest"]} 

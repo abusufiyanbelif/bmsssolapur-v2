@@ -14,7 +14,11 @@ export function Footer() {
           <div className="space-y-4">
              <div className="flex items-center gap-3">
                 <Logo width={48} height={48} />
-                <h3 className="text-xl font-bold font-headline text-foreground">Baitul Mal Samajik Sanstha (Solapur)</h3>
+                <h3 className="text-xl font-bold font-headline text-foreground">
+                    <span className="text-primary">Baitul Mal</span><br/>
+                    <span className="text-accent">Samajik Sanstha</span><br/>
+                    <span className="text-primary">(Solapur)</span>
+                </h3>
              </div>
             <p className="text-sm text-muted-foreground">
               Baitul Mal Samajik Sanstha (Solapur) provides life-saving and life-enriching humanitarian aid to underserved populations in the Solapur region, regardless of faith or nationality.
