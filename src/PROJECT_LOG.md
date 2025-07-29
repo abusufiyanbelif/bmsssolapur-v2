@@ -27,7 +27,8 @@ This document tracks the features and changes requested for the project.
 - **OTP**: Created Genkit flows for sending (`send-otp-flow.ts`) and verifying (`verify-otp-flow.ts`) one-time passwords via Twilio.
 
 ### User Interface
-- **Role-Based Navigation**: Implemented a dynamic navigation menu that displays different modules based on the logged-in user's role (Super Admin, Admin, Donor, Beneficiary).
+- **Role-Based Navigation**: Implemented a dynamic navigation menu that displays different modules based on the logged-in user's role (Guest, Super Admin, Admin, Donor, Beneficiary).
+- **Public Campaigns Page**: Created a public page at `/campaigns` to display verified and open leads to potential donors.
 - **Organization Page**: Created a public page at `/organization` to display verifiable details of the registered organization.
 - **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
 - **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.
@@ -39,7 +40,7 @@ This document tracks the features and changes requested for the project.
 
 ### User Roles & Permissions
 
-- Defined user roles: Donor, Beneficiary, Referral, Super Admin, Admin (with sub-categories: Normal admin, Founder, Co-founder, Finance).
+- Defined user roles: Guest, Donor, Beneficiary, Referral, Super Admin, Admin (with sub-categories: Normal admin, Founder, Co-founder, Finance).
 - **Flexible Roles**: Users can hold multiple roles (e.g., a Donor can also be a Beneficiary).
 - Added Privileges and Groups to the user model.
 - Specified access levels for Admin, Donor, and Guest roles.

@@ -23,7 +23,10 @@ import {
     BookText,
     Wrench,
     Download,
-    Eye
+    Eye,
+    Megaphone,
+    Info,
+    LogIn
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -34,6 +37,13 @@ type NavItem = {
   icon: React.ElementType;
   subRoles?: string[];
 };
+
+const guestNavItems: NavItem[] = [
+    { href: "/", label: "Home", icon: Home },
+    { href: "/campaigns", label: "Approved Campaigns", icon: Megaphone },
+    { href: "/organization", label: "Organization Details", icon: Info },
+    { href: "/login", label: "Login / Register", icon: LogIn },
+];
 
 const donorNavItems: NavItem[] = [
     { href: "/home", label: "Home", icon: Home },
@@ -78,6 +88,7 @@ const superAdminNavItems: NavItem[] = [
 
 
 const allNavItems = {
+    'Guest': guestNavItems,
     'Donor': donorNavItems,
     'Beneficiary': beneficiaryNavItems,
     'Admin': adminNavItems,
@@ -88,21 +99,28 @@ export function Nav() {
     const pathname = usePathname();
 
     // In a real app, you would get the user's role from your authentication context.
-    // For now, we'll simulate it.
-    const userRole: keyof typeof allNavItems = "Super Admin"; 
+    // We can simulate different roles by changing the value here.
+    // e.g., 'Super Admin', 'Admin', 'Donor', 'Beneficiary', 'Guest'
+    const userRole: keyof typeof allNavItems = "Guest"; 
 
     const navItems = allNavItems[userRole] || [];
 
     const isDonationRoute = pathname.startsWith('/admin/donations');
     const isLeadsRoute = pathname.startsWith('/admin/leads');
 
+    // Special case for root path when user is not a guest
+    if (userRole !== 'Guest' && pathname === '/') {
+        // In a real app, you might redirect to the user's specific dashboard
+        // For now, we do nothing to prevent wrong highlighting.
+    }
+
+
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">
             {navItems.map((item) => {
                 const isActive = (
-                    (item.href === '/admin/donations' && isDonationRoute) ||
-                    (item.href === '/admin/leads' && isLeadsRoute) ||
-                    (pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin'))
+                    (item.href !== '/' && pathname.startsWith(item.href)) ||
+                    (pathname === item.href)
                 );
                 
                 // A real implementation would also check sub-roles here
