@@ -11,28 +11,33 @@ import { Footer } from "./footer";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
+    const [requiredRole, setRequiredRole] = useState<string | null>(null);
 
     // In a real app, this would come from your authentication context.
     // For now, we simulate a user who is logged in and has an active role.
-    // To simulate a guest user, set isLoggedIn to false.
     const [user, setUser] = useState({
-        isLoggedIn: true, // Default to logged-out state
+        isLoggedIn: true, // Set to true to simulate a logged-in user
         roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-        activeRole: "Super Admin", // Change this to test different roles
+        activeRole: "Donor", // Change this to test different roles
     });
 
-    const handleOpenRoleSwitcher = () => setIsRoleSwitcherOpen(true);
-    
     const handleRoleChange = (newRole: string) => {
         setUser(currentUser => ({...currentUser, activeRole: newRole}));
+        setRequiredRole(null); // Reset required role after switching
+    };
+
+    const handleOpenRoleSwitcher = (requiredRoleName: string | null = null) => {
+        setRequiredRole(requiredRoleName);
+        setIsRoleSwitcherOpen(true);
     };
 
     const handleOpenChange = (open: boolean) => {
         setIsRoleSwitcherOpen(open);
+        if (!open) {
+            setRequiredRole(null); // Reset on close
+        }
     };
 
-    // To test the logged-in view, you can manually change isLoggedIn to true here.
-    // In a real app, a login function would update this state.
     const activeRole = user.isLoggedIn ? user.activeRole : "Guest";
 
     return (
@@ -46,7 +51,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </a>
                     </div>
                     <div className="flex-1">
-                        <Nav activeRole={activeRole} />
+                        <Nav 
+                            userRoles={user.isLoggedIn ? user.roles : ["Guest"]} 
+                            activeRole={activeRole}
+                            onRoleSwitchRequired={handleOpenRoleSwitcher}
+                        />
                     </div>
                 </div>
             </div>
@@ -70,12 +79,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     <span className="font-headline">Baitul Mal Samajik Sanstha (Solapur)</span>
                                 </a>
                             </div>
-                            <Nav activeRole={activeRole} />
+                            <Nav 
+                                userRoles={user.isLoggedIn ? user.roles : ["Guest"]} 
+                                activeRole={activeRole}
+                                onRoleSwitchRequired={handleOpenRoleSwitcher}
+                            />
                         </SheetContent>
                     </Sheet>
                      <div className="w-full flex-1 flex justify-end">
                         {user.isLoggedIn && user.roles.length > 1 && (
-                             <Button variant="outline" onClick={handleOpenRoleSwitcher}>
+                             <Button variant="outline" onClick={() => handleOpenRoleSwitcher()}>
                                 <Users className="mr-2 h-4 w-4" />
                                 Switch Role
                             </Button>
@@ -94,6 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     availableRoles={user.roles}
                     onRoleChange={handleRoleChange}
                     currentUserRole={user.activeRole}
+                    requiredRole={requiredRole}
                 />
             )}
         </div>

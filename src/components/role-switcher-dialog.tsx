@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { User, Shield, HandHeart, UserCog, LucideIcon, CheckCircle } from 'lucide-react';
+import { User, Shield, HandHeart, UserCog, LucideIcon, CheckCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 const roleMap: Record<string, { icon: LucideIcon; description: string }> = {
     "Super Admin": {
@@ -39,14 +40,15 @@ interface RoleSwitcherDialogProps extends DialogProps {
     availableRoles: string[];
     onRoleChange: (newRole: string) => void;
     currentUserRole: string;
+    requiredRole?: string | null;
 }
 
-export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleChange, currentUserRole }: RoleSwitcherDialogProps) {
+export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleChange, currentUserRole, requiredRole }: RoleSwitcherDialogProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(currentUserRole);
   
   useEffect(() => {
-    setSelectedRole(currentUserRole);
-  }, [currentUserRole, open]);
+    setSelectedRole(requiredRole || currentUserRole);
+  }, [requiredRole, currentUserRole, open]);
 
 
   const handleContinue = () => {
@@ -60,13 +62,32 @@ export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
+          // Prevent closing if a specific role is required
+          if(requiredRole) {
+              e.preventDefault();
+          }
+      }}>
         <DialogHeader>
           <DialogTitle>Switch Your Profile</DialogTitle>
           <DialogDescription>
-            You have multiple roles. Choose which profile you want to use for this session.
+            {requiredRole 
+                ? `This action requires the "${requiredRole}" profile.`
+                : "You have multiple roles. Choose which profile you want to use for this session."
+            }
           </DialogDescription>
         </DialogHeader>
+
+        {requiredRole && (
+             <Alert variant="default" className="border-amber-500/50 text-amber-900 dark:text-amber-300">
+                <AlertTriangle className="h-4 w-4 !text-amber-500" />
+                <AlertTitle>Privilege Required</AlertTitle>
+                <AlertDescription>
+                   Please switch to the <span className='font-semibold'>{requiredRole}</span> role to continue.
+                </AlertDescription>
+            </Alert>
+        )}
+
         <div className="grid gap-4 py-4">
             {availableRoles.map(roleName => {
                 const roleInfo = roleMap[roleName];
