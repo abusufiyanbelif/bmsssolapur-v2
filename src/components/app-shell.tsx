@@ -117,9 +117,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </SheetContent>
                     </Sheet>
                      <div className="w-full flex-1 flex justify-end gap-2">
-                        {/* A temporary button to simulate logging in. You can remove this later. */}
-                        {!user.isLoggedIn && <Button onClick={simulateLogin}>Login (Simulated)</Button>}
-                        {user.isLoggedIn && user.roles.length > 1 && (
+                        {/* A temporary button to simulate logging in was here. It's removed as the nav link is now present. */}
+                        {user.isLoggedIn && (
                              <Button variant="outline" onClick={() => handleOpenRoleSwitcher()}>
                                 <Users className="mr-2 h-4 w-4" />
                                 Switch Role ({user.activeRole})
