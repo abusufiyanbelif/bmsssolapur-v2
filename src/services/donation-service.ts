@@ -19,8 +19,14 @@ import { logDonationActivity } from './donation-activity-log';
 const DONATIONS_COLLECTION = 'donations';
 
 export type DonationStatus = 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Allocated';
-export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah';
+export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah' | 'Split';
 export type DonationPurpose = 'Education' | 'Deen' | 'Hospital' | 'Loan and Relief Fund' | 'To Organization Use';
+
+export interface Allocation {
+  leadId: string;
+  amount: number;
+  allocatedAt: Timestamp;
+}
 
 export interface Donation {
   id?: string;
@@ -35,8 +41,8 @@ export interface Donation {
   transactionId?: string;
   createdAt: Timestamp;
   verifiedAt?: Timestamp;
-  allocatedAt?: Timestamp;
-  allocatedToLeadId?: string; // Should link to a Lead ID
+  // allocations will store an array of mappings to leads
+  allocations?: Allocation[];
   notes?: string;
 }
 

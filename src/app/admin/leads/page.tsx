@@ -89,7 +89,7 @@ export default function LeadsPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Date Helped</TableHead>
+                        <TableHead>Date Created</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Help Requested</TableHead>
@@ -101,7 +101,7 @@ export default function LeadsPage() {
                 <TableBody>
                     {leads.map((lead) => (
                         <TableRow key={lead.id}>
-                            <TableCell>{format(lead.dateHelped.toDate(), "dd MMM yyyy")}</TableCell>
+                            <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
                             <TableCell className="font-medium">{lead.name}</TableCell>
                             <TableCell>{lead.category}</TableCell>
                             <TableCell>₹{lead.helpRequested.toFixed(2)}</TableCell>
