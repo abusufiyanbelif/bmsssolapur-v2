@@ -3,15 +3,6 @@ import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, Shield, Building } from 'lucide-react';
 import Image from 'next/image';
 
-const LogoPlaceholder = () => (
-    <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
-        <rect width="100" height="100" rx="12" fill="currentColor" fillOpacity="0.1"/>
-        <path d="M50 25L25 43.3L25 79.9L50 98.2L75 79.9L75 43.3L50 25Z" stroke="currentColor" strokeWidth="5"/>
-        <path d="M50 54.1L25 72.4V35.8L50 17.5L75 35.8V72.4L50 54.1Z" stroke="currentColor" strokeWidth="5" strokeOpacity="0.5"/>
-    </svg>
-)
-
-
 export function Footer() {
   return (
     <footer className="border-t bg-card text-card-foreground">
@@ -21,7 +12,7 @@ export function Footer() {
           {/* Column 1: Organization Info */}
           <div className="space-y-4">
              <div className="flex items-center gap-3">
-                <LogoPlaceholder />
+                <Image src="https://placehold.co/48x48/000000/000000.png" alt="Organization Logo" width={48} height={48} className="rounded-md" data-ai-hint="logo placeholder" />
                 <h3 className="text-xl font-bold font-headline text-foreground">Baitul Mal Samajik Sanstha (Solapur)</h3>
              </div>
             <p className="text-sm text-muted-foreground">
