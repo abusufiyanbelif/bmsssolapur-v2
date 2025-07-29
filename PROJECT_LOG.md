@@ -30,4 +30,3 @@ This document tracks the features and changes requested for the project.
 
 - **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
 - **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.
-- **Configuration Validator**: Created a page (`/validator`) with an AI-powered tool to validate Firebase and external service configurations for potential issues.
