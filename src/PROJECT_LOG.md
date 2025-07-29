@@ -55,7 +55,7 @@ This document tracks the features and changes requested for the project.
 ### Fund Flow Dashboard & Reporting
 - **Summary Dashboard**: Admin view with key metrics.
 - **Charts**: Visualizations for "Raised vs. Distributed" funds.
-- **Data Export**: Functionality to export donation and lead data to CSV/Excel.
+- **Data Export**: Functionality to export donation and lead data to CSV/Excel. Access restricted to Admins (all) and optionally Donors/Beneficiaries.
 
 ## Optional Add-Ons (Later Stages)
 
