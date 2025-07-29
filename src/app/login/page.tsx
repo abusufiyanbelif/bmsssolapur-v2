@@ -30,7 +30,7 @@ export default function LoginPage() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
 
-  const onSuccessfulLogin = (data: {userId?: string, user?: any}) => {
+  const onSuccessfulLogin = (data: {userId?: string}) => {
     toast({
       title: "Login Successful",
       description: "Welcome back! Please select your role to continue.",
@@ -39,13 +39,6 @@ export default function LoginPage() {
     localStorage.removeItem('activeRole'); 
     if (data.userId) {
       localStorage.setItem('userId', data.userId);
-    }
-    if (data.user) {
-      // For hardcoded user, pass the full object via session storage for the app-shell to pick up.
-      // This avoids needing a DB record for a temporary test user.
-      sessionStorage.setItem('hardcodedUser', JSON.stringify(data.user));
-      // Still set a user ID for consistency in other parts of the app
-      localStorage.setItem('userId', data.user.id);
     }
     
     // Use router to navigate, letting app-shell handle the role switching logic
@@ -59,8 +52,8 @@ export default function LoginPage() {
     const formData = new FormData(event.currentTarget);
     const result = await handleLogin(formData);
 
-    if (result.success) {
-      onSuccessfulLogin({userId: result.userId, user: result.user});
+    if (result.success && result.userId) {
+      onSuccessfulLogin({userId: result.userId});
     } else {
       toast({
         variant: "destructive",
@@ -198,8 +191,8 @@ export default function LoginPage() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone or Username</Label>
-                      <Input id="phone" name="phone" type="text" placeholder="e.g., 7887646583 or admin" required defaultValue="admin" />
+                      <Label htmlFor="identifier">Email or Phone</Label>
+                      <Input id="identifier" name="identifier" type="text" placeholder="user@example.com or 9876543210" required defaultValue="abusufiyan.belif@gmail.com" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>

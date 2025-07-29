@@ -11,36 +11,22 @@ interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
-    user?: User; // For hardcoded user login
 }
+
+const isEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
     if (!isConfigValid) {
         return { success: false, error: "Firebase is not configured. Cannot process login." };
     }
-    const identifier = formData.get("phone") as string;
+    const identifier = formData.get("identifier") as string;
     const password = formData.get("password") as string;
 
     if (!identifier || !password) {
         return { success: false, error: "Identifier and password are required." };
     }
     
-    // Special hardcoded admin login for testing
-    if (identifier === 'admin' && password === 'admin') {
-        const hardcodedAdminUser: User = {
-            id: 'hardcoded_admin_id',
-            name: "Hardcoded Admin",
-            email: "admin@internal.app",
-            phone: "0000000000",
-            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-            privileges: ["all"],
-            groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"],
-            createdAt: Timestamp.now(),
-        };
-        return { success: true, user: hardcodedAdminUser };
-    }
-
-    // For this prototype, we'll use a simple password check for other users.
+    // For this prototype, we'll use a simple password check for all users.
     // In a real application, you would use Firebase Authentication
     // with password hashing or other secure methods.
     if (password !== 'admin') {
@@ -48,10 +34,18 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     }
 
     try {
-        const user = await getUserByPhone(identifier);
-
-        if (!user) {
-            return { success: false, error: "User with this phone number not found." };
+        let user: User | null = null;
+        if (isEmail(identifier)) {
+            user = await getUserByEmail(identifier);
+             if (!user) {
+                return { success: false, error: "User with this email not found." };
+            }
+        } else {
+            // Assume it's a phone number
+            user = await getUserByPhone(identifier);
+             if (!user) {
+                return { success: false, error: "User with this phone number not found." };
+            }
         }
         
         return { success: true, userId: user.id };

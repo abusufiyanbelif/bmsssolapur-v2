@@ -23,7 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "./nav";
 import type { User as UserType } from "@/services/user-service";
 import { getUser } from "@/services/user-service";
-import { Timestamp } from "firebase/firestore";
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -48,32 +47,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     useEffect(() => {
         const checkUser = async () => {
-            // Check for hardcoded user first
-            const hardcodedUserJson = sessionStorage.getItem('hardcodedUser');
-            if (hardcodedUserJson) {
-                const hardcodedUser = JSON.parse(hardcodedUserJson);
-                // Firestore timestamps don't survive JSON serialization, so we need to convert them back
-                if (hardcodedUser.createdAt) {
-                  hardcodedUser.createdAt = new Timestamp(hardcodedUser.createdAt.seconds, hardcodedUser.createdAt.nanoseconds);
-                }
-
-                const savedRole = localStorage.getItem('activeRole');
-                const activeRole = savedRole || hardcodedUser.roles[0];
-                setUser({
-                    ...hardcodedUser,
-                    isLoggedIn: true,
-                    activeRole: activeRole,
-                    initials: hardcodedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
-                    avatar: `https://placehold.co/100x100.png?text=${hardcodedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
-                });
-                sessionStorage.removeItem('hardcodedUser'); // Use it once, then remove
-                if (!savedRole && hardcodedUser.roles.length > 1) {
-                    setIsRoleSwitcherOpen(true);
-                }
-                return;
-            }
-
-
             const storedUserId = localStorage.getItem('userId');
             if (storedUserId && storedUserId !== guestUser.id) {
                 const fetchedUser = await getUser(storedUserId);
