@@ -41,7 +41,7 @@ export interface Donation {
 }
 
 // Function to create a donation
-export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>) => {
+export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>, performedBy?: string) => {
   try {
     const donationRef = doc(collection(db, DONATIONS_COLLECTION));
     const newDonation: Donation = {
@@ -50,7 +50,7 @@ export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'
         createdAt: Timestamp.now()
     };
     await setDoc(donationRef, newDonation);
-    await logDonationActivity(newDonation.id!, 'Donation Created', { details: `Donation of ${newDonation.amount} from ${newDonation.donorName} created.` });
+    await logDonationActivity(newDonation.id!, 'Donation Created', { details: `Donation of ${newDonation.amount} from ${newDonation.donorName} created.` }, performedBy);
     return newDonation;
   } catch (error) {
     console.error('Error creating donation: ', error);
@@ -63,7 +63,7 @@ export const getDonation = async (id: string) => {
   try {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
     if (donationDoc.exists()) {
-      return donationDoc.data() as Donation;
+      return { id: donationDoc.id, ...donationDoc.data() } as Donation;
     }
     return null;
   } catch (error) {
@@ -73,7 +73,7 @@ export const getDonation = async (id: string) => {
 };
 
 // Function to update a donation
-export const updateDonation = async (id: string, updates: Partial<Donation>) => {
+export const updateDonation = async (id: string, updates: Partial<Donation>, performedBy?: string) => {
     try {
         const donationRef = doc(db, DONATIONS_COLLECTION, id);
         const originalDonation = await getDonation(id);
@@ -81,9 +81,9 @@ export const updateDonation = async (id: string, updates: Partial<Donation>) => 
         await updateDoc(donationRef, updates);
 
         if(updates.status && originalDonation?.status !== updates.status) {
-            await logDonationActivity(id, 'Status Changed', { from: originalDonation?.status, to: updates.status });
+            await logDonationActivity(id, 'Status Changed', { from: originalDonation?.status, to: updates.status }, performedBy);
         } else {
-             await logDonationActivity(id, 'Donation Updated', { updates: Object.keys(updates).join(', ') });
+             await logDonationActivity(id, 'Donation Updated', { updates: Object.keys(updates).join(', ') }, performedBy);
         }
 
     } catch (error) {

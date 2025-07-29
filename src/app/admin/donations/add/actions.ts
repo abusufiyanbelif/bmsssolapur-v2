@@ -21,6 +21,8 @@ export async function handleAddDonation(
   formData: FormData
 ): Promise<FormState> {
   const rawFormData = Object.fromEntries(formData.entries());
+  // In a real app, you'd get the logged-in user's ID here.
+  const adminUserId = "admin_user_placeholder_id";
 
   try {
     const screenshotFile = rawFormData.paymentScreenshot as File;
@@ -38,7 +40,7 @@ export async function handleAddDonation(
         paymentScreenshotUrl: paymentScreenshotUrl,
     };
 
-    const newDonation = await createDonation(newDonationData);
+    const newDonation = await createDonation(newDonationData, adminUserId);
     
     revalidatePath("/admin/donations");
 
