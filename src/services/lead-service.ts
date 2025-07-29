@@ -20,6 +20,14 @@ import { DonationType } from './donation-service';
 const LEADS_COLLECTION = 'leads';
 
 export type LeadStatus = 'Pending' | 'Partial' | 'Closed';
+export type LeadVerificationStatus = 'Pending' | 'Verified' | 'Rejected';
+
+export interface Verifier {
+    verifierId: string;
+    verifierName: string;
+    verifiedAt: Timestamp;
+    notes?: string;
+}
 
 export interface Lead {
   id?: string;
@@ -28,16 +36,19 @@ export interface Lead {
   helpRequested: number;
   helpGiven: number;
   status: LeadStatus;
-  notes?: string;
+  caseDetails?: string; // Formerly 'notes'
+  verificationDocumentUrl?: string;
+  verifiedStatus: LeadVerificationStatus;
+  verifiers: Verifier[];
+  verificationNotes?: string;
   dateCreated: Timestamp;
-  dateHelped: Timestamp;
   adminAddedBy: string; // ID of the admin who created the lead
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 // Function to create a lead
-export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'adminAddedBy'>, adminId: string) => {
+export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'adminAddedBy' | 'verifiedStatus' | 'verifiers'>, adminId: string) => {
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
     const newLead: Omit<Lead, 'id'> & { id: string } = {
@@ -45,6 +56,8 @@ export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'upda
       id: leadRef.id,
       helpGiven: 0,
       status: 'Pending',
+      verifiedStatus: 'Pending',
+      verifiers: [],
       dateCreated: Timestamp.now(),
       adminAddedBy: adminId,
       createdAt: Timestamp.now(),
