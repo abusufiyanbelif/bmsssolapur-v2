@@ -50,14 +50,12 @@ const donorNavItems: NavItem[] = [
     { href: "/campaigns", label: "Approved Leads", icon: FileCheck },
     { href: "/my-donations", label: "My Donations", icon: HandHeart },
     { href: "/profile", label: "Settings", icon: Settings },
-    { href: "/reminders", label: "Reminders", icon: BadgePercent },
 ];
 
 const beneficiaryNavItems: NavItem[] = [
     { href: "/home", label: "Home", icon: Home },
     { href: "/my-cases", label: "My Cases", icon: FileText },
-    { href: "/upload-documents", label: "Upload Documents", icon: Upload },
-    { href: "/case-status", label: "Case Status", icon: FileCheck },
+    { href: "/campaigns", label: "View Public Campaigns", icon: Megaphone },
     { href: "/profile", label: "Settings", icon: Settings },
 ];
 
