@@ -9,7 +9,6 @@ import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
-import { Logo } from "./logo";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
@@ -73,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo />
+            
             <div className="font-headline text-sm font-bold whitespace-nowrap">
                 <span className="text-primary font-bold">BM</span>{' '}
                 <span className="text-accent font-bold">SS</span>{' '}
