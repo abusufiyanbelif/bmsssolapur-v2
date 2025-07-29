@@ -6,13 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { KeyRound, LogIn, MessageSquare, Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -62,10 +55,10 @@ export default function LoginPage() {
   
   const onSendOtp = async (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
-      const phoneInput = (event.currentTarget.form?.elements.namedItem('phone-otp') as HTMLInputElement);
+      const phoneInput = (event.currentTarget.form?.elements.namedItem('phone') as HTMLInputElement);
       const phoneNumber = phoneInput?.value;
 
-      if (!phoneNumber || phoneNumber.length !== 10) {
+      if (!phoneNumber || !/^[0-9]{10}$/.test(phoneNumber)) {
           toast({ variant: "destructive", title: "Invalid Phone Number", description: "Please enter a valid 10-digit phone number." });
           return;
       }
@@ -131,10 +124,8 @@ export default function LoginPage() {
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
                     <div className="space-y-2">
-                    <Label htmlFor="phone-otp">Phone Number (10 digits)</Label>
-                    <div className="flex gap-2">
-                        <Input id="phone-otp" name="phone-otp" type="tel" placeholder="9876543210" maxLength={10} required disabled={isOtpSent || isOtpSending} />
-                    </div>
+                      <Label htmlFor="phone">Phone Number (10 digits)</Label>
+                      <Input id="phone" name="phone" type="tel" placeholder="9876543210" maxLength={10} required disabled={isOtpSent || isOtpSending} />
                     </div>
                     
                     {isOtpSent && (
@@ -160,8 +151,8 @@ export default function LoginPage() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="phone-password">Phone Number (10 digits)</Label>
-                      <Input id="phone-password" name="phone" type="tel" placeholder="9876543210" maxLength={10} required defaultValue="7887646583" />
+                      <Label htmlFor="phone">Phone Number (10 digits)</Label>
+                      <Input id="phone" name="phone" type="tel" placeholder="9876543210" maxLength={10} required defaultValue="7887646583" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>

@@ -58,7 +58,7 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
     }
     
     try {
-        // Basic validation: Check if user exists before sending OTP
+        // Basic validation: Check if user exists with the 10-digit number before sending OTP
         const user = await getUserByPhone(phoneNumber); 
         if (!user) {
             return { success: false, error: "No user found with this phone number." };
