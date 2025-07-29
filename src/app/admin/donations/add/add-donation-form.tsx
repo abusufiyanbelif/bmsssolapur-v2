@@ -30,7 +30,7 @@ import { User } from "@/services/user-service";
 import { DonationType, DonationPurpose } from "@/services/donation-service";
 
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
-const donationPurposes: DonationPurpose[] = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use'];
+const donationPurposes: DonationPurpose[] = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'];
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Donor is required."),

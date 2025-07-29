@@ -69,6 +69,7 @@ This document tracks the features and changes requested for the project.
     - `Amount Requested`: The requested help amount.
     - `Amount Given`: Total funds given so far.
     - `Status`: "Pending", "Partial", "Closed".
+    - `isLoan`: A boolean to indicate if the help is a repayable loan.
     - `Case Details`: Details about the need (reason for support).
     - `Date Created`: Timestamp when the lead was logged.
     - `Admin Added By`: ID of the admin who entered the lead.
@@ -79,6 +80,14 @@ This document tracks the features and changes requested for the project.
 - **Lead Statuses**: "Pending", "Partial", "Closed".
 - **Permissions**: Only users with "Admin" or "Super Admin" privileges can add or update leads.
 - **Business Rule**: Leads must have a `Verified Status` of "Verified" before any funds can be allocated to them. Leads without a verification document cannot be approved.
+
+### Loan Management
+- **Loan as Donation**: A lead can request help as a loan, which they are expected to pay back.
+- **Repayment Tracking**: The system will track loan repayments. A `Loan Repayment` donation purpose will be used for this.
+- **Repayment Alerts**: Automated reminders will be sent to beneficiaries for loan repayments via their registered number or other linked accounts.
+- **Repayment Announcements**: When a loan is partially or fully repaid, an announcement can be published in the app (if the beneficiary agrees). This announcement will be shareable on social media.
+- **Admin Notifications**: Admins will receive mandatory alerts when a loan repayment is made.
+
 
 ### Fund Flow Dashboard & Reporting
 - **Summary Dashboard**: Admin view with key metrics.

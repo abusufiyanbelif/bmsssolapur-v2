@@ -36,6 +36,7 @@ export interface Lead {
   helpRequested: number;
   helpGiven: number;
   status: LeadStatus;
+  isLoan: boolean; // To mark if the help is a repayable loan
   caseDetails?: string; // Formerly 'notes'
   verificationDocumentUrl?: string;
   verifiedStatus: LeadVerificationStatus;
