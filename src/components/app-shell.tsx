@@ -4,17 +4,21 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Users } from "lucide-react";
+import { LogIn, LogOut, Menu, Users } from "lucide-react";
 import { Nav } from "./nav";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import { Logo } from "./logo";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
+    const pathname = usePathname();
 
     // In a real app, this would come from your authentication context.
     // We now default to a logged-out 'Guest' user.
@@ -71,10 +75,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             activeRole: "Super Admin", // Default to Super Admin on login for this demo
         });
     };
+    
+    const simulateLogout = () => {
+        setUser({
+            isLoggedIn: false,
+            id: "guest_user_id",
+            name: "Guest",
+            email: "guest@example.com",
+            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+            activeRole: "Guest",
+        });
+    }
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-8 w-auto" />
+            <Logo className="h-10 w-auto" />
             <div className="font-headline text-sm font-bold whitespace-nowrap">
                 <span className="text-primary font-bold">BM</span>{' '}
                 <span className="text-accent font-bold">SS</span>{' '}
@@ -123,12 +138,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             />
                         </SheetContent>
                     </Sheet>
-                     <div className="w-full flex-1 flex justify-end gap-2">
-                        {user.isLoggedIn && (
-                             <Button variant="outline" onClick={() => handleOpenRoleSwitcher()}>
-                                <Users className="mr-2 h-4 w-4" />
-                                Switch Role ({user.activeRole})
-                            </Button>
+                     <div className="w-full flex-1 flex justify-end items-center gap-2">
+                        {user.isLoggedIn ? (
+                            <>
+                                 <Button variant="outline" onClick={() => handleOpenRoleSwitcher()}>
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Switch Role ({user.activeRole})
+                                </Button>
+                                <Button variant="ghost" onClick={simulateLogout}>
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    Logout
+                                </Button>
+                            </>
+                        ) : (
+                             <>
+                                {/* This is a temporary login button for demonstration */}
+                                <Button variant="outline" onClick={simulateLogin}>
+                                    Simulate Login
+                                </Button>
+                                {pathname !== '/login' && (
+                                     <Button asChild>
+                                        <Link href="/login">
+                                            <LogIn className="mr-2 h-4 w-4" />
+                                            Login / Register
+                                        </Link>
+                                    </Button>
+                                )}
+                             </>
                         )}
                     </div>
                 </header>
