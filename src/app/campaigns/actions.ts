@@ -3,13 +3,17 @@
 
 import { getAllLeads, Lead } from "@/services/lead-service";
 import { query, collection, where, getDocs } from "firebase/firestore";
-import { db } from "@/services/firebase";
+import { db, isConfigValid } from "@/services/firebase";
 
 /**
  * Fetches leads that are verified and not yet closed.
  * These are the leads that should be displayed publicly for donations.
  */
 export async function getOpenLeads(): Promise<Lead[]> {
+    if (!isConfigValid) {
+        console.warn("Firebase is not configured. Skipping fetching open leads.");
+        return [];
+    }
     try {
         const leadsCollection = collection(db, 'leads');
         // We need to create a composite index for this query in Firestore.
