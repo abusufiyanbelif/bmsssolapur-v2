@@ -13,7 +13,7 @@ export function Footer() {
           {/* Column 1: Organization Info */}
           <div className="space-y-4">
              <div className="flex items-center gap-3">
-                <Logo className="h-12 w-12" />
+                <Logo width={48} height={48} />
                 <h3 className="text-xl font-bold font-headline text-foreground">Baitul Mal Samajik Sanstha (Solapur)</h3>
              </div>
             <p className="text-sm text-muted-foreground">
