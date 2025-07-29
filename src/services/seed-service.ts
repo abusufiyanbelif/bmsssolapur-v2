@@ -46,28 +46,29 @@ const seedUsers = async () => {
     if (!isConfigValid) {
         throw new Error("Firebase is not configured. Cannot seed users.");
     }
-    const usersCollection = collection(db, 'users');
-    const snapshot = await getDocs(usersCollection);
-    if (!snapshot.empty) {
-        console.log('Users collection already has documents. Skipping user seeding.');
-        return 'Users already exist. Skipped seeding.';
-    }
-
     console.log('Seeding users...');
+    let createdCount = 0;
+    let skippedCount = 0;
+
     for (const userData of usersToSeed) {
-        // Find existing user by phone to avoid duplicates if re-run
+        // Find existing user by phone to avoid duplicates
         const q = query(collection(db, 'users'), where("phone", "==", userData.phone));
         const existingUsers = await getDocs(q);
+        
         if (existingUsers.empty) {
             await createUser({
                 ...userData,
                 createdAt: Timestamp.now()
             });
+            createdCount++;
         } else {
-            console.log(`User with phone ${userData.phone} already exists. Skipping.`);
+            skippedCount++;
         }
     }
-    return 'Users seeded successfully.';
+
+    const statusMessage = `User seeding complete. Created: ${createdCount}, Skipped: ${skippedCount}.`;
+    console.log(statusMessage);
+    return statusMessage;
 };
 
 const seedOrganization = async () => {

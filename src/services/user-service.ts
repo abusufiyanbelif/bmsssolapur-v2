@@ -60,12 +60,14 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
-    const newUser: User = { 
+    // Ensure createdAt is a Firestore Timestamp
+    const finalUserData: User = { 
         ...user, 
-        id: userRef.id
+        id: userRef.id,
+        createdAt: user.createdAt || Timestamp.now(),
     };
-    await setDoc(userRef, newUser);
-    return newUser;
+    await setDoc(userRef, finalUserData);
+    return finalUserData;
   } catch (error) {
     console.error('Error creating user: ', error);
     throw new Error('Failed to create user.');
