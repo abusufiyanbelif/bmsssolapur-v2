@@ -19,7 +19,7 @@ import { logDonationActivity } from './donation-activity-log';
 const DONATIONS_COLLECTION = 'donations';
 
 export type DonationStatus = 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Allocated';
-export type DonationType = 'Zakat' | 'Sadqa' | 'General' | 'Fitra';
+export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah';
 
 export interface Donation {
   id?: string;
