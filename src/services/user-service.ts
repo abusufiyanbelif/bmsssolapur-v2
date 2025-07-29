@@ -12,6 +12,8 @@ import {
   query,
   getDocs,
   Timestamp,
+  where,
+  limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 
@@ -89,6 +91,26 @@ export const getUser = async (id: string): Promise<User | null> => {
   }
 };
 
+// Function to get a user by phone number
+export const getUserByPhone = async (phone: string): Promise<User | null> => {
+  if (!isConfigValid) {
+    console.warn("Firebase is not configured. Skipping user fetch by phone.");
+    return null;
+  }
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where("phone", "==", phone), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      return { id: userDoc.id, ...userDoc.data() } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user by phone: ', error);
+    throw new Error('Failed to get user by phone.');
+  }
+}
+
 // Function to update a user
 export const updateUser = async (id: string, updates: Partial<User>) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
@@ -132,3 +154,5 @@ export const getAllUsers = async (): Promise<User[]> => {
         throw new Error('Failed to get all users.');
     }
 }
+
+    

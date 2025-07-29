@@ -16,7 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { handleLogin } from "./actions";
+import { handleLogin, handleSendOtp, handleVerifyOtp } from "./actions";
 import { useRouter } from "next/navigation";
 
 
@@ -24,14 +24,9 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleFeatureInProgress = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); // Prevent form submission
-    toast({
-        title: "In Progress",
-        description: "This feature is currently in development and will be available soon.",
-    });
-  };
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
 
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -59,7 +54,62 @@ export default function LoginPage() {
       });
     }
     setIsSubmitting(false);
+  };
+  
+  const onSendOtp = async (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const phoneInput = (event.currentTarget.form?.elements.namedItem('phone-otp') as HTMLInputElement);
+      const phoneNumber = phoneInput?.value;
+
+      if (!phoneNumber || phoneNumber.length !== 10) {
+          toast({ variant: "destructive", title: "Invalid Phone Number", description: "Please enter a valid 10-digit phone number." });
+          return;
+      }
+      
+      const fullPhoneNumber = `+91${phoneNumber}`;
+      setOtpPhoneNumber(fullPhoneNumber);
+      setIsOtpSending(true);
+
+      const result = await handleSendOtp(fullPhoneNumber);
+      
+      if (result.success) {
+          toast({ title: "OTP Sent", description: "An OTP has been sent to your phone." });
+          setIsOtpSent(true);
+      } else {
+          toast({ variant: "destructive", title: "Failed to Send OTP", description: result.error });
+      }
+
+      setIsOtpSending(false);
   }
+
+  const onVerifyOtpSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setIsSubmitting(true);
+      const formData = new FormData(event.currentTarget);
+      formData.append('phone', otpPhoneNumber);
+      
+      const result = await handleVerifyOtp(formData);
+
+       if (result.success && result.userId) {
+            toast({
+                title: "Login Successful",
+                description: "Welcome back!",
+            });
+            localStorage.setItem('userId', result.userId);
+            setTimeout(() => {
+                router.push('/home');
+            }, 100);
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Login Failed",
+                description: result.error || "An unknown error occurred.",
+            });
+        }
+      
+      setIsSubmitting(false);
+  }
+
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -83,7 +133,7 @@ export default function LoginPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="otp">
-                <form className="space-y-6 pt-4">
+                <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
                     <div className="space-y-2">
                     <Label htmlFor="phone-otp">Phone Number</Label>
                     <div className="flex gap-2">
@@ -95,20 +145,28 @@ export default function LoginPage() {
                                 <SelectItem value="+91">+91 (IN)</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Input id="phone-otp" type="tel" placeholder="12345 67890" maxLength={10} required />
+                        <Input id="phone-otp" name="phone-otp" type="tel" placeholder="12345 67890" maxLength={10} required disabled={isOtpSent || isOtpSending} />
                     </div>
                     </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="otp">One-Time Password (OTP)</Label>
-                    <Input id="otp" type="text" placeholder="Enter your OTP" />
-                    </div>
-                    <Button type="submit" className="w-full" onClick={handleFeatureInProgress}>
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Login with OTP
-                    </Button>
-                    <div className="text-center">
-                        <Button variant="link" size="sm" type="button" onClick={handleFeatureInProgress}>Send OTP</Button>
-                    </div>
+                    
+                    {isOtpSent && (
+                        <div className="space-y-2">
+                            <Label htmlFor="otp">One-Time Password (OTP)</Label>
+                            <Input id="otp" name="otp" type="text" placeholder="Enter your OTP" required />
+                        </div>
+                    )}
+
+                    {!isOtpSent ? (
+                         <Button type="button" className="w-full" onClick={onSendOtp} disabled={isOtpSending}>
+                            {isOtpSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
+                            Send OTP
+                        </Button>
+                    ) : (
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                            Login with OTP
+                        </Button>
+                    )}
                 </form>
             </TabsContent>
             <TabsContent value="password">
@@ -140,7 +198,7 @@ export default function LoginPage() {
                         Login with Password
                     </Button>
                      <div className="text-center">
-                        <Button variant="link" size="sm" type="button" onClick={handleFeatureInProgress}>Forgot Password?</Button>
+                        <Button variant="link" size="sm" type="button" onClick={() => toast({ title: "In Progress", description: "This feature is currently in development and will be available soon."})}>Forgot Password?</Button>
                     </div>
                 </form>
             </TabsContent>
@@ -150,3 +208,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
