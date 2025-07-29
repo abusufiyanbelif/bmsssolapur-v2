@@ -56,9 +56,12 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
     if (!isConfigValid) {
         return { success: false, error: "Firebase is not configured. Cannot send OTP." };
     }
+    // The phone number passed here now includes the country code.
+    // We strip it for the user check, but pass the full number to the OTP service.
+    const phoneWithoutCountryCode = phoneNumber.startsWith('+91') ? phoneNumber.substring(3) : phoneNumber;
     try {
         // Basic validation
-        const user = await getUserByPhone(phoneNumber.substring(2)); // remove +91
+        const user = await getUserByPhone(phoneWithoutCountryCode); 
         if (!user) {
             return { success: false, error: "No user found with this phone number." };
         }
@@ -83,14 +86,16 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         return { success: false, error: "Phone and OTP code are required." };
     }
 
+    const phoneWithoutCountryCode = phoneNumber.startsWith('+91') ? phoneNumber.substring(3) : phoneNumber;
+
     try {
         const verificationResult = await verifyOtp({ phoneNumber, code });
         if (!verificationResult.success) {
             return { success: false, error: verificationResult.error || "Invalid OTP." };
         }
         
-        // Find user by phone number
-        const user = await getUserByPhone(phoneNumber.substring(2)); // remove +91
+        // Find user by phone number (without country code)
+        const user = await getUserByPhone(phoneWithoutCountryCode); 
         if (!user) {
              return { success: false, error: "User with this phone number not found." };
         }

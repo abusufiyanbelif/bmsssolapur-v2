@@ -48,18 +48,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const checkUser = async () => {
             const storedUserId = localStorage.getItem('userId');
-            if (storedUserId) {
+            if (storedUserId && storedUserId !== guestUser.id) {
                 const fetchedUser = await getUser(storedUserId);
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
+                    const activeRole = savedRole || fetchedUser.roles[0];
+                    
                     setUser({
                         ...fetchedUser,
                         isLoggedIn: true,
-                        activeRole: savedRole || fetchedUser.roles[0],
+                        activeRole: activeRole,
                         initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
                         avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
                     });
-                     // Show role switcher on first load after login if multiple roles exist and one hasn't been chosen
+                     // Show role switcher on first load after login if multiple roles exist and one hasn't been chosen yet
                     if (!savedRole && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                     }
