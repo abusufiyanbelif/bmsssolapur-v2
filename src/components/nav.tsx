@@ -26,7 +26,9 @@ import {
     Eye,
     Megaphone,
     Info,
-    LogIn
+    LogIn,
+    Server,
+    BrainCircuit
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -63,15 +65,8 @@ const beneficiaryNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
     { href: "/admin", label: "Dashboard", icon: Home },
-    { href: "/admin/leads/add", label: "Add Lead", icon: UserPlus },
     { href: "/admin/leads", label: "All Leads", icon: Users },
-    { href: "/admin/approvals", label: "Approvals", icon: FileCheck },
-    { href: "/admin/verifications", label: "Upload Verifications", icon: Upload },
     { href: "/admin/donations", label: "Donations", icon: Banknote, subRoles: ["Finance Admin"] },
-    { href: "/admin/donations/verify", label: "Verify Donation Proofs", icon: ShieldCheck, subRoles: ["Finance Admin"] },
-    { href: "/admin/reports/donations", label: "Donation Reports", icon: BarChart, subRoles: ["Finance Admin"] },
-    { href: "/admin/analytics", label: "Analytics", icon: BarChart, subRoles: ["Founder", "Co-Founder"] },
-    { href: "/admin/reports/cases", label: "Case Reports", icon: FileText, subRoles: ["Founder", "Co-Founder"] },
     { href: "/profile", label: "Settings", icon: Settings },
 ];
 
@@ -84,6 +79,10 @@ const superAdminNavItems: NavItem[] = [
     { href: "/admin/maintenance", label: "Maintenance Toggle", icon: Wrench },
     { href: "/admin/export", label: "Data Export", icon: Download },
     { href: "/admin/module-visibility", label: "Module Visibility", icon: Eye },
+    { href: "/services", label: "Services Summary", icon: Server },
+    { href: "/dependencies", label: "Dependency Map", icon: Share2 },
+    { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
+    { href: "/personas", label: "AI Personas", icon: BrainCircuit },
 ];
 
 
@@ -101,12 +100,9 @@ export function Nav() {
     // In a real app, you would get the user's role from your authentication context.
     // We can simulate different roles by changing the value here.
     // e.g., 'Super Admin', 'Admin', 'Donor', 'Beneficiary', 'Guest'
-    const userRole: keyof typeof allNavItems = "Guest"; 
+    const userRole: keyof typeof allNavItems = "Super Admin"; 
 
     const navItems = allNavItems[userRole] || [];
-
-    const isDonationRoute = pathname.startsWith('/admin/donations');
-    const isLeadsRoute = pathname.startsWith('/admin/leads');
 
     // Special case for root path when user is not a guest
     if (userRole !== 'Guest' && pathname === '/') {
