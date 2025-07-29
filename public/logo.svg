@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="handGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="hsl(155 60% 45%)" />
+      <stop offset="100%" stop-color="hsl(155 80% 35%)" />
+    </linearGradient>
+     <linearGradient id="heartGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="hsl(48 90% 50%)" />
+      <stop offset="100%" stop-color="hsl(48 100% 60%)" />
+    </linearGradient>
+  </defs>
+
+  <path d="M 128 448 C 64 448 32 416 32 352 C 32 256 128 128 256 224 C 384 128 480 256 480 352 C 480 416 448 448 384 448 L 128 448 Z" fill="url(#handGradient)"/>
+  
+  <path d="M 256 96 C 256 64 224 64 224 96 C 224 128 256 160 256 160 C 256 160 288 128 288 96 C 288 64 256 64 256 96 Z" fill="url(#heartGradient)"/>
+</svg>
