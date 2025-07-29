@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ActivityFeed } from "./activity-feed";
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -28,6 +30,7 @@ export default function ProfilePage() {
 
   // Placeholder user data
   const user = {
+    id: "user_placeholder_id_12345",
     name: "Aisha Khan",
     email: "aisha.khan@example.com",
     avatar: "https://placehold.co/100x100.png",
@@ -63,47 +66,66 @@ export default function ProfilePage() {
             </Card>
         </div>
         <div className="md:col-span-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Account Settings</CardTitle>
-                    <CardDescription>Update your account details and preferences.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                     <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input id="name" defaultValue={user.name} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" defaultValue={user.email} />
-                    </div>
-                    {isAdmin && (
-                         <div className="space-y-2">
-                            <Label htmlFor="secondaryPhone">Secondary Phone (for Account Recovery)</Label>
-                            <Input id="secondaryPhone" defaultValue={user.secondaryPhone} />
-                        </div>
-                    )}
-                     <Button onClick={handleFeatureInProgress}>Save Changes</Button>
-                </CardContent>
-            </Card>
+           <Tabs defaultValue="account">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="account">Account Settings</TabsTrigger>
+                    <TabsTrigger value="history">Activity History</TabsTrigger>
+                </TabsList>
+                <TabsContent value="account">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Account Settings</CardTitle>
+                            <CardDescription>Update your account details and preferences.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Full Name</Label>
+                                <Input id="name" defaultValue={user.name} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email Address</Label>
+                                <Input id="email" type="email" defaultValue={user.email} />
+                            </div>
+                            {isAdmin && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="secondaryPhone">Secondary Phone (for Account Recovery)</Label>
+                                    <Input id="secondaryPhone" defaultValue={user.secondaryPhone} />
+                                </div>
+                            )}
+                            <Button onClick={handleFeatureInProgress}>Save Changes</Button>
+                        </CardContent>
+                    </Card>
 
-            <Card className="mt-8">
-                <CardHeader>
-                    <CardTitle>Notification Settings</CardTitle>
-                    <CardDescription>Manage how you receive notifications from us.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                            <Label htmlFor="monthly-reminder" className="font-semibold">Monthly Donation Reminder</Label>
-                            <p className="text-sm text-muted-foreground">
-                                Receive a gentle reminder on the 1st of every month.
-                            </p>
-                        </div>
-                        <Switch id="monthly-reminder" onCheckedChange={handleSwitchChange} />
-                    </div>
-                </CardContent>
-            </Card>
+                    <Card className="mt-8">
+                        <CardHeader>
+                            <CardTitle>Notification Settings</CardTitle>
+                            <CardDescription>Manage how you receive notifications from us.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                                <div>
+                                    <Label htmlFor="monthly-reminder" className="font-semibold">Monthly Donation Reminder</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Receive a gentle reminder on the 1st of every month.
+                                    </p>
+                                </div>
+                                <Switch id="monthly-reminder" onCheckedChange={handleSwitchChange} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="history">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Activity History</CardTitle>
+                            <CardDescription>A log of actions you have performed in the system.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <p>Activity feed not yet implemented.</p>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
       </div>
     </div>
