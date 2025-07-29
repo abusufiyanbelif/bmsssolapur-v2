@@ -9,7 +9,7 @@ import { collection, getDocs } from 'firebase/firestore';
 
 const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
     // Super Admins
-    { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder"] },
+    { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"] },
     { name: "Super Admin", email: "admin@baitulmalsolapur.org", phone: "1111111111", roles: ["Super Admin"], privileges: ["all"] },
     
     // Admins (Founders and Members)
