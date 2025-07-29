@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Settings, Share2, ShieldCheck, UserCog, User, HandHeart } from "lucide-react"
+import { Home, Settings, Share2, ShieldCheck, UserCog, User, HandHeart, Users } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
 const navItems = [
     { href: "/admin", label: "Dashboard", icon: Home },
     { href: "/admin/donations", label: "Donations", icon: HandHeart },
+    { href: "/admin/leads", label: "Leads", icon: Users },
     { href: "/profile", label: "User Profile", icon: User },
     { href: "/services", label: "Services Summary", icon: Settings },
     { href: "/dependencies", label: "Dependency Map", icon: Share2 },
@@ -24,9 +25,9 @@ export function Nav() {
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {navItems.map((item) => {
-                const isActive = item.href === '/admin/donations' 
+                const isActive = (item.href === '/admin/donations' 
                     ? isDonationRoute
-                    : pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
+                    : pathname.startsWith(item.href)) && (item.href !== '/admin' || pathname === '/admin')
 
                 return (
                     <Link
