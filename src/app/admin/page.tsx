@@ -1,25 +1,43 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const metrics = [
   {
-    title: "Total Donations",
-    value: "$42,854",
-    icon: DollarSign,
-    description: "+12.5% from last month",
+    title: "Total Raised",
+    value: "₹50,000",
+    icon: TrendingUp,
+    description: "Total donations received.",
   },
   {
-    title: "Amount Distributed",
-    value: "$35,210",
-    icon: PiggyBank,
-    description: "Across 48 approved leads",
+    title: "Total Distributed",
+    value: "₹32,000",
+    icon: HandCoins,
+    description: "Total funds given to leads.",
   },
   {
-    title: "Beneficiaries Helped",
-    value: "152",
+    title: "Pending to Disburse",
+    value: "₹18,000",
+    icon: Hourglass,
+    description: "Available funds for distribution.",
+  },
+  {
+    title: "Total Beneficiaries Helped",
+    value: "12 leads",
     icon: Users,
-    description: "+28% from last month",
+    description: "Total number of cases managed.",
+  },
+  {
+    title: "Cases Fully Closed",
+    value: "8",
+    icon: CheckCircle,
+    description: "Leads where help is complete.",
+  },
+  {
+    title: "Cases Pending",
+    value: "4",
+    icon: PiggyBank,
+    description: "Leads awaiting assistance.",
   },
 ];
 
