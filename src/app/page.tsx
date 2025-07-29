@@ -51,8 +51,8 @@ export default async function LandingPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/campaigns">
-                View All Campaigns <ArrowRight className="ml-2" />
+              <Link href="/organization">
+                About Us <ArrowRight className="ml-2" />
               </Link>
             </Button>
           </div>

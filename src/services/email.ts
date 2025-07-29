@@ -5,17 +5,18 @@
  */
 
 import nodemailer from 'nodemailer';
+import { config } from '@/lib/config';
 
 // This is a placeholder for your email configuration.
 // In a real application, you should use environment variables
 // to store sensitive information like email credentials.
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-  port: parseInt(process.env.SMTP_PORT || '587', 10),
-  secure: (process.env.SMTP_SECURE === 'true'), // true for 465, false for other ports
+  host: config.smtp.host || 'smtp.ethereal.email',
+  port: parseInt(config.smtp.port || '587', 10),
+  secure: (config.smtp.secure === 'true'), // true for 465, false for other ports
   auth: {
-    user: process.env.SMTP_USER || 'your-email@example.com', // generated ethereal user
-    pass: process.env.SMTP_PASS || 'your-password', // generated ethereal password
+    user: config.smtp.user || 'your-email@example.com', // generated ethereal user
+    pass: config.smtp.pass || 'your-password', // generated ethereal password
   },
 });
 
@@ -27,7 +28,7 @@ const transporter = nodemailer.createTransport({
  */
 export async function sendEmail(to: string, subject: string, html: string) {
   const mailOptions = {
-    from: process.env.EMAIL_FROM || '"Baitul Mal Samajik Sanstha" <no-reply@example.com>',
+    from: config.emailFrom || '"Baitul Mal Samajik Sanstha" <no-reply@example.com>',
     to,
     subject,
     html,

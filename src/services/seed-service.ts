@@ -3,6 +3,9 @@
  */
 
 import { createUser, User } from './user-service';
+import { createOrganization, Organization } from './organization-service';
+import { db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
     // Super Admins
@@ -20,18 +23,51 @@ const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
     { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [] },
 ];
 
+const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
+    name: "Baitul Mal Samajik Sanstha (Solapur)",
+    city: "Solapur",
+    address: "Solapur, Maharashtra, India",
+    registrationNumber: "MAHA/123/2024",
+    contactEmail: "contact@baitulmalsolapur.org",
+    contactPhone: "+91 12345 67890",
+    website: "https://baitulmalsolapur.org"
+};
+
+const seedUsers = async () => {
+    const usersCollection = collection(db, 'users');
+    const snapshot = await getDocs(usersCollection);
+    if (!snapshot.empty) {
+        console.log('Users collection already has documents. Skipping user seeding.');
+        return;
+    }
+
+    console.log('Seeding users...');
+    for (const userData of usersToSeed) {
+        await createUser({
+            ...userData,
+            createdAt: new Date(),
+        } as User);
+    }
+};
+
+const seedOrganization = async () => {
+    const orgsCollection = collection(db, 'organizations');
+    const snapshot = await getDocs(orgsCollection);
+    if (!snapshot.empty) {
+        console.log('Organizations collection already has documents. Skipping organization seeding.');
+        return;
+    }
+    
+    console.log('Seeding organization...');
+    await createOrganization(organizationToSeed);
+};
+
 
 export const seedDatabase = async () => {
     console.log('Seeding database...');
     try {
-        for (const userData of usersToSeed) {
-            // In a real app, we'd check if the user exists before creating
-            // For this seeder, we'll just create them.
-            await createUser({
-                ...userData,
-                createdAt: new Date(),
-            } as User);
-        }
+        await seedUsers();
+        await seedOrganization();
         console.log('Database seeded successfully.');
     } catch (error) {
         console.error('Error seeding database:', error);
