@@ -1,25 +1,15 @@
-<svg width="128" height="128" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="gradient-border" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:hsl(155, 60%, 45%);"/>
-      <stop offset="100%" style="stop-color:hsl(48, 90%, 50%);"/>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(122, 39%, 49%);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:hsl(48, 90%, 50%);stop-opacity:1" />
     </linearGradient>
   </defs>
+  <circle cx="256" cy="256" r="240" fill="white" stroke="url(#grad)" stroke-width="20"/>
   
-  <!-- Circle with gradient border and white background -->
-  <circle cx="50" cy="50" r="45" fill="white" stroke="url(#gradient-border)" stroke-width="6"/>
+  <!-- Centered Green Heart -->
+  <path d="M206 280 Q186 260 186 230 A30 30 0 0 1 246 230 Q246 260 226 280 L206 300 Z" fill="hsl(122, 39%, 49%)" />
 
-  <!-- Yellow Heart (larger, in back) -->
-  <path 
-    d="M50 85 C-20 45, 30 -10, 50 20 C 70 -10, 120 45, 50 85" 
-    fill="hsl(48, 90%, 50%)"
-    transform="translate(1, -2) scale(0.45)"
-  />
-
-  <!-- Green Heart (smaller, in front) -->
-  <path 
-    d="M50 85 C-20 45, 30 -10, 50 20 C 70 -10, 120 45, 50 85" 
-    fill="hsl(155, 60%, 45%)"
-    transform="translate(-25, 20) scale(0.35)"
-  />
+  <!-- Centered Yellow Heart -->
+  <path d="M306 280 Q286 260 286 230 A30 30 0 0 1 346 230 Q346 260 326 280 L306 300 Z" fill="hsl(48, 90%, 50%)" />
 </svg>
