@@ -1,23 +1,23 @@
-<svg width="256" height="256" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&amp;family=Montserrat:wght@700&amp;display=swap');
-    </style>
-    <path id="upper" d="M 64,256 A 192,192 0 0 1 448,256"/>
-    <path id="lower" d="M 448,256 A 192,192 0 0 1 64,256"/>
+    <path id="lower" d="M 128,384 A 128,128 0 0 0 384,384"/>
   </defs>
   
   <circle cx="256" cy="256" r="250" fill="hsl(155, 100%, 12%)"/>
   
-  <text fill="white">
-    <textPath href="#upper" startOffset="50%" text-anchor="middle" style="font-family: 'Great Vibes', cursive; font-size: 84px; letter-spacing: 4px;">
-      BM SS
-    </textPath>
-    <textPath href="#lower" startOffset="50%" text-anchor="middle" style="font-family: 'Montserrat', sans-serif; font-size: 64px; font-weight: 700; letter-spacing: 8px;">
+  <!-- Centered "BM SS" Monogram -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&amp;display=swap');
+  </style>
+  <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-family="'Great Vibes', cursive" font-size="160" fill="white" font-weight="normal">
+    BM SS
+  </text>
+
+  <!-- "SOLAPUR" text at the bottom -->
+  <text font-size="64" font-family="sans-serif" fill="white" font-weight="bold" letter-spacing="8">
+    <textPath href="#lower" startOffset="50%" text-anchor="middle">
       SOLAPUR
     </textPath>
   </text>
   
-  <circle cx="90" cy="256" r="6" fill="white"/>
-  <circle cx="422" cy="256" r="6" fill="white"/>
 </svg>
