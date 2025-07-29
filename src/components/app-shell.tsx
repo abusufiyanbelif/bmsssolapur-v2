@@ -35,6 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         id: "guest_user_id",
         name: "Guest",
         phone: '',
+        email: '',
         roles: ["Guest"],
         activeRole: "Guest",
         initials: "G",
