@@ -52,6 +52,11 @@ This document tracks the features and changes requested for the project.
 - **Leads Table**: Created a "Leads" table in Firestore to track help cases.
 - **Lead Statuses**: "Pending", "Partially Closed", "Closed".
 
+### Fund Flow Dashboard & Reporting
+- **Summary Dashboard**: Admin view with key metrics.
+- **Charts**: Visualizations for "Raised vs. Distributed" funds.
+- **Data Export**: Functionality to export donation and lead data to CSV/Excel.
+
 ## Optional Add-Ons (Later Stages)
 
 - PDF donation receipt (auto-send)
