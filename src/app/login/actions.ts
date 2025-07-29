@@ -14,21 +14,6 @@ interface LoginState {
     userId?: string;
 }
 
-export async function triggerSeed(): Promise<{ message: string }> {
-    console.log("Login page loaded, triggering database seed...");
-    try {
-        await seedDatabase();
-        const message = "Database seeding initiated in the background.";
-        console.log(message);
-        return { message };
-    } catch(e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred during seeding.";
-        console.error("Seeding trigger failed:", error);
-        return { message: `Seeding trigger failed: ${error}` };
-    }
-}
-
-
 export async function handleLogin(formData: FormData): Promise<LoginState> {
     if (!isConfigValid) {
         return { success: false, error: "Firebase is not configured. Cannot process login." };

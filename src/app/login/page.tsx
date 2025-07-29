@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KeyRound, LogIn, MessageSquare, Loader2, Database } from "lucide-react";
+import { KeyRound, LogIn, MessageSquare, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
-import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin, triggerSeed } from "./actions";
+import { useState } from "react";
+import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin } from "./actions";
 import { useRouter } from "next/navigation";
 import { auth } from "@/services/firebase";
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "firebase/auth";
@@ -29,23 +29,6 @@ export default function LoginPage() {
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
-
-  useEffect(() => {
-    // This effect runs only once when the component mounts
-    const runSeed = async () => {
-        // Use a session storage item to ensure this runs only once per session
-        if (!sessionStorage.getItem('db_seeded')) {
-            toast({
-                title: "Initializing Test Data...",
-                description: "The database is being seeded with test users. This may take a moment.",
-                icon: <Database className="mr-2 h-4 w-4 animate-pulse" />
-            });
-            await triggerSeed();
-            sessionStorage.setItem('db_seeded', 'true');
-        }
-    };
-    runSeed();
-  }, []);
 
   const onSuccessfulLogin = (userId: string) => {
     toast({

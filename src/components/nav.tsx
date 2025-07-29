@@ -53,7 +53,6 @@ const allNavItems: NavItem[] = [
     { href: "/admin/maintenance", label: "Maintenance Toggle", icon: Wrench, allowedRoles: ["Super Admin"] },
     { href: "/admin/export", label: "Data Export", icon: Download, allowedRoles: ["Super Admin"] },
     { href: "/admin/module-visibility", label: "Module Visibility", icon: Eye, allowedRoles: ["Super Admin"] },
-    { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"]},
     
     // Shared / Profile (Visible to all logged-in users)
     { href: "/profile", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin"] },
