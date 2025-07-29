@@ -1,6 +1,7 @@
+
 "use server";
 
-import { createDonation, Donation } from "@/services/donation-service";
+import { createDonation, Donation, DonationPurpose, DonationType } from "@/services/donation-service";
 import { revalidatePath } from "next/cache";
 
 interface FormState {
@@ -33,8 +34,8 @@ export async function handleAddDonation(
         donorName: rawFormData.donorName as string,
         isAnonymous: rawFormData.isAnonymous === 'true',
         amount: parseFloat(rawFormData.amount as string),
-        type: rawFormData.type as any, // Cast to any to satisfy DonationType enum
-        purpose: rawFormData.purpose as any, // Cast to any for optional field
+        type: rawFormData.type as DonationType,
+        purpose: rawFormData.purpose ? rawFormData.purpose as DonationPurpose : undefined,
         status: "Pending verification",
         transactionId: rawFormData.transactionId as string,
         paymentScreenshotUrl: paymentScreenshotUrl,
