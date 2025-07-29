@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
-import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck } from "lucide-react";
+import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
@@ -51,6 +51,7 @@ export default async function OrganizationPage() {
         { icon: Hash, label: "Registration No.", value: organization.registrationNumber },
         { icon: Mail, label: "Contact Email", value: organization.contactEmail },
         { icon: Phone, label: "Contact Phone", value: organization.contactPhone },
+        { icon: CreditCard, label: "UPI ID", value: organization.upiId || "Not Available" },
         { icon: Globe, label: "Website", value: organization.website || "Not Available" },
         { icon: ShieldCheck, label: "PAN Number", value: organization.panNumber || "Not Available" },
         { icon: ShieldCheck, label: "Aadhaar Number", value: organization.aadhaarNumber || "Not Available" },

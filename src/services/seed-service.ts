@@ -33,7 +33,8 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     registrationNumber: "MAHA/123/2024",
     contactEmail: "contact@baitulmalsolapur.org",
     contactPhone: "+91 12345 67890",
-    website: "https://baitulmalsolapur.org"
+    website: "https://baitulmalsolapur.org",
+    upiId: "maaz9145@okhdfcbank"
 };
 
 const seedUsers = async () => {

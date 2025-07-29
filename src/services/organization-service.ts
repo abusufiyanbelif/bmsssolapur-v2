@@ -28,6 +28,7 @@ export interface Organization {
   contactEmail: string;
   contactPhone: string;
   website?: string;
+  upiId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
