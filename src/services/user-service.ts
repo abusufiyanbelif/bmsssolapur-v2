@@ -20,7 +20,9 @@ export interface User {
   id?: string;
   name: string;
   phone: string;
-  role: 'Super Admin' | 'Admin' | 'Founder' | 'Finance Team' | 'Member of Organization' | 'Co-Founder';
+  role: string; // Changed to string to be more flexible
+  privileges?: string[];
+  groups?: string[];
   createdAt: Date;
 }
 
