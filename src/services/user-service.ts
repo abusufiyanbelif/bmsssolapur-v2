@@ -97,6 +97,26 @@ export const getUser = async (id: string): Promise<User | null> => {
   }
 };
 
+// Function to get a user by name (for the special 'admin' case)
+export const getUserByName = async (name: string): Promise<User | null> => {
+  if (!isConfigValid) {
+    console.warn("Firebase is not configured. Skipping user fetch by name.");
+    return null;
+  }
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      return { id: userDoc.id, ...userDoc.data() } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user by name: ', error);
+    throw new Error('Failed to get user by name.');
+  }
+}
+
 // Function to get a user by phone number
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
   if (!isConfigValid) {

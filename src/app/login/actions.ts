@@ -3,7 +3,7 @@
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db, isConfigValid } from '@/services/firebase';
-import { User, getUserByPhone, getUserByEmail, createUser } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, createUser, getUserByName } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 
@@ -26,22 +26,6 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     if (!identifier || !password) {
         return { success: false, error: "Identifier and password are required." };
     }
-    
-    // Hardcoded super admin user for guaranteed access
-    if (identifier === 'admin' && password === 'admin') {
-        const hardcodedAdminUser: User = {
-            id: 'hardcoded-admin',
-            name: "Super Admin (Hardcoded)",
-            email: "admin@internal.app",
-            phone: "0000000000",
-            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-            privileges: ["all"],
-            groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"],
-            createdAt: Timestamp.now()
-        };
-        return { success: true, user: hardcodedAdminUser };
-    }
-
 
     // For this prototype, we'll use a simple password check for all users.
     // In a real application, you would use Firebase Authentication
@@ -52,22 +36,26 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
 
     try {
         let user: User | null = null;
-        if (isEmail(identifier)) {
-            user = await getUserByEmail(identifier);
-             if (!user) {
-                return { success: false, error: "User with this email not found." };
+        
+        if (identifier === 'admin') {
+            user = await getUserByName('admin');
+            if (!user) {
+                return { success: false, error: "The default 'admin' user was not found in the database. Please run the database seeder." };
             }
+        } else if (isEmail(identifier)) {
+            user = await getUserByEmail(identifier);
         } else {
             // Assume it's a phone number
             const phoneRegex = /^[0-9]{10}$/;
             if (phoneRegex.test(identifier)) {
                 user = await getUserByPhone(identifier);
-                if (!user) {
-                    return { success: false, error: "User with this phone number not found." };
-                }
             } else {
                 return { success: false, error: "Invalid identifier. Please use a valid email or 10-digit phone number." };
             }
+        }
+        
+        if (!user) {
+            return { success: false, error: "User not found." };
         }
         
         return { success: true, userId: user.id };
@@ -183,4 +171,11 @@ export async function handleGoogleLogin(firebaseUser: {
     const error = e instanceof Error ? e.message : 'An unknown error occurred during login.';
     return { success: false, error };
   }
+}
+
+
+export async function triggerSeed() {
+    console.log("Triggering seed from login page...");
+    const { seedDatabase } = await import('@/services/seed-service');
+    await seedDatabase();
 }
