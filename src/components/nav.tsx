@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Settings, Share2, ShieldCheck, UserCog, User } from "lucide-react"
+import { Home, Settings, Share2, ShieldCheck, UserCog, User, HandHeart } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
 const navItems = [
     { href: "/admin", label: "Dashboard", icon: Home },
+    { href: "/admin/donations", label: "Donations", icon: HandHeart },
     { href: "/profile", label: "User Profile", icon: User },
     { href: "/services", label: "Services Summary", icon: Settings },
     { href: "/dependencies", label: "Dependency Map", icon: Share2 },
