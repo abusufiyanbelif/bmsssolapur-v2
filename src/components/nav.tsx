@@ -2,16 +2,16 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Settings, Share2, ShieldCheck, Package2 } from "lucide-react"
+import { Home, Settings, Share2, ShieldCheck, UserCog } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/services", label: "Services Summary", icon: Settings },
     { href: "/dependencies", label: "Dependency Map", icon: Share2 },
     { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
+    { href: "/personas", label: "AI Persona Management", icon: UserCog },
 ];
 
 export function Nav() {
