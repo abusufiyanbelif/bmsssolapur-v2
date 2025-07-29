@@ -7,10 +7,9 @@ import { createOrganization, Organization } from './organization-service';
 import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 
-const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
-    // Super Admins
+const usersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
+    // Super Admin
     { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"] },
-    { name: "Super Admin", email: "admin@baitulmalsolapur.org", phone: "1111111111", roles: ["Super Admin"], privileges: ["all"] },
     
     // Admins (Founders and Members)
     { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"] },
