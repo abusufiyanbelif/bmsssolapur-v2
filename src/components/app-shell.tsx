@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users, User } from "lucide-react";
+import { LogIn, LogOut, Menu, Users, User, Home } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect } from "react";
 import { Footer } from "./footer";
@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
     const pathname = usePathname();
 
-    const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; }>({
+    const guestUser = {
         isLoggedIn: false,
         id: "guest_user_id",
         name: "Guest",
@@ -40,7 +40,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         initials: "G",
         avatar: "https://placehold.co/100x100.png",
         createdAt: new Date() as any,
-    });
+    };
+
+    const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; }>(guestUser);
     
     useEffect(() => {
         const checkUser = async () => {
@@ -48,23 +50,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             if (storedUserId) {
                 const fetchedUser = await getUser(storedUserId);
                 if (fetchedUser) {
-                    const savedRole = localStorage.getItem('activeRole') || fetchedUser.roles[0];
+                    const savedRole = localStorage.getItem('activeRole');
                     setUser({
                         ...fetchedUser,
                         isLoggedIn: true,
-                        activeRole: savedRole,
+                        activeRole: savedRole || fetchedUser.roles[0],
                         initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
                         avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
                     });
-                     // Show role switcher on first load after login if multiple roles exist
-                    if (!localStorage.getItem('activeRole') && fetchedUser.roles.length > 1) {
+                     // Show role switcher on first load after login if multiple roles exist and one hasn't been chosen
+                    if (!savedRole && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                     }
+                } else {
+                    // If user ID is invalid, log them out.
+                    handleLogout();
                 }
+            } else {
+                setUser(guestUser);
             }
         };
         checkUser();
-    }, []);
+    }, [pathname]); // Rerun on path change to catch login redirects
 
 
     const handleRoleChange = (newRole: string) => {
@@ -85,20 +92,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     };
     
-    const simulateLogout = () => {
+    const handleLogout = () => {
         localStorage.removeItem('userId');
         localStorage.removeItem('activeRole');
-        setUser({
-            isLoggedIn: false,
-            id: "guest_user_id",
-            name: "Guest",
-            phone: '',
-            roles: ["Guest"],
-            activeRole: "Guest",
-            initials: "G",
-            avatar: "https://placehold.co/100x100.png",
-            createdAt: new Date() as any
-        });
+        setUser(guestUser);
     }
 
     const handleOpenRoleSwitcher = (requiredRoleName: string | null = null) => {
@@ -187,6 +184,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                         </div>
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
+                                     <DropdownMenuItem asChild>
+                                        <Link href="/home">
+                                            <Home className="mr-2 h-4 w-4" />
+                                            <span>Home</span>
+                                        </Link>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
                                         <Link href="/profile">
                                             <User className="mr-2 h-4 w-4" />
@@ -198,7 +201,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                         <span>Switch Role ({user.activeRole})</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={simulateLogout}>
+                                    <DropdownMenuItem onClick={handleLogout}>
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>Log out</span>
                                     </DropdownMenuItem>
@@ -236,6 +239,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
     )
 }
-
-
-    

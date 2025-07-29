@@ -28,6 +28,19 @@ export default function LoginPage() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
 
+  const onSuccessfulLogin = (userId: string) => {
+    toast({
+      title: "Login Successful",
+      description: "Welcome back! Please select your role to continue.",
+    });
+    // Clear any previous role selection
+    localStorage.removeItem('activeRole'); 
+    localStorage.setItem('userId', userId);
+    
+    // Use router to navigate, letting app-shell handle the role switching logic
+    router.push('/home'); 
+  }
+
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -35,17 +48,7 @@ export default function LoginPage() {
     const result = await handleLogin(formData);
 
     if (result.success && result.userId) {
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      localStorage.setItem('userId', result.userId);
-      // Give localStorage a moment to update before reloading the page to trigger the app shell's user check.
-      setTimeout(() => {
-        router.push('/home');
-        // A full reload might be better to ensure all states are reset and re-initialized.
-        // window.location.href = '/home';
-      }, 100);
+      onSuccessfulLogin(result.userId);
     } else {
       toast({
         variant: "destructive",
@@ -91,14 +94,7 @@ export default function LoginPage() {
       const result = await handleVerifyOtp(formData);
 
        if (result.success && result.userId) {
-            toast({
-                title: "Login Successful",
-                description: "Welcome back!",
-            });
-            localStorage.setItem('userId', result.userId);
-            setTimeout(() => {
-                router.push('/home');
-            }, 100);
+            onSuccessfulLogin(result.userId);
         } else {
             toast({
                 variant: "destructive",
@@ -208,5 +204,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    

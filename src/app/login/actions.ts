@@ -2,7 +2,7 @@
 "use server";
 
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/services/firebase';
+import { db, isConfigValid } from '@/services/firebase';
 import { User, getUserByPhone } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
@@ -14,6 +14,9 @@ interface LoginState {
 }
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
+    if (!isConfigValid) {
+        return { success: false, error: "Firebase is not configured. Cannot process login." };
+    }
     const phone = formData.get("phone") as string;
     const password = formData.get("password") as string;
 
@@ -29,17 +32,11 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     }
 
     try {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where("phone", "==", phone));
-        const querySnapshot = await getDocs(q);
+        const user = await getUserByPhone(phone);
 
-        if (querySnapshot.empty) {
+        if (!user) {
             return { success: false, error: "User with this phone number not found." };
         }
-
-        // Assuming phone numbers are unique, so we take the first result.
-        const userDoc = querySnapshot.docs[0];
-        const user = { id: userDoc.id, ...userDoc.data() } as User;
         
         return { success: true, userId: user.id };
 
@@ -56,6 +53,9 @@ interface OtpState {
 }
 
 export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
+    if (!isConfigValid) {
+        return { success: false, error: "Firebase is not configured. Cannot send OTP." };
+    }
     try {
         // Basic validation
         const user = await getUserByPhone(phoneNumber.substring(2)); // remove +91
@@ -73,6 +73,9 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
 
 
 export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
+    if (!isConfigValid) {
+        return { success: false, error: "Firebase is not configured. Cannot verify OTP." };
+    }
     const phoneNumber = formData.get("phone") as string;
     const code = formData.get("otp") as string;
     
@@ -99,5 +102,3 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         return { success: false, error };
     }
 }
-
-    
