@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LogIn } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -12,10 +12,15 @@ export default function LandingPage() {
         <p className="mt-4 text-lg text-muted-foreground md:text-xl">
           A non-profit organization dedicated to serving the community through various social welfare activities.
         </p>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button asChild size="lg">
-            <Link href="/admin">
-              Go to Admin Dashboard <ArrowRight className="ml-2" />
+            <Link href="/campaigns">
+              View Campaigns <ArrowRight className="ml-2" />
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/login">
+              Login / Register <LogIn className="ml-2" />
             </Link>
           </Button>
         </div>

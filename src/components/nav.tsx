@@ -9,7 +9,6 @@ import {
     Share2, 
     ShieldCheck, 
     UserCog, 
-    User, 
     HandHeart, 
     Users,
     FileCheck,
@@ -17,7 +16,6 @@ import {
     FileText,
     BadgePercent,
     Banknote,
-    BarChart,
     UserPlus,
     Lock,
     BookText,
@@ -71,7 +69,10 @@ const adminNavItems: NavItem[] = [
 ];
 
 const superAdminNavItems: NavItem[] = [
-    ...adminNavItems,
+    { href: "/admin", label: "Dashboard", icon: Home },
+    { href: "/admin/leads", label: "All Leads", icon: Users },
+    { href: "/admin/donations", label: "Donations", icon: Banknote, subRoles: ["Finance Admin"] },
+    { href: "/profile", label: "Profile", icon: UserCog },
     { href: "/admin/user-management", label: "User Management", icon: UserCog },
     { href: "/admin/role-assignment", label: "Role Assignment", icon: Lock },
     { href: "/admin/logs", label: "All Logs", icon: BookText },
@@ -100,7 +101,7 @@ export function Nav() {
     // In a real app, you would get the user's role from your authentication context.
     // We can simulate different roles by changing the value here.
     // e.g., 'Super Admin', 'Admin', 'Donor', 'Beneficiary', 'Guest'
-    const userRole: keyof typeof allNavItems = "Super Admin"; 
+    const userRole: keyof typeof allNavItems = "Guest"; 
 
     const navItems = allNavItems[userRole] || [];
 
@@ -115,7 +116,7 @@ export function Nav() {
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">
             {navItems.map((item) => {
                 const isActive = (
-                    (item.href !== '/' && pathname.startsWith(item.href)) ||
+                    (pathname.startsWith(item.href) && item.href !== '/') ||
                     (pathname === item.href)
                 );
                 
