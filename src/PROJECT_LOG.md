@@ -27,6 +27,7 @@ This document tracks the features and changes requested for the project.
 - **OTP**: Created Genkit flows for sending (`send-otp-flow.ts`) and verifying (`verify-otp-flow.ts`) one-time passwords via Twilio.
 
 ### User Interface
+- **Role-Based Navigation**: Implemented a dynamic navigation menu that displays different modules based on the logged-in user's role (Super Admin, Admin, Donor, Beneficiary).
 - **Organization Page**: Created a public page at `/organization` to display verifiable details of the registered organization.
 - **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
 - **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.

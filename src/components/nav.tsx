@@ -1,33 +1,114 @@
+
 "use client";
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Settings, Share2, ShieldCheck, UserCog, User, HandHeart, Users } from "lucide-react"
+import { 
+    Home, 
+    Settings, 
+    Share2, 
+    ShieldCheck, 
+    UserCog, 
+    User, 
+    HandHeart, 
+    Users,
+    FileCheck,
+    Upload,
+    FileText,
+    BadgePercent,
+    Banknote,
+    BarChart,
+    UserPlus,
+    Lock,
+    BookText,
+    Wrench,
+    Download,
+    Eye
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const navItems = [
-    { href: "/admin", label: "Dashboard", icon: Home },
-    { href: "/admin/donations", label: "Donations", icon: HandHeart },
-    { href: "/admin/leads", label: "Leads", icon: Users },
-    { href: "/profile", label: "User Profile", icon: User },
-    { href: "/services", label: "Services Summary", icon: Settings },
-    { href: "/dependencies", label: "Dependency Map", icon: Share2 },
-    { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
-    { href: "/personas", label: "AI Persona Management", icon: UserCog },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  subRoles?: string[];
+};
+
+const donorNavItems: NavItem[] = [
+    { href: "/home", label: "Home", icon: Home },
+    { href: "/approved-leads", label: "Approved Leads", icon: FileCheck },
+    { href: "/my-donations", label: "My Donations", icon: HandHeart },
+    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/reminders", label: "Reminders", icon: BadgePercent },
 ];
+
+const beneficiaryNavItems: NavItem[] = [
+    { href: "/home", label: "Home", icon: Home },
+    { href: "/my-cases", label: "My Cases", icon: FileText },
+    { href: "/upload-documents", label: "Upload Documents", icon: Upload },
+    { href: "/case-status", label: "Case Status", icon: FileCheck },
+    { href: "/settings", label: "Settings", icon: Settings },
+];
+
+const adminNavItems: NavItem[] = [
+    { href: "/admin", label: "Dashboard", icon: Home },
+    { href: "/admin/leads/add", label: "Add Lead", icon: UserPlus },
+    { href: "/admin/leads", label: "All Leads", icon: Users },
+    { href: "/admin/approvals", label: "Approvals", icon: FileCheck },
+    { href: "/admin/verifications", label: "Upload Verifications", icon: Upload },
+    { href: "/admin/donations", label: "Donations", icon: Banknote, subRoles: ["Finance Admin"] },
+    { href: "/admin/donations/verify", label: "Verify Donation Proofs", icon: ShieldCheck, subRoles: ["Finance Admin"] },
+    { href: "/admin/reports/donations", label: "Donation Reports", icon: BarChart, subRoles: ["Finance Admin"] },
+    { href: "/admin/analytics", label: "Analytics", icon: BarChart, subRoles: ["Founder", "Co-Founder"] },
+    { href: "/admin/reports/cases", label: "Case Reports", icon: FileText, subRoles: ["Founder", "Co-Founder"] },
+    { href: "/profile", label: "Settings", icon: Settings },
+];
+
+const superAdminNavItems: NavItem[] = [
+    ...adminNavItems,
+    { href: "/admin/user-management", label: "User Management", icon: UserCog },
+    { href: "/admin/role-assignment", label: "Role Assignment", icon: Lock },
+    { href: "/admin/logs", label: "All Logs", icon: BookText },
+    { href: "/admin/app-settings", label: "App Settings", icon: Settings },
+    { href: "/admin/maintenance", label: "Maintenance Toggle", icon: Wrench },
+    { href: "/admin/export", label: "Data Export", icon: Download },
+    { href: "/admin/module-visibility", label: "Module Visibility", icon: Eye },
+];
+
+
+const allNavItems = {
+    'Donor': donorNavItems,
+    'Beneficiary': beneficiaryNavItems,
+    'Admin': adminNavItems,
+    'Super Admin': superAdminNavItems,
+}
 
 export function Nav() {
     const pathname = usePathname();
 
-    const isDonationRoute = pathname === '/admin/donations' || pathname === '/admin/donations/add';
+    // In a real app, you would get the user's role from your authentication context.
+    // For now, we'll simulate it.
+    const userRole: keyof typeof allNavItems = "Super Admin"; 
+
+    const navItems = allNavItems[userRole] || [];
+
+    const isDonationRoute = pathname.startsWith('/admin/donations');
+    const isLeadsRoute = pathname.startsWith('/admin/leads');
 
     return (
-        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">
             {navItems.map((item) => {
-                const isActive = (item.href === '/admin/donations' 
-                    ? isDonationRoute
-                    : pathname.startsWith(item.href)) && (item.href !== '/admin' || pathname === '/admin')
+                const isActive = (
+                    (item.href === '/admin/donations' && isDonationRoute) ||
+                    (item.href === '/admin/leads' && isLeadsRoute) ||
+                    (pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin'))
+                );
+                
+                // A real implementation would also check sub-roles here
+                // if (item.subRoles && !currentUser.subRoles.some(r => item.subRoles.includes(r))) {
+                //     return null;
+                // }
 
                 return (
                     <Link
