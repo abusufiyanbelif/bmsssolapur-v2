@@ -19,6 +19,7 @@ const USERS_COLLECTION = 'users';
 export interface User {
   id?: string;
   name: string;
+  email?: string;
   phone: string;
   secondaryPhone?: string; // For account recovery
   aadhaarNumber?: string; // Mandated for Admins
