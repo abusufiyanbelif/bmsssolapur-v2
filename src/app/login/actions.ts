@@ -1,9 +1,9 @@
 
 "use server";
 
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db, isConfigValid } from '@/services/firebase';
-import { User, getUserByPhone } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, createUser } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 
@@ -107,4 +107,49 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
         return { success: false, error };
     }
+}
+
+interface OAuthLoginState {
+    success: boolean;
+    error?: string;
+    userId?: string;
+}
+
+export async function handleGoogleLogin(firebaseUser: {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  phoneNumber: string | null;
+}): Promise<OAuthLoginState> {
+  if (!isConfigValid) {
+    return { success: false, error: 'Firebase is not configured.' };
+  }
+
+  if (!firebaseUser.email) {
+    return { success: false, error: 'Google account must have an email.' };
+  }
+
+  try {
+    let appUser = await getUserByEmail(firebaseUser.email);
+
+    if (!appUser) {
+      // User doesn't exist, create a new one
+      const newUser: Omit<User, 'id'> = {
+        name: firebaseUser.displayName || 'Google User',
+        email: firebaseUser.email,
+        // Use a placeholder phone number; the user can update it in their profile
+        phone: firebaseUser.phoneNumber || Date.now().toString().slice(-10),
+        roles: ['Donor'], // Default role for new sign-ups
+        createdAt: Timestamp.now(),
+      };
+      // Use the Firebase UID as the document ID for our user record
+      appUser = await createUser({ ...newUser, id: firebaseUser.uid });
+    }
+
+    return { success: true, userId: appUser.id };
+  } catch (e) {
+    console.error('Error during Google login process:', e);
+    const error = e instanceof Error ? e.message : 'An unknown error occurred during login.';
+    return { success: false, error };
+  }
 }

@@ -62,7 +62,12 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
-        ...user, 
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        roles: user.roles || [],
+        privileges: user.privileges || [],
+        groups: user.groups || [],
         id: userRef.id,
         createdAt: user.createdAt || Timestamp.now(),
     };
@@ -109,6 +114,26 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
   } catch (error) {
     console.error('Error getting user by phone: ', error);
     throw new Error('Failed to get user by phone.');
+  }
+}
+
+// Function to get a user by email
+export const getUserByEmail = async (email: string): Promise<User | null> => {
+  if (!isConfigValid) {
+    console.warn("Firebase is not configured. Skipping user fetch by email.");
+    return null;
+  }
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where("email", "==", email), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      return { id: userDoc.id, ...userDoc.data() } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user by email: ', error);
+    throw new Error('Failed to get user by email.');
   }
 }
 
