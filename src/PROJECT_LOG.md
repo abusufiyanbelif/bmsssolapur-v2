@@ -2,6 +2,19 @@
 
 This document tracks the features and changes requested for the project.
 
+## Project Status & Next Steps
+
+### Pending Configurations (Blocked)
+- **OTP Login**: The Twilio integration for sending OTPs via SMS is built but requires a live Account SID, Auth Token, and Verify Service SID to be functional.
+- **Email Notifications**: The Nodemailer setup for sending emails is ready but needs valid SMTP credentials (host, user, password) to be enabled.
+
+### Pending Feature Development (In Progress)
+- **Core Business Logic**: The foundational services for creating users, donations, and leads are in place. The next step is to build the UI and workflows for admins to manage them (e.g., verifying a donation, allocating funds to a lead).
+- **Dynamic User Home Page**: The authenticated user's home page (`/home`) is currently static. The next major task is to make this page dynamic by fetching and displaying real, user-specific data (e.g., a donor's donation history, a beneficiary's case status).
+
+
+---
+
 ## Initial Setup & Configuration
 
 - **Development Mode**: AI assistant to write all code on behalf of the user.
