@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users } from "lucide-react";
+import { LogIn, LogOut, Menu, Users, User, Settings, ChevronDown } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState } from "react";
 import { Footer } from "./footer";
@@ -12,6 +11,15 @@ import { logActivity } from "@/services/activity-log-service";
 import { Logo } from "./logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -22,10 +30,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // In a real app, this would come from your authentication context.
     // We now default to a logged-out 'Guest' user.
     const [user, setUser] = useState({
-        isLoggedIn: false, // Set to false to simulate a logged-out user (Guest)
+        isLoggedIn: false, // Set to true to simulate a logged-in user
         id: "guest_user_id",
         name: "Guest",
         email: "guest@example.com",
+        initials: "G",
+        avatar: "https://placehold.co/100x100.png",
         roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
         activeRole: "Guest", // Default role is Guest
     });
@@ -47,6 +57,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
     };
+    
+    // This is a simulation function for logging in.
+    const simulateLogin = () => {
+         setUser({
+            isLoggedIn: true,
+            id: "user_placeholder_id_12345",
+            name: "Aisha Khan",
+            email: "aisha.khan@example.com",
+            initials: "AK",
+            avatar: "https://placehold.co/100x100.png",
+            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
+            activeRole: "Donor",
+        });
+    }
 
     const handleOpenRoleSwitcher = (requiredRoleName: string | null = null) => {
         setRequiredRole(requiredRoleName);
@@ -69,6 +93,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             id: "guest_user_id",
             name: "Guest",
             email: "guest@example.com",
+            initials: "G",
+            avatar: "https://placehold.co/100x100.png",
             roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
             activeRole: "Guest",
         });
@@ -125,20 +151,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             />
                         </SheetContent>
                     </Sheet>
-                     <div className="w-full flex-1 flex justify-end items-center gap-2">
+                     <div className="w-full flex-1 flex justify-end items-center gap-4">
                         {user.isLoggedIn ? (
-                            <>
-                                 <Button variant="outline" onClick={() => handleOpenRoleSwitcher()}>
-                                    <Users className="mr-2 h-4 w-4" />
-                                    Switch Role ({user.activeRole})
-                                </Button>
-                                <Button variant="ghost" onClick={simulateLogout}>
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    Logout
-                                </Button>
-                            </>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                                        <Avatar className="h-9 w-9">
+                                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="female portrait" />
+                                            <AvatarFallback>{user.initials}</AvatarFallback>
+                                        </Avatar>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56" align="end" forceMount>
+                                    <DropdownMenuLabel className="font-normal">
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                                            <p className="text-xs leading-none text-muted-foreground">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/profile">
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Profile</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                     <DropdownMenuItem onClick={() => handleOpenRoleSwitcher()}>
+                                        <Users className="mr-2 h-4 w-4" />
+                                        <span>Switch Role ({user.activeRole})</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={simulateLogout}>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <span>Log out</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         ) : (
                              <>
+                                <Button onClick={simulateLogin}>Simulate Login</Button>
                                 {pathname !== '/login' && (
                                      <Button asChild>
                                         <Link href="/login">
