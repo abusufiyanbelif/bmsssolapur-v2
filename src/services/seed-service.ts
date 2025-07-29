@@ -16,6 +16,8 @@ const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
     { name: "Mazhar Shaikh", phone: "8087669914", role: "Member of Organization", privileges: ["Admin"] },
     { name: "Mujahid Chabukswar", phone: "8087420544", role: "Member of Organization", privileges: ["Admin"] },
     { name: "Muddasir", phone: "7385557820", role: "Member of Organization", privileges: ["Admin"] },
+    // Generic Donor for Anonymous Donations
+    { name: "Anonymous Donor", phone: "0000000000", role: "Donor", privileges: [] },
 ];
 
 
