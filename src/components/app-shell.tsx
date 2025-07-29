@@ -11,7 +11,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                         <a href="/" className="flex items-center gap-2 font-semibold font-headline">
                             <Package2 className="h-6 w-6 text-primary" />
-                            <span className="">Baitul Mal</span>
+                            <span className="">Baitul Mal SS</span>
                         </a>
                     </div>
                     <div className="flex-1">
@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                                 <a href="/" className="flex items-center gap-2 font-semibold font-headline">
                                     <Package2 className="h-6 w-6 text-primary" />
-                                    <span className="">Baitul Mal</span>
+                                    <span className="">Baitul Mal SS</span>
                                 </a>
                             </div>
                             <Nav />

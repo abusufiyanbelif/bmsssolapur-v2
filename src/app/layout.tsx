@@ -4,7 +4,7 @@ import { AppShell } from '@/components/app-shell';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Baitul Mal Connect: Visualizer',
+  title: 'Baitul Mal Samajik Sanstha (Solapur)',
   description: 'Visualize your Firebase and external service configurations.',
 };
 
