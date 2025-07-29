@@ -44,11 +44,13 @@ This document tracks the features and changes requested for the project.
 - Specified access levels for Admin, Donor, and Guest roles.
 - **Conflict of Interest**: Admins cannot approve their own beneficiary applications. If a finance admin is a beneficiary, another admin must approve.
 - **Account Recovery**: Admins and Super Admins can add a secondary phone number for account recovery.
+- **Verification IDs**: Admins are required to provide Aadhaar and PAN numbers for verification. These fields are optional for other user roles.
 
 ### Organization Management
 - **City-wise Management**: Organizations are managed on a city-by-city basis, starting with Solapur.
 - **Duplicate Prevention**: The system prevents the creation of organizations with a duplicate name or registration number.
 - **Approval Workflow**: Edits to organization details by an Admin must be approved by a Super Admin.
+- **Verification IDs**: Organizations can have Aadhaar and PAN numbers stored for verification.
 
 ### Donation Management
 

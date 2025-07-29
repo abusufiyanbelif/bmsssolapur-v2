@@ -23,6 +23,8 @@ export interface Organization {
   city: string;
   address: string;
   registrationNumber: string;
+  aadhaarNumber?: string;
+  panNumber?: string;
   contactEmail: string;
   contactPhone: string;
   website?: string;

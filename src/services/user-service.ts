@@ -21,6 +21,8 @@ export interface User {
   name: string;
   phone: string;
   secondaryPhone?: string; // For account recovery
+  aadhaarNumber?: string; // Mandated for Admins
+  panNumber?: string; // Mandated for Admins
   role: string; // Changed to string to be more flexible
   privileges?: string[];
   groups?: string[];
