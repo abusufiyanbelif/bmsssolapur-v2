@@ -30,6 +30,7 @@ export interface Donation {
   type: DonationType;
   purpose?: DonationPurpose;
   status: DonationStatus;
+  isAnonymous?: boolean; // To handle anonymous donations
   paymentScreenshotUrl?: string; // URL to the uploaded screenshot
   transactionId?: string;
   createdAt: Timestamp;
@@ -43,10 +44,10 @@ export interface Donation {
 export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>) => {
   try {
     const donationRef = doc(collection(db, DONATIONS_COLLECTION));
-    const newDonation: Donation = { 
-        ...donation, 
-        id: donationRef.id, 
-        createdAt: Timestamp.now() 
+    const newDonation: Donation = {
+        ...donation,
+        id: donationRef.id,
+        createdAt: Timestamp.now()
     };
     await setDoc(donationRef, newDonation);
     await logDonationActivity(newDonation.id!, 'Donation Created', { details: `Donation of ${newDonation.amount} from ${newDonation.donorName} created.` });
@@ -76,9 +77,9 @@ export const updateDonation = async (id: string, updates: Partial<Donation>) => 
     try {
         const donationRef = doc(db, DONATIONS_COLLECTION, id);
         const originalDonation = await getDonation(id);
-        
+
         await updateDoc(donationRef, updates);
-        
+
         if(updates.status && originalDonation?.status !== updates.status) {
             await logDonationActivity(id, 'Status Changed', { from: originalDonation?.status, to: updates.status });
         } else {
@@ -98,7 +99,7 @@ export const getAllDonations = async (): Promise<Donation[]> => {
         const querySnapshot = await getDocs(donationsQuery);
         const donations: Donation[] = [];
         querySnapshot.forEach((doc) => {
-            donations.push(doc.data() as Donation);
+            donations.push({ id: doc.id, ...doc.data() } as Donation);
         });
         return donations;
     } catch (error) {

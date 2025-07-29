@@ -31,10 +31,20 @@ This document tracks the features and changes requested for the project.
 - **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
 - **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.
 - **User Profile**: Created a page (`/profile`) for users to manage their settings, including notification preferences.
+- **Admin Dashboard**: Created at `/admin` to show key stats.
+- **Donation Management**: Created a page at `/admin/donations` to list all donations with their status.
 
 ### User Roles & Permissions
 
-- Defined user roles: Donor, Beneficiary, Referral, Super Admin, Admin (with sub-categories).
+- Defined user roles: Donor, Beneficiary, Referral, Super Admin, Admin (with sub-categories: Normal admin, Founder, Co-founder, Finance).
+- Added Privileges and Groups to the user model.
+
+### Donation Management
+
+- **Statuses**: "Pending verification", "Verified", "Failed/Incomplete", "Allocated"
+- **Categories**: 'Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'
+- **Purposes**: 'Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use'
+
 
 ## Optional Add-Ons (Later Stages)
 
