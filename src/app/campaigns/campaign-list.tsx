@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -93,8 +94,10 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
                                     ₹{remainingAmount.toLocaleString()} still needed
                                 </p>
                             }
-                            <Button className="w-full">
-                                Donate Now
+                            <Button asChild className="w-full">
+                                <Link href="/login">
+                                    Donate Now
+                                </Link>
                             </Button>
                         </CardFooter>
                     </Card>
