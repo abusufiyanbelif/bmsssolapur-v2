@@ -27,10 +27,11 @@ const usersToSeed: Omit<User, 'createdAt' | 'id'>[] = [
 ];
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
-    name: "Baitul Mal Samajik Sanstha (Solapur)",
+    name: "BAITULMAL SAMAJIK SANSTHA SOLAPUR",
     city: "Solapur",
     address: "Solapur, Maharashtra, India",
     registrationNumber: "MAHA/123/2024",
+    panNumber: "AAFTB9401P",
     contactEmail: "contact@baitulmalsolapur.org",
     contactPhone: "+91 12345 67890",
     website: "https://baitulmalsolapur.org",
