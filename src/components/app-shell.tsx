@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // For now, we simulate a user who is logged in and has an active role.
     // To simulate a guest user, set isLoggedIn to false.
     const [user, setUser] = useState({
-        isLoggedIn: true,
+        isLoggedIn: false, // Default to logged-out state
         roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
         activeRole: "Super Admin", // Change this to test different roles
     });
@@ -31,6 +31,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setIsRoleSwitcherOpen(open);
     };
 
+    // To test the logged-in view, you can manually change isLoggedIn to true here.
+    // In a real app, a login function would update this state.
     const activeRole = user.isLoggedIn ? user.activeRole : "Guest";
 
     return (
