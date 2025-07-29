@@ -38,7 +38,7 @@ export default async function OrganizationPage() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Organization Found</AlertTitle>
                     <AlertDescription>
-                        No organization details have been configured in the database yet.
+                        No organization details have been configured in the database yet. This could also be due to missing Firebase credentials.
                     </AlertDescription>
                 </Alert>
             </div>

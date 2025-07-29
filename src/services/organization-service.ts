@@ -13,7 +13,7 @@ import {
   where,
   limit,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, isConfigValid } from './firebase';
 
 const ORGANIZATIONS_COLLECTION = 'organizations';
 
@@ -34,6 +34,7 @@ export interface Organization {
 
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
+    if (!isConfigValid) return false;
     const nameQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("name", "==", name), limit(1));
     const regQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("registrationNumber", "==", registrationNumber), limit(1));
 
@@ -48,6 +49,7 @@ const checkDuplicates = async (name: string, registrationNumber: string): Promis
 
 // Function to create an organization
 export const createOrganization = async (orgData: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>) => {
+  if (!isConfigValid) throw new Error("Firebase is not configured.");
   try {
     const isDuplicate = await checkDuplicates(orgData.name, orgData.registrationNumber);
     if (isDuplicate) {
@@ -71,6 +73,7 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 
 // Function to get an organization by ID
 export const getOrganization = async (id: string): Promise<Organization | null> => {
+  if (!isConfigValid) throw new Error("Firebase is not configured.");
   try {
     const orgDoc = await getDoc(doc(db, ORGANIZATIONS_COLLECTION, id));
     if (orgDoc.exists()) {
@@ -85,6 +88,10 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
 
 // For now, we will assume one organization for simplicity. This can be expanded later.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
+    if (!isConfigValid) {
+        console.warn("Firebase not configured, skipping organization fetch.");
+        return null;
+    }
     try {
         const orgQuery = query(collection(db, ORGANIZATIONS_COLLECTION), limit(1));
         const querySnapshot = await getDocs(orgQuery);
@@ -102,6 +109,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
 
 // Function to update an organization
 export const updateOrganization = async (id: string, updates: Partial<Omit<Organization, 'id' | 'createdAt'>>) => {
+  if (!isConfigValid) throw new Error("Firebase is not configured.");
   try {
     const orgRef = doc(db, ORGANIZATIONS_COLLECTION, id);
     await updateDoc(orgRef, {
