@@ -59,7 +59,10 @@ const seedUsers = async () => {
         const q = query(collection(db, 'users'), where("phone", "==", userData.phone));
         const existingUsers = await getDocs(q);
         if (existingUsers.empty) {
-            await createUser(userData);
+            await createUser({
+                ...userData,
+                createdAt: Timestamp.now()
+            });
         } else {
             console.log(`User with phone ${userData.phone} already exists. Skipping.`);
         }

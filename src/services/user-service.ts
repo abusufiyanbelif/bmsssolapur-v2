@@ -56,14 +56,13 @@ export interface User {
 }
 
 // Function to create or update a user
-export const createUser = async (user: Omit<User, 'id' | 'createdAt'> & { id?: string }) => {
+export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
     const newUser: User = { 
         ...user, 
-        id: userRef.id,
-        createdAt: Timestamp.now()
+        id: userRef.id
     };
     await setDoc(userRef, newUser);
     return newUser;
@@ -154,5 +153,3 @@ export const getAllUsers = async (): Promise<User[]> => {
         throw new Error('Failed to get all users.');
     }
 }
-
-    
