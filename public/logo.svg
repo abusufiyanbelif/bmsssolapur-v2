@@ -1,20 +1,21 @@
-<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="256" height="256" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <path id="upper" d="M 128,256 A 128,128 0 1 1 384,256"/>
-    <path id="lower" d="M 384,256 A 128,128 0 1 1 128,256"/>
+    <path id="upper" d="M 64,256 A 192,192 0 0 1 448,256"/>
+    <path id="lower" d="M 448,256 A 192,192 0 0 1 64,256"/>
   </defs>
   
   <circle cx="256" cy="256" r="250" fill="hsl(155, 100%, 12%)"/>
   
-  <text font-size="96" font-family="sans-serif" fill="white" font-weight="bold" letter-spacing="12">
-    <textPath href="#upper" startOffset="50%" text-anchor="middle">
-      BM SS
-    </textPath>
-    <textPath href="#lower" startOffset="50%" text-anchor="middle">
-      SOLAPUR
-    </textPath>
+  <text font-size="38" font-family="sans-serif" fill="white" font-weight="bold" letter-spacing="4">
+    <textPath href="#upper" startOffset="50%" text-anchor="middle"> BM SS</textPath>
+    <textPath href="#lower" startOffset="50%" text-anchor="middle"> SOLAPUR </textPath>
   </text>
   
-  <circle cx="100" cy="256" r="10" fill="white"/>
-  <circle cx="412" cy="256" r="10" fill="white"/>
+  <circle cx="90" cy="256" r="6" fill="white"/>
+  <circle cx="422" cy="256" r="6" fill="white"/>
+  
+  <path d="M 196,352 Q 176,322 176,282 C 176,242 196,212 216,212 Q 236,212 256,242" fill="hsl(155, 60%, 45%)"/>
+  <path d="M 316,352 Q 336,322 336,282 C 336,242 316,212 296,212 Q 276,212 256,242" fill="hsl(48, 90%, 50%)"/>
+  
+  <path d="M 256,180 L 276,200 A 20,20 0,0,1 256,225 A 20,20 0,0,1 236,200 Z" fill="hsl(48, 90%, 50%)"/>
 </svg>
