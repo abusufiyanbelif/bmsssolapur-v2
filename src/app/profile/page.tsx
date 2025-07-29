@@ -1,20 +1,49 @@
 
+
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ActivityFeed } from "./activity-feed";
+import { getUser, User } from '@/services/user-service';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ProfilePage() {
   const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // In a real app, this would be from an auth context
+  const userId = "user_placeholder_id_12345"; 
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const fetchedUser = await getUser(userId);
+        if (fetchedUser) {
+          setUser(fetchedUser);
+        } else {
+          setError("User not found.");
+        }
+      } catch (e) {
+        setError("Failed to load user profile.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [userId]);
 
   const handleFeatureInProgress = (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault();
@@ -28,18 +57,22 @@ export default function ProfilePage() {
     handleFeatureInProgress();
   }
 
-  // Placeholder user data - in a real app, this would come from an auth context
-  const user = {
-    id: "user_placeholder_id_12345",
-    name: "Aisha Khan",
-    email: "aisha.khan@example.com",
-    avatar: "https://placehold.co/100x100.png",
-    initials: "AK",
-    secondaryPhone: "9876543210",
-    roles: ["Super Admin", "Donor"], // Example of multiple roles
-  };
+  if (loading) {
+    return <div className="flex items-center justify-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (error || !user) {
+    return (
+       <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error || "Could not load user profile."}</AlertDescription>
+        </Alert>
+    );
+  }
 
   const isAdmin = user.roles.includes("Admin") || user.roles.includes("Super Admin");
+  const userInitials = user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
 
   return (
     <div className="flex-1 space-y-4">
@@ -49,8 +82,8 @@ export default function ProfilePage() {
             <Card>
                 <CardHeader className="items-center text-center">
                     <Avatar className="w-24 h-24 mb-4">
-                        <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="female portrait" />
-                        <AvatarFallback>{user.initials}</AvatarFallback>
+                        <AvatarImage src={`https://placehold.co/100x100.png?text=${userInitials}`} alt={user.name} data-ai-hint="female portrait" />
+                        <AvatarFallback>{userInitials}</AvatarFallback>
                     </Avatar>
                     <CardTitle>{user.name}</CardTitle>
                     <CardDescription>{user.email}</CardDescription>
@@ -121,7 +154,7 @@ export default function ProfilePage() {
                             <CardDescription>A log of actions you have performed in the system.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                           <ActivityFeed userId={user.id} />
+                           <ActivityFeed userId={user.id!} />
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -131,3 +164,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

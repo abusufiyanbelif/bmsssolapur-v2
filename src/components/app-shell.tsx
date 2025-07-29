@@ -191,7 +191,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </DropdownMenu>
                         ) : (
                              <>
-                                <Button onClick={simulateLogin}>Simulate Login</Button>
+                                <Button onClick={simulateLogin} variant="secondary">Simulate Login</Button>
                                 {pathname !== '/login' && (
                                      <Button asChild>
                                         <Link href="/login">

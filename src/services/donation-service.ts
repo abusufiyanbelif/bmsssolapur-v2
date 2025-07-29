@@ -13,8 +13,10 @@ import {
   query,
   getDocs,
   Timestamp,
+  where,
+  orderBy
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
 
@@ -50,6 +52,7 @@ export interface Donation {
 
 // Function to create a donation
 export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>, adminUserId: string) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const adminUser = await getUser(adminUserId);
     const donationRef = doc(collection(db, DONATIONS_COLLECTION));
@@ -84,6 +87,7 @@ export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'
 
 // Function to get a donation by ID
 export const getDonation = async (id: string) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
     if (donationDoc.exists()) {
@@ -98,6 +102,7 @@ export const getDonation = async (id: string) => {
 
 // Function to update a donation
 export const updateDonation = async (id: string, updates: Partial<Donation>, performedByUserId: string) => {
+    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const adminUser = await getUser(performedByUserId);
         const donationRef = doc(db, DONATIONS_COLLECTION, id);
@@ -142,6 +147,7 @@ export const updateDonation = async (id: string, updates: Partial<Donation>, per
 
 // Function to get all donations
 export const getAllDonations = async (): Promise<Donation[]> => {
+    if (!isConfigValid) return [];
     try {
         const donationsQuery = query(collection(db, DONATIONS_COLLECTION));
         const querySnapshot = await getDocs(donationsQuery);
@@ -155,3 +161,30 @@ export const getAllDonations = async (): Promise<Donation[]> => {
         throw new Error('Failed to get all donations.');
     }
 }
+
+// Function to get all donations for a specific user
+export const getDonationsByUserId = async (userId: string): Promise<Donation[]> => {
+    if (!isConfigValid) return [];
+    try {
+        const donationsQuery = query(
+            collection(db, DONATIONS_COLLECTION), 
+            where("donorId", "==", userId),
+            orderBy("createdAt", "desc")
+        );
+        const querySnapshot = await getDocs(donationsQuery);
+        const donations: Donation[] = [];
+        querySnapshot.forEach((doc) => {
+            donations.push({ id: doc.id, ...doc.data() } as Donation);
+        });
+        return donations;
+    } catch (error) {
+        console.error("Error getting user donations: ", error);
+        // This could be due to a missing index. Log a helpful message.
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'donorId' (ascending) and 'createdAt' (descending).");
+        }
+        throw new Error('Failed to get user donations.');
+    }
+}
+
+    

@@ -142,7 +142,7 @@ export default async function LandingPage() {
             </div>
             <div className="flex flex-wrap items-center justify-center gap-3 text-center">
                 {donationCategories.map(category => (
-                    <Badge key={category} variant="outline" className="text-base px-4 py-2 border-primary/50 text-primary-foreground bg-primary/10">
+                    <Badge key={category} variant="outline" className="text-base px-4 py-2">
                        <BookOpenCheck className="mr-2" />
                        {category}
                     </Badge>

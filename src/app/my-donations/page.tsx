@@ -5,12 +5,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, AlertCircle } from "lucide-react";
-import { type Donation, type DonationStatus, getAllDonations } from "@/services/donation-service";
+import { type Donation, type DonationStatus, getDonationsByUserId } from "@/services/donation-service";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -25,23 +26,22 @@ export default function MyDonationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   // In a real app, you would get the logged-in user's ID here
+  // For this prototype, we're using a placeholder.
   const userId = "user_placeholder_id_12345";
 
   useEffect(() => {
     const fetchDonations = async () => {
       try {
         setLoading(true);
-        // This fetches all donations. In a real app, this service would
-        // be updated to fetch only donations for the logged-in user.
-        const allDonations = await getAllDonations();
-        const userDonations = allDonations.filter(d => d.donorId === userId);
-        userDonations.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        const userDonations = await getDonationsByUserId(userId);
         setDonations(userDonations);
         setError(null);
       } catch (e) {
-        setError("Failed to fetch donation history.");
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+        setError(`Failed to fetch donation history: ${errorMessage}`);
         console.error(e);
       } finally {
         setLoading(false);
@@ -52,7 +52,10 @@ export default function MyDonationsPage() {
   }, [userId]);
   
   const handleDownloadReceipt = () => {
-    alert("Receipt download functionality is in progress.");
+    toast({
+        title: "In Progress",
+        description: "PDF receipt generation is planned for a future update.",
+    });
   }
   
   const renderReceiptButton = (donation: Donation) => (
@@ -181,3 +184,5 @@ export default function MyDonationsPage() {
     </div>
   );
 }
+
+    

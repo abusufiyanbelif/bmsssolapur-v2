@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { type Lead, type LeadStatus, getAllLeads } from "@/services/lead-service";
+import { type Lead, type LeadStatus, getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -34,14 +34,11 @@ export default function MyCasesPage() {
         const fetchCases = async () => {
             try {
                 setLoading(true);
-                // This fetches all leads. In a real app, this service would be updated
-                // to fetch only leads associated with the logged-in beneficiary.
-                const allLeads = await getAllLeads();
-                const userCases = allLeads.filter(l => l.id === userId); // Placeholder logic
-                 userCases.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                const userCases = await getLeadsByBeneficiaryId(userId);
                 setCases(userCases);
             } catch (e) {
-                setError("Failed to load your cases.");
+                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+                setError(`Failed to load your cases: ${errorMessage}`);
                 console.error(e);
             } finally {
                 setLoading(false);
@@ -181,3 +178,5 @@ export default function MyCasesPage() {
     </div>
   );
 }
+
+    

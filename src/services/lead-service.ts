@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -13,8 +14,10 @@ import {
   getDocs,
   Timestamp,
   serverTimestamp,
+  where,
+  orderBy
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, isConfigValid } from './firebase';
 import { DonationType } from './donation-service';
 
 const LEADS_COLLECTION = 'leads';
@@ -32,6 +35,7 @@ export interface Verifier {
 export interface Lead {
   id?: string;
   name: string; // Can be "Anonymous"
+  beneficiaryId: string; // ID of the user who is the beneficiary
   category: DonationType;
   helpRequested: number;
   helpGiven: number;
@@ -50,6 +54,7 @@ export interface Lead {
 
 // Function to create a lead
 export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'adminAddedBy' | 'verifiedStatus' | 'verifiers'>, adminId: string) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
     const newLead: Omit<Lead, 'id'> & { id: string } = {
@@ -74,6 +79,7 @@ export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'upda
 
 // Function to get a lead by ID
 export const getLead = async (id: string) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadDoc = await getDoc(doc(db, LEADS_COLLECTION, id));
     if (leadDoc.exists()) {
@@ -88,6 +94,7 @@ export const getLead = async (id: string) => {
 
 // Function to update a lead
 export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 'createdAt'>>) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(db, LEADS_COLLECTION, id);
     await updateDoc(leadRef, {
@@ -102,6 +109,7 @@ export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 
 
 // Function to delete a lead
 export const deleteLead = async (id: string) => {
+    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         await deleteDoc(doc(db, LEADS_COLLECTION, id));
     } catch (error) {
@@ -112,6 +120,7 @@ export const deleteLead = async (id: string) => {
 
 // Function to get all leads
 export const getAllLeads = async (): Promise<Lead[]> => {
+    if (!isConfigValid) return [];
     try {
         const leadsQuery = query(collection(db, LEADS_COLLECTION));
         const querySnapshot = await getDocs(leadsQuery);
@@ -125,3 +134,29 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         throw new Error('Failed to get all leads.');
     }
 }
+
+// Function to get all leads for a specific beneficiary
+export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Lead[]> => {
+    if (!isConfigValid) return [];
+    try {
+        const leadsQuery = query(
+            collection(db, LEADS_COLLECTION), 
+            where("beneficiaryId", "==", beneficiaryId),
+            orderBy("createdAt", "desc")
+        );
+        const querySnapshot = await getDocs(leadsQuery);
+        const leads: Lead[] = [];
+        querySnapshot.forEach((doc) => {
+            leads.push({ id: doc.id, ...doc.data() } as Lead);
+        });
+        return leads;
+    } catch (error) {
+        console.error("Error getting beneficiary leads: ", error);
+         if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'beneficiaryId' (ascending) and 'createdAt' (descending).");
+        }
+        throw new Error('Failed to get beneficiary leads.');
+    }
+}
+
+    
