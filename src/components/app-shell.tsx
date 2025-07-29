@@ -3,9 +3,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users, User, Settings, ChevronDown } from "lucide-react";
+import { LogIn, LogOut, Menu, Users, User } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import { Logo } from "./logo";
@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "./nav";
+import type { User as UserType } from "@/services/user-service";
+import { getUser } from "@/services/user-service";
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -28,28 +30,52 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
     const pathname = usePathname();
 
-    // In a real app, this would come from your authentication context.
-    // We now default to a logged-out 'Guest' user.
-    const [user, setUser] = useState({
-        isLoggedIn: false, // Set to true to simulate a logged-in user
+    const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; }>({
+        isLoggedIn: false,
         id: "guest_user_id",
         name: "Guest",
-        email: "guest@example.com",
+        phone: '',
+        roles: ["Guest"],
+        activeRole: "Guest",
         initials: "G",
         avatar: "https://placehold.co/100x100.png",
-        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-        activeRole: "Guest", // Default role is Guest
+        createdAt: new Date() as any,
     });
+    
+    useEffect(() => {
+        const checkUser = async () => {
+            const storedUserId = localStorage.getItem('userId');
+            if (storedUserId) {
+                const fetchedUser = await getUser(storedUserId);
+                if (fetchedUser) {
+                    const savedRole = localStorage.getItem('activeRole') || fetchedUser.roles[0];
+                    setUser({
+                        ...fetchedUser,
+                        isLoggedIn: true,
+                        activeRole: savedRole,
+                        initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
+                        avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
+                    });
+                     // Show role switcher on first load after login if multiple roles exist
+                    if (!localStorage.getItem('activeRole') && fetchedUser.roles.length > 1) {
+                        setIsRoleSwitcherOpen(true);
+                    }
+                }
+            }
+        };
+        checkUser();
+    }, []);
+
 
     const handleRoleChange = (newRole: string) => {
         const previousRole = user.activeRole;
         setUser(currentUser => ({...currentUser, activeRole: newRole}));
-        setRequiredRole(null); // Reset required role after switching
+        localStorage.setItem('activeRole', newRole);
+        setRequiredRole(null); 
 
-        // Log the role switch activity
         if (user.isLoggedIn) {
             logActivity({
-                userId: user.id,
+                userId: user.id!,
                 userName: user.name,
                 userEmail: user.email,
                 role: newRole,
@@ -59,17 +85,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     };
     
-    // This is a simulation function for logging in.
-    const simulateLogin = () => {
-         setUser({
-            isLoggedIn: true,
-            id: "user_placeholder_id_12345",
-            name: "Aisha Khan",
-            email: "aisha.khan@example.com",
-            initials: "AK",
+    const simulateLogout = () => {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('activeRole');
+        setUser({
+            isLoggedIn: false,
+            id: "guest_user_id",
+            name: "Guest",
+            phone: '',
+            roles: ["Guest"],
+            activeRole: "Guest",
+            initials: "G",
             avatar: "https://placehold.co/100x100.png",
-            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-            activeRole: "Donor",
+            createdAt: new Date() as any
         });
     }
 
@@ -81,25 +109,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const handleOpenChange = (open: boolean) => {
         setIsRoleSwitcherOpen(open);
         if (!open) {
-            setRequiredRole(null); // Reset on close
+            setRequiredRole(null);
         }
     };
 
-    const activeRole = user.isLoggedIn ? user.activeRole : "Guest";
-
-    // This is a simulation function for logging out.
-    const simulateLogout = () => {
-        setUser({
-            isLoggedIn: false,
-            id: "guest_user_id",
-            name: "Guest",
-            email: "guest@example.com",
-            initials: "G",
-            avatar: "https://placehold.co/100x100.png",
-            roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-            activeRole: "Guest",
-        });
-    }
+    const activeRole = user.activeRole;
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
@@ -121,7 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                     <div className="flex-1">
                         <Nav 
-                            userRoles={user.isLoggedIn ? user.roles : ["Guest"]} 
+                            userRoles={user.roles} 
                             activeRole={activeRole}
                             onRoleSwitchRequired={handleOpenRoleSwitcher}
                         />
@@ -146,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                <HeaderTitle />
                             </div>
                             <Nav 
-                                userRoles={user.isLoggedIn ? user.roles : ["Guest"]} 
+                                userRoles={user.roles}
                                 activeRole={activeRole}
                                 onRoleSwitchRequired={handleOpenRoleSwitcher}
                             />
@@ -192,7 +206,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </DropdownMenu>
                         ) : (
                              <>
-                                <Button onClick={simulateLogin} variant="secondary">Simulate Login</Button>
                                 {pathname !== '/login' && (
                                      <Button asChild>
                                         <Link href="/login">
@@ -223,3 +236,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
     )
 }
+
+
+    

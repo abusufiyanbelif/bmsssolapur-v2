@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KeyRound, LogIn, MessageSquare } from "lucide-react";
+import { KeyRound, LogIn, MessageSquare, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,9 +15,15 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { handleLogin } from "./actions";
+import { useRouter } from "next/navigation";
+
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFeatureInProgress = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // Prevent form submission
@@ -26,6 +32,29 @@ export default function LoginPage() {
         description: "This feature is currently in development and will be available soon.",
     });
   };
+
+  const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    const formData = new FormData(event.currentTarget);
+    const result = await handleLogin(formData);
+
+    if (result.success && result.userId) {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      localStorage.setItem('userId', result.userId);
+      router.push('/home');
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: result.error || "An unknown error occurred.",
+      });
+    }
+    setIsSubmitting(false);
+  }
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -78,27 +107,31 @@ export default function LoginPage() {
                 </form>
             </TabsContent>
             <TabsContent value="password">
-                 <form className="space-y-6 pt-4">
+                 <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                    <Label htmlFor="phone-password">Phone Number</Label>
-                    <div className="flex gap-2">
-                        <Select defaultValue="+91">
-                            <SelectTrigger className="w-[80px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="+91">+91 (IN)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Input id="phone-password" type="tel" placeholder="12345 67890" maxLength={10} required />
-                    </div>
+                      <Label htmlFor="phone-password">Phone Number</Label>
+                      <div className="flex gap-2">
+                          <Select defaultValue="+91" name="countryCode">
+                              <SelectTrigger className="w-[80px]">
+                                  <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="+91">+91 (IN)</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <Input id="phone-password" name="phone" type="tel" placeholder="12345 67890" maxLength={10} required />
+                      </div>
                     </div>
                     <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" placeholder="Enter your password" />
+                      <Label htmlFor="password">Password</Label>
+                      <Input id="password" name="password" type="password" placeholder="Enter your password" required />
                     </div>
-                    <Button type="submit" className="w-full" onClick={handleFeatureInProgress}>
-                        <LogIn className="mr-2 h-4 w-4" />
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <LogIn className="mr-2 h-4 w-4" />
+                        )}
                         Login with Password
                     </Button>
                      <div className="text-center">
@@ -112,3 +145,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
