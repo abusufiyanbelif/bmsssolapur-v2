@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Package2 } from "lucide-react";
 import { Nav } from "./nav";
+import { RoleSwitcherDialog } from "./role-switcher-dialog";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     return (
@@ -50,6 +51,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     {children}
                 </main>
             </div>
+            {/* We will trigger this based on auth state later */}
+            <RoleSwitcherDialog />
         </div>
     )
 }
