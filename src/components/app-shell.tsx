@@ -9,9 +9,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden border-r bg-card md:block">
                 <div className="flex h-full max-h-screen flex-col gap-2">
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                        <a href="/" className="flex items-center gap-2 font-semibold font-headline">
+                        <a href="/" className="flex items-center gap-2 font-semibold">
                             <Package2 className="h-6 w-6 text-primary" />
-                            <span className="">Baitul Mal Samajik Sanstha (Solapur)</span>
+                            <span className="font-headline">Baitul Mal Samajik Sanstha (Solapur)</span>
                         </a>
                     </div>
                     <div className="flex-1">
@@ -32,11 +32,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 <span className="sr-only">Toggle navigation menu</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="flex flex-col">
+                        <SheetContent side="left" className="flex flex-col p-0">
                             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                                <a href="/" className="flex items-center gap-2 font-semibold font-headline">
+                                <a href="/" className="flex items-center gap-2 font-semibold">
                                     <Package2 className="h-6 w-6 text-primary" />
-                                    <span className="">Baitul Mal Samajik Sanstha (Solapur)</span>
+                                    <span className="font-headline">Baitul Mal Samajik Sanstha (Solapur)</span>
                                 </a>
                             </div>
                             <Nav />
@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         {/* Can add a search bar here if needed */}
                     </div>
                 </header>
-                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                     {children}
                 </main>
             </div>
