@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { 
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, Lock, BookText,
-    Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, Database
+    Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -36,6 +36,7 @@ const allNavItems: NavItem[] = [
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
+    { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
     { href: "/campaigns", label: "View Public Campaigns", icon: Megaphone, allowedRoles: ["Beneficiary"] },
     
     // Admin
