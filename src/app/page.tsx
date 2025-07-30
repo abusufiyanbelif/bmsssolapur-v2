@@ -134,35 +134,36 @@ export default async function LandingPage() {
       </section>
 
       {/* Quotes Section */}
-      <section id="quotes" className="py-16 lg:py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-                <h2 className="text-4xl font-bold tracking-tight font-headline">Wisdom & Reflection</h2>
-                <p className="mt-2 text-lg text-muted-foreground">Inspiration from Islamic teachings on charity and compassion.</p>
+       {quotes.length > 0 && (
+          <section id="quotes" className="py-16 lg:py-24 bg-muted/30">
+            <div className="container mx-auto px-4">
+                <div className="text-center mb-12">
+                    <h2 className="text-4xl font-bold tracking-tight font-headline">Wisdom & Reflection</h2>
+                    <p className="mt-2 text-lg text-muted-foreground">Inspiration from Islamic teachings on charity and compassion.</p>
+                </div>
+                <div className="grid gap-8 md:grid-cols-3">
+                    {quotes.map((quote, index) => (
+                        <Card key={index} className="flex flex-col">
+                            <CardContent className="pt-6 flex-grow">
+                                <Quote className="w-8 h-8 text-primary mb-4" />
+                                <blockquote className="text-lg italic text-foreground">
+                                    "{quote.text}"
+                                </blockquote>
+                            </CardContent>
+                            <CardFooter>
+                                <cite className="font-semibold not-italic">{quote.source}</cite>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+                <div className="text-center mt-12">
+                    <Button asChild variant="secondary">
+                        <Link href="/quotes">View All Quotes <ArrowRight className="ml-2" /></Link>
+                    </Button>
+                </div>
             </div>
-            <div className="grid gap-8 md:grid-cols-3">
-                {quotes.map((quote, index) => (
-                    <Card key={index} className="flex flex-col">
-                        <CardContent className="pt-6 flex-grow">
-                            <Quote className="w-8 h-8 text-primary mb-4" />
-                            <blockquote className="text-lg italic text-foreground">
-                                "{quote.text}"
-                            </blockquote>
-                        </CardContent>
-                        <CardFooter>
-                            <cite className="font-semibold not-italic">{quote.source}</cite>
-                        </CardFooter>
-                    </Card>
-                ))}
-            </div>
-             <div className="text-center mt-12">
-                <Button asChild variant="secondary">
-                    <Link href="/quotes">View All Quotes <ArrowRight className="ml-2" /></Link>
-                </Button>
-            </div>
-        </div>
-      </section>
-
+          </section>
+      )}
     </div>
   );
 }
