@@ -200,11 +200,11 @@ export default function LoginPage() {
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
                       <Label htmlFor="identifier">Email, Phone, or Username</Label>
-                      <Input id="identifier" name="identifier" type="text" placeholder="user@example.com or 9876543210" required />
+                      <Input id="identifier" name="identifier" type="text" placeholder="e.g., admin" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
-                      <Input id="password" name="password" type="password" placeholder="Enter your password" required />
+                      <Input id="password" name="password" type="password" required />
                     </div>
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? (

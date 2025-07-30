@@ -36,7 +36,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        if (identifier === 'admin') {
+        if (identifier.toLowerCase() === 'admin') {
             user = await getUserByName('admin');
             if (!user) {
                 return { success: false, error: "The default 'admin' user was not found in the database. Please visit /admin/seed to initialize data." };
@@ -168,6 +168,12 @@ export async function handleGoogleLogin(firebaseUser: {
         roles: ['Donor'], // Default role for new sign-ups
         isActive: true, // New users are active by default
         createdAt: Timestamp.now(),
+        gender: 'Other',
+        address: '',
+        panNumber: '',
+        aadhaarNumber: '',
+        privileges: [],
+        groups: []
       };
       // Use the Firebase UID as the document ID for our user record
       appUser = await createUser({ ...newUser, id: firebaseUser.uid });
