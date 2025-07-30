@@ -138,7 +138,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting user by name: ', error);
+    console.error(`Error getting user by name: ${name}`, error);
     throw new Error('Failed to get user by name.');
   }
 }

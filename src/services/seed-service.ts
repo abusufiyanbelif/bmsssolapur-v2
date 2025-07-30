@@ -1,9 +1,10 @@
 
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
 
-import { createUser, User, UserRole } from './user-service';
+import { createUser, User, UserRole, getUserByName } from './user-service';
 import { createOrganization, Organization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
@@ -47,7 +48,10 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     upiId: "maaz9145@okhdfcbank"
 };
 
-const leadsToSeed: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated'>[] = [
+type LeadSeedData = Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name'>;
+
+// Historical leads are assigned to "Anonymous Donor" user as a placeholder.
+const historicalLeadsToSeed: (LeadSeedData & { name: string })[] = [
     { name: 'Mustahik Person', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verifiers: [], verificationDocumentUrl: '' },
     { name: 'Hazrate Nomaniya Masjid', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verifiers: [], verificationDocumentUrl: '' },
     { name: 'Nomaniya Masjid', helpRequested: 720, helpGiven: 720, category: 'Deen', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verifiers: [], verificationDocumentUrl: '' },
@@ -63,6 +67,47 @@ const leadsToSeed: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId'
     { name: 'Madrasa Admission', helpRequested: 600, helpGiven: 600, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Admission fee for a 9-year-old boy from a new Muslim family in a school cum madrasa.', verifiers: [], verificationDocumentUrl: '' },
     { name: 'Aid for Needy', helpRequested: 6000, helpGiven: 6000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Follow-up help provided to a previously supported case.', verifiers: [], verificationDocumentUrl: '' },
     { name: 'Monthly Aid', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Monthly financial assistance to a deserving person.', verifiers: [], verificationDocumentUrl: '' },
+];
+
+
+// "Production" leads are assigned to specific seeded beneficiary users.
+const productionLeadsToSeed: (LeadSeedData & { beneficiaryName: string })[] = [
+    {
+        beneficiaryName: "Aisha Khan",
+        helpRequested: 15000,
+        helpGiven: 0,
+        category: 'Education',
+        isLoan: false,
+        status: 'Pending',
+        verifiedStatus: 'Verified',
+        caseDetails: 'Financial assistance needed for college semester fees for my daughter who is pursuing a degree in Computer Science. The funds are required to cover tuition and exam fees.',
+        verifiers: [],
+        verificationDocumentUrl: 'https://placehold.co/600x400.png?text=fee-challan'
+    },
+    {
+        beneficiaryName: "Beneficiary User",
+        helpRequested: 25000,
+        helpGiven: 0,
+        category: 'Hospital',
+        isLoan: false,
+        status: 'Pending',
+        verifiedStatus: 'Pending',
+        caseDetails: 'Urgent funds required for an essential medical procedure for my elderly father. The total cost of the surgery is high and we are unable to bear it on our own.',
+        verifiers: [],
+        verificationDocumentUrl: 'https://placehold.co/600x400.png?text=medical-report'
+    },
+    {
+        beneficiaryName: "Aisha Khan",
+        helpRequested: 50000,
+        helpGiven: 22000,
+        category: 'Loan and Relief Fund',
+        isLoan: true,
+        status: 'Partial',
+        verifiedStatus: 'Verified',
+        caseDetails: 'Seeking a repayable loan to repair our home which was damaged during the recent heavy rains. The roof needs immediate attention to prevent further damage to the structure.',
+        verifiers: [],
+        verificationDocumentUrl: 'https://placehold.co/600x400.png?text=house-damage-photo'
+    },
 ];
 
 
@@ -122,28 +167,22 @@ const seedLeads = async (): Promise<SeedItemResult[]> => {
     if (!isConfigValid) {
         throw new Error("Firebase is not configured. Cannot seed leads.");
     }
-    console.log('Seeding historical leads...');
+    console.log('Seeding historical and production leads...');
     const results: SeedItemResult[] = [];
-
-    const anonymousUserQuery = query(collection(db, 'users'), where("name", "==", "Anonymous Donor"));
-    const adminUserQuery = query(collection(db, 'users'), where("name", "==", "Abusufiyan Belif"));
-
-    const [anonymousSnapshot, adminSnapshot] = await Promise.all([
-        getDocs(anonymousUserQuery),
-        getDocs(adminUserQuery),
-    ]);
     
-    if (anonymousSnapshot.empty || adminSnapshot.empty) {
-        throw new Error("Cannot seed leads without 'Anonymous Donor' and 'Abusufiyan Belif' users. Please ensure users are seeded first.");
+    const adminUser = await getUserByName("Abusufiyan Belif");
+    if (!adminUser) {
+        throw new Error("Cannot seed leads without 'Abusufiyan Belif' user. Please ensure users are seeded first.");
     }
-    
-    const anonymousUserId = anonymousSnapshot.docs[0].id;
-    const adminUserId = adminSnapshot.docs[0].id;
 
     const leadsCollection = collection(db, 'leads');
 
-    for (const leadData of leadsToSeed) {
-        // Use caseDetails as a rough unique identifier for checking existence
+    // Seed historical leads
+    const anonymousUser = await getUserByName("Anonymous Donor");
+    if (!anonymousUser) {
+        throw new Error("Cannot seed historical leads without 'Anonymous Donor' user.");
+    }
+    for (const leadData of historicalLeadsToSeed) {
         const q = query(leadsCollection, where("caseDetails", "==", leadData.caseDetails));
         const existingLeads = await getDocs(q);
         
@@ -152,8 +191,8 @@ const seedLeads = async (): Promise<SeedItemResult[]> => {
             const newLead: Lead = {
                 ...leadData,
                 id: leadRef.id,
-                beneficiaryId: anonymousUserId,
-                adminAddedBy: adminUserId,
+                beneficiaryId: anonymousUser.id!,
+                adminAddedBy: adminUser.id!,
                 dateCreated: Timestamp.fromDate(new Date("2021-12-01")), // Using a historical date
                 createdAt: Timestamp.fromDate(new Date("2021-12-01")),
                 updatedAt: Timestamp.fromDate(new Date("2021-12-01")),
@@ -162,6 +201,37 @@ const seedLeads = async (): Promise<SeedItemResult[]> => {
             results.push({ name: leadData.name, status: 'Created' });
         } else {
             results.push({ name: leadData.name, status: 'Skipped (already exists)' });
+        }
+    }
+
+    // Seed production leads
+    for (const leadData of productionLeadsToSeed) {
+        const q = query(leadsCollection, where("caseDetails", "==", leadData.caseDetails));
+        const existingLeads = await getDocs(q);
+        
+        if (existingLeads.empty) {
+            const beneficiary = await getUserByName(leadData.beneficiaryName);
+            if (!beneficiary) {
+                console.warn(`Could not find beneficiary '${leadData.beneficiaryName}' for lead seeding. Skipping.`);
+                results.push({ name: `Lead for ${leadData.beneficiaryName}`, status: 'Skipped (already exists)' });
+                continue;
+            }
+
+            const leadRef = doc(leadsCollection);
+            const newLead: Lead = {
+                ...(leadData as LeadSeedData), // Cast to remove beneficiaryName
+                id: leadRef.id,
+                name: beneficiary.name,
+                beneficiaryId: beneficiary.id!,
+                adminAddedBy: adminUser.id!,
+                dateCreated: Timestamp.now(),
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+            };
+            await setDoc(leadRef, newLead);
+            results.push({ name: newLead.name, status: 'Created' });
+        } else {
+            results.push({ name: leadData.beneficiaryName, status: 'Skipped (already exists)' });
         }
     }
 
