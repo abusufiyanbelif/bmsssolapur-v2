@@ -8,23 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { type DonationType, type DonationPurpose } from "@/services/donation-service";
-import { getInspirationalQuotes, type Quote as QuoteType } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getQuotes, type Quote as QuoteType } from "@/services/quotes-service";
 import { Lead } from "@/services/lead-service";
 
-const staticQuotes: QuoteType[] = [
-    {
-    text: "Indeed, those who believe and do righteous deeds and establish prayer and give zakah will have their reward with their Lord, and there will be no fear concerning them, nor will they grieve.",
-    source: "Quran, Surah Al-Baqarah (2:277)"
-  },
-  {
-    text: "Allah is in the assistance of His servant as long as His servant is in the assistance of his brother.",
-    source: "Hadith (Sahih Muslim)"
-  },
-  {
-    text: "You will never attain righteousness until you donate some of what you cherish. And whatever you give is certainly known to Allah.",
-    source: "Quran, Surah Al- Imran (3:92)"
-  }
-];
 
 const donationCategories: (DonationType | DonationPurpose)[] = [
     'Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah',
@@ -44,14 +30,11 @@ export default async function LandingPage() {
   }
   
   try {
-    quotes = await getInspirationalQuotes(3);
-    if(!quotes || quotes.length === 0) {
-        // Fallback if AI returns empty array
-        quotes = staticQuotes;
-    }
+    const allQuotes = await getQuotes(3);
+    quotes = allQuotes.slice(0, 3);
   } catch (error) {
-    console.error("Failed to fetch dynamic quotes, using fallback.", error);
-    quotes = staticQuotes;
+    console.error("Failed to fetch quotes from DB.", error);
+    quotes = [];
   }
 
   const featuredLeads = openLeads.slice(0, 3);

@@ -1,40 +1,23 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getInspirationalQuotes, type Quote } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getQuotes, type Quote } from "@/services/quotes-service";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-const staticQuotes: Quote[] = [
-  {
-    text: "Those who in charity spend of their goods by night and by day, in secret and in public, have their reward with their Lord: on them shall be no fear, nor shall they grieve.",
-    source: "Quran, 2:274"
-  },
-  {
-    text: "The believer's shade on the Day of Resurrection will be his charity.",
-    source: "Hadith, Tirmidhi"
-  },
-  {
-    text: "When a man dies, his deeds come to an end except for three things: Sadaqah Jariyah (ceaseless charity); a knowledge which is beneficial, or a virtuous descendant who prays for him (for the deceased).",
-    source: "Hadith, Muslim"
-  }
-];
-
-
 export default async function QuotesPage() {
-    let quotes: Quote[];
+    let quotes: Quote[] = [];
     let error: string | null = null;
 
     try {
-        quotes = await getInspirationalQuotes(10);
+        quotes = await getQuotes();
          if(quotes.length === 0) {
-            // Fallback if AI returns empty array
-            quotes = staticQuotes;
+            error = "No quotes have been added to the database yet. Please run the seeder if this is a new setup.";
         }
     } catch (e) {
-        console.error("Failed to fetch dynamic quotes, using fallback.", e);
-        error = "Could not load dynamic quotes at this time. Displaying a few examples.";
-        quotes = staticQuotes;
+        console.error("Failed to fetch quotes from DB.", e);
+        error = "Could not load quotes due to a database error.";
+        quotes = [];
     }
 
     return (

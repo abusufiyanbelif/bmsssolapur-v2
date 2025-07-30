@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, UserX } from "lucide-react";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote } from "lucide-react";
 import { seedDatabase } from "@/services/seed-service";
 import {
   Table,
@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export default async function SeedPage() {
-    const { userResults, orgStatus, error } = await seedDatabase();
+    const { userResults, orgStatus, quotesStatus, error } = await seedDatabase();
 
     const wasSuccessful = !error;
 
@@ -48,17 +48,30 @@ export default async function SeedPage() {
                                 </AlertDescription>
                             </Alert>
                             
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-xl flex items-center gap-2">
-                                        <Database className="h-5 w-5" />
-                                        Organization Status
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm">{orgStatus}</p>
-                                </CardContent>
-                            </Card>
+                             <div className="grid md:grid-cols-2 gap-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-xl flex items-center gap-2">
+                                            <Database className="h-5 w-5" />
+                                            Organization Status
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm">{orgStatus}</p>
+                                    </CardContent>
+                                </Card>
+                                 <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-xl flex items-center gap-2">
+                                            <Quote className="h-5 w-5" />
+                                            Quotes Status
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm">{quotesStatus}</p>
+                                    </CardContent>
+                                </Card>
+                             </div>
 
                             <Card>
                                 <CardHeader>

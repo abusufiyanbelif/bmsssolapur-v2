@@ -4,6 +4,7 @@
 
 import { createUser, User, UserRole } from './user-service';
 import { createOrganization, Organization } from './organization-service';
+import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 
@@ -45,6 +46,12 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 };
 
 export type UserSeedResult = { name: string; phone: string; status: 'Created' | 'Skipped (already exists)' };
+export type SeedResult = {
+    userResults: UserSeedResult[];
+    orgStatus: string;
+    quotesStatus: string;
+    error?: string;
+};
 
 const seedUsers = async (): Promise<UserSeedResult[]> => {
     if (!isConfigValid) {
@@ -91,7 +98,7 @@ const seedOrganization = async (): Promise<string> => {
 };
 
 
-export const seedDatabase = async (): Promise<{userResults: UserSeedResult[], orgStatus: string, error?: string}> => {
+export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Attempting to seed database...');
     if (!isConfigValid) {
         const errorMsg = "Firebase is not configured. Aborting seed.";
@@ -99,20 +106,23 @@ export const seedDatabase = async (): Promise<{userResults: UserSeedResult[], or
         return {
             userResults: [],
             orgStatus: 'Failed',
+            quotesStatus: 'Failed',
             error: errorMsg,
         }
     }
     try {
         const userResults = await seedUsers();
         const orgStatus = await seedOrganization();
+        const quotesStatus = await seedInitialQuotes();
         console.log('Database seeding process completed.');
-        return { userResults, orgStatus };
+        return { userResults, orgStatus, quotesStatus };
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred during seeding.';
         console.error('Error seeding database:', errorMsg);
         return {
             userResults: [],
             orgStatus: 'Failed',
+            quotesStatus: 'Failed',
             error: errorMsg,
         };
     }
