@@ -11,6 +11,7 @@ import {
   query,
   limit,
   writeBatch,
+  where,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 
@@ -44,6 +45,9 @@ const quotesToSeed: Omit<Quote, 'id'>[] = [
     { text: "Every act of kindness is a charity.", source: "Hadith, Bukhari, Muslim", category: "Hadith"},
     { text: "A man's true wealth is the good he does in this world.", source: "Hadith", category: "Hadith"},
     { text: "The upper hand is better than the lower hand. The upper hand is that of the giver and the lower hand is that of the beggar.", source: "Hadith, Bukhari", category: "Hadith"},
+    { text: "A charity is due for every joint in each person on every day the sun comes up: to act justly between two people is a charity; to help a man with his mount, lifting him onto it or hoisting up his belongings onto it, is a charity; a good word is a charity; and removing a harmful thing from the road is a charity.", source: "Hadith, Bukhari, Muslim", category: "Hadith"},
+    { text: "The best of you are those who are best to their families.", source: "Prophet Muhammad (ﷺ), narrated by Aisha (R.A)", category: "Hadith"},
+
 
     // --- Islamic Scholars ---
     { text: "The dunya is like a shadow. If you try to catch it, you will never be able to do so. If you turn your back towards it, it has no choice but to follow you.", source: "Ibn Qayyim Al-Jawziyya", category: "Scholar"},
@@ -51,8 +55,6 @@ const quotesToSeed: Omit<Quote, 'id'>[] = [
     { text: "Do not belittle any good deed, even meeting your brother with a cheerful face.", source: "Imam Nawawi", category: "Scholar"},
     { text: "Generosity is not in giving me that which I need more than you, but it is in giving me that which you need more than I.", source: "Kahlil Gibran", category: "Scholar"},
     { text: "Patience is a pillar of faith.", source: "Umar ibn al-Khattab (R.A)", category: "Scholar"},
-    { text: "The best of you are those who are best to their families.", source: "Prophet Muhammad (ﷺ), narrated by Aisha (R.A)", category: "Hadith"},
-    { text: "A charity is due for every joint in each person on every day the sun comes up: to act justly between two people is a charity; to help a man with his mount, lifting him onto it or hoisting up his belongings onto it, is a charity; a good word is a charity; and removing a harmful thing from the road is a charity.", source: "Hadith, Bukhari, Muslim", category: "Hadith"}
 ];
 
 
@@ -79,6 +81,43 @@ export const getQuotes = async (count?: number): Promise<Quote[]> => {
         throw new Error('Failed to get quotes from database.');
     }
 }
+
+/**
+ * Fetches one random quote from each category.
+ * @returns An array of three quote objects, one for each category.
+ */
+export async function getRandomQuotesFromEachCategory(): Promise<Quote[]> {
+  if (!isConfigValid) {
+    console.warn("Firebase not configured, skipping random quotes fetch.");
+    return [];
+  }
+
+  const categories: QuoteCategory[] = ['Quran', 'Hadith', 'Scholar'];
+  const randomQuotes: Quote[] = [];
+
+  try {
+    for (const category of categories) {
+      const q = query(collection(db, QUOTES_COLLECTION), where("category", "==", category));
+      const snapshot = await getDocs(q);
+      const quotesFromCategory: Quote[] = [];
+      snapshot.forEach(doc => quotesFromCategory.push({ id: doc.id, ...doc.data() as Omit<Quote, 'id'> }));
+      
+      if (quotesFromCategory.length > 0) {
+        const randomIndex = Math.floor(Math.random() * quotesFromCategory.length);
+        randomQuotes.push(quotesFromCategory[randomIndex]);
+      }
+    }
+    return randomQuotes;
+  } catch (error) {
+    console.error("Error fetching random quotes:", error);
+    // It's likely a composite index is missing if another error occurs.
+    if (error instanceof Error && error.message.includes('requires an index')) {
+        console.error("Firestore composite index missing. Please create a composite index on 'inspirationalQuotes' collection with 'category' (ascending).");
+    }
+    return []; // Return empty array on error
+  }
+}
+
 
 /**
  * Seeds the database with the initial set of quotes.
@@ -113,4 +152,3 @@ export const seedInitialQuotes = async (): Promise<string> => {
         throw new Error('Failed to seed quotes.');
     }
 };
-

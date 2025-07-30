@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { type DonationType, type DonationPurpose } from "@/services/donation-service";
-import { getQuotes, type Quote as QuoteType } from "@/services/quotes-service";
+import { getRandomQuotesFromEachCategory, type Quote as QuoteType } from "@/services/quotes-service";
 import { Lead } from "@/services/lead-service";
 
 
@@ -30,10 +30,9 @@ export default async function LandingPage() {
   }
   
   try {
-    const allQuotes = await getQuotes(3);
-    quotes = allQuotes.slice(0, 3);
+    quotes = await getRandomQuotesFromEachCategory();
   } catch (error) {
-    console.error("Failed to fetch quotes from DB.", error);
+    console.error("Failed to fetch random quotes from DB.", error);
     quotes = [];
   }
 
