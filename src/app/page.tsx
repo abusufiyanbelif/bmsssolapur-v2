@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { type DonationType, type DonationPurpose } from "@/services/donation-service";
-import { getRandomQuotesFromEachCategory, type Quote as QuoteType } from "@/services/quotes-service";
+import { getInspirationalQuotes, type Quote as QuoteType } from "@/ai/flows/get-inspirational-quotes-flow";
 import { Lead } from "@/services/lead-service";
 
 
@@ -30,9 +30,9 @@ export default async function LandingPage() {
   }
   
   try {
-    quotes = await getRandomQuotesFromEachCategory();
+    quotes = await getInspirationalQuotes(3);
   } catch (error) {
-    console.error("Failed to fetch random quotes from DB.", error);
+    console.error("Failed to fetch quotes from Genkit flow.", error);
     quotes = [];
   }
 
