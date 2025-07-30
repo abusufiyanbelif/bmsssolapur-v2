@@ -5,28 +5,15 @@
  * @fileOverview Configuration validator flow.
  *
  * - validateConfiguration - A function that validates the Firebase and external service configurations.
- * - ValidateConfigurationInput - The input type for the validateConfiguration function.
- * - ValidateConfigurationOutput - The return type for the validateConfiguration function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const ValidateConfigurationInputSchema = z.object({
-  firebaseConfig: z
-    .string()
-    .describe('The Firebase configuration as a JSON string.'),
-  externalServiceConfigs: z
-    .string()
-    .describe('The external services configurations as a JSON string.'),
-});
-export type ValidateConfigurationInput = z.infer<typeof ValidateConfigurationInputSchema>;
-
-const ValidateConfigurationOutputSchema = z.object({
-  isValid: z.boolean().describe('Whether the configuration is valid or not.'),
-  errors: z.array(z.string()).describe('A list of potential misconfigurations or security vulnerabilities.'),
-});
-export type ValidateConfigurationOutput = z.infer<typeof ValidateConfigurationOutputSchema>;
+import {
+  ValidateConfigurationInput,
+  ValidateConfigurationInputSchema,
+  ValidateConfigurationOutput,
+  ValidateConfigurationOutputSchema
+} from '@/ai/schemas';
 
 export async function validateConfiguration(input: ValidateConfigurationInput): Promise<ValidateConfigurationOutput> {
   return validateConfigurationFlow(input);

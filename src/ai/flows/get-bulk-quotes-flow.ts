@@ -1,26 +1,14 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for fetching a large batch of inspirational quotes for database seeding.
  *
  * - getBulkInspirationalQuotes - A function that returns a large array of inspirational quotes.
- * - Quote - The type for a single quote object.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-
-export const QuoteSchema = z.object({
-  text: z.string().describe('The text of the quote.'),
-  source: z.string().describe('The source of the quote (e.g., Quran 2:261, Sahih al-Bukhari, Imam Al-Ghazali).'),
-  category: z.enum(['Quran', 'Hadith', 'Scholar']).describe('The category of the quote.')
-});
-export type Quote = z.infer<typeof QuoteSchema>;
-
-const QuotesOutputSchema = z.object({
-  quotes: z.array(QuoteSchema).describe('An array of 50 to 100 inspirational quotes.'),
-});
-type QuotesOutput = z.infer<typeof QuotesOutputSchema>;
-
+import { Quote, QuotesOutput, QuotesOutputSchema } from '@/ai/schemas';
 
 const prompt = ai.definePrompt({
     name: 'bulkInspirationalQuotesPrompt',

@@ -43,3 +43,34 @@ export const SendEmailOutputSchema = z.object({
   error: z.string().optional().describe('The error message if the email failed to send.'),
 });
 export type SendEmailOutput = z.infer<typeof SendEmailOutputSchema>;
+
+// Schema for Configuration Validator
+export const ValidateConfigurationInputSchema = z.object({
+  firebaseConfig: z
+    .string()
+    .describe('The Firebase configuration as a JSON string.'),
+  externalServiceConfigs: z
+    .string()
+    .describe('The external services configurations as a JSON string.'),
+});
+export type ValidateConfigurationInput = z.infer<typeof ValidateConfigurationInputSchema>;
+
+export const ValidateConfigurationOutputSchema = z.object({
+  isValid: z.boolean().describe('Whether the configuration is valid or not.'),
+  errors: z.array(z.string()).describe('A list of potential misconfigurations or security vulnerabilities.'),
+});
+export type ValidateConfigurationOutput = z.infer<typeof ValidateConfigurationOutputSchema>;
+
+
+// Schema for Quotes
+export const QuoteSchema = z.object({
+  text: z.string().describe('The text of the quote.'),
+  source: z.string().describe('The source of the quote (e.g., Quran 2:261, Sahih al-Bukhari, Imam Al-Ghazali).'),
+  category: z.enum(['Quran', 'Hadith', 'Scholar']).describe('The category of the quote.')
+});
+export type Quote = z.infer<typeof QuoteSchema>;
+
+export const QuotesOutputSchema = z.object({
+  quotes: z.array(QuoteSchema).describe('An array of 50 to 100 inspirational quotes.'),
+});
+export type QuotesOutput = z.infer<typeof QuotesOutputSchema>;
