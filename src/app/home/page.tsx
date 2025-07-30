@@ -8,13 +8,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon } from "lucide-react";
 import { getDonationsByUserId, Donation } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, Lead } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getUser, User as UserType } from "@/services/user-service";
+import { getRoleBasedInspirationalQuotes, Quote } from "@/ai/flows/get-role-based-quotes-flow";
 
 
 export default function UserHomePage() {
@@ -22,8 +23,10 @@ export default function UserHomePage() {
   const [activeRole, setActiveRole] = useState<string | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [cases, setCases] = useState<Lead[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quotesLoading, setQuotesLoading] = useState(true);
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -39,6 +42,11 @@ export default function UserHomePage() {
             setActiveRole(currentRole);
 
              try {
+                if (currentRole) {
+                    setQuotesLoading(true);
+                    getRoleBasedInspirationalQuotes(currentRole).then(setQuotes).finally(() => setQuotesLoading(false));
+                }
+
                 if (currentRole === 'Donor') {
                 const donorDonations = await getDonationsByUserId(fetchedUser.id!);
                 setDonations(donorDonations.slice(0, 3)); // Get latest 3
@@ -86,13 +94,39 @@ export default function UserHomePage() {
       );
     }
 
+    let dashboardContent;
     if (activeRole === 'Donor') {
-      return <DonorDashboard donations={donations} />;
+      dashboardContent = <DonorDashboard donations={donations} />;
+    } else if (activeRole === 'Beneficiary') {
+      dashboardContent = <BeneficiaryDashboard cases={cases} />;
+    } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
+        dashboardContent = (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Admin Dashboard</CardTitle>
+                    <CardDescription>Welcome to the admin control panel. Use the navigation menu to manage users, donations, and leads.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild>
+                        <Link href="/admin">Go to Full Dashboard</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        )
+    } else {
+        dashboardContent = <p>You do not have a role that has a default dashboard. Please select a role from your profile.</p>;
     }
-    if (activeRole === 'Beneficiary') {
-      return <BeneficiaryDashboard cases={cases} />;
-    }
-    return <p>You do not have a role that has a default dashboard. Please select a role from your profile.</p>;
+
+    return (
+        <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+                {dashboardContent}
+            </div>
+            <div className="lg:col-span-1">
+                <InspirationalQuotes quotes={quotes} loading={quotesLoading} />
+            </div>
+        </div>
+    )
   };
   
   return (
@@ -199,4 +233,32 @@ function BeneficiaryDashboard({ cases }: { cases: Lead[] }) {
     )
 }
 
-    
+function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <QuoteIcon className="text-primary" />
+                    Food for Thought
+                </CardTitle>
+                <CardDescription>
+                    A little inspiration for your journey.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                     <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
+                ) : (
+                    <div className="space-y-6">
+                        {quotes.map((quote, index) => (
+                            <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                                <p>"{quote.text}"</p>
+                                <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                            </blockquote>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
