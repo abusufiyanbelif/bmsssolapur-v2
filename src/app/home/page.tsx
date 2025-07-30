@@ -17,16 +17,33 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getUser, User as UserType } from "@/services/user-service";
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
 
+const hardcodedQuotes = [
+    {
+        text: "The believer's shade on the Day of Resurrection will be their charity.",
+        source: "Sahih al-Bukhari",
+        category: "Hadith"
+    },
+    {
+        text: "Those who in charity spend of their goods by night and by day, in secret and in public, have their reward with their Lord: on them shall be no fear, nor shall they grieve.",
+        source: "Quran 2:274",
+        category: "Quran"
+    },
+    {
+        text: "A man's true wealth is the good he does in this world.",
+        source: "Imam Ali",
+        category: "Scholar"
+    }
+];
 
 export default function UserHomePage() {
   const [user, setUser] = useState<UserType | null>(null);
   const [activeRole, setActiveRole] = useState<string | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [cases, setCases] = useState<Lead[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>(hardcodedQuotes);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quotesLoading, setQuotesLoading] = useState(true);
+  const [quotesLoading, setQuotesLoading] = useState(false);
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -42,9 +59,6 @@ export default function UserHomePage() {
             setActiveRole(currentRole);
 
              try {
-                setQuotesLoading(true);
-                getRandomQuotes(3).then(setQuotes).finally(() => setQuotesLoading(false));
-
                 if (currentRole === 'Donor') {
                 const donorDonations = await getDonationsByUserId(fetchedUser.id!);
                 setDonations(donorDonations.slice(0, 3)); // Get latest 3
