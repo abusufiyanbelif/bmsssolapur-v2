@@ -85,7 +85,7 @@ export default function UserManagementPage() {
                             </div>
                         </TableCell>
                         <TableCell>
-                            <Badge variant={user.isActive ? "default" : "destructive"} className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
+                            <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
@@ -108,7 +108,7 @@ export default function UserManagementPage() {
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <CardTitle className="text-lg">{user.name}</CardTitle>
-                            <Badge variant={user.isActive ? "default" : "destructive"} className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
+                            <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </div>

@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser } from "./actions";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { UserRole } from "@/services/user-service";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -72,7 +72,7 @@ export function AddUserForm() {
     formData.append("email", values.email);
     formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
-    formData.append("isActive", String(values.isActive));
+    if(values.isActive) formData.append("isActive", "on");
     formData.append("gender", values.gender);
     if(values.address) formData.append("address", values.address);
     if(values.panNumber) formData.append("panNumber", values.panNumber);
@@ -87,6 +87,7 @@ export function AddUserForm() {
         variant: "success",
         title: "User Created",
         description: `Successfully created user ${result.user.name}.`,
+        icon: <CheckCircle />,
       });
       form.reset();
     } else {
@@ -205,7 +206,7 @@ export function AddUserForm() {
                     <RadioGroup
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    className="flex flex-col space-y-1"
+                    className="flex flex-row space-x-4"
                     >
                     <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
@@ -252,7 +253,7 @@ export function AddUserForm() {
             name="panNumber"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>PAN Number</FormLabel>
+                <FormLabel>PAN Number (Optional)</FormLabel>
                 <FormControl>
                     <Input placeholder="Enter PAN number" {...field} />
                 </FormControl>
@@ -265,7 +266,7 @@ export function AddUserForm() {
             name="aadhaarNumber"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Aadhaar Number</FormLabel>
+                <FormLabel>Aadhaar Number (Optional)</FormLabel>
                 <FormControl>
                     <Input placeholder="Enter Aadhaar number" {...field} />
                 </FormControl>

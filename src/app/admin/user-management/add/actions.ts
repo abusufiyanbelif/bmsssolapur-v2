@@ -19,7 +19,7 @@ export async function handleAddUser(
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
-    isActive: formData.get("isActive") === 'true',
+    isActive: formData.get("isActive") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     address: formData.get("address") as string | undefined,
     panNumber: formData.get("panNumber") as string | undefined,
@@ -31,22 +31,21 @@ export async function handleAddUser(
   }
   
   try {
-    const newUserData: Omit<User, 'id'> = {
+    const newUserData: Omit<User, 'id' | 'createdAt'> = {
         name: rawFormData.name,
         email: rawFormData.email,
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: rawFormData.isActive,
         gender: rawFormData.gender,
-        address: rawFormData.address,
-        panNumber: rawFormData.panNumber,
-        aadhaarNumber: rawFormData.aadhaarNumber,
+        address: rawFormData.address || '',
+        panNumber: rawFormData.panNumber || '',
+        aadhaarNumber: rawFormData.aadhaarNumber || '',
         privileges: [],
         groups: [],
-        createdAt: Timestamp.now()
     };
 
-    const newUser = await createUser(newUserData);
+    const newUser = await createUser({...newUserData, createdAt: Timestamp.now()});
     
     revalidatePath("/admin/user-management");
 

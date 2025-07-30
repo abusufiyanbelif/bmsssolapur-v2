@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/services/firebase";
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "firebase/auth";
 import { Separator } from "@/components/ui/separator";
-import { User } from "@/services/user-service";
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="mr-2 h-4 w-4">
@@ -31,17 +30,17 @@ export default function LoginPage() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
 
-  const onSuccessfulLogin = (data: {userId?: string, user?: User}) => {
+  const onSuccessfulLogin = (data: {userId?: string}) => {
     toast({
       variant: "success",
       title: "Login Successful",
       description: "Welcome back! Please select your role to continue.",
-      icon: <CheckCircle className="text-green-600" />,
+      icon: <CheckCircle />,
     });
     // Clear any previous role selection
     localStorage.removeItem('activeRole'); 
     
-    if (data.userId) { // Handle DB user case
+    if (data.userId) {
       localStorage.setItem('userId', data.userId);
     }
     
@@ -88,7 +87,7 @@ export default function LoginPage() {
             variant: "success",
             title: "OTP Sent", 
             description: "An OTP has been sent to your phone.",
-            icon: <CheckCircle className="text-green-600" />
+            icon: <CheckCircle />
           });
           setIsOtpSent(true);
       } else {
@@ -200,7 +199,7 @@ export default function LoginPage() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="identifier">Email or Phone</Label>
+                      <Label htmlFor="identifier">Email, Phone, or Username</Label>
                       <Input id="identifier" name="identifier" type="text" placeholder="user@example.com or 9876543210" required />
                     </div>
                     <div className="space-y-2">
@@ -213,7 +212,7 @@ export default function LoginPage() {
                         ) : (
                           <LogIn className="mr-2 h-4 w-4" />
                         )}
-                        Login with Password
+                        Login
                     </Button>
                      <div className="text-center">
                         <Button variant="link" size="sm" type="button" onClick={() => toast({ title: "In Progress", description: "This feature is currently in development and will be available soon."})}>Forgot Password?</Button>

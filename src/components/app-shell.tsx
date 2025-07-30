@@ -32,13 +32,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    const guestUser = {
+    const guestUser: UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } = {
         isLoggedIn: false,
         id: "guest_user_id",
         name: "Guest",
         phone: '',
         email: '',
         roles: ["Guest"],
+        isActive: true,
         activeRole: "Guest",
         initials: "G",
         avatar: "https://placehold.co/100x100.png",
@@ -55,7 +56,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 const fetchedUser = await getUser(storedUserId);
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
-                    const activeRole = savedRole || fetchedUser.roles[0];
+                    // Ensure the saved role is actually one the user has, otherwise default
+                    const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
                     
                     setUser({
                         ...fetchedUser,

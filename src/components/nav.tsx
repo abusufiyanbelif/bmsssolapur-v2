@@ -29,7 +29,7 @@ const allNavItems: NavItem[] = [
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (for non-admins)
-    { href: "/home", label: "Home", icon: Home, allowedRoles: ["Donor", "Beneficiary"] },
+    { href: "/home", label: "Home", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
     
     // Donor
     { href: "/campaigns", label: "Approved Leads", icon: FileCheck, allowedRoles: ["Donor"] },
@@ -41,28 +41,20 @@ const allNavItems: NavItem[] = [
     { href: "/campaigns", label: "View Public Campaigns", icon: Megaphone, allowedRoles: ["Beneficiary"] },
     
     // Admin
-    { href: "/admin", label: "Dashboard", icon: Home, allowedRoles: ["Admin", "Super Admin"] },
+    { href: "/admin", label: "Dashboard", icon: Home, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     { href: "/admin/leads", label: "All Leads", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
-    { href: "/admin/donations", label: "Donations", icon: Banknote, allowedRoles: ["Admin", "Super Admin"] },
+    { href: "/admin/donations", label: "Donations", icon: Banknote, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     
     // Super Admin
     { href: "/admin/user-management", label: "User Management", icon: UserCog, allowedRoles: ["Super Admin"] },
-    { href: "/admin/role-assignment", label: "Role Assignment", icon: Lock, allowedRoles: ["Super Admin"] },
-    { href: "/admin/logs", label: "All Logs", icon: BookText, allowedRoles: ["Super Admin"] },
-    { href: "/admin/app-settings", label: "App Settings", icon: Settings, allowedRoles: ["Super Admin"] },
-    { href: "/admin/maintenance", label: "Maintenance Toggle", icon: Wrench, allowedRoles: ["Super Admin"] },
-    { href: "/admin/export", label: "Data Export", icon: Download, allowedRoles: ["Super Admin"] },
-    { href: "/admin/module-visibility", label: "Module Visibility", icon: Eye, allowedRoles: ["Super Admin"] },
-    
-    // Shared / Profile (Visible to all logged-in users)
-    { href: "/profile", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin"] },
-
-    // Super Admin Dev/Debug Tools
     { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
     { href: "/services", label: "Services Summary", icon: Server, allowedRoles: ["Super Admin"] },
     { href: "/dependencies", label: "Dependency Map", icon: Share2, allowedRoles: ["Super Admin"] },
     { href: "/validator", label: "Configuration Validator", icon: ShieldCheck, allowedRoles: ["Super Admin"] },
     { href: "/personas", label: "AI Personas", icon: BrainCircuit, allowedRoles: ["Super Admin"] },
+    
+    // Shared / Profile (Visible to all logged-in users)
+    { href: "/profile", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
 ];
 
 interface NavProps {

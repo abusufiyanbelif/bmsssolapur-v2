@@ -11,7 +11,6 @@ interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
-    user?: User; // For hardcoded user case
 }
 
 const isEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
@@ -40,7 +39,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         if (identifier === 'admin') {
             user = await getUserByName('admin');
             if (!user) {
-                return { success: false, error: "The default 'admin' user was not found in the database. Please run the database seeder." };
+                return { success: false, error: "The default 'admin' user was not found in the database. Please visit /admin/seed to initialize data." };
             }
         } else if (isEmail(identifier)) {
             user = await getUserByEmail(identifier);
@@ -56,6 +55,10 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         
         if (!user) {
             return { success: false, error: "User not found." };
+        }
+
+        if (!user.isActive) {
+            return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
         
         return { success: true, userId: user.id };
@@ -82,6 +85,9 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
         const user = await getUserByPhone(phoneNumber); 
         if (!user) {
             return { success: false, error: "No user found with this phone number." };
+        }
+         if (!user.isActive) {
+            return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
         
         // Add country code only when sending to the external service
@@ -154,12 +160,14 @@ export async function handleGoogleLogin(firebaseUser: {
 
     if (!appUser) {
       // User doesn't exist, create a new one
-      const newUser: Omit<User, 'id' | 'createdAt'> = {
+      const newUser: Omit<User, 'id'> = {
         name: firebaseUser.displayName || 'Google User',
         email: firebaseUser.email,
         // Use a placeholder phone number; the user can update it in their profile
-        phone: firebaseUser.phoneNumber || Date.now().toString().slice(-10),
+        phone: Date.now().toString().slice(-10),
         roles: ['Donor'], // Default role for new sign-ups
+        isActive: true, // New users are active by default
+        createdAt: Timestamp.now(),
       };
       // Use the Firebase UID as the document ID for our user record
       appUser = await createUser({ ...newUser, id: firebaseUser.uid });
@@ -171,11 +179,4 @@ export async function handleGoogleLogin(firebaseUser: {
     const error = e instanceof Error ? e.message : 'An unknown error occurred during login.';
     return { success: false, error };
   }
-}
-
-
-export async function triggerSeed() {
-    console.log("Triggering seed from login page...");
-    const { seedDatabase } = await import('@/services/seed-service');
-    await seedDatabase();
 }
