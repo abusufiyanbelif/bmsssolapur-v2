@@ -58,6 +58,7 @@ const allNavItems: NavItem[] = [
     { href: "/profile", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin"] },
 
     // Super Admin Dev/Debug Tools
+    { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
     { href: "/services", label: "Services Summary", icon: Server, allowedRoles: ["Super Admin"] },
     { href: "/dependencies", label: "Dependency Map", icon: Share2, allowedRoles: ["Super Admin"] },
     { href: "/validator", label: "Configuration Validator", icon: ShieldCheck, allowedRoles: ["Super Admin"] },
