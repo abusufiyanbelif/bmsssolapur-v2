@@ -19,6 +19,7 @@ export async function handleAddUser(
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
+    // Correctly interpret checkbox value: 'on' if checked, null if not.
     isActive: formData.get("isActive") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     address: formData.get("address") as string | undefined,
