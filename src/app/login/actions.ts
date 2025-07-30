@@ -181,6 +181,8 @@ export async function handleGoogleLogin(firebaseUser: {
       };
       // Use the Firebase UID as the document ID for our user record
       appUser = await createUser({ ...newUser, id: firebaseUser.uid });
+    } else if (!appUser.isActive) {
+        return { success: false, error: 'This user account is inactive. Please contact an administrator.' };
     }
 
     return { success: true, userId: appUser.id };
@@ -190,4 +192,3 @@ export async function handleGoogleLogin(firebaseUser: {
     return { success: false, error };
   }
 }
-
