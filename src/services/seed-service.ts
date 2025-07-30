@@ -15,9 +15,6 @@ const usersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
     { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"], isActive: true, gender: 'Male', address: '123 Admin Lane, Solapur', panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012' },
     
-    // Default Admin User
-    { name: "admin", email: "admin@internal.app", phone: "9999999999", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"], isActive: true, gender: 'Male', address: '1 Admin Way, Solapur', panNumber: 'ADMINPAN123', aadhaarNumber: '999999999999' },
-
     // Admins (Founders and Members)
     { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
     { name: "Maaz Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", roles: ["Admin", "Finance Admin"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
