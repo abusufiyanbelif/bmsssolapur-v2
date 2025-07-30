@@ -19,22 +19,16 @@ const donationCategories: (DonationType | DonationPurpose)[] = [
 
 
 export default async function LandingPage() {
-  let openLeads: Lead[] = [];
-  let quotes: QuoteType[] = [];
-
-  try {
-    openLeads = await getOpenLeads();
-  } catch (error) {
-    console.error("Failed to fetch open leads, using empty array as fallback.", error);
-    openLeads = [];
-  }
-  
-  try {
-    quotes = await getRandomQuotes(3);
-  } catch (error) {
-    console.error("Failed to fetch quotes from database.", error);
-    quotes = [];
-  }
+  const [openLeads, quotes] = await Promise.all([
+    getOpenLeads().catch(err => {
+      console.error("Failed to fetch open leads, using empty array as fallback.", err);
+      return [];
+    }),
+    getRandomQuotes(3).catch(err => {
+      console.error("Failed to fetch quotes from database, using empty array as fallback.", err);
+      return [];
+    })
+  ]);
 
   const featuredLeads = openLeads.slice(0, 3);
 
