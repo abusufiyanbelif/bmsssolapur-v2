@@ -147,7 +147,10 @@ export const updateDonation = async (id: string, updates: Partial<Donation>, per
 
 // Function to get all donations
 export const getAllDonations = async (): Promise<Donation[]> => {
-    if (!isConfigValid) return [];
+    if (!isConfigValid) {
+      console.warn("Firebase not configured. Skipping fetching all donations.");
+      return [];
+    }
     try {
         const donationsQuery = query(collection(db, DONATIONS_COLLECTION));
         const querySnapshot = await getDocs(donationsQuery);

@@ -120,7 +120,10 @@ export const deleteLead = async (id: string) => {
 
 // Function to get all leads
 export const getAllLeads = async (): Promise<Lead[]> => {
-    if (!isConfigValid) return [];
+    if (!isConfigValid) {
+        console.warn("Firebase not configured. Skipping fetching all leads.");
+        return [];
+    }
     try {
         const leadsQuery = query(collection(db, LEADS_COLLECTION));
         const querySnapshot = await getDocs(leadsQuery);

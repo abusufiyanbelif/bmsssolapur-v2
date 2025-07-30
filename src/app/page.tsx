@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HeartHandshake, Quote, BookOpenCheck } from "lucide-react";
+import { ArrowRight, HeartHandshake, Quote, BookOpenCheck, HandCoins, Users, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
-import { type DonationType, type DonationPurpose } from "@/services/donation-service";
-import { Lead } from "@/services/lead-service";
+import { type DonationType, type DonationPurpose, getAllDonations } from "@/services/donation-service";
+import { getAllLeads, Lead } from "@/services/lead-service";
 import { getRandomQuotes } from "@/services/quotes-service";
 
 
@@ -18,19 +18,45 @@ const donationCategories: (DonationType | DonationPurpose)[] = [
 ];
 
 export default async function LandingPage() {
-  const openLeads = await getOpenLeads().catch((err) => {
+  let openLeads: Lead[] = [];
+  let quotes: any[] = [];
+  let totalRaised = 0;
+  let beneficiariesHelped = 0;
+  let casesClosed = 0;
+
+  try {
+      openLeads = await getOpenLeads();
+      quotes = await getRandomQuotes(3);
+      const allDonations = await getAllDonations();
+      const allLeads = await getAllLeads();
+
+      totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated' ? acc + d.amount : acc), 0);
+      
+      // Only count unique beneficiaries helped
+      const beneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+      beneficiariesHelped = beneficiaryIds.size;
+
+      casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+
+  } catch (err) {
       console.error("Error fetching landing page data:", err);
       // Fallback to empty arrays if there's an error
-      return [];
-  });
-  
+      openLeads = [];
+      quotes = [];
+  }
+
   const featuredLeads = openLeads.slice(0, 3);
-  const quotes = await getRandomQuotes(3);
+  
+  const impactStats = [
+    { title: "Total Funds Raised", value: `₹${totalRaised.toLocaleString()}`, icon: HandCoins },
+    { title: "Beneficiaries Helped", value: beneficiariesHelped.toLocaleString(), icon: Users },
+    { title: "Campaigns Completed", value: casesClosed.toLocaleString(), icon: CheckCircle },
+  ];
 
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center min-h-[calc(80vh-150px)] text-center p-4 bg-background">
+      <section className="flex flex-col items-center justify-center min-h-[calc(70vh-150px)] text-center p-4 bg-background">
         <div className="max-w-4xl">
            <h1 className="text-5xl font-bold tracking-tighter font-headline sm:text-6xl md:text-7xl">
             <span className="text-primary font-bold">Baitul Mal</span>{' '}
@@ -55,6 +81,29 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* Public Dashboard Section */}
+       <section id="dashboard" className="py-16 lg:py-24 bg-background">
+         <div className="container mx-auto px-4">
+             <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold tracking-tight font-headline">Our Impact at a Glance</h2>
+                <p className="mt-2 text-lg text-muted-foreground">Transparency and progress, powered by community support.</p>
+            </div>
+            <div className="grid gap-6 md:grid-cols-3">
+              {impactStats.map(stat => (
+                <Card key={stat.title}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-base font-medium">{stat.title}</CardTitle>
+                    <stat.icon className="h-5 w-5 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">{stat.value}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+         </div>
+      </section>
+
       {/* Featured Campaigns Section */}
       {featuredLeads.length > 0 && (
         <section id="campaigns" className="py-16 lg:py-24 bg-muted/30">
@@ -66,7 +115,6 @@ export default async function LandingPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {featuredLeads.map((lead) => {
                         const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
-                        const remainingAmount = lead.helpRequested - lead.helpGiven;
                         return (
                              <Card key={lead.id} className="flex flex-col">
                                 <CardHeader>
@@ -129,7 +177,7 @@ export default async function LandingPage() {
                 <p className="mt-2 text-lg text-muted-foreground">Inspiration from Islamic teachings on charity and compassion.</p>
             </div>
             
-            <div className="grid gap-8 md:grid-cols-3">
+             <div className="grid gap-8 md:grid-cols-3">
                 {quotes.map((quote, index) => (
                     <Card key={index} className="flex flex-col">
                         <CardContent className="pt-6 flex-grow">
