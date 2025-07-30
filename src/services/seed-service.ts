@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -6,7 +7,8 @@ import { createUser, User, UserRole } from './user-service';
 import { createOrganization, Organization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc } from 'firebase/firestore';
+import { Lead } from './lead-service';
 
 const usersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
@@ -45,23 +47,42 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     upiId: "maaz9145@okhdfcbank"
 };
 
-export type UserSeedResult = { name: string; phone: string; status: 'Created' | 'Skipped (already exists)' };
+const leadsToSeed: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated'>[] = [
+    { name: 'Mustahik Person', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Hazrate Nomaniya Masjid', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Nomaniya Masjid', helpRequested: 720, helpGiven: 720, category: 'Deen', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Ration Distribution', helpRequested: 2795, helpGiven: 2795, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration provided to a needy person.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Ration for 4 Houses', helpRequested: 5000, helpGiven: 5000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration kits provided to 4 households, including elderly widows and sick families.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Ration Aid', helpRequested: 2000, helpGiven: 2000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Grain provided to a person in need.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Madrasa Riaz Ul Jannah', helpRequested: 1800, helpGiven: 1800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Rent and deposit for a new Madrasa at Sugar factory site new gharkul.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Anonymous Help', helpRequested: 1700, helpGiven: 1700, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Cash help provided to a person in need.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Lalsab Bagali', helpRequested: 29500, helpGiven: 29500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a patient\'s operation. 25000 cash given plus 4500 collected.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Lalsab Bagali', helpRequested: 26800, helpGiven: 26800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Hospital bill payment for a patient in need.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Mustahiq Family', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Money for household ration for a deserving family.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Child Hospital Bill', helpRequested: 3000, helpGiven: 3000, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a sick 2-year-old child admitted to the government hospital.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Madrasa Admission', helpRequested: 600, helpGiven: 600, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Admission fee for a 9-year-old boy from a new Muslim family in a school cum madrasa.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Aid for Needy', helpRequested: 6000, helpGiven: 6000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Follow-up help provided to a previously supported case.', verifiers: [], verificationDocumentUrl: '' },
+    { name: 'Monthly Aid', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Monthly financial assistance to a deserving person.', verifiers: [], verificationDocumentUrl: '' },
+];
+
+
+export type SeedItemResult = { name: string; status: 'Created' | 'Skipped (already exists)' };
 export type SeedResult = {
-    userResults: UserSeedResult[];
+    userResults: SeedItemResult[];
     orgStatus: string;
     quotesStatus: string;
+    leadResults: SeedItemResult[];
     error?: string;
 };
 
-const seedUsers = async (): Promise<UserSeedResult[]> => {
+const seedUsers = async (): Promise<SeedItemResult[]> => {
     if (!isConfigValid) {
         throw new Error("Firebase is not configured. Cannot seed users.");
     }
     console.log('Seeding users...');
-    const results: UserSeedResult[] = [];
+    const results: SeedItemResult[] = [];
 
     for (const userData of usersToSeed) {
-        // Find existing user by phone to avoid duplicates
         const q = query(collection(db, 'users'), where("phone", "==", userData.phone));
         const existingUsers = await getDocs(q);
         
@@ -70,9 +91,9 @@ const seedUsers = async (): Promise<UserSeedResult[]> => {
                 ...userData,
                 createdAt: Timestamp.now()
             });
-            results.push({ name: userData.name, phone: userData.phone, status: 'Created' });
+            results.push({ name: userData.name, status: 'Created' });
         } else {
-            results.push({ name: userData.name, phone: userData.phone, status: 'Skipped (already exists)' });
+            results.push({ name: userData.name, status: 'Skipped (already exists)' });
         }
     }
 
@@ -97,6 +118,57 @@ const seedOrganization = async (): Promise<string> => {
     return 'Organization seeded successfully.';
 };
 
+const seedLeads = async (): Promise<SeedItemResult[]> => {
+    if (!isConfigValid) {
+        throw new Error("Firebase is not configured. Cannot seed leads.");
+    }
+    console.log('Seeding historical leads...');
+    const results: SeedItemResult[] = [];
+
+    const anonymousUserQuery = query(collection(db, 'users'), where("name", "==", "Anonymous Donor"));
+    const adminUserQuery = query(collection(db, 'users'), where("name", "==", "Abusufiyan Belif"));
+
+    const [anonymousSnapshot, adminSnapshot] = await Promise.all([
+        getDocs(anonymousUserQuery),
+        getDocs(adminUserQuery),
+    ]);
+    
+    if (anonymousSnapshot.empty || adminSnapshot.empty) {
+        throw new Error("Cannot seed leads without 'Anonymous Donor' and 'Abusufiyan Belif' users. Please ensure users are seeded first.");
+    }
+    
+    const anonymousUserId = anonymousSnapshot.docs[0].id;
+    const adminUserId = adminSnapshot.docs[0].id;
+
+    const leadsCollection = collection(db, 'leads');
+
+    for (const leadData of leadsToSeed) {
+        // Use caseDetails as a rough unique identifier for checking existence
+        const q = query(leadsCollection, where("caseDetails", "==", leadData.caseDetails));
+        const existingLeads = await getDocs(q);
+        
+        if (existingLeads.empty) {
+            const leadRef = doc(leadsCollection);
+            const newLead: Lead = {
+                ...leadData,
+                id: leadRef.id,
+                beneficiaryId: anonymousUserId,
+                adminAddedBy: adminUserId,
+                dateCreated: Timestamp.fromDate(new Date("2021-12-01")), // Using a historical date
+                createdAt: Timestamp.fromDate(new Date("2021-12-01")),
+                updatedAt: Timestamp.fromDate(new Date("2021-12-01")),
+            };
+            await setDoc(leadRef, newLead);
+            results.push({ name: leadData.name, status: 'Created' });
+        } else {
+            results.push({ name: leadData.name, status: 'Skipped (already exists)' });
+        }
+    }
+
+    console.log('Lead seeding process finished.');
+    return results;
+};
+
 
 export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Attempting to seed database...');
@@ -107,6 +179,7 @@ export const seedDatabase = async (): Promise<SeedResult> => {
             userResults: [],
             orgStatus: 'Failed',
             quotesStatus: 'Failed',
+            leadResults: [],
             error: errorMsg,
         }
     }
@@ -114,8 +187,9 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         const userResults = await seedUsers();
         const orgStatus = await seedOrganization();
         const quotesStatus = await seedInitialQuotes();
+        const leadResults = await seedLeads();
         console.log('Database seeding process completed.');
-        return { userResults, orgStatus, quotesStatus };
+        return { userResults, orgStatus, quotesStatus, leadResults };
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred during seeding.';
         console.error('Error seeding database:', errorMsg);
@@ -123,6 +197,7 @@ export const seedDatabase = async (): Promise<SeedResult> => {
             userResults: [],
             orgStatus: 'Failed',
             quotesStatus: 'Failed',
+            leadResults: [],
             error: errorMsg,
         };
     }
