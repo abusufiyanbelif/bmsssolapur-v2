@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getUser, User as UserType } from "@/services/user-service";
-import { getInspirationalQuotes, Quote } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getRandomQuotes, Quote } from "@/services/quotes-service";
 
 
 export default function UserHomePage() {
@@ -43,7 +43,7 @@ export default function UserHomePage() {
 
              try {
                 setQuotesLoading(true);
-                getInspirationalQuotes(3).then(setQuotes).finally(() => setQuotesLoading(false));
+                getRandomQuotes(3).then(setQuotes).finally(() => setQuotesLoading(false));
 
                 if (currentRole === 'Donor') {
                 const donorDonations = await getDonationsByUserId(fetchedUser.id!);
@@ -232,6 +232,10 @@ function BeneficiaryDashboard({ cases }: { cases: Lead[] }) {
 }
 
 function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+    if (!loading && quotes.length === 0) {
+        return null;
+    }
+
     return (
         <Card>
             <CardHeader>

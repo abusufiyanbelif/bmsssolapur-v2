@@ -1,0 +1,104 @@
+/**
+ * @fileOverview Service for managing inspirational quotes in Firestore.
+ */
+
+import {
+  collection,
+  doc,
+  getDocs,
+  writeBatch,
+  query,
+  limit,
+} from 'firebase/firestore';
+import { db, isConfigValid } from './firebase';
+import { getBulkInspirationalQuotes, Quote } from '@/ai/flows/get-bulk-quotes-flow';
+
+const QUOTES_COLLECTION = 'inspirationalQuotes';
+
+export type { Quote };
+
+/**
+ * Seeds the database with a large set of initial quotes if it's empty.
+ * @returns A status message.
+ */
+export const seedInitialQuotes = async (): Promise<string> => {
+  if (!isConfigValid) {
+    return "Firebase not configured. Skipped quote seeding.";
+  }
+  
+  const quotesCollection = collection(db, QUOTES_COLLECTION);
+  const snapshot = await getDocs(query(quotesCollection, limit(1)));
+
+  if (!snapshot.empty) {
+    const msg = "Quotes collection is not empty. Skipped seeding.";
+    console.log(msg);
+    return msg;
+  }
+
+  console.log("Quotes collection is empty. Seeding initial quotes from AI...");
+  try {
+    const quotesToSeed = await getBulkInspirationalQuotes();
+    if (!quotesToSeed || quotesToSeed.length === 0) {
+        throw new Error("AI flow returned no quotes to seed.");
+    }
+    
+    // Use a batch write for efficiency
+    const batch = writeBatch(db);
+    quotesToSeed.forEach((quote) => {
+      const quoteRef = doc(quotesCollection);
+      batch.set(quoteRef, quote);
+    });
+
+    await batch.commit();
+    const successMsg = `Successfully seeded ${quotesToSeed.length} quotes.`;
+    console.log(successMsg);
+    return successMsg;
+  } catch (error) {
+    const errorMsg = "Failed to seed quotes from AI flow.";
+    console.error(errorMsg, error);
+    throw new Error(errorMsg);
+  }
+};
+
+/**
+ * Fetches all quotes from the database.
+ * @returns An array of all quote objects.
+ */
+export const getAllQuotes = async (): Promise<Quote[]> => {
+    if (!isConfigValid) return [];
+    try {
+        const quotesQuery = query(collection(db, QUOTES_COLLECTION));
+        const querySnapshot = await getDocs(quotesQuery);
+        const quotes: Quote[] = [];
+        querySnapshot.forEach((doc) => {
+            quotes.push({ id: doc.id, ...doc.data() } as Quote);
+        });
+        return quotes;
+    } catch (error) {
+        console.error("Error getting all quotes: ", error);
+        throw new Error('Failed to get all quotes.');
+    }
+}
+
+/**
+ * Fetches a specified number of random quotes from the database.
+ * @param count The number of random quotes to fetch.
+ * @returns An array of random quote objects.
+ */
+export const getRandomQuotes = async (count: number): Promise<Quote[]> => {
+    if (!isConfigValid) return [];
+    try {
+        const allQuotes = await getAllQuotes();
+        if (allQuotes.length === 0) {
+            return [];
+        }
+        
+        // Simple shuffle and slice algorithm for random selection
+        const shuffled = allQuotes.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
+
+    } catch (error) {
+        console.error("Error getting random quotes: ", error);
+        throw new Error('Failed to get random quotes.');
+    }
+}

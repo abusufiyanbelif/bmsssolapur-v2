@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getInspirationalQuotes, type Quote } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getAllQuotes, type Quote } from "@/services/quotes-service";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useEffect, useState } from "react";
@@ -18,11 +18,11 @@ export default function QuotesPage() {
         try {
             setLoading(true);
             setError(null);
-            const fetchedQuotes = await getInspirationalQuotes(10);
+            const fetchedQuotes = await getAllQuotes();
             setQuotes(fetchedQuotes);
         } catch (e) {
-            console.error("Failed to fetch quotes from Genkit.", e);
-            setError("Could not load quotes due to an AI service error.");
+            console.error("Failed to fetch quotes from database.", e);
+            setError("Could not load quotes due to a database error.");
             setQuotes([]);
         } finally {
             setLoading(false);
@@ -39,7 +39,7 @@ export default function QuotesPage() {
                  <h2 className="text-3xl font-bold tracking-tight font-headline">Inspirational Quotes</h2>
                  <Button onClick={fetchQuotes} disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                    Get New Quotes
+                    Refresh Quotes
                  </Button>
             </div>
            
@@ -47,7 +47,7 @@ export default function QuotesPage() {
                 <CardHeader>
                     <CardTitle>A Collection of Wisdom</CardTitle>
                     <CardDescription>
-                        A collection of quotes from the Quran and Hadith about charity, compassion, and helping others.
+                        A collection of quotes from the Quran, Hadith, and scholars about charity, compassion, and helping others.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -68,6 +68,7 @@ export default function QuotesPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[70%]">Quote</TableHead>
+                                    <TableHead>Category</TableHead>
                                     <TableHead>Source</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -75,6 +76,7 @@ export default function QuotesPage() {
                                 {quotes.map((quote, index) => (
                                     <TableRow key={index}>
                                         <TableCell className="font-medium italic">"{quote.text}"</TableCell>
+                                        <TableCell>{quote.category}</TableCell>
                                         <TableCell>{quote.source}</TableCell>
                                     </TableRow>
                                 ))}
