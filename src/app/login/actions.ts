@@ -13,6 +13,8 @@ interface LoginState {
     userId?: string;
 }
 
+const SUPER_ADMIN_PHONE = "7887646583";
+
 export async function handleLogin(formData: FormData): Promise<LoginState> {
     if (!isConfigValid) {
         return { success: false, error: "Firebase is not configured. Cannot process login." };
@@ -61,7 +63,8 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             return { success: false, error: "User not found with the provided details." };
         }
 
-        if (!user.isActive) {
+        // The Super Admin should never be locked out.
+        if (!user.isActive && user.phone !== SUPER_ADMIN_PHONE) {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
         
@@ -90,7 +93,8 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
         if (!user) {
             return { success: false, error: "No user found with this phone number." };
         }
-         if (!user.isActive) {
+         // The Super Admin should never be locked out.
+         if (!user.isActive && user.phone !== SUPER_ADMIN_PHONE) {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
         
@@ -181,7 +185,7 @@ export async function handleGoogleLogin(firebaseUser: {
       };
       // Use the Firebase UID as the document ID for our user record
       appUser = await createUser({ ...newUser, id: firebaseUser.uid });
-    } else if (!appUser.isActive) {
+    } else if (!appUser.isActive && appUser.phone !== SUPER_ADMIN_PHONE) {
         return { success: false, error: 'This user account is inactive. Please contact an administrator.' };
     }
 
