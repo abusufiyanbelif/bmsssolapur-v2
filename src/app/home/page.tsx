@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getUser, User as UserType } from "@/services/user-service";
-import { getRoleBasedInspirationalQuotes, Quote } from "@/ai/flows/get-role-based-quotes-flow";
+import { getQuotesForRole, Quote } from "@/services/quotes-service";
 
 
 export default function UserHomePage() {
@@ -44,7 +44,7 @@ export default function UserHomePage() {
              try {
                 if (currentRole) {
                     setQuotesLoading(true);
-                    getRoleBasedInspirationalQuotes(currentRole).then(setQuotes).finally(() => setQuotesLoading(false));
+                    getQuotesForRole(currentRole).then(setQuotes).finally(() => setQuotesLoading(false));
                 }
 
                 if (currentRole === 'Donor') {
