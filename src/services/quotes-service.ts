@@ -83,7 +83,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
 const hardcodedQuotes: Quote[] = [
     {
         text: "The believer's shade on the Day of Resurrection will be their charity.",
-        source: "Sahih al-Bukhari",
+        source: "Sahih al-Bukhari 1422",
         category: "Hadith"
     },
     {
@@ -98,7 +98,7 @@ const hardcodedQuotes: Quote[] = [
     },
     {
         text: "Every act of goodness is charity.",
-        source: "Sahih Muslim",
+        source: "Sahih Muslim 1004",
         category: "Hadith"
     }
 ];

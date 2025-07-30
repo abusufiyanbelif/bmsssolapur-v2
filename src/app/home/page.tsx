@@ -20,7 +20,7 @@ import { getRandomQuotes, Quote } from "@/services/quotes-service";
 const hardcodedQuotes = [
     {
         text: "The believer's shade on the Day of Resurrection will be their charity.",
-        source: "Sahih al-Bukhari",
+        source: "Sahih al-Bukhari 1422",
         category: "Hadith"
     },
     {
