@@ -18,3 +18,5 @@ This document contains a log of all requests made by the user during the develop
 12. `how can we migrate in future to git and other technology stack to maintain outside Firebase?`
 13. `who can help me to do this if i know nothing?`
 14. `make doc of every query i asked. keep all chat history from my side.`
+15. `are you updating work flows`
+16. `scan full chat history and update in that doc it shoes only few i want from first meesage`
