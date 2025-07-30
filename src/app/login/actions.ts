@@ -36,11 +36,8 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        if (identifier.toLowerCase() === 'admin') {
-            user = await getUserByName('admin');
-            if (!user) {
-                return { success: false, error: "The default 'admin' user was not found in the database. Please visit /admin/seed to initialize data." };
-            }
+        if (identifier.toLowerCase() === 'abusufiyan belif') {
+            user = await getUserByName('Abusufiyan Belif');
         } else if (isEmail(identifier)) {
             user = await getUserByEmail(identifier);
         } else {
