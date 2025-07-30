@@ -144,11 +144,6 @@ export default async function LandingPage() {
                     </Card>
                 ))}
             </div>
-            <div className="text-center mt-12">
-                <Button asChild variant="secondary">
-                    <Link href="/quotes">View All Quotes <ArrowRight className="ml-2" /></Link>
-                </Button>
-            </div>
         </div>
       </section>
     </div>
