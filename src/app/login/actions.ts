@@ -13,45 +13,52 @@ interface LoginState {
     userId?: string;
 }
 
-const isEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
-
 export async function handleLogin(formData: FormData): Promise<LoginState> {
     if (!isConfigValid) {
         return { success: false, error: "Firebase is not configured. Cannot process login." };
     }
     const identifier = formData.get("identifier") as string;
     const password = formData.get("password") as string;
+    const loginMethod = formData.get("loginMethod") as 'username' | 'email' | 'phone';
 
-    if (!identifier || !password) {
-        return { success: false, error: "Identifier and password are required." };
+    if (!identifier || !password || !loginMethod) {
+        return { success: false, error: "Identifier, password, and login method are required." };
     }
 
     // For this prototype, we'll use a simple password check for all users.
     // In a real application, you would use Firebase Authentication
     // with password hashing or other secure methods.
     if (password !== 'admin') {
-         return { success: false, error: "Invalid password." };
+         return { success: false, error: "Invalid credentials." };
     }
 
     try {
         let user: User | null = null;
         
-        if (identifier.toLowerCase() === 'abusufiyan belif') {
-            user = await getUserByName('Abusufiyan Belif');
-        } else if (isEmail(identifier)) {
-            user = await getUserByEmail(identifier);
-        } else {
-            // Assume it's a phone number
-            const phoneRegex = /^[0-9]{10}$/;
-            if (phoneRegex.test(identifier)) {
+        switch (loginMethod) {
+            case 'email':
+                const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+                if (!isEmail) {
+                    return { success: false, error: "Please enter a valid email address." };
+                }
+                user = await getUserByEmail(identifier);
+                break;
+            case 'phone':
+                const phoneRegex = /^[0-9]{10}$/;
+                if (!phoneRegex.test(identifier)) {
+                    return { success: false, error: "Please enter a valid 10-digit phone number." };
+                }
                 user = await getUserByPhone(identifier);
-            } else {
-                return { success: false, error: "Invalid identifier. Please use a valid email or 10-digit phone number." };
-            }
+                break;
+            case 'username':
+                user = await getUserByName(identifier);
+                break;
+            default:
+                return { success: false, error: "Invalid login method specified." };
         }
         
         if (!user) {
-            return { success: false, error: "User not found." };
+            return { success: false, error: "User not found with the provided details." };
         }
 
         if (!user.isActive) {
