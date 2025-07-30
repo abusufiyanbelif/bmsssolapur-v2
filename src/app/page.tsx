@@ -9,6 +9,7 @@ import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { type DonationType, type DonationPurpose } from "@/services/donation-service";
 import { Lead } from "@/services/lead-service";
+import { getRandomQuotes } from "@/services/quotes-service";
 
 
 const donationCategories: (DonationType | DonationPurpose)[] = [
@@ -16,34 +17,15 @@ const donationCategories: (DonationType | DonationPurpose)[] = [
     'Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use'
 ];
 
-const hardcodedQuotes = [
-    {
-        text: "The believer's shade on the Day of Resurrection will be their charity.",
-        source: "Sahih al-Bukhari 1422",
-        category: "Hadith"
-    },
-    {
-        text: "Those who in charity spend of their goods by night and by day, in secret and in public, have their reward with their Lord: on them shall be no fear, nor shall they grieve.",
-        source: "Quran 2:274",
-        category: "Quran"
-    },
-    {
-        text: "A man's true wealth is the good he does in this world.",
-        source: "Imam Ali",
-        category: "Scholar"
-    }
-];
-
-
 export default async function LandingPage() {
   const openLeads = await getOpenLeads().catch((err) => {
       console.error("Error fetching landing page data:", err);
       // Fallback to empty arrays if there's an error
       return [];
   });
-
+  
   const featuredLeads = openLeads.slice(0, 3);
-  const quotes = hardcodedQuotes;
+  const quotes = await getRandomQuotes(3);
 
   return (
     <div className="flex flex-col">
@@ -147,29 +129,26 @@ export default async function LandingPage() {
                 <p className="mt-2 text-lg text-muted-foreground">Inspiration from Islamic teachings on charity and compassion.</p>
             </div>
             
-              <>
-                <div className="grid gap-8 md:grid-cols-3">
-                    {quotes.map((quote, index) => (
-                        <Card key={index} className="flex flex-col">
-                            <CardContent className="pt-6 flex-grow">
-                                <Quote className="w-8 h-8 text-primary mb-4" />
-                                <blockquote className="text-lg italic text-foreground">
-                                    "{quote.text}"
-                                </blockquote>
-                            </CardContent>
-                            <CardFooter>
-                                <cite className="font-semibold not-italic">{quote.source}</cite>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-                <div className="text-center mt-12">
-                    <Button asChild variant="secondary">
-                        <Link href="/quotes">View All Quotes <ArrowRight className="ml-2" /></Link>
-                    </Button>
-                </div>
-              </>
-            
+            <div className="grid gap-8 md:grid-cols-3">
+                {quotes.map((quote, index) => (
+                    <Card key={index} className="flex flex-col">
+                        <CardContent className="pt-6 flex-grow">
+                            <Quote className="w-8 h-8 text-primary mb-4" />
+                            <blockquote className="text-lg italic text-foreground">
+                                "{quote.text}"
+                            </blockquote>
+                        </CardContent>
+                        <CardFooter>
+                            <cite className="font-semibold not-italic">{quote.source}</cite>
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
+            <div className="text-center mt-12">
+                <Button asChild variant="secondary">
+                    <Link href="/quotes">View All Quotes <ArrowRight className="ml-2" /></Link>
+                </Button>
+            </div>
         </div>
       </section>
     </div>

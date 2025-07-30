@@ -93,23 +93,44 @@ const hardcodedQuotes: Quote[] = [
     },
     {
         text: "A man's true wealth is the good he does in this world.",
-        source: "Imam Ali",
+        source: "Imam Ali (RA)",
         category: "Scholar"
     },
     {
         text: "Every act of goodness is charity.",
         source: "Sahih Muslim 1004",
         category: "Hadith"
+    },
+    {
+        text: "Do not show lethargy or negligence in giving charity and doing good deeds. Verily, the calamitous horrors of hell-fire can be averted only by the charity which you give.",
+        source: "Imam Al-Ghazali",
+        category: "Scholar"
+    },
+    {
+        text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.",
+        source: "Quran 2:110",
+        category: "Quran"
+    },
+    {
+        text: "Give charity without delay, for it stands in the way of calamity.",
+        source: "Tirmidhi 589",
+        category: "Hadith"
+    },
+     {
+        text: "The best among you are those who bring greatest benefits to many others.",
+        source: "Daraqutni, Hasan",
+        category: "Hadith"
     }
 ];
 
 /**
- * Fetches a specified number of random quotes from the database.
+ * Fetches a specified number of random quotes.
+ * For now, it uses a hardcoded list to ensure UI stability.
  * @param count The number of random quotes to fetch.
  * @returns An array of random quote objects.
  */
 export const getRandomQuotes = async (count: number): Promise<Quote[]> => {
-    // For now, return hardcoded quotes to ensure the UI is stable.
+    // Simple shuffle and slice algorithm for random selection from the hardcoded list
     const shuffled = hardcodedQuotes.sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
 
@@ -119,16 +140,19 @@ export const getRandomQuotes = async (count: number): Promise<Quote[]> => {
     try {
         const allQuotes = await getAllQuotes();
         if (allQuotes.length === 0) {
-            return [];
+            // Fallback to hardcoded quotes if DB is empty
+            const shuffled = hardcodedQuotes.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
         }
         
-        // Simple shuffle and slice algorithm for random selection
         const shuffled = allQuotes.sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
 
     } catch (error) {
         console.error("Error getting random quotes: ", error);
-        throw new Error('Failed to get random quotes.');
+        // Fallback to hardcoded quotes on error
+        const shuffled = hardcodedQuotes.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
     }
     */
 }
