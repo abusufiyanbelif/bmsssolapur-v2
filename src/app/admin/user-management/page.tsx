@@ -21,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -63,7 +64,7 @@ export default function UserManagementPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Roles</TableHead>
-                    <TableHead>Groups</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Joined On</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -83,10 +84,10 @@ export default function UserManagementPage() {
                                 {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
                             </div>
                         </TableCell>
-                            <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                                {user.groups?.length ? user.groups.map(group => <Badge key={group} variant="outline">{group}</Badge>) : 'N/A'}
-                            </div>
+                        <TableCell>
+                            <Badge variant={user.isActive ? "default" : "destructive"} className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
+                                {user.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
                         </TableCell>
                         <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
@@ -105,7 +106,12 @@ export default function UserManagementPage() {
             {users.map(user => (
                 <Card key={user.id}>
                     <CardHeader>
-                        <CardTitle className="text-lg">{user.name}</CardTitle>
+                        <div className="flex justify-between items-start">
+                            <CardTitle className="text-lg">{user.name}</CardTitle>
+                            <Badge variant={user.isActive ? "default" : "destructive"} className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
+                                {user.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                        </div>
                         <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-sm">
@@ -113,12 +119,6 @@ export default function UserManagementPage() {
                             <h4 className="font-semibold mb-2">Roles</h4>
                              <div className="flex flex-wrap gap-1">
                                 {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
-                            </div>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-2">Groups</h4>
-                            <div className="flex flex-wrap gap-1">
-                                {user.groups?.length ? user.groups.map(group => <Badge key={group} variant="outline">{group}</Badge>) : 'N/A'}
                             </div>
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">

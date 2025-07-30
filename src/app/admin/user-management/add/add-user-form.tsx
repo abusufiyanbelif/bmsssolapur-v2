@@ -21,6 +21,8 @@ import { handleAddUser } from "./actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { UserRole } from "@/services/user-service";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -38,6 +40,11 @@ const formSchema = z.object({
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
+  isActive: z.boolean().default(true),
+  gender: z.enum(["Male", "Female", "Other"]),
+  address: z.string().optional(),
+  panNumber: z.string().optional(),
+  aadhaarNumber: z.string().optional(),
 });
 
 type AddUserFormValues = z.infer<typeof formSchema>;
@@ -52,7 +59,8 @@ export function AddUserForm() {
       name: "",
       email: "",
       phone: "",
-      roles: ["Donor"], // Default to Donor
+      roles: ["Donor"],
+      isActive: true,
     },
   });
 
@@ -64,6 +72,11 @@ export function AddUserForm() {
     formData.append("email", values.email);
     formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
+    formData.append("isActive", String(values.isActive));
+    formData.append("gender", values.gender);
+    if(values.address) formData.append("address", values.address);
+    if(values.panNumber) formData.append("panNumber", values.panNumber);
+    if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
 
     const result = await handleAddUser(formData);
 
@@ -71,6 +84,7 @@ export function AddUserForm() {
 
     if (result.success && result.user) {
       toast({
+        variant: "success",
         title: "User Created",
         description: `Successfully created user ${result.user.name}.`,
       });
@@ -180,8 +194,110 @@ export function AddUserForm() {
             </FormItem>
           )}
         />
-        
 
+        <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+                <FormItem className="space-y-3">
+                <FormLabel>Gender</FormLabel>
+                <FormControl>
+                    <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex flex-col space-y-1"
+                    >
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                        <RadioGroupItem value="Male" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Male</FormLabel>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                        <RadioGroupItem value="Female" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Female</FormLabel>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                        <RadioGroupItem value="Other" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Other</FormLabel>
+                    </FormItem>
+                    </RadioGroup>
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter user's full address" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <FormField
+            control={form.control}
+            name="panNumber"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>PAN Number</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter PAN number" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+            control={form.control}
+            name="aadhaarNumber"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Aadhaar Number</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter Aadhaar number" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="isActive"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  User Status
+                </FormLabel>
+                <FormDescription>
+                  Set the user account to active or inactive. Inactive users cannot log in.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Create User

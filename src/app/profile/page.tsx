@@ -16,6 +16,7 @@ import { ActivityFeed } from "./activity-feed";
 import { getUser, User } from '@/services/user-service';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -97,6 +98,9 @@ export default function ProfilePage() {
                     </Avatar>
                     <CardTitle>{user.name}</CardTitle>
                     <CardDescription>{user.email}</CardDescription>
+                    <Badge variant={user.isActive ? 'default' : 'destructive'} className={user.isActive ? "bg-green-500/20 text-green-700" : ""}>
+                        {user.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
                      <div className="flex flex-wrap justify-center gap-2 pt-2">
                         {user.roles.map(role => (
                             <Badge key={role} variant="secondary">{role}</Badge>
@@ -118,24 +122,40 @@ export default function ProfilePage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Account Settings</CardTitle>
-                            <CardDescription>Update your account details and preferences.</CardDescription>
+                            <CardDescription>Update your account details and preferences. Editing is currently disabled.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
-                                <Input id="name" defaultValue={user.name} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email Address</Label>
-                                <Input id="email" type="email" defaultValue={user.email} />
-                            </div>
-                            {isAdmin && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="secondaryPhone">Secondary Phone (for Account Recovery)</Label>
-                                    <Input id="secondaryPhone" defaultValue={user.secondaryPhone} />
+                                    <Label htmlFor="name">Full Name</Label>
+                                    <Input id="name" defaultValue={user.name} disabled />
                                 </div>
-                            )}
-                            <Button onClick={handleFeatureInProgress}>Save Changes</Button>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email Address</Label>
+                                    <Input id="email" type="email" defaultValue={user.email} disabled />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">Primary Phone</Label>
+                                    <Input id="phone" defaultValue={user.phone} disabled />
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="gender">Gender</Label>
+                                    <Input id="gender" defaultValue={user.gender || 'Not set'} disabled />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pan">PAN Number</Label>
+                                    <Input id="pan" defaultValue={user.panNumber || 'Not set'} disabled />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="aadhaar">Aadhaar Number</Label>
+                                    <Input id="aadhaar" defaultValue={user.aadhaarNumber || 'Not set'} disabled />
+                                </div>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="address">Address</Label>
+                                <Textarea id="address" defaultValue={user.address || 'Not set'} disabled />
+                            </div>
+                            <Button onClick={handleFeatureInProgress} disabled>Save Changes</Button>
                         </CardContent>
                     </Card>
 
@@ -174,5 +194,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

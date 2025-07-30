@@ -19,6 +19,11 @@ export async function handleAddUser(
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
+    isActive: formData.get("isActive") === 'true',
+    gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
+    address: formData.get("address") as string | undefined,
+    panNumber: formData.get("panNumber") as string | undefined,
+    aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
   };
   
   if (!rawFormData.name || !rawFormData.email || !rawFormData.phone || rawFormData.roles.length === 0) {
@@ -31,6 +36,11 @@ export async function handleAddUser(
         email: rawFormData.email,
         phone: rawFormData.phone,
         roles: rawFormData.roles,
+        isActive: rawFormData.isActive,
+        gender: rawFormData.gender,
+        address: rawFormData.address,
+        panNumber: rawFormData.panNumber,
+        aadhaarNumber: rawFormData.aadhaarNumber,
         privileges: [],
         groups: [],
         createdAt: Timestamp.now()

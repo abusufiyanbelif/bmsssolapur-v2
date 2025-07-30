@@ -46,6 +46,9 @@ export interface User {
   name: string;
   email?: string;
   phone: string;
+  isActive: boolean;
+  address?: string;
+  gender?: 'Male' | 'Female' | 'Other';
   secondaryPhone?: string; // For account recovery
   aadhaarNumber?: string; // Mandated for Admins
   panNumber?: string; // Mandated for Admins
@@ -78,6 +81,12 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        isActive: user.isActive,
+        address: user.address,
+        gender: user.gender,
+        secondaryPhone: user.secondaryPhone,
+        aadhaarNumber: user.aadhaarNumber,
+        panNumber: user.panNumber,
         roles: user.roles || [],
         privileges: user.privileges || [],
         groups: user.groups || [],
