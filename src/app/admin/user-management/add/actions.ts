@@ -26,19 +26,17 @@ export async function handleAddUser(
   }
   
   try {
-    const newUserData: Omit<User, 'id' | 'createdAt'> = {
+    const newUserData: Omit<User, 'id'> = {
         name: rawFormData.name,
         email: rawFormData.email,
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         privileges: [],
         groups: [],
+        createdAt: Timestamp.now()
     };
 
-    const newUser = await createUser({
-        ...newUserData,
-        createdAt: Timestamp.now()
-    });
+    const newUser = await createUser(newUserData);
     
     revalidatePath("/admin/user-management");
 

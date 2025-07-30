@@ -10,7 +10,7 @@ import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import { Logo } from "./logo";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
     const pathname = usePathname();
+    const router = useRouter();
 
     const guestUser = {
         isLoggedIn: false,
@@ -44,35 +45,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         createdAt: new Date() as any,
     };
     
-    const hardcodedAdminUser: UserType = {
-        id: 'hardcoded-admin',
-        name: "Super Admin (Hardcoded)",
-        email: "admin@internal.app",
-        phone: "0000000000",
-        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"],
-        privileges: ["all"],
-        groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"],
-        createdAt: Timestamp.now()
-    };
-
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; }>(guestUser);
     
     useEffect(() => {
         const checkUser = async () => {
             const storedUserId = localStorage.getItem('userId');
 
-            if (storedUserId === 'hardcoded-admin') {
-                const savedRole = localStorage.getItem('activeRole');
-                const activeRole = savedRole || hardcodedAdminUser.roles[0];
-                setUser({
-                    ...hardcodedAdminUser,
-                    isLoggedIn: true,
-                    activeRole: activeRole,
-                    initials: 'SA',
-                    avatar: `https://placehold.co/100x100.png?text=SA`
-                });
-
-            } else if (storedUserId && storedUserId !== guestUser.id) {
+            if (storedUserId && storedUserId !== guestUser.id) {
                 const fetchedUser = await getUser(storedUserId);
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
@@ -123,6 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('userId');
         localStorage.removeItem('activeRole');
         setUser(guestUser);
+        router.push('/');
     }
 
     const handleOpenRoleSwitcher = (requiredRoleName: string | null = null) => {

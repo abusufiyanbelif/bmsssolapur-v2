@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KeyRound, LogIn, MessageSquare, Loader2 } from "lucide-react";
+import { KeyRound, LogIn, MessageSquare, Loader2, CheckCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -33,15 +33,15 @@ export default function LoginPage() {
 
   const onSuccessfulLogin = (data: {userId?: string, user?: User}) => {
     toast({
+      variant: "success",
       title: "Login Successful",
       description: "Welcome back! Please select your role to continue.",
+      icon: <CheckCircle className="text-green-600" />,
     });
     // Clear any previous role selection
     localStorage.removeItem('activeRole'); 
     
-    if (data.user) { // Handle hardcoded user case
-        localStorage.setItem('userId', data.user.id!);
-    } else if (data.userId) { // Handle DB user case
+    if (data.userId) { // Handle DB user case
       localStorage.setItem('userId', data.userId);
     }
     
@@ -57,7 +57,7 @@ export default function LoginPage() {
     const result = await handleLogin(formData);
 
     if (result.success) {
-      onSuccessfulLogin({userId: result.userId, user: result.user});
+      onSuccessfulLogin({userId: result.userId});
     } else {
       toast({
         variant: "destructive",
@@ -84,7 +84,12 @@ export default function LoginPage() {
       const result = await handleSendOtp(phoneNumber);
       
       if (result.success) {
-          toast({ title: "OTP Sent", description: "An OTP has been sent to your phone." });
+          toast({ 
+            variant: "success",
+            title: "OTP Sent", 
+            description: "An OTP has been sent to your phone.",
+            icon: <CheckCircle className="text-green-600" />
+          });
           setIsOtpSent(true);
       } else {
           toast({ variant: "destructive", title: "Failed to Send OTP", description: result.error });
@@ -102,7 +107,7 @@ export default function LoginPage() {
       const result = await handleVerifyOtp(formData);
 
        if (result.success) {
-            onSuccessfulLogin({userId: result.userId, user: result.user});
+            onSuccessfulLogin({userId: result.userId});
         } else {
             toast({
                 variant: "destructive",
@@ -195,8 +200,8 @@ export default function LoginPage() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="identifier">Email, Phone, or Username</Label>
-                      <Input id="identifier" name="identifier" type="text" placeholder="e.g. admin or user@example.com" required />
+                      <Label htmlFor="identifier">Email or Phone</Label>
+                      <Input id="identifier" name="identifier" type="text" placeholder="user@example.com or 9876543210" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>

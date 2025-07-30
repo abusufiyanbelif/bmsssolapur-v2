@@ -59,6 +59,19 @@ export interface User {
 export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
+    // Check for duplicate email if one is provided
+    if (user.email) {
+      const emailExists = await getUserByEmail(user.email);
+      if (emailExists && emailExists.id !== user.id) {
+          throw new Error(`A user with the email ${user.email} already exists.`);
+      }
+    }
+    // Check for duplicate phone number
+    const phoneExists = await getUserByPhone(user.phone);
+    if(phoneExists && phoneExists.id !== user.id) {
+        throw new Error(`A user with the phone number ${user.phone} already exists.`);
+    }
+
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
@@ -71,10 +84,14 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         id: userRef.id,
         createdAt: user.createdAt || Timestamp.now(),
     };
-    await setDoc(userRef, finalUserData);
+    await setDoc(userRef, finalUserData, { merge: true }); // Use merge to avoid overwriting on OAuth creation
     return finalUserData;
   } catch (error) {
     console.error('Error creating user: ', error);
+    // Re-throw the specific error message for the client to handle
+    if (error instanceof Error) {
+        throw error;
+    }
     throw new Error('Failed to create user.');
   }
 };
