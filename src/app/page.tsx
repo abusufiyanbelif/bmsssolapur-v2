@@ -125,13 +125,14 @@ export default async function LandingPage() {
       </section>
 
       {/* Quotes Section */}
-       {quotes.length > 0 && (
-          <section id="quotes" className="py-16 lg:py-24 bg-muted/30">
-            <div className="container mx-auto px-4">
-                <div className="text-center mb-12">
-                    <h2 className="text-4xl font-bold tracking-tight font-headline">Wisdom &amp; Reflection</h2>
-                    <p className="mt-2 text-lg text-muted-foreground">Inspiration from Islamic teachings on charity and compassion.</p>
-                </div>
+      <section id="quotes" className="py-16 lg:py-24 bg-muted/30">
+        <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold tracking-tight font-headline">Wisdom &amp; Reflection</h2>
+                <p className="mt-2 text-lg text-muted-foreground">Inspiration from Islamic teachings on charity and compassion.</p>
+            </div>
+            {quotes.length > 0 ? (
+              <>
                 <div className="grid gap-8 md:grid-cols-3">
                     {quotes.map((quote, index) => (
                         <Card key={index} className="flex flex-col">
@@ -152,9 +153,12 @@ export default async function LandingPage() {
                         <Link href="/quotes">View All Quotes <ArrowRight className="ml-2" /></Link>
                     </Button>
                 </div>
-            </div>
-          </section>
-      )}
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground">Loading inspirational quotes...</p>
+            )}
+        </div>
+      </section>
     </div>
   );
 }
