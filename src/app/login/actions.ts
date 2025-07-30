@@ -190,3 +190,4 @@ export async function handleGoogleLogin(firebaseUser: {
     return { success: false, error };
   }
 }
+
