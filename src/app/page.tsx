@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { getOpenLeads } from "./campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { type DonationType, type DonationPurpose } from "@/services/donation-service";
-import { getRandomQuotes, type Quote as QuoteType } from "@/services/quotes-service";
+import { getRandomQuotes } from "@/services/quotes-service";
 import { Lead } from "@/services/lead-service";
 
 
@@ -20,18 +20,15 @@ const donationCategories: (DonationType | DonationPurpose)[] = [
 
 export default async function LandingPage() {
   const [openLeads, quotes] = await Promise.all([
-    getOpenLeads().catch(err => {
-      console.error("Failed to fetch open leads, using empty array as fallback.", err);
-      return [];
-    }),
-    getRandomQuotes(3).catch(err => {
-      console.error("Failed to fetch quotes from database, using empty array as fallback.", err);
-      return [];
-    })
-  ]);
+    getOpenLeads(),
+    getRandomQuotes(3),
+  ]).catch((err) => {
+      console.error("Error fetching landing page data:", err);
+      // Fallback to empty arrays if there's an error
+      return [[], []];
+  });
 
   const featuredLeads = openLeads.slice(0, 3);
-
 
   return (
     <div className="flex flex-col">
@@ -132,7 +129,7 @@ export default async function LandingPage() {
           <section id="quotes" className="py-16 lg:py-24 bg-muted/30">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
-                    <h2 className="text-4xl font-bold tracking-tight font-headline">Wisdom & Reflection</h2>
+                    <h2 className="text-4xl font-bold tracking-tight font-headline">Wisdom &amp; Reflection</h2>
                     <p className="mt-2 text-lg text-muted-foreground">Inspiration from Islamic teachings on charity and compassion.</p>
                 </div>
                 <div className="grid gap-8 md:grid-cols-3">
