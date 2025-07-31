@@ -38,10 +38,10 @@ export default function LoginPage() {
       description: "Welcome back! Please select your role to continue.",
       icon: <CheckCircle />,
     });
-    // Clear any previous role selection
-    localStorage.removeItem('activeRole'); 
     
     if (data.userId) {
+      // Clear any previous role selection
+      localStorage.removeItem('activeRole'); 
       localStorage.setItem('userId', data.userId);
     }
     
