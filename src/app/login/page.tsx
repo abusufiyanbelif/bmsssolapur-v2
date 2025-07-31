@@ -23,29 +23,28 @@ const GoogleIcon = () => (
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting(false);
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
   const [loginMethod, setLoginMethod] = useState<'username' | 'email' | 'phone'>('username');
+  const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string} | null>(null);
 
-  const onSuccessfulLogin = (data: {userId?: string}) => {
-    toast({
-      variant: "success",
-      title: "Login Successful",
-      description: "Welcome back! Redirecting you to your dashboard...",
-      icon: <CheckCircle />,
-    });
-    
-    if (data.userId) {
+  useEffect(() => {
+    if (loginSuccessData?.userId) {
+      toast({
+        variant: "success",
+        title: "Login Successful",
+        description: "Welcome back! Redirecting you to your dashboard...",
+        icon: <CheckCircle />,
+      });
       // Clear any previous role selection
       localStorage.removeItem('activeRole'); 
-      localStorage.setItem('userId', data.userId);
+      localStorage.setItem('userId', loginSuccessData.userId);
+      // Use a standard redirect to avoid router issues in this context
+      window.location.href = '/home';
     }
-    
-    // Use a standard redirect to avoid router issues in this context
-    window.location.href = '/home';
-  }
+  }, [loginSuccessData, toast]);
 
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -56,7 +55,7 @@ export default function LoginPage() {
     const result = await handleLogin(formData);
 
     if (result.success) {
-      onSuccessfulLogin({userId: result.userId});
+      setLoginSuccessData({userId: result.userId});
     } else {
       toast({
         variant: "destructive",
@@ -106,7 +105,7 @@ export default function LoginPage() {
       const result = await handleVerifyOtp(formData);
 
        if (result.success) {
-            onSuccessfulLogin({userId: result.userId});
+            setLoginSuccessData({userId: result.userId});
         } else {
             toast({
                 variant: "destructive",
@@ -128,7 +127,7 @@ export default function LoginPage() {
         const serverResult = await handleGoogleLogin(firebaseUser);
         
         if(serverResult.success && serverResult.userId) {
-            onSuccessfulLogin({userId: serverResult.userId});
+            setLoginSuccessData({userId: serverResult.userId});
         } else {
              toast({
                 variant: "destructive",
