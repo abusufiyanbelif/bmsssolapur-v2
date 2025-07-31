@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin } from "./actions";
-import { useRouter } from "next/navigation";
 import { auth } from "@/services/firebase";
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "firebase/auth";
 import { Separator } from "@/components/ui/separator";
@@ -24,7 +23,6 @@ const GoogleIcon = () => (
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -35,7 +33,7 @@ export default function LoginPage() {
     toast({
       variant: "success",
       title: "Login Successful",
-      description: "Welcome back! Please select your role to continue.",
+      description: "Welcome back! Redirecting you to your dashboard...",
       icon: <CheckCircle />,
     });
     
@@ -45,9 +43,8 @@ export default function LoginPage() {
       localStorage.setItem('userId', data.userId);
     }
     
-    // Use router to navigate, letting app-shell handle the role switching logic
-    router.push('/home'); 
-    router.refresh(); // force a refresh to re-trigger the effect in app-shell
+    // Use a standard redirect to avoid router issues in this context
+    window.location.href = '/home';
   }
 
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -272,3 +269,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
