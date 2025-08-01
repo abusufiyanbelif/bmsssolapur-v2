@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -132,6 +132,14 @@ export default function LeadsPage() {
     useEffect(() => {
         setCurrentPage(1);
     }, [nameFilter, statusFilter, verificationFilter, leadsPerPage]);
+    
+    const renderActionButton = (lead: Lead) => (
+        <Button variant="outline" size="sm" asChild>
+            <Link href={`/admin/leads/${lead.id}`}>
+                <Eye className="mr-2 h-3 w-3" /> View
+            </Link>
+        </Button>
+    );
 
     const renderDesktopTable = () => (
         <Table>
@@ -169,7 +177,7 @@ export default function LeadsPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                                <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>View/Edit</Button>
+                                {renderActionButton(lead)}
                             </TableCell>
                         </TableRow>
                     );
@@ -217,7 +225,7 @@ export default function LeadsPage() {
                             </div>
                         </CardContent>
                          <CardFooter className="flex justify-end">
-                            <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>View/Edit</Button>
+                            {renderActionButton(lead)}
                         </CardFooter>
                     </Card>
                 );
@@ -409,4 +417,3 @@ export default function LeadsPage() {
     </div>
   )
 }
-

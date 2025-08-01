@@ -1,0 +1,201 @@
+
+import { getLead, Lead } from "@/services/lead-service";
+import { getUser, User } from "@/services/user-service";
+import { getDonation, Donation } from "@/services/donation-service";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote } from "lucide-react";
+import { notFound } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+// Helper data for styling statuses
+const statusColors: Record<Lead['status'], string> = {
+    "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
+};
+
+const verificationStatusConfig: Record<Lead['verifiedStatus'], { color: string; icon: React.ElementType }> = {
+    "Pending": { color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30", icon: ShieldAlert },
+    "Verified": { color: "bg-green-500/20 text-green-700 border-green-500/30", icon: ShieldCheck },
+    "Rejected": { color: "bg-red-500/20 text-red-700 border-red-500/30", icon: ShieldX },
+};
+
+type AllocatedDonation = Donation & { amountAllocated: number };
+
+export default async function LeadDetailPage({ params }: { params: { id: string } }) {
+    const lead = await getLead(params.id);
+
+    if (!lead) {
+        notFound();
+    }
+    
+    const [beneficiary, allocatedDonations] = await Promise.all([
+        getUser(lead.beneficiaryId),
+        Promise.all(
+            lead.donations.map(async (alloc) => {
+                const donation = await getDonation(alloc.donationId);
+                return donation ? { ...donation, amountAllocated: alloc.amount } : null;
+            })
+        )
+    ]);
+    
+    const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
+    const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+    const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
+    
+    return (
+        <div className="flex-1 space-y-6">
+             <Link href="/admin/leads" className="flex items-center text-sm text-muted-foreground hover:text-primary">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to All Leads
+            </Link>
+            
+            <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold tracking-tight font-headline">Lead Details</h2>
+                 <Button>Edit Lead</Button>
+            </div>
+            
+            <div className="grid gap-6 md:grid-cols-3">
+                {/* Left Column */}
+                <div className="md:col-span-2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <FileText />
+                                Case Summary
+                            </CardTitle>
+                             <CardDescription>
+                                For: {lead.purpose || lead.category} {lead.subCategory && `> ${lead.subCategory}`}
+                            </CardDescription>
+                        </CardHeader>
+                         <CardContent className="space-y-4">
+                            <div className="flex flex-wrap gap-4 text-sm">
+                                <div className="flex items-center">
+                                    <span className="text-muted-foreground mr-2">Case Status:</span> 
+                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>{lead.status}</Badge>
+                                </div>
+                                <div className="flex items-center">
+                                     <span className="text-muted-foreground mr-2">Verification:</span> 
+                                     <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
+                                        <verifConfig.icon className="mr-1 h-3 w-3" />
+                                        {lead.verifiedStatus}
+                                    </Badge>
+                                </div>
+                                 <div className="flex items-center">
+                                     <span className="text-muted-foreground mr-2">Type:</span> 
+                                     <Badge variant="secondary">{lead.isLoan ? "Loan" : "Aid"}</Badge>
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label>Funding Progress</Label>
+                                <Progress value={fundingProgress} className="mt-2" />
+                                <div className="flex justify-between text-xs mt-2 text-muted-foreground">
+                                    <span>Raised: ₹{lead.helpGiven.toLocaleString()}</span>
+                                    <span>Goal: ₹{lead.helpRequested.toLocaleString()}</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <Label>Case Details</Label>
+                                <p className="text-sm text-muted-foreground mt-1">{lead.caseDetails || "No details provided."}</p>
+                            </div>
+                         </CardContent>
+                    </Card>
+
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Banknote />
+                                Allocated Donations
+                            </CardTitle>
+                             <CardDescription>
+                               Donations that have been applied to this lead.
+                            </CardDescription>
+                        </CardHeader>
+                         <CardContent>
+                             {validAllocatedDonations.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Donor</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead className="text-right">Amount Allocated</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {validAllocatedDonations.map(donation => (
+                                            <TableRow key={donation.id}>
+                                                <TableCell>{format(donation.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
+                                                <TableCell>{donation.donorName}</TableCell>
+                                                <TableCell>{donation.type}</TableCell>
+                                                <TableCell className="text-right font-semibold">₹{donation.amountAllocated.toLocaleString()}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                             ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No donations have been allocated to this lead yet.</p>
+                             )}
+                         </CardContent>
+                    </Card>
+                </div>
+                
+                {/* Right Column */}
+                <div className="md:col-span-1">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <UserIcon />
+                                Beneficiary Details
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                             {beneficiary ? (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Name</span>
+                                        <span className="font-semibold">{beneficiary.name}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Phone</span>
+                                        <span className="font-semibold">{beneficiary.phone}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Email</span>
+                                        <span className="font-semibold">{beneficiary.email || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Member Since</span>
+                                        <span className="font-semibold">{format(beneficiary.createdAt.toDate(), 'dd MMM yyyy')}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                 <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Error</AlertTitle>
+                                    <AlertDescription>Could not load beneficiary details.</AlertDescription>
+                                </Alert>
+                            )}
+                        </CardContent>
+                         {beneficiary && (
+                            <CardFooter>
+                                <Button variant="secondary" className="w-full" asChild>
+                                    <Link href={`/admin/user-management`}>View Full Profile</Link>
+                                </Button>
+                            </CardFooter>
+                        )}
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
+}
