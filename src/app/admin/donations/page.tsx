@@ -15,11 +15,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
@@ -212,26 +212,33 @@ export default function DonationsPage() {
     );
     
     const renderActions = (donation: Donation) => {
-        if (donation.status === "Pending verification") {
-            return <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>Verify</Button>;
-        }
-        if (donation.status === "Verified") {
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleFeatureInProgress}>Allocate to Lead</DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleFeatureInProgress}>Split Donation</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            );
-        }
-        return null;
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                        <Link href={`/admin/donations/${donation.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {donation.status === "Pending verification" && (
+                         <DropdownMenuItem onClick={handleFeatureInProgress}>Verify</DropdownMenuItem>
+                    )}
+                    {donation.status === "Verified" && (
+                        <>
+                            <DropdownMenuItem onClick={handleFeatureInProgress}>Allocate to Lead</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleFeatureInProgress}>Split Donation</DropdownMenuItem>
+                        </>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
     }
     
     const renderPaginationControls = () => (

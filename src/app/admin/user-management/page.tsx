@@ -125,8 +125,10 @@ export default function UserManagementPage() {
                         </TableCell>
                         <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
-                            <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>
-                                <UserCog className="mr-2 h-3 w-3" /> Manage
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={`/admin/user-management/${user.id}/edit`}>
+                                    <UserCog className="mr-2 h-3 w-3" /> Manage
+                                </Link>
                             </Button>
                         </TableCell>
                     </TableRow>
@@ -161,8 +163,10 @@ export default function UserManagementPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                        <Button variant="outline" size="sm" onClick={handleFeatureInProgress}>
-                            <UserCog className="mr-2 h-3 w-3" /> Manage User
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={`/admin/user-management/${user.id}/edit`}>
+                                <UserCog className="mr-2 h-3 w-3" /> Manage User
+                            </Link>
                         </Button>
                     </CardFooter>
                 </Card>
