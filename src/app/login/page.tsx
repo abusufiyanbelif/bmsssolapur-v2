@@ -41,6 +41,8 @@ export default function LoginPage() {
       // Clear any previous role selection
       localStorage.removeItem('activeRole'); 
       localStorage.setItem('userId', loginSuccessData.userId);
+      // Set a flag to show the role switcher on the next page load
+      localStorage.setItem('showRoleSwitcher', 'true');
       // Use a standard redirect to avoid router issues in this context
       window.location.href = '/home';
     }
@@ -268,3 +270,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

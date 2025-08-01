@@ -51,6 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const checkUser = async () => {
             const storedUserId = localStorage.getItem('userId');
+            const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
             if (storedUserId && storedUserId !== guestUser.id) {
                 const fetchedUser = await getUser(storedUserId);
@@ -66,9 +67,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
                         avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
                     });
-                     // Show role switcher on first load after login if multiple roles exist and one hasn't been chosen yet
-                    if (!savedRole && fetchedUser.roles.length > 1) {
+
+                    // Show role switcher on first load after login if flag is set
+                    if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
+                        localStorage.removeItem('showRoleSwitcher'); // Consume the flag
                     }
                 } else {
                     // If user ID is invalid, log them out.
@@ -248,3 +251,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
     )
 }
+
+    
