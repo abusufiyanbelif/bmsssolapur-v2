@@ -26,6 +26,10 @@ const roleMap: Record<string, { icon: LucideIcon; description: string }> = {
         icon: UserCog,
         description: "Manage leads, donations, and approvals."
     },
+    "Finance Admin": {
+        icon: UserCog,
+        description: "Manage donations and view financial data."
+    },
     "Donor": {
         icon: HandHeart,
         description: "View campaigns and manage your donations."
@@ -53,7 +57,9 @@ export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleC
 
   const handleContinue = () => {
     if (selectedRole) {
-        onRoleChange(selectedRole);
+        if (selectedRole !== currentUserRole) {
+            onRoleChange(selectedRole);
+        }
         if (onOpenChange) {
             onOpenChange(false);
         }
@@ -121,7 +127,7 @@ export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleC
             })}
         </div>
         <DialogFooter>
-            <Button onClick={handleContinue} disabled={!selectedRole || selectedRole === currentUserRole} className="w-full">
+            <Button onClick={handleContinue} disabled={!selectedRole} className="w-full">
                 Continue as {selectedRole || '...'}
             </Button>
         </DialogFooter>
