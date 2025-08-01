@@ -159,6 +159,10 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
     return null;
   } catch (error) {
     console.error('Error getting user by phone: ', error);
+    // This could be due to a missing index. Log a helpful message.
+    if (error instanceof Error && error.message.includes('index')) {
+        console.error("Firestore index missing. Please create a composite index in Firestore on the 'users' collection for 'phone' (ascending). The link in the error message will help you do this.");
+    }
     throw new Error('Failed to get user by phone.');
   }
 }
@@ -210,7 +214,7 @@ export const deleteUser = async (id: string) => {
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     if (!isConfigValid) {
-      console.warn("Firebase is not configured. Skipping fetching all users.");
+      console.warn("Firebase not configured. Skipping fetching all users.");
       return [];
     }
     try {
