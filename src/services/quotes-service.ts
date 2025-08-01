@@ -11,11 +11,29 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import { getBulkInspirationalQuotes, Quote } from '@/ai/flows/get-bulk-quotes-flow';
 
 const QUOTES_COLLECTION = 'inspirationalQuotes';
 
-export type { Quote };
+export interface Quote {
+  id?: string;
+  text: string;
+  source: string;
+  category: 'Quran' | 'Hadith' | 'Scholar';
+}
+
+const hardcodedQuotes: Omit<Quote, 'id'>[] = [
+    { text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Sahih al-Bukhari 1422", category: "Hadith" },
+    { text: "Those who in charity spend of their goods by night and by day, in secret and in public, have their reward with their Lord: on them shall be no fear, nor shall they grieve.", source: "Quran 2:274", category: "Quran" },
+    { text: "A man's true wealth is the good he does in this world.", source: "Imam Ali (RA)", category: "Scholar" },
+    { text: "Every act of goodness is charity.", source: "Sahih Muslim 1004", category: "Hadith" },
+    { text: "Do not show lethargy or negligence in giving charity and doing good deeds. Verily, the calamitous horrors of hell-fire can be averted only by the charity which you give.", source: "Imam Al-Ghazali", category: "Scholar" },
+    { text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran" },
+    { text: "Give charity without delay, for it stands in the way of calamity.", source: "Tirmidhi 589", category: "Hadith" },
+    { text: "The best among you are those who bring greatest benefits to many others.", source: "Daraqutni, Hasan", category: "Hadith" },
+    { text: "He who removes from a believer a difficulty of this world, Allah will remove one of his difficulties on the Day of Judgement.", source: "Sahih Muslim 2699", category: "Hadith"},
+    { text: "By no means shall you attain righteousness unless you give (freely) of that which you love.", source: "Quran 3:92", category: "Quran"},
+    { text: "Knowledge is the life of the mind.", source: "Imam Abu Hanifa", category: "Scholar"},
+];
 
 /**
  * Seeds the database with a large set of initial quotes if it's empty.
@@ -35,12 +53,9 @@ export const seedInitialQuotes = async (): Promise<string> => {
     return msg;
   }
 
-  console.log("Quotes collection is empty. Seeding initial quotes from AI...");
+  console.log("Quotes collection is empty. Seeding initial quotes from hardcoded list...");
   try {
-    const quotesToSeed = await getBulkInspirationalQuotes();
-    if (!quotesToSeed || quotesToSeed.length === 0) {
-        throw new Error("AI flow returned no quotes to seed.");
-    }
+    const quotesToSeed = hardcodedQuotes;
     
     // Use a batch write for efficiency
     const batch = writeBatch(db);
@@ -54,7 +69,7 @@ export const seedInitialQuotes = async (): Promise<string> => {
     console.log(successMsg);
     return successMsg;
   } catch (error) {
-    const errorMsg = "Failed to seed quotes from AI flow.";
+    const errorMsg = "Failed to seed quotes from hardcoded list.";
     console.error(errorMsg, error);
     throw new Error(errorMsg);
   }
@@ -80,48 +95,6 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
     }
 }
 
-const hardcodedQuotes: Quote[] = [
-    {
-        text: "The believer's shade on the Day of Resurrection will be their charity.",
-        source: "Sahih al-Bukhari 1422",
-        category: "Hadith"
-    },
-    {
-        text: "Those who in charity spend of their goods by night and by day, in secret and in public, have their reward with their Lord: on them shall be no fear, nor shall they grieve.",
-        source: "Quran 2:274",
-        category: "Quran"
-    },
-    {
-        text: "A man's true wealth is the good he does in this world.",
-        source: "Imam Ali (RA)",
-        category: "Scholar"
-    },
-    {
-        text: "Every act of goodness is charity.",
-        source: "Sahih Muslim 1004",
-        category: "Hadith"
-    },
-    {
-        text: "Do not show lethargy or negligence in giving charity and doing good deeds. Verily, the calamitous horrors of hell-fire can be averted only by the charity which you give.",
-        source: "Imam Al-Ghazali",
-        category: "Scholar"
-    },
-    {
-        text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.",
-        source: "Quran 2:110",
-        category: "Quran"
-    },
-    {
-        text: "Give charity without delay, for it stands in the way of calamity.",
-        source: "Tirmidhi 589",
-        category: "Hadith"
-    },
-     {
-        text: "The best among you are those who bring greatest benefits to many others.",
-        source: "Daraqutni, Hasan",
-        category: "Hadith"
-    }
-];
 
 /**
  * Fetches a specified number of random quotes.
