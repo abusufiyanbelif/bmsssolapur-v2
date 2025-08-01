@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllUsers, type User } from "@/services/user-service";
+import { getAllUsers, type User, UserRole } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,11 +22,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type UserCategory = 'all' | 'admins' | 'donors' | 'beneficiaries';
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<UserCategory>('all');
     const { toast } = useToast();
     const isMobile = useIsMobile();
 
@@ -56,8 +60,22 @@ export default function UserManagementPage() {
 
         fetchUsers();
     }, []);
+    
+    const filteredUsers = useMemo(() => {
+        switch(activeTab) {
+            case 'admins':
+                return users.filter(u => u.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r)));
+            case 'donors':
+                return users.filter(u => u.roles.includes('Donor'));
+            case 'beneficiaries':
+                 return users.filter(u => u.roles.includes('Beneficiary'));
+            case 'all':
+            default:
+                return users;
+        }
+    }, [users, activeTab]);
 
-    const renderDesktopTable = () => (
+    const renderDesktopTable = (userList: User[]) => (
         <Table>
             <TableHeader>
                 <TableRow>
@@ -70,7 +88,7 @@ export default function UserManagementPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {users.map((user) => (
+                {userList.map((user) => (
                     <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>
@@ -101,9 +119,9 @@ export default function UserManagementPage() {
         </Table>
     );
 
-    const renderMobileCards = () => (
+    const renderMobileCards = (userList: User[]) => (
         <div className="space-y-4">
-            {users.map(user => (
+            {userList.map(user => (
                 <Card key={user.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -169,8 +187,16 @@ export default function UserManagementPage() {
                 </div>
             )
         }
+        
+        if (filteredUsers.length === 0) {
+             return (
+                <div className="text-center py-10">
+                    <p className="text-muted-foreground">No users found in this category.</p>
+                </div>
+            );
+        }
 
-        return isMobile ? renderMobileCards() : renderDesktopTable();
+        return isMobile ? renderMobileCards(filteredUsers) : renderDesktopTable(filteredUsers);
     }
 
   return (
@@ -184,17 +210,68 @@ export default function UserManagementPage() {
                 </Link>
             </Button>
         </div>
-        <Card>
-            <CardHeader>
-                <CardTitle>All Users</CardTitle>
-                <CardDescription>
-                    View and manage all users, their roles, and permissions.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                {renderContent()}
-            </CardContent>
-        </Card>
+        
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as UserCategory)}>
+            <TabsList>
+                <TabsTrigger value="all">All Users</TabsTrigger>
+                <TabsTrigger value="admins">Admins</TabsTrigger>
+                <TabsTrigger value="donors">Donors</TabsTrigger>
+                <TabsTrigger value="beneficiaries">Beneficiaries</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>All Users</CardTitle>
+                        <CardDescription>
+                            A comprehensive list of every user in the system.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {renderContent()}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="admins">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Administrators</CardTitle>
+                        <CardDescription>
+                           Users with administrative privileges (Super Admin, Admin, Finance Admin).
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {renderContent()}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="donors">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Donors</CardTitle>
+                        <CardDescription>
+                            Users who have the Donor role and can make contributions.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {renderContent()}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+             <TabsContent value="beneficiaries">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Beneficiaries</CardTitle>
+                        <CardDescription>
+                            Users who are eligible to receive aid.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {renderContent()}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
     </div>
   )
 }
