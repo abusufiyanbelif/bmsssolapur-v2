@@ -71,6 +71,6 @@ export const QuoteSchema = z.object({
 export type Quote = z.infer<typeof QuoteSchema>;
 
 export const QuotesOutputSchema = z.object({
-  quotes: z.array(QuoteSchema).describe('An array of 50 to 100 inspirational quotes.'),
+  quotes: z.array(QuoteSchema).describe('An array of inspirational quotes.'),
 });
 export type QuotesOutput = z.infer<typeof QuotesOutputSchema>;

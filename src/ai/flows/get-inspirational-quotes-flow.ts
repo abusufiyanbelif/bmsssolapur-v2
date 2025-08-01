@@ -8,18 +8,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-
-const QuoteSchema = z.object({
-  text: z.string().describe('The text of the quote.'),
-  source: z.string().describe('The source of the quote (e.g., Quran, Hadith).'),
-});
-export type Quote = z.infer<typeof QuoteSchema>;
-
-const QuotesOutputSchema = z.object({
-  quotes: z.array(QuoteSchema).describe('An array of 3 to 10 inspirational quotes.'),
-});
-type QuotesOutput = z.infer<typeof QuotesOutputSchema>;
-
+import { Quote, QuoteSchema, QuotesOutput, QuotesOutputSchema } from '@/ai/schemas';
 
 const prompt = ai.definePrompt({
     name: 'inspirationalQuotesPrompt',
