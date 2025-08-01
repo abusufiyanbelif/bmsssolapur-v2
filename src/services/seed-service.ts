@@ -29,6 +29,22 @@ const usersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [], isActive: true, gender: 'Other', address: '', panNumber: '', aadhaarNumber: '' },
 ];
 
+const beneficiariesToSeed: Omit<User, 'id' | 'createdAt'>[] = [
+    { name: 'Mustahik Person', email: 'mustahik.person@example.com', phone: '1000000001', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Hazrate Nomaniya Masjid', email: 'nomaniya.masjid@example.com', phone: '1000000002', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Ration Distribution', email: 'ration.distribution@example.com', phone: '1000000003', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Ration for 4 Houses', email: 'ration.4houses@example.com', phone: '1000000004', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Ration Aid', email: 'ration.aid@example.com', phone: '1000000005', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Madrasa Riaz Ul Jannah', email: 'riazul.jannah@example.com', phone: '1000000006', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Anonymous Help', email: 'anonymous.help@example.com', phone: '1000000007', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Lalsab Bagali', email: 'lalsab.bagali@example.com', phone: '1000000008', roles: ['Beneficiary'], isActive: true, gender: 'Male' },
+    { name: 'Mustahiq Family', email: 'mustahiq.family@example.com', phone: '1000000009', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Child Hospital Bill', email: 'child.hospital@example.com', phone: '1000000010', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Madrasa Admission', email: 'madrasa.admission@example.com', phone: '1000000011', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Aid for Needy', email: 'aid.needy@example.com', phone: '1000000012', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+    { name: 'Monthly Aid', email: 'monthly.aid@example.com', phone: '1000000013', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+];
+
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "BAITULMAL SAMAJIK SANSTHA SOLAPUR",
     city: "Solapur",
@@ -43,23 +59,24 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 
 type LeadSeedData = Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'purpose' | 'subCategory'>;
 
-// Historical leads are assigned to "Anonymous Donor" user as a placeholder.
-const historicalLeadsToSeed: (LeadSeedData & { name: string })[] = [
-    { name: 'Mustahik Person', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
-    { name: 'Hazrate Nomaniya Masjid', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
-    { name: 'Nomaniya Masjid', helpRequested: 720, helpGiven: 720, category: 'Deen', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
-    { name: 'Ration Distribution', helpRequested: 2795, helpGiven: 2795, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration provided to a needy person.', verificationDocumentUrl: '' },
-    { name: 'Ration for 4 Houses', helpRequested: 5000, helpGiven: 5000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration kits provided to 4 households, including elderly widows and sick families.', verificationDocumentUrl: '' },
-    { name: 'Ration Aid', helpRequested: 2000, helpGiven: 2000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Grain provided to a person in need.', verificationDocumentUrl: '' },
-    { name: 'Madrasa Riaz Ul Jannah', helpRequested: 1800, helpGiven: 1800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Rent and deposit for a new Madrasa at Sugar factory site new gharkul.', verificationDocumentUrl: '' },
-    { name: 'Anonymous Help', helpRequested: 1700, helpGiven: 1700, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Cash help provided to a person in need.', verificationDocumentUrl: '' },
-    { name: 'Lalsab Bagali', helpRequested: 29500, helpGiven: 29500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a patient\'s operation. 25000 cash given plus 4500 collected.', verificationDocumentUrl: '' },
-    { name: 'Lalsab Bagali', helpRequested: 26800, helpGiven: 26800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Hospital bill payment for a patient in need.', verificationDocumentUrl: '' },
-    { name: 'Mustahiq Family', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Money for household ration for a deserving family.', verificationDocumentUrl: '' },
-    { name: 'Child Hospital Bill', helpRequested: 3000, helpGiven: 3000, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a sick 2-year-old child admitted to the government hospital.', verificationDocumentUrl: '' },
-    { name: 'Madrasa Admission', helpRequested: 600, helpGiven: 600, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Admission fee for a 9-year-old boy from a new Muslim family in a school cum madrasa.', verificationDocumentUrl: '' },
-    { name: 'Aid for Needy', helpRequested: 6000, helpGiven: 6000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Follow-up help provided to a previously supported case.', verificationDocumentUrl: '' },
-    { name: 'Monthly Aid', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Monthly financial assistance to a deserving person.', verificationDocumentUrl: '' },
+const historicalLeadsToSeed: (LeadSeedData & { beneficiaryName: string })[] = [
+    { beneficiaryName: 'Mustahik Person', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Hazrate Nomaniya Masjid', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
+    // Re-using the same beneficiary name for Nomaniya Masjid as it's the same entity
+    { beneficiaryName: 'Hazrate Nomaniya Masjid', helpRequested: 720, helpGiven: 720, category: 'Deen', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Ration Distribution', helpRequested: 2795, helpGiven: 2795, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration provided to a needy person.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Ration for 4 Houses', helpRequested: 5000, helpGiven: 5000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration kits provided to 4 households, including elderly widows and sick families.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Ration Aid', helpRequested: 2000, helpGiven: 2000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Grain provided to a person in need.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Madrasa Riaz Ul Jannah', helpRequested: 1800, helpGiven: 1800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Rent and deposit for a new Madrasa at Sugar factory site new gharkul.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Anonymous Help', helpRequested: 1700, helpGiven: 1700, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Cash help provided to a person in need.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Lalsab Bagali', helpRequested: 29500, helpGiven: 29500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a patient\'s operation. 25000 cash given plus 4500 collected.', verificationDocumentUrl: '' },
+    // Re-using Lalsab Bagali
+    { beneficiaryName: 'Lalsab Bagali', helpRequested: 26800, helpGiven: 26800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Hospital bill payment for a patient in need.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Mustahiq Family', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Money for household ration for a deserving family.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Child Hospital Bill', helpRequested: 3000, helpGiven: 3000, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a sick 2-year-old child admitted to the government hospital.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Madrasa Admission', helpRequested: 600, helpGiven: 600, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Admission fee for a 9-year-old boy from a new Muslim family in a school cum madrasa.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Aid for Needy', helpRequested: 6000, helpGiven: 6000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Follow-up help provided to a previously supported case.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Monthly Aid', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Monthly financial assistance to a deserving person.', verificationDocumentUrl: '' },
 ];
 
 
@@ -72,16 +89,15 @@ export type SeedResult = {
     error?: string;
 };
 
-const seedUsers = async (): Promise<SeedItemResult[]> => {
+const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedItemResult[]> => {
     if (!isConfigValid) {
         throw new Error("Firebase is not configured. Cannot seed users.");
     }
-    console.log('Seeding users...');
     const results: SeedItemResult[] = [];
 
-    for (const userData of usersToSeed) {
-        // Hardcode Super Admin and Anonymous Donor to be active to prevent lockouts.
-        if (userData.roles.includes('Super Admin') || userData.name === 'Anonymous Donor') {
+    for (const userData of users) {
+        // Hardcode Super Admin to be active to prevent lockouts.
+        if (userData.roles.includes('Super Admin')) {
             userData.isActive = true;
         }
 
@@ -98,10 +114,9 @@ const seedUsers = async (): Promise<SeedItemResult[]> => {
             results.push({ name: userData.name, status: 'Skipped (already exists)' });
         }
     }
-
-    console.log('User seeding process finished.');
     return results;
 };
+
 
 const seedOrganization = async (): Promise<string> => {
     if (!isConfigValid) {
@@ -136,18 +151,21 @@ const seedLeads = async (): Promise<SeedItemResult[]> => {
     const leadsCollection = collection(db, 'leads');
     const historicalDate = Timestamp.fromDate(new Date("2021-12-01"));
 
-    // Seed historical leads
-    const anonymousUser = await getUserByName("Anonymous Donor");
-    if (!anonymousUser) {
-        throw new Error("Cannot seed historical leads without 'Anonymous Donor' user.");
-    }
     for (const leadData of historicalLeadsToSeed) {
-        const q = query(leadsCollection, where("caseDetails", "==", leadData.caseDetails), where("category", "==", leadData.category));
+        // Check if a similar lead exists already to prevent duplicates
+        const q = query(leadsCollection, where("caseDetails", "==", leadData.caseDetails), where("helpRequested", "==", leadData.helpRequested));
         const existingLeads = await getDocs(q);
         
         if (existingLeads.empty) {
+            const beneficiaryUser = await getUserByName(leadData.beneficiaryName);
+            if (!beneficiaryUser) {
+                console.warn(`Could not find beneficiary user "${leadData.beneficiaryName}" for lead. Skipping.`);
+                results.push({ name: leadData.beneficiaryName, status: 'Skipped (already exists)' });
+                continue;
+            }
+
             const leadRef = doc(leadsCollection);
-             const verifier: Verifier = {
+            const verifier: Verifier = {
                 verifierId: historicalAdmin.id!,
                 verifierName: historicalAdmin.name,
                 verifiedAt: historicalDate,
@@ -156,8 +174,8 @@ const seedLeads = async (): Promise<SeedItemResult[]> => {
             const newLead: Lead = {
                 ...leadData,
                 id: leadRef.id,
-                name: leadData.name,
-                beneficiaryId: anonymousUser.id!,
+                name: beneficiaryUser.name,
+                beneficiaryId: beneficiaryUser.id!,
                 adminAddedBy: historicalAdmin.id!,
                 verifiers: [verifier],
                 dateCreated: historicalDate,
@@ -165,9 +183,9 @@ const seedLeads = async (): Promise<SeedItemResult[]> => {
                 updatedAt: historicalDate,
             };
             await setDoc(leadRef, newLead);
-            results.push({ name: leadData.name, status: 'Created' });
+            results.push({ name: newLead.name, status: 'Created' });
         } else {
-            results.push({ name: leadData.name, status: 'Skipped (already exists)' });
+            results.push({ name: leadData.beneficiaryName, status: 'Skipped (already exists)' });
         }
     }
 
@@ -190,7 +208,12 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         }
     }
     try {
-        const userResults = await seedUsers();
+        console.log("Seeding core admin users...");
+        const adminUserResults = await seedUsers(usersToSeed);
+        console.log("Seeding beneficiary users...");
+        const beneficiaryUserResults = await seedUsers(beneficiariesToSeed);
+        const userResults = [...adminUserResults, ...beneficiaryUserResults];
+        
         const orgStatus = await seedOrganization();
         const quotesStatus = await seedInitialQuotes();
         const leadResults = await seedLeads();
