@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -57,6 +57,10 @@ export default function DonationsPage() {
     const [nameFilter, setNameFilter] = useState<string>('');
     const [sort, setSort] = useState<SortOption>('date-desc');
 
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
     const { toast } = useToast();
     const isMobile = useIsMobile();
 
@@ -78,7 +82,7 @@ export default function DonationsPage() {
         fetchDonations();
     }, []);
 
-    const processedDonations = useMemo(() => {
+    const filteredDonations = useMemo(() => {
         let filtered = donations.filter(donation => {
             const statusMatch = statusFilter === 'all' || donation.status === statusFilter;
             const typeMatch = typeFilter === 'all' || donation.type === typeFilter;
@@ -100,6 +104,18 @@ export default function DonationsPage() {
 
     }, [donations, statusFilter, typeFilter, nameFilter, sort]);
 
+    const paginatedDonations = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredDonations.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredDonations, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(filteredDonations.length / itemsPerPage);
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, typeFilter, nameFilter, itemsPerPage]);
+
+
     const handleFeatureInProgress = () => {
         toast({
             title: "In Progress",
@@ -112,6 +128,7 @@ export default function DonationsPage() {
         setTypeFilter('all');
         setNameFilter('');
         setSort('date-desc');
+        setCurrentPage(1);
     };
 
     const renderDesktopTable = () => (
@@ -128,7 +145,7 @@ export default function DonationsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {processedDonations.map((donation) => (
+                {paginatedDonations.map((donation) => (
                     <TableRow key={donation.id}>
                         <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="font-medium">
@@ -158,7 +175,7 @@ export default function DonationsPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {processedDonations.map(donation => (
+            {paginatedDonations.map(donation => (
                 <Card key={donation.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -216,6 +233,59 @@ export default function DonationsPage() {
         }
         return null;
     }
+    
+    const renderPaginationControls = () => (
+        <div className="flex items-center justify-between pt-4">
+            <div className="text-sm text-muted-foreground">
+                Showing {paginatedDonations.length} of {filteredDonations.length} donations.
+            </div>
+            <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                        value={`${itemsPerPage}`}
+                        onValueChange={(value) => {
+                            setItemsPerPage(Number(value))
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder={itemsPerPage} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                        {[10, 25, 50].map((pageSize) => (
+                            <SelectItem key={pageSize} value={`${pageSize}`}>
+                            {pageSize}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
 
     const renderContent = () => {
         if (loading) {
@@ -251,7 +321,7 @@ export default function DonationsPage() {
             )
         }
         
-        if (processedDonations.length === 0) {
+        if (filteredDonations.length === 0) {
              return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">No donations match your current filters.</p>
@@ -263,7 +333,12 @@ export default function DonationsPage() {
             )
         }
 
-        return isMobile ? renderMobileCards() : renderDesktopTable();
+        return (
+            <>
+                {isMobile ? renderMobileCards() : renderDesktopTable()}
+                {totalPages > 1 && renderPaginationControls()}
+            </>
+        );
     }
 
   return (

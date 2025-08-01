@@ -16,13 +16,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers, type User, UserRole } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type UserCategory = 'all' | 'admins' | 'donors' | 'beneficiaries';
 
@@ -33,6 +34,10 @@ export default function UserManagementPage() {
     const [activeTab, setActiveTab] = useState<UserCategory>('all');
     const { toast } = useToast();
     const isMobile = useIsMobile();
+
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const handleFeatureInProgress = () => {
         toast({
@@ -74,8 +79,19 @@ export default function UserManagementPage() {
                 return users;
         }
     }, [users, activeTab]);
+    
+    const paginatedUsers = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredUsers, currentPage, itemsPerPage]);
 
-    const renderDesktopTable = (userList: User[]) => (
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, itemsPerPage]);
+
+    const renderDesktopTable = () => (
         <Table>
             <TableHeader>
                 <TableRow>
@@ -88,7 +104,7 @@ export default function UserManagementPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {userList.map((user) => (
+                {paginatedUsers.map((user) => (
                     <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>
@@ -119,9 +135,9 @@ export default function UserManagementPage() {
         </Table>
     );
 
-    const renderMobileCards = (userList: User[]) => (
+    const renderMobileCards = () => (
         <div className="space-y-4">
-            {userList.map(user => (
+            {paginatedUsers.map(user => (
                 <Card key={user.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -151,6 +167,59 @@ export default function UserManagementPage() {
                     </CardFooter>
                 </Card>
             ))}
+        </div>
+    );
+    
+    const renderPaginationControls = () => (
+        <div className="flex items-center justify-between pt-4">
+            <div className="text-sm text-muted-foreground">
+                Showing {paginatedUsers.length} of {filteredUsers.length} users.
+            </div>
+            <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                        value={`${itemsPerPage}`}
+                        onValueChange={(value) => {
+                            setItemsPerPage(Number(value))
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder={itemsPerPage} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                        {[10, 25, 50].map((pageSize) => (
+                            <SelectItem key={pageSize} value={`${pageSize}`}>
+                            {pageSize}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next</span>
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 
@@ -196,7 +265,12 @@ export default function UserManagementPage() {
             );
         }
 
-        return isMobile ? renderMobileCards(filteredUsers) : renderDesktopTable(filteredUsers);
+        return (
+            <>
+                {isMobile ? renderMobileCards() : renderDesktopTable()}
+                {totalPages > 1 && renderPaginationControls()}
+            </>
+        )
     }
 
   return (
