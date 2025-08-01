@@ -122,6 +122,11 @@ const seedUsers = async (): Promise<SeedItemResult[]> => {
     const results: SeedItemResult[] = [];
 
     for (const userData of usersToSeed) {
+        // Hardcode Super Admin and Anonymous Donor to be active to prevent lockouts.
+        if (userData.name === 'Abusufiyan Belif' || userData.name === 'Anonymous Donor') {
+            userData.isActive = true;
+        }
+
         const q = query(collection(db, 'users'), where("phone", "==", userData.phone));
         const existingUsers = await getDocs(q);
         
@@ -280,5 +285,7 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         };
     }
 };
+
+    
 
     
