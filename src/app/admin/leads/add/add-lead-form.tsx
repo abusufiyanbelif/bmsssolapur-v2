@@ -29,18 +29,34 @@ import { handleAddLead } from "./actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { User } from "@/services/user-service";
-import { DonationType } from "@/services/donation-service";
+import { LeadPurpose } from "@/services/lead-service";
 
-const leadCategories: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
+const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen'];
 
+const subCategoryMap: Record<LeadPurpose, string[]> = {
+    Education: ['Tuition Fees', 'College Fees', 'School Fees', 'Madrasa Fees', 'Other'],
+    Medical: ['Check Up', 'Operation', 'Other'],
+    'Relief Fund': ['Need to Pay', 'Loan to Pay', 'Other'],
+    Deen: ['General', 'Other']
+};
 
 const formSchema = z.object({
   beneficiaryId: z.string().min(1, "Beneficiary is required."),
-  category: z.enum(leadCategories),
+  purpose: z.enum(leadPurposes),
+  subCategory: z.string().min(1, "Sub-category is required."),
+  otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
   verificationDocument: z.any().optional(),
+}).refine(data => {
+    if (data.subCategory === 'Other') {
+        return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify details for the 'Other' category.",
+    path: ["otherCategoryDetail"],
 });
 
 type AddLeadFormValues = z.infer<typeof formSchema>;
@@ -53,7 +69,6 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Suggest users who are marked as beneficiaries
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
 
   const form = useForm<AddLeadFormValues>({
@@ -64,12 +79,17 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     },
   });
 
+  const selectedPurpose = form.watch("purpose");
+  const selectedSubCategory = form.watch("subCategory");
+
   async function onSubmit(values: AddLeadFormValues) {
     setIsSubmitting(true);
     
     const formData = new FormData();
     formData.append("beneficiaryId", values.beneficiaryId);
-    formData.append("category", values.category);
+    formData.append("purpose", values.purpose);
+    formData.append("subCategory", values.subCategory);
+    if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
     formData.append("isLoan", String(values.isLoan));
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
@@ -127,42 +147,86 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
-            name="category"
+            name="purpose"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel>Primary Category</FormLabel>
+                <Select onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('subCategory', ''); // Reset subcategory on primary change
+                }} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {leadCategories.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                    {leadPurposes.map(purpose => (
+                        <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
                     ))}
                     </SelectContent>
                 </Select>
-                 <FormDescription>The type of aid being requested.</FormDescription>
+                 <FormDescription>The main reason for the help request.</FormDescription>
                 <FormMessage />
                 </FormItem>
             )}
             />
+            {selectedPurpose && (
+                <FormField
+                control={form.control}
+                name="subCategory"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Sub-Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a sub-category" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {subCategoryMap[selectedPurpose].map(sub => (
+                            <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
+        </div>
+
+        {selectedSubCategory === 'Other' && (
             <FormField
             control={form.control}
-            name="helpRequested"
+            name="otherCategoryDetail"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Amount Requested</FormLabel>
+                <FormLabel>Specify "Other" Category</FormLabel>
                 <FormControl>
-                    <Input type="number" placeholder="Enter amount" {...field} />
+                    <Input placeholder="Please provide more details" {...field} />
                 </FormControl>
-                <FormDescription>The total amount of funds needed.</FormDescription>
                 <FormMessage />
                 </FormItem>
             )}
             />
-        </div>
+        )}
+
+        <FormField
+        control={form.control}
+        name="helpRequested"
+        render={({ field }) => (
+            <FormItem>
+            <FormLabel>Amount Requested</FormLabel>
+            <FormControl>
+                <Input type="number" placeholder="Enter amount" {...field} />
+            </FormControl>
+            <FormDescription>The total amount of funds needed.</FormDescription>
+            <FormMessage />
+            </FormItem>
+        )}
+        />
 
         <FormField
           control={form.control}

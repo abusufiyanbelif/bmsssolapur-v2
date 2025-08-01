@@ -24,6 +24,8 @@ const LEADS_COLLECTION = 'leads';
 
 export type LeadStatus = 'Pending' | 'Partial' | 'Closed';
 export type LeadVerificationStatus = 'Pending' | 'Verified' | 'Rejected';
+export type LeadPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen';
+
 
 export interface Verifier {
     verifierId: string;
@@ -36,7 +38,10 @@ export interface Lead {
   id?: string;
   name: string; // Can be "Anonymous"
   beneficiaryId: string; // ID of the user who is the beneficiary
-  category: DonationType;
+  category: DonationType; // Original category for fund source compatibility
+  purpose?: LeadPurpose; // New primary category
+  subCategory?: string; // New secondary category
+  otherCategoryDetail?: string; // Details if sub-category is 'Other'
   helpRequested: number;
   helpGiven: number;
   status: LeadStatus;
@@ -53,7 +58,7 @@ export interface Lead {
 }
 
 // Function to create a lead
-export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'adminAddedBy' | 'verifiedStatus' | 'verifiers'>, adminId: string) => {
+export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'adminAddedBy' | 'verifiedStatus' | 'verifiers' | 'category'>, adminId: string) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
@@ -64,6 +69,8 @@ export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'upda
       status: 'Pending',
       verifiedStatus: 'Pending',
       verifiers: [],
+      // Assign a default category for backward compatibility or filtering logic
+      category: leadData.purpose === 'Education' ? 'Sadaqah' : 'Lillah',
       dateCreated: Timestamp.now(),
       adminAddedBy: adminId,
       createdAt: Timestamp.now(),
@@ -161,5 +168,3 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
         throw new Error('Failed to get beneficiary leads.');
     }
 }
-
-    

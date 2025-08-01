@@ -1,7 +1,7 @@
 
 "use server";
 
-import { createLead, Lead } from "@/services/lead-service";
+import { createLead, Lead, LeadPurpose } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 
@@ -27,14 +27,16 @@ export async function handleAddLead(
   
   const rawFormData = {
       beneficiaryId: formData.get("beneficiaryId") as string,
-      category: formData.get("category") as any,
+      purpose: formData.get("purpose") as LeadPurpose,
+      subCategory: formData.get("subCategory") as string,
+      otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
       helpRequested: parseFloat(formData.get("helpRequested") as string),
       isLoan: formData.get("isLoan") === 'true',
       caseDetails: formData.get("caseDetails") as string,
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
   
-  if (!rawFormData.beneficiaryId || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
+  if (!rawFormData.beneficiaryId || !rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
     return { success: false, error: "Missing required fields." };
   }
 
@@ -49,10 +51,12 @@ export async function handleAddLead(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy'> = {
+    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'category'> = {
         name: beneficiaryUser.name,
         beneficiaryId: rawFormData.beneficiaryId,
-        category: rawFormData.category,
+        purpose: rawFormData.purpose,
+        subCategory: rawFormData.subCategory,
+        otherCategoryDetail: rawFormData.otherCategoryDetail,
         helpRequested: rawFormData.helpRequested,
         isLoan: rawFormData.isLoan,
         caseDetails: rawFormData.caseDetails,
