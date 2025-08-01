@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -15,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -63,6 +64,10 @@ export default function LeadsPage() {
     const [verificationFilter, setVerificationFilter] = useState<string>('all');
     const [sort, setSort] = useState<SortOption>('date-desc');
 
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [leadsPerPage, setLeadsPerPage] = useState(10);
+
     const handleFeatureInProgress = () => {
         toast({
             title: "In Progress",
@@ -88,7 +93,7 @@ export default function LeadsPage() {
         fetchLeads();
     }, []);
 
-    const processedLeads = useMemo(() => {
+    const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
             const nameMatch = nameFilter === '' || lead.name.toLowerCase().includes(nameFilter.toLowerCase());
             const statusMatch = statusFilter === 'all' || lead.status === statusFilter;
@@ -108,13 +113,25 @@ export default function LeadsPage() {
             }
         });
     }, [leads, nameFilter, statusFilter, verificationFilter, sort]);
+    
+    const paginatedLeads = useMemo(() => {
+        const startIndex = (currentPage - 1) * leadsPerPage;
+        return filteredLeads.slice(startIndex, startIndex + leadsPerPage);
+    }, [filteredLeads, currentPage, leadsPerPage]);
+
+    const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
 
     const resetFilters = () => {
         setNameFilter('');
         setStatusFilter('all');
         setVerificationFilter('all');
         setSort('date-desc');
+        setCurrentPage(1);
     };
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [nameFilter, statusFilter, verificationFilter, leadsPerPage]);
 
     const renderDesktopTable = () => (
         <Table>
@@ -131,7 +148,7 @@ export default function LeadsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {processedLeads.map((lead) => {
+                {paginatedLeads.map((lead) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                     return (
                         <TableRow key={lead.id}>
@@ -163,7 +180,7 @@ export default function LeadsPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {processedLeads.map((lead) => {
+            {paginatedLeads.map((lead) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                 return (
                     <Card key={lead.id}>
@@ -207,6 +224,59 @@ export default function LeadsPage() {
             })}
         </div>
     );
+    
+    const renderPaginationControls = () => (
+        <div className="flex items-center justify-between pt-4">
+            <div className="text-sm text-muted-foreground">
+                Showing {paginatedLeads.length} of {filteredLeads.length} leads.
+            </div>
+            <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                        value={`${leadsPerPage}`}
+                        onValueChange={(value) => {
+                            setLeadsPerPage(Number(value))
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder={leadsPerPage} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                        {[10, 25, 50].map((pageSize) => (
+                            <SelectItem key={pageSize} value={`${pageSize}`}>
+                            {pageSize}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
 
     const renderContent = () => {
         if (loading) {
@@ -242,7 +312,7 @@ export default function LeadsPage() {
             )
         }
         
-        if (processedLeads.length === 0) {
+        if (filteredLeads.length === 0) {
             return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">No leads match your current filters.</p>
@@ -254,7 +324,12 @@ export default function LeadsPage() {
             );
         }
 
-        return isMobile ? renderMobileCards() : renderDesktopTable();
+        return (
+            <>
+                {isMobile ? renderMobileCards() : renderDesktopTable()}
+                {totalPages > 1 && renderPaginationControls()}
+            </>
+        )
     }
 
   return (
@@ -334,3 +409,4 @@ export default function LeadsPage() {
     </div>
   )
 }
+
