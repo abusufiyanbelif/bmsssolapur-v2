@@ -80,7 +80,7 @@ export async function handleAddLead(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'category'> = {
+    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'category' | 'donations'> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
         purpose: rawFormData.purpose,

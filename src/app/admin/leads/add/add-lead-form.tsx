@@ -130,7 +130,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     formData.append("helpRequested", String(values.helpRequested));
     formData.append("isLoan", String(values.isLoan));
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
-    if(values.verificationDocument) formData.append("verificationDocument", values.verificationDocument);
+    if(values.verificationDocument) formData.append("verificationDocument", values.verificationDocument[0]);
     
     const result = await handleAddLead(formData);
 
@@ -387,14 +387,15 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
         <FormField
           control={form.control}
           name="verificationDocument"
-          render={({ field }) => (
+          render={({ field: { onChange, ...fieldProps } }) => (
             <FormItem>
               <FormLabel>Verification Document</FormLabel>
               <FormControl>
                 <Input 
                   type="file" 
                   accept="image/*,application/pdf"
-                  onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
+                  onChange={(e) => onChange(e.target.files)}
+                  {...fieldProps}
                 />
               </FormControl>
               <FormDescription>
