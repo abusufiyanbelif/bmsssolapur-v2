@@ -5,14 +5,14 @@
  */
 
 import { createUser, User, UserRole, getUserByName, getUserByPhone, getAllUsers } from './user-service';
-import { createOrganization, Organization } from './organization-service';
+import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch } from 'firebase/firestore';
-import { Lead, Verifier, LeadPurpose, DonationType, LeadDonationAllocation } from './lead-service';
+import { Lead, Verifier, LeadPurpose, DonationType, LeadDonationAllocation, createLead } from './lead-service';
 import { Donation, createDonation } from './donation-service';
 
-const usersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
+const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
     { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"], isActive: true, gender: 'Male', address: '123 Admin Lane, Solapur', panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012' },
     
@@ -146,15 +146,30 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
     let leadResults: SeedItemResult[] = [];
 
     const allUsers = await getAllUsers();
-    const donorUsers = allUsers.filter(u => u.roles.includes('Donor'));
+    const donorUsers = allUsers.filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
 
     if (donorUsers.length === 0) {
-        throw new Error("Cannot seed donations. No users with 'Donor' role found.");
+        console.warn("No real donor users found. Donations will be assigned to Super Admins if possible.");
+        const superAdmins = allUsers.filter(u => u.roles.includes('Super Admin'));
+        if (superAdmins.length === 0) {
+            throw new Error("Cannot seed donations. No users with 'Donor' or 'Super Admin' role found.");
+        }
+        donorUsers.push(...superAdmins);
     }
     
     const historicalAdmin = await getUserByPhone("8421708907");
     if (!historicalAdmin) {
         throw new Error("Cannot seed historical data without 'Moosa Shaikh' (8421708907) user.");
+    }
+    
+    const q = query(collection(db, 'leads'));
+    const existingLeads = await getDocs(q);
+    if (!existingLeads.empty) {
+        console.log("Leads collection is not empty. Skipping lead and donation seeding.");
+        return {
+            donationResults: [{ name: 'Historical Donations', status: 'Skipped (already exists)' }],
+            leadResults: [{ name: 'Historical Leads', status: 'Skipped (already exists)' }],
+        };
     }
 
     const batch = writeBatch(db);
@@ -165,7 +180,7 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         const beneficiaryUser = await getUserByName(leadData.beneficiaryName);
         if (!beneficiaryUser) {
             console.warn(`Could not find beneficiary user "${leadData.beneficiaryName}" for lead. Skipping.`);
-            leadResults.push({ name: `Lead for ${leadData.beneficiaryName}`, status: 'Skipped (already exists)' });
+            leadResults.push({ name: `Lead for ${leadData.beneficiaryName}`, status: 'Failed' });
             continue;
         }
 
@@ -244,7 +259,7 @@ export const seedDatabase = async (): Promise<SeedResult> => {
     }
     try {
         console.log("Seeding core admin users...");
-        const adminUserResults = await seedUsers(usersToSeed);
+        const adminUserResults = await seedUsers(adminUsersToSeed);
         console.log("Seeding beneficiary users...");
         const beneficiaryUserResults = await seedUsers(beneficiariesToSeed);
         const userResults = [...adminUserResults, ...beneficiaryUserResults];
