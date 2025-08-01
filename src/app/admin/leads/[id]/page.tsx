@@ -5,7 +5,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -60,7 +60,12 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Lead Details</h2>
-                 <Button>Edit Lead</Button>
+                 <Button asChild>
+                    <Link href={`/admin/leads/${lead.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Lead
+                    </Link>
+                 </Button>
             </div>
             
             <div className="grid gap-6 md:grid-cols-3">
@@ -73,7 +78,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                 Case Summary
                             </CardTitle>
                              <CardDescription>
-                                For: {lead.purpose || lead.category} {lead.subCategory && `> ${lead.subCategory}`}
+                                Purpose: {lead.purpose} {lead.subCategory && `> ${lead.subCategory}`}
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
@@ -190,7 +195,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                          {beneficiary && (
                             <CardFooter>
                                 <Button variant="secondary" className="w-full" asChild>
-                                    <Link href={`/admin/user-management`}>View Full Profile</Link>
+                                    <Link href={`/admin/user-management/${beneficiary.id}/edit`}>View Full Profile</Link>
                                 </Button>
                             </CardFooter>
                         )}
@@ -200,3 +205,5 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         </div>
     );
 }
+
+    

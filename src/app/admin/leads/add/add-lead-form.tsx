@@ -35,13 +35,6 @@ import { Label } from "@/components/ui/label";
 
 const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen'];
 
-const subCategoryMap: Record<LeadPurpose, string[]> = {
-    Education: ['Tuition Fees', 'College Fees', 'School Fees', 'Madrasa Fees', 'Other'],
-    Medical: ['Check Up', 'Operation', 'Other'],
-    'Relief Fund': ['Need to Pay', 'Loan to Pay', 'Other'],
-    Deen: ['General', 'Other']
-};
-
 const formSchema = z.object({
   userType: z.enum(['existing', 'new']).default('existing'),
   beneficiaryId: z.string().optional(),
@@ -52,20 +45,11 @@ const formSchema = z.object({
   newUserEmail: z.string().email("Please enter a valid email for the new user.").optional().or(z.literal('')),
 
   purpose: z.enum(leadPurposes),
-  subCategory: z.string().min(1, "Sub-category is required."),
-  otherCategoryDetail: z.string().optional(),
+  subCategory: z.string().optional(), // Now an optional text field
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
   verificationDocument: z.any().optional(),
-}).refine(data => {
-    if (data.subCategory === 'Other') {
-        return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
-    }
-    return true;
-}, {
-    message: "Please specify details for the 'Other' category.",
-    path: ["otherCategoryDetail"],
 }).refine(data => {
     if (data.userType === 'existing') {
         return !!data.beneficiaryId && data.beneficiaryId.length > 0;
@@ -106,8 +90,6 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     },
   });
 
-  const selectedPurpose = form.watch("purpose");
-  const selectedSubCategory = form.watch("subCategory");
   const selectedUserType = form.watch("userType");
 
   async function onSubmit(values: AddLeadFormValues) {
@@ -125,8 +107,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     }
     
     formData.append("purpose", values.purpose);
-    formData.append("subCategory", values.subCategory);
-    if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
+    if (values.subCategory) formData.append("subCategory", values.subCategory);
     formData.append("helpRequested", String(values.helpRequested));
     formData.append("isLoan", String(values.isLoan));
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
@@ -265,14 +246,11 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
             name="purpose"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Primary Category</FormLabel>
-                <Select onValueChange={(value) => {
-                    field.onChange(value);
-                    form.setValue('subCategory', ''); // Reset subcategory on primary change
-                }} defaultValue={field.value}>
+                <FormLabel>Purpose</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder="Select a purpose" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -286,47 +264,21 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                 </FormItem>
             )}
             />
-            {selectedPurpose && (
-                <FormField
-                control={form.control}
-                name="subCategory"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Sub-Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a sub-category" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {subCategoryMap[selectedPurpose].map(sub => (
-                            <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            )}
-        </div>
-
-        {selectedSubCategory === 'Other' && (
             <FormField
             control={form.control}
-            name="otherCategoryDetail"
+            name="subCategory"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Specify "Other" Category</FormLabel>
+                <FormLabel>Details / Sub-Category (Optional)</FormLabel>
                 <FormControl>
-                    <Input placeholder="Please provide more details" {...field} />
+                    <Input placeholder="e.g., Tuition Fees, Hospital Bill" {...field} />
                 </FormControl>
+                <FormDescription>Provide a specific detail for this purpose.</FormDescription>
                 <FormMessage />
                 </FormItem>
             )}
             />
-        )}
+        </div>
 
         <FormField
         control={form.control}
@@ -414,3 +366,5 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     </Form>
   );
 }
+
+    
