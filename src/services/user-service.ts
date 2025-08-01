@@ -14,6 +14,7 @@ import {
   Timestamp,
   where,
   limit,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 
@@ -56,6 +57,7 @@ export interface User {
   privileges?: Privilege[]; // Specific permissions granted to the user, often derived from roles
   groups?: string[]; // e.g., 'Founders', 'Finance Team', for organizational purposes
   createdAt: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 // Function to create or update a user
@@ -192,7 +194,10 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
-        await updateDoc(userRef, updates);
+        await updateDoc(userRef, {
+            ...updates,
+            updatedAt: serverTimestamp()
+        });
     } catch (error) {
         console.error("Error updating user: ", error);
         throw new Error('Failed to update user.');
