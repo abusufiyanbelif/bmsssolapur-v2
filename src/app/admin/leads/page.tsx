@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -29,6 +28,16 @@ import { Label } from "@/components/ui/label";
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Partial", "Closed"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected"];
 
+type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc' | 'amount-desc' | 'amount-asc';
+const sortOptions: { value: SortOption, label: string }[] = [
+    { value: 'date-desc', label: 'Date Created (Newest First)' },
+    { value: 'date-asc', label: 'Date Created (Oldest First)' },
+    { value: 'name-asc', label: 'Beneficiary Name (A-Z)' },
+    { value: 'name-desc', label: 'Beneficiary Name (Z-A)' },
+    { value: 'amount-desc', label: 'Amount Requested (High-Low)' },
+    { value: 'amount-asc', label: 'Amount Requested (Low-High)' },
+];
+
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -48,10 +57,11 @@ export default function LeadsPage() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
     
-    // Filter states
+    // Filter and Sort states
     const [nameFilter, setNameFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [verificationFilter, setVerificationFilter] = useState<string>('all');
+    const [sort, setSort] = useState<SortOption>('date-desc');
 
     const handleFeatureInProgress = () => {
         toast({
@@ -65,8 +75,6 @@ export default function LeadsPage() {
             try {
                 setLoading(true);
                 const fetchedLeads = await getAllLeads();
-                // Sort by most recent first
-                fetchedLeads.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                 setLeads(fetchedLeads);
                 setError(null);
             } catch (e) {
@@ -80,19 +88,32 @@ export default function LeadsPage() {
         fetchLeads();
     }, []);
 
-    const filteredLeads = useMemo(() => {
-        return leads.filter(lead => {
+    const processedLeads = useMemo(() => {
+        let filtered = leads.filter(lead => {
             const nameMatch = nameFilter === '' || lead.name.toLowerCase().includes(nameFilter.toLowerCase());
             const statusMatch = statusFilter === 'all' || lead.status === statusFilter;
             const verificationMatch = verificationFilter === 'all' || lead.verifiedStatus === verificationFilter;
             return nameMatch && statusMatch && verificationMatch;
         });
-    }, [leads, nameFilter, statusFilter, verificationFilter]);
+
+        return filtered.sort((a, b) => {
+             switch(sort) {
+                case 'date-desc': return b.dateCreated.toMillis() - a.dateCreated.toMillis();
+                case 'date-asc': return a.dateCreated.toMillis() - b.dateCreated.toMillis();
+                case 'name-asc': return a.name.localeCompare(b.name);
+                case 'name-desc': return b.name.localeCompare(a.name);
+                case 'amount-desc': return b.helpRequested - a.helpRequested;
+                case 'amount-asc': return a.helpRequested - b.helpRequested;
+                default: return 0;
+            }
+        });
+    }, [leads, nameFilter, statusFilter, verificationFilter, sort]);
 
     const resetFilters = () => {
         setNameFilter('');
         setStatusFilter('all');
         setVerificationFilter('all');
+        setSort('date-desc');
     };
 
     const renderDesktopTable = () => (
@@ -110,7 +131,7 @@ export default function LeadsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {filteredLeads.map((lead) => {
+                {processedLeads.map((lead) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                     return (
                         <TableRow key={lead.id}>
@@ -142,7 +163,7 @@ export default function LeadsPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {filteredLeads.map((lead) => {
+            {processedLeads.map((lead) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                 return (
                     <Card key={lead.id}>
@@ -221,7 +242,7 @@ export default function LeadsPage() {
             )
         }
         
-        if (filteredLeads.length === 0) {
+        if (processedLeads.length === 0) {
             return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">No leads match your current filters.</p>
@@ -255,8 +276,8 @@ export default function LeadsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="nameFilter">Beneficiary Name</Label>
                         <Input 
                             id="nameFilter" 
@@ -292,6 +313,19 @@ export default function LeadsPage() {
                             <FilterX className="mr-2 h-4 w-4" />
                             Clear Filters
                         </Button>
+                    </div>
+                     <div className="space-y-2 lg:col-span-2">
+                        <Label htmlFor="sortOption">Sort By</Label>
+                        <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+                            <SelectTrigger id="sortOption" className="w-full">
+                                <SelectValue placeholder="Sort by..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {sortOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
                 {renderContent()}

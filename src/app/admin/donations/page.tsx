@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -29,6 +29,16 @@ import { Label } from "@/components/ui/label";
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
 
+type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc' | 'amount-desc' | 'amount-asc';
+const sortOptions: { value: SortOption, label: string }[] = [
+    { value: 'date-desc', label: 'Date (Newest First)' },
+    { value: 'date-asc', label: 'Date (Oldest First)' },
+    { value: 'name-asc', label: 'Donor Name (A-Z)' },
+    { value: 'name-desc', label: 'Donor Name (Z-A)' },
+    { value: 'amount-desc', label: 'Amount (High to Low)' },
+    { value: 'amount-asc', label: 'Amount (Low to High)' },
+];
+
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Verified": "bg-green-500/20 text-green-700 border-green-500/30",
@@ -41,10 +51,11 @@ export default function DonationsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // Filter states
+    // Filter and Sort states
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [nameFilter, setNameFilter] = useState<string>('');
+    const [sort, setSort] = useState<SortOption>('date-desc');
 
     const { toast } = useToast();
     const isMobile = useIsMobile();
@@ -54,7 +65,6 @@ export default function DonationsPage() {
             try {
                 setLoading(true);
                 const fetchedDonations = await getAllDonations();
-                fetchedDonations.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                 setDonations(fetchedDonations);
                 setError(null);
             } catch (e) {
@@ -68,14 +78,27 @@ export default function DonationsPage() {
         fetchDonations();
     }, []);
 
-    const filteredDonations = useMemo(() => {
-        return donations.filter(donation => {
+    const processedDonations = useMemo(() => {
+        let filtered = donations.filter(donation => {
             const statusMatch = statusFilter === 'all' || donation.status === statusFilter;
             const typeMatch = typeFilter === 'all' || donation.type === typeFilter;
             const nameMatch = nameFilter === '' || donation.donorName.toLowerCase().includes(nameFilter.toLowerCase());
             return statusMatch && typeMatch && nameMatch;
         });
-    }, [donations, statusFilter, typeFilter, nameFilter]);
+
+        return filtered.sort((a, b) => {
+            switch(sort) {
+                case 'date-desc': return b.createdAt.toMillis() - a.createdAt.toMillis();
+                case 'date-asc': return a.createdAt.toMillis() - b.createdAt.toMillis();
+                case 'name-asc': return a.donorName.localeCompare(b.donorName);
+                case 'name-desc': return b.donorName.localeCompare(a.donorName);
+                case 'amount-desc': return b.amount - a.amount;
+                case 'amount-asc': return a.amount - b.amount;
+                default: return 0;
+            }
+        });
+
+    }, [donations, statusFilter, typeFilter, nameFilter, sort]);
 
     const handleFeatureInProgress = () => {
         toast({
@@ -88,6 +111,7 @@ export default function DonationsPage() {
         setStatusFilter('all');
         setTypeFilter('all');
         setNameFilter('');
+        setSort('date-desc');
     };
 
     const renderDesktopTable = () => (
@@ -104,7 +128,7 @@ export default function DonationsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {filteredDonations.map((donation) => (
+                {processedDonations.map((donation) => (
                     <TableRow key={donation.id}>
                         <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="font-medium">
@@ -134,7 +158,7 @@ export default function DonationsPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {filteredDonations.map(donation => (
+            {processedDonations.map(donation => (
                 <Card key={donation.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -227,7 +251,7 @@ export default function DonationsPage() {
             )
         }
         
-        if (filteredDonations.length === 0) {
+        if (processedDonations.length === 0) {
              return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">No donations match your current filters.</p>
@@ -261,8 +285,8 @@ export default function DonationsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="donorName">Donor Name</Label>
                         <Input 
                             id="donorName" 
@@ -298,6 +322,19 @@ export default function DonationsPage() {
                             <FilterX className="mr-2 h-4 w-4" />
                             Clear Filters
                         </Button>
+                    </div>
+                    <div className="space-y-2 lg:col-span-2">
+                        <Label htmlFor="sortOption">Sort By</Label>
+                        <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+                            <SelectTrigger id="sortOption" className="w-full">
+                                <SelectValue placeholder="Sort by..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {sortOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
                 {renderContent()}
