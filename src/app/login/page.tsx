@@ -23,7 +23,7 @@ const GoogleIcon = () => (
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
@@ -268,5 +268,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
