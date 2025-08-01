@@ -4,21 +4,22 @@
  * @fileOverview A service to seed the database with initial data.
  */
 
-import { createUser, User, UserRole, getUserByName, getUserByPhone } from './user-service';
+import { createUser, User, UserRole, getUserByName, getUserByPhone, getAllUsers } from './user-service';
 import { createOrganization, Organization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc } from 'firebase/firestore';
-import { Lead, Verifier, LeadPurpose, DonationType } from './lead-service';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch } from 'firebase/firestore';
+import { Lead, Verifier, LeadPurpose, DonationType, LeadDonationAllocation } from './lead-service';
+import { Donation, createDonation } from './donation-service';
 
 const usersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
     { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"], isActive: true, gender: 'Male', address: '123 Admin Lane, Solapur', panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012' },
     
     // Admins (Founders and Members)
-    { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Maaz Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", roles: ["Admin", "Finance Admin"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Abu Rehan Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
+    { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
+    { name: "Maaz Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
+    { name: "Abu Rehan Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
     { name: "Nayyar Ahmed Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
     { name: "Arif Baig", email: "arif.baig@example.com", phone: "9225747045", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
     { name: "Mazhar Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
@@ -57,20 +58,18 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     upiId: "maaz9145@okhdfcbank"
 };
 
-type LeadSeedData = Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'purpose' | 'subCategory'>;
+type LeadSeedData = Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'subCategory'>;
 
 const historicalLeadsToSeed: (LeadSeedData & { beneficiaryName: string })[] = [
     { beneficiaryName: 'Mustahik Person', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Hazrate Nomaniya Masjid', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
-    // Re-using the same beneficiary name for Nomaniya Masjid as it's the same entity
-    { beneficiaryName: 'Hazrate Nomaniya Masjid', helpRequested: 720, helpGiven: 720, category: 'Deen', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Hazrate Nomaniya Masjid', helpRequested: 720, helpGiven: 720, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Ration Distribution', helpRequested: 2795, helpGiven: 2795, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration provided to a needy person.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Ration for 4 Houses', helpRequested: 5000, helpGiven: 5000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration kits provided to 4 households, including elderly widows and sick families.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Ration Aid', helpRequested: 2000, helpGiven: 2000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Grain provided to a person in need.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Madrasa Riaz Ul Jannah', helpRequested: 1800, helpGiven: 1800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Rent and deposit for a new Madrasa at Sugar factory site new gharkul.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Anonymous Help', helpRequested: 1700, helpGiven: 1700, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Cash help provided to a person in need.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Lalsab Bagali', helpRequested: 29500, helpGiven: 29500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a patient\'s operation. 25000 cash given plus 4500 collected.', verificationDocumentUrl: '' },
-    // Re-using Lalsab Bagali
     { beneficiaryName: 'Lalsab Bagali', helpRequested: 26800, helpGiven: 26800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Hospital bill payment for a patient in need.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Mustahiq Family', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Money for household ration for a deserving family.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Child Hospital Bill', helpRequested: 3000, helpGiven: 3000, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a sick 2-year-old child admitted to the government hospital.', verificationDocumentUrl: '' },
@@ -80,12 +79,13 @@ const historicalLeadsToSeed: (LeadSeedData & { beneficiaryName: string })[] = [
 ];
 
 
-export type SeedItemResult = { name: string; status: 'Created' | 'Skipped (already exists)' };
+export type SeedItemResult = { name: string; status: 'Created' | 'Skipped (already exists)' | 'Failed' };
 export type SeedResult = {
     userResults: SeedItemResult[];
+    donationResults: SeedItemResult[];
+    leadResults: SeedItemResult[];
     orgStatus: string;
     quotesStatus: string;
-    leadResults: SeedItemResult[];
     error?: string;
 };
 
@@ -135,62 +135,96 @@ const seedOrganization = async (): Promise<string> => {
     return 'Organization seeded successfully.';
 };
 
-const seedLeads = async (): Promise<SeedItemResult[]> => {
+
+const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResult[], leadResults: SeedItemResult[] }> => {
     if (!isConfigValid) {
-        throw new Error("Firebase is not configured. Cannot seed leads.");
+        throw new Error("Firebase is not configured.");
     }
-    console.log('Seeding historical leads...');
-    const results: SeedItemResult[] = [];
+
+    console.log('Seeding historical donations and leads...');
+    let donationResults: SeedItemResult[] = [];
+    let leadResults: SeedItemResult[] = [];
+
+    const allUsers = await getAllUsers();
+    const donorUsers = allUsers.filter(u => u.roles.includes('Donor'));
+
+    if (donorUsers.length === 0) {
+        throw new Error("Cannot seed donations. No users with 'Donor' role found.");
+    }
     
-    const historicalAdmin = await getUserByPhone("8421708907"); // Moosa Shaikh
-
-     if (!historicalAdmin) {
-        throw new Error("Cannot seed historical leads without 'Moosa Shaikh' (8421708907) user.");
+    const historicalAdmin = await getUserByPhone("8421708907");
+    if (!historicalAdmin) {
+        throw new Error("Cannot seed historical data without 'Moosa Shaikh' (8421708907) user.");
     }
 
+    const batch = writeBatch(db);
     const leadsCollection = collection(db, 'leads');
-    const historicalDate = Timestamp.fromDate(new Date("2021-12-01"));
+    const donationsCollection = collection(db, 'donations');
 
     for (const leadData of historicalLeadsToSeed) {
-        // Check if a similar lead exists already to prevent duplicates
-        const q = query(leadsCollection, where("caseDetails", "==", leadData.caseDetails), where("helpRequested", "==", leadData.helpRequested));
-        const existingLeads = await getDocs(q);
-        
-        if (existingLeads.empty) {
-            const beneficiaryUser = await getUserByName(leadData.beneficiaryName);
-            if (!beneficiaryUser) {
-                console.warn(`Could not find beneficiary user "${leadData.beneficiaryName}" for lead. Skipping.`);
-                results.push({ name: leadData.beneficiaryName, status: 'Skipped (already exists)' });
-                continue;
-            }
-
-            const leadRef = doc(leadsCollection);
-            const verifier: Verifier = {
-                verifierId: historicalAdmin.id!,
-                verifierName: historicalAdmin.name,
-                verifiedAt: historicalDate,
-                notes: "Verified as part of historical data import."
-            };
-            const newLead: Lead = {
-                ...leadData,
-                id: leadRef.id,
-                name: beneficiaryUser.name,
-                beneficiaryId: beneficiaryUser.id!,
-                adminAddedBy: historicalAdmin.id!,
-                verifiers: [verifier],
-                dateCreated: historicalDate,
-                createdAt: historicalDate,
-                updatedAt: historicalDate,
-            };
-            await setDoc(leadRef, newLead);
-            results.push({ name: newLead.name, status: 'Created' });
-        } else {
-            results.push({ name: leadData.beneficiaryName, status: 'Skipped (already exists)' });
+        const beneficiaryUser = await getUserByName(leadData.beneficiaryName);
+        if (!beneficiaryUser) {
+            console.warn(`Could not find beneficiary user "${leadData.beneficiaryName}" for lead. Skipping.`);
+            leadResults.push({ name: `Lead for ${leadData.beneficiaryName}`, status: 'Skipped (already exists)' });
+            continue;
         }
-    }
 
-    console.log('Lead seeding process finished.');
-    return results;
+        // Create a corresponding donation for each historical lead
+        const randomDonor = donorUsers[Math.floor(Math.random() * donorUsers.length)];
+        const donationRef = doc(donationsCollection);
+        const donation: Donation = {
+            id: donationRef.id,
+            donorId: randomDonor.id!,
+            donorName: randomDonor.name,
+            amount: leadData.helpGiven,
+            type: leadData.category,
+            status: 'Allocated',
+            createdAt: Timestamp.fromDate(new Date("2021-11-01")),
+            verifiedAt: Timestamp.fromDate(new Date("2021-11-01")),
+            allocations: [], // This will be filled later
+        };
+        batch.set(donationRef, donation);
+        donationResults.push({ name: `Donation from ${randomDonor.name} for ${leadData.helpGiven}`, status: 'Created' });
+        
+        // Create the lead
+        const leadRef = doc(leadsCollection);
+        const verifier: Verifier = {
+            verifierId: historicalAdmin.id!,
+            verifierName: historicalAdmin.name,
+            verifiedAt: Timestamp.fromDate(new Date("2021-12-01")),
+            notes: "Verified as part of historical data import."
+        };
+        const leadDonationAllocation: LeadDonationAllocation = {
+            donationId: donation.id!,
+            amount: leadData.helpGiven,
+        };
+        const newLead: Lead = {
+            ...leadData,
+            id: leadRef.id,
+            name: beneficiaryUser.name,
+            beneficiaryId: beneficiaryUser.id!,
+            adminAddedBy: historicalAdmin.id!,
+            verifiers: [verifier],
+            donations: [leadDonationAllocation],
+            dateCreated: Timestamp.fromDate(new Date("2021-12-01")),
+            createdAt: Timestamp.fromDate(new Date("2021-12-01")),
+            updatedAt: Timestamp.fromDate(new Date("2021-12-01")),
+        };
+        batch.set(leadRef, newLead);
+        leadResults.push({ name: `Lead for ${newLead.name}`, status: 'Created' });
+
+        // Update the donation's allocation
+        const updatedDonationAllocation = {
+            leadId: newLead.id!,
+            amount: leadData.helpGiven,
+            allocatedAt: Timestamp.fromDate(new Date("2021-12-01")),
+        };
+        batch.update(donationRef, { allocations: [updatedDonationAllocation] });
+    }
+    
+    await batch.commit();
+    console.log('Donation and Lead seeding process finished.');
+    return { donationResults, leadResults };
 };
 
 
@@ -201,9 +235,10 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         console.error(errorMsg);
         return {
             userResults: [],
+            donationResults: [],
+            leadResults: [],
             orgStatus: 'Failed',
             quotesStatus: 'Failed',
-            leadResults: [],
             error: errorMsg,
         }
     }
@@ -216,17 +251,19 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         
         const orgStatus = await seedOrganization();
         const quotesStatus = await seedInitialQuotes();
-        const leadResults = await seedLeads();
+        const { donationResults, leadResults } = await seedDonationsAndLeads();
+        
         console.log('Database seeding process completed.');
-        return { userResults, orgStatus, quotesStatus, leadResults };
+        return { userResults, orgStatus, quotesStatus, leadResults, donationResults };
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred during seeding.';
         console.error('Error seeding database:', errorMsg);
         return {
             userResults: [],
+            donationResults: [],
+            leadResults: [],
             orgStatus: 'Failed',
             quotesStatus: 'Failed',
-            leadResults: [],
             error: errorMsg,
         };
     }

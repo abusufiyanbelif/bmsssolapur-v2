@@ -34,6 +34,11 @@ export interface Verifier {
     notes?: string;
 }
 
+export interface LeadDonationAllocation {
+    donationId: string;
+    amount: number;
+}
+
 export interface Lead {
   id?: string;
   name: string; // Can be "Anonymous"
@@ -50,6 +55,7 @@ export interface Lead {
   verificationDocumentUrl?: string;
   verifiedStatus: LeadVerificationStatus;
   verifiers: Verifier[];
+  donations: LeadDonationAllocation[];
   verificationNotes?: string;
   dateCreated: Timestamp;
   adminAddedBy: string; // ID of the admin who created the lead
@@ -58,7 +64,7 @@ export interface Lead {
 }
 
 // Function to create a lead
-export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'adminAddedBy' | 'verifiedStatus' | 'verifiers' | 'category'>, adminId: string) => {
+export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'adminAddedBy' | 'verifiedStatus' | 'verifiers' | 'category' | 'donations'>, adminId: string) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
@@ -69,6 +75,7 @@ export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'upda
       status: 'Pending',
       verifiedStatus: 'Pending',
       verifiers: [],
+      donations: [],
       // Assign a default category for backward compatibility or filtering logic
       category: leadData.purpose === 'Education' ? 'Sadaqah' : 'Lillah',
       dateCreated: Timestamp.now(),
