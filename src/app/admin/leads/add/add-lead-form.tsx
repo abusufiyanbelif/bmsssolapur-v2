@@ -31,6 +31,7 @@ import { Loader2 } from "lucide-react";
 import { User } from "@/services/user-service";
 import { LeadPurpose } from "@/services/lead-service";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen'];
 
