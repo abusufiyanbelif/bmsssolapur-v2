@@ -2,8 +2,9 @@
 "use server";
 
 import { createLead, Lead, LeadPurpose } from "@/services/lead-service";
-import { getUser } from "@/services/user-service";
+import { getUser, createUser, User } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
+import { Timestamp } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -26,7 +27,12 @@ export async function handleAddLead(
   const adminUserId = "user_placeholder_id_12345";
   
   const rawFormData = {
-      beneficiaryId: formData.get("beneficiaryId") as string,
+      userType: formData.get("userType") as 'existing' | 'new',
+      beneficiaryId: formData.get("beneficiaryId") as string | undefined,
+      newUserName: formData.get("newUserName") as string | undefined,
+      newUserPhone: formData.get("newUserPhone") as string | undefined,
+      newUserEmail: formData.get("newUserEmail") as string | undefined,
+
       purpose: formData.get("purpose") as LeadPurpose,
       subCategory: formData.get("subCategory") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
@@ -36,14 +42,37 @@ export async function handleAddLead(
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
   
-  if (!rawFormData.beneficiaryId || !rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
-    return { success: false, error: "Missing required fields." };
+  if (!rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
+    return { success: false, error: "Missing required lead details fields." };
   }
 
   try {
-    const beneficiaryUser = await getUser(rawFormData.beneficiaryId);
-    if (!beneficiaryUser) {
-        return { success: false, error: "Selected beneficiary user not found." };
+    let beneficiaryUser: User | null = null;
+    
+    if (rawFormData.userType === 'existing') {
+        if (!rawFormData.beneficiaryId) return { success: false, error: "Beneficiary ID is required for existing user."};
+        beneficiaryUser = await getUser(rawFormData.beneficiaryId);
+        if (!beneficiaryUser) {
+            return { success: false, error: "Selected beneficiary user not found." };
+        }
+    } else { // New user
+        if (!rawFormData.newUserName || !rawFormData.newUserPhone) {
+             return { success: false, error: "New user name and phone are required."};
+        }
+        try {
+            const newUser: Omit<User, 'id'> = {
+                name: rawFormData.newUserName,
+                phone: rawFormData.newUserPhone,
+                email: rawFormData.newUserEmail || '',
+                roles: ['Beneficiary'], // Default role
+                isActive: true,
+                createdAt: Timestamp.now(),
+            };
+            beneficiaryUser = await createUser(newUser);
+        } catch (e) {
+            const error = e instanceof Error ? e.message : "An unknown error occurred creating the user.";
+            return { success: false, error };
+        }
     }
       
     let verificationDocumentUrl = "";
@@ -53,7 +82,7 @@ export async function handleAddLead(
     
     const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'category'> = {
         name: beneficiaryUser.name,
-        beneficiaryId: rawFormData.beneficiaryId,
+        beneficiaryId: beneficiaryUser.id!,
         purpose: rawFormData.purpose,
         subCategory: rawFormData.subCategory,
         otherCategoryDetail: rawFormData.otherCategoryDetail,
@@ -66,6 +95,7 @@ export async function handleAddLead(
     const newLead = await createLead(newLeadData, adminUserId);
     
     revalidatePath("/admin/leads");
+    revalidatePath("/admin/leads/add"); // To refresh the user list
 
     return {
       success: true,

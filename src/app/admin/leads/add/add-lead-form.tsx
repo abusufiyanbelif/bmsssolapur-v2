@@ -30,6 +30,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { User } from "@/services/user-service";
 import { LeadPurpose } from "@/services/lead-service";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen'];
 
@@ -41,7 +42,14 @@ const subCategoryMap: Record<LeadPurpose, string[]> = {
 };
 
 const formSchema = z.object({
-  beneficiaryId: z.string().min(1, "Beneficiary is required."),
+  userType: z.enum(['existing', 'new']).default('existing'),
+  beneficiaryId: z.string().optional(),
+  
+  // New user fields
+  newUserName: z.string().optional(),
+  newUserPhone: z.string().optional(),
+  newUserEmail: z.string().email("Please enter a valid email for the new user.").optional().or(z.literal('')),
+
   purpose: z.enum(leadPurposes),
   subCategory: z.string().min(1, "Sub-category is required."),
   otherCategoryDetail: z.string().optional(),
@@ -57,7 +65,24 @@ const formSchema = z.object({
 }, {
     message: "Please specify details for the 'Other' category.",
     path: ["otherCategoryDetail"],
+}).refine(data => {
+    if (data.userType === 'existing') {
+        return !!data.beneficiaryId && data.beneficiaryId.length > 0;
+    }
+    return true;
+}, {
+    message: "Beneficiary is required for an existing user.",
+    path: ["beneficiaryId"],
+}).refine(data => {
+    if (data.userType === 'new') {
+        return !!data.newUserName && data.newUserName.length > 0 && !!data.newUserPhone && /^[0-9]{10}$/.test(data.newUserPhone);
+    }
+    return true;
+}, {
+    message: "New user's name and a valid 10-digit phone number are required.",
+    path: ["newUserName"], // Attach error to a relevant field
 });
+
 
 type AddLeadFormValues = z.infer<typeof formSchema>;
 
@@ -74,6 +99,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
   const form = useForm<AddLeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      userType: 'existing',
       isLoan: false,
       helpRequested: 0,
     },
@@ -81,12 +107,22 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
 
   const selectedPurpose = form.watch("purpose");
   const selectedSubCategory = form.watch("subCategory");
+  const selectedUserType = form.watch("userType");
 
   async function onSubmit(values: AddLeadFormValues) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append("beneficiaryId", values.beneficiaryId);
+    formData.append("userType", values.userType);
+    if (values.userType === 'existing' && values.beneficiaryId) {
+        formData.append("beneficiaryId", values.beneficiaryId);
+    }
+    if (values.userType === 'new') {
+        if(values.newUserName) formData.append("newUserName", values.newUserName);
+        if(values.newUserPhone) formData.append("newUserPhone", values.newUserPhone);
+        if(values.newUserEmail) formData.append("newUserEmail", values.newUserEmail);
+    }
+    
     formData.append("purpose", values.purpose);
     formData.append("subCategory", values.subCategory);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
@@ -119,30 +155,108 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         
         <FormField
-            control={form.control}
-            name="beneficiaryId"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Beneficiary</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+          control={form.control}
+          name="userType"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Add Lead for...</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex space-x-4"
+                >
+                  <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a beneficiary" />
-                    </SelectTrigger>
+                      <RadioGroupItem value="existing" id="existing" />
                     </FormControl>
-                    <SelectContent>
-                    {potentialBeneficiaries.map(user => (
-                        <SelectItem key={user.id} value={user.id!}>
-                            {user.name} ({user.phone})
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormDescription>Select the user who will receive the aid.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
+                    <Label htmlFor="existing">Existing User</Label>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <RadioGroupItem value="new" id="new" />
+                    </FormControl>
+                    <Label htmlFor="new">New User</Label>
+                  </FormItem>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
+        
+        {selectedUserType === 'existing' && (
+            <FormField
+                control={form.control}
+                name="beneficiaryId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Beneficiary</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a beneficiary" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {potentialBeneficiaries.map(user => (
+                            <SelectItem key={user.id} value={user.id!}>
+                                {user.name} ({user.phone})
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormDescription>Select the user who will receive the aid.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
+
+        {selectedUserType === 'new' && (
+            <div className="space-y-4 rounded-md border p-4">
+                 <h3 className="font-semibold text-foreground">New Beneficiary Details</h3>
+                 <FormField
+                    control={form.control}
+                    name="newUserName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Enter new user's full name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="newUserPhone"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Phone Number (10 digits)</FormLabel>
+                        <FormControl>
+                            <Input maxLength={10} placeholder="Enter new user's phone" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="newUserEmail"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Email Address (Optional)</FormLabel>
+                        <FormControl>
+                            <Input type="email" placeholder="user@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
