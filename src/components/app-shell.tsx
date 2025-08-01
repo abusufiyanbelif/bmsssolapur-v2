@@ -23,7 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "./nav";
 import type { User as UserType } from "@/services/user-service";
 import { getUser } from "@/services/user-service";
-import { Timestamp } from "firebase/firestore";
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -53,13 +52,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             const storedUserId = localStorage.getItem('userId');
             const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
-            if (storedUserId && storedUserId !== guestUser.id) {
+            if (storedUserId) {
                 const fetchedUser = await getUser(storedUserId);
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
                     // Ensure the saved role is actually one the user has, otherwise default
                     const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
                     
+                    if (localStorage.getItem('activeRole') !== activeRole) {
+                         localStorage.setItem('activeRole', activeRole);
+                    }
+
                     setUser({
                         ...fetchedUser,
                         isLoggedIn: true,
@@ -68,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
                     });
 
-                    // Show role switcher on first load after login if flag is set
+                    // Show role switcher on first load after login if flag is set and user has multiple roles
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                         localStorage.removeItem('showRoleSwitcher'); // Consume the flag
@@ -208,10 +211,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                             <span>Profile</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                     <DropdownMenuItem onClick={() => handleOpenRoleSwitcher()}>
-                                        <Users className="mr-2 h-4 w-4" />
-                                        <span>Switch Role ({user.activeRole})</span>
-                                    </DropdownMenuItem>
+                                     {user.roles.length > 1 && (
+                                        <DropdownMenuItem onClick={() => handleOpenRoleSwitcher()}>
+                                            <Users className="mr-2 h-4 w-4" />
+                                            <span>Switch Role ({user.activeRole})</span>
+                                        </DropdownMenuItem>
+                                     )}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleLogout}>
                                         <LogOut className="mr-2 h-4 w-4" />
@@ -251,5 +256,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
     )
 }
-
-    
