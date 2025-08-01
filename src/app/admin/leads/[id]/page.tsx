@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -39,7 +40,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const [beneficiary, allocatedDonations] = await Promise.all([
         getUser(lead.beneficiaryId),
         Promise.all(
-            lead.donations.map(async (alloc) => {
+            (lead.donations || []).map(async (alloc) => {
                 const donation = await getDonation(alloc.donationId);
                 return donation ? { ...donation, amountAllocated: alloc.amount } : null;
             })
