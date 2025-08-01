@@ -19,6 +19,7 @@ export async function handleUpdateLead(
     const updates: Partial<Lead> = {
         purpose: rawFormData.purpose as LeadPurpose,
         subCategory: rawFormData.subCategory as string | undefined,
+        otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         helpRequested: parseFloat(rawFormData.helpRequested as string),
         caseDetails: rawFormData.caseDetails as string | undefined,
         isLoan: rawFormData.isLoan === 'on',
@@ -42,5 +43,3 @@ export async function handleUpdateLead(
     };
   }
 }
-
-    

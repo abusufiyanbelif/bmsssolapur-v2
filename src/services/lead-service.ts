@@ -44,7 +44,7 @@ export interface Lead {
   name: string; // Can be "Anonymous"
   beneficiaryId: string; // ID of the user who is the beneficiary
   category: DonationType; // Original category for fund source compatibility
-  purpose?: LeadPurpose; // New primary category
+  purpose: LeadPurpose; // New primary category
   subCategory?: string; // New secondary category
   otherCategoryDetail?: string; // Details if sub-category is 'Other'
   helpRequested: number;

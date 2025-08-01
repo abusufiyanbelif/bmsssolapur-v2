@@ -35,15 +35,32 @@ const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Dee
 const leadStatuses: LeadStatus[] = ["Pending", "Partial", "Closed"];
 const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected"];
 
+const subCategoryOptions: Record<LeadPurpose, string[]> = {
+    'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
+    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Other'],
+    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Other'],
+    'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
+};
+
 const formSchema = z.object({
   purpose: z.enum(leadPurposes),
-  subCategory: z.string().optional(),
+  subCategory: z.string().min(1, "Sub-category is required."),
+  otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   caseDetails: z.string().optional(),
   isLoan: z.boolean().default(false),
   status: z.enum(leadStatuses),
   verifiedStatus: z.enum(leadVerificationStatuses),
+}).refine(data => {
+    if (data.subCategory === 'Other') {
+        return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify details for the 'Other' sub-category.",
+    path: ["otherCategoryDetail"],
 });
+
 
 type EditLeadFormValues = z.infer<typeof formSchema>;
 
@@ -60,6 +77,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     defaultValues: {
       purpose: lead.purpose,
       subCategory: lead.subCategory || '',
+      otherCategoryDetail: lead.otherCategoryDetail || '',
       helpRequested: lead.helpRequested,
       caseDetails: lead.caseDetails || '',
       isLoan: lead.isLoan,
@@ -68,12 +86,16 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     },
   });
 
+  const selectedPurpose = form.watch("purpose");
+  const selectedSubCategory = form.watch("subCategory");
+
   async function onSubmit(values: EditLeadFormValues) {
     setIsSubmitting(true);
     
     const formData = new FormData();
     formData.append("purpose", values.purpose);
-    if (values.subCategory) formData.append("subCategory", values.subCategory);
+    formData.append("subCategory", values.subCategory);
+    if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
     if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
     if(values.isLoan) formData.append("isLoan", "on");
@@ -111,13 +133,17 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <FormField
+                     <FormField
                         control={form.control}
                         name="purpose"
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Purpose</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                form.setValue('subCategory', '');
+                                form.setValue('otherCategoryDetail', '');
+                            }} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a purpose" />
@@ -133,20 +159,47 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                             </FormItem>
                         )}
                     />
+                    {selectedPurpose && (
+                        <FormField
+                            control={form.control}
+                            name="subCategory"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Sub-Category</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a sub-category" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {subCategoryOptions[selectedPurpose].map(sub => (
+                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                </div>
+
+                {selectedSubCategory === 'Other' && (
                     <FormField
                         control={form.control}
-                        name="subCategory"
+                        name="otherCategoryDetail"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Details / Sub-Category (Optional)</FormLabel>
+                            <FormLabel>Please specify "Other" details</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., Tuition Fees, Hospital Bill" {...field} />
+                                <Input placeholder="e.g., Specific textbook name" {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div>
+                )}
 
                 <FormField
                 control={form.control}
@@ -256,5 +309,3 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     </Card>
   );
 }
-
-    

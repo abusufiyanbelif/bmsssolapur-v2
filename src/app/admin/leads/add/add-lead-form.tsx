@@ -35,6 +35,14 @@ import { Label } from "@/components/ui/label";
 
 const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen'];
 
+const subCategoryOptions: Record<LeadPurpose, string[]> = {
+    'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
+    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Other'],
+    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Other'],
+    'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
+};
+
+
 const formSchema = z.object({
   userType: z.enum(['existing', 'new']).default('existing'),
   beneficiaryId: z.string().optional(),
@@ -45,7 +53,8 @@ const formSchema = z.object({
   newUserEmail: z.string().email("Please enter a valid email for the new user.").optional().or(z.literal('')),
 
   purpose: z.enum(leadPurposes),
-  subCategory: z.string().optional(), // Now an optional text field
+  subCategory: z.string().min(1, "Sub-category is required."),
+  otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
@@ -66,6 +75,14 @@ const formSchema = z.object({
 }, {
     message: "New user's name and a valid 10-digit phone number are required.",
     path: ["newUserName"], // Attach error to a relevant field
+}).refine(data => {
+    if (data.subCategory === 'Other') {
+        return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify details for the 'Other' sub-category.",
+    path: ["otherCategoryDetail"],
 });
 
 
@@ -91,6 +108,8 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
   });
 
   const selectedUserType = form.watch("userType");
+  const selectedPurpose = form.watch("purpose");
+  const selectedSubCategory = form.watch("subCategory");
 
   async function onSubmit(values: AddLeadFormValues) {
     setIsSubmitting(true);
@@ -107,11 +126,12 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     }
     
     formData.append("purpose", values.purpose);
-    if (values.subCategory) formData.append("subCategory", values.subCategory);
+    formData.append("subCategory", values.subCategory);
+    if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
     formData.append("isLoan", String(values.isLoan));
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
-    if(values.verificationDocument) formData.append("verificationDocument", values.verificationDocument[0]);
+    if(values.verificationDocument?.[0]) formData.append("verificationDocument", values.verificationDocument[0]);
     
     const result = await handleAddLead(formData);
 
@@ -247,7 +267,11 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Purpose</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('subCategory', ''); // Reset subcategory on purpose change
+                    form.setValue('otherCategoryDetail', '');
+                }} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a purpose" />
@@ -264,21 +288,48 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                 </FormItem>
             )}
             />
-            <FormField
-            control={form.control}
-            name="subCategory"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Details / Sub-Category (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., Tuition Fees, Hospital Bill" {...field} />
-                </FormControl>
-                <FormDescription>Provide a specific detail for this purpose.</FormDescription>
-                <FormMessage />
-                </FormItem>
+            {selectedPurpose && (
+                 <FormField
+                    control={form.control}
+                    name="subCategory"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Sub-Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a sub-category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {subCategoryOptions[selectedPurpose].map(sub => (
+                                    <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
             )}
-            />
         </div>
+
+        {selectedSubCategory === 'Other' && (
+             <FormField
+                control={form.control}
+                name="otherCategoryDetail"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Please specify "Other" details</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Specific textbook name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
+
 
         <FormField
         control={form.control}
@@ -339,7 +390,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
         <FormField
           control={form.control}
           name="verificationDocument"
-          render={({ field: { onChange, ...fieldProps } }) => (
+          render={({ field: { onChange, value, ...rest } }) => (
             <FormItem>
               <FormLabel>Verification Document</FormLabel>
               <FormControl>
@@ -347,7 +398,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                   type="file" 
                   accept="image/*,application/pdf"
                   onChange={(e) => onChange(e.target.files)}
-                  {...fieldProps}
+                  {...rest}
                 />
               </FormControl>
               <FormDescription>
@@ -366,5 +417,3 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     </Form>
   );
 }
-
-    

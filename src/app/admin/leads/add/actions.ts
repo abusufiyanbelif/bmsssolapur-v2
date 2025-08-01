@@ -37,7 +37,7 @@ export async function handleAddLead(
       subCategory: formData.get("subCategory") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
       helpRequested: parseFloat(formData.get("helpRequested") as string),
-      isLoan: formData.get("isLoan") === 'true',
+      isLoan: formData.get("isLoan") === 'on',
       caseDetails: formData.get("caseDetails") as string,
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
