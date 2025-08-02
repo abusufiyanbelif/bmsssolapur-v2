@@ -59,6 +59,8 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
     },
   });
 
+  const { formState: { isDirty } } = form;
+
   async function onSubmit(values: SettingsFormValues) {
     setIsSubmitting(true);
     
@@ -82,6 +84,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
         title: "Settings Saved",
         description: `Application settings have been updated successfully.`,
       });
+      form.reset(values); // This resets the 'dirty' state of the form
     } else {
       toast({
         variant: "destructive",
@@ -226,10 +229,12 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
             </CardContent>
         </Card>
 
-        <Button type="submit" disabled={isSubmitting} size="lg">
-          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Save All Settings
-        </Button>
+        {isDirty && (
+            <Button type="submit" disabled={isSubmitting} size="lg">
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save Changes
+            </Button>
+        )}
       </form>
     </Form>
   );

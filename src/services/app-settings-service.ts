@@ -37,8 +37,8 @@ export interface AppSettings {
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {
         password: { enabled: true },
-        otp: { enabled: true },
-        google: { enabled: true },
+        otp: { enabled: false },
+        google: { enabled: false },
     },
     services: {
         twilio: { enabled: true },
