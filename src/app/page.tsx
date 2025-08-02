@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandCoins, Users, CheckCircle, Quote as QuoteIcon, Target } from "lucide-react";
+import { ArrowRight, HandCoins, Users, CheckCircle, Quote as QuoteIcon, Target, TrendingUp } from "lucide-react";
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
 import Image from "next/image";
 import { getAllDonations } from "@/services/donation-service";
@@ -13,25 +13,28 @@ export default async function LandingPage() {
     const allDonations = await getAllDonations();
     const allLeads = await getAllLeads();
 
-    const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+    const totalRaised = allDonations.reduce((acc, d) => d.status === 'Verified' ? acc + d.amount : acc, 0);
     const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
-    const campaignsSupported = allLeads.filter(l => l.status === 'Closed').length;
+    const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
 
     const metrics = [
         {
-            title: "Amount Distributed",
-            value: `₹${totalDistributed.toLocaleString()}`,
-            icon: HandCoins,
+            title: "Total Verified Funds Raised",
+            value: `₹${totalRaised.toLocaleString()}`,
+            icon: TrendingUp,
+            description: "Total verified donations received to date.",
         },
         {
             title: "Beneficiaries Helped",
             value: beneficiariesHelped.toString(),
             icon: Users,
+            description: "Unique individuals and families supported.",
         },
         {
-            title: "Campaigns/Funds Supported",
-            value: campaignsSupported.toString(),
-            icon: Target,
+            title: "Cases Successfully Closed",
+            value: casesClosed.toString(),
+            icon: CheckCircle,
+            description: "Help requests that have been fully funded.",
         },
     ];
 
@@ -55,21 +58,22 @@ export default async function LandingPage() {
              {/* Public Dashboard Section */}
             <section id="impact">
                  <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Impact</h2>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline">Our Impact</h2>
                     <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-                        Together, we are making a difference. Here's a look at what we've achieved.
+                        We believe in complete transparency. Here's a live look at the impact your generosity has created.
                     </p>
                 </div>
                 <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                   {metrics.map((metric) => (
-                    <Card key={metric.title} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
-                      <CardContent className="flex flex-col items-center p-6">
-                        <div className="p-4 bg-primary/10 rounded-full mb-4">
-                            <metric.icon className="h-8 w-8 text-primary" />
-                        </div>
-                        <p className="text-3xl font-bold text-primary">{metric.value}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{metric.title}</p>
-                      </CardContent>
+                    <Card key={metric.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                            <metric.icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{metric.value}</div>
+                            <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        </CardContent>
                     </Card>
                   ))}
                 </div>
