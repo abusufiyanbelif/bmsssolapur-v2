@@ -85,7 +85,7 @@ export async function handleAddLead(
         beneficiaryId: beneficiaryUser.id!,
         purpose: rawFormData.purpose,
         subCategory: rawFormData.subCategory,
-        otherCategoryDetail: rawFormData.otherCategoryDetail,
+        otherCategoryDetail: rawFormData.subCategory === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         helpRequested: rawFormData.helpRequested,
         isLoan: rawFormData.isLoan,
         caseDetails: rawFormData.caseDetails,
