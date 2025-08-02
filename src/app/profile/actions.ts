@@ -13,6 +13,8 @@ type UpdateProfilePayload = Pick<User, 'name' | 'phone' | 'gender' | 'occupation
     address: {
         addressLine1: string;
         city: string;
+        state: string;
+        country: string;
         pincode: string;
     };
     familyMembers: number;

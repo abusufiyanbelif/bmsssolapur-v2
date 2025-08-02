@@ -45,6 +45,8 @@ const formSchema = z.object({
   gender: z.enum(["Male", "Female", "Other"]),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
   pincode: z.string().optional(),
   occupation: z.string().optional(),
   familyMembers: z.coerce.number().optional(),
@@ -73,7 +75,9 @@ export function EditUserForm({ user }: EditUserFormProps) {
       isActive: user.isActive,
       gender: user.gender || 'Other',
       addressLine1: user.address?.addressLine1 || '',
-      city: user.address?.city || '',
+      city: user.address?.city || 'Solapur',
+      state: user.address?.state || 'Maharashtra',
+      country: user.address?.country || 'India',
       pincode: user.address?.pincode || '',
       occupation: user.occupation || '',
       familyMembers: user.familyMembers || 0,
@@ -98,6 +102,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
     formData.append("gender", values.gender);
     if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
     if(values.city) formData.append("city", values.city);
+    if(values.state) formData.append("state", values.state);
+    if(values.country) formData.append("country", values.country);
     if(values.pincode) formData.append("pincode", values.pincode);
     if(values.occupation) formData.append("occupation", values.occupation);
     if(values.familyMembers) formData.append("familyMembers", String(values.familyMembers));
@@ -230,7 +236,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <FormItem>
                             <FormLabel>City</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., Solapur" {...field} />
+                                <Input placeholder="e.g., Solapur" {...field} disabled />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -244,6 +250,34 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <FormLabel>Pincode</FormLabel>
                             <FormControl>
                                 <Input placeholder="e.g., 413001" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FormField
+                        control={form.control}
+                        name="state"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>State</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., Maharashtra" {...field} disabled />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., India" {...field} disabled />
                             </FormControl>
                             <FormMessage />
                             </FormItem>

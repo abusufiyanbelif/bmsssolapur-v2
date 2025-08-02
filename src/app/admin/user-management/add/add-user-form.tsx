@@ -41,10 +41,11 @@ const formSchema = z.object({
     message: "You have to select at least one role.",
   }),
   isAnonymous: z.boolean().default(false),
-  isActive: z.boolean().default(true),
   gender: z.enum(["Male", "Female", "Other"]),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
   pincode: z.string().optional(),
   occupation: z.string().optional(),
   familyMembers: z.coerce.number().optional(),
@@ -66,9 +67,11 @@ export function AddUserForm() {
       email: "",
       phone: "",
       roles: ["Donor"],
-      isActive: true,
       isAnonymous: false,
       isWidow: false,
+      city: 'Solapur',
+      state: 'Maharashtra',
+      country: 'India',
     },
   });
 
@@ -82,11 +85,12 @@ export function AddUserForm() {
     formData.append("email", values.email);
     formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
-    if(values.isActive) formData.append("isActive", "on");
     if(values.isAnonymous) formData.append("isAnonymous", "on");
     formData.append("gender", values.gender);
     if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
     if(values.city) formData.append("city", values.city);
+    if(values.state) formData.append("state", values.state);
+    if(values.country) formData.append("country", values.country);
     if(values.pincode) formData.append("pincode", values.pincode);
     if(values.occupation) formData.append("occupation", values.occupation);
     if(values.familyMembers) formData.append("familyMembers", String(values.familyMembers));
@@ -207,7 +211,7 @@ export function AddUserForm() {
             name="addressLine1"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel>Address Line 1 (Street, Area)</FormLabel>
                 <FormControl>
                     <Textarea placeholder="Enter user's full address" {...field} />
                 </FormControl>
@@ -223,7 +227,7 @@ export function AddUserForm() {
                     <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., Solapur" {...field} />
+                        <Input placeholder="e.g., Solapur" {...field} disabled />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -243,6 +247,35 @@ export function AddUserForm() {
                 )}
                 />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>State</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Maharashtra" {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+             <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Country</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., India" {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+        </div>
+
 
         <h3 className="text-lg font-semibold border-b pb-2">Family & Occupation</h3>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -403,29 +436,6 @@ export function AddUserForm() {
             )}
             />
         </div>
-
-        <FormField
-          control={form.control}
-          name="isActive"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">
-                  User Status
-                </FormLabel>
-                <FormDescription>
-                  Set the user account to active or inactive. Inactive users cannot log in.
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
         
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -52,6 +53,8 @@ export interface User {
   address?: {
     addressLine1?: string;
     city?: string;
+    state?: string;
+    country?: string;
     pincode?: string;
   };
   
@@ -105,7 +108,13 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         email: user.email,
         phone: user.phone,
         isActive: user.isActive,
-        address: user.address,
+        address: {
+            addressLine1: user.address?.addressLine1 || '',
+            city: user.address?.city || 'Solapur',
+            state: user.address?.state || 'Maharashtra',
+            country: user.address?.country || 'India',
+            pincode: user.address?.pincode || '',
+        },
         gender: user.gender,
         isAnonymous: user.isAnonymous || false,
         anonymousId: anonymousId,

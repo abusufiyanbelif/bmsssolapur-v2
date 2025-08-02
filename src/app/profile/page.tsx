@@ -29,6 +29,8 @@ const profileFormSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
   pincode: z.string().optional(),
   gender: z.enum(['Male', 'Female', 'Other']),
   occupation: z.string().optional(),
@@ -75,6 +77,8 @@ export default function ProfilePage() {
               phone: fetchedUser.phone,
               addressLine1: fetchedUser.address?.addressLine1 || '',
               city: fetchedUser.address?.city || '',
+              state: fetchedUser.address?.state || '',
+              country: fetchedUser.address?.country || '',
               pincode: fetchedUser.address?.pincode || '',
               gender: fetchedUser.gender || 'Other',
               occupation: fetchedUser.occupation || '',
@@ -107,6 +111,8 @@ export default function ProfilePage() {
           address: {
               addressLine1: values.addressLine1 || '',
               city: values.city || '',
+              state: values.state || '',
+              country: values.country || '',
               pincode: values.pincode || '',
           },
           gender: values.gender,
@@ -273,7 +279,7 @@ export default function ProfilePage() {
                                         name="addressLine1"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Address</FormLabel>
+                                                <FormLabel>Address Line 1</FormLabel>
                                                 <FormControl>
                                                     <Textarea {...field} disabled={!isEditing} />
                                                 </FormControl>
@@ -289,7 +295,7 @@ export default function ProfilePage() {
                                                 <FormItem>
                                                     <FormLabel>City</FormLabel>
                                                     <FormControl>
-                                                        <Input {...field} disabled={!isEditing} />
+                                                        <Input {...field} disabled />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -303,6 +309,34 @@ export default function ProfilePage() {
                                                     <FormLabel>Pincode</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="state"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>State</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="country"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Country</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

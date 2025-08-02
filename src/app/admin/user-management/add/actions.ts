@@ -19,12 +19,13 @@ export async function handleAddUser(
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
-    isActive: formData.get("isActive") === 'on',
     isAnonymous: formData.get("isAnonymous") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     
     addressLine1: formData.get("addressLine1") as string | undefined,
     city: formData.get("city") as string | undefined,
+    state: formData.get("state") as string | undefined,
+    country: formData.get("country") as string | undefined,
     pincode: formData.get("pincode") as string | undefined,
 
     occupation: formData.get("occupation") as string | undefined,
@@ -45,13 +46,15 @@ export async function handleAddUser(
         email: rawFormData.email,
         phone: rawFormData.phone,
         roles: rawFormData.roles,
-        isActive: rawFormData.isActive,
+        isActive: true, // Default to active
         isAnonymous: rawFormData.isAnonymous,
         gender: rawFormData.gender,
         
         address: {
             addressLine1: rawFormData.addressLine1 || '',
-            city: rawFormData.city || '',
+            city: rawFormData.city || 'Solapur',
+            state: rawFormData.state || 'Maharashtra',
+            country: rawFormData.country || 'India',
             pincode: rawFormData.pincode || '',
         },
 

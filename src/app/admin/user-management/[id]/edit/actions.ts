@@ -24,6 +24,8 @@ export async function handleUpdateUser(
     
     addressLine1: formData.get("addressLine1") as string | undefined,
     city: formData.get("city") as string | undefined,
+    state: formData.get("state") as string | undefined,
+    country: formData.get("country") as string | undefined,
     pincode: formData.get("pincode") as string | undefined,
 
     occupation: formData.get("occupation") as string | undefined,
@@ -50,7 +52,9 @@ export async function handleUpdateUser(
         
         address: {
             addressLine1: rawFormData.addressLine1 || '',
-            city: rawFormData.city || '',
+            city: rawFormData.city || 'Solapur',
+            state: rawFormData.state || 'Maharashtra',
+            country: rawFormData.country || 'India',
             pincode: rawFormData.pincode || '',
         },
 
