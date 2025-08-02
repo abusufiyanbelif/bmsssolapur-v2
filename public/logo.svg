@@ -1,14 +1,14 @@
-<svg width="200" height="200" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <linearGradient id="logoGradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#F97316"/>
-            <stop offset="100%" stop-color="#D946EF"/>
-        </linearGradient>
-    </defs>
-    <g stroke="url(#logoGradient)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20.4 14.8329C20.4 14.8329 22 15.6986 22 17.5831C22 19.4676 20.4 20.3333 20.4 20.3333" fill="none"/>
-        <path d="M15.5 12.0001L14.4 12.4348C13.2 12.9131 12 12.4348 12 11.1218V10.2435C12 8.35899 10.4 6.71743 8.5 6.71743H4.8C3.8 6.71743 3 7.59567 3 8.59134V17.5831C3 18.5788 3.8 19.457 4.8 19.457H18.2C19.2 19.457 20 18.5788 20 17.5831V16.7048C20 15.3918 18.8 14.9135 17.6 15.3918L15.5 16.2609" fill="none"/>
-        <path d="M12 20.3333H3.6C3.6 20.3333 2 19.4676 2 17.5831C2 15.6986 3.6 14.8329 3.6 14.8329" fill="none"/>
-        <path d="M15.626 5.86958C16.899 4.60932 18.651 4.60932 19.924 5.86958C21.197 7.12984 21.197 9.07016 19.924 10.3304L17.775 12.4565L15.626 10.3304C14.353 9.07016 14.353 7.12984 15.626 5.86958Z" fill="none"/>
-    </g>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(155, 100%, 22%);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:hsl(48, 90%, 47%);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Heart shape -->
+  <path d="M 50,35 A 15,15 0 0 1 65,20 A 15,15 0 0 1 80,35 C 80,50 50,70 50,70 C 50,70 20,50 20,35 A 15,15 0 0 1 35,20 A 15,15 0 0 1 50,35" fill="url(#logoGradient)"/>
+  
+  <!-- Hand shape -->
+  <path d="M 20 85 C 10 75, 15 60, 25 55 C 35 50, 40 60, 40 60 L 70 60 C 85 60, 90 70, 80 85 L 70 95 L 30 95 L 20 85 Z" fill="#E2E8F0" stroke="hsl(var(--border))" stroke-width="2"/>
 </svg>
