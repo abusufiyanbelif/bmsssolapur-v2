@@ -21,7 +21,7 @@ export default async function SeedPage() {
 
     return (
         <div className="flex-1 space-y-4">
-             <h2 className="text-3xl font-bold tracking-tight font-headline">Database Seeding</h2>
+             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Database Seeding</h2>
              <Card>
                 <CardHeader>
                     <CardTitle>Seeding Result</CardTitle>

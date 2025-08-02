@@ -115,7 +115,7 @@ export default function RequestHelpPage() {
 
   return (
      <div className="flex-1 space-y-4">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Request Assistance</h2>
+        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Request Assistance</h2>
         <Card>
             <CardHeader>
                 <CardTitle>Submit a Help Request</CardTitle>

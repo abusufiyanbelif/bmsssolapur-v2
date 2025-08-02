@@ -22,7 +22,7 @@ const services = [
 export default function ServicesPage() {
   return (
     <div className="flex-1 space-y-4">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Services Summary</h2>
+        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Services Summary</h2>
         <Card>
             <CardHeader>
                 <CardTitle>Configuration Overview</CardTitle>

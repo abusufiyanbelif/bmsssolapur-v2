@@ -7,7 +7,7 @@ export default async function AddLeadPage() {
     
     return (
         <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline">Add New Lead</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Add New Lead</h2>
             <Card>
                 <CardHeader>
                     <CardTitle>Lead Details</CardTitle>

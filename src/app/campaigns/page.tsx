@@ -14,7 +14,7 @@ export default async function CampaignsPage() {
     
     return (
         <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline">Approved Campaigns</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Approved Campaigns</h2>
 
             {organization?.upiId && (
                 <Alert>

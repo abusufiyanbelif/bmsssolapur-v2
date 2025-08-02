@@ -60,7 +60,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             </Link>
             
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight font-headline">Lead Details</h2>
+                <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Lead Details</h2>
                 <div className="flex gap-2">
                     <Button asChild>
                         <Link href={`/admin/leads/${lead.id}/edit`}>
