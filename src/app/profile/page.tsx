@@ -21,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { handleUpdateProfile } from './actions';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -42,7 +43,9 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<ProfileFormValues>();
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+  });
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -81,7 +84,7 @@ export default function ProfilePage() {
     
   useEffect(() => {
     fetchUser();
-  }, [userId]);
+  }, [userId, form]);
 
 
   async function onSubmit(values: ProfileFormValues) {
@@ -203,10 +206,34 @@ export default function ProfilePage() {
                                             control={form.control}
                                             name="gender"
                                             render={({ field }) => (
-                                                <FormItem>
+                                                <FormItem className="space-y-3">
                                                     <FormLabel>Gender</FormLabel>
                                                     <FormControl>
-                                                        <Input {...field} disabled={!isEditing} />
+                                                        <RadioGroup
+                                                        onValueChange={field.onChange}
+                                                        defaultValue={field.value}
+                                                        className="flex flex-row space-x-4"
+                                                        disabled={!isEditing}
+                                                        >
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                            <RadioGroupItem value="Male" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">Male</FormLabel>
+                                                        </FormItem>
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                            <RadioGroupItem value="Female" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">Female</FormLabel>
+                                                        </FormItem>
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                            <RadioGroupItem value="Other" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">Other</FormLabel>
+                                                        </FormItem>
+                                                        </RadioGroup>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
