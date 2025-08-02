@@ -53,7 +53,7 @@ export default async function LandingPage() {
                 </p>
                 <div className="mt-8 flex justify-center gap-4">
                     <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                        <Link href="/campaigns">Donate Now <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                        <Link href="/organization">Donate Now <ArrowRight className="ml-2 h-5 w-5" /></Link>
                     </Button>
                 </div>
             </section>
