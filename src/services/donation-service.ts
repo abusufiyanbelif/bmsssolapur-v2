@@ -19,36 +19,12 @@ import {
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
+import type { Donation, DonationStatus, DonationType, DonationPurpose } from './types';
+
+// Re-export types for backward compatibility if other services import from here
+export type { Donation, DonationStatus, DonationType, DonationPurpose };
 
 const DONATIONS_COLLECTION = 'donations';
-
-export type DonationStatus = 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Allocated';
-export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah' | 'Split';
-export type DonationPurpose = 'Education' | 'Deen' | 'Hospital' | 'Loan and Relief Fund' | 'To Organization Use' | 'Loan Repayment';
-
-export interface Allocation {
-  leadId: string;
-  amount: number;
-  allocatedAt: Timestamp;
-}
-
-export interface Donation {
-  id?: string;
-  donorId: string; // Should link to a User ID
-  donorName: string;
-  amount: number;
-  type: DonationType;
-  purpose?: DonationPurpose;
-  status: DonationStatus;
-  isAnonymous?: boolean; // To handle anonymous donations
-  paymentScreenshotUrl?: string; // URL to the uploaded screenshot
-  transactionId?: string;
-  createdAt: Timestamp;
-  verifiedAt?: Timestamp;
-  // allocations will store an array of mappings to leads
-  allocations?: Allocation[];
-  notes?: string;
-}
 
 // Function to create a donation
 export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>, adminUserId: string) => {

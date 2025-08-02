@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonation } from "./actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/donation-service";
+import type { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;

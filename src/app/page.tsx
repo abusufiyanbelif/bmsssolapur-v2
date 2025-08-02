@@ -6,14 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, Loader2 } from "lucide-react";
-import { getRandomQuotes, Quote } from "@/services/quotes-service";
+import { getRandomQuotes } from "@/services/quotes-service";
 import Image from "next/image";
-import { getAllDonations, Donation } from "@/services/donation-service";
-import { Lead } from "@/services/lead-service";
+import { getAllDonations } from "@/services/donation-service";
 import { getOpenLeads } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
 import { getAllLeads } from "@/services/lead-service";
 import { useEffect, useState } from "react";
+import type { Quote, Donation, Lead } from "@/services/types";
 
 export default function LandingPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);

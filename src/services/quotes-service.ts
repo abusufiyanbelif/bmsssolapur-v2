@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -11,15 +12,12 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
+import type { Quote } from './types';
+
+// Re-export type for backward compatibility
+export type { Quote };
 
 const QUOTES_COLLECTION = 'inspirationalQuotes';
-
-export interface Quote {
-  id?: string;
-  text: string;
-  source: string;
-  category: 'Quran' | 'Hadith' | 'Scholar';
-}
 
 const ALL_QUOTES: Omit<Quote, 'id'>[] = [
     // Quran

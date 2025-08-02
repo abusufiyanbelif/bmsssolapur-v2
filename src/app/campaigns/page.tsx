@@ -2,13 +2,14 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getOpenLeads, Lead } from "@/services/lead-service";
+import { getOpenLeads } from "@/app/campaigns/actions";
 import { CampaignList } from "./campaign-list";
-import { getCurrentOrganization, Organization } from "@/services/organization-service";
+import { getCurrentOrganization } from "@/services/organization-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CreditCard, Copy, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import type { Lead, Organization } from "@/services/types";
 
 export default function CampaignsPage() {
     const [leads, setLeads] = useState<Lead[]>([]);

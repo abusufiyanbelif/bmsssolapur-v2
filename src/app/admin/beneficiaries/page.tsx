@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -12,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllUsers, type User } from "@/services/user-service";
+import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { User } from "@/services/types";
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 const statusOptions: StatusFilter[] = ["all", "active", "inactive"];

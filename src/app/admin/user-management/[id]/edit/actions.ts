@@ -1,8 +1,9 @@
 
 "use server";
 
-import { updateUser, User, UserRole } from "@/services/user-service";
+import { updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
+import type { User, UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;

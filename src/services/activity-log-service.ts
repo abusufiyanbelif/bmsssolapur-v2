@@ -6,19 +6,12 @@
 
 import { collection, addDoc, query, where, getDocs, serverTimestamp, orderBy, Timestamp } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
+import type { ActivityLog } from './types';
+
+// Re-export type
+export type { ActivityLog };
 
 const ACTIVITY_LOG_COLLECTION = 'activityLog';
-
-export interface ActivityLog {
-  id?: string;
-  userId: string;
-  userEmail?: string;
-  userName?: string;
-  role: string; // The role used to perform the action
-  activity: string; // e.g., 'Switched Role', 'Created Donation', 'Verified Lead'
-  details: Record<string, any>;
-  timestamp: Timestamp;
-}
 
 /**
  * Logs an activity for a specific user.

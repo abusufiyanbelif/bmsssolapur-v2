@@ -28,10 +28,9 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { User } from "@/services/user-service";
-import { LeadPurpose } from "@/services/lead-service";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import type { User, LeadPurpose } from "@/services/types";
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 

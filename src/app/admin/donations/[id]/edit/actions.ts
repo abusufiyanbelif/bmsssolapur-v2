@@ -1,8 +1,9 @@
 
 "use server";
 
-import { updateDonation, Donation, DonationPurpose, DonationType, DonationStatus } from "@/services/donation-service";
+import { updateDonation } from "@/services/donation-service";
 import { revalidatePath } from "next/cache";
+import type { Donation, DonationPurpose, DonationType, DonationStatus } from "@/services/types";
 
 interface FormState {
     success: boolean;

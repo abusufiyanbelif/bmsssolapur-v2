@@ -1,10 +1,11 @@
 
 "use server";
 
-import { createLead, Lead, LeadPurpose } from "@/services/lead-service";
-import { getUser, createUser, User } from "@/services/user-service";
+import { createLead } from "@/services/lead-service";
+import { getUser, createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase/firestore";
+import type { Lead, LeadPurpose, User } from "@/services/types";
 
 interface FormState {
     success: boolean;

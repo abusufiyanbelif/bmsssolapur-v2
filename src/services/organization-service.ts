@@ -15,25 +15,12 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
+import type { Organization } from './types';
+
+// Re-export types for backward compatibility
+export type { Organization };
 
 const ORGANIZATIONS_COLLECTION = 'organizations';
-
-export interface Organization {
-  id?: string;
-  name: string;
-  city: string;
-  address: string;
-  registrationNumber: string;
-  aadhaarNumber?: string;
-  panNumber?: string;
-  contactEmail: string;
-  contactPhone: string;
-  website?: string;
-  upiId?: string;
-  qrCodeUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {

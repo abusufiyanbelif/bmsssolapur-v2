@@ -5,13 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, AlertCircle } from "lucide-react";
-import { type Donation, type DonationStatus, getDonationsByUserId } from "@/services/donation-service";
+import { getDonationsByUserId } from "@/services/donation-service";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import type { Donation, DonationStatus } from "@/services/types";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -126,7 +127,7 @@ export default function MyDonationsPage() {
                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
                                 {donation.status}
-                            </Badge>
+                             </Badge>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">

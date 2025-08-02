@@ -1,9 +1,10 @@
 
 "use server";
 
-import { createUser, User, UserRole } from "@/services/user-service";
+import { createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase/firestore";
+import type { User, UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;

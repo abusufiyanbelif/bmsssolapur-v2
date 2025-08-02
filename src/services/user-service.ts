@@ -18,64 +18,13 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
+import type { User, UserRole } from './types';
 
 const USERS_COLLECTION = 'users';
 
-export type UserRole = 
-  | 'Guest'           // Public user, not logged in
-  | 'Donor'           // Logged-in user who can donate
-  | 'Beneficiary'     // Logged-in user who can receive aid
-  | 'Referral'        // A user who refers beneficiaries (future role)
-  | 'Admin'           // A staff member with operational privileges
-  | 'Finance Admin'   // An admin with specific financial privileges
-  | 'Super Admin';    // A user with all privileges
+// Re-export types for backward compatibility if other services import from here
+export type { User, UserRole };
 
-// A list of granular permissions
-export type Privilege =
-  | 'all' // Super Admin privilege
-  | 'canManageUsers'
-  | 'canManageRoles'
-  | 'canManageLeads'
-  | 'canVerifyLeads'
-  | 'canManageDonations'
-  | 'canVerifyDonations'
-  | 'canViewFinancials'
-  | 'canExportData'
-  | 'canManageSettings';
-
-export interface User {
-  id?: string;
-  name: string;
-  email?: string;
-  phone: string;
-  isActive: boolean;
-  
-  address?: {
-    addressLine1?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    pincode?: string;
-  };
-  
-  gender?: 'Male' | 'Female' | 'Other';
-  isAnonymous?: boolean; 
-  anonymousId?: string; 
-  
-  occupation?: string;
-  familyMembers?: number;
-  isWidow?: boolean;
-
-  secondaryPhone?: string; 
-  aadhaarNumber?: string; 
-  panNumber?: string; 
-  
-  roles: UserRole[]; 
-  privileges?: Privilege[]; 
-  groups?: string[];
-  createdAt: Timestamp;
-  updatedAt?: Timestamp;
-}
 
 // Function to create or update a user
 export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {

@@ -9,17 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon } from "lucide-react";
-import { getDonationsByUserId, Donation } from "@/services/donation-service";
-import { getLeadsByBeneficiaryId, Lead } from "@/services/lead-service";
+import { getDonationsByUserId } from "@/services/donation-service";
+import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { getUser, User as UserType } from "@/services/user-service";
-import { getRandomQuotes, Quote } from "@/services/quotes-service";
+import { getUser } from "@/services/user-service";
+import { getRandomQuotes } from "@/services/quotes-service";
+import type { User, Donation, Lead, Quote } from "@/services/types";
 
 
 export default function UserHomePage() {
-  const [user, setUser] = useState<UserType | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [activeRole, setActiveRole] = useState<string | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [cases, setCases] = useState<Lead[]>([]);

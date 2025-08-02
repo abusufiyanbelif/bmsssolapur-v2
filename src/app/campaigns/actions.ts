@@ -2,8 +2,8 @@
 
 "use server";
 
-import { Lead } from "@/services/lead-service";
-import { query, collection, where, getDocs, Timestamp } from "firebase/firestore";
+import type { Lead } from "@/services/types";
+import { query, collection, where, getDocs } from "firebase/firestore";
 import { db, isConfigValid } from "@/services/firebase";
 
 /**

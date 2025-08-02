@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -13,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllUsers, type User, UserRole } from "@/services/user-service";
+import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -26,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleDeleteUser } from "./actions";
+import type { User, UserRole } from "@/services/types";
 
 
 type UserCategory = 'all' | 'admins' | 'donors' | 'beneficiaries';

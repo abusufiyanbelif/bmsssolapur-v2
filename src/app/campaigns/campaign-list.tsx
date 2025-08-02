@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Lead } from '@/services/lead-service';
-import { getOpenLeads } from './actions';
-import { getUser, User } from '@/services/user-service';
+import { getUser } from '@/services/user-service';
+import type { Lead, User } from '@/services/types';
 
 interface CampaignListProps {
     initialLeads: Lead[];

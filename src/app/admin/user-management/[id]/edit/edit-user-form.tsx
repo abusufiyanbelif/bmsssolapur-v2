@@ -20,10 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser } from "./actions";
 import { useState } from "react";
 import { Loader2, CheckCircle } from "lucide-react";
-import { User, UserRole } from "@/services/user-service";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import type { User, UserRole } from "@/services/types";
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",

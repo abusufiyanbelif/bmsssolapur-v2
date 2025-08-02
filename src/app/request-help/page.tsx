@@ -27,9 +27,9 @@ import { useToast } from "@/hooks/use-toast";
 import { handleRequestHelp } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
-import { DonationType } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import type { DonationType } from "@/services/types";
 
 
 const leadCategories = ['Zakat', 'Sadaqah', 'Fitr'] as const;

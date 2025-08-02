@@ -28,8 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation } from "./actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { User } from "@/services/user-service";
-import { DonationType, DonationPurpose } from "@/services/donation-service";
+import type { User, DonationType, DonationPurpose } from "@/services/types";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;

@@ -12,27 +12,13 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
+import type { AppSettings } from './types';
+
+// Re-export type for backward compatibility
+export type { AppSettings };
 
 const SETTINGS_COLLECTION = 'settings';
 const MAIN_SETTINGS_DOC_ID = 'main'; // Use a singleton document for global settings
-
-export interface AppSettings {
-  id?: string;
-  loginMethods: {
-    password: { enabled: boolean };
-    otp: { enabled: boolean };
-    google: { enabled: boolean };
-  };
-  services: {
-    twilio: { enabled: boolean };
-    nodemailer: { enabled: boolean };
-    whatsapp: { enabled: boolean };
-  };
-  features: {
-    directPaymentToBeneficiary: { enabled: boolean };
-  };
-  updatedAt?: Timestamp;
-}
 
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {

@@ -20,9 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddUser } from "./actions";
 import { useState } from "react";
 import { Loader2, CheckCircle } from "lucide-react";
-import { UserRole } from "@/services/user-service";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import type { UserRole } from "@/services/types";
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",

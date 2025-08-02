@@ -1,9 +1,10 @@
 
 "use server";
 
-import { createLead, Lead } from "@/services/lead-service";
+import { createLead } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
+import type { Lead } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -45,7 +46,7 @@ export async function handleRequestHelp(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan'> = {
+    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'purpose' | 'subCategory'> = {
         name: beneficiaryUser.name,
         beneficiaryId: userId,
         category: rawFormData.category,
@@ -54,7 +55,7 @@ export async function handleRequestHelp(
         verificationDocumentUrl,
     };
 
-    const newLead = await createLead({ ...newLeadData, isLoan: false }, userId);
+    const newLead = await createLead({ ...newLeadData, isLoan: false, purpose: 'Relief Fund' }, userId);
     
     revalidatePath("/my-cases");
 

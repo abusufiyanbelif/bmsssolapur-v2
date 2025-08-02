@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { type Lead, type LeadStatus, getLeadsByBeneficiaryId } from "@/services/lead-service";
+import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { Lead, LeadStatus } from "@/services/types";
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
