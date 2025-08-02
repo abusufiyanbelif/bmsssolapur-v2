@@ -21,6 +21,7 @@ export async function handleAddUser(
     roles: formData.getAll("roles") as UserRole[],
     // Correctly interpret checkbox value: 'on' if checked, null if not.
     isActive: formData.get("isActive") === 'on',
+    isAnonymous: formData.get("isAnonymous") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     address: formData.get("address") as string | undefined,
     panNumber: formData.get("panNumber") as string | undefined,
@@ -38,6 +39,7 @@ export async function handleAddUser(
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: rawFormData.isActive,
+        isAnonymous: rawFormData.isAnonymous,
         gender: rawFormData.gender,
         address: rawFormData.address || '',
         panNumber: rawFormData.panNumber || '',
@@ -63,4 +65,3 @@ export async function handleAddUser(
     };
   }
 }
-

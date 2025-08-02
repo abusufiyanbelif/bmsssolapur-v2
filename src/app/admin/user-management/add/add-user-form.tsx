@@ -40,6 +40,7 @@ const formSchema = z.object({
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
+  isAnonymous: z.boolean().default(false),
   isActive: z.boolean().default(true),
   gender: z.enum(["Male", "Female", "Other"]),
   address: z.string().optional(),
@@ -61,8 +62,11 @@ export function AddUserForm() {
       phone: "",
       roles: ["Donor"],
       isActive: true,
+      isAnonymous: false,
     },
   });
+
+  const selectedRoles = form.watch("roles");
 
   async function onSubmit(values: AddUserFormValues) {
     setIsSubmitting(true);
@@ -73,6 +77,7 @@ export function AddUserForm() {
     formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
     if(values.isActive) formData.append("isActive", "on");
+    if(values.isAnonymous) formData.append("isAnonymous", "on");
     formData.append("gender", values.gender);
     if(values.address) formData.append("address", values.address);
     if(values.panNumber) formData.append("panNumber", values.panNumber);
@@ -195,6 +200,32 @@ export function AddUserForm() {
             </FormItem>
           )}
         />
+        
+        {selectedRoles.includes("Beneficiary") && (
+             <FormField
+                control={form.control}
+                name="isAnonymous"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                        <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                        <FormLabel>
+                        Mark as Anonymous Beneficiary
+                        </FormLabel>
+                        <FormDescription>
+                        If checked, a unique ID will be generated and their real name will be hidden from public view.
+                        </FormDescription>
+                    </div>
+                    </FormItem>
+                )}
+            />
+        )}
+
 
         <FormField
             control={form.control}

@@ -50,6 +50,8 @@ export interface User {
   isActive: boolean;
   address?: string;
   gender?: 'Male' | 'Female' | 'Other';
+  isAnonymous?: boolean; // New field for beneficiary privacy
+  anonymousId?: string; // New field for unique anonymous ID
   secondaryPhone?: string; // For account recovery
   aadhaarNumber?: string; // Mandated for Admins
   panNumber?: string; // Mandated for Admins
@@ -78,6 +80,13 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
     }
 
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
+    
+    let anonymousId: string | undefined = user.anonymousId;
+    if (user.isAnonymous && !anonymousId) {
+        // Generate a unique anonymous ID if it doesn't exist
+        anonymousId = `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
+    }
+
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
         name: user.name,
@@ -86,6 +95,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         isActive: user.isActive,
         address: user.address,
         gender: user.gender,
+        isAnonymous: user.isAnonymous || false,
+        anonymousId: anonymousId,
         secondaryPhone: user.secondaryPhone,
         aadhaarNumber: user.aadhaarNumber,
         panNumber: user.panNumber,
@@ -194,8 +205,17 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
+        
+        let finalUpdates = { ...updates };
+        if (updates.isAnonymous && !updates.anonymousId) {
+            const existingUser = await getDoc(userRef);
+            if (existingUser.exists() && !existingUser.data().anonymousId) {
+                finalUpdates.anonymousId = `Beneficiary-${id.substring(0, 6).toUpperCase()}`;
+            }
+        }
+
         await updateDoc(userRef, {
-            ...updates,
+            ...finalUpdates,
             updatedAt: serverTimestamp()
         });
     } catch (error) {
@@ -219,7 +239,7 @@ export const deleteUser = async (id: string) => {
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     if (!isConfigValid) {
-      console.warn("Firebase not configured. Skipping fetching all users.");
+      console.warn("Firebase is not configured. Skipping fetching all users.");
       return [];
     }
     try {

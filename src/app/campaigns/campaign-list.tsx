@@ -10,32 +10,38 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Lead } from '@/services/lead-service';
 import { getOpenLeads } from './actions';
+import { getUser, User } from '@/services/user-service';
 
 interface CampaignListProps {
     initialLeads: Lead[];
 }
 
+interface EnrichedLead extends Lead {
+    beneficiary?: User;
+}
+
 export function CampaignList({ initialLeads }: CampaignListProps) {
-    const [leads, setLeads] = useState<Lead[]>(initialLeads);
-    const [loading, setLoading] = useState(false);
+    const [leads, setLeads] = useState<EnrichedLead[]>(initialLeads);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // This effect can be used to periodically refresh data if needed
-    // For now, we just use the initial server-rendered data.
-    // useEffect(() => {
-    //     async function fetchLeads() {
-    //         setLoading(true);
-    //         try {
-    //             const freshLeads = await getOpenLeads();
-    //             setLeads(freshLeads);
-    //         } catch (e) {
-    //             setError("Failed to load campaigns. Please try again later.");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     }
-    //     // fetchLeads(); // Uncomment to fetch on client
-    // }, []);
+    useEffect(() => {
+        async function enrichLeads() {
+            try {
+                const enriched = await Promise.all(initialLeads.map(async (lead) => {
+                    const beneficiary = await getUser(lead.beneficiaryId);
+                    return { ...lead, beneficiary };
+                }));
+                setLeads(enriched as EnrichedLead[]);
+            } catch (e) {
+                setError("Failed to load beneficiary details for campaigns.");
+            } finally {
+                setLoading(false);
+            }
+        }
+        enrichLeads();
+    }, [initialLeads]);
+
 
     if (loading) {
         return (
@@ -72,10 +78,14 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
             {leads.map((lead) => {
                 const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
                 const remainingAmount = lead.helpRequested - lead.helpGiven;
+                const displayName = lead.beneficiary?.isAnonymous 
+                    ? lead.beneficiary?.anonymousId || "Anonymous Beneficiary"
+                    : lead.name;
+
                 return (
                     <Card key={lead.id} className="flex flex-col">
                         <CardHeader>
-                            <CardTitle>{lead.name === "Anonymous" ? "Anonymous Beneficiary" : lead.name}</CardTitle>
+                            <CardTitle>{displayName}</CardTitle>
                             <CardDescription>
                                 Seeking help for: <span className="font-semibold">{lead.category}</span>
                             </CardDescription>
