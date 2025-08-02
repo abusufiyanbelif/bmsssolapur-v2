@@ -22,6 +22,7 @@ import { Loader2, Save } from "lucide-react";
 import { Organization } from "@/services/organization-service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import Image from "next/image";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   name: z.string().min(1, "Organization name is required."),
