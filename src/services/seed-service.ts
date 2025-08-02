@@ -58,7 +58,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     contactPhone: "+91 12345 67890",
     website: "https://baitulmalsolapur.org",
     upiId: "maaz9145@okhdfcbank",
-    qrCodeUrl: "/qr.png",
+    qrCodeUrl: "https://placehold.co/200x200.png",
 };
 
 export type SeedItemResult = { name: string; status: 'Created' | 'Skipped (already exists)' | 'Failed' };

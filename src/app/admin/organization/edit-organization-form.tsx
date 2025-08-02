@@ -155,7 +155,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                 <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
                     {qrCodeUrl ? (
                          <div className="relative w-48 h-48">
-                                <Image src={qrCodeUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" />
+                                <Image src={qrCodeUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
                             </div>
                     ): (
                         <p className="text-sm text-muted-foreground text-center p-8">
