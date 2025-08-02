@@ -135,7 +135,7 @@ export const deleteLead = async (id: string) => {
 // Function to get all leads
 export const getAllLeads = async (): Promise<Lead[]> => {
     if (!isConfigValid) {
-        console.warn("Firebase not configured. Skipping fetching all leads.");
+        console.warn("Firebase not configured. Returning empty array for leads.");
         return [];
     }
     try {

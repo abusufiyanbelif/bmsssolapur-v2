@@ -1,16 +1,33 @@
 
+"use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getOpenLeads } from "./actions";
+import { getOpenLeads, Lead } from "@/services/lead-service";
 import { CampaignList } from "./campaign-list";
-import { getCurrentOrganization } from "@/services/organization-service";
+import { getCurrentOrganization, Organization } from "@/services/organization-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CreditCard, Copy } from "lucide-react";
+import { CreditCard, Copy, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
-export default async function CampaignsPage() {
-    const leads = await getOpenLeads();
-    const organization = await getCurrentOrganization();
+export default function CampaignsPage() {
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [organization, setOrganization] = useState<Organization | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            setLoading(true);
+            const [fetchedLeads, fetchedOrganization] = await Promise.all([
+                getOpenLeads(),
+                getCurrentOrganization()
+            ]);
+            setLeads(fetchedLeads);
+            setOrganization(fetchedOrganization);
+            setLoading(false);
+        }
+        fetchData();
+    }, []);
     
     return (
         <div className="flex-1 space-y-4">
@@ -40,7 +57,14 @@ export default async function CampaignsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <CampaignList initialLeads={leads} />
+                    {loading ? (
+                        <div className="flex items-center justify-center py-10">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="ml-2">Loading campaigns...</p>
+                        </div>
+                    ) : (
+                        <CampaignList initialLeads={leads} />
+                    )}
                 </CardContent>
             </Card>
         </div>

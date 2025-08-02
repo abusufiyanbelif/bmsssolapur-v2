@@ -160,7 +160,7 @@ export const deleteDonation = async (id: string) => {
 // Function to get all donations
 export const getAllDonations = async (): Promise<Donation[]> => {
     if (!isConfigValid) {
-      console.warn("Firebase not configured. Skipping fetching all donations.");
+      console.warn("Firebase not configured. Returning empty array for donations.");
       return [];
     }
     try {
@@ -201,5 +201,3 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
         throw new Error('Failed to get user donations.');
     }
 }
-
-    

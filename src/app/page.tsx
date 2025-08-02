@@ -1,43 +1,65 @@
 
+"use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target } from "lucide-react";
+import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, Loader2 } from "lucide-react";
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
 import Image from "next/image";
-import { getAllDonations } from "@/services/donation-service";
+import { getAllDonations, Donation } from "@/services/donation-service";
 import { Lead } from "@/services/lead-service";
 import { getOpenLeads } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
 import { getAllLeads } from "@/services/lead-service";
+import { useEffect, useState } from "react";
 
-export default async function LandingPage() {
-    const quotes = await getRandomQuotes(3);
-    const allDonations = await getAllDonations();
-    const allLeads = await getAllLeads();
-    const featuredLeads = (await getOpenLeads()).slice(0, 3);
+export default function LandingPage() {
+    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [featuredLeads, setFeaturedLeads] = useState<Lead[]>([]);
+    const [stats, setStats] = useState({ totalRaised: 0, beneficiariesHelped: 0, casesClosed: 0 });
+    const [loading, setLoading] = useState(true);
 
-    const totalRaised = allDonations.reduce((acc, d) => d.status === 'Verified' || d.status === 'Allocated' ? acc + d.amount : acc, 0);
-    const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
-    const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            const [fetchedQuotes, openLeads, allDonations, allLeads] = await Promise.all([
+                getRandomQuotes(3),
+                getOpenLeads(),
+                getAllDonations(),
+                getAllLeads(),
+            ]);
+            
+            setQuotes(fetchedQuotes);
+            setFeaturedLeads(openLeads.slice(0, 3));
+
+            const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+            const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
+            const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+            
+            setStats({ totalRaised, beneficiariesHelped, casesClosed });
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
+
 
     const metrics = [
         {
             title: "Total Verified Funds Raised",
-            value: `₹${totalRaised.toLocaleString()}`,
+            value: `₹${stats.totalRaised.toLocaleString()}`,
             icon: HandHeart,
             description: "Total verified donations received to date.",
         },
         {
             title: "Beneficiaries Helped",
-            value: beneficiariesHelped.toString(),
+            value: stats.beneficiariesHelped.toString(),
             icon: Users,
             description: "Unique individuals and families supported.",
         },
         {
             title: "Cases Successfully Closed",
-            value: casesClosed.toString(),
+            value: stats.casesClosed.toString(),
             icon: Target,
             description: "Help requests that have been fully funded.",
         },
@@ -68,25 +90,37 @@ export default async function LandingPage() {
                         We believe in complete transparency. Here's a live look at the impact your generosity has created. Together, we are making a difference.
                     </p>
                 </div>
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                  {metrics.map((metric) => (
-                    <Card key={metric.title}>
-                        <CardContent className="flex flex-col items-center justify-center p-6 gap-4">
-                            <div className="p-4 bg-primary/10 rounded-full">
-                                <metric.icon className="h-8 w-8 text-primary" />
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-primary">{metric.value}</p>
-                                <p className="text-sm text-muted-foreground mt-1">{metric.description}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                {loading ? (
+                    <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="ml-2">Loading impact stats...</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    {metrics.map((metric) => (
+                        <Card key={metric.title}>
+                            <CardContent className="flex flex-col items-center justify-center p-6 gap-4">
+                                <div className="p-4 bg-primary/10 rounded-full">
+                                    <metric.icon className="h-8 w-8 text-primary" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-3xl font-bold text-primary">{metric.value}</p>
+                                    <p className="text-sm text-muted-foreground mt-1">{metric.description}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                    </div>
+                )}
             </section>
 
             {/* Featured Campaigns Section */}
-            {featuredLeads.length > 0 && (
+            {loading ? (
+                <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="ml-2">Loading featured campaigns...</p>
+                </div>
+            ) : featuredLeads.length > 0 && (
                 <section id="featured-campaigns">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Featured Campaigns</h2>
