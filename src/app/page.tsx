@@ -7,9 +7,10 @@ import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target }
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
 import Image from "next/image";
 import { getAllDonations } from "@/services/donation-service";
-import { getAllLeads, Lead } from "@/services/lead-service";
+import { Lead } from "@/services/lead-service";
 import { getOpenLeads } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
+import { getAllLeads } from "@/services/lead-service";
 
 export default async function LandingPage() {
     const quotes = await getRandomQuotes(3);
@@ -87,7 +88,7 @@ export default async function LandingPage() {
             {/* Featured Campaigns Section */}
             <section id="featured-campaigns">
                  <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight font-headline">Featured Campaigns</h2>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Featured Campaigns</h2>
                     <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
                         Choose a cause that speaks to you. Every donation makes a difference.
                     </p>
@@ -129,7 +130,7 @@ export default async function LandingPage() {
                    })}
                 </div>
                 <div className="mt-12 text-center">
-                    <Button asChild variant="outline">
+                    <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
                         <Link href="/campaigns">View All Campaigns</Link>
                     </Button>
                 </div>
@@ -138,7 +139,7 @@ export default async function LandingPage() {
             {/* Wisdom and Reflection Section */}
             <section id="wisdom">
                 <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold tracking-tight font-headline">Wisdom & Reflection</h2>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Wisdom & Reflection</h2>
                     <p className="mt-2 text-muted-foreground">A little inspiration for your journey of giving.</p>
                 </div>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
