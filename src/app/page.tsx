@@ -13,7 +13,7 @@ export default async function LandingPage() {
     const allDonations = await getAllDonations();
     const allLeads = await getAllLeads();
 
-    const totalRaised = allDonations.reduce((acc, d) => d.status === 'Verified' ? acc + d.amount : acc, 0);
+    const totalRaised = allDonations.reduce((acc, d) => d.status === 'Verified' || d.status === 'Allocated' ? acc + d.amount : acc, 0);
     const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
     const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
 
@@ -60,7 +60,7 @@ export default async function LandingPage() {
                  <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold tracking-tight font-headline">Our Impact</h2>
                     <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-                        We believe in complete transparency. Here's a live look at the impact your generosity has created.
+                        We believe in complete transparency. Here's a live look at the impact your generosity has created. Together, we are making a difference. Here's a look at what we've achieved.
                     </p>
                 </div>
                 <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
