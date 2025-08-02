@@ -139,9 +139,10 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         donorUsers = superAdmins; // Fallback to super admins as donors
     }
     
-    const historicalAdmin = await getUserByPhone("8421708907");
+    // Explicitly fetch Moosa Shaikh's record to use as the admin for all historical data.
+    const historicalAdmin = await getUserByPhone("8421708907"); 
     if (!historicalAdmin) {
-        throw new Error("Cannot seed historical data without 'Moosa Shaikh' (8421708907) user, who is needed as the lead creator.");
+        throw new Error("Cannot seed historical data. The user 'Moosa Shaikh' (phone: 8421708907) must exist to act as the verifier for past leads.");
     }
     
     const q = query(collection(db, 'leads'));
