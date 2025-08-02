@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, TrendingUp } from "lucide-react";
+import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target } from "lucide-react";
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
 import Image from "next/image";
 import { getAllDonations } from "@/services/donation-service";
@@ -88,17 +88,14 @@ export default async function LandingPage() {
                 </div>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {quotes.map((quote, index) => (
-                        <Card key={index} className="flex flex-col">
-                             <CardHeader className="flex-row gap-4 items-center">
+                        <Card key={index} className="flex flex-col p-6">
+                            <CardContent className="flex-grow flex flex-col gap-4">
                                 <QuoteIcon className="w-8 h-8 text-accent" />
-                                <CardTitle className="text-base font-semibold">{quote.category}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex-grow">
-                                <blockquote className="italic text-muted-foreground">
+                                <blockquote className="italic text-muted-foreground flex-grow">
                                     "{quote.text}"
                                 </blockquote>
                             </CardContent>
-                            <CardFooter>
+                            <CardFooter className="p-0 mt-4">
                                  <cite className="w-full text-right text-sm not-italic text-primary font-medium">— {quote.source}</cite>
                             </CardFooter>
                         </Card>
