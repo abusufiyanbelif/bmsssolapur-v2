@@ -69,12 +69,20 @@ const formSchema = z.object({
     path: ["beneficiaryId"],
 }).refine(data => {
     if (data.userType === 'new') {
-        return !!data.newUserName && data.newUserName.length > 0 && !!data.newUserPhone && /^[0-9]{10}$/.test(data.newUserPhone);
+        return !!data.newUserName && data.newUserName.length > 0;
     }
     return true;
 }, {
-    message: "New user's name and a valid 10-digit phone number are required.",
-    path: ["newUserName"], // Attach error to a relevant field
+    message: "New user's name is required.",
+    path: ["newUserName"], 
+}).refine(data => {
+    if (data.userType === 'new') {
+        return !!data.newUserPhone && /^[0-9]{10}$/.test(data.newUserPhone);
+    }
+    return true;
+}, {
+    message: "A valid 10-digit phone number is required for a new user.",
+    path: ["newUserPhone"], 
 }).refine(data => {
     if (data.subCategory === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
