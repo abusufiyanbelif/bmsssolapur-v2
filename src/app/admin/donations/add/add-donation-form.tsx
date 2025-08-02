@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +41,8 @@ const formSchema = z.object({
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
   transactionId: z.string().min(1, "Transaction ID is required."),
-  paymentScreenshot: z.any().refine(file => file instanceof File, { message: "Screenshot is required." }),
+  paymentScreenshot: z.any().optional(),
+  paymentMethod: z.enum(["Bank Transfer", "Cash", "UPI / QR Code", "Other"]),
 });
 
 type AddDonationFormValues = z.infer<typeof formSchema>;
@@ -60,10 +62,12 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     defaultValues: {
       isAnonymous: false,
       amount: 0,
+      paymentMethod: "UPI / QR Code",
     },
   });
 
   const isAnonymous = form.watch("isAnonymous");
+  const paymentMethod = form.watch("paymentMethod");
 
   async function onSubmit(values: AddDonationFormValues) {
     setIsSubmitting(true);
@@ -76,7 +80,9 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     formData.append("type", values.type);
     if(values.purpose) formData.append("purpose", values.purpose);
     formData.append("transactionId", values.transactionId);
-    formData.append("paymentScreenshot", values.paymentScreenshot);
+    if (values.paymentScreenshot) {
+        formData.append("paymentScreenshot", values.paymentScreenshot);
+    }
     
     const result = await handleAddDonation(formData);
 
@@ -150,19 +156,43 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
             />
         )}
 
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Amount</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="Enter amount" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Amount</FormLabel>
+                <FormControl>
+                    <Input type="number" placeholder="Enter amount" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+              control={form.control}
+              name="paymentMethod"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Method</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {["UPI / QR Code", "Bank Transfer", "Cash", "Other"].map(method => (
+                        <SelectItem key={method} value={method}>{method}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
@@ -216,35 +246,37 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
           name="transactionId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Transaction ID</FormLabel>
+              <FormLabel>Transaction ID / Reference</FormLabel>
               <FormControl>
-                <Input placeholder="Enter transaction ID or reference number" {...field} />
+                <Input placeholder="Enter reference number" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="paymentScreenshot"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Payment Screenshot</FormLabel>
-              <FormControl>
-                <Input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
-                />
-              </FormControl>
-              <FormDescription>
-                Upload a screenshot of the payment for verification.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {paymentMethod !== "Cash" && (
+            <FormField
+            control={form.control}
+            name="paymentScreenshot"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Payment Screenshot</FormLabel>
+                <FormControl>
+                    <Input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
+                    />
+                </FormControl>
+                <FormDescription>
+                    Upload a screenshot of the payment for verification.
+                </FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
 
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

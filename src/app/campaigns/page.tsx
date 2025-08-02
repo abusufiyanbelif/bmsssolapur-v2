@@ -1,10 +1,12 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOpenLeads } from "./actions";
 import { CampaignList } from "./campaign-list";
 import { getCurrentOrganization } from "@/services/organization-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CreditCard, Copy } from "lucide-react";
+import Image from "next/image";
 
 export default async function CampaignsPage() {
     const leads = await getOpenLeads();
@@ -18,10 +20,14 @@ export default async function CampaignsPage() {
                 <Alert>
                     <CreditCard className="h-4 w-4" />
                     <AlertTitle>Donate via UPI</AlertTitle>
-                    <AlertDescription className="flex items-center justify-between">
-                       <span>You can donate directly to our organization's UPI ID: <strong className="font-mono">{organization.upiId}</strong></span>
-                       {/* This would need client-side JS to actually copy to clipboard */}
-                       {/* <Button variant="ghost" size="sm"><Copy className="mr-2 h-4 w-4" /> Copy</Button> */}
+                    <AlertDescription className="flex flex-col md:flex-row items-center justify-between gap-4">
+                       <span className="flex-grow">You can donate directly to our organization's UPI ID: <strong className="font-mono">{organization.upiId}</strong></span>
+                       {organization.qrCodeUrl && (
+                           <div className="flex items-center gap-2 p-2 border rounded-md bg-background">
+                               <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={40} height={40} />
+                               <span className="text-xs text-muted-foreground">Scan to Pay</span>
+                           </div>
+                       )}
                     </AlertDescription>
                 </Alert>
             )}

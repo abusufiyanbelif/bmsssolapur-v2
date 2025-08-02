@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { createDonation, Donation, DonationPurpose, DonationType } from "@/services/donation-service";
@@ -26,8 +27,11 @@ export async function handleAddDonation(
   const adminUserId = "admin_user_placeholder_id";
 
   try {
-    const screenshotFile = rawFormData.paymentScreenshot as File;
-    const paymentScreenshotUrl = await handleFileUpload(screenshotFile);
+    const screenshotFile = rawFormData.paymentScreenshot as File | undefined;
+    let paymentScreenshotUrl: string | undefined;
+    if (screenshotFile && screenshotFile.size > 0) {
+        paymentScreenshotUrl = await handleFileUpload(screenshotFile);
+    }
     
     const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
         donorId: rawFormData.donorId as string,

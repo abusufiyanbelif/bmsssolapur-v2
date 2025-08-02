@@ -58,7 +58,8 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     contactEmail: "contact@baitulmalsolapur.org",
     contactPhone: "+91 12345 67890",
     website: "https://baitulmalsolapur.org",
-    upiId: "maaz9145@okhdfcbank"
+    upiId: "maaz9145@okhdfcbank",
+    qrCodeUrl: "/qr.png",
 };
 
 export type SeedItemResult = { name: string; status: 'Created' | 'Skipped (already exists)' | 'Failed' };

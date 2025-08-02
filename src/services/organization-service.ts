@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -29,6 +30,7 @@ export interface Organization {
   contactPhone: string;
   website?: string;
   upiId?: string;
+  qrCodeUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

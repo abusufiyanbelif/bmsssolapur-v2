@@ -1,9 +1,11 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
 import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import Image from "next/image";
 
 export default async function OrganizationPage() {
     let organization;
@@ -68,16 +70,29 @@ export default async function OrganizationPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-4">
-                        {details.map(item => (
-                             <div key={item.label} className="flex items-start gap-4">
-                                <item.icon className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                                <div>
-                                    <p className="font-semibold">{item.label}</p>
-                                    <p className="text-muted-foreground">{item.value}</p>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                            {details.map(item => (
+                                <div key={item.label} className="flex items-start gap-4">
+                                    <item.icon className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">{item.label}</p>
+                                        <p className="text-muted-foreground">{item.value}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                        {organization.qrCodeUrl && (
+                             <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50">
+                                <h3 className="font-semibold text-center">Scan to Pay with UPI</h3>
+                                <div className="relative w-56 h-56">
+                                     <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" />
+                                </div>
+                                <p className="text-sm text-muted-foreground text-center">
+                                    You can use any UPI app like Google Pay, PhonePe, or Paytm to donate directly.
+                                </p>
+                             </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
