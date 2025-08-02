@@ -30,9 +30,9 @@ import { Loader2 } from "lucide-react";
 import { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
-const donationPurposes: DonationPurpose[] = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'];
-const donationStatuses: DonationStatus[] = ["Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
+const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
+const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
+const donationStatuses = ["Pending verification", "Verified", "Failed/Incomplete", "Allocated"] as const;
 
 const formSchema = z.object({
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),

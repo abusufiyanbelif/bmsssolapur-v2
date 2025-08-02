@@ -31,9 +31,9 @@ import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus } from "@/service
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen'];
-const leadStatuses: LeadStatus[] = ["Pending", "Partial", "Closed"];
-const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected"];
+const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
+const leadStatuses = ["Pending", "Partial", "Closed"] as const;
+const leadVerificationStatuses = ["Pending", "Verified", "Rejected"] as const;
 
 const subCategoryOptions: Record<LeadPurpose, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],

@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 
-const leadCategories: Exclude<DonationType, 'Split' | 'Lillah' | 'Kaffarah'>[] = ['Zakat', 'Sadaqah', 'Fitr'];
+const leadCategories = ['Zakat', 'Sadaqah', 'Fitr'] as const;
 
 const formSchema = z.object({
   category: z.enum(leadCategories),

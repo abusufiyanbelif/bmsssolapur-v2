@@ -33,7 +33,7 @@ import { LeadPurpose } from "@/services/lead-service";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-const leadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen'];
+const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
 const subCategoryOptions: Record<LeadPurpose, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
