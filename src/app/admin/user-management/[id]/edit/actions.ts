@@ -21,7 +21,15 @@ export async function handleUpdateUser(
     isActive: formData.get("isActive") === 'on',
     isAnonymous: formData.get("isAnonymous") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
-    address: formData.get("address") as string | undefined,
+    
+    addressLine1: formData.get("addressLine1") as string | undefined,
+    city: formData.get("city") as string | undefined,
+    pincode: formData.get("pincode") as string | undefined,
+
+    occupation: formData.get("occupation") as string | undefined,
+    familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string, 10) : undefined,
+    isWidow: formData.get("isWidow") === 'on',
+    
     panNumber: formData.get("panNumber") as string | undefined,
     aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
   };
@@ -39,7 +47,17 @@ export async function handleUpdateUser(
         isActive: rawFormData.isActive,
         isAnonymous: rawFormData.isAnonymous,
         gender: rawFormData.gender,
-        address: rawFormData.address || '',
+        
+        address: {
+            addressLine1: rawFormData.addressLine1 || '',
+            city: rawFormData.city || '',
+            pincode: rawFormData.pincode || '',
+        },
+
+        occupation: rawFormData.occupation || '',
+        familyMembers: rawFormData.familyMembers || 0,
+        isWidow: rawFormData.isWidow,
+
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
     };

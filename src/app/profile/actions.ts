@@ -9,7 +9,16 @@ interface FormState {
     error?: string;
 }
 
-type UpdateProfilePayload = Pick<User, 'name' | 'phone' | 'address' | 'gender' | 'panNumber' | 'aadhaarNumber'>;
+type UpdateProfilePayload = Pick<User, 'name' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber'> & {
+    address: {
+        addressLine1: string;
+        city: string;
+        pincode: string;
+    };
+    familyMembers: number;
+    isWidow: boolean;
+};
+
 
 export async function handleUpdateProfile(
   userId: string,
@@ -26,6 +35,9 @@ export async function handleUpdateProfile(
       phone: data.phone,
       address: data.address,
       gender: data.gender,
+      occupation: data.occupation,
+      familyMembers: data.familyMembers,
+      isWidow: data.isWidow,
       panNumber: data.panNumber,
       aadhaarNumber: data.aadhaarNumber,
     };

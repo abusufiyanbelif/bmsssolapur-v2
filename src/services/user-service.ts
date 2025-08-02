@@ -48,16 +48,28 @@ export interface User {
   email?: string;
   phone: string;
   isActive: boolean;
-  address?: string;
+  
+  address?: {
+    addressLine1?: string;
+    city?: string;
+    pincode?: string;
+  };
+  
   gender?: 'Male' | 'Female' | 'Other';
-  isAnonymous?: boolean; // New field for beneficiary privacy
-  anonymousId?: string; // New field for unique anonymous ID
-  secondaryPhone?: string; // For account recovery
-  aadhaarNumber?: string; // Mandated for Admins
-  panNumber?: string; // Mandated for Admins
-  roles: UserRole[]; // A user can have multiple roles
-  privileges?: Privilege[]; // Specific permissions granted to the user, often derived from roles
-  groups?: string[]; // e.g., 'Founders', 'Finance Team', for organizational purposes
+  isAnonymous?: boolean; 
+  anonymousId?: string; 
+  
+  occupation?: string;
+  familyMembers?: number;
+  isWidow?: boolean;
+
+  secondaryPhone?: string; 
+  aadhaarNumber?: string; 
+  panNumber?: string; 
+  
+  roles: UserRole[]; 
+  privileges?: Privilege[]; 
+  groups?: string[];
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -97,6 +109,9 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         gender: user.gender,
         isAnonymous: user.isAnonymous || false,
         anonymousId: anonymousId,
+        occupation: user.occupation,
+        familyMembers: user.familyMembers,
+        isWidow: user.isWidow,
         secondaryPhone: user.secondaryPhone,
         aadhaarNumber: user.aadhaarNumber,
         panNumber: user.panNumber,
@@ -239,7 +254,7 @@ export const deleteUser = async (id: string) => {
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     if (!isConfigValid) {
-      console.warn("Firebase is not configured. Skipping fetching all users.");
+      console.warn("Firebase not configured. Skipping fetching all users.");
       return [];
     }
     try {

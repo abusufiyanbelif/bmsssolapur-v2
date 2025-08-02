@@ -22,12 +22,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { handleUpdateProfile } from './actions';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
-  address: z.string().optional(),
+  addressLine1: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
   gender: z.enum(['Male', 'Female', 'Other']),
+  occupation: z.string().optional(),
+  familyMembers: z.coerce.number().optional(),
+  isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
 });
@@ -67,8 +73,13 @@ export default function ProfilePage() {
           form.reset({
               name: fetchedUser.name,
               phone: fetchedUser.phone,
-              address: fetchedUser.address || '',
+              addressLine1: fetchedUser.address?.addressLine1 || '',
+              city: fetchedUser.address?.city || '',
+              pincode: fetchedUser.address?.pincode || '',
               gender: fetchedUser.gender || 'Other',
+              occupation: fetchedUser.occupation || '',
+              familyMembers: fetchedUser.familyMembers || 0,
+              isWidow: fetchedUser.isWidow || false,
               panNumber: fetchedUser.panNumber || '',
               aadhaarNumber: fetchedUser.aadhaarNumber || '',
           });
@@ -84,13 +95,27 @@ export default function ProfilePage() {
     
   useEffect(() => {
     fetchUser();
-  }, [userId, form]);
+  }, [userId]);
 
 
   async function onSubmit(values: ProfileFormValues) {
       if (!user?.id) return;
       setIsSubmitting(true);
-      const result = await handleUpdateProfile(user.id, values);
+      const result = await handleUpdateProfile(user.id, {
+          name: values.name,
+          phone: values.phone,
+          address: {
+              addressLine1: values.addressLine1 || '',
+              city: values.city || '',
+              pincode: values.pincode || '',
+          },
+          gender: values.gender,
+          occupation: values.occupation,
+          familyMembers: values.familyMembers || 0,
+          isWidow: values.isWidow,
+          panNumber: values.panNumber,
+          aadhaarNumber: values.aadhaarNumber,
+      });
       
       if (result.success) {
           toast({ variant: "success", title: "Profile Updated", description: "Your changes have been saved." });
@@ -170,6 +195,7 @@ export default function ProfilePage() {
                                     <CardDescription>{isEditing ? "Update your account details below." : "View your account details."}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
+                                     <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
@@ -177,24 +203,6 @@ export default function ProfilePage() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Full Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} disabled={!isEditing} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <div className="space-y-2">
-                                            <Label htmlFor="email">Email Address</Label>
-                                            <Input id="email" type="email" defaultValue={user.email} disabled />
-                                            <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
-                                        </div>
-                                         <FormField
-                                            control={form.control}
-                                            name="phone"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Primary Phone</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} disabled={!isEditing} />
                                                     </FormControl>
@@ -212,7 +220,7 @@ export default function ProfilePage() {
                                                         <RadioGroup
                                                         onValueChange={field.onChange}
                                                         defaultValue={field.value}
-                                                        className="flex flex-row space-x-4"
+                                                        className="flex flex-row space-x-4 pt-2"
                                                         disabled={!isEditing}
                                                         >
                                                         <FormItem className="flex items-center space-x-3 space-y-0">
@@ -239,6 +247,125 @@ export default function ProfilePage() {
                                                 </FormItem>
                                             )}
                                         />
+                                         <div className="space-y-2">
+                                            <Label htmlFor="email">Email Address</Label>
+                                            <Input id="email" type="email" defaultValue={user.email} disabled />
+                                            <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
+                                        </div>
+                                         <FormField
+                                            control={form.control}
+                                            name="phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Primary Phone</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <h3 className="text-lg font-semibold border-b pb-2">Address Details</h3>
+                                     <FormField
+                                        control={form.control}
+                                        name="addressLine1"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Address</FormLabel>
+                                                <FormControl>
+                                                    <Textarea {...field} disabled={!isEditing} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="city"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>City</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="pincode"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Pincode</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    
+                                     <h3 className="text-lg font-semibold border-b pb-2">Family & Occupation</h3>
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                         <FormField
+                                            control={form.control}
+                                            name="occupation"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Occupation</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                          <FormField
+                                            control={form.control}
+                                            name="familyMembers"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Number of Family Members</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                     </div>
+                                      <FormField
+                                        control={form.control}
+                                        name="isWidow"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={!isEditing}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>
+                                                Are you a Widow?
+                                                </FormLabel>
+                                                <FormDescription>
+                                                This information helps us understand your situation better.
+                                                </FormDescription>
+                                            </div>
+                                            </FormItem>
+                                        )}
+                                    />
+
+
+                                     <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                          <FormField
                                             control={form.control}
                                             name="panNumber"
@@ -266,19 +393,7 @@ export default function ProfilePage() {
                                             )}
                                         />
                                     </div>
-                                    <FormField
-                                        control={form.control}
-                                        name="address"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Address</FormLabel>
-                                                <FormControl>
-                                                    <Textarea {...field} disabled={!isEditing} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    
                                     {isEditing && (
                                         <Button type="submit" disabled={isSubmitting}>
                                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

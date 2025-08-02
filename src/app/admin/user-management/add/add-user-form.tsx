@@ -43,7 +43,12 @@ const formSchema = z.object({
   isAnonymous: z.boolean().default(false),
   isActive: z.boolean().default(true),
   gender: z.enum(["Male", "Female", "Other"]),
-  address: z.string().optional(),
+  addressLine1: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
+  occupation: z.string().optional(),
+  familyMembers: z.coerce.number().optional(),
+  isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
 });
@@ -63,6 +68,7 @@ export function AddUserForm() {
       roles: ["Donor"],
       isActive: true,
       isAnonymous: false,
+      isWidow: false,
     },
   });
 
@@ -79,7 +85,12 @@ export function AddUserForm() {
     if(values.isActive) formData.append("isActive", "on");
     if(values.isAnonymous) formData.append("isAnonymous", "on");
     formData.append("gender", values.gender);
-    if(values.address) formData.append("address", values.address);
+    if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
+    if(values.city) formData.append("city", values.city);
+    if(values.pincode) formData.append("pincode", values.pincode);
+    if(values.occupation) formData.append("occupation", values.occupation);
+    if(values.familyMembers) formData.append("familyMembers", String(values.familyMembers));
+    if(values.isWidow) formData.append("isWidow", "on");
     if(values.panNumber) formData.append("panNumber", values.panNumber);
     if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
 
@@ -107,19 +118,59 @@ export function AddUserForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter user's full name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
+        <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter user's full name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                    <FormLabel>Gender</FormLabel>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-row space-x-4 pt-2"
+                        >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Male" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Male</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Female" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Female</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Other" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Other</FormLabel>
+                        </FormItem>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
@@ -149,7 +200,104 @@ export function AddUserForm() {
             )}
             />
         </div>
-        
+
+        <h3 className="text-lg font-semibold border-b pb-2">Address Details</h3>
+         <FormField
+            control={form.control}
+            name="addressLine1"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Address</FormLabel>
+                <FormControl>
+                    <Textarea placeholder="Enter user's full address" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Solapur" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+             <FormField
+                control={form.control}
+                name="pincode"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Pincode</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., 413001" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+        </div>
+
+        <h3 className="text-lg font-semibold border-b pb-2">Family & Occupation</h3>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <FormField
+                control={form.control}
+                name="occupation"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Occupation</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Daily wage worker, Unemployed" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+             <FormField
+                control={form.control}
+                name="familyMembers"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Number of Family Members</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="e.g., 5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+        </div>
+        <FormField
+            control={form.control}
+            name="isWidow"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                    <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                    <FormLabel>
+                    Is the Beneficiary a Widow?
+                    </FormLabel>
+                    <FormDescription>
+                    Check this box if the user is a widow. This helps in prioritizing cases.
+                    </FormDescription>
+                </div>
+                </FormItem>
+            )}
+        />
+
+
+        <h3 className="text-lg font-semibold border-b pb-2">Account Settings & Roles</h3>
         <FormField
           control={form.control}
           name="roles"
@@ -226,58 +374,7 @@ export function AddUserForm() {
             />
         )}
 
-
-        <FormField
-            control={form.control}
-            name="gender"
-            render={({ field }) => (
-                <FormItem className="space-y-3">
-                <FormLabel>Gender</FormLabel>
-                <FormControl>
-                    <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-row space-x-4"
-                    >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                        <RadioGroupItem value="Male" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Male</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                        <RadioGroupItem value="Female" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Female</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                        <RadioGroupItem value="Other" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Other</FormLabel>
-                    </FormItem>
-                    </RadioGroup>
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Enter user's full address" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
+        <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
