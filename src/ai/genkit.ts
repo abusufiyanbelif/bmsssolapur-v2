@@ -13,4 +13,7 @@ const plugins: GenkitPlugin[] = [googleAI()];
 
 export const ai = genkit({
   plugins,
+  telemetry: {
+    instrumentor: 'none',
+  }
 });
