@@ -19,10 +19,10 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, DonationType } from './types';
+import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose } from './types';
 
 // Re-export types for backward compatibility
-export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, DonationType };
+export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
 
 const LEADS_COLLECTION = 'leads';
 

@@ -9,8 +9,7 @@ import { createOrganization, Organization, getCurrentOrganization } from './orga
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch } from 'firebase/firestore';
-import { Lead, Verifier, LeadPurpose, DonationType, LeadDonationAllocation, createLead, LeadStatus, LeadVerificationStatus } from './lead-service';
-import { Donation, createDonation } from './donation-service';
+import type { Lead, Verifier, LeadDonationAllocation, Donation } from './types';
 
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
