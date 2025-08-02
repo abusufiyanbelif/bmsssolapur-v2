@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -61,7 +62,7 @@ export default async function LandingPage() {
              {/* Public Dashboard Section */}
             <section id="impact">
                  <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight font-headline">Our Impact</h2>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Impact</h2>
                     <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
                         We believe in complete transparency. Here's a live look at the impact your generosity has created. Together, we are making a difference.
                     </p>
