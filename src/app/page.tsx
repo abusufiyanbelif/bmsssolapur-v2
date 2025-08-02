@@ -24,22 +24,30 @@ export default function LandingPage() {
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
-            const [fetchedQuotes, openLeads, allDonations, allLeads] = await Promise.all([
-                getRandomQuotes(3),
-                getOpenLeads(),
-                getAllDonations(),
-                getAllLeads(),
-            ]);
-            
-            setQuotes(fetchedQuotes);
-            setFeaturedLeads(openLeads.slice(0, 3));
+            try {
+                const [fetchedQuotes, openLeads, allDonations, allLeads] = await Promise.all([
+                    getRandomQuotes(3),
+                    getOpenLeads(),
+                    getAllDonations(),
+                    getAllLeads(),
+                ]);
+                
+                setQuotes(fetchedQuotes);
+                setFeaturedLeads(openLeads.slice(0, 3));
 
-            const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
-            const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
-            const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
-            
-            setStats({ totalRaised, beneficiariesHelped, casesClosed });
-            setLoading(false);
+                const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+                const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
+                const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+                
+                setStats({ totalRaised, beneficiariesHelped, casesClosed });
+
+            } catch (error) {
+                console.error("Failed to fetch landing page data:", error);
+                // Set stats to 0 or show an error state if fetching fails
+                setStats({ totalRaised: 0, beneficiariesHelped: 0, casesClosed: 0 });
+            } finally {
+                setLoading(false);
+            }
         };
         fetchData();
     }, []);

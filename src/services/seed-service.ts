@@ -128,7 +128,7 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
     let leadResults: SeedItemResult[] = [];
 
     const allUsers = await getAllUsers();
-    const donorUsers = allUsers.filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
+    let donorUsers = allUsers.filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
 
     if (donorUsers.length === 0) {
         console.warn("No real donor users found. Donations will be assigned to Super Admins if possible.");
@@ -136,12 +136,12 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         if (superAdmins.length === 0) {
             throw new Error("Cannot seed donations. No users with 'Donor' or 'Super Admin' role found.");
         }
-        donorUsers.push(...superAdmins);
+        donorUsers = superAdmins; // Fallback to super admins as donors
     }
     
     const historicalAdmin = await getUserByPhone("8421708907");
     if (!historicalAdmin) {
-        throw new Error("Cannot seed historical data without 'Moosa Shaikh' (8421708907) user.");
+        throw new Error("Cannot seed historical data without 'Moosa Shaikh' (8421708907) user, who is needed as the lead creator.");
     }
     
     const q = query(collection(db, 'leads'));
@@ -162,7 +162,7 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         let beneficiaryUser = await getUserByPhone(leadData.beneficiaryPhone);
 
         if (!beneficiaryUser) {
-            console.log(`Beneficiary ${leadData.beneficiaryName} not found, creating...`);
+            console.log(`Beneficiary ${leadData.beneficiaryName} with phone ${leadData.beneficiaryPhone} not found, creating...`);
             beneficiaryUser = await createUser({
                 name: leadData.beneficiaryName,
                 phone: leadData.beneficiaryPhone,
