@@ -9,7 +9,7 @@ export default async function DashboardPage() {
   const allDonations = await getAllDonations();
   const allLeads = await getAllLeads();
 
-  const totalRaised = allDonations.reduce((acc, d) => d.status === 'Verified' || d.status === 'Allocated' ? acc + d.amount : acc, 0);
+  const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
   const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
   const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
   const beneficiariesHelped = allLeads.length;
