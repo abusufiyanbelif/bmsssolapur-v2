@@ -10,37 +10,16 @@ buildConfig:
 
 # Settings that determine how your backend is run.
 runConfig:
-  # You can specify environment variables for your backend. These are not secret.
-  # https://firebase.google.com/docs/app-hosting/configure#environment-variables
-  env:
-    - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-      availability:
-        - BUILD
-        - RUNTIME
-    - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-      availability:
-        - BUILD
-        - RUNTIME
-    - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-      availability:
-        - BUILD
-        - RUNTIME
-    - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-      availability:
-        - BUILD
-        - RUNTIME
-    - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-      availability:
-        - BUILD
-        - RUNTIME
-    - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-      availability:
-        - BUILD
-        - RUNTIME
   # To use secrets, you must grant the Secret Manager Secret Accessor role
   # to your backend's service account.
   # https://firebase.google.com/docs/app-hosting/configure#secrets
   secrets:
+    - secret: NEXT_PUBLIC_FIREBASE_API_KEY
+    - secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    - secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    - secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    - secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    - secret: NEXT_PUBLIC_FIREBASE_APP_ID
     - secret: TWILIO_ACCOUNT_SID
     - secret: TWILIO_AUTH_TOKEN
     - secret: TWILIO_VERIFY_SID
