@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandCoins, Users, CheckCircle, Quote as QuoteIcon, Target, TrendingUp } from "lucide-react";
+import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, TrendingUp } from "lucide-react";
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
 import Image from "next/image";
 import { getAllDonations } from "@/services/donation-service";
@@ -21,7 +21,7 @@ export default async function LandingPage() {
         {
             title: "Total Verified Funds Raised",
             value: `₹${totalRaised.toLocaleString()}`,
-            icon: TrendingUp,
+            icon: HandHeart,
             description: "Total verified donations received to date.",
         },
         {
@@ -33,7 +33,7 @@ export default async function LandingPage() {
         {
             title: "Cases Successfully Closed",
             value: casesClosed.toString(),
-            icon: CheckCircle,
+            icon: Target,
             description: "Help requests that have been fully funded.",
         },
     ];
@@ -66,13 +66,14 @@ export default async function LandingPage() {
                 <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                   {metrics.map((metric) => (
                     <Card key={metric.title}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                            <metric.icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metric.value}</div>
-                            <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        <CardContent className="flex flex-col items-center justify-center p-6 gap-4">
+                            <div className="p-4 bg-primary/10 rounded-full">
+                                <metric.icon className="h-8 w-8 text-primary" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-3xl font-bold text-primary">{metric.value}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{metric.description}</p>
+                            </div>
                         </CardContent>
                     </Card>
                   ))}
