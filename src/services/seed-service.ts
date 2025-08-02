@@ -9,42 +9,45 @@ import { createOrganization, Organization, getCurrentOrganization } from './orga
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch } from 'firebase/firestore';
-import { Lead, Verifier, LeadPurpose, DonationType, LeadDonationAllocation, createLead } from './lead-service';
+import { Lead, Verifier, LeadPurpose, DonationType, LeadDonationAllocation, createLead, LeadStatus, LeadVerificationStatus } from './lead-service';
 import { Donation, createDonation } from './donation-service';
 
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
-    { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"], isActive: true, gender: 'Male', address: '123 Admin Lane, Solapur', panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012' },
+    { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Founder", "Co-Founder", "Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012' },
     
     // Admins (Founders and Members)
-    { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Maaz Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Abu Rehan Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Nayyar Ahmed Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Arif Baig", email: "arif.baig@example.com", phone: "9225747045", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Mazhar Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Mujahid Chabukswar", email: "mujahid.chabukswar@example.com", phone: "8087420544", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
-    { name: "Muddasir", email: "muddasir@example.com", phone: "7385557820", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: 'Solapur', panNumber: '', aadhaarNumber: '' },
+    { name: "Moosa Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Maaz Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Abu Rehan Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Nayyar Ahmed Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Arif Baig", email: "arif.baig@example.com", phone: "9225747045", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Mazhar Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Mujahid Chabukswar", email: "mujahid.chabukswar@example.com", phone: "8087420544", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Muddasir", email: "muddasir@example.com", phone: "7385557820", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
     
     // Generic Donor for Anonymous Donations
-    { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [], isActive: true, gender: 'Other', address: '', panNumber: '', aadhaarNumber: '' },
+    { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [], isActive: true, gender: 'Other' },
 ];
 
-const beneficiariesToSeed: Omit<User, 'id' | 'createdAt'>[] = [
-    { name: 'Mustahik Person', email: 'mustahik.person@example.com', phone: '1000000001', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Hazrate Nomaniya Masjid', email: 'nomaniya.masjid@example.com', phone: '1000000002', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Ration Distribution', email: 'ration.distribution@example.com', phone: '1000000003', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Ration for 4 Houses', email: 'ration.4houses@example.com', phone: '1000000004', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Ration Aid', email: 'ration.aid@example.com', phone: '1000000005', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Madrasa Riaz Ul Jannah', email: 'riazul.jannah@example.com', phone: '1000000006', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Anonymous Help', email: 'anonymous.help@example.com', phone: '1000000007', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Lalsab Bagali', email: 'lalsab.bagali@example.com', phone: '1000000008', roles: ['Beneficiary'], isActive: true, gender: 'Male' },
-    { name: 'Mustahiq Family', email: 'mustahiq.family@example.com', phone: '1000000009', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Child Hospital Bill', email: 'child.hospital@example.com', phone: '1000000010', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Madrasa Admission', email: 'madrasa.admission@example.com', phone: '1000000011', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Aid for Needy', email: 'aid.needy@example.com', phone: '1000000012', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
-    { name: 'Monthly Aid', email: 'monthly.aid@example.com', phone: '1000000013', roles: ['Beneficiary'], isActive: true, gender: 'Other' },
+const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'subCategory'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
+    { beneficiaryName: 'Mustahik Person', beneficiaryPhone: '1000000001', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Hazrate Nomaniya Masjid', beneficiaryPhone: '1000000002', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Hazrate Nomaniya Masjid Bill', beneficiaryPhone: '1000000003', helpRequested: 720, helpGiven: 720, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Ration Distribution', beneficiaryPhone: '1000000004', helpRequested: 2795, helpGiven: 2795, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration provided to a needy person.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Ration for 4 Houses', beneficiaryPhone: '1000000005', helpRequested: 5000, helpGiven: 5000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration kits provided to 4 households, including elderly widows and sick families.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Ration Aid', beneficiaryPhone: '1000000006', helpRequested: 2000, helpGiven: 2000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Grain provided to a person in need.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Madrasa Riaz Ul Jannah', beneficiaryPhone: '1000000007', helpRequested: 1800, helpGiven: 1800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Rent and deposit for a new Madrasa at Sugar factory site new gharkul.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Anonymous Help', beneficiaryPhone: '1000000008', helpRequested: 1700, helpGiven: 1700, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Cash help provided to a person in need.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Lalsab Bagali Operation', beneficiaryPhone: '1000000009', helpRequested: 29500, helpGiven: 29500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a patient\'s operation. 25000 cash given plus 4500 collected.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Lalsab Bagali Bill', beneficiaryPhone: '1000000010', helpRequested: 26800, helpGiven: 26800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Hospital bill payment for a patient in need.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Mustahiq Family', beneficiaryPhone: '1000000011', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Money for household ration for a deserving family.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Child Hospital Bill', beneficiaryPhone: '1000000012', helpRequested: 3000, helpGiven: 3000, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a sick 2-year-old child admitted to the government hospital.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Madrasa Admission', beneficiaryPhone: '1000000013', helpRequested: 600, helpGiven: 600, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Admission fee for a 9-year-old boy from a new Muslim family in a school cum madrasa.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Aid for Needy', beneficiaryPhone: '1000000014', helpRequested: 6000, helpGiven: 6000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Follow-up help provided to a previously supported case.', verificationDocumentUrl: '' },
+    { beneficiaryName: 'Monthly Aid', beneficiaryPhone: '1000000015', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Monthly financial assistance to a deserving person.', verificationDocumentUrl: '' },
 ];
+
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "BAITULMAL SAMAJIK SANSTHA SOLAPUR",
@@ -57,27 +60,6 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     website: "https://baitulmalsolapur.org",
     upiId: "maaz9145@okhdfcbank"
 };
-
-type LeadSeedData = Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'subCategory'>;
-
-const historicalLeadsToSeed: (LeadSeedData & { beneficiaryName: string })[] = [
-    { beneficiaryName: 'Mustahik Person', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Hazrate Nomaniya Masjid', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Hazrate Nomaniya Masjid', helpRequested: 720, helpGiven: 720, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Ration Distribution', helpRequested: 2795, helpGiven: 2795, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration provided to a needy person.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Ration for 4 Houses', helpRequested: 5000, helpGiven: 5000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration kits provided to 4 households, including elderly widows and sick families.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Ration Aid', helpRequested: 2000, helpGiven: 2000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Grain provided to a person in need.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Madrasa Riaz Ul Jannah', helpRequested: 1800, helpGiven: 1800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Rent and deposit for a new Madrasa at Sugar factory site new gharkul.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Anonymous Help', helpRequested: 1700, helpGiven: 1700, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Cash help provided to a person in need.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Lalsab Bagali', helpRequested: 29500, helpGiven: 29500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a patient\'s operation. 25000 cash given plus 4500 collected.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Lalsab Bagali', helpRequested: 26800, helpGiven: 26800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Hospital bill payment for a patient in need.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Mustahiq Family', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Money for household ration for a deserving family.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Child Hospital Bill', helpRequested: 3000, helpGiven: 3000, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a sick 2-year-old child admitted to the government hospital.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Madrasa Admission', helpRequested: 600, helpGiven: 600, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Admission fee for a 9-year-old boy from a new Muslim family in a school cum madrasa.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Aid for Needy', helpRequested: 6000, helpGiven: 6000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Follow-up help provided to a previously supported case.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Monthly Aid', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Monthly financial assistance to a deserving person.', verificationDocumentUrl: '' },
-];
-
 
 export type SeedItemResult = { name: string; status: 'Created' | 'Skipped (already exists)' | 'Failed' };
 export type SeedResult = {
@@ -177,13 +159,19 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
     const donationsCollection = collection(db, 'donations');
 
     for (const leadData of historicalLeadsToSeed) {
-        const beneficiaryUser = await getUserByName(leadData.beneficiaryName);
-        if (!beneficiaryUser) {
-            console.warn(`Could not find beneficiary user "${leadData.beneficiaryName}" for lead. Skipping.`);
-            leadResults.push({ name: `Lead for ${leadData.beneficiaryName}`, status: 'Failed' });
-            continue;
-        }
+        let beneficiaryUser = await getUserByPhone(leadData.beneficiaryPhone);
 
+        if (!beneficiaryUser) {
+            console.log(`Beneficiary ${leadData.beneficiaryName} not found, creating...`);
+            beneficiaryUser = await createUser({
+                name: leadData.beneficiaryName,
+                phone: leadData.beneficiaryPhone,
+                roles: ['Beneficiary'],
+                isActive: true,
+                createdAt: Timestamp.fromDate(new Date("2021-11-01")),
+            });
+        }
+        
         // Create a corresponding donation for each historical lead
         const randomDonor = donorUsers[Math.floor(Math.random() * donorUsers.length)];
         const donationRef = doc(donationsCollection);
@@ -213,18 +201,28 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             donationId: donation.id!,
             amount: leadData.helpGiven,
         };
+
         const newLead: Lead = {
-            ...leadData,
             id: leadRef.id,
             name: beneficiaryUser.name,
             beneficiaryId: beneficiaryUser.id!,
-            adminAddedBy: historicalAdmin.id!,
+            helpRequested: leadData.helpRequested,
+            helpGiven: leadData.helpGiven,
+            status: leadData.status,
+            isLoan: leadData.isLoan,
+            caseDetails: leadData.caseDetails,
+            verificationDocumentUrl: leadData.verificationDocumentUrl,
+            verifiedStatus: leadData.verifiedStatus,
             verifiers: [verifier],
             donations: [leadDonationAllocation],
+            adminAddedBy: historicalAdmin.id!,
             dateCreated: Timestamp.fromDate(new Date("2021-12-01")),
             createdAt: Timestamp.fromDate(new Date("2021-12-01")),
             updatedAt: Timestamp.fromDate(new Date("2021-12-01")),
+            category: leadData.category,
+            purpose: 'Relief Fund', // Assign a default purpose
         };
+        
         batch.set(leadRef, newLead);
         leadResults.push({ name: `Lead for ${newLead.name}`, status: 'Created' });
 
@@ -259,10 +257,7 @@ export const seedDatabase = async (): Promise<SeedResult> => {
     }
     try {
         console.log("Seeding core admin users...");
-        const adminUserResults = await seedUsers(adminUsersToSeed);
-        console.log("Seeding beneficiary users...");
-        const beneficiaryUserResults = await seedUsers(beneficiariesToSeed);
-        const userResults = [...adminUserResults, ...beneficiaryUserResults];
+        const userResults = await seedUsers(adminUsersToSeed);
         
         const orgStatus = await seedOrganization();
         const quotesStatus = await seedInitialQuotes();
