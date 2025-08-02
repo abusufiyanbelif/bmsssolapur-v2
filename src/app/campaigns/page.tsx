@@ -24,7 +24,7 @@ export default async function CampaignsPage() {
                        <span className="flex-grow">You can donate directly to our organization's UPI ID: <strong className="font-mono">{organization.upiId}</strong></span>
                        {organization.qrCodeUrl && (
                            <div className="flex items-center gap-2 p-2 border rounded-md bg-background">
-                               <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={40} height={40} />
+                               <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={40} height={40} data-ai-hint="qr code" />
                                <span className="text-xs text-muted-foreground">Scan to Pay</span>
                            </div>
                        )}
