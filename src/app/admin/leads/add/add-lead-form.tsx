@@ -28,9 +28,10 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import type { User, LeadPurpose } from "@/services/types";
+import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { UserPlus } from "lucide-react";
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
@@ -43,14 +44,7 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
 
 
 const formSchema = z.object({
-  userType: z.enum(['existing', 'new']).default('existing'),
-  beneficiaryId: z.string().optional(),
-  
-  // New user fields
-  newUserName: z.string().optional(),
-  newUserPhone: z.string().optional(),
-  newUserEmail: z.string().email("Please enter a valid email for the new user.").optional().or(z.literal('')),
-
+  beneficiaryId: z.string().min(1, "Beneficiary is required."),
   purpose: z.enum(leadPurposes),
   subCategory: z.string().min(1, "Sub-category is required."),
   otherCategoryDetail: z.string().optional(),
@@ -58,30 +52,6 @@ const formSchema = z.object({
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
   verificationDocument: z.any().optional(),
-}).refine(data => {
-    if (data.userType === 'existing') {
-        return !!data.beneficiaryId && data.beneficiaryId.length > 0;
-    }
-    return true;
-}, {
-    message: "Beneficiary is required for an existing user.",
-    path: ["beneficiaryId"],
-}).refine(data => {
-    if (data.userType === 'new') {
-        return !!data.newUserName && data.newUserName.length > 0;
-    }
-    return true;
-}, {
-    message: "New user's name is required.",
-    path: ["newUserName"], 
-}).refine(data => {
-    if (data.userType === 'new') {
-        return !!data.newUserPhone && /^[0-9]{10}$/.test(data.newUserPhone);
-    }
-    return true;
-}, {
-    message: "A valid 10-digit phone number is required for a new user.",
-    path: ["newUserPhone"], 
 }).refine(data => {
     if (data.subCategory === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
@@ -108,13 +78,11 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
   const form = useForm<AddLeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      userType: 'existing',
       isLoan: false,
       helpRequested: 0,
     },
   });
 
-  const selectedUserType = form.watch("userType");
   const selectedPurpose = form.watch("purpose");
   const selectedSubCategory = form.watch("subCategory");
 
@@ -122,16 +90,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append("userType", values.userType);
-    if (values.userType === 'existing' && values.beneficiaryId) {
-        formData.append("beneficiaryId", values.beneficiaryId);
-    }
-    if (values.userType === 'new') {
-        if(values.newUserName) formData.append("newUserName", values.newUserName);
-        if(values.newUserPhone) formData.append("newUserPhone", values.newUserPhone);
-        if(values.newUserEmail) formData.append("newUserEmail", values.newUserEmail);
-    }
-    
+    formData.append("beneficiaryId", values.beneficiaryId);
     formData.append("purpose", values.purpose);
     formData.append("subCategory", values.subCategory);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
@@ -158,114 +117,51 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
       });
     }
   }
+  
+  if(potentialBeneficiaries.length === 0) {
+    return (
+        <Alert>
+            <UserPlus className="h-4 w-4" />
+            <AlertTitle>No Beneficiaries Found</AlertTitle>
+            <AlertDescription>
+                There are no users with the 'Beneficiary' role in the system. You must add a beneficiary user before you can create a lead.
+                <Button asChild className="mt-4">
+                    <Link href="/admin/user-management/add">Add Beneficiary User</Link>
+                </Button>
+            </AlertDescription>
+        </Alert>
+    )
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         
         <FormField
-          control={form.control}
-          name="userType"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>Add Lead for...</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex space-x-4"
-                >
-                  <FormItem className="flex items-center space-x-2">
+            control={form.control}
+            name="beneficiaryId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Beneficiary</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <RadioGroupItem value="existing" id="existing" />
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a beneficiary" />
+                    </SelectTrigger>
                     </FormControl>
-                    <Label htmlFor="existing">Existing User</Label>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-2">
-                    <FormControl>
-                      <RadioGroupItem value="new" id="new" />
-                    </FormControl>
-                    <Label htmlFor="new">New User</Label>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+                    <SelectContent>
+                    {potentialBeneficiaries.map(user => (
+                        <SelectItem key={user.id} value={user.id!}>
+                            {user.name} ({user.phone})
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormDescription>Select the user who will receive the aid. If the user is not listed, <Link href="/admin/user-management/add" className="text-primary underline">add them as a new user</Link> first.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
         />
-        
-        {selectedUserType === 'existing' && (
-            <FormField
-                control={form.control}
-                name="beneficiaryId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Beneficiary</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a beneficiary" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {potentialBeneficiaries.map(user => (
-                            <SelectItem key={user.id} value={user.id!}>
-                                {user.name} ({user.phone})
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormDescription>Select the user who will receive the aid.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        )}
-
-        {selectedUserType === 'new' && (
-            <div className="space-y-4 rounded-md border p-4">
-                 <h3 className="font-semibold text-foreground">New Beneficiary Details</h3>
-                 <FormField
-                    control={form.control}
-                    name="newUserName"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter new user's full name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="newUserPhone"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Phone Number (10 digits)</FormLabel>
-                        <FormControl>
-                            <Input maxLength={10} placeholder="Enter new user's phone" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="newUserEmail"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Email Address (Optional)</FormLabel>
-                        <FormControl>
-                            <Input type="email" placeholder="user@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField

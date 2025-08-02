@@ -212,7 +212,7 @@ export const deleteUser = async (id: string) => {
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     if (!isConfigValid) {
-      console.warn("Firebase not configured. Skipping fetching all users.");
+      console.warn("Firebase is not configured. Skipping fetching all users.");
       return [];
     }
     try {

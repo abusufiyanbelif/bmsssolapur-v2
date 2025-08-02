@@ -2,9 +2,8 @@
 "use server";
 
 import { createLead } from "@/services/lead-service";
-import { getUser, createUser } from "@/services/user-service";
+import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import { Timestamp } from "firebase/firestore";
 import type { Lead, LeadPurpose, User } from "@/services/types";
 
 interface FormState {
@@ -28,12 +27,7 @@ export async function handleAddLead(
   const adminUserId = "user_placeholder_id_12345";
   
   const rawFormData = {
-      userType: formData.get("userType") as 'existing' | 'new',
-      beneficiaryId: formData.get("beneficiaryId") as string | undefined,
-      newUserName: formData.get("newUserName") as string | undefined,
-      newUserPhone: formData.get("newUserPhone") as string | undefined,
-      newUserEmail: formData.get("newUserEmail") as string | undefined,
-
+      beneficiaryId: formData.get("beneficiaryId") as string,
       purpose: formData.get("purpose") as LeadPurpose,
       subCategory: formData.get("subCategory") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
@@ -43,37 +37,14 @@ export async function handleAddLead(
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
   
-  if (!rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
+  if (!rawFormData.beneficiaryId || !rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
     return { success: false, error: "Missing required lead details fields." };
   }
 
   try {
-    let beneficiaryUser: User | null = null;
-    
-    if (rawFormData.userType === 'existing') {
-        if (!rawFormData.beneficiaryId) return { success: false, error: "Beneficiary ID is required for existing user."};
-        beneficiaryUser = await getUser(rawFormData.beneficiaryId);
-        if (!beneficiaryUser) {
-            return { success: false, error: "Selected beneficiary user not found." };
-        }
-    } else { // New user
-        if (!rawFormData.newUserName || !rawFormData.newUserPhone) {
-             return { success: false, error: "New user name and phone are required."};
-        }
-        try {
-            const newUser: Omit<User, 'id'> = {
-                name: rawFormData.newUserName,
-                phone: rawFormData.newUserPhone,
-                email: rawFormData.newUserEmail || '',
-                roles: ['Beneficiary'], // Default role
-                isActive: true,
-                createdAt: Timestamp.now(),
-            };
-            beneficiaryUser = await createUser(newUser);
-        } catch (e) {
-            const error = e instanceof Error ? e.message : "An unknown error occurred creating the user.";
-            return { success: false, error };
-        }
+    const beneficiaryUser = await getUser(rawFormData.beneficiaryId);
+    if (!beneficiaryUser) {
+        return { success: false, error: "Selected beneficiary user not found." };
     }
       
     let verificationDocumentUrl = "";
