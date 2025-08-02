@@ -48,6 +48,7 @@ const allNavItems: NavItem[] = [
     
     // Super Admin
     { href: "/admin/user-management", label: "User Management", icon: UserCog, allowedRoles: ["Super Admin"] },
+    { href: "/admin/settings", label: "App Settings", icon: Settings, allowedRoles: ["Super Admin"] },
     { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
     { href: "/services", label: "Services Summary", icon: Server, allowedRoles: ["Super Admin"] },
     { href: "/dependencies", label: "Dependency Map", icon: Share2, allowedRoles: ["Super Admin"] },
