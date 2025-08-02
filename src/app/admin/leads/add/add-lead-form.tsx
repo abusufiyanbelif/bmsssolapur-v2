@@ -137,9 +137,9 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     formData.append("subCategory", values.subCategory);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
-    formData.append("isLoan", String(values.isLoan));
+    formData.append("isLoan", values.isLoan ? "on" : "off");
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
-    if(values.verificationDocument?.[0]) formData.append("verificationDocument", values.verificationDocument[0]);
+    if(values.verificationDocument) formData.append("verificationDocument", values.verificationDocument);
     
     const result = await handleAddLead(formData);
 
@@ -405,7 +405,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                 <Input 
                   type="file" 
                   accept="image/*,application/pdf"
-                  onChange={(e) => onChange(e.target.files)}
+                  onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
                   {...rest}
                 />
               </FormControl>
