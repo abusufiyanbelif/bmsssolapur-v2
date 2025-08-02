@@ -5,7 +5,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
+import { DeleteLeadButton } from "./delete-lead-button";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -60,12 +61,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Lead Details</h2>
-                 <Button asChild>
-                    <Link href={`/admin/leads/${lead.id}/edit`}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Lead
-                    </Link>
-                 </Button>
+                <div className="flex gap-2">
+                    <Button asChild>
+                        <Link href={`/admin/leads/${lead.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Lead
+                        </Link>
+                    </Button>
+                     <DeleteLeadButton leadId={lead.id!} leadName={lead.name} />
+                </div>
             </div>
             
             <div className="grid gap-6 md:grid-cols-3">

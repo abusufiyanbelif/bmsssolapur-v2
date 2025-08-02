@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -15,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -25,6 +26,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { handleDeleteDonation } from "./actions";
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
@@ -64,21 +67,22 @@ export default function DonationsPage() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
 
-    useEffect(() => {
-        const fetchDonations = async () => {
-            try {
-                setLoading(true);
-                const fetchedDonations = await getAllDonations();
-                setDonations(fetchedDonations);
-                setError(null);
-            } catch (e) {
-                setError("Failed to fetch donations. Please try again later.");
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchDonations = async () => {
+        try {
+            setLoading(true);
+            const fetchedDonations = await getAllDonations();
+            setDonations(fetchedDonations);
+            setError(null);
+        } catch (e) {
+            setError("Failed to fetch donations. Please try again later.");
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+
+    useEffect(() => {
         fetchDonations();
     }, []);
 
@@ -130,6 +134,16 @@ export default function DonationsPage() {
         setSort('date-desc');
         setCurrentPage(1);
     };
+
+    const onDonationDeleted = () => {
+        toast({
+            title: "Donation Deleted",
+            description: "The donation record has been successfully removed.",
+        });
+        // Re-fetch donations to update the list
+        fetchDonations();
+    }
+
 
     const renderDesktopTable = () => (
         <Table>
@@ -226,6 +240,18 @@ export default function DonationsPage() {
                             <Edit className="mr-2 h-4 w-4" /> Edit
                         </Link>
                     </DropdownMenuItem>
+                    
+                    <DeleteConfirmationDialog
+                        itemType="donation"
+                        itemName={`from ${donation.donorName} for ₹${donation.amount}`}
+                        onDelete={() => handleDeleteDonation(donation.id!)}
+                        onSuccess={onDonationDeleted}
+                    >
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                    </DeleteConfirmationDialog>
+                    
                     <DropdownMenuSeparator />
                     {donation.status === "Pending verification" && (
                          <DropdownMenuItem onClick={handleFeatureInProgress}>Verify</DropdownMenuItem>

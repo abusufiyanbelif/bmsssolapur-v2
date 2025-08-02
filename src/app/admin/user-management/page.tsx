@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/page.tsx
 
 "use client";
@@ -16,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers, type User, UserRole } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,6 +25,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { handleDeleteUser } from "./actions";
+
 
 type UserCategory = 'all' | 'admins' | 'donors' | 'beneficiaries';
 
@@ -46,26 +51,35 @@ export default function UserManagementPage() {
         });
     };
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setLoading(true);
-                const fetchedUsers = await getAllUsers();
-                // Sort by name
-                fetchedUsers.sort((a, b) => a.name.localeCompare(b.name));
-                setUsers(fetchedUsers);
-                setError(null);
-            } catch (e) {
-                setError("Failed to fetch users. Please try again later.");
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            const fetchedUsers = await getAllUsers();
+            // Sort by name
+            fetchedUsers.sort((a, b) => a.name.localeCompare(b.name));
+            setUsers(fetchedUsers);
+            setError(null);
+        } catch (e) {
+            setError("Failed to fetch users. Please try again later.");
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchUsers();
     }, []);
     
+    const onUserDeleted = () => {
+        toast({
+            title: "User Deleted",
+            description: "The user has been successfully removed.",
+        });
+        // Re-fetch users to update the list
+        fetchUsers();
+    }
+
     const filteredUsers = useMemo(() => {
         switch(activeTab) {
             case 'admins':
@@ -90,6 +104,35 @@ export default function UserManagementPage() {
     useEffect(() => {
         setCurrentPage(1);
     }, [activeTab, itemsPerPage]);
+
+    const renderActions = (user: User) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                    <Link href={`/admin/user-management/${user.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" /> Manage
+                    </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+                 <DeleteConfirmationDialog
+                    itemType="user"
+                    itemName={user.name}
+                    onDelete={() => handleDeleteUser(user.id!)}
+                    onSuccess={onUserDeleted}
+                 >
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </DropdownMenuItem>
+                 </DeleteConfirmationDialog>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
 
     const renderDesktopTable = () => (
         <Table>
@@ -125,11 +168,7 @@ export default function UserManagementPage() {
                         </TableCell>
                         <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={`/admin/user-management/${user.id}/edit`}>
-                                    <UserCog className="mr-2 h-3 w-3" /> Manage
-                                </Link>
-                            </Button>
+                           {renderActions(user)}
                         </TableCell>
                     </TableRow>
                 ))}
@@ -163,11 +202,7 @@ export default function UserManagementPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/user-management/${user.id}/edit`}>
-                                <UserCog className="mr-2 h-3 w-3" /> Manage User
-                            </Link>
-                        </Button>
+                        {renderActions(user)}
                     </CardFooter>
                 </Card>
             ))}

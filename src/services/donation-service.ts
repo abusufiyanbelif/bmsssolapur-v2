@@ -145,6 +145,18 @@ export const updateDonation = async (id: string, updates: Partial<Donation>, per
     }
 };
 
+// Function to delete a donation
+export const deleteDonation = async (id: string) => {
+    if (!isConfigValid) throw new Error('Firebase is not configured.');
+    try {
+        await deleteDoc(doc(db, DONATIONS_COLLECTION, id));
+    } catch (error) {
+        console.error("Error deleting donation: ", error);
+        throw new Error('Failed to delete donation.');
+    }
+}
+
+
 // Function to get all donations
 export const getAllDonations = async (): Promise<Donation[]> => {
     if (!isConfigValid) {
