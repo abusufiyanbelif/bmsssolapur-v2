@@ -6,12 +6,15 @@ import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target }
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
 import Image from "next/image";
 import { getAllDonations } from "@/services/donation-service";
-import { getAllLeads } from "@/services/lead-service";
+import { getAllLeads, Lead } from "@/services/lead-service";
+import { getOpenLeads } from "@/app/campaigns/actions";
+import { Progress } from "@/components/ui/progress";
 
 export default async function LandingPage() {
     const quotes = await getRandomQuotes(3);
     const allDonations = await getAllDonations();
     const allLeads = await getAllLeads();
+    const featuredLeads = (await getOpenLeads()).slice(0, 3);
 
     const totalRaised = allDonations.reduce((acc, d) => d.status === 'Verified' || d.status === 'Allocated' ? acc + d.amount : acc, 0);
     const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
@@ -77,6 +80,57 @@ export default async function LandingPage() {
                         </CardContent>
                     </Card>
                   ))}
+                </div>
+            </section>
+
+            {/* Featured Campaigns Section */}
+            <section id="featured-campaigns">
+                 <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight font-headline">Featured Campaigns</h2>
+                    <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+                        Choose a cause that speaks to you. Every donation makes a difference.
+                    </p>
+                </div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                   {featuredLeads.map((lead) => {
+                        const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
+                        const remainingAmount = lead.helpRequested - lead.helpGiven;
+                        return (
+                            <Card key={lead.id} className="flex flex-col">
+                                <CardHeader>
+                                    <CardTitle>{lead.name}</CardTitle>
+                                    <CardDescription>
+                                        Seeking help for: <span className="font-semibold">{lead.purpose} {lead.subCategory && `(${lead.subCategory})`}</span>
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow space-y-4">
+                                    <p className="text-sm text-muted-foreground line-clamp-3">{lead.caseDetails || "No details provided."}</p>
+                                    <div>
+                                        <Progress value={progress} className="mb-2" />
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-semibold text-primary">Raised: ₹{lead.helpGiven.toLocaleString()}</span>
+                                            <span className="text-muted-foreground">Goal: ₹{lead.helpRequested.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter className='flex-col items-stretch gap-4'>
+                                    {remainingAmount > 0 && 
+                                        <p className="text-destructive font-bold text-center w-full">
+                                            ₹{remainingAmount.toLocaleString()} still needed
+                                        </p>
+                                    }
+                                    <Button asChild className="w-full">
+                                        <Link href="/login">Donate Now</Link>
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        )
+                   })}
+                </div>
+                <div className="mt-12 text-center">
+                    <Button asChild variant="outline">
+                        <Link href="/campaigns">View All Campaigns</Link>
+                    </Button>
                 </div>
             </section>
 
