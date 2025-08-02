@@ -52,9 +52,6 @@ export default async function LandingPage() {
                     <Button asChild size="lg">
                         <Link href="/campaigns">View Campaigns</Link>
                     </Button>
-                    <Button asChild variant="outline" size="lg">
-                        <Link href="/organization">About The Trust</Link>
-                    </Button>
                 </div>
             </section>
 
