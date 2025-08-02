@@ -139,7 +139,6 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         donorUsers = superAdmins; // Fallback to super admins as donors
     }
     
-    // Explicitly fetch Moosa Shaikh's record to use as the admin for all historical data.
     const historicalAdmin = await getUserByPhone("8421708907"); 
     if (!historicalAdmin) {
         throw new Error("Cannot seed historical data. The user 'Moosa Shaikh' (phone: 8421708907) must exist to act as the verifier for past leads.");
@@ -173,7 +172,6 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             });
         }
         
-        // Create a corresponding donation for each historical lead
         const randomDonor = donorUsers[Math.floor(Math.random() * donorUsers.length)];
         const donationRef = doc(donationsCollection);
         const donation: Donation = {
@@ -182,15 +180,18 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             donorName: randomDonor.name,
             amount: leadData.helpGiven,
             type: leadData.category,
+            purpose: 'Relief Fund',
             status: 'Allocated',
+            isAnonymous: false,
+            transactionId: `HISTORICAL-${Date.now()}-${Math.random()}`,
+            paymentScreenshotUrl: '',
             createdAt: Timestamp.fromDate(new Date("2021-11-01")),
             verifiedAt: Timestamp.fromDate(new Date("2021-11-01")),
-            allocations: [], // This will be filled later
+            notes: 'Historical donation seeded automatically.'
         };
         batch.set(donationRef, donation);
         donationResults.push({ name: `Donation from ${randomDonor.name} for ${leadData.helpGiven}`, status: 'Created' });
         
-        // Create the lead
         const leadRef = doc(leadsCollection);
         const verifier: Verifier = {
             verifierId: historicalAdmin.id!,
@@ -221,13 +222,12 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             createdAt: Timestamp.fromDate(new Date("2021-12-01")),
             updatedAt: Timestamp.fromDate(new Date("2021-12-01")),
             category: leadData.category,
-            purpose: 'Relief Fund', // Assign a default purpose
+            purpose: 'Relief Fund',
         };
         
         batch.set(leadRef, newLead);
         leadResults.push({ name: `Lead for ${newLead.name}`, status: 'Created' });
 
-        // Update the donation's allocation
         const updatedDonationAllocation = {
             leadId: newLead.id!,
             amount: leadData.helpGiven,
