@@ -86,7 +86,7 @@ export default async function OrganizationPage() {
                              <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50">
                                 <h3 className="font-semibold text-center">Scan to Pay with UPI</h3>
                                 <div className="relative w-56 h-56">
-                                     <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" />
+                                     <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
                                 </div>
                                 <p className="text-sm text-muted-foreground text-center">
                                     You can use any UPI app like Google Pay, PhonePe, or Paytm to donate directly.
