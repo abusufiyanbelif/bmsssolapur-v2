@@ -44,16 +44,16 @@ export default async function LandingPage() {
     return (
         <div className="flex-1 space-y-12">
             {/* Hero Section */}
-            <section className="text-center py-20 px-4 bg-primary/5 rounded-lg">
+            <section className="text-center py-20 px-4 bg-secondary rounded-lg">
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline text-primary">
-                    Empowering Our Community, Together
+                    Connecting Hearts, Empowering Communities
                 </h1>
                 <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                    Join Baitul Mal Samajik Sanstha in providing life-enriching aid to underserved populations in Solapur. Your contribution makes a real difference.
+                    Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution, whether Zakat, Sadaqah, or General Help, brings hope and changes lives.
                 </p>
                 <div className="mt-8 flex justify-center gap-4">
-                    <Button asChild size="lg">
-                        <Link href="/campaigns">View Campaigns</Link>
+                    <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                        <Link href="/campaigns">Donate Now <ArrowRight className="ml-2 h-5 w-5" /></Link>
                     </Button>
                 </div>
             </section>
