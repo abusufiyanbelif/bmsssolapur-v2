@@ -13,14 +13,15 @@ const firebaseConfig = {
   appId: config.firebase.appId,
 };
 
-// Check if all required firebase config values are present
-const isConfigValid = 
-    firebaseConfig.apiKey &&
-    firebaseConfig.authDomain &&
-    firebaseConfig.projectId &&
-    firebaseConfig.storageBucket &&
-    firebaseConfig.messagingSenderId &&
-    firebaseConfig.appId;
+// A simple check to see if the config values are placeholders
+const isConfigPotentiallyValid = (config: typeof firebaseConfig) => {
+  if (!config.apiKey || config.apiKey.includes("YOUR_")) return false;
+  if (!config.projectId || config.projectId.includes("YOUR_")) return false;
+  return true;
+}
+
+// Check if all required firebase config values are present and not placeholders
+export const isConfigValid = isConfigPotentiallyValid(firebaseConfig);
 
 let app;
 let db;
@@ -31,7 +32,7 @@ if (isConfigValid) {
     db = getFirestore(app);
     auth = getAuth(app);
 } else {
-    console.warn("Firebase configuration is missing or incomplete. Firebase services will not be initialized.");
+    console.warn("Firebase configuration is missing, incomplete, or contains placeholder values. Firebase services will not be initialized.");
     // Provide dummy objects to prevent app from crashing when firebase is not configured
     app = {};
     db = {};
@@ -39,4 +40,4 @@ if (isConfigValid) {
 }
 
 
-export { app, db, auth, isConfigValid };
+export { app, db, auth };
