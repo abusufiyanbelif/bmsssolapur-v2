@@ -4,7 +4,7 @@
  * @fileOverview Service for logging user activities.
  */
 
-import { collection, addDoc, query, where, getDocs, serverTimestamp, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, serverTimestamp, orderBy, Timestamp, FieldValue } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { ActivityLog } from './types';
 
@@ -24,7 +24,7 @@ export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>
         return;
     }
   try {
-    const logWithTimestamp: Omit<ActivityLog, 'id'> & { timestamp: any } = {
+    const logWithTimestamp: Omit<ActivityLog, 'id'> = {
       ...logData,
       timestamp: serverTimestamp(), // Use server timestamp for consistency
     };

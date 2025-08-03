@@ -4,7 +4,7 @@
  * @fileOverview Centralized type definitions for the application's data models.
  */
 
-import type { Timestamp } from 'firebase/firestore';
+import type { Timestamp, FieldValue } from 'firebase/firestore';
 
 // User-related types
 export type UserRole = 
@@ -161,7 +161,7 @@ export interface ActivityLog {
   role: string;
   activity: string;
   details: Record<string, any>;
-  timestamp: Timestamp;
+  timestamp: Timestamp | FieldValue;
 }
 
 // AppSettings-related types
