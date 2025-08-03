@@ -32,7 +32,8 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!user || !user.isLoggedIn) {
+      // Guard against running fetch logic when user is not logged in or role is not set.
+      if (!user || !user.isLoggedIn || !activeRole) {
         setLoading(false);
         return;
       }
@@ -64,6 +65,9 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
         setQuotesLoading(false);
     }
     
+    // This effect now correctly depends on `user` and `activeRole`.
+    // When the user logs in or switches roles, these props will change,
+    // and this effect will re-run, fetching the correct data.
     fetchDashboardData();
     fetchQuotes();
 
@@ -82,7 +86,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
         </Alert>
       );
     }
-    if (!user || !user.isLoggedIn || !activeRole) {
+    if (!user || !user.isLoggedIn) {
        return (
         <Alert>
           <AlertCircle className="h-4 w-4" />
