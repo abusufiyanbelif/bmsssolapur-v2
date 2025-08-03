@@ -86,13 +86,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }
         };
         checkUser();
-    }, [pathname]); // Rerun on path change to catch login redirects
+    }, []); // Run only once on initial mount
 
 
     const handleRoleChange = (newRole: string) => {
         if (!user) return;
         const previousRole = user.activeRole;
-        setUser(currentUser => currentUser ? ({...currentUser, activeRole: newRole}) : null);
+        
+        const updatedUser = {...user, activeRole: newRole};
+        setUser(updatedUser);
+        
         localStorage.setItem('activeRole', newRole);
         setRequiredRole(null); 
 
@@ -106,6 +109,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 details: { from: previousRole, to: newRole },
             });
         }
+        // Force a reload to ensure all components pick up the new role from localStorage
+        window.location.reload();
     };
     
     const handleLogout = () => {
