@@ -42,6 +42,10 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
       setError(null);
       
       try {
+        // Reset data on role change
+        setDonations([]);
+        setCases([]);
+
         if (activeRole === 'Donor') {
           const donorDonations = await getDonationsByUserId(user.id!);
           setDonations(donorDonations.slice(0, 3)); // Get latest 3

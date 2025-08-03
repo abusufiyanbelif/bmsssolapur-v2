@@ -117,10 +117,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
         
         // After changing role in the dialog, the session is now ready.
-        // We reload to ensure all components pick up the new role.
-        if (!isSessionReady) {
-            window.location.reload();
-        }
         setIsSessionReady(true);
     };
     
