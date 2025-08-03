@@ -57,6 +57,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        password: user.password,
         isActive: user.isActive,
         address: {
             addressLine1: user.address?.addressLine1 || '',
@@ -227,7 +228,7 @@ export const deleteUser = async (id: string) => {
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     if (!isConfigValid) {
-      console.warn("Firebase is not configured. Skipping fetching all users.");
+      console.warn("Firebase not configured. Skipping fetching all users.");
       return [];
     }
     try {
@@ -243,4 +244,5 @@ export const getAllUsers = async (): Promise<User[]> => {
         throw new Error('Failed to get all users.');
     }
 }
+
 

@@ -33,6 +33,7 @@ export interface User {
   name: string;
   email?: string;
   phone: string;
+  password?: string;
   isActive: boolean;
   address?: {
     addressLine1?: string;

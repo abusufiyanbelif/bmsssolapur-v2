@@ -54,14 +54,8 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             return { success: false, error: "User not found with the provided details." };
         }
 
-        // For this prototype, we use a simple password check.
-        // In a real application, you would use Firebase Authentication.
-        let validPassword = 'admin'; // Default password
-        if (user.name.toLowerCase() === 'donor') {
-            validPassword = 'donor';
-        }
-
-        if (password !== validPassword) {
+        // Check the stored password.
+        if (password !== user.password) {
             return { success: false, error: "Invalid credentials." };
         }
 
@@ -174,6 +168,7 @@ export async function handleGoogleLogin(firebaseUser: {
       const newUser: Omit<User, 'id'> = {
         name: firebaseUser.displayName || 'Google User',
         email: firebaseUser.email,
+        password: `google_${Date.now()}`, // Set a random, unusable password for OAuth users
         // Use a placeholder phone number; the user can update it in their profile
         phone: Date.now().toString().slice(-10),
         roles: ['Donor'], // Default role for new sign-ups
