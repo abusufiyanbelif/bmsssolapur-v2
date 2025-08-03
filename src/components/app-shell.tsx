@@ -128,15 +128,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const activeRole = user.activeRole;
 
     const HeaderTitle = () => (
-        <a href="/" className="flex items-center gap-3" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-10 w-auto" />
-             <div className="font-headline font-bold text-sm leading-tight">
-                <h3>
-                    <span className="text-primary">Baitul Mal </span>
-                    <span className="text-accent">Samajik Sanstha</span>
-                    <span className="text-primary block md:inline"> (Solapur)</span>
-                </h3>
-            </div>
+        <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
+            <Logo className="h-8 w-auto" />
+            <span className="font-bold font-headline">Baitul Mal</span>
         </a>
     );
 
@@ -229,10 +223,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         ) : (
                              <>
                                 {pathname !== '/login' && (
-                                     <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+                                     <Button asChild>
                                         <Link href="/login">
                                             <LogIn className="mr-2 h-4 w-4" />
-                                            Login / Register
+                                            Login
                                         </Link>
                                     </Button>
                                 )}
