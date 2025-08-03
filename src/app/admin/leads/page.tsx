@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -58,22 +58,23 @@ export default function LeadsPage() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
     
-    // Filter and Sort states
-    const [nameFilter, setNameFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [verificationFilter, setVerificationFilter] = useState<string>('all');
-    const [sort, setSort] = useState<SortOption>('date-desc');
+    // Input states
+    const [nameInput, setNameInput] = useState('');
+    const [statusInput, setStatusInput] = useState<string>('all');
+    const [verificationInput, setVerificationInput] = useState<string>('all');
+    const [sortInput, setSortInput] = useState<SortOption>('date-desc');
+
+    // Applied filter states
+    const [appliedFilters, setAppliedFilters] = useState({
+        name: '',
+        status: 'all',
+        verification: 'all',
+        sort: 'date-desc' as SortOption
+    });
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [leadsPerPage, setLeadsPerPage] = useState(10);
-
-    const handleFeatureInProgress = () => {
-        toast({
-            title: "In Progress",
-            description: "This feature is currently in development and will be available soon.",
-        });
-    };
 
     useEffect(() => {
         const fetchLeads = async () => {
@@ -93,16 +94,26 @@ export default function LeadsPage() {
         fetchLeads();
     }, []);
 
+    const handleSearch = () => {
+        setCurrentPage(1);
+        setAppliedFilters({
+            name: nameInput,
+            status: statusInput,
+            verification: verificationInput,
+            sort: sortInput
+        });
+    };
+    
     const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
-            const nameMatch = nameFilter === '' || lead.name.toLowerCase().includes(nameFilter.toLowerCase());
-            const statusMatch = statusFilter === 'all' || lead.status === statusFilter;
-            const verificationMatch = verificationFilter === 'all' || lead.verifiedStatus === verificationFilter;
+            const nameMatch = appliedFilters.name === '' || lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const statusMatch = appliedFilters.status === 'all' || lead.status === appliedFilters.status;
+            const verificationMatch = appliedFilters.verification === 'all' || lead.verifiedStatus === appliedFilters.verification;
             return nameMatch && statusMatch && verificationMatch;
         });
 
         return filtered.sort((a, b) => {
-             switch(sort) {
+             switch(appliedFilters.sort) {
                 case 'date-desc': return b.dateCreated.toMillis() - a.dateCreated.toMillis();
                 case 'date-asc': return a.dateCreated.toMillis() - b.dateCreated.toMillis();
                 case 'name-asc': return a.name.localeCompare(b.name);
@@ -112,7 +123,7 @@ export default function LeadsPage() {
                 default: return 0;
             }
         });
-    }, [leads, nameFilter, statusFilter, verificationFilter, sort]);
+    }, [leads, appliedFilters]);
     
     const paginatedLeads = useMemo(() => {
         const startIndex = (currentPage - 1) * leadsPerPage;
@@ -122,16 +133,17 @@ export default function LeadsPage() {
     const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
 
     const resetFilters = () => {
-        setNameFilter('');
-        setStatusFilter('all');
-        setVerificationFilter('all');
-        setSort('date-desc');
+        setNameInput('');
+        setStatusInput('all');
+        setVerificationInput('all');
+        setSortInput('date-desc');
+        setAppliedFilters({ name: '', status: 'all', verification: 'all', sort: 'date-desc' });
         setCurrentPage(1);
     };
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [nameFilter, statusFilter, verificationFilter, leadsPerPage]);
+    }, [leadsPerPage]);
     
     const renderActionButton = (lead: Lead) => (
         <Button variant="outline" size="sm" asChild>
@@ -361,13 +373,13 @@ export default function LeadsPage() {
                         <Input 
                             id="nameFilter" 
                             placeholder="Filter by name..."
-                            value={nameFilter}
-                            onChange={(e) => setNameFilter(e.target.value)}
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="statusFilter">Case Status</Label>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <Select value={statusInput} onValueChange={setStatusInput}>
                             <SelectTrigger id="statusFilter">
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
@@ -378,7 +390,7 @@ export default function LeadsPage() {
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="verificationFilter">Verification</Label>
-                        <Select value={verificationFilter} onValueChange={setVerificationFilter}>
+                        <Select value={verificationInput} onValueChange={setVerificationInput}>
                             <SelectTrigger id="verificationFilter">
                                 <SelectValue placeholder="Filter by verification" />
                             </SelectTrigger>
@@ -387,15 +399,9 @@ export default function LeadsPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end">
-                        <Button variant="outline" onClick={resetFilters} className="w-full">
-                            <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filters
-                        </Button>
-                    </div>
-                     <div className="space-y-2 lg:col-span-2">
+                    <div className="space-y-2 lg:col-span-1">
                         <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
                                 <SelectValue placeholder="Sort by..." />
                             </SelectTrigger>
@@ -405,6 +411,16 @@ export default function LeadsPage() {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                     <div className="flex items-end gap-4 lg:col-span-full">
+                        <Button onClick={handleSearch} className="w-full">
+                           <Search className="mr-2 h-4 w-4" />
+                            Apply Filters
+                        </Button>
+                        <Button variant="outline" onClick={resetFilters} className="w-full">
+                            <FilterX className="mr-2 h-4 w-4" />
+                            Clear Filters
+                        </Button>
                     </div>
                 </div>
                 {renderContent()}

@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, Edit, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, Edit, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -50,11 +50,19 @@ export default function UserManagementPage() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
 
-    // Filter and Sort states
-    const [nameFilter, setNameFilter] = useState('');
-    const [roleFilter, setRoleFilter] = useState<string>('all');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [sort, setSort] = useState<SortOption>('name-asc');
+    // Input states
+    const [nameInput, setNameInput] = useState('');
+    const [roleInput, setRoleInput] = useState<string>('all');
+    const [statusInput, setStatusInput] = useState<string>('all');
+    const [sortInput, setSortInput] = useState<SortOption>('name-asc');
+    
+    // Applied filter states
+    const [appliedFilters, setAppliedFilters] = useState({
+        name: '',
+        role: 'all',
+        status: 'all',
+        sort: 'name-asc' as SortOption
+    });
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -73,7 +81,7 @@ export default function UserManagementPage() {
             setLoading(false);
         }
     };
-
+    
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -86,18 +94,28 @@ export default function UserManagementPage() {
         fetchUsers();
     }
 
+    const handleSearch = () => {
+        setCurrentPage(1);
+        setAppliedFilters({
+            name: nameInput,
+            role: roleInput,
+            status: statusInput,
+            sort: sortInput
+        });
+    };
+
     const filteredUsers = useMemo(() => {
         let filtered = users.filter(user => {
-            const nameMatch = nameFilter === '' || 
-                              user.name.toLowerCase().includes(nameFilter.toLowerCase()) ||
-                              user.id?.toLowerCase().includes(nameFilter.toLowerCase());
-            const roleMatch = roleFilter === 'all' || user.roles.includes(roleFilter as UserRole);
-            const statusMatch = statusFilter === 'all' || (statusFilter === 'active' && user.isActive) || (statusFilter === 'inactive' && !user.isActive);
+            const nameMatch = appliedFilters.name === '' || 
+                              user.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
+                              user.id?.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const roleMatch = appliedFilters.role === 'all' || user.roles.includes(appliedFilters.role as UserRole);
+            const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
             return nameMatch && roleMatch && statusMatch;
         });
         
         return filtered.sort((a, b) => {
-             switch(sort) {
+             switch(appliedFilters.sort) {
                 case 'date-desc': return b.createdAt.toMillis() - a.createdAt.toMillis();
                 case 'date-asc': return a.createdAt.toMillis() - b.createdAt.toMillis();
                 case 'name-asc': return a.name.localeCompare(b.name);
@@ -105,7 +123,7 @@ export default function UserManagementPage() {
                 default: return 0;
             }
         });
-    }, [users, nameFilter, roleFilter, statusFilter, sort]);
+    }, [users, appliedFilters]);
     
     const paginatedUsers = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -115,16 +133,17 @@ export default function UserManagementPage() {
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     
     const resetFilters = () => {
-        setNameFilter('');
-        setRoleFilter('all');
-        setStatusFilter('all');
-        setSort('name-asc');
+        setNameInput('');
+        setRoleInput('all');
+        setStatusInput('all');
+        setSortInput('name-asc');
+        setAppliedFilters({ name: '', role: 'all', status: 'all', sort: 'name-asc' });
         setCurrentPage(1);
     };
     
     useEffect(() => {
         setCurrentPage(1);
-    }, [nameFilter, roleFilter, statusFilter, itemsPerPage]);
+    }, [itemsPerPage]);
 
     const renderActions = (user: User) => {
         const isDeletable = !user.roles.includes('Super Admin') && user.name !== 'Donor' && user.name !== 'Beneficiary' && user.name !== 'Anonymous Donor';
@@ -374,13 +393,13 @@ export default function UserManagementPage() {
                         <Input 
                             id="nameFilter" 
                             placeholder="Filter by name or ID..."
-                            value={nameFilter}
-                            onChange={(e) => setNameFilter(e.target.value)}
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="roleFilter">Role</Label>
-                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                        <Select value={roleInput} onValueChange={setRoleInput}>
                             <SelectTrigger id="roleFilter">
                                 <SelectValue placeholder="Filter by role" />
                             </SelectTrigger>
@@ -391,7 +410,7 @@ export default function UserManagementPage() {
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="statusFilter">Status</Label>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <Select value={statusInput} onValueChange={setStatusInput}>
                             <SelectTrigger id="statusFilter">
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
@@ -400,15 +419,9 @@ export default function UserManagementPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end">
-                        <Button variant="outline" onClick={resetFilters} className="w-full">
-                            <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filters
-                        </Button>
-                    </div>
-                    <div className="space-y-2 lg:col-span-2">
+                    <div className="space-y-2 lg:col-span-1">
                         <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
                                 <SelectValue placeholder="Sort by..." />
                             </SelectTrigger>
@@ -418,6 +431,16 @@ export default function UserManagementPage() {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="flex items-end gap-4 lg:col-span-full">
+                        <Button onClick={handleSearch} className="w-full">
+                           <Search className="mr-2 h-4 w-4" />
+                            Apply Filters
+                        </Button>
+                        <Button variant="outline" onClick={resetFilters} className="w-full">
+                            <FilterX className="mr-2 h-4 w-4" />
+                            Clear Filters
+                        </Button>
                     </div>
                 </div>
 

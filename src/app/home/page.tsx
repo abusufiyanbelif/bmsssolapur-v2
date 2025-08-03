@@ -1,5 +1,4 @@
 
-
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -156,8 +155,26 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 
 function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[] }) {
   const isMobile = useIsMobile();
-  const [purposeFilter, setPurposeFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [purposeInput, setPurposeInput] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  
+  const [appliedFilters, setAppliedFilters] = useState({
+      purpose: 'all',
+      search: ''
+  });
+
+  const handleSearch = () => {
+    setAppliedFilters({
+        purpose: purposeInput,
+        search: searchInput
+    })
+  };
+
+  const resetFilters = () => {
+    setPurposeInput('all');
+    setSearchInput('');
+    setAppliedFilters({ purpose: 'all', search: '' });
+  };
 
   const totalDonated = useMemo(() => {
     return donations.reduce((sum, d) => sum + d.amount, 0);
@@ -175,13 +192,13 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
 
   const filteredLeads = useMemo(() => {
     return openLeads.filter(lead => {
-      const purposeMatch = purposeFilter === 'all' || lead.purpose === purposeFilter;
-      const searchMatch = searchQuery === '' || 
-        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (lead.caseDetails && lead.caseDetails.toLowerCase().includes(searchQuery.toLowerCase()));
+      const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
+      const searchMatch = appliedFilters.search === '' || 
+        lead.name.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
+        (lead.caseDetails && lead.caseDetails.toLowerCase().includes(appliedFilters.search.toLowerCase()));
       return purposeMatch && searchMatch;
     });
-  }, [openLeads, purposeFilter, searchQuery]);
+  }, [openLeads, appliedFilters]);
   
   const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen"];
 
@@ -220,16 +237,26 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
                     <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                         <div className="flex-1 space-y-2">
                             <Label htmlFor="search">Search Cases</Label>
-                            <Input id="search" placeholder="Search by name or details..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                            <Input id="search" placeholder="Search by name or details..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
                         </div>
                         <div className="flex-1 space-y-2">
                             <Label htmlFor="purposeFilter">Filter by Purpose</Label>
-                            <Select value={purposeFilter} onValueChange={setPurposeFilter}>
+                            <Select value={purposeInput} onValueChange={setPurposeInput}>
                                 <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     {purposeOptions.map(p => <SelectItem key={p} value={p} className="capitalize">{p === 'all' ? 'All Purposes' : p}</SelectItem>)}
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="flex items-end gap-2 md:flex-col lg:flex-row">
+                            <Button onClick={handleSearch} className="w-full">
+                                <Search className="mr-2 h-4 w-4" />
+                                Search
+                            </Button>
+                             <Button onClick={resetFilters} variant="outline" className="w-full">
+                                <FilterX className="mr-2 h-4 w-4" />
+                                Clear
+                            </Button>
                         </div>
                     </div>
 
@@ -282,6 +309,7 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>Sr. No.</TableHead>
                             <TableHead>Date</TableHead>
                             {!isMobile && <TableHead>Type</TableHead>}
                             {!isMobile && <TableHead>Purpose</TableHead>}
@@ -290,8 +318,9 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {donations.slice(0, 5).map(d => (
+                        {donations.slice(0, 5).map((d, index) => (
                             <TableRow key={d.id}>
+                                <TableCell>{index + 1}</TableCell>
                                 <TableCell>{format(d.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
                                 {!isMobile && <TableCell>{d.type}</TableCell>}
                                 {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}

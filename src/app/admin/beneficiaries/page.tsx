@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,19 +45,28 @@ export default function BeneficiariesPage() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
 
-    // Filter and Sort states
-    const [nameFilter, setNameFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-    const [sort, setSort] = useState<SortOption>('name-asc');
+    // Input states
+    const [nameInput, setNameInput] = useState('');
+    const [statusInput, setStatusInput] = useState<StatusFilter>('all');
+    const [sortInput, setSortInput] = useState<SortOption>('name-asc');
+    
+    // Applied filter states
+    const [appliedFilters, setAppliedFilters] = useState({
+        name: '',
+        status: 'all' as StatusFilter,
+        sort: 'name-asc' as SortOption
+    });
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    const handleFeatureInProgress = () => {
-        toast({
-            title: "In Progress",
-            description: "This feature is currently in development and will be available soon.",
+    const handleSearch = () => {
+        setCurrentPage(1);
+        setAppliedFilters({
+            name: nameInput,
+            status: statusInput,
+            sort: sortInput
         });
     };
 
@@ -82,13 +91,13 @@ export default function BeneficiariesPage() {
     
     const filteredBeneficiaries = useMemo(() => {
         let filtered = beneficiaries.filter(user => {
-            const nameMatch = nameFilter === '' || user.name.toLowerCase().includes(nameFilter.toLowerCase());
-            const statusMatch = statusFilter === 'all' || (statusFilter === 'active' && user.isActive) || (statusFilter === 'inactive' && !user.isActive);
+            const nameMatch = appliedFilters.name === '' || user.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
             return nameMatch && statusMatch;
         });
 
         return filtered.sort((a, b) => {
-             switch(sort) {
+             switch(appliedFilters.sort) {
                 case 'date-desc': return b.createdAt.toMillis() - a.createdAt.toMillis();
                 case 'date-asc': return a.createdAt.toMillis() - b.createdAt.toMillis();
                 case 'name-asc': return a.name.localeCompare(b.name);
@@ -97,7 +106,7 @@ export default function BeneficiariesPage() {
             }
         });
 
-    }, [beneficiaries, nameFilter, statusFilter, sort]);
+    }, [beneficiaries, appliedFilters]);
 
     const paginatedBeneficiaries = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -107,15 +116,16 @@ export default function BeneficiariesPage() {
     const totalPages = Math.ceil(filteredBeneficiaries.length / itemsPerPage);
     
     const resetFilters = () => {
-        setNameFilter('');
-        setStatusFilter('all');
-        setSort('name-asc');
+        setNameInput('');
+        setStatusInput('all');
+        setSortInput('name-asc');
+        setAppliedFilters({ name: '', status: 'all', sort: 'name-asc' });
         setCurrentPage(1);
     };
-
+    
     useEffect(() => {
         setCurrentPage(1);
-    }, [nameFilter, statusFilter, itemsPerPage]);
+    }, [itemsPerPage]);
 
     const renderDesktopTable = () => (
         <Table>
@@ -324,13 +334,13 @@ export default function BeneficiariesPage() {
                         <Input 
                             id="nameFilter" 
                             placeholder="Filter by name..."
-                            value={nameFilter}
-                            onChange={(e) => setNameFilter(e.target.value)}
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="statusFilter">Status</Label>
-                        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+                        <Select value={statusInput} onValueChange={(v) => setStatusInput(v as StatusFilter)}>
                             <SelectTrigger id="statusFilter">
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
@@ -339,15 +349,9 @@ export default function BeneficiariesPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end">
-                        <Button variant="outline" onClick={resetFilters} className="w-full">
-                            <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filters
-                        </Button>
-                    </div>
-                     <div className="space-y-2 lg:col-span-2">
+                     <div className="space-y-2">
                         <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
                                 <SelectValue placeholder="Sort by..." />
                             </SelectTrigger>
@@ -358,6 +362,16 @@ export default function BeneficiariesPage() {
                             </SelectContent>
                         </Select>
                     </div>
+                    <div className="flex items-end gap-4 lg:col-span-2">
+                        <Button onClick={handleSearch} className="w-full">
+                            <Search className="mr-2 h-4 w-4" />
+                            Apply Filters
+                        </Button>
+                        <Button variant="outline" onClick={resetFilters} className="w-full">
+                            <FilterX className="mr-2 h-4 w-4" />
+                            Clear
+                        </Button>
+                    </div>
                 </div>
                 {renderContent()}
             </CardContent>
@@ -365,5 +379,3 @@ export default function BeneficiariesPage() {
     </div>
   )
 }
-
-    

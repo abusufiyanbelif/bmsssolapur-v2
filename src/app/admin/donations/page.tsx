@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -54,11 +54,19 @@ export default function DonationsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // Filter and Sort states
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [typeFilter, setTypeFilter] = useState<string>('all');
-    const [nameFilter, setNameFilter] = useState<string>('');
-    const [sort, setSort] = useState<SortOption>('date-desc');
+    // Input states
+    const [statusInput, setStatusInput] = useState<string>('all');
+    const [typeInput, setTypeInput] = useState<string>('all');
+    const [nameInput, setNameInput] = useState<string>('');
+    const [sortInput, setSortInput] = useState<SortOption>('date-desc');
+
+    // Applied filter states
+    const [appliedFilters, setAppliedFilters] = useState({
+        status: 'all',
+        type: 'all',
+        name: '',
+        sort: 'date-desc' as SortOption
+    });
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -86,16 +94,26 @@ export default function DonationsPage() {
         fetchDonations();
     }, []);
 
+    const handleSearch = () => {
+        setCurrentPage(1);
+        setAppliedFilters({
+            status: statusInput,
+            type: typeInput,
+            name: nameInput,
+            sort: sortInput
+        });
+    };
+
     const filteredDonations = useMemo(() => {
         let filtered = donations.filter(donation => {
-            const statusMatch = statusFilter === 'all' || donation.status === statusFilter;
-            const typeMatch = typeFilter === 'all' || donation.type === typeFilter;
-            const nameMatch = nameFilter === '' || donation.donorName.toLowerCase().includes(nameFilter.toLowerCase());
+            const statusMatch = appliedFilters.status === 'all' || donation.status === appliedFilters.status;
+            const typeMatch = appliedFilters.type === 'all' || donation.type === appliedFilters.type;
+            const nameMatch = appliedFilters.name === '' || donation.donorName.toLowerCase().includes(appliedFilters.name.toLowerCase());
             return statusMatch && typeMatch && nameMatch;
         });
 
         return filtered.sort((a, b) => {
-            switch(sort) {
+            switch(appliedFilters.sort) {
                 case 'date-desc': return b.createdAt.toMillis() - a.createdAt.toMillis();
                 case 'date-asc': return a.createdAt.toMillis() - b.createdAt.toMillis();
                 case 'name-asc': return a.donorName.localeCompare(b.donorName);
@@ -106,7 +124,7 @@ export default function DonationsPage() {
             }
         });
 
-    }, [donations, statusFilter, typeFilter, nameFilter, sort]);
+    }, [donations, appliedFilters]);
 
     const paginatedDonations = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -117,13 +135,14 @@ export default function DonationsPage() {
     
     useEffect(() => {
         setCurrentPage(1);
-    }, [statusFilter, typeFilter, nameFilter, itemsPerPage]);
+    }, [itemsPerPage]);
 
     const resetFilters = () => {
-        setStatusFilter('all');
-        setTypeFilter('all');
-        setNameFilter('');
-        setSort('date-desc');
+        setStatusInput('all');
+        setTypeInput('all');
+        setNameInput('');
+        setSortInput('date-desc');
+        setAppliedFilters({ status: 'all', type: 'all', name: '', sort: 'date-desc' });
         setCurrentPage(1);
     };
 
@@ -382,13 +401,13 @@ export default function DonationsPage() {
                         <Input 
                             id="donorName" 
                             placeholder="Filter by donor name..."
-                            value={nameFilter}
-                            onChange={(e) => setNameFilter(e.target.value)}
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="statusFilter">Status</Label>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <Select value={statusInput} onValueChange={setStatusInput}>
                             <SelectTrigger id="statusFilter">
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
@@ -399,7 +418,7 @@ export default function DonationsPage() {
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="typeFilter">Donation Type</Label>
-                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <Select value={typeInput} onValueChange={setTypeInput}>
                             <SelectTrigger id="typeFilter">
                                 <SelectValue placeholder="Filter by type" />
                             </SelectTrigger>
@@ -408,15 +427,9 @@ export default function DonationsPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end">
-                        <Button variant="outline" onClick={resetFilters} className="w-full">
-                            <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filters
-                        </Button>
-                    </div>
-                    <div className="space-y-2 lg:col-span-2">
+                    <div className="space-y-2 lg:col-span-1">
                         <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
                                 <SelectValue placeholder="Sort by..." />
                             </SelectTrigger>
@@ -426,6 +439,16 @@ export default function DonationsPage() {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="flex items-end gap-4 lg:col-span-full">
+                        <Button onClick={handleSearch} className="w-full">
+                            <Search className="mr-2 h-4 w-4" />
+                            Apply Filters
+                        </Button>
+                         <Button variant="outline" onClick={resetFilters} className="w-full">
+                            <FilterX className="mr-2 h-4 w-4" />
+                            Clear Filters
+                        </Button>
                     </div>
                 </div>
                 {renderContent()}
