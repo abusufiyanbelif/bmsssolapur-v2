@@ -104,6 +104,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
 
   const { formState: { isDirty } } = form;
   const selectedRoles = form.watch("roles");
+  const selectedGender = form.watch("gender");
+
 
   async function onSubmit(values: EditUserFormValues) {
     setIsSubmitting(true);
@@ -333,28 +335,30 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         )}
                         />
                 </div>
-                <FormField
-                    control={form.control}
-                    name="isWidow"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                            <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                            <FormLabel>
-                            Is the Beneficiary a Widow?
-                            </FormLabel>
-                            <FormDescription>
-                            Check this box if the user is a widow. This helps in prioritizing cases.
-                            </FormDescription>
-                        </div>
-                        </FormItem>
-                    )}
-                />
+                {selectedGender === 'Female' && selectedRoles.includes('Beneficiary') && (
+                    <FormField
+                        control={form.control}
+                        name="isWidow"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                Is the Beneficiary a Widow?
+                                </FormLabel>
+                                <FormDescription>
+                                Check this box if the user is a widow. This helps in prioritizing cases.
+                                </FormDescription>
+                            </div>
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 <h3 className="text-lg font-semibold border-b pb-2">Account Settings & Roles</h3>
                 <FormField
