@@ -180,7 +180,7 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             donorName: randomDonor.name,
             amount: leadData.helpGiven,
             type: leadData.category,
-            purpose: 'Relief Fund',
+            purpose: 'Loan and Relief Fund',
             status: 'Allocated',
             isAnonymous: false,
             transactionId: `HISTORICAL-${Date.now()}-${Math.random()}`,
