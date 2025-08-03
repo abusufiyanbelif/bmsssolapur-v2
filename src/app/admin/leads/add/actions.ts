@@ -21,14 +21,6 @@ async function handleFileUpload(file: File): Promise<string> {
     return `https://placehold.co/600x400.png?text=verification-doc`;
 }
 
-// Map LeadPurpose to a valid DonationType for the category field.
-const purposeToCategoryMap: Record<LeadPurpose, DonationType> = {
-    'Education': 'Sadaqah',
-    'Medical': 'Sadaqah',
-    'Relief Fund': 'Lillah',
-    'Deen': 'Sadaqah'
-};
-
 export async function handleAddLead(
   formData: FormData
 ): Promise<FormState> {
@@ -43,15 +35,17 @@ export async function handleAddLead(
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
+      category: formData.get("category") as DonationType,
       subCategory: formData.get("subCategory") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
       helpRequested: parseFloat(formData.get("helpRequested") as string),
+      dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
       isLoan: formData.get("isLoan") === 'on',
       caseDetails: formData.get("caseDetails") as string,
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
   
-  if (!rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
+  if (!rawFormData.purpose || !rawFormData.subCategory || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
     return { success: false, error: "Missing required lead details fields." };
   }
 
@@ -98,9 +92,10 @@ export async function handleAddLead(
         campaignName: rawFormData.campaignName,
         purpose: rawFormData.purpose,
         subCategory: rawFormData.subCategory,
-        category: purposeToCategoryMap[rawFormData.purpose] || 'Sadaqah',
+        category: rawFormData.category,
         otherCategoryDetail: rawFormData.subCategory === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         helpRequested: rawFormData.helpRequested,
+        dueDate: rawFormData.dueDate,
         isLoan: rawFormData.isLoan,
         caseDetails: rawFormData.caseDetails,
         verificationDocumentUrl,

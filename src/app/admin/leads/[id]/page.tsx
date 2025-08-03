@@ -5,7 +5,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2, Megaphone } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2, Megaphone, CalendarIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -51,7 +51,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
     const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
-    
+    const dueDate = lead.dueDate ? (lead.dueDate as any).toDate() : null;
+
     return (
         <div className="flex-1 space-y-6">
              <Link href="/admin/leads" className="flex items-center text-sm text-muted-foreground hover:text-primary">
@@ -82,7 +83,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                 Case Summary
                             </CardTitle>
                              <CardDescription>
-                                Purpose: {lead.purpose} {lead.subCategory && `> ${lead.subCategory}`}
+                                Purpose: {lead.purpose} > {lead.category} {lead.subCategory && `> ${lead.subCategory}`}
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
@@ -102,6 +103,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                      <span className="text-muted-foreground mr-2">Type:</span> 
                                      <Badge variant="secondary">{lead.isLoan ? "Loan" : "Aid"}</Badge>
                                 </div>
+                                {dueDate && (
+                                     <div className="flex items-center">
+                                         <span className="text-muted-foreground mr-2">Due Date:</span> 
+                                         <Badge variant="outline" className="text-destructive border-destructive/50">
+                                            <CalendarIcon className="mr-1 h-3 w-3" />
+                                            {format(dueDate, "dd MMM yyyy")}
+                                        </Badge>
+                                    </div>
+                                )}
                                 {lead.campaignName && (
                                     <div className="flex items-center">
                                         <span className="text-muted-foreground mr-2">Campaign:</span> 
@@ -218,5 +228,3 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         </div>
     );
 }
-
-    

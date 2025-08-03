@@ -9,13 +9,6 @@ interface FormState {
     error?: string;
 }
 
-const purposeToCategoryMap: Record<LeadPurpose, DonationType> = {
-    'Education': 'Sadaqah',
-    'Medical': 'Sadaqah',
-    'Relief Fund': 'Lillah',
-    'Deen': 'Sadaqah'
-};
-
 export async function handleUpdateLead(
   leadId: string,
   formData: FormData
@@ -24,15 +17,15 @@ export async function handleUpdateLead(
 
   try {
     const purpose = rawFormData.purpose as LeadPurpose;
-    const category = purposeToCategoryMap[purpose];
 
     const updates: Partial<Lead> = {
         campaignName: rawFormData.campaignName as string | undefined,
         purpose: purpose,
-        category: category,
+        category: rawFormData.category as DonationType,
         subCategory: rawFormData.subCategory as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         helpRequested: parseFloat(rawFormData.helpRequested as string),
+        dueDate: rawFormData.dueDate ? new Date(rawFormData.dueDate as string) : undefined,
         caseDetails: rawFormData.caseDetails as string | undefined,
         isLoan: rawFormData.isLoan === 'on',
         status: rawFormData.status as LeadStatus,

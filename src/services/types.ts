@@ -114,6 +114,7 @@ export interface Lead {
   otherCategoryDetail?: string;
   helpRequested: number;
   helpGiven: number;
+  dueDate?: Date;
   status: LeadStatus;
   isLoan: boolean;
   caseDetails?: string;
