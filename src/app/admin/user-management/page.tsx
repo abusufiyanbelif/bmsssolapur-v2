@@ -168,6 +168,7 @@ export default function UserManagementPage() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Roles</TableHead>
@@ -177,8 +178,9 @@ export default function UserManagementPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedUsers.map((user) => (
+                {paginatedUsers.map((user, index) => (
                     <TableRow key={user.id}>
+                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>
                             <div className="flex flex-col">
@@ -208,11 +210,11 @@ export default function UserManagementPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {paginatedUsers.map(user => (
+            {paginatedUsers.map((user, index) => (
                 <Card key={user.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">{user.name}</CardTitle>
+                            <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {user.name}</CardTitle>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>

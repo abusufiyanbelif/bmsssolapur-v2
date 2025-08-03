@@ -141,6 +141,7 @@ export default function DonationsPage() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Donor</TableHead>
                     <TableHead>Amount</TableHead>
@@ -151,8 +152,9 @@ export default function DonationsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedDonations.map((donation) => (
+                {paginatedDonations.map((donation, index) => (
                     <TableRow key={donation.id}>
+                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
@@ -181,12 +183,12 @@ export default function DonationsPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {paginatedDonations.map(donation => (
+            {paginatedDonations.map((donation, index) => (
                 <Card key={donation.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
                              <div>
-                                <CardTitle className="text-lg">₹{donation.amount.toFixed(2)}</CardTitle>
+                                <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: ₹{donation.amount.toFixed(2)}</CardTitle>
                                 <CardDescription>{donation.donorName}</CardDescription>
                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
@@ -432,5 +434,3 @@ export default function DonationsPage() {
     </div>
   )
 }
-
-    

@@ -227,6 +227,7 @@ export default function LandingPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead>Sr. No.</TableHead>
                                     <TableHead className="w-[25%]">Campaign</TableHead>
                                     <TableHead>Dates</TableHead>
                                     <TableHead className="w-[30%]">Funding Progress</TableHead>
@@ -234,10 +235,11 @@ export default function LandingPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {exampleCampaigns.map((campaign) => {
+                                {exampleCampaigns.map((campaign, index) => {
                                     const progress = campaign.goal > 0 ? (campaign.raised / campaign.goal) * 100 : 100;
                                     return (
                                         <TableRow key={campaign.name}>
+                                            <TableCell>{index + 1}</TableCell>
                                             <TableCell>
                                                 <div className="font-medium">{campaign.name}</div>
                                                 <div className="text-xs text-muted-foreground">{campaign.purpose}</div>

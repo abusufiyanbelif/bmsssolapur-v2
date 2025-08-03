@@ -86,6 +86,7 @@ export default function MyDonationsPage() {
      <Table>
         <TableHeader>
             <TableRow>
+                <TableHead>Sr. No.</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Type</TableHead>
@@ -95,8 +96,9 @@ export default function MyDonationsPage() {
             </TableRow>
         </TableHeader>
         <TableBody>
-            {donations.map((donation) => (
+            {donations.map((donation, index) => (
                 <TableRow key={donation.id}>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                     <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
                     <TableCell>{donation.type}</TableCell>
@@ -117,12 +119,12 @@ export default function MyDonationsPage() {
 
   const renderMobileCards = () => (
       <div className="space-y-4">
-          {donations.map(donation => (
+          {donations.map((donation, index) => (
                <Card key={donation.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
                              <div>
-                                <CardTitle className="text-lg">₹{donation.amount.toFixed(2)}</CardTitle>
+                                <CardTitle className="text-lg">#{index + 1}: ₹{donation.amount.toFixed(2)}</CardTitle>
                                 <CardDescription>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
@@ -196,5 +198,3 @@ export default function MyDonationsPage() {
     </div>
   );
 }
-
-    

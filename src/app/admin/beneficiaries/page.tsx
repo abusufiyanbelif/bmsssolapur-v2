@@ -121,6 +121,7 @@ export default function BeneficiariesPage() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Status</TableHead>
@@ -129,8 +130,9 @@ export default function BeneficiariesPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedBeneficiaries.map((user) => (
+                {paginatedBeneficiaries.map((user, index) => (
                     <TableRow key={user.id}>
+                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>
                             <div className="flex flex-col">
@@ -159,11 +161,11 @@ export default function BeneficiariesPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {paginatedBeneficiaries.map(user => (
+            {paginatedBeneficiaries.map((user, index) => (
                 <Card key={user.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">{user.name}</CardTitle>
+                            <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {user.name}</CardTitle>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>

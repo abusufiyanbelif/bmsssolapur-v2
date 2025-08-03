@@ -64,6 +64,7 @@ export default function MyCasesPage() {
          <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>Date Submitted</TableHead>
                     <TableHead>Purpose</TableHead>
                     <TableHead>Status</TableHead>
@@ -72,10 +73,11 @@ export default function MyCasesPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {cases.map((caseItem) => {
+                {cases.map((caseItem, index) => {
                     const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                     return (
                         <TableRow key={caseItem.id}>
+                            <TableCell>{index + 1}</TableCell>
                             <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.subCategory && ` (${caseItem.subCategory})`}</TableCell>
                             <TableCell>
@@ -101,14 +103,14 @@ export default function MyCasesPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {cases.map(caseItem => {
+            {cases.map((caseItem, index) => {
                 const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                 return (
                     <Card key={caseItem.id}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
+                                    <CardTitle className="text-lg">#{index + 1}: For: {caseItem.purpose}</CardTitle>
                                     <CardDescription>Submitted: {format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
                                 </div>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>

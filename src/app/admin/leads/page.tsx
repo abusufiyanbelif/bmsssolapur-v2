@@ -145,6 +145,7 @@ export default function LeadsPage() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>Date Created</TableHead>
                     <TableHead>Beneficiary</TableHead>
                     <TableHead>Campaign</TableHead>
@@ -155,10 +156,11 @@ export default function LeadsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedLeads.map((lead) => {
+                {paginatedLeads.map((lead, index) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                     return (
                         <TableRow key={lead.id}>
+                            <TableCell>{(currentPage - 1) * leadsPerPage + index + 1}</TableCell>
                             <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
                             <TableCell className="font-medium">{lead.name}</TableCell>
                             <TableCell>{lead.campaignName || 'N/A'}</TableCell>
@@ -186,14 +188,14 @@ export default function LeadsPage() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {paginatedLeads.map((lead) => {
+            {paginatedLeads.map((lead, index) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                 return (
                     <Card key={lead.id}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
+                                    <CardTitle className="text-lg">#{ (currentPage - 1) * leadsPerPage + index + 1 }: {lead.name}</CardTitle>
                                     <CardDescription>Campaign: {lead.campaignName || 'N/A'}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
