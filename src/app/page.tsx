@@ -77,7 +77,8 @@ export default function LandingPage() {
     ];
     
      const exampleCampaigns = [
-        { name: "Zakat Drive 2025", purpose: "Collect Zakat for Ramadan", status: "Upcoming", raised: 0, goal: 500000, startDate: "Mar 2025", endDate: "Apr 2025" },
+        { name: "Zakat Drive 2026", purpose: "Collect Zakat for Ramadan", status: "Upcoming", raised: 0, goal: 600000, startDate: "Mar 2026", endDate: "Apr 2026" },
+        { name: "Zakat Drive 2025", purpose: "Collect Zakat for Ramadan", status: "Completed", raised: 500000, goal: 500000, startDate: "Mar 2025", endDate: "Apr 2025" },
         { name: "Hospital Emergency Fund", purpose: "Support critical surgery cases", status: "Ongoing", raised: 150000, goal: 300000, startDate: "Jan 2025", endDate: "Dec 2025" },
         { name: "Monthly Relief", purpose: "Provide monthly support to 50 families", status: "Ongoing", raised: 750000, goal: 1200000, startDate: "Jan 2025", endDate: "Dec 2025" },
         { name: "Education Support 2024", purpose: "Raise funds for school fees", status: "Completed", raised: 250000, goal: 250000, startDate: "Jun 2024", endDate: "Aug 2024" },
