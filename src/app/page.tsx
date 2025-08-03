@@ -201,10 +201,10 @@ export default function LandingPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                            <CheckCircle className="text-primary"/>
-                           Example Campaigns
+                           Types of Initiatives
                         </CardTitle>
                         <CardDescription>
-                            Here are some examples of the types of campaigns we organize.
+                            We focus on several key areas to provide comprehensive support to our community.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
