@@ -1,7 +1,8 @@
+
 // src/services/firebase.ts
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getAuth, Auth } from "firebase/auth";
 import { config } from '@/lib/config';
 
 const firebaseConfig = {
@@ -23,9 +24,9 @@ const isConfigPotentiallyValid = (config: typeof firebaseConfig) => {
 // Check if all required firebase config values are present and not placeholders
 export const isConfigValid = isConfigPotentiallyValid(firebaseConfig);
 
-let app;
-let db;
-let auth;
+let app: FirebaseApp;
+let db: Firestore;
+let auth: Auth;
 
 if (isConfigValid) {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -34,9 +35,9 @@ if (isConfigValid) {
 } else {
     console.warn("Firebase configuration is missing, incomplete, or contains placeholder values. Firebase services will not be initialized.");
     // Provide dummy objects to prevent app from crashing when firebase is not configured
-    app = {};
-    db = {};
-    auth = {};
+    app = {} as FirebaseApp;
+    db = {} as Firestore;
+    auth = {} as Auth;
 }
 
 
