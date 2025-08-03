@@ -16,6 +16,7 @@ import type { Quote, Donation, Lead } from "@/services/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/logo";
 
 export default function LandingPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -95,8 +96,11 @@ export default function LandingPage() {
         <div className="flex-1 space-y-12">
             {/* Hero Section */}
             <section className="text-center py-20 px-4 bg-secondary rounded-lg">
+                <div className="flex justify-center mb-6">
+                    <Logo className="h-16 w-16" />
+                </div>
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline text-primary">
-                    Your small help can make a large impact and empower our community.
+                    Your small help can make a large impact.
                 </h1>
                 <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
                     Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
