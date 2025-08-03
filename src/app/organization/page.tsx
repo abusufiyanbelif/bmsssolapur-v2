@@ -101,10 +101,10 @@ export default async function OrganizationPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                         <Award className="h-6 w-6 text-accent" />
-                        Our Principles
+                        Our Guiding Principles
                     </CardTitle>
                     <CardDescription>
-                        This group is made for the charitable purpose of assisting needy people. The following principles guide our work.
+                        To ensure our operations are transparent, fair, and impactful, we adhere to a clear set of guiding principles. These rules govern how we identify beneficiaries, allocate funds, and manage our resources to best serve the community.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

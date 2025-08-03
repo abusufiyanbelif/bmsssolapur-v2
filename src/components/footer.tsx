@@ -79,10 +79,10 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="text-lg font-semibold font-headline text-foreground">Our Commitment</h4>
             <p className="text-sm text-muted-foreground">
-              We are dedicated to operating with transparency and accountability. Our work is guided by core principles that ensure your contributions make a direct and meaningful impact.
+              We are dedicated to complete transparency and accountability in all our endeavors. Our work is guided by core principles that ensure your contributions directly and meaningfully impact those in need.
             </p>
             <Link href="/organization#principles" className="text-sm font-semibold text-primary hover:underline">
-                Learn More →
+                Read Our Principles →
             </Link>
           </div>
 
