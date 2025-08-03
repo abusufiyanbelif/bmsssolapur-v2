@@ -55,9 +55,9 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     registrationNumber: "MAHA/123/2024",
     panNumber: "AAFTB9401P",
     contactEmail: "contact@baitulmalsolapur.org",
-    contactPhone: "+91 12345 67890",
+    contactPhone: "919372145889",
     website: "https://baitulmalsolapur.org",
-    upiId: "maaz9145@okhdfcbank",
+    upiId: "919372145889@paytm",
     qrCodeUrl: "https://placehold.co/200x200.png",
 };
 
