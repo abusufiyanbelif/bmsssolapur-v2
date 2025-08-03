@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -225,7 +226,7 @@ export default function LeadsPage() {
                         </CardContent>
                          <CardFooter className="flex justify-end">
                             {renderActionButton(lead)}
-                        </CardFooter>
+                         </CardFooter>
                     </Card>
                 );
             })}
@@ -416,3 +417,5 @@ export default function LeadsPage() {
     </div>
   )
 }
+
+    

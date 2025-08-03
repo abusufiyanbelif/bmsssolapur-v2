@@ -285,3 +285,5 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
         </Card>
     );
 }
+
+    

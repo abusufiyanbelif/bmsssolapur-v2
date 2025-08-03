@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ValidatorForm } from "./validator-form";
 
@@ -19,3 +20,5 @@ export default function ValidatorPage() {
         </div>
     );
 }
+
+    
