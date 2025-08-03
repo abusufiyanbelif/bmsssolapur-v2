@@ -53,6 +53,7 @@ export async function handleRequestHelp(
         helpRequested: rawFormData.helpRequested,
         caseDetails: rawFormData.caseDetails,
         verificationDocumentUrl,
+        donations: [],
     };
 
     const newLead = await createLead({ ...newLeadData, isLoan: false, purpose: 'Relief Fund' }, userId);
