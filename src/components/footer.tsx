@@ -1,5 +1,4 @@
 
-
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
@@ -45,14 +44,34 @@ export function Footer() {
                     </p>
                 </div>
                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <a href="tel:+919876543210" className="text-muted-foreground hover:text-primary">+91 98765 43210</a>
-                </div>
-                 <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-primary" />
                      <a href="mailto:info@baitulmalsolapur.org" className="text-muted-foreground hover:text-primary">info@baitulmalsolapur.org</a>
                 </div>
             </div>
+             <div className="space-y-3 pt-4">
+                <h5 className="font-semibold text-foreground text-sm">Key Contacts</h5>
+                 <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <div className="text-sm">
+                        <span className="text-muted-foreground">Maaz Shaikh: </span>
+                        <a href="tel:+919372145889" className="font-medium text-foreground hover:text-primary">9372145889</a>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-primary" />
+                     <div className="text-sm">
+                        <span className="text-muted-foreground">Abu Rehan Bedrekar: </span>
+                        <a href="tel:+917276224160" className="font-medium text-foreground hover:text-primary">7276224160</a>
+                    </div>
+                </div>
+                 <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <div className="text-sm">
+                        <span className="text-muted-foreground">Moosa Shaikh: </span>
+                        <a href="tel:+918421708907" className="font-medium text-foreground hover:text-primary">8421708907</a>
+                    </div>
+                </div>
+             </div>
              <div className="space-y-2 text-sm pt-4">
                 <h4 className="font-semibold text-foreground">Connect With Us</h4>
                 <ul className="flex items-center gap-4">
