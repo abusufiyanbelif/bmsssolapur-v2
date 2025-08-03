@@ -13,6 +13,8 @@ import { Progress } from "@/components/ui/progress";
 import { getAllLeads } from "@/services/lead-service";
 import { useEffect, useState } from "react";
 import type { Quote, Donation, Lead } from "@/services/types";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export default function LandingPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -71,6 +73,13 @@ export default function LandingPage() {
             icon: Target,
             description: "Help requests that have been fully funded.",
         },
+    ];
+    
+    const exampleCampaigns = [
+        { name: "Zakat Drive 2025", purpose: "Collect Zakat for Ramadan", status: "Approved" },
+        { name: "Hospital Emergency Fund", purpose: "Support 5 surgery cases", status: "Approved" },
+        { name: "Monthly Relief", purpose: "Provide monthly support to families", status: "Approved" },
+        { name: "Education Support", purpose: "Raise funds for 10 school fees", status: "Approved" },
     ];
 
     return (
@@ -180,6 +189,50 @@ export default function LandingPage() {
                 </section>
             )}
 
+            {/* Example Campaigns Section */}
+            <section id="example-campaigns">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Initiatives</h2>
+                    <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+                        We run various campaigns throughout the year to address the community's needs.
+                    </p>
+                </div>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                           <CheckCircle className="text-primary"/>
+                           Example Campaigns
+                        </CardTitle>
+                        <CardDescription>
+                            Here are some examples of the types of campaigns we organize.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Campaign Name</TableHead>
+                                    <TableHead>Purpose</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {exampleCampaigns.map((campaign) => (
+                                    <TableRow key={campaign.name}>
+                                        <TableCell className="font-medium">{campaign.name}</TableCell>
+                                        <TableCell>{campaign.purpose}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="bg-green-100 text-green-800">{campaign.status}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </section>
+
+
             {/* Wisdom and Reflection Section */}
             <section id="wisdom">
                 <div className="text-center mb-8">
@@ -205,5 +258,3 @@ export default function LandingPage() {
         </div>
     );
 }
-
-    
