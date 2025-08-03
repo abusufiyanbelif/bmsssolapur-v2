@@ -175,7 +175,13 @@ export async function handleGoogleLogin(firebaseUser: {
         isActive: true, // New users are active by default
         createdAt: Timestamp.now(),
         gender: 'Other',
-        address: '',
+        address: {
+            addressLine1: '',
+            city: 'Solapur',
+            state: 'Maharashtra',
+            country: 'India',
+            pincode: '',
+        },
         panNumber: '',
         aadhaarNumber: '',
         privileges: [],
