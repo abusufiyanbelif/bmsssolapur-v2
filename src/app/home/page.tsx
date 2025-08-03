@@ -18,7 +18,7 @@ import { getRandomQuotes } from "@/services/quotes-service";
 import type { User, Donation, Lead, Quote } from "@/services/types";
 
 interface UserHomePageProps {
-  user: User & { isLoggedIn: boolean; };
+  user: (User & { isLoggedIn: boolean; }) | null;
   activeRole: string;
 }
 
@@ -131,10 +131,10 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
     <div className="flex-1 space-y-6">
       <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
-            Welcome{loading || !user.isLoggedIn ? '' : `, ${user?.name || 'Guest'}`}!
+            Welcome{loading || !user?.isLoggedIn ? '' : `, ${user?.name || 'Guest'}`}!
         </h2>
         <p className="text-muted-foreground">
-          {activeRole && user.isLoggedIn ? (
+          {activeRole && user?.isLoggedIn ? (
             <>You are currently viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.</>
           ) : (
             "Please log in to continue."

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         createdAt: new Date() as any,
     };
     
-    const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; }>(guestUser);
+    const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
     
     useEffect(() => {
         const checkUser = async () => {
@@ -89,8 +90,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 
     const handleRoleChange = (newRole: string) => {
+        if (!user) return;
         const previousRole = user.activeRole;
-        setUser(currentUser => ({...currentUser, activeRole: newRole}));
+        setUser(currentUser => currentUser ? ({...currentUser, activeRole: newRole}) : null);
         localStorage.setItem('activeRole', newRole);
         setRequiredRole(null); 
 
@@ -125,7 +127,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const activeRole = user.activeRole;
+    const activeRole = user?.activeRole ?? "Guest";
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
@@ -145,6 +147,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
         return child;
     });
+
+    if (!user) {
+        // Render a loading state or a minimal shell while the user is being determined.
+        return (
+             <div className="flex items-center justify-center h-screen">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+            </div>
+        )
+    }
 
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
