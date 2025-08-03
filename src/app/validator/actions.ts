@@ -1,10 +1,14 @@
+
 "use server";
 
 import {
   validateConfiguration,
-  type ValidateConfigurationInput,
-  type ValidateConfigurationOutput,
 } from "@/ai/flows/configuration-validator";
+import type {
+  ValidateConfigurationInput,
+  ValidateConfigurationOutput,
+} from "@/ai/schemas";
+
 
 type FormState = ValidateConfigurationOutput | null;
 
