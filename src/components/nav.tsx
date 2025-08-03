@@ -5,9 +5,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { 
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
-    FileCheck, FileText, Banknote, UserPlus, Lock, BookText,
+    FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database
+    Database, Building
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -48,6 +48,7 @@ const allNavItems: NavItem[] = [
     
     // Super Admin
     { href: "/admin/user-management", label: "User Management", icon: UserCog, allowedRoles: ["Super Admin"] },
+    { href: "/admin/organization", label: "Organization", icon: Building, allowedRoles: ["Super Admin"] },
     { href: "/admin/settings", label: "App Settings", icon: Settings, allowedRoles: ["Super Admin"] },
     { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
     { href: "/services", label: "Services Summary", icon: Server, allowedRoles: ["Super Admin"] },
