@@ -21,7 +21,7 @@ interface DeleteConfirmationDialogProps {
   children: React.ReactNode;
   itemType: string;
   itemName: string;
-  onDelete: () => Promise<{ success: boolean, error?: string }>;
+  onDelete: () => Promise<{ success: boolean, error?: string } | void>;
   onSuccess?: () => void;
 }
 
@@ -40,16 +40,21 @@ export function DeleteConfirmationDialog({
     const result = await onDelete();
     setIsDeleting(false);
 
-    if (result.success) {
+    if (result && result.success) {
         if (onSuccess) {
             onSuccess();
         }
-    } else {
+    } else if (result) { // Check if result exists before trying to access .error
       toast({
         variant: "destructive",
         title: `Failed to delete ${itemType}`,
         description: result.error || "An unknown error occurred.",
       });
+    } else if (!result) {
+        // This case handles when the onDelete function is successful but returns no object.
+        if (onSuccess) {
+            onSuccess();
+        }
     }
   };
 
