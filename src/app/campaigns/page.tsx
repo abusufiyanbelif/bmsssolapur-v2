@@ -32,7 +32,7 @@ export default function CampaignsPage() {
     
     return (
         <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Approved Campaigns</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Verified Cases for Donation</h2>
 
             {organization?.upiId && (
                 <Alert>
@@ -52,7 +52,7 @@ export default function CampaignsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Help a Cause</CardTitle>
+                    <CardTitle>Support an Individual Case</CardTitle>
                     <CardDescription>
                         Browse through the verified cases that are currently seeking support. Your donation can make a difference.
                     </CardDescription>
@@ -61,7 +61,7 @@ export default function CampaignsPage() {
                     {loading ? (
                         <div className="flex items-center justify-center py-10">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="ml-2">Loading campaigns...</p>
+                            <p className="ml-2">Loading cases...</p>
                         </div>
                     ) : (
                         <CampaignList initialLeads={leads} />

@@ -140,7 +140,7 @@ export default function LandingPage() {
             ) : featuredLeads.length > 0 && (
                 <section id="featured-campaigns">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Featured Campaigns</h2>
+                        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Featured Cases</h2>
                         <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
                             Choose a cause that speaks to you. Every donation makes a difference.
                         </p>
@@ -183,7 +183,7 @@ export default function LandingPage() {
                     </div>
                     <div className="mt-12 text-center">
                         <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-                            <Link href="/campaigns">View All Campaigns</Link>
+                            <Link href="/campaigns">View All Cases</Link>
                         </Button>
                     </div>
                 </section>

@@ -33,7 +33,7 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
                 }));
                 setLeads(enriched as EnrichedLead[]);
             } catch (e) {
-                setError("Failed to load beneficiary details for campaigns.");
+                setError("Failed to load beneficiary details for cases.");
             } finally {
                 setLoading(false);
             }
@@ -46,7 +46,7 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
         return (
             <div className="flex items-center justify-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-2">Loading campaigns...</p>
+                <p className="ml-2">Loading cases...</p>
             </div>
         );
     }
@@ -64,9 +64,9 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
     if (leads.length === 0) {
         return (
             <div className="text-center py-20 bg-muted/50 rounded-lg">
-                <h3 className="text-xl font-semibold">All Campaigns Fully Funded!</h3>
+                <h3 className="text-xl font-semibold">All Cases Fully Funded!</h3>
                 <p className="text-muted-foreground mt-2">
-                    Thank you for your generosity. There are no open campaigns at the moment.
+                    Thank you for your generosity. There are no open cases at the moment.
                 </p>
             </div>
         );

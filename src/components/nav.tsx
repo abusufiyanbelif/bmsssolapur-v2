@@ -25,20 +25,20 @@ type NavItem = {
 const allNavItems: NavItem[] = [
     // Guest
     { href: "/", label: "Home", icon: Home, allowedRoles: ["Guest"] },
-    { href: "/campaigns", label: "Approved Campaigns", icon: Megaphone, allowedRoles: ["Guest"] },
+    { href: "/campaigns", label: "Verified Cases", icon: Megaphone, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (for non-admins)
     { href: "/home", label: "Home", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
     
     // Donor
-    { href: "/campaigns", label: "Approved Leads", icon: FileCheck, allowedRoles: ["Donor"] },
+    { href: "/campaigns", label: "Verified Cases", icon: FileCheck, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
     { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
-    { href: "/campaigns", label: "View Public Campaigns", icon: Megaphone, allowedRoles: ["Beneficiary"] },
+    { href: "/campaigns", label: "View Public Cases", icon: Megaphone, allowedRoles: ["Beneficiary"] },
     
     // Admin
     { href: "/admin", label: "Dashboard", icon: Home, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
