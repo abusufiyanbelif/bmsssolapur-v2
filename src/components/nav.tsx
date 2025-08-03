@@ -7,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building
+    Database, Building, Award
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
