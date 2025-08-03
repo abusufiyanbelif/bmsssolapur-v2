@@ -1,18 +1,24 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
-import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard, Award } from "lucide-react";
+import { getAllUsers } from "@/services/user-service";
+import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard, Award, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { User } from "@/services/types";
 
 export default async function OrganizationPage() {
     let organization;
+    let users: User[] = [];
     let error = null;
 
     try {
-        organization = await getCurrentOrganization();
+        [organization, users] = await Promise.all([
+            getCurrentOrganization(),
+            getAllUsers()
+        ]);
     } catch(e) {
         error = e instanceof Error ? e.message : "An unknown error occurred while fetching organization details.";
         console.error(e);
@@ -56,9 +62,28 @@ export default async function OrganizationPage() {
         { icon: CreditCard, label: "UPI ID", value: organization.upiId || "Not Available" },
         { icon: Globe, label: "Website", value: organization.website || "Not Available" },
         { icon: ShieldCheck, label: "PAN Number", value: organization.panNumber || "Not Available" },
-        { icon: ShieldCheck, label: "Aadhaar Number", value: organization.aadhaarNumber || "Not Available" },
     ];
     
+    const founders = users.filter(u => u.groups?.includes('Founder'));
+    const cofounders = users.filter(u => u.groups?.includes('Co-Founder') && !u.groups?.includes('Founder'));
+    const members = users.filter(u => u.groups?.includes('Member of Organization'));
+
+    const MemberCard = ({ user }: { user: User }) => {
+        const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        return (
+            <div className="flex items-center gap-4 p-4 border rounded-lg">
+                <Avatar>
+                    <AvatarImage src={`https://placehold.co/100x100.png?text=${initials}`} alt={user.name} data-ai-hint="male portrait" />
+                    <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-semibold">{user.name}</p>
+                    <p className="text-sm text-muted-foreground">{user.phone}</p>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="flex-1 space-y-6">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
@@ -93,6 +118,38 @@ export default async function OrganizationPage() {
                                 </p>
                              </div>
                         )}
+                    </div>
+                </CardContent>
+            </Card>
+            
+            <Card id="board-members">
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                        <Users className="h-6 w-6 text-accent" />
+                        Our Board Members
+                    </CardTitle>
+                    <CardDescription>
+                        The dedicated individuals leading our organization and its mission.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Founder</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {founders.map(user => <MemberCard key={user.id} user={user} />)}
+                        </div>
+                    </div>
+                     <div>
+                        <h3 className="text-lg font-semibold mb-4">Co-Founders</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {cofounders.map(user => <MemberCard key={user.id} user={user} />)}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Members</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {members.map(user => <MemberCard key={user.id} user={user} />)}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
