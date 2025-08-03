@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, AlertCircle } from "lucide-react";
+import { Download, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Donation, DonationStatus } from "@/services/types";
 
 const statusColors: Record<DonationStatus, string> = {
@@ -29,6 +30,10 @@ export default function MyDonationsPage() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -63,6 +68,17 @@ export default function MyDonationsPage() {
     fetchDonations();
   }, [userId]);
   
+    const paginatedDonations = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return donations.slice(startIndex, startIndex + itemsPerPage);
+    }, [donations, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(donations.length / itemsPerPage);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [itemsPerPage]);
+  
   const handleDownloadReceipt = () => {
     toast({
         title: "In Progress",
@@ -96,9 +112,9 @@ export default function MyDonationsPage() {
             </TableRow>
         </TableHeader>
         <TableBody>
-            {donations.map((donation, index) => (
+            {paginatedDonations.map((donation, index) => (
                 <TableRow key={donation.id}>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                     <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                     <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
                     <TableCell>{donation.type}</TableCell>
@@ -119,12 +135,12 @@ export default function MyDonationsPage() {
 
   const renderMobileCards = () => (
       <div className="space-y-4">
-          {donations.map((donation, index) => (
+          {paginatedDonations.map((donation, index) => (
                <Card key={donation.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
                              <div>
-                                <CardTitle className="text-lg">#{index + 1}: ₹{donation.amount.toFixed(2)}</CardTitle>
+                                <CardTitle className="text-lg">#{(currentPage - 1) * itemsPerPage + index + 1}: ₹{donation.amount.toFixed(2)}</CardTitle>
                                 <CardDescription>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
@@ -149,6 +165,60 @@ export default function MyDonationsPage() {
           ))}
       </div>
   );
+  
+   const renderPaginationControls = () => (
+        <div className="flex items-center justify-between pt-4">
+            <div className="text-sm text-muted-foreground">
+                Showing {paginatedDonations.length} of {donations.length} donations.
+            </div>
+            <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                        value={`${itemsPerPage}`}
+                        onValueChange={(value) => {
+                            setItemsPerPage(Number(value))
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder={itemsPerPage} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                        {[10, 25, 50].map((pageSize) => (
+                            <SelectItem key={pageSize} value={`${pageSize}`}>
+                            {pageSize}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+
 
   const renderContent = () => {
     if (loading) {
@@ -178,7 +248,12 @@ export default function MyDonationsPage() {
         )
     }
 
-    return isMobile ? renderMobileCards() : renderDesktopTable();
+    return (
+        <>
+            {isMobile ? renderMobileCards() : renderDesktopTable()}
+            {totalPages > 1 && renderPaginationControls()}
+        </>
+    )
   }
   
   return (

@@ -74,7 +74,7 @@ export default function LeadsPage() {
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
-    const [leadsPerPage, setLeadsPerPage] = useState(10);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         const fetchLeads = async () => {
@@ -126,11 +126,11 @@ export default function LeadsPage() {
     }, [leads, appliedFilters]);
     
     const paginatedLeads = useMemo(() => {
-        const startIndex = (currentPage - 1) * leadsPerPage;
-        return filteredLeads.slice(startIndex, startIndex + leadsPerPage);
-    }, [filteredLeads, currentPage, leadsPerPage]);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredLeads.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredLeads, currentPage, itemsPerPage]);
 
-    const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
+    const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
 
     const resetFilters = () => {
         setNameInput('');
@@ -143,7 +143,7 @@ export default function LeadsPage() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [leadsPerPage]);
+    }, [itemsPerPage]);
     
     const renderActionButton = (lead: Lead) => (
         <Button variant="outline" size="sm" asChild>
@@ -172,7 +172,7 @@ export default function LeadsPage() {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                     return (
                         <TableRow key={lead.id}>
-                            <TableCell>{(currentPage - 1) * leadsPerPage + index + 1}</TableCell>
+                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
                             <TableCell className="font-medium">{lead.name}</TableCell>
                             <TableCell>{lead.campaignName || 'N/A'}</TableCell>
@@ -207,7 +207,7 @@ export default function LeadsPage() {
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">#{ (currentPage - 1) * leadsPerPage + index + 1 }: {lead.name}</CardTitle>
+                                    <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {lead.name}</CardTitle>
                                     <CardDescription>Campaign: {lead.campaignName || 'N/A'}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
@@ -250,13 +250,13 @@ export default function LeadsPage() {
                  <div className="flex items-center gap-2">
                     <p className="text-sm font-medium">Rows per page</p>
                     <Select
-                        value={`${leadsPerPage}`}
+                        value={`${itemsPerPage}`}
                         onValueChange={(value) => {
-                            setLeadsPerPage(Number(value))
+                            setItemsPerPage(Number(value))
                         }}
                     >
                         <SelectTrigger className="h-8 w-[70px]">
-                        <SelectValue placeholder={leadsPerPage} />
+                        <SelectValue placeholder={itemsPerPage} />
                         </SelectTrigger>
                         <SelectContent side="top">
                         {[10, 25, 50].map((pageSize) => (
