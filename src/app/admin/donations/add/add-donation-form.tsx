@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 
@@ -61,6 +61,13 @@ interface AddDonationFormProps {
 export function AddDonationForm({ users }: AddDonationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // In a real app, this would be handled by a more robust session management.
+    const storedUserId = localStorage.getItem('userId');
+    setAdminUserId(storedUserId);
+  }, []);
   
   const anonymousDonor = users.find(u => u.name === "Anonymous Donor");
 
@@ -77,12 +84,21 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
   const paymentMethod = form.watch("paymentMethod");
 
   async function onSubmit(values: AddDonationFormValues) {
+    if (!adminUserId) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not identify the logged in administrator. Please log out and back in.",
+        });
+        return;
+    }
     setIsSubmitting(true);
     
     const formData = new FormData();
     const donorId = isAnonymous ? anonymousDonor!.id! : values.donorId!;
     const donorName = isAnonymous ? "Anonymous Donor" : users.find(u => u.id === values.donorId)?.name || "Unknown";
 
+    formData.append("adminUserId", adminUserId);
     formData.append("donorId", donorId);
     formData.append("donorName", donorName);
     formData.append("isAnonymous", String(values.isAnonymous));

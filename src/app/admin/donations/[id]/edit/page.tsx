@@ -1,3 +1,4 @@
+
 import { getDonation } from "@/services/donation-service";
 import { notFound } from "next/navigation";
 import { EditDonationForm } from "./edit-donation-form";
@@ -14,9 +15,6 @@ export default async function EditDonationPage({ params }: { params: { id: strin
         notFound();
     }
     
-    // In a real app, this would come from a session provider.
-    const adminUserId = "admin_user_placeholder_id";
-
     return (
         <div className="flex-1 space-y-4">
              <Link href="/admin/donations" className="flex items-center text-sm text-muted-foreground hover:text-primary">
@@ -32,7 +30,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                 </AlertDescription>
             </Alert>
             
-            <EditDonationForm donation={donation} adminUserId={adminUserId} />
+            <EditDonationForm donation={donation} />
         </div>
     );
 }

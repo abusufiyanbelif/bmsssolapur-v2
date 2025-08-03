@@ -25,7 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonation } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import type { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,12 +47,18 @@ type EditDonationFormValues = z.infer<typeof formSchema>;
 
 interface EditDonationFormProps {
   donation: Donation;
-  adminUserId: string; // This should come from session in a real app
 }
 
-export function EditDonationForm({ donation, adminUserId }: EditDonationFormProps) {
+export function EditDonationForm({ donation }: EditDonationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // In a real app, this would be handled by a more robust session management.
+    const storedUserId = localStorage.getItem('userId');
+    setAdminUserId(storedUserId);
+  }, []);
 
   const form = useForm<EditDonationFormValues>({
     resolver: zodResolver(formSchema),
@@ -69,6 +75,15 @@ export function EditDonationForm({ donation, adminUserId }: EditDonationFormProp
   const { formState: { isDirty } } = form;
 
   async function onSubmit(values: EditDonationFormValues) {
+    if (!adminUserId) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not identify the logged in administrator. Please log out and back in.",
+        });
+        return;
+    }
+
     setIsSubmitting(true);
     
     const formData = new FormData();

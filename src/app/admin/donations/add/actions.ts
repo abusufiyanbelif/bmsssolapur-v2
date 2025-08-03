@@ -23,8 +23,11 @@ async function handleFileUpload(file: File): Promise<string> {
 export async function handleAddDonation(
   formData: FormData
 ): Promise<FormState> {
-  // In a real app, you'd get the logged-in user's ID here.
-  const adminUserId = "admin_user_placeholder_id";
+  const adminUserId = formData.get("adminUserId") as string;
+  
+  if (!adminUserId) {
+    return { success: false, error: "Could not identify the administrator performing this action. Please log out and try again." };
+  }
 
   try {
     const adminUser = await getUser(adminUserId); // Fetch admin user details for logging
