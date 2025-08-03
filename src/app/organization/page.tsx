@@ -59,11 +59,8 @@ export default async function OrganizationPage() {
         )
     }
 
-    const keyContacts = [
-        ...founders.filter(u => u.phone), 
-        ...cofounders.filter(u => u.phone),
-        ...financeTeam.filter(u => u.phone)
-    ];
+    const keyContacts = users.filter(u => ["7276224160", "9372145889", "8421708907"].includes(u.phone));
+
 
     const details = [
         { icon: Building, label: "Organization Name", value: organization.name },
@@ -117,11 +114,11 @@ export default async function OrganizationPage() {
                                 <Phone className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <p className="font-semibold">Key Contacts</p>
-                                    {keyContacts.map(contact => (
+                                    {keyContacts.length > 0 ? keyContacts.map(contact => (
                                         <p key={contact.id} className="text-muted-foreground">
                                             {contact.name}: {contact.phone}
                                         </p>
-                                    ))}
+                                    )) : <p className="text-muted-foreground">No key contacts assigned.</p>}
                                 </div>
                             </div>
                         </div>
