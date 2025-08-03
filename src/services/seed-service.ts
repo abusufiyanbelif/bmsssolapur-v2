@@ -26,13 +26,13 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { name: "Muddasir", email: "muddasir@example.com", phone: "7385557820", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
     
     // Generic Donor for Anonymous Donations
-    { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [], isActive: true, gender: 'Other' },
+    { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other' },
 
     // Hardcoded Donor user
-    { name: "Donor", email: "donor@example.com", phone: "1111111111", roles: ["Donor"], privileges: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Donor", email: "donor@example.com", phone: "1111111111", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
 
     // Hardcoded Beneficiary user
-    { name: "Beneficiary", email: "beneficiary@example.com", phone: "2222222222", roles: ["Beneficiary"], privileges: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { name: "Beneficiary", email: "beneficiary@example.com", phone: "2222222222", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
 ];
 
 const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'subCategory'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
@@ -95,8 +95,8 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
              // User exists, update them with the seed data
             await updateUser(existingUser.id!, {
                 roles: userData.roles,
-                groups: userData.groups,
-                privileges: userData.privileges,
+                groups: userData.groups || [],
+                privileges: userData.privileges || [],
                 isActive: userData.isActive,
             });
             results.push({ name: userData.name, status: 'Updated' });
@@ -293,4 +293,3 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         };
     }
 };
-

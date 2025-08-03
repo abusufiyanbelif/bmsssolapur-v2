@@ -79,6 +79,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         groups: user.groups || [],
         id: userRef.id,
         createdAt: user.createdAt || Timestamp.now(),
+        updatedAt: user.updatedAt || Timestamp.now(),
     };
     await setDoc(userRef, finalUserData, { merge: true }); // Use merge to avoid overwriting on OAuth creation
     return finalUserData;
@@ -213,7 +214,7 @@ export const deleteUser = async (id: string) => {
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     if (!isConfigValid) {
-      console.warn("Firebase not configured. Skipping fetching all users.");
+      console.warn("Firebase is not configured. Skipping fetching all users.");
       return [];
     }
     try {
