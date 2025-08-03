@@ -93,7 +93,7 @@ export default function LandingPage() {
 
 
     return (
-        <div className="flex-1 space-y-12">
+        <div className="flex-1 space-y-8">
             {/* Hero Section */}
             <section className="text-center py-20 px-4 bg-secondary rounded-lg">
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline text-primary">
