@@ -105,34 +105,44 @@ export default function UserManagementPage() {
         setCurrentPage(1);
     }, [activeTab, itemsPerPage]);
 
-    const renderActions = (user: User) => (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                    <Link href={`/admin/user-management/${user.id}/edit`}>
-                        <Edit className="mr-2 h-4 w-4" /> Manage
-                    </Link>
-                </DropdownMenuItem>
-                 <DropdownMenuSeparator />
-                 <DeleteConfirmationDialog
-                    itemType="user"
-                    itemName={user.name}
-                    onDelete={() => handleDeleteUser(user.id!)}
-                    onSuccess={onUserDeleted}
-                 >
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+    const renderActions = (user: User) => {
+        // Do not allow deleting the Super Admin or the hardcoded test users for safety
+        const isDeletable = !user.roles.includes('Super Admin') && user.name !== 'Donor' && user.name !== 'Beneficiary' && user.name !== 'Anonymous Donor';
+
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                        <Link href={`/admin/user-management/${user.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" /> Manage
+                        </Link>
                     </DropdownMenuItem>
-                 </DeleteConfirmationDialog>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
+                    {isDeletable && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DeleteConfirmationDialog
+                                itemType="user"
+                                itemName={user.name}
+                                onDelete={() => handleDeleteUser(user.id!)}
+                                onSuccess={onUserDeleted}
+                            >
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                            </DeleteConfirmationDialog>
+                        </>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    }
+
 
     const renderDesktopTable = () => (
         <Table>
@@ -388,5 +398,3 @@ export default function UserManagementPage() {
     </div>
   )
 }
-
-    
