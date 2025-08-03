@@ -248,12 +248,6 @@ export default function MyCasesPage() {
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Help Requests</h2>
-             <Button asChild>
-                <Link href="/request-help">
-                    <FilePlus2 className="mr-2 h-4 w-4" />
-                    Submit New Request
-                </Link>
-            </Button>
         </div>
       <Card>
         <CardHeader>

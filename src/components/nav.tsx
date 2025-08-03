@@ -37,7 +37,6 @@ const allNavItems: NavItem[] = [
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
-    { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
     { href: "/campaigns", label: "View Public Cases", icon: Megaphone, allowedRoles: ["Beneficiary"] },
     
     // Admin
