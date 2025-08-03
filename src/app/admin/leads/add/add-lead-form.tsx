@@ -30,6 +30,7 @@ import { useState } from "react";
 import { Loader2, UserPlus, Users } from "lucide-react";
 import type { User, LeadPurpose } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
