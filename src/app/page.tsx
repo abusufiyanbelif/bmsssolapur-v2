@@ -201,7 +201,7 @@ export default function LandingPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                            <CheckCircle className="text-primary"/>
-                           Types of Initiatives
+                           Types of Campaigns
                         </CardTitle>
                         <CardDescription>
                             We focus on several key areas to provide comprehensive support to our community.
