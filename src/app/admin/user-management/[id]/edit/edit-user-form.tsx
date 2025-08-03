@@ -18,12 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, CheckCircle, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { User, UserRole } from "@/services/types";
+import { getUser } from "@/services/user-service";
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -31,6 +32,12 @@ const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Admin",
     "Finance Admin",
     "Super Admin",
+    "Referral",
+];
+
+const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'Finance Admin'>[] = [
+    "Donor",
+    "Beneficiary",
     "Referral",
 ];
 
@@ -64,6 +71,14 @@ interface EditUserFormProps {
 export function EditUserForm({ user }: EditUserFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
+
+  useEffect(() => {
+    const adminId = localStorage.getItem('userId');
+    if (adminId) {
+      getUser(adminId).then(setCurrentAdmin);
+    }
+  }, []);
 
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(formSchema),
@@ -132,6 +147,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
       });
     }
   }
+
+  const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
 
   return (
     <Card>
@@ -352,7 +369,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         </FormDescription>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {allRoles.map((role) => (
+                        {availableRoles.map((role) => (
                             <FormField
                             key={role}
                             control={form.control}
