@@ -12,7 +12,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           
           {/* Column 1: Organization Info */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:col-span-2">
              <div className="flex items-center gap-3">
                 <Logo className="h-12 w-auto" />
                 <h3 className="text-xl font-bold font-headline text-foreground">
@@ -21,7 +21,7 @@ export function Footer() {
                     <span className="text-primary font-bold">(Solapur)</span>
                 </h3>
              </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-lg">
               Baitul Mal Samajik Sanstha (Solapur) provides life-saving and life-enriching humanitarian aid to underserved populations in the Solapur region, regardless of faith or nationality.
             </p>
              <p className="text-xs text-muted-foreground">
@@ -32,7 +32,7 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Column 2: Contact Us */}
+          {/* Column 2: Contact Us & Socials */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold font-headline text-foreground">Contact Us</h4>
             <div className="space-y-2 text-sm">
@@ -53,33 +53,21 @@ export function Footer() {
                      <a href="mailto:info@baitulmalsolapur.org" className="text-muted-foreground hover:text-primary">info@baitulmalsolapur.org</a>
                 </div>
             </div>
-          </div>
-
-          {/* Column 3: Quick Links */}
-          <div className="grid grid-cols-2 gap-8">
-            <div className="space-y-4">
-                <h4 className="text-lg font-semibold font-headline text-foreground">Connect With Us</h4>
-                <ul className="space-y-2 text-sm">
-                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Facebook />Facebook</a></li>
-                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Instagram />Instagram</a></li>
-                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Twitter />Twitter</a></li>
+             <div className="space-y-2 text-sm pt-4">
+                <h4 className="font-semibold text-foreground">Connect With Us</h4>
+                <ul className="flex items-center gap-4">
+                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Facebook /></a></li>
+                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Instagram /></a></li>
+                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Twitter /></a></li>
                 </ul>
-            </div>
-             <div className="space-y-4">
-                <h4 className="text-lg font-semibold font-headline text-foreground">More</h4>
-                <ul className="space-y-2 text-sm">
-                     <li><Link href="/organization" className="text-muted-foreground hover:text-primary">About Us</Link></li>
-                     <li><Link href="/campaigns" className="text-muted-foreground hover:text-primary">Campaigns</Link></li>
-                     <li><Link href="/login" className="text-muted-foreground hover:text-primary">Admin Login</Link></li>
-                </ul>
-            </div>
+             </div>
           </div>
           
-          {/* Column 4: Our Commitment */}
+          {/* Column 3: Our Commitment */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold font-headline text-foreground">Our Commitment</h4>
             <p className="text-sm text-muted-foreground">
-              We are dedicated to complete transparency and accountability in all our endeavors. Our work is guided by core principles that ensure your contributions directly and meaningfully impact those in need.
+               We are dedicated to complete transparency and accountability in all our endeavors. Our work is guided by core principles that ensure your contributions directly and meaningfully impact those in need.
             </p>
             <Link href="/organization#principles" className="text-sm font-semibold text-primary hover:underline">
                 Read Our Principles →
