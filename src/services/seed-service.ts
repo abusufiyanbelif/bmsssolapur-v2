@@ -4,7 +4,7 @@
  * @fileOverview A service to seed the database with initial data.
  */
 
-import { createUser, User, UserRole, getUserByName, getUserByPhone, getAllUsers, updateUser } from './user-service';
+import { createUser, User, UserRole, getUserByName, getUserByPhone, getAllUsers, updateUser, getUserByEmail } from './user-service';
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
@@ -90,7 +90,10 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             userData.isActive = true;
         }
 
-        const existingUser = await getUserByPhone(userData.phone);
+        const existingUserByPhone = await getUserByPhone(userData.phone);
+        const existingUserByEmail = await getUserByEmail(userData.email);
+
+        const existingUser = existingUserByPhone || existingUserByEmail;
         
         if (existingUser) {
              // User exists, update them with the seed data

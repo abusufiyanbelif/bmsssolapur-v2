@@ -176,6 +176,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     return null;
   }
   try {
+    if (!email) return null;
     const q = query(collection(db, USERS_COLLECTION), where("email", "==", email), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -244,6 +245,3 @@ export const getAllUsers = async (): Promise<User[]> => {
         throw new Error('Failed to get all users.');
     }
 }
-
-
-
