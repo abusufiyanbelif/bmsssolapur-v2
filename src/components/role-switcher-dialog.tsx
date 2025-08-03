@@ -45,9 +45,10 @@ interface RoleSwitcherDialogProps extends DialogProps {
     onRoleChange: (newRole: string) => void;
     currentUserRole: string;
     requiredRole?: string | null;
+    isMandatory?: boolean; // Is closing the dialog disallowed?
 }
 
-export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleChange, currentUserRole, requiredRole }: RoleSwitcherDialogProps) {
+export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleChange, currentUserRole, requiredRole, isMandatory }: RoleSwitcherDialogProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(currentUserRole);
   
   useEffect(() => {
@@ -57,9 +58,7 @@ export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleC
 
   const handleContinue = () => {
     if (selectedRole) {
-        if (selectedRole !== currentUserRole) {
-            onRoleChange(selectedRole);
-        }
+        onRoleChange(selectedRole);
         if (onOpenChange) {
             onOpenChange(false);
         }
@@ -69,17 +68,19 @@ export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleC
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
-          // Prevent closing if a specific role is required
-          if(requiredRole) {
+          // Prevent closing if a specific role is required or selection is mandatory
+          if(requiredRole || isMandatory) {
               e.preventDefault();
           }
       }}>
         <DialogHeader>
           <DialogTitle>Switch Your Profile</DialogTitle>
-          <DialogDescription>
-            {requiredRole 
-                ? `This action requires the "${requiredRole}" profile.`
-                : "You have multiple roles. Choose which profile you want to use for this session."
+           <DialogDescription>
+            {isMandatory 
+                ? "Please select a profile to start your session."
+                : requiredRole 
+                    ? `This action requires the "${requiredRole}" profile.`
+                    : "You have multiple roles. Choose which profile you want to use for this session."
             }
           </DialogDescription>
         </DialogHeader>

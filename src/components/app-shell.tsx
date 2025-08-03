@@ -4,7 +4,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users, User, Home } from "lucide-react";
+import { LogIn, LogOut, Menu, Users, User, Home, Loader2 } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
@@ -29,6 +29,7 @@ import { getUser } from "@/services/user-service";
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
+    const [isSessionReady, setIsSessionReady] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -63,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     if (localStorage.getItem('activeRole') !== activeRole) {
                          localStorage.setItem('activeRole', activeRole);
                     }
-
+                    
                     setUser({
                         ...fetchedUser,
                         isLoggedIn: true,
@@ -76,6 +77,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                         localStorage.removeItem('showRoleSwitcher'); // Consume the flag
+                        // Session is NOT ready until a role is chosen
+                        setIsSessionReady(false);
+                    } else {
+                        setIsSessionReady(true);
                     }
                 } else {
                     // If user ID is invalid, log them out.
@@ -83,6 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }
             } else {
                 setUser(guestUser);
+                setIsSessionReady(true);
             }
         };
         checkUser();
@@ -109,14 +115,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 details: { from: previousRole, to: newRole },
             });
         }
-        // Force a reload to ensure all components pick up the new role from localStorage
-        window.location.reload();
+        
+        // After changing role in the dialog, the session is now ready.
+        // We reload to ensure all components pick up the new role.
+        if (!isSessionReady) {
+            window.location.reload();
+        }
+        setIsSessionReady(true);
     };
     
     const handleLogout = () => {
         localStorage.removeItem('userId');
         localStorage.removeItem('activeRole');
         setUser(guestUser);
+        setIsSessionReady(true);
         router.push('/');
     }
 
@@ -126,13 +138,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     const handleOpenChange = (open: boolean) => {
+        // Prevent closing the dialog if a role switch is mandatory for the session to be ready
+        if (!open && !isSessionReady && user && user.roles.length > 1) {
+            return; 
+        }
         setIsRoleSwitcherOpen(open);
         if (!open) {
             setRequiredRole(null);
         }
     };
 
-    const activeRole = user?.activeRole ?? "Guest";
+    // Pass user and activeRole as props to children
+    const childrenWithProps = Children.map(children, child => {
+        if (isValidElement(child)) {
+            return cloneElement(child as React.ReactElement<any>, { user, activeRole: user?.activeRole });
+        }
+        return child;
+    });
+    
+    const LoadingState = () => (
+        <div className="flex flex-col flex-1 items-center justify-center h-full">
+            <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
+            <p className="mt-4 text-muted-foreground">Initializing your session...</p>
+        </div>
+    )
+
+    if (!user) {
+        return <LoadingState />
+    }
+
+    const activeRole = user.activeRole;
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
@@ -145,23 +180,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </a>
     );
 
-    // Pass user and activeRole as props to children
-    const childrenWithProps = Children.map(children, child => {
-        if (isValidElement(child)) {
-            return cloneElement(child as React.ReactElement<any>, { user, activeRole });
-        }
-        return child;
-    });
-
-    if (!user) {
-        // Render a loading state or a minimal shell while the user is being determined.
-        return (
-             <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
-            </div>
-        )
-    }
-
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-card md:block">
@@ -169,13 +187,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                         <HeaderTitle />
                     </div>
-                    <div className="flex-1">
-                        <Nav 
-                            userRoles={user.roles} 
-                            activeRole={activeRole}
-                            onRoleSwitchRequired={handleOpenRoleSwitcher}
-                        />
-                    </div>
+                    {isSessionReady && (
+                        <div className="flex-1">
+                            <Nav 
+                                userRoles={user.roles} 
+                                activeRole={activeRole}
+                                onRoleSwitchRequired={handleOpenRoleSwitcher}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col">
@@ -195,11 +215,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                                <HeaderTitle />
                             </div>
-                            <Nav 
+                           {isSessionReady && (
+                             <Nav 
                                 userRoles={user.roles}
                                 activeRole={activeRole}
                                 onRoleSwitchRequired={handleOpenRoleSwitcher}
                             />
+                           )}
                         </SheetContent>
                     </Sheet>
                      <div className="w-full flex-1 flex justify-end items-center gap-4">
@@ -263,7 +285,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                    {childrenWithProps}
+                    {!isSessionReady ? <LoadingState /> : childrenWithProps}
                 </main>
                 <Footer />
             </div>
@@ -275,6 +297,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     onRoleChange={handleRoleChange}
                     currentUserRole={user.activeRole}
                     requiredRole={requiredRole}
+                    isMandatory={!isSessionReady}
                 />
             )}
         </div>
