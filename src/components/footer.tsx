@@ -78,10 +78,12 @@ export function Footer() {
           {/* Column 4: Our Commitment */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold font-headline text-foreground">Our Commitment</h4>
-            <div className="flex flex-col gap-4">
-                 <Image src="https://placehold.co/200x100.png" alt="Commitment 1" width={200} height={100} className="rounded-md" data-ai-hint="charity community" />
-                 <Image src="https://placehold.co/200x100.png" alt="Commitment 2" width={200} height={100} className="rounded-md" data-ai-hint="donation help" />
-            </div>
+            <p className="text-sm text-muted-foreground">
+              We are dedicated to operating with transparency and accountability. Our work is guided by core principles that ensure your contributions make a direct and meaningful impact.
+            </p>
+            <Link href="/organization#principles" className="text-sm font-semibold text-primary hover:underline">
+                Learn More →
+            </Link>
           </div>
 
         </div>

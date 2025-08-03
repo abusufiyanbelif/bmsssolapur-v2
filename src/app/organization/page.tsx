@@ -97,7 +97,7 @@ export default async function OrganizationPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card id="principles">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                         <Award className="h-6 w-6 text-accent" />
