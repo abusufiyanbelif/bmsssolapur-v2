@@ -27,11 +27,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserPlus, Users } from "lucide-react";
 import type { User, LeadPurpose } from "@/services/types";
-import Link from "next/link";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { UserPlus } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
@@ -44,7 +42,14 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
 
 
 const formSchema = z.object({
-  beneficiaryId: z.string().min(1, "Beneficiary is required."),
+  beneficiaryType: z.enum(['existing', 'new']).default('existing'),
+  beneficiaryId: z.string().optional(),
+  
+  // New beneficiary fields
+  newBeneficiaryName: z.string().optional(),
+  newBeneficiaryPhone: z.string().optional(),
+  newBeneficiaryEmail: z.string().email().optional(),
+
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
   subCategory: z.string().min(1, "Sub-category is required."),
@@ -61,6 +66,22 @@ const formSchema = z.object({
 }, {
     message: "Please specify details for the 'Other' sub-category.",
     path: ["otherCategoryDetail"],
+}).refine(data => {
+    if (data.beneficiaryType === 'existing') {
+        return !!data.beneficiaryId;
+    }
+    return true;
+}, {
+    message: "Please select an existing beneficiary.",
+    path: ["beneficiaryId"],
+}).refine(data => {
+    if (data.beneficiaryType === 'new') {
+        return !!data.newBeneficiaryName && !!data.newBeneficiaryPhone;
+    }
+    return true;
+}, {
+    message: "New beneficiary name and phone are required.",
+    path: ["newBeneficiaryName"], // Report error on one of the fields
 });
 
 
@@ -79,6 +100,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
   const form = useForm<AddLeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      beneficiaryType: 'existing',
       isLoan: false,
       helpRequested: 0,
     },
@@ -86,12 +108,17 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
 
   const selectedPurpose = form.watch("purpose");
   const selectedSubCategory = form.watch("subCategory");
+  const beneficiaryType = form.watch("beneficiaryType");
 
   async function onSubmit(values: AddLeadFormValues) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append("beneficiaryId", values.beneficiaryId);
+    formData.append("beneficiaryType", values.beneficiaryType);
+    if(values.beneficiaryId) formData.append("beneficiaryId", values.beneficiaryId);
+    if(values.newBeneficiaryName) formData.append("newBeneficiaryName", values.newBeneficiaryName);
+    if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
+    if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
     formData.append("subCategory", values.subCategory);
@@ -110,7 +137,11 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
         title: "Lead Created",
         description: `Successfully created lead for ${result.lead.name}.`,
       });
-      form.reset();
+      form.reset({
+        beneficiaryType: 'existing',
+        isLoan: false,
+        helpRequested: 0,
+      });
     } else {
       toast({
         variant: "destructive",
@@ -119,52 +150,124 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
       });
     }
   }
-  
-  if(potentialBeneficiaries.length === 0) {
-    return (
-        <Alert>
-            <UserPlus className="h-4 w-4" />
-            <AlertTitle>No Beneficiaries Found</AlertTitle>
-            <AlertDescription>
-                There are no users with the 'Beneficiary' role in the system. You must add a beneficiary user before you can create a lead.
-                <Button asChild className="mt-4">
-                    <Link href="/admin/user-management/add">Add Beneficiary User</Link>
-                </Button>
-            </AlertDescription>
-        </Alert>
-    )
-  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         
-        <FormField
+         <FormField
             control={form.control}
-            name="beneficiaryId"
+            name="beneficiaryType"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                 <FormLabel>Beneficiary</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a beneficiary" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {potentialBeneficiaries.map(user => (
-                        <SelectItem key={user.id} value={user.id!}>
-                            {user.name} ({user.phone})
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormDescription>Select the user who will receive the aid. If the user is not listed, <Link href="/admin/user-management/add" className="text-primary underline">add them as a new user</Link> first.</FormDescription>
+                <FormControl>
+                    <RadioGroup
+                    onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue('beneficiaryId', undefined);
+                        form.setValue('newBeneficiaryName', '');
+                        form.setValue('newBeneficiaryPhone', '');
+                        form.setValue('newBeneficiaryEmail', '');
+                    }}
+                    defaultValue={field.value}
+                    className="grid grid-cols-2 gap-4"
+                    >
+                        <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                            <FormControl>
+                                <RadioGroupItem value="existing" className="sr-only" />
+                            </FormControl>
+                            <Users className="mb-3 h-6 w-6" />
+                            Existing Beneficiary
+                        </Label>
+                         <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                            <FormControl>
+                                <RadioGroupItem value="new" className="sr-only" />
+                            </FormControl>
+                            <UserPlus className="mb-3 h-6 w-6" />
+                            New Beneficiary
+                        </Label>
+                    </RadioGroup>
+                </FormControl>
                 <FormMessage />
                 </FormItem>
             )}
-        />
+            />
+
+        {beneficiaryType === 'existing' && (
+            <FormField
+                control={form.control}
+                name="beneficiaryId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Select Beneficiary</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an existing beneficiary" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {potentialBeneficiaries.map(user => (
+                            <SelectItem key={user.id} value={user.id!}>
+                                {user.name} ({user.phone})
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         
+        {beneficiaryType === 'new' && (
+            <div className="space-y-4 p-4 border rounded-lg">
+                <h3 className="font-medium">New Beneficiary Details</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <FormField
+                        control={form.control}
+                        name="newBeneficiaryName"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter beneficiary's full name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="newBeneficiaryPhone"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                                <Input type="tel" maxLength={10} placeholder="Enter 10-digit phone number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                 <FormField
+                    control={form.control}
+                    name="newBeneficiaryEmail"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Email (Optional)</FormLabel>
+                        <FormControl>
+                            <Input type="email" placeholder="beneficiary@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        )}
+
         <FormField
           control={form.control}
           name="campaignName"

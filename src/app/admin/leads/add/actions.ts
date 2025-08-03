@@ -2,9 +2,10 @@
 "use server";
 
 import { createLead } from "@/services/lead-service";
-import { getUser } from "@/services/user-service";
+import { getUser, createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType } from "@/services/types";
+import { Timestamp } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -27,7 +28,11 @@ export async function handleAddLead(
   const adminUserId = "user_placeholder_id_12345";
   
   const rawFormData = {
-      beneficiaryId: formData.get("beneficiaryId") as string,
+      beneficiaryType: formData.get("beneficiaryType") as 'existing' | 'new',
+      beneficiaryId: formData.get("beneficiaryId") as string | undefined,
+      newBeneficiaryName: formData.get("newBeneficiaryName") as string | undefined,
+      newBeneficiaryPhone: formData.get("newBeneficiaryPhone") as string | undefined,
+      newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
       subCategory: formData.get("subCategory") as string,
@@ -38,14 +43,40 @@ export async function handleAddLead(
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
   
-  if (!rawFormData.beneficiaryId || !rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
+  if (!rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
     return { success: false, error: "Missing required lead details fields." };
   }
 
   try {
-    const beneficiaryUser = await getUser(rawFormData.beneficiaryId);
+    let beneficiaryUser: User | null = null;
+    
+    if (rawFormData.beneficiaryType === 'new') {
+        if (!rawFormData.newBeneficiaryName || !rawFormData.newBeneficiaryPhone) {
+            return { success: false, error: "New beneficiary name and phone number are required." };
+        }
+        try {
+            beneficiaryUser = await createUser({
+                name: rawFormData.newBeneficiaryName,
+                phone: rawFormData.newBeneficiaryPhone,
+                email: rawFormData.newBeneficiaryEmail || `${rawFormData.newBeneficiaryPhone}@example.com`,
+                roles: ['Beneficiary'],
+                isActive: true,
+                createdAt: Timestamp.now(),
+            });
+        } catch (e) {
+             const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
+             console.error("Error creating new beneficiary from lead form:", error);
+             return { success: false, error };
+        }
+    } else {
+        if (!rawFormData.beneficiaryId) {
+             return { success: false, error: "Please select an existing beneficiary." };
+        }
+        beneficiaryUser = await getUser(rawFormData.beneficiaryId);
+    }
+    
     if (!beneficiaryUser) {
-        return { success: false, error: "Selected beneficiary user not found." };
+        return { success: false, error: "Could not find or create the beneficiary user." };
     }
       
     let verificationDocumentUrl = "";
@@ -79,7 +110,7 @@ export async function handleAddLead(
     const newLead = await createLead(newLeadData, adminUserId);
     
     revalidatePath("/admin/leads");
-    revalidatePath("/admin/leads/add"); // To refresh the user list
+    revalidatePath("/admin/leads/add"); // To refresh the user list if a new one was added
 
     return {
       success: true,
