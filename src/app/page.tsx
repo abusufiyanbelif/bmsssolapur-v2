@@ -192,7 +192,7 @@ export default function LandingPage() {
             {/* Example Campaigns Section */}
             <section id="example-campaigns">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Initiatives</h2>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Campaigns</h2>
                     <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
                         We run various campaigns throughout the year to address the community's needs.
                     </p>
