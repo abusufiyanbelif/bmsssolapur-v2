@@ -1,69 +1,22 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getUser } from '@/services/user-service';
-import type { Lead, User } from '@/services/types';
+import { EnrichedLead } from './actions';
 
 interface CampaignListProps {
-    initialLeads: Lead[];
+    leads: EnrichedLead[];
 }
 
-interface EnrichedLead extends Lead {
-    beneficiary?: User;
-}
-
-export function CampaignList({ initialLeads }: CampaignListProps) {
-    const [leads, setLeads] = useState<EnrichedLead[]>(initialLeads);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+export function CampaignList({ leads }: CampaignListProps) {
     const router = useRouter();
-
-    useEffect(() => {
-        async function enrichLeads() {
-            try {
-                const enriched = await Promise.all(initialLeads.map(async (lead) => {
-                    const beneficiary = await getUser(lead.beneficiaryId);
-                    return { ...lead, beneficiary };
-                }));
-                setLeads(enriched as EnrichedLead[]);
-            } catch (e) {
-                setError("Failed to load beneficiary details for cases.");
-            } finally {
-                setLoading(false);
-            }
-        }
-        enrichLeads();
-    }, [initialLeads]);
     
     const handleDonateClick = () => {
         sessionStorage.setItem('redirectAfterLogin', '/campaigns');
         router.push('/login');
-    }
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-2">Loading cases...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <Alert variant="destructive" className="my-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
-        );
     }
 
     if (leads.length === 0) {
@@ -91,11 +44,11 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
                         <CardHeader>
                             <CardTitle>{displayName}</CardTitle>
                             <CardDescription>
-                                Seeking help for: <span className="font-semibold">{lead.category}</span>
+                                Seeking help for: <span className="font-semibold">{lead.purpose} {lead.subCategory ? `(${lead.subCategory})` : ''}</span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">
-                            <p className="text-sm text-muted-foreground mb-4">{lead.caseDetails || "No details provided."}</p>
+                            <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{lead.caseDetails || "No details provided."}</p>
                             <Progress value={progress} className="mb-2" />
                             <div className="flex justify-between text-sm">
                                 <span className="font-semibold">Raised: ₹{lead.helpGiven.toLocaleString()}</span>

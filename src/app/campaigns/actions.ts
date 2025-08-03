@@ -2,15 +2,21 @@
 
 "use server";
 
-import type { Lead } from "@/services/types";
+import type { Lead, User } from "@/services/types";
 import { query, collection, where, getDocs } from "firebase/firestore";
 import { db, isConfigValid } from "@/services/firebase";
+import { getUser } from "@/services/user-service";
+
+export interface EnrichedLead extends Lead {
+    beneficiary?: User;
+}
 
 /**
- * Fetches leads that are verified and not yet closed.
+ * Fetches leads that are verified and not yet closed, and enriches them
+ * with their corresponding beneficiary user data.
  * These are the leads that should be displayed publicly for donations.
  */
-export async function getOpenLeads(): Promise<Lead[]> {
+export async function getOpenLeads(): Promise<EnrichedLead[]> {
     if (!isConfigValid) {
         console.warn("Firebase is not configured. Skipping fetching open leads.");
         return [];
@@ -18,38 +24,33 @@ export async function getOpenLeads(): Promise<Lead[]> {
     try {
         const leadsCollection = collection(db, 'leads');
         
-        // Firestore does not support the '!=' (not equal) operator in queries in a way that
-        // scales and can be automatically indexed. 
-        // To get leads that are not 'Closed', we must query for the other statuses ('Pending' and 'Partial')
-        // and merge the results.
+        // Firestore does not support the '!=' (not equal) or 'in' operator for 'status' in this context.
+        // We query for the statuses that mean the lead is "open".
         const q1 = query(
             leadsCollection, 
             where("verifiedStatus", "==", "Verified"),
-            where("status", "==", "Pending")
-        );
-        const q2 = query(
-            leadsCollection, 
-            where("verifiedStatus", "==", "Verified"),
-            where("status", "==", "Partial")
+            where("status", "in", ["Pending", "Partial"])
         );
         
-        const [pendingSnapshot, partialSnapshot] = await Promise.all([
-            getDocs(q1),
-            getDocs(q2)
-        ]);
+        const querySnapshot = await getDocs(q1);
 
         const leads: Lead[] = [];
-        pendingSnapshot.forEach((doc) => {
+        querySnapshot.forEach((doc) => {
             leads.push({ id: doc.id, ...(doc.data() as Omit<Lead, 'id'>) });
         });
-        partialSnapshot.forEach((doc) => {
-            leads.push({ id: doc.id, ...(doc.data() as Omit<Lead, 'id'>) });
-        });
-
+        
         // Sort by most recently created first
         leads.sort((a, b) => b.dateCreated.toMillis() - a.dateCreated.toMillis());
 
-        return leads;
+        // Enrich leads with beneficiary data
+        const enrichedLeads = await Promise.all(
+            leads.map(async (lead) => {
+                const beneficiary = await getUser(lead.beneficiaryId);
+                return { ...lead, beneficiary };
+            })
+        );
+
+        return enrichedLeads;
     } catch (error) {
         console.error("Error fetching open leads: ", error);
         // It's likely a composite index is missing if another error occurs.
