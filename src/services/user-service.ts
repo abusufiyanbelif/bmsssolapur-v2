@@ -81,8 +81,21 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         createdAt: user.createdAt || Timestamp.now(),
         updatedAt: user.updatedAt || Timestamp.now(),
     };
+
+    // Remove undefined fields to prevent Firestore errors
+    Object.keys(finalUserData).forEach(key => {
+        const typedKey = key as keyof User;
+        if (finalUserData[typedKey] === undefined) {
+            delete finalUserData[typedKey];
+        }
+    });
+
     await setDoc(userRef, finalUserData, { merge: true }); // Use merge to avoid overwriting on OAuth creation
-    return finalUserData;
+    
+    // Fetch the potentially merged document to return the full user object
+    const savedUserDoc = await getDoc(userRef);
+    return { id: savedUserDoc.id, ...savedUserDoc.data() } as User;
+
   } catch (error) {
     console.error('Error creating user: ', error);
     // Re-throw the specific error message for the client to handle
@@ -230,3 +243,4 @@ export const getAllUsers = async (): Promise<User[]> => {
         throw new Error('Failed to get all users.');
     }
 }
+
