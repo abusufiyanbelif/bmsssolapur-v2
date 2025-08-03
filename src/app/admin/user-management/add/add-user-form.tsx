@@ -36,10 +36,11 @@ const allRoles: Exclude<UserRole, 'Guest'>[] = [
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
+  phone: z.string().optional(),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
+  createProfile: z.boolean().default(false),
   isAnonymous: z.boolean().default(false),
   gender: z.enum(["Male", "Female", "Other"]),
   addressLine1: z.string().optional(),
@@ -52,7 +53,17 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+}).refine(data => {
+    // If creating a beneficiary profile, phone number is required
+    if (data.roles.includes("Beneficiary") && data.createProfile) {
+        return data.phone && /^[0-9]{10}$/.test(data.phone);
+    }
+    return true;
+}, {
+    message: "A valid 10-digit phone number is required to create a profile.",
+    path: ["phone"],
 });
+
 
 type AddUserFormValues = z.infer<typeof formSchema>;
 
@@ -67,6 +78,7 @@ export function AddUserForm() {
       email: "",
       phone: "",
       roles: ["Donor"],
+      createProfile: false,
       isAnonymous: false,
       isWidow: false,
       city: 'Solapur',
@@ -83,8 +95,9 @@ export function AddUserForm() {
     const formData = new FormData();
     formData.append("name", values.name);
     formData.append("email", values.email);
-    formData.append("phone", values.phone);
+    if(values.phone) formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
+    if(values.createProfile) formData.append("createProfile", "on");
     if(values.isAnonymous) formData.append("isAnonymous", "on");
     formData.append("gender", values.gender);
     if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
@@ -383,28 +396,52 @@ export function AddUserForm() {
         />
         
         {selectedRoles.includes("Beneficiary") && (
-             <FormField
-                control={form.control}
-                name="isAnonymous"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                        <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                        <FormLabel>
-                        Mark as Anonymous Beneficiary
-                        </FormLabel>
-                        <FormDescription>
-                        If checked, a unique ID will be generated and their real name will be hidden from public view.
-                        </FormDescription>
-                    </div>
-                    </FormItem>
-                )}
-            />
+            <>
+                <FormField
+                    control={form.control}
+                    name="createProfile"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                            <FormLabel>
+                            Create Beneficiary Profile
+                            </FormLabel>
+                            <FormDescription>
+                            If checked, a profile will be created for the beneficiary, and a phone number becomes mandatory.
+                            </FormDescription>
+                        </div>
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="isAnonymous"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                            <FormLabel>
+                            Mark as Anonymous Beneficiary
+                            </FormLabel>
+                            <FormDescription>
+                            If checked, a unique ID will be generated and their real name will be hidden from public view.
+                            </FormDescription>
+                        </div>
+                        </FormItem>
+                    )}
+                />
+            </>
         )}
 
         <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>

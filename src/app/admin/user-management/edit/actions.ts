@@ -1,18 +1,17 @@
 
 "use server";
 
-import { createUser } from "@/services/user-service";
+import { updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import { Timestamp } from "firebase/firestore";
 import type { User, UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;
     error?: string;
-    user?: User;
 }
 
-export async function handleAddUser(
+export async function handleUpdateUser(
+  userId: string,
   formData: FormData
 ): Promise<FormState> {
   const rawFormData = {
@@ -20,6 +19,7 @@ export async function handleAddUser(
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
+    isActive: formData.get("isActive") === 'on',
     isAnonymous: formData.get("isAnonymous") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     
@@ -32,31 +32,22 @@ export async function handleAddUser(
     occupation: formData.get("occupation") as string | undefined,
     familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string, 10) : undefined,
     isWidow: formData.get("isWidow") === 'on',
-
+    
     panNumber: formData.get("panNumber") as string | undefined,
     aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
-    
-    // The "Create Profile" checkbox is mainly for client-side validation,
-    // but we can check it here as a safeguard.
-    createProfile: formData.get("createProfile") === 'on',
   };
   
-  if (!rawFormData.name || !rawFormData.email || rawFormData.roles.length === 0) {
-      return { success: false, error: "Missing required fields: Name, Email, and Role." };
-  }
-  
-  // If creating a beneficiary profile, phone is mandatory.
-  if (rawFormData.roles.includes('Beneficiary') && rawFormData.createProfile && !rawFormData.phone) {
-      return { success: false, error: "A phone number is required to create a beneficiary profile." };
+  if (!rawFormData.name || !rawFormData.phone || rawFormData.roles.length === 0) {
+      return { success: false, error: "Missing required fields." };
   }
   
   try {
-    const newUserData: Omit<User, 'id' | 'createdAt'> = {
+    const updates: Partial<User> = {
         name: rawFormData.name,
-        email: rawFormData.email,
+        // Email cannot be changed
         phone: rawFormData.phone,
         roles: rawFormData.roles,
-        isActive: true, // Default to active
+        isActive: rawFormData.isActive,
         isAnonymous: rawFormData.isAnonymous,
         gender: rawFormData.gender,
         
@@ -74,23 +65,21 @@ export async function handleAddUser(
 
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
-        privileges: [],
-        groups: [],
     };
 
-    const newUser = await createUser({...newUserData, createdAt: Timestamp.now()});
+    await updateUser(userId, updates);
     
     revalidatePath("/admin/user-management");
+    revalidatePath(`/admin/user-management/${userId}/edit`);
     revalidatePath("/admin/beneficiaries");
 
 
     return {
       success: true,
-      user: newUser,
     };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
-    console.error("Error creating user:", error);
+    console.error("Error updating user:", error);
     return {
       success: false,
       error: error,
