@@ -4,7 +4,7 @@
 import { createLead } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Lead, LeadPurpose, User } from "@/services/types";
+import type { Lead, LeadPurpose, User, DonationType } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -52,11 +52,21 @@ export async function handleAddLead(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'category'> = {
+    // Map LeadPurpose to a valid DonationType for the category field.
+    // This is a simplification; a more complex app might have a separate form input for category.
+    const categoryMapping: Record<LeadPurpose, DonationType> = {
+        'Education': 'Sadaqah',
+        'Medical': 'Sadaqah',
+        'Relief Fund': 'Lillah',
+        'Deen': 'Sadaqah'
+    };
+
+    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
         purpose: rawFormData.purpose,
         subCategory: rawFormData.subCategory,
+        category: categoryMapping[rawFormData.purpose] || 'Sadaqah',
         otherCategoryDetail: rawFormData.subCategory === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         helpRequested: rawFormData.helpRequested,
         isLoan: rawFormData.isLoan,
