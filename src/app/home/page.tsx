@@ -71,9 +71,26 @@ export default function UserHomePage() {
         setQuotes(randomQuotes);
         setQuotesLoading(false);
     }
-
+    
+    // Function to handle role changes from other components
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'activeRole') {
+        initializeUser();
+      }
+    };
+    
+    // Initial load
     initializeUser();
     fetchQuotes();
+    
+    // Listen for changes in local storage
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Cleanup listener on component unmount
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+
   }, []);
 
   const renderContent = () => {
