@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -23,6 +23,7 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
     const [leads, setLeads] = useState<EnrichedLead[]>(initialLeads);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         async function enrichLeads() {
@@ -40,7 +41,11 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
         }
         enrichLeads();
     }, [initialLeads]);
-
+    
+    const handleDonateClick = () => {
+        sessionStorage.setItem('redirectAfterLogin', '/campaigns');
+        router.push('/login');
+    }
 
     if (loading) {
         return (
@@ -103,10 +108,8 @@ export function CampaignList({ initialLeads }: CampaignListProps) {
                                     ₹{remainingAmount.toLocaleString()} still needed
                                 </p>
                             }
-                            <Button asChild className="w-full">
-                                <Link href="/login">
-                                    Donate Now
-                                </Link>
+                            <Button onClick={handleDonateClick} className="w-full">
+                                Donate Now
                             </Button>
                         </CardFooter>
                     </Card>

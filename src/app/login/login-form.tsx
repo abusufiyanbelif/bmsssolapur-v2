@@ -35,7 +35,7 @@ export function LoginForm() {
       toast({
         variant: "success",
         title: "Login Successful",
-        description: "Welcome back! Redirecting you to your dashboard...",
+        description: "Welcome back! Redirecting you...",
         icon: <CheckCircle />,
       });
       // Clear any previous role selection
@@ -43,8 +43,12 @@ export function LoginForm() {
       localStorage.setItem('userId', loginSuccessData.userId);
       // Set a flag to show the role switcher on the next page load
       localStorage.setItem('showRoleSwitcher', 'true');
+      
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+      sessionStorage.removeItem('redirectAfterLogin'); // Clean up the stored path
+
       // Use a standard redirect to avoid router issues in this context
-      window.location.href = '/home';
+      window.location.href = redirectPath || '/home';
     }
   }, [loginSuccessData, toast]);
 

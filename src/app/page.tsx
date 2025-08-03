@@ -17,12 +17,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [featuredLeads, setFeaturedLeads] = useState<Lead[]>([]);
     const [stats, setStats] = useState({ totalRaised: 0, beneficiariesHelped: 0, casesClosed: 0 });
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -55,6 +57,10 @@ export default function LandingPage() {
         fetchData();
     }, []);
 
+    const handleDonateClick = () => {
+        sessionStorage.setItem('redirectAfterLogin', '/campaigns');
+        router.push('/login');
+    }
 
     const metrics = [
         {
@@ -103,8 +109,8 @@ export default function LandingPage() {
                     Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
                 </p>
                 <div className="mt-8 flex justify-center gap-4">
-                    <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                        <Link href="/login">Donate Now <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                    <Button onClick={handleDonateClick} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                        Donate Now <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                 </div>
             </section>
@@ -183,8 +189,8 @@ export default function LandingPage() {
                                                 ₹{remainingAmount.toLocaleString()} still needed
                                             </p>
                                         }
-                                        <Button asChild className="w-full">
-                                            <Link href="/login">Donate Now</Link>
+                                        <Button onClick={handleDonateClick} className="w-full">
+                                            Donate Now
                                         </Button>
                                     </CardFooter>
                                 </Card>
@@ -192,8 +198,8 @@ export default function LandingPage() {
                     })}
                     </div>
                     <div className="mt-12 text-center">
-                        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-                            <Link href="/campaigns">View All Cases</Link>
+                        <Button onClick={handleDonateClick} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                            View All Cases
                         </Button>
                     </div>
                 </section>
