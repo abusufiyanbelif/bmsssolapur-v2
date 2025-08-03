@@ -96,9 +96,6 @@ export default function LandingPage() {
         <div className="flex-1 space-y-12">
             {/* Hero Section */}
             <section className="text-center py-20 px-4 bg-secondary rounded-lg">
-                <div className="flex justify-center mb-6">
-                    <Logo className="h-16 w-16" />
-                </div>
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline text-primary">
                     Your small help can make a large impact.
                 </h1>
@@ -202,7 +199,7 @@ export default function LandingPage() {
                 </section>
             )}
 
-            {/* Example Campaigns Section */}
+            {/* Our Campaigns Section */}
             <section id="example-campaigns">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Campaigns</h2>
