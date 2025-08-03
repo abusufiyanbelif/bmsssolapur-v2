@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import Link from "next/link";
-import { format }s from "date-fns";
+import { format } from "date-fns";
 
 export default async function DashboardPage() {
 
