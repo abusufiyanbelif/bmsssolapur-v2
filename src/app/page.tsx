@@ -78,7 +78,7 @@ export default function LandingPage() {
             {/* Hero Section */}
             <section className="text-center py-20 px-4 bg-secondary rounded-lg">
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline text-primary">
-                    Connecting Hearts, Empowering Communities
+                    Your small help can make a large impact and empower our community.
                 </h1>
                 <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
                     Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution, whether Zakat, Sadaqah, or General Help, brings hope and changes lives.
