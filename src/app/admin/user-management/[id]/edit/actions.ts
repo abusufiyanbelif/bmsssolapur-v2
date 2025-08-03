@@ -88,21 +88,23 @@ export async function handleUpdateUser(
 }
 
 
-export async function handleResetPassword(userId: string): Promise<FormState> {
-  if (!userId) {
-    return { success: false, error: "User ID is missing." };
+export async function handleSetPassword(formData: FormData): Promise<FormState> {
+  const userId = formData.get("userId") as string;
+  const newPassword = formData.get("newPassword") as string;
+
+  if (!userId || !newPassword) {
+    return { success: false, error: "User ID and new password are required." };
+  }
+   if (newPassword.length < 6) {
+    return { success: false, error: "Password must be at least 6 characters." };
   }
 
   try {
-    // For this prototype, we'll reset to a default password.
-    // In a real app, this would trigger a password reset email via Firebase Auth.
-    const defaultPassword = "password@123";
-    await updateUser(userId, { password: defaultPassword });
-    
+    await updateUser(userId, { password: newPassword });
     return { success: true };
   } catch(e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
-    console.error("Error resetting password:", error);
+    console.error("Error setting password:", error);
     return {
       success: false,
       error: error,

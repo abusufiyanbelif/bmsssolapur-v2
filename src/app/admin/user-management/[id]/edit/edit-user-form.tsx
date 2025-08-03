@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateUser, handleResetPassword } from "./actions";
+import { handleUpdateUser, handleSetPassword } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +26,120 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import type { User, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { Separator } from "@/components/ui/separator";
-import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
+
+const setPasswordSchema = z.object({
+  newPassword: z.string().min(6, "Password must be at least 6 characters."),
+  userId: z.string(),
+});
+type SetPasswordFormValues = z.infer<typeof setPasswordSchema>;
+
+function SetPasswordSection({ userId }: { userId: string }) {
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const form = useForm<SetPasswordFormValues>({
+        resolver: zodResolver(setPasswordSchema),
+        defaultValues: {
+            newPassword: "",
+            userId: userId,
+        },
+    });
+
+    const onSubmit = async (values: SetPasswordFormValues) => {
+        setIsSubmitting(true);
+        const formData = new FormData();
+        formData.append("userId", values.userId);
+        formData.append("newPassword", values.newPassword);
+        
+        const result = await handleSetPassword(formData);
+        
+        if (result.success) {
+            toast({
+                variant: 'success',
+                title: "Password Set",
+                description: "The user's password has been updated successfully.",
+                icon: <CheckCircle />
+            });
+            form.reset();
+            setIsDialogOpen(false); // Close dialog on success
+        } else {
+            toast({
+                variant: 'destructive',
+                title: "Set Password Failed",
+                description: result.error,
+            });
+        }
+        setIsSubmitting(false);
+    };
+
+    return (
+        <Card className="mt-6 border-destructive/50">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Danger Zone</CardTitle>
+                 <CardDescription>These actions are irreversible. Please proceed with caution.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end justify-between rounded-lg border border-destructive/20 p-4 gap-4">
+                        <div className="flex-grow space-y-2">
+                             <FormField
+                                control={form.control}
+                                name="newPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-base">Set New Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" placeholder="Enter new password" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <AlertDialogTrigger asChild>
+                               <Button variant="destructive" type="button" disabled={!form.formState.isValid}>
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Set Password
+                               </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will change the user's password immediately. They will lose access with their old password.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel disabled={isSubmitting} onClick={() => setIsDialogOpen(false)}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={form.handleSubmit(onSubmit)}
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Yes, set new password
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </form>
+                </Form>
+            </CardContent>
+        </Card>
+    );
+}
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -68,54 +181,6 @@ type EditUserFormValues = z.infer<typeof formSchema>;
 
 interface EditUserFormProps {
     user: User;
-}
-
-function ResetPasswordSection({ userId }: { userId: string }) {
-    const { toast } = useToast();
-    
-    const onResetPassword = async () => {
-        const result = await handleResetPassword(userId);
-        if (result.success) {
-            toast({
-                variant: 'success',
-                title: "Password Reset",
-                description: "The user's password has been reset to 'password@123'.",
-                icon: <CheckCircle />
-            });
-        } else {
-            toast({
-                variant: 'destructive',
-                title: "Reset Failed",
-                description: result.error,
-            });
-        }
-    };
-
-    return (
-        <Card className="mt-6 border-destructive/50">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Danger Zone</CardTitle>
-                 <CardDescription>These actions are irreversible. Please proceed with caution.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <div className="flex items-center justify-between rounded-lg border border-destructive/20 p-4">
-                    <div className="space-y-0.5">
-                        <FormLabel className="text-base">Reset Password</FormLabel>
-                        <FormDescription>This will reset the user's password to a default value. The user will be notified to change it upon next login.</FormDescription>
-                    </div>
-                    <DeleteConfirmationDialog
-                        itemType="password reset for user"
-                        itemName={''} // Pass user name here if needed
-                        onDelete={onResetPassword}
-                    >
-                       <Button variant="destructive">
-                            <RefreshCw className="mr-2 h-4 w-4" /> Reset Password
-                       </Button>
-                    </DeleteConfirmationDialog>
-                 </div>
-            </CardContent>
-        </Card>
-    );
 }
 
 export function EditUserForm({ user }: EditUserFormProps) {
@@ -550,7 +615,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
             </CardContent>
         </Card>
         
-        <ResetPasswordSection userId={user.id!} />
+        <SetPasswordSection userId={user.id!} />
     </>
   );
 }
