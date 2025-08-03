@@ -21,6 +21,14 @@ async function handleFileUpload(file: File): Promise<string> {
     return `https://placehold.co/600x400.png?text=verification-doc`;
 }
 
+// Map LeadPurpose to a valid DonationType for the category field.
+const purposeToCategoryMap: Record<LeadPurpose, DonationType> = {
+    'Education': 'Sadaqah',
+    'Medical': 'Sadaqah',
+    'Relief Fund': 'Lillah',
+    'Deen': 'Sadaqah'
+};
+
 export async function handleAddLead(
   formData: FormData
 ): Promise<FormState> {
@@ -84,22 +92,13 @@ export async function handleAddLead(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    // Map LeadPurpose to a valid DonationType for the category field.
-    // This is a simplification; a more complex app might have a separate form input for category.
-    const categoryMapping: Record<LeadPurpose, DonationType> = {
-        'Education': 'Sadaqah',
-        'Medical': 'Sadaqah',
-        'Relief Fund': 'Lillah',
-        'Deen': 'Sadaqah'
-    };
-
     const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
         campaignName: rawFormData.campaignName,
         purpose: rawFormData.purpose,
         subCategory: rawFormData.subCategory,
-        category: categoryMapping[rawFormData.purpose] || 'Sadaqah',
+        category: purposeToCategoryMap[rawFormData.purpose] || 'Sadaqah',
         otherCategoryDetail: rawFormData.subCategory === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         helpRequested: rawFormData.helpRequested,
         isLoan: rawFormData.isLoan,
@@ -125,5 +124,3 @@ export async function handleAddLead(
     };
   }
 }
-
-    

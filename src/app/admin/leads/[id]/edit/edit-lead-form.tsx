@@ -26,10 +26,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus } from "@/services/lead-service";
+import { Loader2, Info } from "lucide-react";
+import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 const leadStatuses = ["Pending", "Partial", "Closed"] as const;
@@ -40,6 +42,13 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Other'],
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
+};
+
+const purposeToCategoryMap: Record<LeadPurpose, DonationType> = {
+    'Education': 'Sadaqah',
+    'Medical': 'Sadaqah',
+    'Relief Fund': 'Lillah',
+    'Deen': 'Sadaqah'
 };
 
 const formSchema = z.object({
@@ -91,6 +100,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
   const { formState: { isDirty } } = form;
   const selectedPurpose = form.watch("purpose");
   const selectedSubCategory = form.watch("subCategory");
+  const derivedDonationCategory = selectedPurpose ? purposeToCategoryMap[selectedPurpose] : null;
 
   async function onSubmit(values: EditLeadFormValues) {
     setIsSubmitting(true);
@@ -158,7 +168,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                         name="purpose"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Purpose</FormLabel>
+                            <FormLabel>Lead Purpose</FormLabel>
                             <Select onValueChange={(value) => {
                                 field.onChange(value);
                                 form.setValue('subCategory', '');
@@ -204,6 +214,16 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                         />
                     )}
                 </div>
+
+                 {selectedPurpose && (
+                    <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Donation Category</AlertTitle>
+                        <AlertDescription>
+                            This lead is categorized under <span className="font-semibold">{derivedDonationCategory}</span> for donation allocation. This is derived from the Lead Purpose.
+                        </AlertDescription>
+                    </Alert>
+                )}
 
                 {selectedSubCategory === 'Other' && (
                     <FormField
@@ -329,5 +349,3 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     </Card>
   );
 }
-
-    

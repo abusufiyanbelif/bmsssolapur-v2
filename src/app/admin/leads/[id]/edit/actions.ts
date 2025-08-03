@@ -1,13 +1,20 @@
 
 "use server";
 
-import { updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus } from "@/services/lead-service";
+import { updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
 
 interface FormState {
     success: boolean;
     error?: string;
 }
+
+const purposeToCategoryMap: Record<LeadPurpose, DonationType> = {
+    'Education': 'Sadaqah',
+    'Medical': 'Sadaqah',
+    'Relief Fund': 'Lillah',
+    'Deen': 'Sadaqah'
+};
 
 export async function handleUpdateLead(
   leadId: string,
@@ -16,9 +23,13 @@ export async function handleUpdateLead(
   const rawFormData = Object.fromEntries(formData.entries());
 
   try {
+    const purpose = rawFormData.purpose as LeadPurpose;
+    const category = purposeToCategoryMap[purpose];
+
     const updates: Partial<Lead> = {
         campaignName: rawFormData.campaignName as string | undefined,
-        purpose: rawFormData.purpose as LeadPurpose,
+        purpose: purpose,
+        category: category,
         subCategory: rawFormData.subCategory as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         helpRequested: parseFloat(rawFormData.helpRequested as string),

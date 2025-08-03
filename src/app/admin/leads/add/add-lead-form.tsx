@@ -27,10 +27,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState } from "react";
-import { Loader2, UserPlus, Users } from "lucide-react";
-import type { User, LeadPurpose } from "@/services/types";
+import { Loader2, UserPlus, Users, Info } from "lucide-react";
+import type { User, LeadPurpose, DonationType } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
@@ -41,6 +43,12 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
 };
 
+const purposeToCategoryMap: Record<LeadPurpose, DonationType> = {
+    'Education': 'Sadaqah',
+    'Medical': 'Sadaqah',
+    'Relief Fund': 'Lillah',
+    'Deen': 'Sadaqah'
+};
 
 const formSchema = z.object({
   beneficiaryType: z.enum(['existing', 'new']).default('existing'),
@@ -110,6 +118,8 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
   const selectedPurpose = form.watch("purpose");
   const selectedSubCategory = form.watch("subCategory");
   const beneficiaryType = form.watch("beneficiaryType");
+  const derivedDonationCategory = selectedPurpose ? purposeToCategoryMap[selectedPurpose] : null;
+
 
   async function onSubmit(values: AddLeadFormValues) {
     setIsSubmitting(true);
@@ -290,7 +300,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
             name="purpose"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Purpose</FormLabel>
+                <FormLabel>Lead Purpose</FormLabel>
                 <Select onValueChange={(value) => {
                     field.onChange(value);
                     form.setValue('subCategory', ''); // Reset subcategory on purpose change
@@ -337,6 +347,16 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                 />
             )}
         </div>
+
+        {selectedPurpose && (
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Donation Category</AlertTitle>
+                <AlertDescription>
+                    Based on the selected purpose, this lead will be categorized under <span className="font-semibold">{derivedDonationCategory}</span> for donation allocation.
+                </AlertDescription>
+             </Alert>
+        )}
 
         {selectedSubCategory === 'Other' && (
              <FormField
@@ -441,5 +461,3 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     </Form>
   );
 }
-
-    
