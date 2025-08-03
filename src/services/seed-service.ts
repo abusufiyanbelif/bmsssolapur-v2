@@ -27,6 +27,9 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     
     // Generic Donor for Anonymous Donations
     { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", roles: ["Donor"], privileges: [], isActive: true, gender: 'Other' },
+
+    // Hardcoded Donor user
+    { name: "Donor", email: "donor@example.com", phone: "1111111111", roles: ["Donor"], privileges: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
 ];
 
 const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'subCategory'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [

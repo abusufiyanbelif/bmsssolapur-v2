@@ -25,13 +25,6 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         return { success: false, error: "Identifier, password, and login method are required." };
     }
 
-    // For this prototype, we'll use a simple password check for all users.
-    // In a real application, you would use Firebase Authentication
-    // with password hashing or other secure methods.
-    if (password !== 'admin') {
-         return { success: false, error: "Invalid credentials." };
-    }
-
     try {
         let user: User | null = null;
         
@@ -60,6 +53,16 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         if (!user) {
             return { success: false, error: "User not found with the provided details." };
         }
+
+        // For this prototype, we use a simple password check.
+        // In a real application, you would use Firebase Authentication.
+        const isDonorTestUser = user.name.toLowerCase() === 'donor';
+        const validPassword = isDonorTestUser ? 'donor' : 'admin';
+
+        if (password !== validPassword) {
+            return { success: false, error: "Invalid credentials." };
+        }
+
 
         // All Super Admins should always be treated as active to prevent lockouts.
         if (!user.isActive && !user.roles.includes('Super Admin')) {
