@@ -1,14 +1,11 @@
-<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <defs>
+<svg width="200" height="150" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
     <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:hsl(155, 100%, 22%);stop-opacity:1" />
-      <stop offset="100%" style="stop-color:hsl(48, 90%, 47%);stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#5cb85c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4cae4c;stop-opacity:1" />
     </linearGradient>
-  </defs>
-  
-  <!-- Heart shape -->
-  <path d="M 50,35 A 15,15 0 0 1 65,20 A 15,15 0 0 1 80,35 C 80,50 50,70 50,70 C 50,70 20,50 20,35 A 15,15 0 0 1 35,20 A 15,15 0 0 1 50,35" fill="url(#logoGradient)"/>
-  
-  <!-- Hand shape -->
-  <path d="M 20 85 C 10 75, 15 60, 25 55 C 35 50, 40 60, 40 60 L 70 60 C 85 60, 90 70, 80 85 L 70 95 L 30 95 L 20 85 Z" fill="#E2E8F0" stroke="hsl(var(--border))" stroke-width="2"/>
+</defs>
+<path d="M100 10C50.37 10 10 50.37 10 100C10 125.1 20.12 147.66 36.33 163.67M190 100C190 73.68 179.22 49.95 161.94 34.3" stroke="url(#logoGradient)" stroke-width="12" stroke-linecap="round"/>
+<path d="M72.5,92.5 C70,90 65,85 65,85 L55,90 C55,90 62.5,100 65,102.5 C67.5,105 75,110 80,110 L120,110 C125,110 132.5,105 135,102.5 C137.5,100 145,90 145,90 L135,85 C135,85 130,90 127.5,92.5 M72.5,92.5 C75,95 82.5,100 87.5,100 L95,100 M127.5,92.5 C125,95 117.5,100 112.5,100 L105,100 M87.5,100 L112.5,100 M95,85 L95,100 M105,85 L105,100 M115,85 L115,100 M125,85 L125,100" stroke="url(#logoGradient)" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="100" y="140" font-family="sans-serif" font-size="20" font-weight="bold" fill="url(#logoGradient)" text-anchor="middle" dominant-baseline="middle">BAITUL MAL</text>
 </svg>
