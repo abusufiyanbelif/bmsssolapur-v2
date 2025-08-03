@@ -14,14 +14,15 @@ import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { getUser } from "@/services/user-service";
 import { getRandomQuotes } from "@/services/quotes-service";
 import type { User, Donation, Lead, Quote } from "@/services/types";
 
+interface UserHomePageProps {
+  user: User & { isLoggedIn: boolean; };
+  activeRole: string;
+}
 
-export default function UserHomePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [activeRole, setActiveRole] = useState<string | null>(null);
+export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [cases, setCases] = useState<Lead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -30,39 +31,30 @@ export default function UserHomePage() {
   const [quotesLoading, setQuotesLoading] = useState(false);
 
   useEffect(() => {
-    const initializeUser = async () => {
-      setLoading(true);
-      const storedUserId = localStorage.getItem('userId');
-      const storedRole = localStorage.getItem('activeRole');
-      
-      if (storedUserId) {
-          const fetchedUser = await getUser(storedUserId);
-          if (fetchedUser) {
-            setUser(fetchedUser);
-            const currentRole = storedRole || (fetchedUser.roles ? fetchedUser.roles[0] : null)
-            setActiveRole(currentRole);
-
-             try {
-                if (currentRole === 'Donor') {
-                const donorDonations = await getDonationsByUserId(fetchedUser.id!);
-                setDonations(donorDonations.slice(0, 3)); // Get latest 3
-                } else if (currentRole === 'Beneficiary') {
-                const beneficiaryCases = await getLeadsByBeneficiaryId(fetchedUser.id!);
-                setCases(beneficiaryCases.slice(0, 3)); // Get latest 3
-                }
-            } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-                setError(`Failed to load dashboard data: ${errorMessage}`);
-                console.error(e);
-            }
-
-          } else {
-             setError("User not found.");
-          }
-      } else {
-          setError("No logged in user found.");
+    const fetchDashboardData = async () => {
+      if (!user || !user.isLoggedIn) {
+        setLoading(false);
+        return;
       }
-       setLoading(false);
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        if (activeRole === 'Donor') {
+          const donorDonations = await getDonationsByUserId(user.id!);
+          setDonations(donorDonations.slice(0, 3)); // Get latest 3
+        } else if (activeRole === 'Beneficiary') {
+          const beneficiaryCases = await getLeadsByBeneficiaryId(user.id!);
+          setCases(beneficiaryCases.slice(0, 3)); // Get latest 3
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        setError(`Failed to load dashboard data: ${errorMessage}`);
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     };
     
     const fetchQuotes = async () => {
@@ -72,26 +64,10 @@ export default function UserHomePage() {
         setQuotesLoading(false);
     }
     
-    // Function to handle role changes from other components
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'activeRole') {
-        initializeUser();
-      }
-    };
-    
-    // Initial load
-    initializeUser();
+    fetchDashboardData();
     fetchQuotes();
-    
-    // Listen for changes in local storage
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Cleanup listener on component unmount
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
 
-  }, []);
+  }, [user, activeRole]);
 
   const renderContent = () => {
     if (loading) {
@@ -106,7 +82,7 @@ export default function UserHomePage() {
         </Alert>
       );
     }
-    if (!user || !activeRole) {
+    if (!user || !user.isLoggedIn || !activeRole) {
        return (
         <Alert>
           <AlertCircle className="h-4 w-4" />
@@ -155,10 +131,10 @@ export default function UserHomePage() {
     <div className="flex-1 space-y-6">
       <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
-            Welcome{loading ? '' : `, ${user?.name || 'Guest'}`}!
+            Welcome{loading || !user.isLoggedIn ? '' : `, ${user?.name || 'Guest'}`}!
         </h2>
         <p className="text-muted-foreground">
-          {activeRole ? (
+          {activeRole && user.isLoggedIn ? (
             <>You are currently viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.</>
           ) : (
             "Please log in to continue."
@@ -302,5 +278,3 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
         </Card>
     );
 }
-
-    

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LogIn, LogOut, Menu, Users, User, Home } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import { Logo } from "./logo";
@@ -138,6 +138,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </a>
     );
 
+    // Pass user and activeRole as props to children
+    const childrenWithProps = Children.map(children, child => {
+        if (isValidElement(child)) {
+            return cloneElement(child as React.ReactElement<any>, { user, activeRole });
+        }
+        return child;
+    });
+
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-card md:block">
@@ -239,7 +247,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                    {children}
+                    {childrenWithProps}
                 </main>
                 <Footer />
             </div>
