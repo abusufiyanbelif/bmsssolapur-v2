@@ -43,6 +43,7 @@ const allNavItems: NavItem[] = [
     // Admin
     { href: "/admin", label: "Dashboard", icon: Home, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     { href: "/admin/leads", label: "All Leads", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
+    { href: "/admin/donors", label: "All Donors", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
     { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
     { href: "/admin/donations", label: "Donations", icon: Banknote, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     
