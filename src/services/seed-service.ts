@@ -13,7 +13,7 @@ import type { Lead, Verifier, LeadDonationAllocation, Donation } from './types';
 
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
-    { name: "admin", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], groups: ["Founder"], isActive: true, gender: 'Other' },
+    { name: "admin", email: "admin@example.com", phone: "9999999999", password: "admin1", roles: ["Super Admin"], privileges: ["all"], groups: ["Founder"], isActive: true, gender: 'Other' },
     { name: "Abusufiyan Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", password: "admin1", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Member of Organization", "Lead Approver"], isActive: true, gender: 'Male', address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012' },
     
     // Admins (Founders and Members)
@@ -298,5 +298,7 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         };
     }
 };
+
+    
 
     
