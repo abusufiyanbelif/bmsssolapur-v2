@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins } from "lucide-react";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw } from "lucide-react";
 import { seedDatabase } from "@/services/seed-service";
 import {
   Table,
@@ -118,6 +118,8 @@ export default async function SeedPage() {
                                                     <TableCell>
                                                         {result.status === "Created" ? (
                                                             <Badge variant="default" className="bg-green-100 text-green-800">Created</Badge>
+                                                        ) : result.status === 'Updated' ? (
+                                                            <Badge variant="default" className="bg-blue-100 text-blue-800"><RefreshCcw className="mr-1 h-3 w-3"/>Updated</Badge>
                                                         ) : (
                                                             <Badge variant="secondary">{result.status}</Badge>
                                                         )}
@@ -135,5 +137,3 @@ export default async function SeedPage() {
         </div>
     );
 }
-
-    

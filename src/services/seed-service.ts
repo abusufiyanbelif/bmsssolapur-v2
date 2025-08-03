@@ -4,7 +4,7 @@
  * @fileOverview A service to seed the database with initial data.
  */
 
-import { createUser, User, UserRole, getUserByName, getUserByPhone, getAllUsers } from './user-service';
+import { createUser, User, UserRole, getUserByName, getUserByPhone, getAllUsers, updateUser } from './user-service';
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
@@ -61,7 +61,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     qrCodeUrl: "https://placehold.co/200x200.png",
 };
 
-export type SeedItemResult = { name: string; status: 'Created' | 'Skipped (already exists)' | 'Failed' };
+export type SeedItemResult = { name: string; status: 'Created' | 'Updated' | 'Skipped (already exists)' | 'Failed' };
 export type SeedResult = {
     userResults: SeedItemResult[];
     donationResults: SeedItemResult[];
@@ -83,17 +83,25 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             userData.isActive = true;
         }
 
-        const q = query(collection(db, 'users'), where("phone", "==", userData.phone));
-        const existingUsers = await getDocs(q);
+        const existingUser = await getUserByPhone(userData.phone);
         
-        if (existingUsers.empty) {
+        if (existingUser) {
+             // User exists, update them with the seed data
+            await updateUser(existingUser.id!, {
+                roles: userData.roles,
+                groups: userData.groups,
+                privileges: userData.privileges,
+                isActive: userData.isActive,
+            });
+            results.push({ name: userData.name, status: 'Updated' });
+
+        } else {
+            // User does not exist, create them
             await createUser({
                 ...userData,
                 createdAt: Timestamp.now()
             });
             results.push({ name: userData.name, status: 'Created' });
-        } else {
-            results.push({ name: userData.name, status: 'Skipped (already exists)' });
         }
     }
     return results;
@@ -279,3 +287,4 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         };
     }
 };
+
