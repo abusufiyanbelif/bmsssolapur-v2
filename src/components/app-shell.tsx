@@ -229,7 +229,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         ) : (
                              <>
                                 {pathname !== '/login' && (
-                                     <Button asChild>
+                                     <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
                                         <Link href="/login">
                                             <LogIn className="mr-2 h-4 w-4" />
                                             Login / Register
