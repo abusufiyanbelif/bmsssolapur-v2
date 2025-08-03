@@ -2,6 +2,7 @@
 "use server";
 
 import { createDonation } from "@/services/donation-service";
+import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType } from "@/services/types";
 
@@ -22,30 +23,40 @@ async function handleFileUpload(file: File): Promise<string> {
 export async function handleAddDonation(
   formData: FormData
 ): Promise<FormState> {
-  const rawFormData = Object.fromEntries(formData.entries());
   // In a real app, you'd get the logged-in user's ID here.
   const adminUserId = "admin_user_placeholder_id";
 
   try {
-    const screenshotFile = rawFormData.paymentScreenshot as File | undefined;
+    const adminUser = await getUser(adminUserId); // Fetch admin user details for logging
+
+    if (!adminUser) {
+        return { success: false, error: "Admin user not found for logging." };
+    }
+
+    const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
     let paymentScreenshotUrl: string | undefined;
     if (screenshotFile && screenshotFile.size > 0) {
         paymentScreenshotUrl = await handleFileUpload(screenshotFile);
     }
     
     const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
-        donorId: rawFormData.donorId as string,
-        donorName: rawFormData.donorName as string,
-        isAnonymous: rawFormData.isAnonymous === 'true',
-        amount: parseFloat(rawFormData.amount as string),
-        type: rawFormData.type as DonationType,
-        purpose: rawFormData.purpose ? rawFormData.purpose as DonationPurpose : undefined,
+        donorId: formData.get("donorId") as string,
+        donorName: formData.get("donorName") as string,
+        isAnonymous: formData.get("isAnonymous") === 'true',
+        amount: parseFloat(formData.get("amount") as string),
+        type: formData.get("type") as DonationType,
+        purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
         status: "Pending verification",
-        transactionId: rawFormData.transactionId as string,
+        transactionId: formData.get("transactionId") as string,
         paymentScreenshotUrl: paymentScreenshotUrl,
     };
 
-    const newDonation = await createDonation(newDonationData, adminUserId);
+    const newDonation = await createDonation(
+        newDonationData,
+        adminUser.id!,
+        adminUser.name,
+        adminUser.email
+    );
     
     revalidatePath("/admin/donations");
 

@@ -18,8 +18,7 @@ import {
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
-import { getUser } from './user-service';
-import type { Donation, DonationStatus, DonationType, DonationPurpose } from './types';
+import type { Donation, DonationStatus, DonationType, DonationPurpose, User } from './types';
 
 // Re-export types for backward compatibility if other services import from here
 export type { Donation, DonationStatus, DonationType, DonationPurpose };
@@ -27,10 +26,14 @@ export type { Donation, DonationStatus, DonationType, DonationPurpose };
 const DONATIONS_COLLECTION = 'donations';
 
 // Function to create a donation
-export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'>, adminUserId: string) => {
+export const createDonation = async (
+    donation: Omit<Donation, 'id' | 'createdAt'>, 
+    adminUserId: string,
+    adminUserName: string,
+    adminUserEmail: string | undefined,
+) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    const adminUser = await getUser(adminUserId);
     const donationRef = doc(collection(db, DONATIONS_COLLECTION));
     const newDonation: Donation = {
         ...donation,
@@ -39,20 +42,18 @@ export const createDonation = async (donation: Omit<Donation, 'id' | 'createdAt'
     };
     await setDoc(donationRef, newDonation);
     
-    if (adminUser) {
-        await logActivity({
-            userId: adminUser.id!,
-            userName: adminUser.name,
-            userEmail: adminUser.email,
-            role: 'Admin', // Assuming only admins can create donations this way
-            activity: 'Donation Created',
-            details: { 
-                donationId: newDonation.id!,
-                donorName: newDonation.donorName,
-                amount: newDonation.amount
-            },
-        });
-    }
+    await logActivity({
+        userId: adminUserId,
+        userName: adminUserName,
+        userEmail: adminUserEmail,
+        role: 'Admin', // Assuming only admins can create donations this way
+        activity: 'Donation Created',
+        details: { 
+            donationId: newDonation.id!,
+            donorName: newDonation.donorName,
+            amount: newDonation.amount
+        },
+    });
 
     return newDonation;
   } catch (error) {
@@ -77,16 +78,19 @@ export const getDonation = async (id: string) => {
 };
 
 // Function to update a donation
-export const updateDonation = async (id: string, updates: Partial<Donation>, performedByUserId: string) => {
+export const updateDonation = async (
+    id: string, 
+    updates: Partial<Donation>, 
+    adminUser: Pick<User, 'id' | 'name' | 'email'>
+) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
-        const adminUser = await getUser(performedByUserId);
         const donationRef = doc(db, DONATIONS_COLLECTION, id);
         const originalDonation = await getDonation(id);
 
         await updateDoc(donationRef, updates);
 
-        if(adminUser && originalDonation) {
+        if(originalDonation) {
             if(updates.status && originalDonation.status !== updates.status) {
                 await logActivity({
                     userId: adminUser.id!,

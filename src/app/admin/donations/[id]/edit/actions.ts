@@ -2,6 +2,7 @@
 "use server";
 
 import { updateDonation } from "@/services/donation-service";
+import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, DonationStatus } from "@/services/types";
 
@@ -18,6 +19,11 @@ export async function handleUpdateDonation(
   const rawFormData = Object.fromEntries(formData.entries());
 
   try {
+    const adminUser = await getUser(adminUserId);
+    if (!adminUser) {
+        return { success: false, error: "Admin performing the update could not be found." };
+    }
+
     const updates: Partial<Donation> = {
         amount: parseFloat(rawFormData.amount as string),
         type: rawFormData.type as DonationType,
@@ -27,7 +33,7 @@ export async function handleUpdateDonation(
         notes: rawFormData.notes as string | undefined,
     };
 
-    await updateDonation(donationId, updates, adminUserId);
+    await updateDonation(donationId, updates, { id: adminUser.id!, name: adminUser.name, email: adminUser.email });
     
     revalidatePath("/admin/donations");
     revalidatePath(`/admin/donations/${donationId}/edit`);
