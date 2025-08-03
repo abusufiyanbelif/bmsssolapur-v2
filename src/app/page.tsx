@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import type { Quote, Donation, Lead } from "@/services/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function LandingPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -75,12 +76,19 @@ export default function LandingPage() {
         },
     ];
     
-    const exampleCampaigns = [
-        { name: "Zakat Drive 2025", purpose: "Collect Zakat for Ramadan", status: "Approved" },
-        { name: "Hospital Emergency Fund", purpose: "Support 5 surgery cases", status: "Approved" },
-        { name: "Monthly Relief", purpose: "Provide monthly support to families", status: "Approved" },
-        { name: "Education Support", purpose: "Raise funds for 10 school fees", status: "Approved" },
+     const exampleCampaigns = [
+        { name: "Zakat Drive 2025", purpose: "Collect Zakat for Ramadan", status: "Upcoming", raised: 0, goal: 500000, startDate: "Mar 2025", endDate: "Apr 2025" },
+        { name: "Hospital Emergency Fund", purpose: "Support critical surgery cases", status: "Ongoing", raised: 150000, goal: 300000, startDate: "Jan 2025", endDate: "Dec 2025" },
+        { name: "Monthly Relief", purpose: "Provide monthly support to 50 families", status: "Ongoing", raised: 750000, goal: 1200000, startDate: "Jan 2025", endDate: "Dec 2025" },
+        { name: "Education Support 2024", purpose: "Raise funds for school fees", status: "Completed", raised: 250000, goal: 250000, startDate: "Jun 2024", endDate: "Aug 2024" },
     ];
+    
+    const statusColors: Record<string, string> = {
+        "Ongoing": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+        "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
+        "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    };
+
 
     return (
         <div className="flex-1 space-y-12">
@@ -211,21 +219,38 @@ export default function LandingPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Campaign Name</TableHead>
-                                    <TableHead>Purpose</TableHead>
+                                    <TableHead className="w-[25%]">Campaign</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead className="w-[30%]">Funding Progress</TableHead>
                                     <TableHead>Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {exampleCampaigns.map((campaign) => (
-                                    <TableRow key={campaign.name}>
-                                        <TableCell className="font-medium">{campaign.name}</TableCell>
-                                        <TableCell>{campaign.purpose}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className="bg-green-100 text-green-800">{campaign.status}</Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {exampleCampaigns.map((campaign) => {
+                                    const progress = campaign.goal > 0 ? (campaign.raised / campaign.goal) * 100 : 100;
+                                    return (
+                                        <TableRow key={campaign.name}>
+                                            <TableCell>
+                                                <div className="font-medium">{campaign.name}</div>
+                                                <div className="text-xs text-muted-foreground">{campaign.purpose}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {campaign.startDate} - {campaign.endDate}
+                                            </TableCell>
+                                            <TableCell>
+                                                 <div className="flex flex-col gap-2">
+                                                    <Progress value={progress} />
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ₹{campaign.raised.toLocaleString()} / ₹{campaign.goal.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={cn(statusColors[campaign.status])}>{campaign.status}</Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
                             </TableBody>
                         </Table>
                     </CardContent>
