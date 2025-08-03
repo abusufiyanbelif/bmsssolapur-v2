@@ -96,14 +96,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 
     const handleRoleChange = (newRole: string) => {
-        if (!user) return;
+        if (!user || !user.isLoggedIn) return;
+
         const previousRole = user.activeRole;
-        
-        const updatedUser = {...user, activeRole: newRole};
-        setUser(updatedUser);
+        if (previousRole === newRole && isSessionReady) {
+            setIsRoleSwitcherOpen(false);
+            return;
+        }
         
         localStorage.setItem('activeRole', newRole);
-        setRequiredRole(null); 
 
         if (user.isLoggedIn) {
             logActivity({
@@ -116,8 +117,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
         
-        // After changing role in the dialog, the session is now ready.
-        setIsSessionReady(true);
+        // This is a robust way to ensure the entire app re-syncs with the new role.
+        window.location.reload();
     };
     
     const handleLogout = () => {

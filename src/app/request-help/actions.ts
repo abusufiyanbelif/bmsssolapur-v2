@@ -1,10 +1,11 @@
 
+
 "use server";
 
 import { createLead } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Lead } from "@/services/types";
+import type { Lead, DonationType } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -20,12 +21,22 @@ async function handleFileUpload(file: File): Promise<string> {
     return `https://placehold.co/600x400.png?text=verification-doc`;
 }
 
+const categoryToPurposeMap: Record<string, 'Education' | 'Medical' | 'Relief Fund' | 'Deen'> = {
+    'Zakat': 'Relief Fund',
+    'Sadaqah': 'Relief Fund',
+    'Fitr': 'Relief Fund',
+    'Education Fees': 'Education',
+    'Medical Bill': 'Medical',
+    'Ration Kit': 'Relief Fund',
+}
+
+
 export async function handleRequestHelp(
   formData: FormData,
   userId: string
 ): Promise<FormState> {
   const rawFormData = {
-      category: formData.get("category") as any,
+      category: formData.get("category") as string, // This is a blended field now
       helpRequested: parseFloat(formData.get("helpRequested") as string),
       caseDetails: formData.get("caseDetails") as string,
       verificationDocument: formData.get("verificationDocument") as File | null,
@@ -46,17 +57,18 @@ export async function handleRequestHelp(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'purpose' | 'subCategory'> = {
+    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'donations' | 'campaignName' | 'otherCategoryDetail'> = {
         name: beneficiaryUser.name,
         beneficiaryId: userId,
-        category: rawFormData.category,
+        category: 'Sadaqah', // Defaulting to Sadaqah, can be adjusted
+        purpose: categoryToPurposeMap[rawFormData.category] || 'Relief Fund',
+        subCategory: rawFormData.category,
         helpRequested: rawFormData.helpRequested,
         caseDetails: rawFormData.caseDetails,
         verificationDocumentUrl,
-        donations: [],
     };
 
-    const newLead = await createLead({ ...newLeadData, isLoan: false, purpose: 'Relief Fund' }, userId);
+    const newLead = await createLead({ ...newLeadData, isLoan: false }, userId);
     
     revalidatePath("/my-cases");
 

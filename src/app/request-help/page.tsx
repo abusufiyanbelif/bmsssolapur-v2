@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,10 +30,9 @@ import { useState, useEffect } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import type { DonationType } from "@/services/types";
 
 
-const leadCategories = ['Zakat', 'Sadaqah', 'Fitr'] as const;
+const leadCategories = ['Education Fees', 'Medical Bill', 'Ration Kit', 'Zakat', 'Sadaqah', 'Fitr'] as const;
 
 const formSchema = z.object({
   category: z.enum(leadCategories),
@@ -217,5 +217,3 @@ export default function RequestHelpPage() {
      </div>
   );
 }
-
-    

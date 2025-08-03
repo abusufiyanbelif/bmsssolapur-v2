@@ -335,7 +335,7 @@ function BeneficiaryDashboard({ cases }: { cases: Lead[] }) {
             {cases.slice(0,3).map(c => (
               <li key={c.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                 <div>
-                  <p className="font-semibold">For: {c.category}</p>
+                  <p className="font-semibold">For: {c.purpose}</p>
                   <p className="text-sm text-muted-foreground">Requested: ₹{c.helpRequested.toLocaleString()}</p>
                 </div>
                 <div className="text-right">

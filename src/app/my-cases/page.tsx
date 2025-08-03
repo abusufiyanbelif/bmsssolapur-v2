@@ -65,7 +65,7 @@ export default function MyCasesPage() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Date Submitted</TableHead>
-                    <TableHead>Category</TableHead>
+                    <TableHead>Purpose</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[30%]">Funding Progress</TableHead>
                     <TableHead className="text-right">Amount Requested</TableHead>
@@ -77,7 +77,7 @@ export default function MyCasesPage() {
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
-                            <TableCell>{caseItem.category}</TableCell>
+                            <TableCell>{caseItem.purpose}{caseItem.subCategory && ` (${caseItem.subCategory})`}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
                                     {caseItem.status}
@@ -108,7 +108,7 @@ export default function MyCasesPage() {
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">For: {caseItem.category}</CardTitle>
+                                    <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
                                     <CardDescription>Submitted: {format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
                                 </div>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
@@ -191,5 +191,3 @@ export default function MyCasesPage() {
     </div>
   );
 }
-
-    
