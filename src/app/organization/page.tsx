@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
 import { getAllUsers } from "@/services/user-service";
@@ -24,6 +25,11 @@ export default async function OrganizationPage() {
         console.error(e);
     }
     
+    const founders = users.filter(u => u.groups?.includes('Founder'));
+    const cofounders = users.filter(u => u.groups?.includes('Co-Founder') && !u.groups?.includes('Founder'));
+    const financeTeam = users.filter(u => u.groups?.includes('Finance'));
+    const members = users.filter(u => u.groups?.includes('Member of Organization') && !u.groups?.includes('Founder') && !u.groups?.includes('Co-Founder') && !u.groups?.includes('Finance'));
+
     if (error) {
          return (
             <div className="flex-1 space-y-4">
@@ -53,22 +59,22 @@ export default async function OrganizationPage() {
         )
     }
 
+    const keyContacts = [
+        ...founders.filter(u => u.phone), 
+        ...cofounders.filter(u => u.phone),
+        ...financeTeam.filter(u => u.phone)
+    ];
+
     const details = [
         { icon: Building, label: "Organization Name", value: organization.name },
         { icon: MapPin, label: "Address", value: `${organization.address}, ${organization.city}` },
         { icon: Hash, label: "Registration No.", value: organization.registrationNumber },
         { icon: Mail, label: "Contact Email", value: organization.contactEmail },
-        { icon: Phone, label: "Contact Phone", value: organization.contactPhone },
         { icon: CreditCard, label: "UPI ID", value: organization.upiId || "Not Available" },
         { icon: Globe, label: "Website", value: organization.website || "Not Available" },
         { icon: ShieldCheck, label: "PAN Number", value: organization.panNumber || "Not Available" },
     ];
     
-    const founders = users.filter(u => u.groups?.includes('Founder'));
-    const cofounders = users.filter(u => u.groups?.includes('Co-Founder') && !u.groups?.includes('Founder'));
-    const financeTeam = users.filter(u => u.groups?.includes('Finance'));
-    const members = users.filter(u => u.groups?.includes('Member of Organization') && !u.groups?.includes('Founder') && !u.groups?.includes('Co-Founder') && !u.groups?.includes('Finance'));
-
     const MemberCard = ({ user }: { user: User }) => {
         const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         return (
@@ -107,6 +113,17 @@ export default async function OrganizationPage() {
                                     </div>
                                 </div>
                             ))}
+                             <div className="flex items-start gap-4">
+                                <Phone className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                <div>
+                                    <p className="font-semibold">Key Contacts</p>
+                                    {keyContacts.map(contact => (
+                                        <p key={contact.id} className="text-muted-foreground">
+                                            {contact.name}: {contact.phone}
+                                        </p>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                         {organization.qrCodeUrl && (
                              <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50">
