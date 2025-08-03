@@ -104,7 +104,9 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
-            leads.push({ id: doc.id, ...doc.data() } as Lead);
+            const leadData = doc.data() as Omit<Lead, 'id'>;
+            // Ensure campaignName is a string, default to empty string if null/undefined
+            leads.push({ id: doc.id, ...leadData, campaignName: leadData.campaignName || '' });
         });
         return leads;
     } catch (error) {

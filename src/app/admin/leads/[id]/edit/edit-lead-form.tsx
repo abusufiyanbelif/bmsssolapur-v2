@@ -43,6 +43,7 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
 };
 
 const formSchema = z.object({
+  campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
   subCategory: z.string().min(1, "Sub-category is required."),
   otherCategoryDetail: z.string().optional(),
@@ -75,6 +76,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
   const form = useForm<EditLeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      campaignName: lead.campaignName || '',
       purpose: lead.purpose,
       subCategory: lead.subCategory || '',
       otherCategoryDetail: lead.otherCategoryDetail || '',
@@ -94,6 +96,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
+    if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
     formData.append("subCategory", values.subCategory);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
@@ -133,6 +136,21 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+
+                <FormField
+                  control={form.control}
+                  name="campaignName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campaign Name (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Ramadan Food Drive 2024" {...field} />
+                      </FormControl>
+                      <FormDescription>Link this lead to a specific campaign.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <FormField

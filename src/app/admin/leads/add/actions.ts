@@ -28,6 +28,7 @@ export async function handleAddLead(
   
   const rawFormData = {
       beneficiaryId: formData.get("beneficiaryId") as string,
+      campaignName: formData.get("campaignName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
       subCategory: formData.get("subCategory") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
@@ -64,6 +65,7 @@ export async function handleAddLead(
     const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
+        campaignName: rawFormData.campaignName,
         purpose: rawFormData.purpose,
         subCategory: rawFormData.subCategory,
         category: categoryMapping[rawFormData.purpose] || 'Sadaqah',

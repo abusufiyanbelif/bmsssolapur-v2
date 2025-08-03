@@ -5,7 +5,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2, Megaphone } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -102,6 +102,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                      <span className="text-muted-foreground mr-2">Type:</span> 
                                      <Badge variant="secondary">{lead.isLoan ? "Loan" : "Aid"}</Badge>
                                 </div>
+                                {lead.campaignName && (
+                                    <div className="flex items-center">
+                                        <span className="text-muted-foreground mr-2">Campaign:</span> 
+                                        <Badge variant="outline" className="bg-purple-500/10 text-purple-700 border-purple-500/20">
+                                            <Megaphone className="mr-1 h-3 w-3" />
+                                            {lead.campaignName}
+                                        </Badge>
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -209,5 +218,3 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         </div>
     );
 }
-
-    

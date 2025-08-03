@@ -45,6 +45,7 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
 
 const formSchema = z.object({
   beneficiaryId: z.string().min(1, "Beneficiary is required."),
+  campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
   subCategory: z.string().min(1, "Sub-category is required."),
   otherCategoryDetail: z.string().optional(),
@@ -91,6 +92,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     
     const formData = new FormData();
     formData.append("beneficiaryId", values.beneficiaryId);
+    if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
     formData.append("subCategory", values.subCategory);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
@@ -161,6 +163,21 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                 <FormMessage />
                 </FormItem>
             )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="campaignName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Campaign Name (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Ramadan Food Drive 2024" {...field} />
+              </FormControl>
+              <FormDescription>Link this lead to a specific campaign.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

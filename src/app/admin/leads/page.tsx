@@ -146,10 +146,9 @@ export default function LeadsPage() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Date Created</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
+                    <TableHead>Beneficiary</TableHead>
+                    <TableHead>Campaign</TableHead>
                     <TableHead>Amount Requested</TableHead>
-                    <TableHead>Amount Given</TableHead>
                     <TableHead>Case Status</TableHead>
                     <TableHead>Verification</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -162,9 +161,8 @@ export default function LeadsPage() {
                         <TableRow key={lead.id}>
                             <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
                             <TableCell className="font-medium">{lead.name}</TableCell>
-                            <TableCell>{lead.purpose || lead.category}</TableCell>
+                            <TableCell>{lead.campaignName || 'N/A'}</TableCell>
                             <TableCell>₹{lead.helpRequested.toFixed(2)}</TableCell>
-                            <TableCell>₹{lead.helpGiven.toFixed(2)}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     {lead.status}
@@ -196,7 +194,7 @@ export default function LeadsPage() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <CardTitle className="text-lg">{lead.name}</CardTitle>
-                                    <CardDescription>For: {lead.purpose || lead.category}</CardDescription>
+                                    <CardDescription>Campaign: {lead.campaignName || 'N/A'}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
@@ -208,10 +206,6 @@ export default function LeadsPage() {
                            <div className="flex justify-between">
                                 <span className="text-muted-foreground">Amount Requested</span>
                                 <span>₹{lead.helpRequested.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Amount Given</span>
-                                <span>₹{lead.helpGiven.toFixed(2)}</span>
                             </div>
                              <div className="flex justify-between">
                                 <span className="text-muted-foreground">Case Status</span>
@@ -417,5 +411,3 @@ export default function LeadsPage() {
     </div>
   )
 }
-
-    

@@ -17,6 +17,7 @@ export async function handleUpdateLead(
 
   try {
     const updates: Partial<Lead> = {
+        campaignName: rawFormData.campaignName as string | undefined,
         purpose: rawFormData.purpose as LeadPurpose,
         subCategory: rawFormData.subCategory as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
