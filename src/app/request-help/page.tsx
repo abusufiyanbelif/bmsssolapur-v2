@@ -27,9 +27,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleRequestHelp } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import type { Lead } from "@/services/types";
 
 
 const leadCategories = ['Education Fees', 'Medical Bill', 'Ration Kit', 'Zakat', 'Sadaqah', 'Fitr'] as const;
@@ -48,6 +58,8 @@ export default function RequestHelpPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [submittedLead, setSubmittedLead] = useState<Lead | null>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -81,11 +93,8 @@ export default function RequestHelpPage() {
     setIsSubmitting(false);
 
     if (result.success && result.lead) {
-      toast({
-        title: "Request Submitted",
-        description: `Your help request has been successfully submitted for review.`,
-      });
-      form.reset();
+      setSubmittedLead(result.lead);
+      setShowSuccessDialog(true);
     } else {
       toast({
         variant: "destructive",
@@ -93,6 +102,12 @@ export default function RequestHelpPage() {
         description: result.error || "An unknown error occurred.",
       });
     }
+  }
+
+  const handleDialogClose = () => {
+    setShowSuccessDialog(false);
+    form.reset();
+    setSubmittedLead(null);
   }
 
   if (loading) {
@@ -214,6 +229,43 @@ export default function RequestHelpPage() {
                 </Form>
             </CardContent>
         </Card>
+        
+        <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+            <AlertDialogContent>
+                 <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                        <CheckCircle className="h-6 w-6 text-green-500" />
+                        Request Submitted Successfully
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                       Your request has been received and is now pending review. Here is a summary of your submission.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                {submittedLead && (
+                    <div className="text-sm space-y-3 rounded-lg border bg-muted/50 p-4">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Case ID</span>
+                            <span className="font-mono text-xs">{submittedLead.id}</span>
+                        </div>
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground">Category</span>
+                            <span className="font-semibold">{submittedLead.subCategory}</span>
+                        </div>
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground">Amount Requested</span>
+                            <span className="font-semibold">₹{submittedLead.helpRequested.toLocaleString()}</span>
+                        </div>
+                        <div>
+                             <p className="text-muted-foreground mb-1">Details Provided:</p>
+                             <p className="p-2 bg-background rounded text-foreground text-xs">{submittedLead.caseDetails}</p>
+                        </div>
+                    </div>
+                )}
+                 <AlertDialogFooter>
+                    <AlertDialogAction onClick={handleDialogClose}>OK</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
      </div>
   );
 }
