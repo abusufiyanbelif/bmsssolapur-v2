@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
-import { getAllUsers } from "@/services/user-service";
 import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard, Award, Users, Banknote } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -10,25 +9,45 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/services/types";
 
+// Static data for Board Members
+const boardMembers = {
+  founder: [
+    { name: "Moosa Shaikh", phone: "8421708907" },
+  ],
+  cofounder: [
+    { name: "Abu Rehan Bedrekar", phone: "7276224160" },
+  ],
+  finance: [
+    { name: "Maaz Shaikh", phone: "9372145889" },
+  ],
+  members: [
+    { name: "Abusufiyan Belif", phone: "7887646583" },
+    { name: "Nayyar Ahmed Karajgi", phone: "9028976036" },
+    { name: "Arif Baig", phone: "9225747045" },
+    { name: "Mazhar Shaikh", phone: "8087669914" },
+    { name: "Mujahid Chabukswar", phone: "8087420544" },
+    { name: "Muddasir", phone: "7385557820" },
+  ]
+};
+
+const keyContactPhones = ["7276224160", "9372145889", "8421708907"];
+const keyContacts = [
+    ...boardMembers.founder, 
+    ...boardMembers.cofounder, 
+    ...boardMembers.finance
+].filter(m => keyContactPhones.includes(m.phone));
+
+
 export default async function OrganizationPage() {
     let organization;
-    let users: User[] = [];
     let error = null;
 
     try {
-        [organization, users] = await Promise.all([
-            getCurrentOrganization(),
-            getAllUsers()
-        ]);
+        organization = await getCurrentOrganization();
     } catch(e) {
         error = e instanceof Error ? e.message : "An unknown error occurred while fetching organization details.";
         console.error(e);
     }
-    
-    const founders = users.filter(u => u.groups?.includes('Founder'));
-    const cofounders = users.filter(u => u.groups?.includes('Co-Founder'));
-    const financeTeam = users.filter(u => u.groups?.includes('Finance'));
-    const members = users.filter(u => u.groups?.includes('Member of Organization') && !u.groups?.includes('Founder') && !u.groups?.includes('Co-Founder') && !u.groups?.includes('Finance'));
 
     if (error) {
          return (
@@ -59,9 +78,6 @@ export default async function OrganizationPage() {
         )
     }
 
-    const keyContacts = users.filter(u => ["7276224160", "9372145889", "8421708907"].includes(u.phone));
-
-
     const details = [
         { icon: Building, label: "Organization Name", value: organization.name },
         { icon: MapPin, label: "Address", value: `${organization.address}, ${organization.city}` },
@@ -72,17 +88,17 @@ export default async function OrganizationPage() {
         { icon: ShieldCheck, label: "PAN Number", value: organization.panNumber || "Not Available" },
     ];
     
-    const MemberCard = ({ user }: { user: User }) => {
-        const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const MemberCard = ({ member }: { member: { name: string, phone: string } }) => {
+        const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         return (
             <div className="flex items-center gap-4 p-4 border rounded-lg">
                 <Avatar>
-                    <AvatarImage src={`https://placehold.co/100x100.png?text=${initials}`} alt={user.name} data-ai-hint="male portrait" />
+                    <AvatarImage src={`https://placehold.co/100x100.png?text=${initials}`} alt={member.name} data-ai-hint="male portrait" />
                     <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <p className="font-semibold">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.phone}</p>
+                    <p className="font-semibold">{member.name}</p>
+                    <p className="text-sm text-muted-foreground">{member.phone}</p>
                 </div>
             </div>
         );
@@ -115,7 +131,7 @@ export default async function OrganizationPage() {
                                 <div>
                                     <p className="font-semibold">Key Contacts</p>
                                     {keyContacts.length > 0 ? keyContacts.map(contact => (
-                                        <p key={contact.id} className="text-muted-foreground">
+                                        <p key={contact.phone} className="text-muted-foreground">
                                             {contact.name}: {contact.phone}
                                         </p>
                                     )) : <p className="text-muted-foreground">No key contacts assigned.</p>}
@@ -148,35 +164,35 @@ export default async function OrganizationPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {founders.length > 0 && (
+                    {boardMembers.founder.length > 0 && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Founder</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {founders.map(user => <MemberCard key={user.id} user={user} />)}
+                                {boardMembers.founder.map(member => <MemberCard key={member.phone} member={member} />)}
                             </div>
                         </div>
                     )}
-                     {cofounders.length > 0 && (
+                     {boardMembers.cofounder.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-semibold mb-4">Co-Founders</h3>
+                            <h3 className="text-lg font-semibold mb-4">Co-Founder</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {cofounders.map(user => <MemberCard key={user.id} user={user} />)}
+                                {boardMembers.cofounder.map(member => <MemberCard key={member.phone} member={member} />)}
                             </div>
                         </div>
                      )}
-                      {financeTeam.length > 0 && (
+                      {boardMembers.finance.length > 0 && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Banknote className="h-5 w-5" /> Finance</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {financeTeam.map(user => <MemberCard key={user.id} user={user} />)}
+                                {boardMembers.finance.map(member => <MemberCard key={member.phone} member={member} />)}
                             </div>
                         </div>
                     )}
-                    {members.length > 0 && (
+                    {boardMembers.members.length > 0 && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Members</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {members.map(user => <MemberCard key={user.id} user={user} />)}
+                                {boardMembers.members.map(member => <MemberCard key={member.phone} member={member} />)}
                             </div>
                         </div>
                     )}
