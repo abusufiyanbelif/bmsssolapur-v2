@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
 import { getAllUsers } from "@/services/user-service";
-import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard, Award, Users } from "lucide-react";
+import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard, Award, Users, Banknote } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import Image from "next/image";
@@ -66,7 +66,8 @@ export default async function OrganizationPage() {
     
     const founders = users.filter(u => u.groups?.includes('Founder'));
     const cofounders = users.filter(u => u.groups?.includes('Co-Founder') && !u.groups?.includes('Founder'));
-    const members = users.filter(u => u.groups?.includes('Member of Organization'));
+    const financeTeam = users.filter(u => u.groups?.includes('Finance'));
+    const members = users.filter(u => u.groups?.includes('Member of Organization') && !u.groups?.includes('Founder') && !u.groups?.includes('Co-Founder') && !u.groups?.includes('Finance'));
 
     const MemberCard = ({ user }: { user: User }) => {
         const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -133,24 +134,38 @@ export default async function OrganizationPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4">Founder</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {founders.map(user => <MemberCard key={user.id} user={user} />)}
+                    {founders.length > 0 && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-4">Founder</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {founders.map(user => <MemberCard key={user.id} user={user} />)}
+                            </div>
                         </div>
-                    </div>
-                     <div>
-                        <h3 className="text-lg font-semibold mb-4">Co-Founders</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {cofounders.map(user => <MemberCard key={user.id} user={user} />)}
+                    )}
+                     {cofounders.length > 0 && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-4">Co-Founders</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {cofounders.map(user => <MemberCard key={user.id} user={user} />)}
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4">Members</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {members.map(user => <MemberCard key={user.id} user={user} />)}
+                     )}
+                      {financeTeam.length > 0 && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Banknote className="h-5 w-5" /> Finance</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {financeTeam.map(user => <MemberCard key={user.id} user={user} />)}
+                            </div>
                         </div>
-                    </div>
+                    )}
+                    {members.length > 0 && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-4">Members</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {members.map(user => <MemberCard key={user.id} user={user} />)}
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
