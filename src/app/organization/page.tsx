@@ -26,7 +26,7 @@ export default async function OrganizationPage() {
     }
     
     const founders = users.filter(u => u.groups?.includes('Founder'));
-    const cofounders = users.filter(u => u.groups?.includes('Co-Founder') && !u.groups?.includes('Founder'));
+    const cofounders = users.filter(u => u.groups?.includes('Co-Founder'));
     const financeTeam = users.filter(u => u.groups?.includes('Finance'));
     const members = users.filter(u => u.groups?.includes('Member of Organization') && !u.groups?.includes('Founder') && !u.groups?.includes('Co-Founder') && !u.groups?.includes('Finance'));
 
