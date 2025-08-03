@@ -218,3 +218,5 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         </div>
     );
 }
+
+    
