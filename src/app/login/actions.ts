@@ -56,8 +56,10 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
 
         // For this prototype, we use a simple password check.
         // In a real application, you would use Firebase Authentication.
-        const isDonorTestUser = user.name.toLowerCase() === 'donor';
-        const validPassword = isDonorTestUser ? 'donor' : 'admin';
+        let validPassword = 'admin'; // Default password
+        if (user.name.toLowerCase() === 'donor') {
+            validPassword = 'donor';
+        }
 
         if (password !== validPassword) {
             return { success: false, error: "Invalid credentials." };
