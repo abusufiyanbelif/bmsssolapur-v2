@@ -7,14 +7,20 @@ import { Loader2, AlertCircle, ListChecks } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { format, formatDistanceToNow } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 
 interface ActivityFeedProps {
   userId: string;
 }
 
 const ActivityItem = ({ log }: { log: ActivityLog }) => {
-  const timeAgo = formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true });
-  const fullDate = format(log.timestamp.toDate(), 'PPP p');
+  let timeAgo = "Just now";
+  let fullDate = "Pending timestamp...";
+
+  if (log.timestamp instanceof Timestamp) {
+    timeAgo = formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true });
+    fullDate = format(log.timestamp.toDate(), 'PPP p');
+  }
 
   const renderDetails = () => {
     switch(log.activity) {
