@@ -207,5 +207,3 @@ export default async function OrganizationPage() {
         </div>
     );
 }
-
-    
