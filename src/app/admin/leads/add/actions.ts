@@ -13,6 +13,13 @@ interface FormState {
     lead?: Lead;
 }
 
+const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
+    'Education': 'Sadaqah',
+    'Medical': 'Sadaqah',
+    'Relief Fund': 'Lillah',
+    'Deen': 'Sadaqah'
+};
+
 // In a real app, you would upload the file to a storage service like Firebase Storage
 // and get a URL. For this prototype, we'll just acknowledge the file was received.
 async function handleFileUpload(file: File): Promise<string> {
@@ -35,7 +42,6 @@ export async function handleAddLead(
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
-      category: formData.get("category") as DonationType,
       subCategory: formData.get("subCategory") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
       helpRequested: parseFloat(formData.get("helpRequested") as string),
@@ -45,7 +51,7 @@ export async function handleAddLead(
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
   
-  if (!rawFormData.purpose || !rawFormData.subCategory || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
+  if (!rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
     return { success: false, error: "Missing required lead details fields." };
   }
 
@@ -91,8 +97,8 @@ export async function handleAddLead(
         beneficiaryId: beneficiaryUser.id!,
         campaignName: rawFormData.campaignName,
         purpose: rawFormData.purpose,
+        category: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose
         subCategory: rawFormData.subCategory,
-        category: rawFormData.category,
         otherCategoryDetail: rawFormData.subCategory === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         helpRequested: rawFormData.helpRequested,
         dueDate: rawFormData.dueDate,

@@ -9,6 +9,13 @@ interface FormState {
     error?: string;
 }
 
+const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
+    'Education': 'Sadaqah',
+    'Medical': 'Sadaqah',
+    'Relief Fund': 'Lillah',
+    'Deen': 'Sadaqah'
+};
+
 export async function handleUpdateLead(
   leadId: string,
   formData: FormData
@@ -21,7 +28,7 @@ export async function handleUpdateLead(
     const updates: Partial<Lead> = {
         campaignName: rawFormData.campaignName as string | undefined,
         purpose: purpose,
-        category: rawFormData.category as DonationType,
+        category: purposeCategoryMap[purpose], // Infer category from purpose
         subCategory: rawFormData.subCategory as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         helpRequested: parseFloat(rawFormData.helpRequested as string),

@@ -42,13 +42,6 @@ const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 const leadStatuses = ["Pending", "Partial", "Closed"] as const;
 const leadVerificationStatuses = ["Pending", "Verified", "Rejected"] as const;
 
-const purposeCategoryMap: Record<LeadPurpose, DonationType[]> = {
-    'Education': ['Sadaqah', 'Lillah'],
-    'Medical': ['Sadaqah', 'Lillah', 'Zakat'],
-    'Relief Fund': ['Sadaqah', 'Lillah', 'Zakat', 'Fitr'],
-    'Deen': ['Sadaqah', 'Lillah']
-};
-
 const subCategoryOptions: Record<LeadPurpose, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Other'],
@@ -60,7 +53,6 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
 const formSchema = z.object({
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
-  category: z.string().min(1, "Donation category is required."),
   subCategory: z.string().min(1, "Sub-category is required."),
   otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
@@ -95,7 +87,6 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     defaultValues: {
       campaignName: lead.campaignName || '',
       purpose: lead.purpose,
-      category: lead.category,
       subCategory: lead.subCategory || '',
       otherCategoryDetail: lead.otherCategoryDetail || '',
       helpRequested: lead.helpRequested,
@@ -117,7 +108,6 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     const formData = new FormData();
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
-    formData.append("category", values.category);
     formData.append("subCategory", values.subCategory);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
@@ -184,7 +174,6 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                                 field.onChange(value);
                                 form.setValue('subCategory', '');
                                 form.setValue('otherCategoryDetail', '');
-                                form.setValue('category', '');
                             }} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
@@ -201,32 +190,6 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                             </FormItem>
                         )}
                     />
-                     {selectedPurpose && (
-                        <FormField
-                            control={form.control}
-                            name="category"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Donation Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a donation category" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {purposeCategoryMap[selectedPurpose].map(cat => (
-                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {selectedPurpose && (
                         <FormField
                             control={form.control}
@@ -251,6 +214,8 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                             )}
                         />
                     )}
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {selectedSubCategory === 'Other' && (
                         <FormField
                             control={form.control}

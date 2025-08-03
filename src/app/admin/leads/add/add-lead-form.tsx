@@ -40,13 +40,6 @@ import { format } from "date-fns";
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
-const purposeCategoryMap: Record<LeadPurpose, DonationType[]> = {
-    'Education': ['Sadaqah', 'Lillah'],
-    'Medical': ['Sadaqah', 'Lillah', 'Zakat'],
-    'Relief Fund': ['Sadaqah', 'Lillah', 'Zakat', 'Fitr'],
-    'Deen': ['Sadaqah', 'Lillah']
-};
-
 const subCategoryOptions: Record<LeadPurpose, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Other'],
@@ -66,7 +59,6 @@ const formSchema = z.object({
 
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
-  category: z.string().min(1, "Donation category is required."),
   subCategory: z.string().min(1, "Sub-category is required."),
   otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
@@ -138,7 +130,6 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
-    formData.append("category", values.category);
     formData.append("subCategory", values.subCategory);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
@@ -313,7 +304,6 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                     field.onChange(value);
                     form.setValue('subCategory', ''); // Reset subcategory on purpose change
                     form.setValue('otherCategoryDetail', '');
-                    form.setValue('category', ''); // Reset category as well
                 }} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
@@ -331,34 +321,6 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                 </FormItem>
             )}
             />
-            {selectedPurpose && (
-                <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Donation Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a donation category" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {purposeCategoryMap[selectedPurpose].map(cat => (
-                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormDescription>The type of fund this lead falls under.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {selectedPurpose && (
                  <FormField
                     control={form.control}
@@ -383,6 +345,9 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                     )}
                 />
             )}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
              {selectedSubCategory === 'Other' && (
                 <FormField
                     control={form.control}
