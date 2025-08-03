@@ -4,18 +4,25 @@
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Donation, Lead, Quote } from "@/services/types";
+import type { User, Donation, Lead, Quote, LeadPurpose } from "@/services/types";
+import { getOpenLeads, EnrichedLead } from "@/app/campaigns/actions";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserHomePageProps {
   user: (User & { isLoggedIn: boolean; }) | null;
@@ -29,10 +36,10 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quotesLoading, setQuotesLoading] = useState(false);
+  const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Guard against running fetch logic when user is not logged in or role is not set.
       if (!user || !user.isLoggedIn || !activeRole) {
         setLoading(false);
         return;
@@ -42,16 +49,20 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
       setError(null);
       
       try {
-        // Reset data on role change
         setDonations([]);
         setCases([]);
+        setOpenLeads([]);
 
         if (activeRole === 'Donor') {
-          const donorDonations = await getDonationsByUserId(user.id!);
-          setDonations(donorDonations.slice(0, 3)); // Get latest 3
+          const [donorDonations, availableLeads] = await Promise.all([
+             getDonationsByUserId(user.id!),
+             getOpenLeads()
+          ]);
+          setDonations(donorDonations);
+          setOpenLeads(availableLeads);
         } else if (activeRole === 'Beneficiary') {
           const beneficiaryCases = await getLeadsByBeneficiaryId(user.id!);
-          setCases(beneficiaryCases.slice(0, 3)); // Get latest 3
+          setCases(beneficiaryCases);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
@@ -69,9 +80,6 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
         setQuotesLoading(false);
     }
     
-    // This effect now correctly depends on `user` and `activeRole`.
-    // When the user logs in or switches roles, these props will change,
-    // and this effect will re-run, fetching the correct data.
     fetchDashboardData();
     fetchQuotes();
 
@@ -102,7 +110,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 
     let dashboardContent;
     if (activeRole === 'Donor') {
-      dashboardContent = <DonorDashboard donations={donations} />;
+      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} />;
     } else if (activeRole === 'Beneficiary') {
       dashboardContent = <BeneficiaryDashboard cases={cases} />;
     } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
@@ -123,16 +131,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
         dashboardContent = <p>You do not have a role that has a default dashboard. Please select a role from your profile.</p>;
     }
 
-    return (
-        <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-                {dashboardContent}
-            </div>
-            <div className="lg:col-span-1">
-                <InspirationalQuotes quotes={quotes} loading={quotesLoading} />
-            </div>
-        </div>
-    )
+    return dashboardContent;
   };
   
   return (
@@ -155,46 +154,166 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 }
 
 
-function DonorDashboard({ donations }: { donations: Donation[] }) {
+function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[] }) {
+  const isMobile = useIsMobile();
+  const [purposeFilter, setPurposeFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const totalDonated = useMemo(() => {
+    return donations.reduce((sum, d) => sum + d.amount, 0);
+  }, [donations]);
+
+  const uniqueCampaignsFunded = useMemo(() => {
+    const leadIds = new Set();
+    donations.forEach(d => {
+      if(d.allocations) {
+        d.allocations.forEach(a => leadIds.add(a.leadId));
+      }
+    });
+    return leadIds.size;
+  }, [donations]);
+
+  const filteredLeads = useMemo(() => {
+    return openLeads.filter(lead => {
+      const purposeMatch = purposeFilter === 'all' || lead.purpose === purposeFilter;
+      const searchMatch = searchQuery === '' || 
+        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (lead.caseDetails && lead.caseDetails.toLowerCase().includes(searchQuery.toLowerCase()));
+      return purposeMatch && searchMatch;
+    });
+  }, [openLeads, purposeFilter, searchQuery]);
+  
+  const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen"];
+
+  const stats = [
+    { title: "Total Donated", value: `₹${totalDonated.toLocaleString()}`, icon: HandHeart },
+    { title: "Donations Made", value: donations.length, icon: FileText },
+    { title: "Campaigns Supported", value: uniqueCampaignsFunded, icon: Target },
+  ];
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <HandHeart className="text-primary" />
-          Recent Donations
-        </CardTitle>
-        <CardDescription>
-          Here are your latest contributions. Thank you for your support!
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {donations.length > 0 ? (
-          <ul className="space-y-4">
-            {donations.map(d => (
-              <li key={d.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <div>
-                  <p className="font-semibold">₹{d.amount.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">To: {d.purpose || d.type}</p>
-                </div>
-                <div className="text-right">
-                    <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge>
-                    <p className="text-xs text-muted-foreground mt-1">{format(d.createdAt.toDate(), "dd MMM yyyy")}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
-        )}
-      </CardContent>
-      <CardFooter>
-        <Button asChild variant="secondary" className="w-full">
-          <Link href="/my-donations">
-            View All My Donations <ArrowRight className="ml-2" />
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {stats.map(stat => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Open Cases and Quotes */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Open Cases for Funding</CardTitle>
+                    <CardDescription>Browse verified cases that need your support. Your contribution can make a difference.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                        <div className="flex-1 space-y-2">
+                            <Label htmlFor="search">Search Cases</Label>
+                            <Input id="search" placeholder="Search by name or details..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            <Label htmlFor="purposeFilter">Filter by Purpose</Label>
+                            <Select value={purposeFilter} onValueChange={setPurposeFilter}>
+                                <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {purposeOptions.map(p => <SelectItem key={p} value={p} className="capitalize">{p === 'all' ? 'All Purposes' : p}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    {filteredLeads.length > 0 ? (
+                        <div className="space-y-4">
+                            {filteredLeads.slice(0, 4).map(lead => {
+                                const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
+                                const remainingAmount = lead.helpRequested - lead.helpGiven;
+                                return (
+                                <div key={lead.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div className="flex-grow">
+                                        <p className="font-semibold">{lead.name}</p>
+                                        <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.subCategory}</p>
+                                        <Progress value={progress} className="my-2" />
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-bold text-primary">₹{remainingAmount.toLocaleString()}</span> still needed of ₹{lead.helpRequested.toLocaleString()} goal.
+                                        </p>
+                                    </div>
+                                    <Button asChild size="sm">
+                                        <Link href="/campaigns">Donate</Link>
+                                    </Button>
+                                </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-center text-muted-foreground py-6">No cases match your filters. Try clearing them.</p>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    <Button asChild variant="secondary" className="w-full">
+                        <Link href="/campaigns">View All Open Cases <ArrowRight className="ml-2" /></Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+        <div className="lg:col-span-1">
+             <InspirationalQuotes quotes={quotes} loading={false} />
+        </div>
+      </div>
+      
+      {/* Recent Donations */}
+       <Card>
+        <CardHeader>
+            <CardTitle>Recent Donations</CardTitle>
+            <CardDescription>A look at your latest contributions.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {donations.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            {!isMobile && <TableHead>Type</TableHead>}
+                            {!isMobile && <TableHead>Purpose</TableHead>}
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {donations.slice(0, 5).map(d => (
+                            <TableRow key={d.id}>
+                                <TableCell>{format(d.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
+                                {!isMobile && <TableCell>{d.type}</TableCell>}
+                                {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
+                                <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
+                                <TableCell className="text-right font-semibold">₹{d.amount.toLocaleString()}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            ): (
+                <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
+            )}
+        </CardContent>
+        <CardFooter>
+            <Button asChild variant="secondary" className="w-full">
+            <Link href="/my-donations">
+                View All My Donations <ArrowRight className="ml-2" />
+            </Link>
+            </Button>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }
 
@@ -213,7 +332,7 @@ function BeneficiaryDashboard({ cases }: { cases: Lead[] }) {
       <CardContent>
          {cases.length > 0 ? (
           <ul className="space-y-4">
-            {cases.map(c => (
+            {cases.slice(0,3).map(c => (
               <li key={c.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                 <div>
                   <p className="font-semibold">For: {c.category}</p>
