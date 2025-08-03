@@ -63,6 +63,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
     },
   });
 
+  const { formState: { isDirty } } = form;
   const qrCodeUrl = form.watch("qrCodeUrl");
 
   async function onSubmit(values: FormValues) {
@@ -84,6 +85,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         title: "Organization Details Saved",
         description: `The organization profile has been updated successfully.`,
       });
+      form.reset(values);
     } else {
       toast({
         variant: "destructive",
@@ -242,7 +244,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         />
 
 
-        <Button type="submit" disabled={isSubmitting} size="lg">
+        <Button type="submit" disabled={isSubmitting || !isDirty} size="lg">
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Changes
         </Button>

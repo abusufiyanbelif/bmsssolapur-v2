@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ActivityFeed } from "./activity-feed";
 import { getUser, User } from '@/services/user-service';
-import { Loader2, AlertCircle, Edit, X } from 'lucide-react';
+import { Loader2, AlertCircle, Edit, X, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { handleUpdateProfile } from './actions';
@@ -54,6 +54,8 @@ export default function ProfilePage() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
   });
+
+  const { formState: { isDirty } } = form;
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -429,8 +431,8 @@ export default function ProfilePage() {
                                     </div>
                                     
                                     {isEditing && (
-                                        <Button type="submit" disabled={isSubmitting}>
-                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        <Button type="submit" disabled={isSubmitting || !isDirty}>
+                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                             Save Changes
                                         </Button>
                                     )}
@@ -473,5 +475,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

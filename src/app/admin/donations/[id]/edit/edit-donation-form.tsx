@@ -66,6 +66,8 @@ export function EditDonationForm({ donation, adminUserId }: EditDonationFormProp
     },
   });
 
+  const { formState: { isDirty } } = form;
+
   async function onSubmit(values: EditDonationFormValues) {
     setIsSubmitting(true);
     
@@ -86,6 +88,7 @@ export function EditDonationForm({ donation, adminUserId }: EditDonationFormProp
         title: "Donation Updated",
         description: `Successfully updated donation from ${donation.donorName}.`,
       });
+      form.reset(values);
     } else {
       toast({
         variant: "destructive",
@@ -219,7 +222,7 @@ export function EditDonationForm({ donation, adminUserId }: EditDonationFormProp
                 )}
                 />
 
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting || !isDirty}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
                 </Button>

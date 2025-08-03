@@ -86,6 +86,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     },
   });
 
+  const { formState: { isDirty } } = form;
   const selectedPurpose = form.watch("purpose");
   const selectedSubCategory = form.watch("subCategory");
 
@@ -111,6 +112,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
         title: "Lead Updated",
         description: `Successfully updated lead for ${lead.name}.`,
       });
+      form.reset(values);
     } else {
       toast({
         variant: "destructive",
@@ -299,7 +301,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                   )}
                 />
 
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting || !isDirty}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
                 </Button>

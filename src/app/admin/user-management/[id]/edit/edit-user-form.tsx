@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser } from "./actions";
 import { useState } from "react";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -87,6 +87,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
     },
   });
 
+  const { formState: { isDirty } } = form;
   const selectedRoles = form.watch("roles");
 
   async function onSubmit(values: EditUserFormValues) {
@@ -122,6 +123,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         description: `Successfully updated user ${user.name}.`,
         icon: <CheckCircle />,
       });
+      form.reset(values);
     } else {
       toast({
         variant: "destructive",
@@ -467,9 +469,9 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 )}
                 />
                 
-                <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
+                <Button type="submit" disabled={isSubmitting || !isDirty}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Changes
                 </Button>
             </form>
             </Form>
