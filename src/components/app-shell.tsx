@@ -128,12 +128,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const activeRole = user.activeRole;
 
     const HeaderTitle = () => (
-        <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
+        <a href="/" className="flex items-center gap-3" title="Baitul Mal Samajik Sanstha (Solapur)">
             <Logo className="h-10 w-auto" />
-            <div className="font-headline text-sm font-bold whitespace-nowrap">
-                <span className="text-primary font-bold">BM</span>{' '}
-                <span className="text-accent font-bold">SS</span>{' '}
-                 <span className="text-primary font-bold">Solapur</span>
+            <div>
+                <div className="font-headline font-bold text-base leading-tight">
+                    <span className="text-primary">BM</span><span className="text-accent">SS</span>
+                </div>
+                 <div className="text-xs text-muted-foreground leading-tight">Solapur</div>
             </div>
         </a>
     );
