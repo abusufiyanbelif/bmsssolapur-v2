@@ -29,8 +29,8 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Generic Donor for Anonymous Donations
     { name: "Anonymous Donor", email: "anonymous@example.com", phone: "0000000000", password: "admin", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other' },
 
-    // Hardcoded Donor user
-    { name: "Donor", email: "donor@example.com", phone: "1111111111", password: "donor", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    // Hardcoded Donor user, now also a Super Admin for testing
+    { name: "Donor", email: "donor@example.com", phone: "1111111111", password: "admin", roles: ["Donor", "Super Admin"], privileges: ["all"], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
 
     // Hardcoded Beneficiary user
     { name: "Beneficiary", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
