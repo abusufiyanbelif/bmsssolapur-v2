@@ -137,7 +137,9 @@ export default function UserHomePage() {
   return (
     <div className="flex-1 space-y-6">
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Welcome, {user?.name || "Guest"}!</h2>
+        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
+            Welcome{loading ? '' : `, ${user?.name || 'Guest'}`}!
+        </h2>
         <p className="text-muted-foreground">
           {activeRole ? (
             <>You are currently viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.</>
