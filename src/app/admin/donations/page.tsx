@@ -118,14 +118,6 @@ export default function DonationsPage() {
         setCurrentPage(1);
     }, [statusFilter, typeFilter, nameFilter, itemsPerPage]);
 
-
-    const handleFeatureInProgress = () => {
-        toast({
-            title: "In Progress",
-            description: "This feature is currently in development and will be available soon.",
-        });
-    };
-
     const resetFilters = () => {
         setStatusFilter('all');
         setTypeFilter('all');
@@ -250,17 +242,6 @@ export default function DonationsPage() {
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                     </DeleteConfirmationDialog>
-                    
-                    <DropdownMenuSeparator />
-                    {donation.status === "Pending verification" && (
-                         <DropdownMenuItem onClick={handleFeatureInProgress}>Verify</DropdownMenuItem>
-                    )}
-                    {donation.status === "Verified" && (
-                        <>
-                            <DropdownMenuItem onClick={handleFeatureInProgress}>Allocate to Lead</DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleFeatureInProgress}>Split Donation</DropdownMenuItem>
-                        </>
-                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
         );

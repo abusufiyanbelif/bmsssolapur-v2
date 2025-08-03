@@ -34,7 +34,7 @@ const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as cons
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 
 const formSchema = z.object({
-  donorId: z.string().min(1, "Donor is required."),
+  donorId: z.string().optional(),
   isAnonymous: z.boolean().default(false),
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
   type: z.enum(donationTypes),
@@ -42,6 +42,14 @@ const formSchema = z.object({
   transactionId: z.string().min(1, "Transaction ID is required."),
   paymentScreenshot: z.any().optional(),
   paymentMethod: z.enum(["Bank Transfer", "Cash", "UPI / QR Code", "Other"]),
+}).refine(data => {
+    if (!data.isAnonymous) {
+        return !!data.donorId && data.donorId.length > 0;
+    }
+    return true;
+}, {
+    message: "Please select a donor.",
+    path: ["donorId"],
 });
 
 type AddDonationFormValues = z.infer<typeof formSchema>;
@@ -72,8 +80,11 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append("donorId", isAnonymous ? anonymousDonor!.id! : values.donorId);
-    formData.append("donorName", isAnonymous ? "Anonymous Donor" : users.find(u => u.id === values.donorId)?.name || "Unknown");
+    const donorId = isAnonymous ? anonymousDonor!.id! : values.donorId!;
+    const donorName = isAnonymous ? "Anonymous Donor" : users.find(u => u.id === values.donorId)?.name || "Unknown";
+
+    formData.append("donorId", donorId);
+    formData.append("donorName", donorName);
     formData.append("isAnonymous", String(values.isAnonymous));
     formData.append("amount", String(values.amount));
     formData.append("type", values.type);
