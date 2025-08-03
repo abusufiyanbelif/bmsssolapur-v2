@@ -33,7 +33,7 @@ export function Footer() {
 
           {/* Column 2: Contact Us & Socials */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold font-headline text-foreground">Contact Us</h4>
+            <h4 className="text-lg font-semibold font-headline text-primary">Contact Us</h4>
             <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-3">
                     <MapPin className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
@@ -49,7 +49,7 @@ export function Footer() {
                 </div>
             </div>
              <div className="space-y-3 pt-4">
-                <h5 className="font-semibold text-foreground text-sm">Key Contacts</h5>
+                <h5 className="font-semibold text-primary text-sm">Key Contacts</h5>
                  <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-primary" />
                     <div className="text-sm">
@@ -73,7 +73,7 @@ export function Footer() {
                 </div>
              </div>
              <div className="space-y-2 text-sm pt-4">
-                <h4 className="font-semibold text-foreground">Connect With Us</h4>
+                <h4 className="font-semibold text-primary text-sm">Connect With Us</h4>
                 <ul className="flex items-center gap-4">
                     <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Facebook /></a></li>
                     <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Instagram /></a></li>
@@ -84,7 +84,7 @@ export function Footer() {
           
           {/* Column 3: Our Commitment */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold font-headline text-foreground">Our Commitment</h4>
+            <h4 className="text-lg font-semibold font-headline text-primary">Our Commitment</h4>
             <p className="text-sm text-muted-foreground">
                We are dedicated to complete transparency and accountability in all our endeavors. Our work is guided by core principles that ensure your contributions directly and meaningfully impact those in need.
             </p>
