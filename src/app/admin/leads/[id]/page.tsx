@@ -5,7 +5,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2, Megaphone, CalendarIcon, Target } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -123,16 +123,6 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     </div>
                                 )}
                             </div>
-
-                            <div>
-                                <Label>Funding Progress</Label>
-                                <Progress value={fundingProgress} className="mt-2" />
-                                <div className="grid grid-cols-3 text-xs mt-2 text-muted-foreground">
-                                    <div className="flex items-center gap-1"><HandHeart className="h-3 w-3"/><span>Raised: ₹{lead.helpGiven.toLocaleString()}</span></div>
-                                    <div className="flex items-center gap-1 text-destructive"><Target className="h-3 w-3"/><span>Pending: ₹{pendingAmount.toLocaleString()}</span></div>
-                                    <div className="flex items-center gap-1"><Banknote className="h-3 w-3"/><span>Goal: ₹{lead.helpRequested.toLocaleString()}</span></div>
-                                </div>
-                            </div>
                             
                             <div>
                                 <Label>Case Details</Label>
@@ -181,7 +171,37 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                 </div>
                 
                 {/* Right Column */}
-                <div className="md:col-span-1">
+                <div className="md:col-span-1 space-y-6">
+                     <Card>
+                        <CardHeader>
+                             <CardTitle className="flex items-center gap-2">
+                                <Target />
+                                Funding Progress
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Progress value={fundingProgress} className="h-4" />
+                            <div className="grid grid-cols-2 text-sm">
+                                 <div>
+                                    <p className="text-muted-foreground">Raised</p>
+                                    <p className="font-bold text-lg text-primary">₹{lead.helpGiven.toLocaleString()}</p>
+                                </div>
+                                 <div className="text-right">
+                                    <p className="text-muted-foreground">Goal</p>
+                                    <p className="font-bold text-lg">₹{lead.helpRequested.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            {pendingAmount > 0 && (
+                                <Alert className="border-amber-500/50 text-amber-900 dark:text-amber-300">
+                                    <AlertCircle className="h-4 w-4 !text-amber-500" />
+                                    <AlertTitle>Pending Amount</AlertTitle>
+                                    <AlertDescription>
+                                        <span className="font-bold text-lg">₹{pendingAmount.toLocaleString()}</span> is still needed to complete this case.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
