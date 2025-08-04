@@ -38,8 +38,8 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
 
   if (!organization) return <>{children}</>;
 
-  const tipAmount = tipPercentage > 0 ? Math.round(amount * (tipPercentage / 100)) : customTipAmount;
-  const totalAmount = amount + tipAmount;
+  const calculatedTip = tipPercentage > 0 ? Math.round(amount * (tipPercentage / 100)) : customTipAmount;
+  const totalAmount = amount + calculatedTip;
   
   const handleCopyToClipboard = () => {
     if(organization?.upiId) {
@@ -98,9 +98,10 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     <Select
                         value={String(tipPercentage)}
                         onValueChange={(val) => {
-                            setTipPercentage(Number(val));
-                            if (Number(val) > 0) {
-                                setCustomTipAmount(0);
+                            const newTipPercentage = Number(val);
+                            setTipPercentage(newTipPercentage);
+                            if (newTipPercentage > 0) {
+                                setCustomTipAmount(0); // Reset custom amount if a percentage is chosen
                             }
                         }}
                     >
@@ -130,7 +131,7 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => setStep(2)} className="w-full" size="lg">
+              <Button onClick={() => setStep(2)} className="w-full" size="lg" disabled={totalAmount <= 0}>
                 Continue to pay ₹{totalAmount.toLocaleString()}
               </Button>
             </DialogFooter>
