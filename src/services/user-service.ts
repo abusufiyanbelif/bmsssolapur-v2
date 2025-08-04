@@ -79,6 +79,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         privileges: user.privileges || [],
         groups: user.groups || [],
         enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
+        monthlyPledgeEnabled: user.monthlyPledgeEnabled || false,
+        monthlyPledgeAmount: user.monthlyPledgeAmount || 0,
         id: userRef.id,
         createdAt: user.createdAt || Timestamp.now(),
         updatedAt: user.updatedAt || Timestamp.now(),

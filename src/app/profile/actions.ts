@@ -20,6 +20,8 @@ type UpdateProfilePayload = Pick<User, 'name' | 'phone' | 'gender' | 'occupation
     familyMembers: number;
     isWidow: boolean;
     enableMonthlyDonationReminder: boolean;
+    monthlyPledgeEnabled?: boolean;
+    monthlyPledgeAmount?: number;
 };
 
 
@@ -44,6 +46,8 @@ export async function handleUpdateProfile(
       panNumber: data.panNumber,
       aadhaarNumber: data.aadhaarNumber,
       enableMonthlyDonationReminder: data.enableMonthlyDonationReminder,
+      monthlyPledgeEnabled: data.monthlyPledgeEnabled,
+      monthlyPledgeAmount: data.monthlyPledgeAmount,
     };
     
     await updateUser(userId, updates);

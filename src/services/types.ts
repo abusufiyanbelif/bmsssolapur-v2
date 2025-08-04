@@ -55,6 +55,8 @@ export interface User {
   privileges?: Privilege[]; 
   groups?: string[];
   enableMonthlyDonationReminder?: boolean;
+  monthlyPledgeEnabled?: boolean;
+  monthlyPledgeAmount?: number;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }

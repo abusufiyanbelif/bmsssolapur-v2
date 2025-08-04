@@ -8,7 +8,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { useRouter } from 'next/navigation';
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,9 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { updateUser } from "@/services/user-service";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserHomePageProps {
   user: (User & { isLoggedIn: boolean; }) | null;
@@ -158,6 +161,8 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 
 function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], user: User }) {
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const { toast } = useToast();
   const [purposeInput, setPurposeInput] = useState('all');
   const [searchInput, setSearchInput] = useState('');
   
@@ -165,6 +170,10 @@ function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Don
       purpose: 'all',
       search: ''
   });
+
+  const [monthlyPledgeEnabled, setMonthlyPledgeEnabled] = useState(user.monthlyPledgeEnabled || false);
+  const [monthlyPledgeAmount, setMonthlyPledgeAmount] = useState(user.monthlyPledgeAmount || 0);
+  const [isSavingPledge, setIsSavingPledge] = useState(false);
 
   const handleSearch = () => {
     setAppliedFilters({
@@ -177,6 +186,22 @@ function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Don
     setPurposeInput('all');
     setSearchInput('');
     setAppliedFilters({ purpose: 'all', search: '' });
+  };
+  
+  const handleSavePledge = async () => {
+    setIsSavingPledge(true);
+    try {
+        await updateUser(user.id!, {
+            monthlyPledgeEnabled,
+            monthlyPledgeAmount: Number(monthlyPledgeAmount)
+        });
+        toast({ variant: 'success', title: 'Pledge Updated', description: 'Your monthly donation pledge has been saved.' });
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save your pledge.' });
+        console.error(e);
+    } finally {
+        setIsSavingPledge(false);
+    }
   };
 
   const totalDonated = useMemo(() => {
@@ -228,15 +253,48 @@ function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Don
         ))}
       </div>
 
-       <div className="flex items-center space-x-2 rounded-lg border p-4">
-        <Checkbox id="monthly-donor-status" checked={user.enableMonthlyDonationReminder} disabled />
-        <label
-          htmlFor="monthly-donor-status"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          I am committed to a monthly donation. (Set this in your <Link href="/profile" className="underline text-primary">profile</Link>)
-        </label>
-      </div>
+       <Card>
+            <CardHeader>
+                <CardTitle>My Monthly Pledge</CardTitle>
+                <CardDescription>Set a monthly goal for your contributions. We'll help you keep track.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="monthly-pledge-switch" className="text-base">Enable Monthly Pledge</Label>
+                        <p className="text-sm text-muted-foreground">I commit to donating monthly to support ongoing cases.</p>
+                    </div>
+                    <Switch
+                        id="monthly-pledge-switch"
+                        checked={monthlyPledgeEnabled}
+                        onCheckedChange={setMonthlyPledgeEnabled}
+                    />
+                </div>
+                {monthlyPledgeEnabled && (
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                        <div className="space-y-2">
+                            <Label htmlFor="pledge-amount">My Monthly Pledge Amount (₹)</Label>
+                            <Input
+                                id="pledge-amount"
+                                type="number"
+                                value={monthlyPledgeAmount}
+                                onChange={(e) => setMonthlyPledgeAmount(Number(e.target.value))}
+                                placeholder="e.g., 500"
+                            />
+                        </div>
+                        <div className="flex gap-4">
+                            <Button onClick={handleSavePledge} disabled={isSavingPledge}>
+                                {isSavingPledge ? <Loader2 className="animate-spin" /> : <Save />}
+                                Save Pledge
+                            </Button>
+                            <Button onClick={() => router.push('/campaigns')} variant="secondary">
+                                Fulfill Pledge Now
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
 
       {/* Open Cases and Quotes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

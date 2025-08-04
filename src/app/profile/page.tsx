@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -39,6 +40,8 @@ const profileFormSchema = z.object({
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
   enableMonthlyDonationReminder: z.boolean().default(false),
+  monthlyPledgeEnabled: z.boolean().default(false),
+  monthlyPledgeAmount: z.coerce.number().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -90,6 +93,8 @@ export default function ProfilePage() {
               panNumber: fetchedUser.panNumber || '',
               aadhaarNumber: fetchedUser.aadhaarNumber || '',
               enableMonthlyDonationReminder: fetchedUser.enableMonthlyDonationReminder || false,
+              monthlyPledgeEnabled: fetchedUser.monthlyPledgeEnabled || false,
+              monthlyPledgeAmount: fetchedUser.monthlyPledgeAmount || 0,
           });
         } else {
           setError("User not found.");
@@ -126,6 +131,8 @@ export default function ProfilePage() {
           panNumber: values.panNumber,
           aadhaarNumber: values.aadhaarNumber,
           enableMonthlyDonationReminder: values.enableMonthlyDonationReminder,
+          monthlyPledgeEnabled: values.monthlyPledgeEnabled,
+          monthlyPledgeAmount: values.monthlyPledgeAmount,
       });
       
       if (result.success) {
@@ -426,15 +433,15 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     
-                                     <h3 className="text-lg font-semibold border-b pb-2">Notification Settings</h3>
-                                     <FormField
+                                     <h3 className="text-lg font-semibold border-b pb-2">Notification & Pledge Settings</h3>
+                                      <FormField
                                         control={form.control}
-                                        name="enableMonthlyDonationReminder"
+                                        name="monthlyPledgeEnabled"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                                 <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">Monthly Donation Reminder</FormLabel>
-                                                    <FormDescription>Receive a gentle reminder on the 1st of every month.</FormDescription>
+                                                    <FormLabel className="text-base">Enable Monthly Pledge</FormLabel>
+                                                    <FormDescription>I commit to donating a set amount each month.</FormDescription>
                                                 </div>
                                                 <FormControl>
                                                     <Switch
@@ -446,6 +453,22 @@ export default function ProfilePage() {
                                             </FormItem>
                                         )}
                                     />
+                                    {form.watch('monthlyPledgeEnabled') && (
+                                         <FormField
+                                            control={form.control}
+                                            name="monthlyPledgeAmount"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Monthly Pledge Amount (₹)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                     <FormDescription>This is your personal goal. You can fulfill your pledge on the home page.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
                                     
                                     {isEditing && (
                                         <Button type="submit" disabled={isSubmitting || !isDirty}>
