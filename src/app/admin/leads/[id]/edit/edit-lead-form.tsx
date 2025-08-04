@@ -218,7 +218,6 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
                           {campaigns.map((campaign) => (
                             <SelectItem key={campaign.id} value={campaign.id!}>
                               {campaign.name} ({campaign.status})

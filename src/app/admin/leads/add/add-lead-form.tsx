@@ -301,7 +301,6 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                    <SelectItem value="">None</SelectItem>
                     {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
                         <SelectItem key={campaign.id} value={campaign.id!}>
                         {campaign.name} ({campaign.status})
@@ -522,7 +521,3 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     </Form>
   );
 }
-
-    
-
-    
