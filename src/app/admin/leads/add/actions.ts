@@ -1,7 +1,7 @@
 
 "use server";
 
-import { createLead } from "@/services/lead-service";
+import { createLead, getOpenLeadsByBeneficiaryId } from "@/services/lead-service";
 import { getUser, createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType, Campaign } from "@/services/types";
@@ -11,6 +11,7 @@ interface FormState {
     success: boolean;
     error?: string;
     lead?: Lead;
+    duplicateLeadWarning?: Lead[];
 }
 
 const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
@@ -54,6 +55,7 @@ export async function handleAddLead(
       isLoan: formData.get("isLoan") === 'on',
       caseDetails: formData.get("caseDetails") as string,
       verificationDocument: formData.get("verificationDocument") as File | null,
+      forceCreate: formData.get("forceCreate") === 'true',
   };
   
   if (!rawFormData.purpose || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
@@ -96,13 +98,24 @@ export async function handleAddLead(
     if (!beneficiaryUser) {
         return { success: false, error: "Could not find or create the beneficiary user." };
     }
+
+    // Duplicate Lead Check
+    if (!rawFormData.forceCreate) {
+        const openLeads = await getOpenLeadsByBeneficiaryId(beneficiaryUser.id!);
+        if (openLeads.length > 0) {
+            return {
+                success: false,
+                duplicateLeadWarning: openLeads,
+            };
+        }
+    }
       
     let verificationDocumentUrl = "";
     if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'> = {
+    const newLeadData = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
         campaignId: rawFormData.campaignId,

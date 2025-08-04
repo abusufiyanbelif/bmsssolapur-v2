@@ -28,14 +28,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
-import { useState, useEffect } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon } from "lucide-react";
-import type { User, LeadPurpose, Campaign } from "@/services/types";
+import { useState, useEffect, useRef } from "react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle } from "lucide-react";
+import type { User, LeadPurpose, Campaign, Lead } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
@@ -117,6 +127,8 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<Lead[] | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   
@@ -139,7 +151,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   const beneficiaryType = form.watch("beneficiaryType");
 
 
-  async function onSubmit(values: AddLeadFormValues) {
+  async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
     if (!adminUserId) {
         toast({
             variant: "destructive",
@@ -168,10 +180,18 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     formData.append("isLoan", values.isLoan ? "on" : "off");
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
     if(values.verificationDocument) formData.append("verificationDocument", values.verificationDocument);
+    if (forceCreate) {
+        formData.append("forceCreate", "true");
+    }
     
     const result = await handleAddLead(formData);
 
     setIsSubmitting(false);
+    
+    if (result.duplicateLeadWarning) {
+        setDuplicateWarning(result.duplicateLeadWarning);
+        return;
+    }
 
     if (result.success && result.lead) {
       toast({
@@ -193,201 +213,68 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-        
-         <FormField
-            control={form.control}
-            name="beneficiaryType"
-            render={({ field }) => (
-                <FormItem className="space-y-3">
-                <FormLabel>Beneficiary</FormLabel>
-                <FormControl>
-                    <RadioGroup
-                    onValueChange={(value) => {
-                        field.onChange(value);
-                        form.setValue('beneficiaryId', undefined);
-                        form.setValue('newBeneficiaryName', '');
-                        form.setValue('newBeneficiaryPhone', '');
-                        form.setValue('newBeneficiaryEmail', '');
-                    }}
-                    defaultValue={field.value}
-                    className="grid grid-cols-2 gap-4"
-                    >
-                        <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                            <FormControl>
-                                <RadioGroupItem value="existing" className="sr-only" />
-                            </FormControl>
-                            <Users className="mb-3 h-6 w-6" />
-                            Existing Beneficiary
-                        </Label>
-                         <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                            <FormControl>
-                                <RadioGroupItem value="new" className="sr-only" />
-                            </FormControl>
-                            <UserPlus className="mb-3 h-6 w-6" />
-                            New Beneficiary
-                        </Label>
-                    </RadioGroup>
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-
-        {beneficiaryType === 'existing' && (
+    <>
+        <Form {...form}>
+        <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+            
             <FormField
                 control={form.control}
-                name="beneficiaryId"
+                name="beneficiaryType"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Select Beneficiary</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an existing beneficiary" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {potentialBeneficiaries.map(user => (
-                            <SelectItem key={user.id} value={user.id!}>
-                                {user.name} ({user.phone})
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                    <FormItem className="space-y-3">
+                    <FormLabel>Beneficiary</FormLabel>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('beneficiaryId', undefined);
+                            form.setValue('newBeneficiaryName', '');
+                            form.setValue('newBeneficiaryPhone', '');
+                            form.setValue('newBeneficiaryEmail', '');
+                        }}
+                        defaultValue={field.value}
+                        className="grid grid-cols-2 gap-4"
+                        >
+                            <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                <FormControl>
+                                    <RadioGroupItem value="existing" className="sr-only" />
+                                </FormControl>
+                                <Users className="mb-3 h-6 w-6" />
+                                Existing Beneficiary
+                            </Label>
+                            <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                <FormControl>
+                                    <RadioGroupItem value="new" className="sr-only" />
+                                </FormControl>
+                                <UserPlus className="mb-3 h-6 w-6" />
+                                New Beneficiary
+                            </Label>
+                        </RadioGroup>
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
-            />
-        )}
-        
-        {beneficiaryType === 'new' && (
-            <div className="space-y-4 p-4 border rounded-lg">
-                <h3 className="font-medium">New Beneficiary Details</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <FormField
-                        control={form.control}
-                        name="newBeneficiaryName"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter beneficiary's full name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="newBeneficiaryPhone"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                                <Input type="tel" maxLength={10} placeholder="Enter 10-digit phone number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                 <FormField
-                    control={form.control}
-                    name="newBeneficiaryEmail"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Email (Optional)</FormLabel>
-                        <FormControl>
-                            <Input type="email" placeholder="beneficiary@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
                 />
-            </div>
-        )}
 
-        <FormField
-          control={form.control}
-          name="campaignId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Link to Campaign (Optional)</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  const selectedCampaign = campaigns.find(c => c.id === value);
-                  field.onChange(value);
-                  form.setValue('campaignName', selectedCampaign?.name || '');
-                }}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a campaign" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
-                        <SelectItem key={campaign.id} value={campaign.id!}>
-                        {campaign.name} ({campaign.status})
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>Link this lead to a specific fundraising campaign.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <FormField
-            control={form.control}
-            name="purpose"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Lead Purpose</FormLabel>
-                <Select onValueChange={(value) => {
-                    field.onChange(value);
-                    form.setValue('category', ''); // Reset category on purpose change
-                    form.setValue('otherCategoryDetail', '');
-                    form.setValue('otherPurposeDetail', '');
-                }} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a purpose" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {leadPurposes.map(purpose => (
-                        <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                 <FormDescription>The main reason for the help request.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            {selectedPurpose && selectedPurpose !== 'Other' && (
-                 <FormField
+            {beneficiaryType === 'existing' && (
+                <FormField
                     control={form.control}
-                    name="category"
+                    name="beneficiaryId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel>Select Beneficiary</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
+                                <SelectValue placeholder="Select an existing beneficiary" />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {categoryOptions[selectedPurpose].map(sub => (
-                                    <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                                ))}
+                            {potentialBeneficiaries.map(user => (
+                                <SelectItem key={user.id} value={user.id!}>
+                                    {user.name} ({user.phone})
+                                </SelectItem>
+                            ))}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -395,172 +282,338 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     )}
                 />
             )}
-        </div>
+            
+            {beneficiaryType === 'new' && (
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <h3 className="font-medium">New Beneficiary Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="newBeneficiaryName"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter beneficiary's full name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="newBeneficiaryPhone"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                    <Input type="tel" maxLength={10} placeholder="Enter 10-digit phone number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <FormField
+                        control={form.control}
+                        name="newBeneficiaryEmail"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Email (Optional)</FormLabel>
+                            <FormControl>
+                                <Input type="email" placeholder="beneficiary@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            )}
 
-        {selectedPurpose === 'Other' && (
-            <FormField
-                control={form.control}
-                name="otherPurposeDetail"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Please specify "Other" purpose</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., House Repair" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        )}
-        
-        {selectedCategory === 'Other' && (
-            <FormField
-                control={form.control}
-                name="otherCategoryDetail"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Please specify "Other" category details</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Specific textbook name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
-            name="helpRequested"
+            name="campaignId"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Amount Requested</FormLabel>
-                <FormControl>
-                    <Input type="number" placeholder="Enter amount" {...field} />
-                </FormControl>
-                <FormDescription>The total amount of funds needed.</FormDescription>
+                <FormLabel>Link to Campaign (Optional)</FormLabel>
+                <Select
+                    onValueChange={(value) => {
+                    const selectedCampaign = campaigns.find(c => c.id === value);
+                    field.onChange(value);
+                    form.setValue('campaignName', selectedCampaign?.name || '');
+                    }}
+                    defaultValue={field.value}
+                >
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a campaign" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                            <SelectItem key={campaign.id} value={campaign.id!}>
+                            {campaign.name} ({campaign.status})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <FormDescription>Link this lead to a specific fundraising campaign.</FormDescription>
                 <FormMessage />
                 </FormItem>
             )}
             />
-             {selectedPurpose === 'Education' && (
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="purpose"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Lead Purpose</FormLabel>
+                    <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue('category', ''); // Reset category on purpose change
+                        form.setValue('otherCategoryDetail', '');
+                        form.setValue('otherPurposeDetail', '');
+                    }} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a purpose" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {leadPurposes.map(purpose => (
+                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormDescription>The main reason for the help request.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                {selectedPurpose && selectedPurpose !== 'Other' && (
+                    <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {categoryOptions[selectedPurpose].map(sub => (
+                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+            </div>
+
+            {selectedPurpose === 'Other' && (
                 <FormField
                     control={form.control}
-                    name="dueDate"
+                    name="otherPurposeDetail"
                     render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Due Date (Optional)</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                date < new Date() || date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                         <FormDescription>
-                            The deadline for when funds are needed.
-                         </FormDescription>
+                        <FormItem>
+                        <FormLabel>Please specify "Other" purpose</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., House Repair" {...field} />
+                        </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                 />
-             )}
-        </div>
-
-
-        <FormField
-          control={form.control}
-          name="caseDetails"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Case Details</FormLabel>
-              <FormControl>
-                <Textarea
-                    placeholder="Provide a brief summary of the case, the reason for the need, and any other relevant information."
-                    className="resize-y min-h-[100px]"
-                    {...field}
+            )}
+            
+            {selectedCategory === 'Other' && (
+                <FormField
+                    control={form.control}
+                    name="otherCategoryDetail"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Please specify "Other" category details</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Specific textbook name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            )}
 
-        <FormField
-          control={form.control}
-          name="isLoan"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="helpRequested"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Amount Requested</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="Enter amount" {...field} />
+                    </FormControl>
+                    <FormDescription>The total amount of funds needed.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
                 />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Is this a repayable loan?
-                </FormLabel>
+                {selectedPurpose === 'Education' && (
+                    <FormField
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Due Date (Optional)</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                    date < new Date() || date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormDescription>
+                                The deadline for when funds are needed.
+                            </FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+            </div>
+
+
+            <FormField
+            control={form.control}
+            name="caseDetails"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Case Details</FormLabel>
+                <FormControl>
+                    <Textarea
+                        placeholder="Provide a brief summary of the case, the reason for the need, and any other relevant information."
+                        className="resize-y min-h-[100px]"
+                        {...field}
+                    />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+
+            <FormField
+            control={form.control}
+            name="isLoan"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                    <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                    <FormLabel>
+                    Is this a repayable loan?
+                    </FormLabel>
+                    <FormDescription>
+                    If checked, this case will be marked as a loan that is expected to be repaid.
+                    </FormDescription>
+                </div>
+                </FormItem>
+            )}
+            />
+
+            <FormField
+            control={form.control}
+            name="verificationDocument"
+            render={({ field: { onChange, value, ...rest } }) => (
+                <FormItem>
+                <FormLabel>Verification Document</FormLabel>
+                <FormControl>
+                    <Input 
+                    type="file" 
+                    accept="image/*,application/pdf"
+                    onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                    {...rest}
+                    />
+                </FormControl>
                 <FormDescription>
-                  If checked, this case will be marked as a loan that is expected to be repaid.
+                    (Optional) Upload a document for verification purposes (e.g., ID card, medical report).
                 </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+                </FormItem>
+            )}
+            />
 
-        <FormField
-          control={form.control}
-          name="verificationDocument"
-          render={({ field: { onChange, value, ...rest } }) => (
-            <FormItem>
-              <FormLabel>Verification Document</FormLabel>
-              <FormControl>
-                <Input 
-                  type="file" 
-                  accept="image/*,application/pdf"
-                  onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
-                  {...rest}
-                />
-              </FormControl>
-              <FormDescription>
-                (Optional) Upload a document for verification purposes (e.g., ID card, medical report).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create Lead
-        </Button>
-      </form>
-    </Form>
+            <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Create Lead
+            </Button>
+        </form>
+        </Form>
+        <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-6 w-6 text-amber-500" />
+                        Duplicate Lead Warning
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This beneficiary already has {duplicateWarning?.length} open lead(s). Are you sure you want to create another one?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="max-h-60 overflow-y-auto space-y-2 p-2 rounded-md bg-muted">
+                    {duplicateWarning?.map(lead => (
+                        <div key={lead.id} className="text-sm p-2 border bg-background rounded-md">
+                            <p><strong>Purpose:</strong> {lead.purpose}</p>
+                            <p><strong>Amount Requested:</strong> ₹{lead.helpRequested.toLocaleString()}</p>
+                            <p><strong>Status:</strong> {lead.status}</p>
+                        </div>
+                    ))}
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => {
+                        setDuplicateWarning(null);
+                        onSubmit(form.getValues(), true);
+                    }}>
+                        Yes, Create Anyway
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
   );
 }

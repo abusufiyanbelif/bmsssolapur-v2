@@ -27,13 +27,18 @@ export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
 const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
-export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'>, adminUser: { id: string, name: string }) => {
+export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
     const newLead: Lead = {
       ...leadData,
       id: leadRef.id,
+      name: leadData.name!,
+      beneficiaryId: leadData.beneficiaryId!,
+      helpRequested: leadData.helpRequested!,
+      purpose: leadData.purpose!,
+      donationType: leadData.donationType!,
       helpGiven: 0,
       status: 'Pending',
       verifiedStatus: 'Pending',
@@ -140,5 +145,29 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
              console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'beneficiaryId' (ascending) and 'createdAt' (descending).");
         }
         throw new Error('Failed to get beneficiary leads.');
+    }
+}
+
+// Function to get open leads for a specific beneficiary
+export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Lead[]> => {
+    if (!isConfigValid) return [];
+    try {
+        const leadsQuery = query(
+            collection(db, LEADS_COLLECTION),
+            where("beneficiaryId", "==", beneficiaryId),
+            where("status", "in", ["Pending", "Partial"])
+        );
+        const querySnapshot = await getDocs(leadsQuery);
+        const leads: Lead[] = [];
+        querySnapshot.forEach((doc) => {
+            leads.push({ id: doc.id, ...doc.data() } as Lead);
+        });
+        return leads;
+    } catch (error) {
+        console.error("Error getting open beneficiary leads: ", error);
+        if (error instanceof Error && error.message.includes('index')) {
+            console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'beneficiaryId' (ascending) and 'status' (ascending).");
+        }
+        throw new Error('Failed to get open beneficiary leads.');
     }
 }
