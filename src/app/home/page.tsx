@@ -384,6 +384,8 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
             <TableBody>
                 {paginatedCases.map((caseItem) => {
                     const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
+                    const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
+                    const donationCount = caseItem.donations?.length || 0;
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
@@ -396,9 +398,11 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
                             <TableCell>
                                 <div className="flex flex-col gap-2">
                                     <Progress value={progress}  />
-                                    <span className="text-xs text-muted-foreground">
-                                        ₹{caseItem.helpGiven.toLocaleString()} / ₹{caseItem.helpRequested.toLocaleString()}
-                                    </span>
+                                    <div className="text-xs text-muted-foreground flex justify-between">
+                                        <span>Raised: <span className="font-semibold text-foreground">₹{caseItem.helpGiven.toLocaleString()}</span></span>
+                                        {remainingAmount > 0 && <span className="text-destructive">Pending: ₹{remainingAmount.toLocaleString()}</span>}
+                                    </div>
+                                     <span className="text-xs text-muted-foreground">{donationCount} allocation(s) from organization</span>
                                 </div>
                             </TableCell>
                             <TableCell className="text-right font-semibold">₹{caseItem.helpRequested.toLocaleString()}</TableCell>
@@ -413,6 +417,8 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
         <div className="space-y-4">
             {paginatedCases.map((caseItem, index) => {
                 const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
+                const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
+                const donationCount = caseItem.donations?.length || 0;
                 return (
                     <Card key={caseItem.id}>
                         <CardHeader>
@@ -429,13 +435,17 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
                         <CardContent className="space-y-4">
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="font-semibold">Funding Goal</span>
+                                    <span className="font-semibold">Goal</span>
                                     <span className="font-semibold">₹{caseItem.helpRequested.toLocaleString()}</span>
                                 </div>
                                 <Progress value={progress} />
                                 <div className="flex justify-between text-xs mt-2 text-muted-foreground">
                                     <span>Raised: ₹{caseItem.helpGiven.toLocaleString()}</span>
                                     <span>{progress.toFixed(0)}%</span>
+                                </div>
+                                 <div className="flex justify-between text-xs mt-1">
+                                    <span className="text-destructive">Pending: ₹{remainingAmount.toLocaleString()}</span>
+                                    <span>{donationCount} allocation(s)</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -502,6 +512,15 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
                     </div>
                     )}
                 </CardContent>
+                 {cases.length > 0 && (
+                     <CardFooter>
+                        <Button asChild variant="secondary" className="w-full">
+                            <Link href="/my-cases">
+                                View Full Case History <ArrowRight className="ml-2" />
+                            </Link>
+                        </Button>
+                    </CardFooter>
+                )}
                 </Card>
             </div>
             <div className="lg:col-span-1">
