@@ -228,8 +228,8 @@ export async function handleRegister(formData: FormData): Promise<LoginState> {
 
   try {
     // Check if user already exists
-    const existingUser = await getUserByEmail(email);
-    if (existingUser) {
+    const existingUserByEmail = await getUserByEmail(email);
+    if (existingUserByEmail) {
       return { success: false, error: "A user with this email address already exists. Please login instead." };
     }
      const existingPhone = await getUserByPhone(phone);
