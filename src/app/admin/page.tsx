@@ -1,11 +1,13 @@
 
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import Link from "next/link";
 import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default async function DashboardPage() {
 
@@ -22,6 +24,22 @@ export default async function DashboardPage() {
   const pendingVerificationLeads = allLeads
     .filter(lead => lead.verifiedStatus === 'Pending')
     .sort((a, b) => a.dateCreated.toMillis() - b.dateCreated.toMillis());
+    
+  const donationsByDonor = allDonations
+    .filter(d => (d.status === 'Verified' || d.status === 'Allocated') && !d.isAnonymous)
+    .reduce((acc, donation) => {
+        if (!acc[donation.donorName]) {
+            acc[donation.donorName] = { total: 0, count: 0, id: donation.donorId };
+        }
+        acc[donation.donorName].total += donation.amount;
+        acc[donation.donorName].count += 1;
+        return acc;
+    }, {} as Record<string, { total: number, count: number, id: string }>);
+
+  const topDonors = Object.entries(donationsByDonor)
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
 
 
   const metrics = [
@@ -83,7 +101,7 @@ export default async function DashboardPage() {
             </Card>
           ))}
         </div>
-        <div className="grid gap-4 md:grid-cols-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
            <Card className="col-span-1">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline text-destructive">
@@ -97,7 +115,7 @@ export default async function DashboardPage() {
             <CardContent>
                 {pendingVerificationLeads.length > 0 ? (
                     <div className="space-y-4">
-                        {pendingVerificationLeads.map(lead => (
+                        {pendingVerificationLeads.slice(0, 5).map(lead => (
                             <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
                                 <div>
                                     <p className="font-semibold">{lead.name}</p>
@@ -121,6 +139,42 @@ export default async function DashboardPage() {
                         <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
                         <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
                         <p className="mt-1 text-sm text-muted-foreground">There are no pending leads that require verification.</p>
+                    </div>
+                )}
+            </CardContent>
+          </Card>
+           <Card className="col-span-1">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-headline text-accent">
+                    <Award />
+                    Top Donors
+                </CardTitle>
+                <CardDescription>
+                    Our most generous supporters. Thank you for your contributions!
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {topDonors.length > 0 ? (
+                    <div className="space-y-4">
+                        {topDonors.map(donor => (
+                             <div key={donor.id} className="flex items-center rounded-lg border p-4">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={`https://placehold.co/100x100.png?text=${donor.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}`} alt={donor.name} data-ai-hint="male portrait" />
+                                    <AvatarFallback>{donor.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div className="ml-4 flex-grow">
+                                    <p className="text-sm font-medium leading-none">{donor.name}</p>
+                                    <p className="text-sm text-muted-foreground">{donor.count} donations</p>
+                                </div>
+                                <div className="ml-4 font-semibold text-lg">₹{donor.total.toLocaleString()}</div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10">
+                        <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-4 text-lg font-medium">Awaiting Donations</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">Donation data is not yet available.</p>
                     </div>
                 )}
             </CardContent>
