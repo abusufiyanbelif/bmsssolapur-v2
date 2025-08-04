@@ -28,7 +28,7 @@ import { CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Info, Edit, Save, X } from "lucide-react";
 import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus } from "@/services/lead-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,6 +82,12 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    setAdminUserId(storedUserId);
+  }, []);
 
   const form = useForm<EditLeadFormValues>({
     resolver: zodResolver(formSchema),
@@ -120,6 +126,15 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
   }
 
   async function onSubmit(values: EditLeadFormValues) {
+    if (!adminUserId) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not identify the admin performing the update. Please log out and back in.",
+        });
+        return;
+    }
+
     setIsSubmitting(true);
     
     const formData = new FormData();
@@ -134,7 +149,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     formData.append("verifiedStatus", values.verifiedStatus);
     if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
     
-    const result = await handleUpdateLead(lead.id!, formData);
+    const result = await handleUpdateLead(lead.id!, formData, adminUserId);
 
     setIsSubmitting(false);
 

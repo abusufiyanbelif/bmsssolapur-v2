@@ -60,15 +60,15 @@ export async function handleRequestHelp(
     const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'donations' | 'campaignName' | 'otherCategoryDetail'> = {
         name: beneficiaryUser.name,
         beneficiaryId: userId,
-        category: 'Sadaqah', // Defaulting to Sadaqah, can be adjusted
+        donationType: 'Sadaqah', // Defaulting to Sadaqah, can be adjusted
         purpose: categoryToPurposeMap[rawFormData.category] || 'Relief Fund',
-        subCategory: rawFormData.category,
+        category: rawFormData.category,
         helpRequested: rawFormData.helpRequested,
         caseDetails: rawFormData.caseDetails,
         verificationDocumentUrl,
     };
 
-    const newLead = await createLead({ ...newLeadData, isLoan: false }, userId);
+    const newLead = await createLead(newLeadData, { id: userId, name: beneficiaryUser.name });
     
     revalidatePath("/my-cases");
 

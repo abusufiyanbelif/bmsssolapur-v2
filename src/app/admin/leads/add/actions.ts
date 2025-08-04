@@ -31,8 +31,10 @@ async function handleFileUpload(file: File): Promise<string> {
 export async function handleAddLead(
   formData: FormData
 ): Promise<FormState> {
-  // In a real app, you'd get the logged-in user's ID here.
-  const adminUserId = "user_placeholder_id_12345";
+  const adminUserId = formData.get("adminUserId") as string;
+  if (!adminUserId) {
+    return { success: false, error: "Could not identify the admin performing this action." };
+  }
   
   const rawFormData = {
       beneficiaryType: formData.get("beneficiaryType") as 'existing' | 'new',
@@ -57,6 +59,11 @@ export async function handleAddLead(
 
   try {
     let beneficiaryUser: User | null = null;
+    const adminUser = await getUser(adminUserId);
+
+    if (!adminUser) {
+        return { success: false, error: "Admin user not found for logging." };
+    }
     
     if (rawFormData.beneficiaryType === 'new') {
         if (!rawFormData.newBeneficiaryName || !rawFormData.newBeneficiaryPhone) {
@@ -107,7 +114,7 @@ export async function handleAddLead(
         verificationDocumentUrl,
     };
 
-    const newLead = await createLead(newLeadData, adminUserId);
+    const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });
     
     revalidatePath("/admin/leads");
     revalidatePath("/admin/leads/add"); // To refresh the user list if a new one was added

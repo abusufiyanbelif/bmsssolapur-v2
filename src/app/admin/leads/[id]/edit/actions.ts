@@ -1,9 +1,12 @@
 
 "use server";
 
-import { updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
+import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, arrayUnion } from "firebase/firestore";
+import type { User, Verifier } from "@/services/types";
+import { getUser } from "@/services/user-service";
+
 
 interface FormState {
     success: boolean;
@@ -19,13 +22,25 @@ const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
 
 export async function handleUpdateLead(
   leadId: string,
-  formData: FormData
+  formData: FormData,
+  adminUserId: string,
 ): Promise<FormState> {
   const rawFormData = Object.fromEntries(formData.entries());
 
   try {
+    const lead = await getLead(leadId);
+    if (!lead) {
+        return { success: false, error: "Lead not found." };
+    }
+    
+    const adminUser = await getUser(adminUserId);
+    if (!adminUser) {
+        return { success: false, error: "Admin user not found." };
+    }
+
     const purpose = rawFormData.purpose as LeadPurpose;
     const status = rawFormData.status as LeadStatus;
+    const verifiedStatus = rawFormData.verifiedStatus as LeadVerificationStatus;
 
     const updates: Partial<Lead> = {
         campaignName: rawFormData.campaignName as string | undefined,
@@ -38,12 +53,22 @@ export async function handleUpdateLead(
         caseDetails: rawFormData.caseDetails as string | undefined,
         isLoan: rawFormData.isLoan === 'on',
         status: status,
-        verifiedStatus: rawFormData.verifiedStatus as LeadVerificationStatus,
+        verifiedStatus: verifiedStatus,
     };
     
-    // If status is being changed to "Closed", set the closedAt timestamp
-    if (status === 'Closed') {
+    if (status === 'Closed' && lead.status !== 'Closed') {
         updates.closedAt = Timestamp.now();
+    }
+    
+    if (verifiedStatus === 'Verified' && lead.verifiedStatus !== 'Verified') {
+        const newVerifier: Verifier = {
+            verifierId: adminUser.id!,
+            verifierName: adminUser.name,
+            verifiedAt: Timestamp.now(),
+            notes: "Verified through edit form."
+        };
+        // Use arrayUnion to add the verifier without duplicates
+        updates.verifiers = arrayUnion(newVerifier) as any;
     }
 
     await updateLead(leadId, updates);

@@ -36,7 +36,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { name: "Beneficiary", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
 ];
 
-const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'subCategory'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
+const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'donationType'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
     { beneficiaryName: 'Mustahik Person', beneficiaryPhone: '1000000001', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Hazrate Nomaniya Masjid', beneficiaryPhone: '1000000002', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Hazrate Nomaniya Masjid Bill', beneficiaryPhone: '1000000003', helpRequested: 720, helpGiven: 720, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
@@ -224,6 +224,9 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         const leadDonationAllocation: LeadDonationAllocation = {
             donationId: donation.id!,
             amount: leadData.helpGiven,
+            allocatedAt: Timestamp.fromDate(new Date("2021-12-01")),
+            allocatedByUserId: historicalAdmin.id!,
+            allocatedByUserName: historicalAdmin.name,
         };
 
         const newLead: Lead = {
@@ -239,12 +242,13 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             verifiedStatus: leadData.verifiedStatus,
             verifiers: [verifier],
             donations: [leadDonationAllocation],
-            adminAddedBy: historicalAdmin.id!,
+            adminAddedBy: { id: historicalAdmin.id!, name: historicalAdmin.name },
             dateCreated: Timestamp.fromDate(new Date("2021-12-01")),
             createdAt: Timestamp.fromDate(new Date("2021-12-01")),
             updatedAt: Timestamp.fromDate(new Date("2021-12-01")),
             category: leadData.category,
             purpose: 'Relief Fund',
+            donationType: 'Lillah',
         };
         
         batch.set(leadRef, newLead);
@@ -301,7 +305,3 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         };
     }
 };
-
-    
-
-    

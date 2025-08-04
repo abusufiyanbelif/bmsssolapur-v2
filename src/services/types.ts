@@ -104,6 +104,9 @@ export interface Verifier {
 export interface LeadDonationAllocation {
     donationId: string;
     amount: number;
+    allocatedByUserId: string;
+    allocatedByUserName: string;
+    allocatedAt: Timestamp;
 }
 
 export interface Lead {
@@ -128,7 +131,10 @@ export interface Lead {
   donations: LeadDonationAllocation[];
   verificationNotes?: string;
   dateCreated: Timestamp;
-  adminAddedBy: string;
+  adminAddedBy: {
+      id: string;
+      name: string;
+  };
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

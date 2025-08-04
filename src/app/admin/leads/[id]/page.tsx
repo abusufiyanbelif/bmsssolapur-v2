@@ -5,16 +5,17 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { DeleteLeadButton } from "./delete-lead-button";
+import { Separator } from "@/components/ui/separator";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -29,7 +30,7 @@ const verificationStatusConfig: Record<Lead['verifiedStatus'], { color: string; 
     "Rejected": { color: "bg-red-500/20 text-red-700 border-red-500/30", icon: ShieldX },
 };
 
-type AllocatedDonation = Donation & { amountAllocated: number };
+type AllocatedDonation = Donation & { amountAllocated: number, allocatedByUserName: string, allocatedAt: any };
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
     const lead = await getLead(params.id);
@@ -43,7 +44,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         Promise.all(
             (lead.donations || []).map(async (alloc) => {
                 const donation = await getDonation(alloc.donationId);
-                return donation ? { ...donation, amountAllocated: alloc.amount } : null;
+                return donation ? { ...donation, amountAllocated: alloc.amount, allocatedByUserName: alloc.allocatedByUserName, allocatedAt: alloc.allocatedAt } : null;
             })
         )
     ]);
@@ -157,17 +158,20 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Date</TableHead>
-                                            <TableHead>Donor</TableHead>
-                                            <TableHead>Transaction ID</TableHead>
+                                            <TableHead>Allocated By</TableHead>
+                                            <TableHead>From Donation</TableHead>
                                             <TableHead className="text-right">Amount Allocated</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {validAllocatedDonations.map(donation => (
                                             <TableRow key={donation.id}>
-                                                <TableCell>{format(donation.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
-                                                <TableCell>{donation.donorName}</TableCell>
-                                                <TableCell className="font-mono text-xs">{donation.transactionId || 'N/A'}</TableCell>
+                                                <TableCell>{format(donation.allocatedAt.toDate(), 'dd MMM yyyy, p')}</TableCell>
+                                                <TableCell>{donation.allocatedByUserName || 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    <p>{donation.donorName}</p>
+                                                    <p className="font-mono text-xs text-muted-foreground">{donation.transactionId || 'N/A'}</p>
+                                                </TableCell>
                                                 <TableCell className="text-right font-semibold">₹{donation.amountAllocated.toLocaleString()}</TableCell>
                                             </TableRow>
                                         ))}
@@ -175,6 +179,46 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                 </Table>
                              ) : (
                                 <p className="text-sm text-muted-foreground text-center py-4">No donations have been allocated to this lead yet.</p>
+                             )}
+                         </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <ShieldCheck />
+                                Audit Trail
+                            </CardTitle>
+                             <CardDescription>
+                               A log of key actions performed on this lead.
+                            </CardDescription>
+                        </CardHeader>
+                         <CardContent className="space-y-4">
+                             <div className="flex gap-4 items-center">
+                                 <UserPlus className="h-5 w-5 text-muted-foreground" />
+                                 <div className="text-sm">
+                                     <p>Lead Created by <span className="font-semibold">{lead.adminAddedBy?.name || 'Unknown'}</span></p>
+                                     <p className="text-xs text-muted-foreground">{format(lead.dateCreated.toDate(), 'PPP p')}</p>
+                                 </div>
+                             </div>
+                             <Separator />
+                             {lead.verifiers?.length > 0 ? (
+                                lead.verifiers.map((verifier, index) => (
+                                    <div key={index} className="flex gap-4 items-center">
+                                        <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                                        <div className="text-sm">
+                                            <p>Verified by <span className="font-semibold">{verifier.verifierName}</span></p>
+                                            <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt.toDate(), 'PPP p')}</p>
+                                            {verifier.notes && <p className="text-xs italic text-muted-foreground mt-1">"{verifier.notes}"</p>}
+                                        </div>
+                                    </div>
+                                ))
+                             ) : (
+                                  <div className="flex gap-4 items-center">
+                                        <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+                                        <div className="text-sm">
+                                            <p>Awaiting verification</p>
+                                        </div>
+                                    </div>
                              )}
                          </CardContent>
                     </Card>
