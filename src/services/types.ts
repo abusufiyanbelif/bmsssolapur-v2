@@ -132,6 +132,22 @@ export interface Lead {
   updatedAt: Timestamp;
 }
 
+// Campaign-related types
+export type CampaignStatus = 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
+
+export interface Campaign {
+  id?: string;
+  name: string;
+  description: string;
+  startDate: Timestamp;
+  endDate: Timestamp;
+  goal: number;
+  status: CampaignStatus;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+
 // Organization-related types
 export interface Organization {
   id?: string;

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link"
@@ -55,6 +56,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/organization", label: "Org Profile" },
+            { href: "/admin/campaigns", label: "Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
         ]
@@ -129,7 +131,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     };
     
     const filterSubItems = (item: NavItem) => {
-        const adminLinks = ["/admin/leads"];
+        const adminLinks = ["/admin/leads", "/admin/campaigns"];
         const financeLinks = ["/admin/donations"];
         const superAdminLinks = ["/admin/organization"];
 
