@@ -8,14 +8,14 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Donation, Lead, Quote, LeadPurpose } from "@/services/types";
+import type { User, Donation, Lead, Quote, LeadPurpose, LeadStatus } from "@/services/types";
 import { getOpenLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface UserHomePageProps {
   user: (User & { isLoggedIn: boolean; }) | null;
@@ -347,7 +348,132 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
   )
 }
 
+const statusColors: Record<LeadStatus, string> = {
+    "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
+};
+
 function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[] }) {
+    const isMobile = useIsMobile();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
+
+    const paginatedCases = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return cases.slice(startIndex, startIndex + itemsPerPage);
+    }, [cases, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(cases.length / itemsPerPage);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [itemsPerPage]);
+
+    const renderDesktopTable = () => (
+         <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Date Submitted</TableHead>
+                    <TableHead>Purpose</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[30%]">Funding Progress</TableHead>
+                    <TableHead className="text-right">Amount Requested</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {paginatedCases.map((caseItem) => {
+                    const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
+                    return (
+                        <TableRow key={caseItem.id}>
+                            <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                            <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
+                                    {caseItem.status}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex flex-col gap-2">
+                                    <Progress value={progress}  />
+                                    <span className="text-xs text-muted-foreground">
+                                        ₹{caseItem.helpGiven.toLocaleString()} / ₹{caseItem.helpRequested.toLocaleString()}
+                                    </span>
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">₹{caseItem.helpRequested.toLocaleString()}</TableCell>
+                        </TableRow>
+                    )
+                })}
+            </TableBody>
+        </Table>
+    );
+
+     const renderMobileCards = () => (
+        <div className="space-y-4">
+            {paginatedCases.map((caseItem, index) => {
+                const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
+                return (
+                    <Card key={caseItem.id}>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
+                                    <CardDescription>Submitted: {format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
+                                </div>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
+                                    {caseItem.status}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                    <span className="font-semibold">Funding Goal</span>
+                                    <span className="font-semibold">₹{caseItem.helpRequested.toLocaleString()}</span>
+                                </div>
+                                <Progress value={progress} />
+                                <div className="flex justify-between text-xs mt-2 text-muted-foreground">
+                                    <span>Raised: ₹{caseItem.helpGiven.toLocaleString()}</span>
+                                    <span>{progress.toFixed(0)}%</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+            })}
+        </div>
+    );
+    
+     const renderPaginationControls = () => (
+        <div className="flex items-center justify-end pt-4 gap-4">
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next</span>
+                    </Button>
+                </div>
+        </div>
+    );
+
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
@@ -355,39 +481,27 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                     <FileText className="text-primary" />
-                    Recent Cases
+                    My Case History
                     </CardTitle>
                     <CardDescription>
-                    Here is the latest status of your help requests.
+                    Here is the status of all your help requests.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     {cases.length > 0 ? (
-                    <ul className="space-y-4">
-                        {cases.slice(0,3).map(c => (
-                        <li key={c.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                            <div>
-                            <p className="font-semibold">For: {c.purpose}</p>
-                            <p className="text-sm text-muted-foreground">Requested: ₹{c.helpRequested.toLocaleString()}</p>
-                            </div>
-                            <div className="text-right">
-                                <Badge variant={c.status === 'Closed' ? 'default' : 'secondary'}>{c.status}</Badge>
-                                <p className="text-xs text-muted-foreground mt-1">{format(c.createdAt.toDate(), "dd MMM yyyy")}</p>
-                            </div>
-                        </li>
-                        ))}
-                    </ul>
+                        <>
+                            {isMobile ? renderMobileCards() : renderDesktopTable()}
+                            {totalPages > 1 && renderPaginationControls()}
+                        </>
                     ) : (
-                    <p className="text-muted-foreground text-center py-4">No recent cases found.</p>
+                    <div className="text-center py-10">
+                        <p className="text-muted-foreground">You have not submitted any help requests.</p>
+                        <Button asChild className="mt-4">
+                            <Link href="/request-help">Request Help Now</Link>
+                        </Button>
+                    </div>
                     )}
                 </CardContent>
-                <CardFooter>
-                    <Button asChild variant="secondary" className="w-full">
-                    <Link href="/my-cases">
-                        View All My Cases <ArrowRight className="ml-2" />
-                    </Link>
-                    </Button>
-                </CardFooter>
                 </Card>
             </div>
             <div className="lg:col-span-1">
