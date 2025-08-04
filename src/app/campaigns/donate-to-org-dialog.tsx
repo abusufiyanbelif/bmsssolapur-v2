@@ -19,7 +19,7 @@ import { Copy, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import type { Organization } from "@/services/types";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
@@ -54,7 +54,10 @@ export function DonateToOrgDialog({ children, organization }: DonateToOrgDialogP
         <DialogHeader>
           <DialogTitle>Make a secure donation</DialogTitle>
           <DialogDescription>
-            Your contribution will support the organization's mission and future cases.
+            {step === 1 
+              ? "Your contribution will support the organization's mission and future cases."
+              : "Complete your payment using your preferred UPI app."
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -137,6 +140,7 @@ export function DonateToOrgDialog({ children, organization }: DonateToOrgDialogP
                     </div>
                 </div>
                  <Alert>
+                    <AlertTitle>Important Note</AlertTitle>
                     <AlertDescription>
                         After completing the payment, an admin will manually verify and record your donation in the system. Thank you for your generosity!
                     </AlertDescription>
