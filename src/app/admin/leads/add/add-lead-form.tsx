@@ -41,7 +41,7 @@ import { format } from "date-fns";
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
 const categoryOptions: Record<LeadPurpose, string[]> = {
-    'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
+    'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Other'],
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
@@ -500,3 +500,5 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     </Form>
   );
 }
+
+    
