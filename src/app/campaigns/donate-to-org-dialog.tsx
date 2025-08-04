@@ -50,7 +50,7 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
     }
   }
 
-  const transactionNote = `Donation from User: ${user?.id || 'N/A'}`;
+  const transactionNote = `Baitul Mal Samajik Sanstha - General fund. User: ${user?.id || 'N/A'}`;
   const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
 
   return (
