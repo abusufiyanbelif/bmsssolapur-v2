@@ -202,7 +202,7 @@ export async function handleGoogleLogin(firebaseUser: {
 }
 
 
-export async function handleRegister(formData: FormData): Promise<LoginState> {
+export async function handleRegister(formData: FormData): Promise<Omit<LoginState, 'userId'>> {
   if (!isConfigValid) {
     return { success: false, error: "Firebase is not configured. Cannot process registration." };
   }
@@ -248,9 +248,9 @@ export async function handleRegister(formData: FormData): Promise<LoginState> {
       gender: 'Other',
     };
 
-    const createdUser = await createUser(newUser);
+    await createUser(newUser);
 
-    return { success: true, userId: createdUser.id };
+    return { success: true };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown database error occurred during registration.";
     return { success: false, error };

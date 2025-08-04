@@ -29,6 +29,7 @@ export function LoginForm() {
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
   const [loginMethod, setLoginMethod] = useState<'username' | 'email' | 'phone'>('username');
   const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string} | null>(null);
+  const [activeTab, setActiveTab] = useState("password");
 
   useEffect(() => {
     if (loginSuccessData?.userId) {
@@ -75,17 +76,19 @@ export function LoginForm() {
   const onRegisterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const result = await handleRegister(formData);
 
     if (result.success) {
        toast({
         variant: "success",
         title: "Registration Successful",
-        description: "Your account has been created.",
+        description: "Your account has been created. Please log in to continue.",
         icon: <CheckCircle />,
       });
-      setLoginSuccessData({userId: result.userId});
+      form.reset(); // Reset the form fields
+      setActiveTab("password"); // Switch to the password login tab
     } else {
       toast({
         variant: "destructive",
@@ -187,7 +190,7 @@ export function LoginForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="password" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="register"><UserPlus className="mr-2"/>Register</TabsTrigger>
               <TabsTrigger value="password"><KeyRound className="mr-2" />Password</TabsTrigger>
