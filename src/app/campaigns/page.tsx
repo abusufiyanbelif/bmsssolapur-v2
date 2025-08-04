@@ -11,11 +11,15 @@ import { CreditCard, Copy, Loader2, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { EnrichedLead } from "./actions";
-import type { Organization } from "@/services/types";
+import type { Organization, User } from "@/services/types";
 import { DonateToOrgDialog } from "./donate-to-org-dialog";
 import { Button } from "@/components/ui/button";
 
-export default function CampaignsPage() {
+interface CampaignsPageProps {
+  user: User | null;
+}
+
+export default function CampaignsPage({ user }: CampaignsPageProps) {
     const [leads, setLeads] = useState<EnrichedLead[]>([]);
     const [organization, setOrganization] = useState<Organization | null>(null);
     const [loading, setLoading] = useState(true);
@@ -54,7 +58,7 @@ export default function CampaignsPage() {
                             Your general donation supports our operations and helps us respond quickly to future needs.
                         </CardDescription>
                     </div>
-                     <DonateToOrgDialog organization={organization}>
+                     <DonateToOrgDialog organization={organization} user={user}>
                         <Button className="mt-4 md:mt-0">Donate to General Fund</Button>
                     </DonateToOrgDialog>
                 </CardHeader>

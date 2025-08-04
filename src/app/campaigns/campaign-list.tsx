@@ -31,7 +31,7 @@ export function CampaignList({ leads, organization }: CampaignListProps) {
                 <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
                     Your generosity is making a real difference. You can still support our mission by donating to the organization's general fund, which helps us prepare for future cases and emergencies.
                 </p>
-                <DonateToOrgDialog organization={organization}>
+                <DonateToOrgDialog organization={organization} user={null}>
                      <Button className="mt-6">
                         Donate to Organization
                     </Button>

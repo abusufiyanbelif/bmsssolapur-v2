@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,16 +18,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Copy, CreditCard, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import type { Organization } from "@/services/types";
+import type { Organization, User } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
   organization: Organization | null;
+  user: User | null;
 }
 
-export function DonateToOrgDialog({ children, organization }: DonateToOrgDialogProps) {
+export function DonateToOrgDialog({ children, organization, user }: DonateToOrgDialogProps) {
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState(2500);
   const [tipPercentage, setTipPercentage] = useState(10);
@@ -49,7 +50,8 @@ export function DonateToOrgDialog({ children, organization }: DonateToOrgDialogP
     }
   }
 
-  const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${totalAmount}&cu=INR&tn=Donation%20to%20Baitul%20Mal%20Samajik%20Sanstha`;
+  const transactionNote = `Donation from User: ${user?.id || 'N/A'}`;
+  const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
 
   return (
     <Dialog onOpenChange={(open) => !open && setStep(1)}>
