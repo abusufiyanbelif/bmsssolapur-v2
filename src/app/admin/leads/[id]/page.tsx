@@ -5,7 +5,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2, Megaphone, CalendarIcon } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Trash2, Megaphone, CalendarIcon, Target } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -51,6 +51,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
     const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
+    const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
     const dueDate = lead.dueDate ? (lead.dueDate as any).toDate() : null;
 
     return (
@@ -126,9 +127,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             <div>
                                 <Label>Funding Progress</Label>
                                 <Progress value={fundingProgress} className="mt-2" />
-                                <div className="flex justify-between text-xs mt-2 text-muted-foreground">
-                                    <span>Raised: ₹{lead.helpGiven.toLocaleString()}</span>
-                                    <span>Goal: ₹{lead.helpRequested.toLocaleString()}</span>
+                                <div className="grid grid-cols-3 text-xs mt-2 text-muted-foreground">
+                                    <div className="flex items-center gap-1"><HandHeart className="h-3 w-3"/><span>Raised: ₹{lead.helpGiven.toLocaleString()}</span></div>
+                                    <div className="flex items-center gap-1 text-destructive"><Target className="h-3 w-3"/><span>Pending: ₹{pendingAmount.toLocaleString()}</span></div>
+                                    <div className="flex items-center gap-1"><Banknote className="h-3 w-3"/><span>Goal: ₹{lead.helpRequested.toLocaleString()}</span></div>
                                 </div>
                             </div>
                             
@@ -143,10 +145,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Banknote />
-                                Allocated Donations
+                                Allocated Donations ({validAllocatedDonations.length})
                             </CardTitle>
                              <CardDescription>
-                               Donations that have been applied to this lead.
+                               Donations from the organization's funds that have been applied to this specific case.
                             </CardDescription>
                         </CardHeader>
                          <CardContent>
@@ -156,7 +158,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         <TableRow>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Donor</TableHead>
-                                            <TableHead>Donation Type</TableHead>
+                                            <TableHead>Transaction ID</TableHead>
                                             <TableHead className="text-right">Amount Allocated</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -165,7 +167,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                             <TableRow key={donation.id}>
                                                 <TableCell>{format(donation.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
                                                 <TableCell>{donation.donorName}</TableCell>
-                                                <TableCell>{donation.type}</TableCell>
+                                                <TableCell className="font-mono text-xs">{donation.transactionId || 'N/A'}</TableCell>
                                                 <TableCell className="text-right font-semibold">₹{donation.amountAllocated.toLocaleString()}</TableCell>
                                             </TableRow>
                                         ))}
