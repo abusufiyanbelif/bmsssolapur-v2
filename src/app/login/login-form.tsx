@@ -9,11 +9,12 @@ import { KeyRound, LogIn, MessageSquare, Loader2, CheckCircle, User, Mail, Phone
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin, handleRegister } from "./actions";
+import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin } from "./actions";
 import { auth } from "@/services/firebase";
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "firebase/auth";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import Link from "next/link";
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="mr-2 h-4 w-4">
@@ -29,7 +30,6 @@ export function LoginForm() {
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
   const [loginMethod, setLoginMethod] = useState<'username' | 'email' | 'phone'>('username');
   const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string} | null>(null);
-  const [activeTab, setActiveTab] = useState("password");
 
   useEffect(() => {
     if (loginSuccessData?.userId) {
@@ -67,32 +67,6 @@ export function LoginForm() {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: result.error || "An unknown error occurred.",
-      });
-    }
-    setIsSubmitting(false);
-  };
-
-  const onRegisterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitting(true);
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const result = await handleRegister(formData);
-
-    if (result.success) {
-       toast({
-        variant: "success",
-        title: "Registration Successful",
-        description: "Your account has been created. Please log in to continue.",
-        icon: <CheckCircle />,
-      });
-      form.reset(); // Reset the form fields
-      setActiveTab("password"); // Switch to the password login tab
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
         description: result.error || "An unknown error occurred.",
       });
     }
@@ -184,47 +158,17 @@ export function LoginForm() {
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle>Login / Register</CardTitle>
+          <CardTitle>Account Login</CardTitle>
           <CardDescription>
             Choose your preferred method to access your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="register"><UserPlus className="mr-2"/>Register</TabsTrigger>
+          <Tabs defaultValue="password" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="password"><KeyRound className="mr-2" />Password</TabsTrigger>
               <TabsTrigger value="otp"><MessageSquare className="mr-2" />OTP</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="register">
-                <form className="space-y-6 pt-4" onSubmit={onRegisterSubmit}>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-name">Full Name</Label>
-                      <Input id="register-name" name="name" type="text" placeholder="Enter your full name" required />
-                    </div>
-                     <div className="space-y-2">
-                      <Label htmlFor="register-email">Email Address</Label>
-                      <Input id="register-email" name="email" type="email" placeholder="you@example.com" required />
-                    </div>
-                     <div className="space-y-2">
-                      <Label htmlFor="register-phone">Phone Number</Label>
-                      <Input id="register-phone" name="phone" type="tel" placeholder="10-digit number" required maxLength={10} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password">Password</Label>
-                      <Input id="register-password" name="password" type="password" placeholder="Min. 6 characters" required />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <UserPlus className="mr-2 h-4 w-4" />
-                        )}
-                        Create Account
-                    </Button>
-                </form>
-            </TabsContent>
 
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
@@ -308,9 +252,7 @@ export function LoginForm() {
                 </form>
             </TabsContent>
           </Tabs>
-        </CardContent>
-        <CardFooter className="flex-col gap-4">
-            <div className="relative w-full">
+           <div className="relative w-full my-6">
                 <Separator />
                 <span className="absolute left-1/2 -translate-x-1/2 -top-3 bg-card px-2 text-xs text-muted-foreground">OR</span>
             </div>
@@ -318,6 +260,17 @@ export function LoginForm() {
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
                 Sign in with Google
             </Button>
+        </CardContent>
+        <CardFooter className="flex-col gap-4 pt-6">
+            <Separator />
+            <div className="text-center text-sm text-muted-foreground">
+                <p>Don't have an account?</p>
+                <Button variant="link" asChild className="text-accent text-base">
+                    <Link href="/register">
+                         Register Now
+                    </Link>
+                </Button>
+            </div>
         </CardFooter>
       </Card>
     </div>
