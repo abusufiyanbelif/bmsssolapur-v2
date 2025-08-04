@@ -44,7 +44,7 @@ export function CampaignList({ leads }: CampaignListProps) {
                         <CardHeader>
                             <CardTitle>{displayName}</CardTitle>
                             <CardDescription>
-                                Seeking help for: <span className="font-semibold">{lead.purpose} {lead.subCategory ? `(${lead.subCategory})` : ''}</span>
+                                Seeking help for: <span className="font-semibold">{lead.purpose} {lead.category ? `(${lead.category})` : ''}</span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">

@@ -108,9 +108,9 @@ export interface Lead {
   name: string;
   beneficiaryId: string;
   campaignName?: string;
-  category: DonationType;
+  donationType: DonationType;
   purpose: LeadPurpose;
-  subCategory?: string;
+  category?: string;
   otherCategoryDetail?: string;
   helpRequested: number;
   helpGiven: number;

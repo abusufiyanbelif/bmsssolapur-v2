@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
 import { useState } from "react";
 import { Loader2, Info } from "lucide-react";
-import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
+import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus } from "@/services/lead-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -42,9 +42,9 @@ const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 const leadStatuses = ["Pending", "Partial", "Closed"] as const;
 const leadVerificationStatuses = ["Pending", "Verified", "Rejected"] as const;
 
-const subCategoryOptions: Record<LeadPurpose, string[]> = {
+const categoryOptions: Record<LeadPurpose, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
-    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Other'],
+    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Other'],
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
 };
@@ -53,7 +53,7 @@ const subCategoryOptions: Record<LeadPurpose, string[]> = {
 const formSchema = z.object({
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
-  subCategory: z.string().min(1, "Sub-category is required."),
+  category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   dueDate: z.date().optional(),
@@ -62,12 +62,12 @@ const formSchema = z.object({
   status: z.enum(leadStatuses),
   verifiedStatus: z.enum(leadVerificationStatuses),
 }).refine(data => {
-    if (data.subCategory === 'Other') {
+    if (data.category === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
     }
     return true;
 }, {
-    message: "Please specify details for the 'Other' sub-category.",
+    message: "Please specify details for the 'Other' category.",
     path: ["otherCategoryDetail"],
 });
 
@@ -87,7 +87,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     defaultValues: {
       campaignName: lead.campaignName || '',
       purpose: lead.purpose,
-      subCategory: lead.subCategory || '',
+      category: lead.category || '',
       otherCategoryDetail: lead.otherCategoryDetail || '',
       helpRequested: lead.helpRequested,
       dueDate: lead.dueDate ? (lead.dueDate as any).toDate() : undefined,
@@ -100,7 +100,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
 
   const { formState: { isDirty } } = form;
   const selectedPurpose = form.watch("purpose");
-  const selectedSubCategory = form.watch("subCategory");
+  const selectedCategory = form.watch("category");
 
   async function onSubmit(values: EditLeadFormValues) {
     setIsSubmitting(true);
@@ -108,7 +108,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     const formData = new FormData();
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
-    formData.append("subCategory", values.subCategory);
+    formData.append("category", values.category);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
@@ -172,7 +172,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                             <FormLabel>Lead Purpose</FormLabel>
                             <Select onValueChange={(value) => {
                                 field.onChange(value);
-                                form.setValue('subCategory', '');
+                                form.setValue('category', '');
                                 form.setValue('otherCategoryDetail', '');
                             }} defaultValue={field.value}>
                                 <FormControl>
@@ -193,18 +193,18 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                     {selectedPurpose && (
                         <FormField
                             control={form.control}
-                            name="subCategory"
+                            name="category"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Sub-Category</FormLabel>
+                                <FormLabel>Category</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a sub-category" />
+                                        <SelectValue placeholder="Select a category" />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    {subCategoryOptions[selectedPurpose].map(sub => (
+                                    {categoryOptions[selectedPurpose].map(sub => (
                                         <SelectItem key={sub} value={sub}>{sub}</SelectItem>
                                     ))}
                                     </SelectContent>
@@ -216,7 +216,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                     )}
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {selectedSubCategory === 'Other' && (
+                    {selectedCategory === 'Other' && (
                         <FormField
                             control={form.control}
                             name="otherCategoryDetail"

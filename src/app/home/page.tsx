@@ -269,7 +269,7 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
                                 <div key={lead.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                     <div className="flex-grow">
                                         <p className="font-semibold">{lead.name}</p>
-                                        <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.subCategory}</p>
+                                        <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.category}</p>
                                         <Progress value={progress} className="my-2" />
                                         <p className="text-xs text-muted-foreground">
                                             <span className="font-bold text-primary">₹{remainingAmount.toLocaleString()}</span> still needed of ₹{lead.helpRequested.toLocaleString()} goal.

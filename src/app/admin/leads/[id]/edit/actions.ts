@@ -28,8 +28,8 @@ export async function handleUpdateLead(
     const updates: Partial<Lead> = {
         campaignName: rawFormData.campaignName as string | undefined,
         purpose: purpose,
-        category: purposeCategoryMap[purpose], // Infer category from purpose
-        subCategory: rawFormData.subCategory as string | undefined,
+        donationType: purposeCategoryMap[purpose], // Infer category from purpose
+        category: rawFormData.category as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         helpRequested: parseFloat(rawFormData.helpRequested as string),
         dueDate: rawFormData.dueDate ? new Date(rawFormData.dueDate as string) : undefined,

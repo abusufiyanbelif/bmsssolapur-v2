@@ -42,7 +42,7 @@ export async function handleAddLead(
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
-      subCategory: formData.get("subCategory") as string,
+      category: formData.get("category") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
       helpRequested: parseFloat(formData.get("helpRequested") as string),
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
@@ -51,7 +51,7 @@ export async function handleAddLead(
       verificationDocument: formData.get("verificationDocument") as File | null,
   };
   
-  if (!rawFormData.purpose || !rawFormData.subCategory || isNaN(rawFormData.helpRequested)) {
+  if (!rawFormData.purpose || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
     return { success: false, error: "Missing required lead details fields." };
   }
 
@@ -97,9 +97,9 @@ export async function handleAddLead(
         beneficiaryId: beneficiaryUser.id!,
         campaignName: rawFormData.campaignName,
         purpose: rawFormData.purpose,
-        category: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose
-        subCategory: rawFormData.subCategory,
-        otherCategoryDetail: rawFormData.subCategory === 'Other' ? rawFormData.otherCategoryDetail : undefined,
+        donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose
+        category: rawFormData.category,
+        otherCategoryDetail: rawFormData.category === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         helpRequested: rawFormData.helpRequested,
         dueDate: rawFormData.dueDate,
         isLoan: rawFormData.isLoan,

@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon } from "lucide-react";
-import type { User, LeadPurpose, DonationType } from "@/services/types";
+import type { User, LeadPurpose } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -40,9 +40,9 @@ import { format } from "date-fns";
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
 
-const subCategoryOptions: Record<LeadPurpose, string[]> = {
+const categoryOptions: Record<LeadPurpose, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Books & Uniforms', 'Other'],
-    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Other'],
+    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Other'],
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
 };
@@ -59,7 +59,7 @@ const formSchema = z.object({
 
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
-  subCategory: z.string().min(1, "Sub-category is required."),
+  category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   dueDate: z.date().optional(),
@@ -67,12 +67,12 @@ const formSchema = z.object({
   caseDetails: z.string().optional(),
   verificationDocument: z.any().optional(),
 }).refine(data => {
-    if (data.subCategory === 'Other') {
+    if (data.category === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
     }
     return true;
 }, {
-    message: "Please specify details for the 'Other' sub-category.",
+    message: "Please specify details for the 'Other' category.",
     path: ["otherCategoryDetail"],
 }).refine(data => {
     if (data.beneficiaryType === 'existing') {
@@ -115,7 +115,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
   });
 
   const selectedPurpose = form.watch("purpose");
-  const selectedSubCategory = form.watch("subCategory");
+  const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
 
 
@@ -130,7 +130,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
-    formData.append("subCategory", values.subCategory);
+    formData.append("category", values.category);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
@@ -302,7 +302,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
                 <FormLabel>Lead Purpose</FormLabel>
                 <Select onValueChange={(value) => {
                     field.onChange(value);
-                    form.setValue('subCategory', ''); // Reset subcategory on purpose change
+                    form.setValue('category', ''); // Reset category on purpose change
                     form.setValue('otherCategoryDetail', '');
                 }} defaultValue={field.value}>
                     <FormControl>
@@ -324,18 +324,18 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
             {selectedPurpose && (
                  <FormField
                     control={form.control}
-                    name="subCategory"
+                    name="category"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Sub-Category</FormLabel>
+                        <FormLabel>Category</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a sub-category" />
+                                <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {subCategoryOptions[selectedPurpose].map(sub => (
+                                {categoryOptions[selectedPurpose].map(sub => (
                                     <SelectItem key={sub} value={sub}>{sub}</SelectItem>
                                 ))}
                             </SelectContent>
@@ -348,7 +348,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {selectedSubCategory === 'Other' && (
+             {selectedCategory === 'Other' && (
                 <FormField
                     control={form.control}
                     name="otherCategoryDetail"

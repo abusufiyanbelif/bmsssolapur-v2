@@ -83,7 +83,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                 Case Summary
                             </CardTitle>
                              <CardDescription>
-                                Purpose: {lead.purpose} > {lead.category} {lead.subCategory && `> ${lead.subCategory}`}
+                                Purpose: {lead.purpose} {lead.category && `> ${lead.category}`}
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
@@ -156,7 +156,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         <TableRow>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Donor</TableHead>
-                                            <TableHead>Category</TableHead>
+                                            <TableHead>Donation Type</TableHead>
                                             <TableHead className="text-right">Amount Allocated</TableHead>
                                         </TableRow>
                                     </TableHeader>
