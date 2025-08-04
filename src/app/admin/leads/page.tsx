@@ -2,7 +2,8 @@
 // src/app/admin/leads/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -51,7 +52,11 @@ const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; 
     "Rejected": { color: "bg-red-500/20 text-red-700 border-red-500/30", icon: ShieldX },
 };
 
-export default function LeadsPage() {
+
+function LeadsPageContent() {
+    const searchParams = useSearchParams();
+    const statusFromUrl = searchParams.get('status');
+
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -60,14 +65,14 @@ export default function LeadsPage() {
     
     // Input states
     const [nameInput, setNameInput] = useState('');
-    const [statusInput, setStatusInput] = useState<string>('all');
+    const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
     const [verificationInput, setVerificationInput] = useState<string>('all');
     const [sortInput, setSortInput] = useState<SortOption>('date-desc');
 
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         name: '',
-        status: 'all',
+        status: statusFromUrl || 'all',
         verification: 'all',
         sort: 'date-desc' as SortOption
     });
@@ -430,4 +435,10 @@ export default function LeadsPage() {
   )
 }
 
-    
+export default function LeadsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <LeadsPageContent />
+        </Suspense>
+    )
+}

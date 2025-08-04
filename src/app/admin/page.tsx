@@ -68,18 +68,21 @@ export default async function DashboardPage() {
       value: `${beneficiariesHelped} leads`,
       icon: Users,
       description: "Total number of cases managed.",
+      href: "/admin/beneficiaries",
     },
     {
       title: "Cases Fully Closed",
       value: casesClosed.toString(),
       icon: CheckCircle,
       description: "Leads where help is complete.",
+      href: "/admin/leads?status=Closed",
     },
     {
       title: "Cases Open",
       value: casesPending.toString(),
       icon: PiggyBank,
       description: "Leads awaiting assistance.",
+      href: "/admin/leads?status=Pending",
     },
   ];
 
