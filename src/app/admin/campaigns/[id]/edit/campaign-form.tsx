@@ -27,7 +27,6 @@ import { handleUpdateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
 import { Campaign, CampaignStatus } from "@/services/campaign-service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRange } from "react-day-picker";
 
 const campaignStatuses: CampaignStatus[] = ['Upcoming', 'Active', 'Completed', 'Cancelled'];
 
@@ -36,8 +35,8 @@ const formSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters."),
   goal: z.coerce.number().min(1, "Goal must be a positive number."),
   dates: z.object({
-    from: z.date(),
-    to: z.date(),
+    from: z.date({ required_error: "A start date is required."}),
+    to: z.date({ required_error: "An end date is required."}),
   }),
   status: z.enum(campaignStatuses),
 });
@@ -175,10 +174,11 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
                         <PopoverTrigger asChild>
                             <FormControl>
                                 <Button
+                                    id="date"
                                     variant={"outline"}
                                     className={cn(
                                         "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
+                                        !field.value?.from && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -199,11 +199,12 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
+                                initialFocus
                                 mode="range"
+                                defaultMonth={field.value?.from}
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 numberOfMonths={2}
-                                initialFocus
                             />
                         </PopoverContent>
                     </Popover>
