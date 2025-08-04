@@ -8,7 +8,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface UserHomePageProps {
   user: (User & { isLoggedIn: boolean; }) | null;
@@ -111,7 +112,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 
     let dashboardContent;
     if (activeRole === 'Donor') {
-      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} />;
+      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} user={user} />;
     } else if (activeRole === 'Beneficiary') {
       dashboardContent = <BeneficiaryDashboard cases={cases} quotes={quotes} />;
     } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
@@ -155,7 +156,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 }
 
 
-function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[] }) {
+function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], user: User }) {
   const isMobile = useIsMobile();
   const [purposeInput, setPurposeInput] = useState('all');
   const [searchInput, setSearchInput] = useState('');
@@ -225,6 +226,16 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
             </CardContent>
           </Card>
         ))}
+      </div>
+
+       <div className="flex items-center space-x-2 rounded-lg border p-4">
+        <Checkbox id="monthly-donor-status" checked={user.enableMonthlyDonationReminder} disabled />
+        <label
+          htmlFor="monthly-donor-status"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          I am committed to a monthly donation. (Set this in your <Link href="/profile" className="underline text-primary">profile</Link>)
+        </label>
       </div>
 
       {/* Open Cases and Quotes */}

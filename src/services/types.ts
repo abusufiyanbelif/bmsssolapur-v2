@@ -54,6 +54,7 @@ export interface User {
   roles: UserRole[]; 
   privileges?: Privilege[]; 
   groups?: string[];
+  enableMonthlyDonationReminder?: boolean;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }

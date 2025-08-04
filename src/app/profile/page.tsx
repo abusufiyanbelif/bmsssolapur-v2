@@ -38,6 +38,7 @@ const profileFormSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  enableMonthlyDonationReminder: z.boolean().default(false),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -88,6 +89,7 @@ export default function ProfilePage() {
               isWidow: fetchedUser.isWidow || false,
               panNumber: fetchedUser.panNumber || '',
               aadhaarNumber: fetchedUser.aadhaarNumber || '',
+              enableMonthlyDonationReminder: fetchedUser.enableMonthlyDonationReminder || false,
           });
         } else {
           setError("User not found.");
@@ -123,6 +125,7 @@ export default function ProfilePage() {
           isWidow: values.isWidow,
           panNumber: values.panNumber,
           aadhaarNumber: values.aadhaarNumber,
+          enableMonthlyDonationReminder: values.enableMonthlyDonationReminder,
       });
       
       if (result.success) {
@@ -135,13 +138,6 @@ export default function ProfilePage() {
 
       setIsSubmitting(false);
   }
-
-  const handleFeatureInProgress = () => {
-    toast({
-        title: "In Progress",
-        description: "This feature is currently in development and will be available soon.",
-    });
-  };
 
   if (loading) {
     return <div className="flex items-center justify-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -430,6 +426,27 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     
+                                     <h3 className="text-lg font-semibold border-b pb-2">Notification Settings</h3>
+                                     <FormField
+                                        control={form.control}
+                                        name="enableMonthlyDonationReminder"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-base">Monthly Donation Reminder</FormLabel>
+                                                    <FormDescription>Receive a gentle reminder on the 1st of every month.</FormDescription>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                        disabled={!isEditing}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    
                                     {isEditing && (
                                         <Button type="submit" disabled={isSubmitting || !isDirty}>
                                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -440,23 +457,6 @@ export default function ProfilePage() {
                             </Card>
                         </form>
                     </Form>
-                    <Card className="mt-8">
-                        <CardHeader>
-                            <CardTitle>Notification Settings</CardTitle>
-                            <CardDescription>Manage how you receive notifications from us.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                                <div>
-                                    <Label htmlFor="monthly-reminder" className="font-semibold">Monthly Donation Reminder</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Receive a gentle reminder on the 1st of every month.
-                                    </p>
-                                </div>
-                                <Switch id="monthly-reminder" onCheckedChange={handleFeatureInProgress} />
-                            </div>
-                        </CardContent>
-                    </Card>
                 </TabsContent>
                 <TabsContent value="history">
                      <Card>
@@ -475,5 +475,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
