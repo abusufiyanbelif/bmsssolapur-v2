@@ -162,26 +162,31 @@ function LeadsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Sr. No.</TableHead>
-                    <TableHead>Date Created</TableHead>
                     <TableHead>Beneficiary</TableHead>
-                    <TableHead>Campaign</TableHead>
-                    <TableHead>Amount Requested</TableHead>
+                    <TableHead>Amount Req.</TableHead>
+                    <TableHead>Amount Given</TableHead>
+                    <TableHead>Amount Pending</TableHead>
                     <TableHead>Case Status</TableHead>
                     <TableHead>Verification</TableHead>
+                    <TableHead>Date Closed</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {paginatedLeads.map((lead, index) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+                    const pendingAmount = lead.helpRequested - lead.helpGiven;
                     return (
                         <TableRow key={lead.id}>
-                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                            <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
-                            <TableCell className="font-medium">{lead.name}</TableCell>
-                            <TableCell>{lead.campaignName || 'N/A'}</TableCell>
-                            <TableCell>₹{lead.helpRequested.toFixed(2)}</TableCell>
+                            <TableCell>
+                                <div className="font-medium">{lead.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                    Created: {format(lead.dateCreated.toDate(), "dd MMM yyyy")}
+                                </div>
+                            </TableCell>
+                            <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
+                            <TableCell className="font-semibold text-green-600">₹{lead.helpGiven.toLocaleString()}</TableCell>
+                             <TableCell className="font-semibold text-destructive">₹{pendingAmount.toLocaleString()}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     {lead.status}
@@ -192,6 +197,9 @@ function LeadsPageContent() {
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
                                     {lead.verifiedStatus}
                                 </Badge>
+                            </TableCell>
+                            <TableCell>
+                                {lead.closedAt ? format(lead.closedAt.toDate(), "dd MMM yyyy") : 'N/A'}
                             </TableCell>
                             <TableCell className="text-right">
                                 {renderActionButton(lead)}
@@ -207,13 +215,14 @@ function LeadsPageContent() {
         <div className="space-y-4">
             {paginatedLeads.map((lead, index) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+                 const pendingAmount = lead.helpRequested - lead.helpGiven;
                 return (
                     <Card key={lead.id}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
                                     <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {lead.name}</CardTitle>
-                                    <CardDescription>Campaign: {lead.campaignName || 'N/A'}</CardDescription>
+                                    <CardDescription>Created: {format(lead.dateCreated.toDate(), "dd MMM yyyy")}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
@@ -224,17 +233,21 @@ function LeadsPageContent() {
                         <CardContent className="space-y-3 text-sm">
                            <div className="flex justify-between">
                                 <span className="text-muted-foreground">Amount Requested</span>
-                                <span>₹{lead.helpRequested.toFixed(2)}</span>
+                                <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Amount Given</span>
+                                <span className="font-semibold text-green-600">₹{lead.helpGiven.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Amount Pending</span>
+                                <span className="font-semibold text-destructive">₹{pendingAmount.toLocaleString()}</span>
                             </div>
                              <div className="flex justify-between">
                                 <span className="text-muted-foreground">Case Status</span>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     {lead.status}
                                 </Badge>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Date Created</span>
-                                <span>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</span>
                             </div>
                         </CardContent>
                          <CardFooter className="flex justify-end">

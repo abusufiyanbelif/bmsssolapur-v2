@@ -119,6 +119,7 @@ export interface Lead {
   helpGiven: number;
   dueDate?: Date;
   status: LeadStatus;
+  closedAt?: Timestamp;
   isLoan: boolean;
   caseDetails?: string;
   verificationDocumentUrl?: string;

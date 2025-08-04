@@ -3,6 +3,7 @@
 
 import { updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
+import { Timestamp } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -24,6 +25,7 @@ export async function handleUpdateLead(
 
   try {
     const purpose = rawFormData.purpose as LeadPurpose;
+    const status = rawFormData.status as LeadStatus;
 
     const updates: Partial<Lead> = {
         campaignName: rawFormData.campaignName as string | undefined,
@@ -35,9 +37,14 @@ export async function handleUpdateLead(
         dueDate: rawFormData.dueDate ? new Date(rawFormData.dueDate as string) : undefined,
         caseDetails: rawFormData.caseDetails as string | undefined,
         isLoan: rawFormData.isLoan === 'on',
-        status: rawFormData.status as LeadStatus,
+        status: status,
         verifiedStatus: rawFormData.verifiedStatus as LeadVerificationStatus,
     };
+    
+    // If status is being changed to "Closed", set the closedAt timestamp
+    if (status === 'Closed') {
+        updates.closedAt = Timestamp.now();
+    }
 
     await updateLead(leadId, updates);
     

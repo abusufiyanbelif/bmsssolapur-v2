@@ -5,7 +5,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -53,6 +53,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
     const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
     const dueDate = lead.dueDate ? (lead.dueDate as any).toDate() : null;
+    const closedDate = lead.closedAt ? (lead.closedAt as any).toDate() : null;
 
     return (
         <div className="flex-1 space-y-6">
@@ -110,6 +111,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                          <Badge variant="outline" className="text-destructive border-destructive/50">
                                             <CalendarIcon className="mr-1 h-3 w-3" />
                                             {format(dueDate, "dd MMM yyyy")}
+                                        </Badge>
+                                    </div>
+                                )}
+                                {closedDate && (
+                                     <div className="flex items-center">
+                                         <span className="text-muted-foreground mr-2">Closed Date:</span> 
+                                         <Badge variant="outline" className="bg-green-100 text-green-800">
+                                            <CheckCircle className="mr-1 h-3 w-3" />
+                                            {format(closedDate, "dd MMM yyyy")}
                                         </Badge>
                                     </div>
                                 )}
