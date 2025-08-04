@@ -56,6 +56,7 @@ export default async function DashboardPage() {
       value: `₹${totalDistributed.toLocaleString()}`,
       icon: HandCoins,
       description: "Total funds given to leads.",
+      href: "/admin/leads",
     },
     {
       title: "Available for Disbursement",
