@@ -47,9 +47,19 @@ const allNavItems: NavItem[] = [
     
     // Admin
     { href: "/admin", label: "Dashboard", icon: Home, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-    { href: "/admin/leads", label: "All Leads", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
-    { href: "/admin/donations", label: "Donations", icon: Banknote, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     
+    // Admin - Organization (Collapsible)
+    {
+        label: "Organization",
+        icon: Building,
+        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        subItems: [
+            { href: "/admin/organization", label: "Org Profile" },
+            { href: "/admin/leads", label: "All Leads" },
+            { href: "/admin/donations", label: "All Donations" },
+        ]
+    },
+
     // Super Admin - User Management (Collapsible)
     { 
         label: "User Management", 
@@ -66,8 +76,7 @@ const allNavItems: NavItem[] = [
         ]
     },
     
-    // Super Admin - Organization & Settings
-    { href: "/admin/organization", label: "Organization", icon: Building, allowedRoles: ["Super Admin"] },
+    // Super Admin - App Settings (Collapsible)
     { 
         label: "App Settings", 
         icon: Settings, 
@@ -96,9 +105,13 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     const pathname = usePathname();
     
     // Filter nav items based on the user's ACTIVE role.
-    const visibleNavItems = allNavItems.filter(item => 
-        item.allowedRoles.includes(activeRole)
-    );
+    const visibleNavItems = allNavItems.filter(item => {
+        if (item.label === 'Organization') {
+            // Show the Organization menu if user has ANY of the roles that can see its sub-items.
+            return userRoles.includes('Admin') || userRoles.includes('Super Admin') || userRoles.includes('Finance Admin');
+        }
+        return item.allowedRoles.includes(activeRole);
+    });
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
         // If the active role can see the link, just navigate.
@@ -114,13 +127,34 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
         }
         // If the user doesn't have any role that can access it, the link won't be rendered anyway.
     };
+    
+    const filterSubItems = (item: NavItem) => {
+        const adminLinks = ["/admin/leads"];
+        const financeLinks = ["/admin/donations"];
+        const superAdminLinks = ["/admin/organization"];
+
+        return item.subItems?.filter(sub => {
+             if (activeRole === 'Super Admin') return true;
+             if (activeRole === 'Admin' && (adminLinks.includes(sub.href) || financeLinks.includes(sub.href))) return true;
+             if (activeRole === 'Finance Admin' && financeLinks.includes(sub.href)) return true;
+             return false;
+        }) || [];
+    }
 
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
                 if (item.subItems) {
-                    const isAnySubItemActive = item.subItems.some(sub => sub.href && pathname.startsWith(sub.href));
+                    // For collapsible menus like Organization, we need a different check
+                    let subItemsToRender = item.subItems;
+                    if (item.label === 'Organization') {
+                        subItemsToRender = filterSubItems(item);
+                        if(subItemsToRender.length === 0) return null; // Don't render the menu if no sub-items are visible
+                    }
+
+                    const isAnySubItemActive = subItemsToRender.some(sub => sub.href && pathname.startsWith(sub.href));
+
                     return (
                          <Collapsible key={key} defaultOpen={isAnySubItemActive}>
                             <CollapsibleTrigger className="w-full">
@@ -134,7 +168,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
                                 </div>
                             </CollapsibleTrigger>
                             <CollapsibleContent className="pl-8 pt-2 space-y-1">
-                                {item.subItems.map(subItem => {
+                                {subItemsToRender.map(subItem => {
                                     const isSubActive = subItem.href && pathname.startsWith(subItem.href);
                                     return (
                                         <Link
