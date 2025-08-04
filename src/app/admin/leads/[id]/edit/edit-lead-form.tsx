@@ -29,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
 import { useState } from "react";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Edit, Save, X } from "lucide-react";
 import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus } from "@/services/lead-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -81,6 +81,7 @@ interface EditLeadFormProps {
 export function EditLeadForm({ lead }: EditLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<EditLeadFormValues>({
     resolver: zodResolver(formSchema),
@@ -98,9 +99,25 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isDirty }, reset } = form;
   const selectedPurpose = form.watch("purpose");
   const selectedCategory = form.watch("category");
+  
+  const handleCancel = () => {
+    reset({
+        campaignName: lead.campaignName || '',
+        purpose: lead.purpose,
+        category: lead.category || '',
+        otherCategoryDetail: lead.otherCategoryDetail || '',
+        helpRequested: lead.helpRequested,
+        dueDate: lead.dueDate ? (lead.dueDate as any).toDate() : undefined,
+        caseDetails: lead.caseDetails || '',
+        isLoan: lead.isLoan,
+        status: lead.status,
+        verifiedStatus: lead.verifiedStatus,
+    });
+    setIsEditing(false);
+  }
 
   async function onSubmit(values: EditLeadFormValues) {
     setIsSubmitting(true);
@@ -112,10 +129,10 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
-    if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
     if(values.isLoan) formData.append("isLoan", "on");
     formData.append("status", values.status);
     formData.append("verifiedStatus", values.verifiedStatus);
+    if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
     
     const result = await handleUpdateLead(lead.id!, formData);
 
@@ -127,6 +144,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
         description: `Successfully updated lead for ${lead.name}.`,
       });
       form.reset(values);
+      setIsEditing(false);
     } else {
       toast({
         variant: "destructive",
@@ -139,10 +157,20 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
   return (
      <Card>
         <CardHeader>
-            <CardTitle>Edit Lead</CardTitle>
-            <CardDescription>
-                Update the details for the case from <span className="font-semibold">{lead.name}</span>.
-            </CardDescription>
+             <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle>Edit Lead</CardTitle>
+                    <CardDescription>
+                        Update the details for the case from <span className="font-semibold">{lead.name}</span>.
+                    </CardDescription>
+                </div>
+                 {!isEditing && (
+                    <Button onClick={() => setIsEditing(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                    </Button>
+                )}
+            </div>
         </CardHeader>
         <CardContent>
             <Form {...form}>
@@ -155,7 +183,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                     <FormItem>
                       <FormLabel>Campaign Name (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Ramadan Food Drive 2024" {...field} />
+                        <Input placeholder="e.g., Ramadan Food Drive 2024" {...field} disabled={!isEditing} />
                       </FormControl>
                       <FormDescription>Link this lead to a specific campaign.</FormDescription>
                       <FormMessage />
@@ -174,7 +202,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                                 field.onChange(value);
                                 form.setValue('category', '');
                                 form.setValue('otherCategoryDetail', '');
-                            }} defaultValue={field.value}>
+                            }} defaultValue={field.value} disabled={!isEditing}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a purpose" />
@@ -197,7 +225,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a category" />
@@ -224,7 +252,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                                 <FormItem>
                                 <FormLabel>Please specify "Other" details</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g., Specific textbook name" {...field} />
+                                    <Input placeholder="e.g., Specific textbook name" {...field} disabled={!isEditing} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -241,7 +269,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                         <FormItem>
                         <FormLabel>Amount Requested</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="Enter amount" {...field} />
+                            <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -263,6 +291,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                                             "w-full pl-3 text-left font-normal",
                                             !field.value && "text-muted-foreground"
                                         )}
+                                        disabled={!isEditing}
                                         >
                                         {field.value ? (
                                             format(field.value, "PPP")
@@ -302,7 +331,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                     <FormItem>
                     <FormLabel>Case Details</FormLabel>
                     <FormControl>
-                        <Textarea placeholder="Provide a brief summary of the case..." {...field} />
+                        <Textarea placeholder="Provide a brief summary of the case..." {...field} disabled={!isEditing} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -316,7 +345,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Case Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a status" />
@@ -338,7 +367,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Verification Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a verification status" />
@@ -365,6 +394,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          disabled={!isEditing}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
@@ -379,17 +409,21 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
                   )}
                 />
 
-                <Button type="submit" disabled={isSubmitting || !isDirty}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
-                </Button>
+                {isEditing && (
+                    <div className="flex gap-4">
+                        <Button type="submit" disabled={isSubmitting || !isDirty}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                             <X className="mr-2 h-4 w-4" />
+                            Cancel
+                        </Button>
+                    </div>
+                )}
             </form>
             </Form>
         </CardContent>
     </Card>
   );
 }
-
-    
-
-    

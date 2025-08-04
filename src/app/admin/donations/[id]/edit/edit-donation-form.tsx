@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonation } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Edit, Save, X } from "lucide-react";
 import type { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -53,6 +52,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     // In a real app, this would be handled by a more robust session management.
@@ -72,7 +72,19 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isDirty }, reset } = form;
+
+  const handleCancel = () => {
+    reset({
+        amount: donation.amount,
+        type: donation.type as Exclude<DonationType, 'Split'>,
+        purpose: donation.purpose,
+        status: donation.status,
+        transactionId: donation.transactionId || '',
+        notes: donation.notes || '',
+    });
+    setIsEditing(false);
+  }
 
   async function onSubmit(values: EditDonationFormValues) {
     if (!adminUserId) {
@@ -104,6 +116,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
         description: `Successfully updated donation from ${donation.donorName}.`,
       });
       form.reset(values);
+      setIsEditing(false);
     } else {
       toast({
         variant: "destructive",
@@ -116,10 +129,20 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
   return (
      <Card>
         <CardHeader>
-            <CardTitle>Edit Donation</CardTitle>
-            <CardDescription>
-                Update the details for the donation from <span className="font-semibold">{donation.donorName}</span>.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle>Edit Donation</CardTitle>
+                    <CardDescription>
+                        Update the details for the donation from <span className="font-semibold">{donation.donorName}</span>.
+                    </CardDescription>
+                </div>
+                {!isEditing && (
+                    <Button onClick={() => setIsEditing(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                    </Button>
+                )}
+            </div>
         </CardHeader>
         <CardContent>
             <Form {...form}>
@@ -131,7 +154,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                     <FormItem>
                     <FormLabel>Amount</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="Enter amount" {...field} />
+                        <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing}/>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -145,7 +168,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a category" />
@@ -167,7 +190,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Purpose</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a purpose (optional)" />
@@ -191,7 +214,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a status" />
@@ -215,7 +238,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                     <FormItem>
                     <FormLabel>Transaction ID</FormLabel>
                     <FormControl>
-                        <Input placeholder="Enter transaction ID or reference number" {...field} />
+                        <Input placeholder="Enter transaction ID or reference number" {...field} disabled={!isEditing} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -229,7 +252,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                     <FormItem>
                     <FormLabel>Notes (Optional)</FormLabel>
                     <FormControl>
-                        <Textarea placeholder="Add any internal notes about this donation" {...field} />
+                        <Textarea placeholder="Add any internal notes about this donation" {...field} disabled={!isEditing} />
                     </FormControl>
                      <FormDescription>These notes are for internal use only and not visible to the donor.</FormDescription>
                     <FormMessage />
@@ -237,10 +260,18 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                 )}
                 />
 
-                <Button type="submit" disabled={isSubmitting || !isDirty}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
-                </Button>
+                {isEditing && (
+                    <div className="flex gap-4">
+                        <Button type="submit" disabled={isSubmitting || !isDirty}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
+                         <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                            <X className="mr-2 h-4 w-4" />
+                            Cancel
+                        </Button>
+                    </div>
+                )}
             </form>
             </Form>
         </CardContent>

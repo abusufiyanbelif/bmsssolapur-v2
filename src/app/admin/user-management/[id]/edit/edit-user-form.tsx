@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser, handleSetPassword } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -187,6 +187,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
@@ -217,9 +218,31 @@ export function EditUserForm({ user }: EditUserFormProps) {
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isDirty }, reset } = form;
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
+  
+  const handleCancel = () => {
+      reset({
+          name: user.name,
+          phone: user.phone,
+          roles: user.roles,
+          isAnonymous: user.isAnonymous || false,
+          isActive: user.isActive,
+          gender: user.gender || 'Other',
+          addressLine1: user.address?.addressLine1 || '',
+          city: user.address?.city || 'Solapur',
+          state: user.address?.state || 'Maharashtra',
+          country: user.address?.country || 'India',
+          pincode: user.address?.pincode || '',
+          occupation: user.occupation || '',
+          familyMembers: user.familyMembers || 0,
+          isWidow: user.isWidow || false,
+          panNumber: user.panNumber || '',
+          aadhaarNumber: user.aadhaarNumber || '',
+      });
+      setIsEditing(false);
+  }
 
 
   async function onSubmit(values: EditUserFormValues) {
@@ -256,6 +279,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         icon: <CheckCircle />,
       });
       form.reset(values);
+      setIsEditing(false);
     } else {
       toast({
         variant: "destructive",
@@ -271,8 +295,18 @@ export function EditUserForm({ user }: EditUserFormProps) {
     <>
         <Card>
             <CardHeader>
-                <CardTitle>Edit User</CardTitle>
-                <CardDescription>Update the details for {user.name}.</CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Edit User</CardTitle>
+                        <CardDescription>Update the details for {user.name}.</CardDescription>
+                    </div>
+                    {!isEditing && (
+                        <Button onClick={() => setIsEditing(true)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -286,7 +320,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <FormItem>
                             <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="Enter user's full name" {...field} />
+                                <Input placeholder="Enter user's full name" {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -303,6 +337,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     onValueChange={field.onChange}
                                     defaultValue={field.value}
                                     className="flex flex-row space-x-4 pt-2"
+                                    disabled={!isEditing}
                                     >
                                     <FormItem className="flex items-center space-x-3 space-y-0">
                                         <FormControl>
@@ -343,7 +378,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         <FormItem>
                         <FormLabel>Phone Number (10 digits)</FormLabel>
                         <FormControl>
-                            <Input type="tel" maxLength={10} placeholder="9876543210" {...field} />
+                            <Input type="tel" maxLength={10} placeholder="9876543210" {...field} disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -359,7 +394,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <FormItem>
                             <FormLabel>Address</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Enter user's full address" {...field} />
+                                <Textarea placeholder="Enter user's full address" {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -386,7 +421,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 <FormItem>
                                 <FormLabel>Pincode</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g., 413001" {...field} />
+                                    <Input placeholder="e.g., 413001" {...field} disabled={!isEditing} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -431,7 +466,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 <FormItem>
                                 <FormLabel>Occupation</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g., Daily wage worker, Unemployed" {...field} />
+                                    <Input placeholder="e.g., Daily wage worker, Unemployed" {...field} disabled={!isEditing} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -444,7 +479,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 <FormItem>
                                 <FormLabel>Number of Family Members</FormLabel>
                                 <FormControl>
-                                    <Input type="number" placeholder="e.g., 5" {...field} />
+                                    <Input type="number" placeholder="e.g., 5" {...field} disabled={!isEditing} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -461,6 +496,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     <Checkbox
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
+                                    disabled={!isEditing}
                                     />
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
@@ -512,6 +548,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                                     )
                                                 )
                                             }}
+                                            disabled={!isEditing}
                                         />
                                         </FormControl>
                                         <FormLabel className="font-normal">
@@ -538,6 +575,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     <Checkbox
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
+                                    disabled={!isEditing}
                                     />
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
@@ -562,7 +600,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <FormItem>
                             <FormLabel>PAN Number (Optional)</FormLabel>
                             <FormControl>
-                                <Input placeholder="Enter PAN number" {...field} />
+                                <Input placeholder="Enter PAN number" {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -575,7 +613,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <FormItem>
                             <FormLabel>Aadhaar Number (Optional)</FormLabel>
                             <FormControl>
-                                <Input placeholder="Enter Aadhaar number" {...field} />
+                                <Input placeholder="Enter Aadhaar number" {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -600,16 +638,25 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <Checkbox
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            disabled={!isEditing}
                             />
                         </FormControl>
                         </FormItem>
                     )}
                     />
                     
-                    <Button type="submit" disabled={isSubmitting || !isDirty}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Save Changes
-                    </Button>
+                    {isEditing && (
+                        <div className="flex gap-4">
+                             <Button type="submit" disabled={isSubmitting || !isDirty}>
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                Save Changes
+                            </Button>
+                             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                                <X className="mr-2 h-4 w-4" />
+                                Cancel
+                            </Button>
+                        </div>
+                    )}
                 </form>
                 </Form>
             </CardContent>
