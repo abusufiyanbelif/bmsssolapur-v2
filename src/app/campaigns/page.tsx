@@ -12,6 +12,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { EnrichedLead } from "./actions";
 import type { Organization } from "@/services/types";
+import { DonateToOrgDialog } from "./donate-to-org-dialog";
+import { Button } from "@/components/ui/button";
 
 export default function CampaignsPage() {
     const [leads, setLeads] = useState<EnrichedLead[]>([]);
@@ -44,21 +46,19 @@ export default function CampaignsPage() {
         <div className="flex-1 space-y-4">
             <h2 id="page-header" className="text-3xl font-bold tracking-tight font-headline text-primary scroll-mt-20">Verified Cases for Donation</h2>
 
-            {organization?.upiId && (
-                <Alert>
-                    <CreditCard className="h-4 w-4" />
-                    <AlertTitle>Donate via UPI</AlertTitle>
-                    <AlertDescription className="flex flex-col md:flex-row items-center justify-between gap-4">
-                       <span className="flex-grow">You can donate directly to our organization's UPI ID: <strong className="font-mono">{organization.upiId}</strong></span>
-                       {organization.qrCodeUrl && (
-                           <div className="flex items-center gap-2 p-2 border rounded-md bg-background">
-                               <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={40} height={40} data-ai-hint="qr code" />
-                               <span className="text-xs text-muted-foreground">Scan to Pay</span>
-                           </div>
-                       )}
-                    </AlertDescription>
-                </Alert>
-            )}
+             <Card>
+                <CardHeader className="flex flex-col md:flex-row md:items-center justify-between">
+                    <div>
+                        <CardTitle>Donate to the Organization</CardTitle>
+                        <CardDescription>
+                            Your general donation supports our operations and helps us respond quickly to future needs.
+                        </CardDescription>
+                    </div>
+                     <DonateToOrgDialog organization={organization}>
+                        <Button className="mt-4 md:mt-0">Donate to General Fund</Button>
+                    </DonateToOrgDialog>
+                </CardHeader>
+            </Card>
 
             <Card>
                 <CardHeader>
@@ -80,7 +80,7 @@ export default function CampaignsPage() {
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     ) : (
-                        <CampaignList leads={leads} />
+                        <CampaignList leads={leads} organization={organization} />
                     )}
                 </CardContent>
             </Card>

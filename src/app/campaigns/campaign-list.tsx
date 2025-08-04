@@ -7,25 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { EnrichedLead } from './actions';
 import { HandHeart } from 'lucide-react';
+import { DonateToOrgDialog } from './donate-to-org-dialog';
+import type { Organization } from '@/services/types';
 
 interface CampaignListProps {
     leads: EnrichedLead[];
+    organization: Organization | null;
 }
 
-export function CampaignList({ leads }: CampaignListProps) {
+export function CampaignList({ leads, organization }: CampaignListProps) {
     const router = useRouter();
     
     const handleDonateClick = () => {
         sessionStorage.setItem('redirectAfterLogin', '/campaigns');
         router.push('/login');
     }
-
-    const handleScrollToTop = () => {
-        const element = document.getElementById('page-header');
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
 
     if (leads.length === 0) {
         return (
@@ -35,9 +31,11 @@ export function CampaignList({ leads }: CampaignListProps) {
                 <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
                     Your generosity is making a real difference. You can still support our mission by donating to the organization's general fund, which helps us prepare for future cases and emergencies.
                 </p>
-                 <Button onClick={handleScrollToTop} className="mt-6">
-                    Donate to Organization
-                </Button>
+                <DonateToOrgDialog organization={organization}>
+                     <Button className="mt-6">
+                        Donate to Organization
+                    </Button>
+                </DonateToOrgDialog>
             </div>
         );
     }
