@@ -1,4 +1,3 @@
-
 // src/app/admin/campaigns/page.tsx
 "use client";
 
@@ -132,32 +131,48 @@ export default function CampaignsPage() {
                     <TableRow>
                         <TableHead>Campaign</TableHead>
                         <TableHead>Dates</TableHead>
-                        <TableHead>Goal</TableHead>
+                        <TableHead className="w-[25%]">Funding Goal</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {campaigns.map((campaign) => (
-                        <TableRow key={campaign.id}>
-                            <TableCell>
-                                <div className="font-medium">{campaign.name}</div>
-                                <div className="text-sm text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
-                            </TableCell>
-                            <TableCell>
-                                {format(campaign.startDate.toDate(), "dd MMM yyyy")} - {format(campaign.endDate.toDate(), "dd MMM yyyy")}
-                            </TableCell>
-                            <TableCell>₹{campaign.goal.toLocaleString()}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[campaign.status])}>
-                                    {campaign.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                {renderActions(campaign)}
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                    {campaigns.map((campaign) => {
+                        const raisedAmount = campaign.status === 'Completed' ? campaign.goal : campaign.goal / 2; // Placeholder logic
+                        const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+                        return(
+                            <TableRow key={campaign.id}>
+                                <TableCell>
+                                    <div className="font-medium">{campaign.name}</div>
+                                    <div className="text-sm text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
+                                </TableCell>
+                                <TableCell>
+                                    {format(campaign.startDate.toDate(), "dd MMM yyyy")} - {format(campaign.endDate.toDate(), "dd MMM yyyy")}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col gap-2">
+                                        <Progress value={progress} />
+                                        <div className="text-xs text-muted-foreground flex justify-between">
+                                            <span>
+                                                Raised: <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span>
+                                            </span>
+                                            <span>
+                                                Goal: ₹{campaign.goal.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline" className={cn("capitalize", statusColors[campaign.status])}>
+                                        {campaign.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    {renderActions(campaign)}
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })}
                 </TableBody>
             </Table>
         );
