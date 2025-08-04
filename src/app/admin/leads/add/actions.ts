@@ -4,7 +4,7 @@
 import { createLead } from "@/services/lead-service";
 import { getUser, createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Lead, LeadPurpose, User, DonationType } from "@/services/types";
+import type { Lead, LeadPurpose, User, DonationType, Campaign } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 
 interface FormState {
@@ -42,6 +42,7 @@ export async function handleAddLead(
       newBeneficiaryName: formData.get("newBeneficiaryName") as string | undefined,
       newBeneficiaryPhone: formData.get("newBeneficiaryPhone") as string | undefined,
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
+      campaignId: formData.get("campaignId") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
       category: formData.get("category") as string,
@@ -102,6 +103,7 @@ export async function handleAddLead(
     const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
+        campaignId: rawFormData.campaignId,
         campaignName: rawFormData.campaignName,
         purpose: rawFormData.purpose,
         donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose

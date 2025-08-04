@@ -36,6 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Campaign, getAllCampaigns } from "@/services/campaign-service";
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
@@ -51,6 +52,7 @@ const categoryOptions: Record<LeadPurpose, string[]> = {
 
 
 const formSchema = z.object({
+  campaignId: z.string().optional(),
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
   category: z.string().min(1, "Category is required."),
@@ -76,9 +78,10 @@ type EditLeadFormValues = z.infer<typeof formSchema>;
 
 interface EditLeadFormProps {
   lead: Lead;
+  campaigns: Campaign[];
 }
 
-export function EditLeadForm({ lead }: EditLeadFormProps) {
+export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -92,6 +95,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
   const form = useForm<EditLeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      campaignId: lead.campaignId || '',
       campaignName: lead.campaignName || '',
       purpose: lead.purpose,
       category: lead.category || '',
@@ -111,6 +115,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
   
   const handleCancel = () => {
     reset({
+        campaignId: lead.campaignId || '',
         campaignName: lead.campaignName || '',
         purpose: lead.purpose,
         category: lead.category || '',
@@ -138,6 +143,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
+    if(values.campaignId) formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
     formData.append("category", values.category);
@@ -193,14 +199,34 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
 
                 <FormField
                   control={form.control}
-                  name="campaignName"
+                  name="campaignId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Campaign Name (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Ramadan Food Drive 2024" {...field} disabled={!isEditing} />
-                      </FormControl>
-                      <FormDescription>Link this lead to a specific campaign.</FormDescription>
+                      <FormLabel>Link to Campaign (Optional)</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          const selectedCampaign = campaigns.find(c => c.id === value);
+                          field.onChange(value);
+                          form.setValue('campaignName', selectedCampaign?.name || '');
+                        }}
+                        defaultValue={field.value}
+                        disabled={!isEditing}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a campaign" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {campaigns.map((campaign) => (
+                            <SelectItem key={campaign.id} value={campaign.id!}>
+                              {campaign.name} ({campaign.status})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Link this lead to a specific fundraising campaign.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

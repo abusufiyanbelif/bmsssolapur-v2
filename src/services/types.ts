@@ -113,6 +113,7 @@ export interface Lead {
   id?: string;
   name: string;
   beneficiaryId: string;
+  campaignId?: string;
   campaignName?: string;
   donationType: DonationType;
   purpose: LeadPurpose;

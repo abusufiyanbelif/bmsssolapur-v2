@@ -2,9 +2,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddLeadForm } from "./add-lead-form";
 import { getAllUsers } from "@/services/user-service";
+import { getAllCampaigns } from "@/services/campaign-service";
 
 export default async function AddLeadPage() {
-    const users = await getAllUsers();
+    const [users, campaigns] = await Promise.all([
+        getAllUsers(),
+        getAllCampaigns()
+    ]);
     
     return (
         <div className="flex-1 space-y-4">
@@ -17,7 +21,7 @@ export default async function AddLeadPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddLeadForm users={users} />
+                    <AddLeadForm users={users} campaigns={campaigns} />
                 </CardContent>
             </Card>
         </div>

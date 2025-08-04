@@ -41,9 +41,12 @@ export async function handleUpdateLead(
     const purpose = rawFormData.purpose as LeadPurpose;
     const status = rawFormData.status as LeadStatus;
     const verifiedStatus = rawFormData.verifiedStatus as LeadVerificationStatus;
+    const campaignId = rawFormData.campaignId as string | undefined;
+    const campaignName = rawFormData.campaignName as string | undefined;
 
     const updates: Partial<Lead> = {
-        campaignName: rawFormData.campaignName as string | undefined,
+        campaignId: campaignId,
+        campaignName: campaignName,
         purpose: purpose,
         donationType: purposeCategoryMap[purpose], // Infer category from purpose
         category: rawFormData.category as string | undefined,

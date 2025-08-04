@@ -7,9 +7,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { getAllCampaigns } from "@/services/campaign-service";
 
 export default async function EditLeadPage({ params }: { params: { id: string } }) {
-    const lead = await getLead(params.id);
+    const [lead, campaigns] = await Promise.all([
+        getLead(params.id),
+        getAllCampaigns()
+    ]);
 
     if (!lead) {
         notFound();
@@ -30,7 +34,7 @@ export default async function EditLeadPage({ params }: { params: { id: string } 
                 </AlertDescription>
             </Alert>
             
-            <EditLeadForm lead={lead} />
+            <EditLeadForm lead={lead} campaigns={campaigns} />
         </div>
     );
 }

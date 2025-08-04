@@ -28,9 +28,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon } from "lucide-react";
-import type { User, LeadPurpose } from "@/services/types";
+import type { User, LeadPurpose, Campaign } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -57,6 +57,7 @@ const formSchema = z.object({
   newBeneficiaryPhone: z.string().optional(),
   newBeneficiaryEmail: z.string().email().optional(),
 
+  campaignId: z.string().optional(),
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
   category: z.string().min(1, "Category is required."),
@@ -97,9 +98,10 @@ type AddLeadFormValues = z.infer<typeof formSchema>;
 
 interface AddLeadFormProps {
   users: User[];
+  campaigns: Campaign[];
 }
 
-export function AddLeadForm({ users }: AddLeadFormProps) {
+export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -128,6 +130,7 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
     if(values.newBeneficiaryName) formData.append("newBeneficiaryName", values.newBeneficiaryName);
     if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
+    if(values.campaignId) formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
     formData.append("category", values.category);
@@ -280,14 +283,33 @@ export function AddLeadForm({ users }: AddLeadFormProps) {
 
         <FormField
           control={form.control}
-          name="campaignName"
+          name="campaignId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Campaign Name (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Ramadan Food Drive 2024" {...field} />
-              </FormControl>
-              <FormDescription>Link this lead to a specific campaign.</FormDescription>
+              <FormLabel>Link to Campaign (Optional)</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  const selectedCampaign = campaigns.find(c => c.id === value);
+                  field.onChange(value);
+                  form.setValue('campaignName', selectedCampaign?.name || '');
+                }}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a campaign" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                        <SelectItem key={campaign.id} value={campaign.id!}>
+                        {campaign.name} ({campaign.status})
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>Link this lead to a specific fundraising campaign.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
