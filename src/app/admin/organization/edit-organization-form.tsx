@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateOrganization } from "./actions";
 import { useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Edit, X } from "lucide-react";
 import { Organization } from "@/services/organization-service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import Image from "next/image";
@@ -48,6 +48,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(organization.qrCodeUrl || '');
+  const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -66,7 +67,25 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isDirty }, reset } = form;
+  
+  const handleCancel = () => {
+    reset({
+      name: organization.name,
+      address: organization.address,
+      city: organization.city,
+      registrationNumber: organization.registrationNumber,
+      panNumber: organization.panNumber || '',
+      contactEmail: organization.contactEmail,
+      contactPhone: organization.contactPhone,
+      website: organization.website || '',
+      upiId: organization.upiId || '',
+      qrCodeUrl: organization.qrCodeUrl || '',
+      qrCodeFile: null,
+    });
+    setPreviewUrl(organization.qrCodeUrl || '');
+    setIsEditing(false);
+  }
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -89,6 +108,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
       });
       // Reset the form with the new values, which marks it as "not dirty"
       form.reset(values);
+      setIsEditing(false);
     } else {
       toast({
         variant: "destructive",
@@ -110,7 +130,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         <FormItem>
                             <FormLabel>Organization Name</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <Input {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -123,7 +143,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         <FormItem>
                             <FormLabel>Address</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <Input {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -136,7 +156,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         <FormItem>
                             <FormLabel>Registration Number</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <Input {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -149,7 +169,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         <FormItem>
                             <FormLabel>PAN Number</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <Input {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -182,7 +202,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                     <FormItem>
                         <FormLabel>Contact Email</FormLabel>
                         <FormControl>
-                            <Input type="email" {...field} />
+                            <Input type="email" {...field} disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -195,7 +215,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                     <FormItem>
                         <FormLabel>Contact Phone</FormLabel>
                         <FormControl>
-                            <Input {...field} />
+                            <Input {...field} disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -208,7 +228,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                     <FormItem>
                         <FormLabel>Website URL</FormLabel>
                         <FormControl>
-                            <Input type="url" {...field} placeholder="https://example.com" />
+                            <Input type="url" {...field} placeholder="https://example.com" disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -221,7 +241,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                     <FormItem>
                         <FormLabel>UPI ID</FormLabel>
                         <FormControl>
-                            <Input {...field} placeholder="yourname@okhdfcbank" />
+                            <Input {...field} placeholder="yourname@okhdfcbank" disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -239,6 +259,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                 <Input 
                   type="file" 
                   accept="image/png, image/jpeg, image/jpg"
+                  disabled={!isEditing}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     field.onChange(file);
@@ -259,10 +280,23 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         />
 
 
-        <Button type="submit" disabled={isSubmitting || !isDirty} size="lg">
-          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Save Changes
-        </Button>
+        {!isEditing ? (
+            <Button onClick={() => setIsEditing(true)} size="lg">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Details
+            </Button>
+        ) : (
+            <div className="flex gap-4">
+                 <Button type="submit" disabled={isSubmitting || !isDirty} size="lg">
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Changes
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancel} size="lg" disabled={isSubmitting}>
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                </Button>
+            </div>
+        )}
       </form>
     </Form>
   );
