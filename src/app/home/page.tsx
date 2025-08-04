@@ -1,4 +1,5 @@
 
+
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -111,7 +112,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
     if (activeRole === 'Donor') {
       dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} />;
     } else if (activeRole === 'Beneficiary') {
-      dashboardContent = <BeneficiaryDashboard cases={cases} />;
+      dashboardContent = <BeneficiaryDashboard cases={cases} quotes={quotes} />;
     } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
         dashboardContent = (
             <Card>
@@ -346,46 +347,53 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
   )
 }
 
-function BeneficiaryDashboard({ cases }: { cases: Lead[] }) {
+function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[] }) {
     return (
-     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="text-primary" />
-          Recent Cases
-        </CardTitle>
-        <CardDescription>
-          Here is the latest status of your help requests.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-         {cases.length > 0 ? (
-          <ul className="space-y-4">
-            {cases.slice(0,3).map(c => (
-              <li key={c.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                <div>
-                  <p className="font-semibold">For: {c.purpose}</p>
-                  <p className="text-sm text-muted-foreground">Requested: ₹{c.helpRequested.toLocaleString()}</p>
-                </div>
-                <div className="text-right">
-                    <Badge variant={c.status === 'Closed' ? 'default' : 'secondary'}>{c.status}</Badge>
-                    <p className="text-xs text-muted-foreground mt-1">{format(c.createdAt.toDate(), "dd MMM yyyy")}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-muted-foreground text-center py-4">No recent cases found.</p>
-        )}
-      </CardContent>
-      <CardFooter>
-        <Button asChild variant="secondary" className="w-full">
-          <Link href="/my-cases">
-            View All My Cases <ArrowRight className="ml-2" />
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+                <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                    <FileText className="text-primary" />
+                    Recent Cases
+                    </CardTitle>
+                    <CardDescription>
+                    Here is the latest status of your help requests.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {cases.length > 0 ? (
+                    <ul className="space-y-4">
+                        {cases.slice(0,3).map(c => (
+                        <li key={c.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                            <div>
+                            <p className="font-semibold">For: {c.purpose}</p>
+                            <p className="text-sm text-muted-foreground">Requested: ₹{c.helpRequested.toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                                <Badge variant={c.status === 'Closed' ? 'default' : 'secondary'}>{c.status}</Badge>
+                                <p className="text-xs text-muted-foreground mt-1">{format(c.createdAt.toDate(), "dd MMM yyyy")}</p>
+                            </div>
+                        </li>
+                        ))}
+                    </ul>
+                    ) : (
+                    <p className="text-muted-foreground text-center py-4">No recent cases found.</p>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    <Button asChild variant="secondary" className="w-full">
+                    <Link href="/my-cases">
+                        View All My Cases <ArrowRight className="ml-2" />
+                    </Link>
+                    </Button>
+                </CardFooter>
+                </Card>
+            </div>
+            <div className="lg:col-span-1">
+                <InspirationalQuotes quotes={quotes} loading={false} />
+            </div>
+        </div>
     )
 }
 
