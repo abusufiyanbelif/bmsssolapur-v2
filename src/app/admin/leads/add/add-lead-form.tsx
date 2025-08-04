@@ -104,8 +104,14 @@ interface AddLeadFormProps {
 export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
+  
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    setAdminUserId(storedUserId);
+  }, []);
 
   const form = useForm<AddLeadFormValues>({
     resolver: zodResolver(formSchema),
@@ -122,9 +128,18 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
 
 
   async function onSubmit(values: AddLeadFormValues) {
+    if (!adminUserId) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not identify the logged in administrator. Please log out and back in.",
+        });
+        return;
+    }
     setIsSubmitting(true);
     
     const formData = new FormData();
+    formData.append("adminUserId", adminUserId);
     formData.append("beneficiaryType", values.beneficiaryType);
     if(values.beneficiaryId) formData.append("beneficiaryId", values.beneficiaryId);
     if(values.newBeneficiaryName) formData.append("newBeneficiaryName", values.newBeneficiaryName);
