@@ -2,20 +2,12 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAllCampaigns, type Campaign, type CampaignStatus, deleteCampaign } from "@/services/campaign-service";
+import { getAllLeads, Lead } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -23,6 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 const statusColors: Record<CampaignStatus, string> = {
     "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -31,20 +24,37 @@ const statusColors: Record<CampaignStatus, string> = {
     "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
 };
 
+interface CampaignWithStats extends Campaign {
+    leadCount: number;
+    beneficiaryCount: number;
+    statusCounts: {
+        Pending: number;
+        Partial: number;
+        Closed: number;
+    };
+    raisedAmount: number;
+    fundingProgress: number;
+}
+
 export default function CampaignsPage() {
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
 
-    const fetchCampaigns = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const fetchedCampaigns = await getAllCampaigns();
+            const [fetchedCampaigns, fetchedLeads] = await Promise.all([
+                getAllCampaigns(),
+                getAllLeads()
+            ]);
             setCampaigns(fetchedCampaigns);
+            setLeads(fetchedLeads);
             setError(null);
         } catch (e) {
-            setError("Failed to fetch campaigns. Please try again later.");
+            setError("Failed to fetch campaign data. Please try again later.");
             console.error(e);
         } finally {
             setLoading(false);
@@ -52,15 +62,38 @@ export default function CampaignsPage() {
     };
 
     useEffect(() => {
-        fetchCampaigns();
+        fetchData();
     }, []);
+
+    const campaignsWithStats: CampaignWithStats[] = useMemo(() => {
+        return campaigns.map(campaign => {
+            const linkedLeads = leads.filter(lead => lead.campaignId === campaign.id);
+            const statusCounts = linkedLeads.reduce((acc, lead) => {
+                acc[lead.status] = (acc[lead.status] || 0) + 1;
+                return acc;
+            }, { Pending: 0, Partial: 0, Closed: 0 });
+
+            const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+            const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+            const beneficiaryCount = new Set(linkedLeads.map(l => l.beneficiaryId)).size;
+
+            return {
+                ...campaign,
+                leadCount: linkedLeads.length,
+                beneficiaryCount,
+                statusCounts,
+                raisedAmount,
+                fundingProgress
+            };
+        });
+    }, [campaigns, leads]);
     
     const onCampaignDeleted = () => {
         toast({
             title: "Campaign Deleted",
             description: "The campaign has been successfully removed.",
         });
-        fetchCampaigns();
+        fetchData();
     };
 
     const renderActions = (campaign: Campaign) => (
@@ -126,55 +159,57 @@ export default function CampaignsPage() {
         }
         
         return (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Campaign</TableHead>
-                        <TableHead>Dates</TableHead>
-                        <TableHead className="w-[25%]">Funding Goal</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {campaigns.map((campaign) => {
-                        const raisedAmount = campaign.status === 'Completed' ? campaign.goal : campaign.goal / 2; // Placeholder logic
-                        const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
-                        return(
-                            <TableRow key={campaign.id}>
-                                <TableCell>
-                                    <div className="font-medium">{campaign.name}</div>
-                                    <div className="text-sm text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
-                                </TableCell>
-                                <TableCell>
-                                    {format(campaign.startDate.toDate(), "dd MMM yyyy")} - {format(campaign.endDate.toDate(), "dd MMM yyyy")}
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col gap-2">
-                                        <Progress value={progress} />
-                                        <div className="text-xs text-muted-foreground flex justify-between">
-                                            <span>
-                                                Raised: <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span>
-                                            </span>
-                                            <span>
-                                                Goal: ₹{campaign.goal.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="outline" className={cn("capitalize", statusColors[campaign.status])}>
-                                        {campaign.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {renderActions(campaign)}
-                                </TableCell>
-                            </TableRow>
-                        )
-                    })}
-                </TableBody>
-            </Table>
+             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {campaignsWithStats.map((campaign) => (
+                    <Card key={campaign.id} className="flex flex-col">
+                        <CardHeader>
+                            <div className="flex justify-between items-start gap-4">
+                                <div>
+                                    <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                                    <CardDescription>{format(campaign.startDate.toDate(), "dd MMM yyyy")} - {format(campaign.endDate.toDate(), "dd MMM yyyy")}</CardDescription>
+                                </div>
+                                 <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
+                                    {campaign.status}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4 flex-grow">
+                             <div>
+                                <div className="text-xs text-muted-foreground flex justify-between mb-1">
+                                    <span>
+                                        Raised: <span className="font-semibold text-foreground">₹{campaign.raisedAmount.toLocaleString()}</span>
+                                    </span>
+                                    <span>
+                                        Goal: ₹{campaign.goal.toLocaleString()}
+                                    </span>
+                                </div>
+                                <Progress value={campaign.fundingProgress} />
+                            </div>
+
+                             <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
+                                <div>
+                                    <p className="font-bold text-lg">{campaign.leadCount}</p>
+                                    <p className="text-xs text-muted-foreground">Linked Leads</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-lg">{campaign.beneficiaryCount}</p>
+                                    <p className="text-xs text-muted-foreground">Beneficiaries</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-lg text-green-600">{campaign.statusCounts.Closed || 0}</p>
+                                    <p className="text-xs text-muted-foreground">Cases Closed</p>
+                                </div>
+                             </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between items-center bg-muted/50 p-4">
+                             <div className="text-xs text-muted-foreground">
+                                <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
+                             </div>
+                             {renderActions(campaign)}
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
         );
     }
 
