@@ -45,7 +45,7 @@ const leadVerificationStatuses = ["Pending", "Verified", "Rejected"] as const;
 const categoryOptions: Record<LeadPurpose, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
-    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Other'],
+    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
 };
 
@@ -389,5 +389,7 @@ export function EditLeadForm({ lead }: EditLeadFormProps) {
     </Card>
   );
 }
+
+    
 
     
