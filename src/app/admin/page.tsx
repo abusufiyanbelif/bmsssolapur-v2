@@ -8,6 +8,7 @@ import { getAllLeads } from "@/services/lead-service";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DonationsChart } from "./donations-chart";
 
 export default async function DashboardPage() {
 
@@ -181,16 +182,7 @@ export default async function DashboardPage() {
           </Card>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-           <Card className="col-span-4">
-            <CardHeader>
-              <CardTitle className="font-headline">Donations Overview (Last 6 Months)</CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[350px] flex items-center justify-center text-muted-foreground">
-                <p>Donations chart placeholder</p>
-              </div>
-            </CardContent>
-          </Card>
+           <DonationsChart donations={allDonations} />
           <Card className="col-span-4 md:col-span-3">
             <CardHeader>
               <CardTitle className="font-headline">Recent Activity</CardTitle>
