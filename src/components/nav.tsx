@@ -7,18 +7,22 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award
+    Database, Building, Award, ChevronDown
 } from "lucide-react"
-
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
 
+type NavSubItem = {
+    href: string;
+    label: string;
+}
+
 type NavItem = {
-  href: string;
+  href?: string;
   label: string;
   icon: React.ElementType;
-  // Roles that are ALLOWED to see this link.
-  // The link will be shown if the user's active role matches one of these.
   allowedRoles: string[]; 
+  subItems?: NavSubItem[];
 };
 
 // A single source of truth for all navigation items
@@ -43,12 +47,21 @@ const allNavItems: NavItem[] = [
     // Admin
     { href: "/admin", label: "Dashboard", icon: Home, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     { href: "/admin/leads", label: "All Leads", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
-    { href: "/admin/donors", label: "All Donors", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
-    { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Admin", "Super Admin"] },
     { href: "/admin/donations", label: "Donations", icon: Banknote, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     
-    // Super Admin
-    { href: "/admin/user-management", label: "User Management", icon: UserCog, allowedRoles: ["Super Admin"] },
+    // Super Admin - User Management (Collapsible)
+    { 
+        label: "User Management", 
+        icon: UserCog, 
+        allowedRoles: ["Super Admin"],
+        subItems: [
+            { href: "/admin/user-management", label: "All Users" },
+            { href: "/admin/donors", label: "All Donors" },
+            { href: "/admin/beneficiaries", label: "All Beneficiaries" },
+        ]
+    },
+    
+    // Super Admin - Other
     { href: "/admin/organization", label: "Organization", icon: Building, allowedRoles: ["Super Admin"] },
     { href: "/admin/settings", label: "App Settings", icon: Settings, allowedRoles: ["Super Admin"] },
     { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
@@ -93,19 +106,53 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">
             {visibleNavItems.map((item) => {
+                const key = item.label + activeRole;
+                if (item.subItems) {
+                    const isAnySubItemActive = item.subItems.some(sub => sub.href && pathname.startsWith(sub.href));
+                    return (
+                         <Collapsible key={key} defaultOpen={isAnySubItemActive}>
+                            <CollapsibleTrigger className="w-full">
+                                 <div className={cn(
+                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                                    isAnySubItemActive && "text-primary"
+                                )}>
+                                    <item.icon className="h-4 w-4" />
+                                    {item.label}
+                                    <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
+                                </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pl-8 pt-2 space-y-1">
+                                {item.subItems.map(subItem => {
+                                    const isSubActive = subItem.href && pathname.startsWith(subItem.href);
+                                    return (
+                                        <Link
+                                            key={subItem.href}
+                                            href={subItem.href}
+                                            className={cn(
+                                                "block rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                                                isSubActive && "bg-muted text-primary"
+                                            )}
+                                        >
+                                            {subItem.label}
+                                        </Link>
+                                    )
+                                })}
+                            </CollapsibleContent>
+                        </Collapsible>
+                    )
+                }
+
                 const isActive = (item.href === '/' && pathname === '/') || 
-                                 (item.href !== '/' && pathname.startsWith(item.href));
+                                 (item.href && item.href !== '/' && pathname.startsWith(item.href));
 
                 return (
                     <Link
-                        key={item.href + item.label + activeRole} // Add activeRole to key to force re-render on role change
-                        href={item.href}
-                        onClick={(e) => handleNavClick(e, item)}
+                        key={key}
+                        href={item.href || '#'}
+                        onClick={(e) => handleNavClick(e as any, item)}
                         className={cn(
                             "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                            {
-                                "bg-muted text-primary": isActive,
-                            }
+                            isActive && "bg-muted text-primary"
                         )}
                     >
                         <item.icon className="h-4 w-4" />
