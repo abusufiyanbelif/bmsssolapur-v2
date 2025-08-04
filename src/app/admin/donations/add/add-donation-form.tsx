@@ -29,6 +29,8 @@ import { handleAddDonation } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -42,6 +44,8 @@ const formSchema = z.object({
   transactionId: z.string().min(1, "Transaction ID is required."),
   paymentScreenshot: z.any().optional(),
   paymentMethod: z.enum(["Bank Transfer", "Cash", "UPI / QR Code", "Other"]),
+  includeTip: z.boolean().default(false),
+  tipAmount: z.coerce.number().optional(),
 }).refine(data => {
     if (!data.isAnonymous) {
         return !!data.donorId && data.donorId.length > 0;
@@ -50,6 +54,14 @@ const formSchema = z.object({
 }, {
     message: "Please select a donor.",
     path: ["donorId"],
+}).refine(data => {
+    if (data.includeTip) {
+        return !!data.tipAmount && data.tipAmount > 0;
+    }
+    return true;
+}, {
+    message: "Tip amount must be greater than 0.",
+    path: ["tipAmount"],
 });
 
 type AddDonationFormValues = z.infer<typeof formSchema>;
@@ -64,7 +76,6 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // In a real app, this would be handled by a more robust session management.
     const storedUserId = localStorage.getItem('userId');
     setAdminUserId(storedUserId);
   }, []);
@@ -77,11 +88,19 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
       isAnonymous: false,
       amount: 0,
       paymentMethod: "UPI / QR Code",
+      includeTip: false,
+      tipAmount: 0,
     },
   });
 
-  const isAnonymous = form.watch("isAnonymous");
-  const paymentMethod = form.watch("paymentMethod");
+  const { watch, formState: { errors } } = form;
+  const isAnonymous = watch("isAnonymous");
+  const paymentMethod = watch("paymentMethod");
+  const includeTip = watch("includeTip");
+  const amount = watch("amount");
+  const tipAmount = watch("tipAmount");
+  
+  const totalAmount = (amount || 0) + (tipAmount || 0);
 
   async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
@@ -106,6 +125,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     formData.append("type", values.type);
     if(values.purpose) formData.append("purpose", values.purpose);
     formData.append("transactionId", values.transactionId);
+    if(values.tipAmount) formData.append("tipAmount", String(values.tipAmount));
     if (values.paymentScreenshot) {
         formData.append("paymentScreenshot", values.paymentScreenshot);
     }
@@ -181,17 +201,18 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
             )}
             />
         )}
-
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
             name="amount"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Amount</FormLabel>
+                <FormLabel>Primary Donation Amount</FormLabel>
                 <FormControl>
                     <Input type="number" placeholder="Enter amount" {...field} />
                 </FormControl>
+                 <FormDescription>The main amount for the donation's purpose.</FormDescription>
                 <FormMessage />
                 </FormItem>
             )}
@@ -220,13 +241,62 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
             />
         </div>
 
+        <FormField
+          control={form.control}
+          name="includeTip"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Split Transaction with Tip
+                </FormLabel>
+                <FormDescription>
+                  Check this if the transaction includes a separate amount for organization expenses.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+        
+        {includeTip && (
+            <div className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="tipAmount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Tip Amount</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="Enter tip amount" {...field} />
+                        </FormControl>
+                        <FormDescription>This amount will be recorded as a separate donation for 'To Organization Use'.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Total Transaction Amount</AlertTitle>
+                    <AlertDescription>
+                        The total amount you should see on the bank statement is <span className="font-bold">₹{totalAmount.toLocaleString()}</span>.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>Primary Donation Category</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
@@ -248,7 +318,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
             name="purpose"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Purpose</FormLabel>
+                <FormLabel>Primary Donation Purpose</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
@@ -256,7 +326,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {donationPurposes.map(purpose => (
+                    {donationPurposes.filter(p => p !== 'To Organization Use').map(purpose => (
                         <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
                     ))}
                     </SelectContent>
@@ -276,6 +346,9 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
               <FormControl>
                 <Input placeholder="Enter reference number" {...field} />
               </FormControl>
+               <FormDescription>
+                This ID should match the bank transaction. It will be used for both the donation and the tip.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

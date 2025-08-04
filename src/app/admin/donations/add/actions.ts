@@ -61,6 +61,23 @@ export async function handleAddDonation(
         adminUser.email
     );
     
+    const tipAmount = parseFloat(formData.get("tipAmount") as string);
+    if (!isNaN(tipAmount) && tipAmount > 0) {
+        const tipDonationData: Omit<Donation, 'id' | 'createdAt'> = {
+            ...newDonationData,
+            amount: tipAmount,
+            type: 'Sadaqah', // Tips can be categorized as Sadaqah
+            purpose: 'To Organization Use', // This is key for tracking
+            notes: `Tip from donation transaction ID: ${newDonationData.transactionId}`,
+        };
+         await createDonation(
+            tipDonationData,
+            adminUser.id!,
+            adminUser.name,
+            adminUser.email
+        );
+    }
+
     revalidatePath("/admin/donations");
 
     return {
