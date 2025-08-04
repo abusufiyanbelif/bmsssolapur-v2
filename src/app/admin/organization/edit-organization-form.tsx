@@ -34,7 +34,8 @@ const formSchema = z.object({
   contactPhone: z.string().min(1, "Phone number is required."),
   website: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   upiId: z.string().min(1, "UPI ID is required."),
-  qrCodeUrl: z.string().url("Please enter a valid URL for the QR code image.").optional().or(z.literal('')),
+  qrCodeUrl: z.string().optional(),
+  qrCodeFile: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -46,6 +47,7 @@ interface EditOrganizationFormProps {
 export function EditOrganizationForm({ organization }: EditOrganizationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(organization.qrCodeUrl || '');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,11 +62,11 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
       website: organization.website || '',
       upiId: organization.upiId || '',
       qrCodeUrl: organization.qrCodeUrl || '',
+      qrCodeFile: null,
     },
   });
 
   const { formState: { isDirty } } = form;
-  const qrCodeUrl = form.watch("qrCodeUrl");
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -85,7 +87,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         title: "Organization Details Saved",
         description: `The organization profile has been updated successfully.`,
       });
-      form.reset(values);
+      // We don't reset the form values here to allow seeing the new QR code if uploaded
     } else {
       toast({
         variant: "destructive",
@@ -156,13 +158,13 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
              <div className="md:col-span-1 space-y-4">
                 <Label>QR Code Preview</Label>
                 <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                    {qrCodeUrl ? (
+                    {previewUrl ? (
                          <div className="relative w-48 h-48">
-                                <Image src={qrCodeUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                                <Image src={previewUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
                             </div>
                     ): (
                         <p className="text-sm text-muted-foreground text-center p-8">
-                            No QR code URL provided. Paste a URL below to see a preview.
+                           Upload a QR code image below to see a preview.
                         </p>
                     )}
                 </div>
@@ -227,20 +229,32 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         </div>
         
         <FormField
-            control={form.control}
-            name="qrCodeUrl"
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel>QR Code Image URL</FormLabel>
-                    <FormControl>
-                        <Input {...field} placeholder="https://.../qr.png" />
-                    </FormControl>
-                    <FormDescription>
-                        Upload your QR code image to a service like Imgur and paste the direct image link here.
-                    </FormDescription>
-                    <FormMessage />
-                </FormItem>
-            )}
+          control={form.control}
+          name="qrCodeFile"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Upload New QR Code</FormLabel>
+              <FormControl>
+                <Input 
+                  type="file" 
+                  accept="image/png, image/jpeg, image/jpg"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    field.onChange(file);
+                    if (file) {
+                        setPreviewUrl(URL.createObjectURL(file));
+                    } else {
+                        setPreviewUrl(organization.qrCodeUrl || '');
+                    }
+                  }}
+                />
+              </FormControl>
+              <FormDescription>
+                Upload a new QR code image. This will replace the existing one.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
 
