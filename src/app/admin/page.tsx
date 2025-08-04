@@ -49,6 +49,7 @@ export default async function DashboardPage() {
       value: `₹${totalRaised.toLocaleString()}`,
       icon: TrendingUp,
       description: "Total verified donations received.",
+      href: "/admin/donations?status=Verified",
     },
     {
       title: "Total Distributed",
@@ -89,18 +90,25 @@ export default async function DashboardPage() {
       </div>
       <div className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {metrics.map((metric) => (
-            <Card key={metric.title}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                <metric.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metric.value}</div>
-                <p className="text-xs text-muted-foreground">{metric.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {metrics.map((metric) => {
+            const cardContent = (
+              <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                  <metric.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                  <p className="text-xs text-muted-foreground">{metric.description}</p>
+                </CardContent>
+              </Card>
+            );
+
+            if (metric.href) {
+              return <Link href={metric.href} key={metric.title}>{cardContent}</Link>;
+            }
+            return <div key={metric.title}>{cardContent}</div>;
+          })}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
            <Card className="col-span-1">

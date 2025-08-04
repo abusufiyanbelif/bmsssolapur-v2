@@ -2,7 +2,8 @@
 // src/app/admin/donations/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -49,20 +50,23 @@ const statusColors: Record<DonationStatus, string> = {
     "Allocated": "bg-blue-500/20 text-blue-700 border-blue-500/30",
 };
 
-export default function DonationsPage() {
+function DonationsPageContent() {
+    const searchParams = useSearchParams();
+    const statusFromUrl = searchParams.get('status');
+
     const [donations, setDonations] = useState<Donation[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
     // Input states
-    const [statusInput, setStatusInput] = useState<string>('all');
+    const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
     const [typeInput, setTypeInput] = useState<string>('all');
     const [nameInput, setNameInput] = useState<string>('');
     const [sortInput, setSortInput] = useState<SortOption>('date-desc');
 
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
-        status: 'all',
+        status: statusFromUrl || 'all',
         type: 'all',
         name: '',
         sort: 'date-desc' as SortOption
@@ -456,4 +460,12 @@ export default function DonationsPage() {
         </Card>
     </div>
   )
+}
+
+export default function DonationsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <DonationsPageContent />
+        </Suspense>
+    )
 }
