@@ -87,7 +87,8 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         title: "Organization Details Saved",
         description: `The organization profile has been updated successfully.`,
       });
-      // We don't reset the form values here to allow seeing the new QR code if uploaded
+      // Reset the form with the new values, which marks it as "not dirty"
+      form.reset(values);
     } else {
       toast({
         variant: "destructive",
