@@ -231,9 +231,9 @@ function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Don
   const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen"];
 
   const stats = [
-    { title: "Total Donated", value: `₹${totalDonated.toLocaleString()}`, icon: HandHeart },
-    { title: "Donations Made", value: donations.length, icon: FileText },
-    { title: "Campaigns Supported", value: uniqueCampaignsFunded, icon: Target },
+    { title: "Total Donated", value: `₹${totalDonated.toLocaleString()}`, icon: HandHeart, href: "/my-donations" },
+    { title: "Donations Made", value: donations.length, icon: FileText, href: "/my-donations" },
+    { title: "Campaigns Supported", value: uniqueCampaignsFunded, icon: Target, href: "/my-donations" },
   ];
   
   return (
@@ -241,15 +241,17 @@ function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Don
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-3">
         {stats.map(stat => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
+           <Link href={stat.href} key={stat.title}>
+              <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                </CardContent>
+              </Card>
+           </Link>
         ))}
       </div>
 
