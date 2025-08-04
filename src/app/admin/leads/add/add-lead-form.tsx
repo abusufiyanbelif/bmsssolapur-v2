@@ -143,6 +143,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
       beneficiaryType: 'existing',
       isLoan: false,
       helpRequested: 0,
+      campaignId: 'none',
     },
   });
 
@@ -169,7 +170,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     if(values.newBeneficiaryName) formData.append("newBeneficiaryName", values.newBeneficiaryName);
     if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
-    if(values.campaignId) formData.append("campaignId", values.campaignId);
+    if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
@@ -338,9 +339,9 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                 <FormLabel>Link to Campaign (Optional)</FormLabel>
                 <Select
                     onValueChange={(value) => {
-                    const selectedCampaign = campaigns.find(c => c.id === value);
-                    field.onChange(value);
-                    form.setValue('campaignName', selectedCampaign?.name || '');
+                      const selectedCampaign = campaigns.find(c => c.id === value);
+                      field.onChange(value === 'none' ? undefined : value);
+                      form.setValue('campaignName', selectedCampaign?.name || '');
                     }}
                     defaultValue={field.value}
                 >
@@ -350,6 +351,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
                         {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
                             <SelectItem key={campaign.id} value={campaign.id!}>
                             {campaign.name} ({campaign.status})

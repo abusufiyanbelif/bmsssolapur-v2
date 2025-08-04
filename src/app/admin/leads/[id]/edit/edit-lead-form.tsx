@@ -106,7 +106,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
   const form = useForm<EditLeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      campaignId: lead.campaignId || '',
+      campaignId: lead.campaignId || 'none',
       campaignName: lead.campaignName || '',
       purpose: lead.purpose,
       otherPurposeDetail: lead.otherPurposeDetail || '',
@@ -127,7 +127,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
   
   const handleCancel = () => {
     reset({
-        campaignId: lead.campaignId || '',
+        campaignId: lead.campaignId || 'none',
         campaignName: lead.campaignName || '',
         purpose: lead.purpose,
         otherPurposeDetail: lead.otherPurposeDetail || '',
@@ -156,7 +156,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    if(values.campaignId) formData.append("campaignId", values.campaignId);
+    if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
@@ -220,7 +220,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                       <Select
                         onValueChange={(value) => {
                           const selectedCampaign = campaigns.find(c => c.id === value);
-                          field.onChange(value);
+                          field.onChange(value === 'none' ? undefined : value);
                           form.setValue('campaignName', selectedCampaign?.name || '');
                         }}
                         defaultValue={field.value}
@@ -232,6 +232,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
                           {campaigns.map((campaign) => (
                             <SelectItem key={campaign.id} value={campaign.id!}>
                               {campaign.name} ({campaign.status})
