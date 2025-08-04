@@ -8,7 +8,7 @@ import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FilePlus2, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { FilePlus2, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -248,6 +248,12 @@ export default function MyCasesPage() {
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Help Requests</h2>
+             <Button asChild>
+                <Link href="/campaigns">
+                    <HandHeart className="mr-2 h-4 w-4" />
+                    Donate Now
+                </Link>
+            </Button>
         </div>
       <Card>
         <CardHeader>

@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleRequestHelp } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Lead } from "@/services/types";
+import Link from "next/link";
 
 
 const leadCategories = ['Education Fees', 'Medical Bill', 'Ration Kit', 'Zakat', 'Sadaqah', 'Fitr'] as const;
@@ -130,7 +131,15 @@ export default function RequestHelpPage() {
 
   return (
      <div className="flex-1 space-y-4">
-        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Request Assistance</h2>
+        <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Request Assistance</h2>
+            <Button asChild>
+                <Link href="/campaigns">
+                    <HandHeart className="mr-2 h-4 w-4" />
+                    Donate Now
+                </Link>
+            </Button>
+        </div>
         <Card>
             <CardHeader>
                 <CardTitle>Submit a Help Request</CardTitle>

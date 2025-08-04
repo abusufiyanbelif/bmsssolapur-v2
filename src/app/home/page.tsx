@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2 } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -558,13 +558,25 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
             <div className="lg:col-span-2">
                 <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                    <FileText className="text-primary" />
-                    My Case History
-                    </CardTitle>
-                    <CardDescription>
-                    Here is the status of all your help requests.
-                    </CardDescription>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <FileText className="text-primary" />
+                                My Case History
+                            </CardTitle>
+                            <CardDescription>
+                            Here is the status of all your help requests.
+                            </CardDescription>
+                        </div>
+                         <div className="flex flex-col sm:flex-row gap-2">
+                            <Button asChild variant="secondary">
+                                <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href="/campaigns"><HandHeart className="mr-2" />Donate Now</Link>
+                            </Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {cases.length > 0 ? (
