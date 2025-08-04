@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KeyRound, LogIn, MessageSquare, Loader2, CheckCircle, User, Mail, Phone } from "lucide-react";
+import { KeyRound, LogIn, MessageSquare, Loader2, CheckCircle, User, Mail, Phone, UserPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin } from "./actions";
+import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin, handleRegister } from "./actions";
 import { auth } from "@/services/firebase";
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "firebase/auth";
 import { Separator } from "@/components/ui/separator";
@@ -35,7 +35,7 @@ export function LoginForm() {
       toast({
         variant: "success",
         title: "Login Successful",
-        description: "Welcome back! Redirecting you...",
+        description: "Welcome! Redirecting you...",
         icon: <CheckCircle />,
       });
       // Clear any previous role selection
@@ -66,6 +66,30 @@ export function LoginForm() {
       toast({
         variant: "destructive",
         title: "Login Failed",
+        description: result.error || "An unknown error occurred.",
+      });
+    }
+    setIsSubmitting(false);
+  };
+
+  const onRegisterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    const formData = new FormData(event.currentTarget);
+    const result = await handleRegister(formData);
+
+    if (result.success) {
+       toast({
+        variant: "success",
+        title: "Registration Successful",
+        description: "Your account has been created.",
+        icon: <CheckCircle />,
+      });
+      setLoginSuccessData({userId: result.userId});
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
         description: result.error || "An unknown error occurred.",
       });
     }
@@ -164,16 +188,41 @@ export function LoginForm() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="password" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="otp">
-                <MessageSquare className="mr-2" />
-                OTP
-              </TabsTrigger>
-              <TabsTrigger value="password">
-                <KeyRound className="mr-2" />
-                Password
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="register"><UserPlus className="mr-2"/>Register</TabsTrigger>
+              <TabsTrigger value="password"><KeyRound className="mr-2" />Password</TabsTrigger>
+              <TabsTrigger value="otp"><MessageSquare className="mr-2" />OTP</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="register">
+                <form className="space-y-6 pt-4" onSubmit={onRegisterSubmit}>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-name">Full Name</Label>
+                      <Input id="register-name" name="name" type="text" placeholder="Enter your full name" required />
+                    </div>
+                     <div className="space-y-2">
+                      <Label htmlFor="register-email">Email Address</Label>
+                      <Input id="register-email" name="email" type="email" placeholder="you@example.com" required />
+                    </div>
+                     <div className="space-y-2">
+                      <Label htmlFor="register-phone">Phone Number</Label>
+                      <Input id="register-phone" name="phone" type="tel" placeholder="10-digit number" required maxLength={10} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-password">Password</Label>
+                      <Input id="register-password" name="password" type="password" placeholder="Min. 6 characters" required />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <UserPlus className="mr-2 h-4 w-4" />
+                        )}
+                        Create Account
+                    </Button>
+                </form>
+            </TabsContent>
+
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
                     <div className="space-y-2">
@@ -204,22 +253,22 @@ export function LoginForm() {
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-4">
-                        <Label>Login Method</Label>
+                        <Label>Login With</Label>
                         <RadioGroup defaultValue="username" onValueChange={(value) => setLoginMethod(value as any)} className="grid grid-cols-3 gap-2">
-                            <Label htmlFor="method-username" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                            <Label htmlFor="method-username" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <RadioGroupItem value="username" id="method-username" className="sr-only" />
-                                <User className="mb-2"/>
-                                Username
+                                <User className="mb-2 h-5 w-5"/>
+                                <span className="text-xs">Username</span>
                             </Label>
-                             <Label htmlFor="method-email" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                             <Label htmlFor="method-email" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <RadioGroupItem value="email" id="method-email" className="sr-only" />
-                                <Mail className="mb-2"/>
-                                Email
+                                <Mail className="mb-2 h-5 w-5"/>
+                                 <span className="text-xs">Email</span>
                             </Label>
-                             <Label htmlFor="method-phone" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                             <Label htmlFor="method-phone" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <RadioGroupItem value="phone" id="method-phone" className="sr-only" />
-                                <Phone className="mb-2"/>
-                                Phone
+                                <Phone className="mb-2 h-5 w-5"/>
+                                 <span className="text-xs">Phone</span>
                             </Label>
                         </RadioGroup>
                     </div>
