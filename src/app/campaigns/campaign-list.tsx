@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { EnrichedLead } from './actions';
+import { HandHeart } from 'lucide-react';
 
 interface CampaignListProps {
     leads: EnrichedLead[];
@@ -22,9 +23,10 @@ export function CampaignList({ leads }: CampaignListProps) {
     if (leads.length === 0) {
         return (
             <div className="text-center py-20 bg-muted/50 rounded-lg">
-                <h3 className="text-xl font-semibold">All Cases Fully Funded!</h3>
-                <p className="text-muted-foreground mt-2">
-                    Thank you for your generosity. There are no open cases at the moment.
+                <HandHeart className="mx-auto h-12 w-12 text-primary" />
+                <h3 className="text-xl font-semibold mt-4">All Active Cases Are Funded!</h3>
+                <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
+                    Your generosity is making a real difference. You can still support our mission by donating to the organization's general fund, which helps us prepare for future cases and emergencies. Please use the UPI details above to contribute.
                 </p>
             </div>
         );
