@@ -7,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 type NavSubItem = {
     href: string;
     label: string;
+    icon?: React.ElementType;
 }
 
 type NavItem = {
@@ -59,6 +60,9 @@ const allNavItems: NavItem[] = [
             { href: "/admin/donors", label: "All Donors" },
             { href: "/admin/beneficiaries", label: "All Beneficiaries" },
             { href: "/admin/board-members", label: "Board Members" },
+            { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
+            { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
+            { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
         ]
     },
     
@@ -130,10 +134,11 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
                                             key={subItem.href}
                                             href={subItem.href}
                                             className={cn(
-                                                "block rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                                                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                                                 isSubActive && "bg-muted text-primary"
                                             )}
                                         >
+                                            {subItem.icon && <subItem.icon className="h-3.5 w-3.5" />}
                                             {subItem.label}
                                         </Link>
                                     )
