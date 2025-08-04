@@ -32,12 +32,13 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState(2500);
   const [tipPercentage, setTipPercentage] = useState(10);
+  const [customTipAmount, setCustomTipAmount] = useState(0);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   if (!organization) return <>{children}</>;
 
-  const tipAmount = Math.round(amount * (tipPercentage / 100));
+  const tipAmount = tipPercentage > 0 ? Math.round(amount * (tipPercentage / 100)) : customTipAmount;
   const totalAmount = amount + tipAmount;
   
   const handleCopyToClipboard = () => {
@@ -96,7 +97,12 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     <Label htmlFor="tip" className="flex-shrink-0">Include a tip of</Label>
                     <Select
                         value={String(tipPercentage)}
-                        onValueChange={(val) => setTipPercentage(Number(val))}
+                        onValueChange={(val) => {
+                            setTipPercentage(Number(val));
+                            if (Number(val) > 0) {
+                                setCustomTipAmount(0);
+                            }
+                        }}
                     >
                         <SelectTrigger id="tip">
                             <SelectValue />
@@ -109,6 +115,18 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                         </SelectContent>
                     </Select>
                 </div>
+                 {tipPercentage === 0 && (
+                    <div className="mt-4 space-y-2">
+                        <Label htmlFor="custom-tip">Custom Tip Amount</Label>
+                        <Input
+                            id="custom-tip"
+                            type="number"
+                            value={customTipAmount}
+                            onChange={(e) => setCustomTipAmount(Number(e.target.value))}
+                            placeholder="Enter custom tip amount"
+                        />
+                    </div>
+                 )}
               </div>
             </div>
             <DialogFooter>
