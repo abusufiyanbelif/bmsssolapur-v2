@@ -27,6 +27,12 @@ export async function handleUpdateAppSettings(
       },
       features: {
         directPaymentToBeneficiary: { enabled: formData.get("feature.directPayment") === 'on' },
+      },
+      paymentMethods: {
+        bankTransfer: { enabled: formData.get("payment.bankTransfer") === 'on' },
+        cash: { enabled: formData.get("payment.cash") === 'on' },
+        upi: { enabled: formData.get("payment.upi") === 'on' },
+        other: { enabled: formData.get("payment.other") === 'on' },
       }
     };
 

@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  */
@@ -34,6 +35,12 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     features: {
         directPaymentToBeneficiary: { enabled: false },
     },
+    paymentMethods: {
+        bankTransfer: { enabled: true },
+        cash: { enabled: true },
+        upi: { enabled: true },
+        other: { enabled: true },
+    },
 };
 
 /**
@@ -51,7 +58,18 @@ export const getAppSettings = async (): Promise<AppSettings> => {
     const settingsDoc = await getDoc(settingsDocRef);
     
     if (settingsDoc.exists()) {
-      return { id: settingsDoc.id, ...settingsDoc.data() } as AppSettings;
+      const data = settingsDoc.data();
+      // Merge with defaults to handle cases where new settings are added
+      // to the code but don't exist in the Firestore document yet.
+      const mergedSettings = {
+        ...defaultSettings,
+        ...data,
+        loginMethods: { ...defaultSettings.loginMethods, ...data.loginMethods },
+        services: { ...defaultSettings.services, ...data.services },
+        features: { ...defaultSettings.features, ...data.features },
+        paymentMethods: { ...defaultSettings.paymentMethods, ...data.paymentMethods },
+      };
+      return { id: settingsDoc.id, ...mergedSettings } as AppSettings;
     } else {
       // Document doesn't exist, so create it with defaults
       console.log("No settings document found. Creating one with default values.");

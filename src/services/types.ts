@@ -186,5 +186,11 @@ export interface AppSettings {
   features: {
     directPaymentToBeneficiary: { enabled: boolean };
   };
+  paymentMethods: {
+    bankTransfer: { enabled: boolean };
+    cash: { enabled: boolean };
+    upi: { enabled: boolean };
+    other: { enabled: boolean };
+  };
   updatedAt?: Timestamp;
 }

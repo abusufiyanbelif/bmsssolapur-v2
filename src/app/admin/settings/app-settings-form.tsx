@@ -34,6 +34,12 @@ const formSchema = z.object({
   
   // Features
   featureDirectPayment: z.boolean().default(false),
+
+  // Payment Methods
+  paymentBankTransfer: z.boolean().default(true),
+  paymentCash: z.boolean().default(true),
+  paymentUpi: z.boolean().default(true),
+  paymentOther: z.boolean().default(true),
 });
 
 type SettingsFormValues = z.infer<typeof formSchema>;
@@ -56,6 +62,10 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
       serviceSms: settings.services.twilio.enabled,
       serviceWhatsapp: settings.services.whatsapp.enabled,
       featureDirectPayment: settings.features.directPaymentToBeneficiary.enabled,
+      paymentBankTransfer: settings.paymentMethods?.bankTransfer.enabled ?? true,
+      paymentCash: settings.paymentMethods?.cash.enabled ?? true,
+      paymentUpi: settings.paymentMethods?.upi.enabled ?? true,
+      paymentOther: settings.paymentMethods?.other.enabled ?? true,
     },
   });
 
@@ -74,6 +84,11 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
     if(values.serviceWhatsapp) formData.append("service.whatsapp", "on");
 
     if(values.featureDirectPayment) formData.append("feature.directPayment", "on");
+    
+    if(values.paymentBankTransfer) formData.append("payment.bankTransfer", "on");
+    if(values.paymentCash) formData.append("payment.cash", "on");
+    if(values.paymentUpi) formData.append("payment.upi", "on");
+    if(values.paymentOther) formData.append("payment.other", "on");
     
     const result = await handleUpdateAppSettings(formData);
 
@@ -195,6 +210,75 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
                             <div className="space-y-0.5">
                                 <FormLabel className="text-base">WhatsApp Notifications</FormLabel>
                                 <FormDescription>Enable or disable sending notifications via WhatsApp (requires separate setup).</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Payment Methods</CardTitle>
+                <CardDescription>Configure which payment methods are available when admins record a donation.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="paymentUpi"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">UPI / QR Code</FormLabel>
+                                <FormDescription>Allow recording donations made via UPI.</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="paymentBankTransfer"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">Bank Transfer</FormLabel>
+                                <FormDescription>Allow recording donations made via bank transfer.</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="paymentCash"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">Cash</FormLabel>
+                                <FormDescription>Allow recording cash donations.</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="paymentOther"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">Other</FormLabel>
+                                <FormDescription>Allow recording donations from other methods.</FormDescription>
                             </div>
                             <FormControl>
                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
