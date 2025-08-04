@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Donation, DonationStatus } from "@/services/types";
+import Link from "next/link";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -244,6 +245,12 @@ export default function MyDonationsPage() {
         return (
             <div className="text-center py-10">
                 <p className="text-muted-foreground">You have not made any donations yet.</p>
+                <Button asChild className="mt-4">
+                    <Link href="/campaigns">
+                        <HandHeart className="mr-2 h-4 w-4" />
+                        Donate Now
+                    </Link>
+                </Button>
             </div>
         )
     }
@@ -258,7 +265,15 @@ export default function MyDonationsPage() {
   
   return (
     <div className="flex-1 space-y-4">
-      <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Donations</h2>
+      <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Donations</h2>
+           <Button asChild>
+                <Link href="/campaigns">
+                    <HandHeart className="mr-2 h-4 w-4" />
+                    Donate Now
+                </Link>
+            </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Donation History</CardTitle>
