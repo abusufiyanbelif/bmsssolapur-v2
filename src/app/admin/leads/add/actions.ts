@@ -17,7 +17,8 @@ const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
     'Education': 'Sadaqah',
     'Medical': 'Sadaqah',
     'Relief Fund': 'Lillah',
-    'Deen': 'Sadaqah'
+    'Deen': 'Sadaqah',
+    'Other': 'Sadaqah', // Defaulting 'Other' purpose to Sadaqah, can be adjusted
 };
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
@@ -45,6 +46,7 @@ export async function handleAddLead(
       campaignId: formData.get("campaignId") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
+      otherPurposeDetail: formData.get("otherPurposeDetail") as string | undefined,
       category: formData.get("category") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
       helpRequested: parseFloat(formData.get("helpRequested") as string),
@@ -106,6 +108,7 @@ export async function handleAddLead(
         campaignId: rawFormData.campaignId,
         campaignName: rawFormData.campaignName,
         purpose: rawFormData.purpose,
+        otherPurposeDetail: rawFormData.purpose === 'Other' ? rawFormData.otherPurposeDetail : undefined,
         donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose
         category: rawFormData.category,
         otherCategoryDetail: rawFormData.category === 'Other' ? rawFormData.otherCategoryDetail : undefined,

@@ -38,9 +38,9 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 
-const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
+const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
 
-const categoryOptions: Record<LeadPurpose, string[]> = {
+const categoryOptions: Record<Exclude<LeadPurpose, 'Other'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
@@ -60,6 +60,7 @@ const formSchema = z.object({
   campaignId: z.string().optional(),
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
+  otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
@@ -67,15 +68,26 @@ const formSchema = z.object({
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
   verificationDocument: z.any().optional(),
-}).refine(data => {
-    if (data.category === 'Other') {
+})
+.refine(data => {
+    if (data.purpose === 'Other') {
+        return !!data.otherPurposeDetail && data.otherPurposeDetail.length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify details for the 'Other' purpose.",
+    path: ["otherPurposeDetail"],
+})
+.refine(data => {
+    if (data.purpose && categoryOptions[data.purpose as Exclude<LeadPurpose, 'Other'>] && data.category === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
     }
     return true;
 }, {
     message: "Please specify details for the 'Other' category.",
     path: ["otherCategoryDetail"],
-}).refine(data => {
+})
+.refine(data => {
     if (data.beneficiaryType === 'existing') {
         return !!data.beneficiaryId;
     }
@@ -148,6 +160,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     if(values.campaignId) formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
+    if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
@@ -340,6 +353,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     field.onChange(value);
                     form.setValue('category', ''); // Reset category on purpose change
                     form.setValue('otherCategoryDetail', '');
+                    form.setValue('otherPurposeDetail', '');
                 }} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
@@ -357,7 +371,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                 </FormItem>
             )}
             />
-            {selectedPurpose && (
+            {selectedPurpose && selectedPurpose !== 'Other' && (
                  <FormField
                     control={form.control}
                     name="category"
@@ -382,24 +396,38 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                 />
             )}
         </div>
+
+        {selectedPurpose === 'Other' && (
+            <FormField
+                control={form.control}
+                name="otherPurposeDetail"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Please specify "Other" purpose</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., House Repair" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {selectedCategory === 'Other' && (
-                <FormField
-                    control={form.control}
-                    name="otherCategoryDetail"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Please specify "Other" details</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Specific textbook name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
-        </div>
+        {selectedCategory === 'Other' && (
+            <FormField
+                control={form.control}
+                name="otherCategoryDetail"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Please specify "Other" category details</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Specific textbook name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField

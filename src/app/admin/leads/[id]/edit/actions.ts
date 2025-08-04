@@ -17,7 +17,8 @@ const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
     'Education': 'Sadaqah',
     'Medical': 'Sadaqah',
     'Relief Fund': 'Lillah',
-    'Deen': 'Sadaqah'
+    'Deen': 'Sadaqah',
+    'Other': 'Sadaqah',
 };
 
 export async function handleUpdateLead(
@@ -48,6 +49,7 @@ export async function handleUpdateLead(
         campaignId: campaignId,
         campaignName: campaignName,
         purpose: purpose,
+        otherPurposeDetail: rawFormData.otherPurposeDetail as string | undefined,
         donationType: purposeCategoryMap[purpose], // Infer category from purpose
         category: rawFormData.category as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,

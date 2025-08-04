@@ -39,11 +39,11 @@ import { format } from "date-fns";
 import { Campaign, getAllCampaigns } from "@/services/campaign-service";
 
 
-const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen'] as const;
+const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
 const leadStatuses = ["Pending", "Partial", "Closed"] as const;
 const leadVerificationStatuses = ["Pending", "Verified", "Rejected"] as const;
 
-const categoryOptions: Record<LeadPurpose, string[]> = {
+const categoryOptions: Record<Exclude<LeadPurpose, 'Other'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
@@ -55,6 +55,7 @@ const formSchema = z.object({
   campaignId: z.string().optional(),
   campaignName: z.string().optional(),
   purpose: z.enum(leadPurposes),
+  otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
@@ -63,8 +64,18 @@ const formSchema = z.object({
   isLoan: z.boolean().default(false),
   status: z.enum(leadStatuses),
   verifiedStatus: z.enum(leadVerificationStatuses),
-}).refine(data => {
-    if (data.category === 'Other') {
+})
+.refine(data => {
+    if (data.purpose === 'Other') {
+        return !!data.otherPurposeDetail && data.otherPurposeDetail.length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify details for the 'Other' purpose.",
+    path: ["otherPurposeDetail"],
+})
+.refine(data => {
+    if (data.purpose && categoryOptions[data.purpose as Exclude<LeadPurpose, 'Other'>] && data.category === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
     }
     return true;
@@ -98,6 +109,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
       campaignId: lead.campaignId || '',
       campaignName: lead.campaignName || '',
       purpose: lead.purpose,
+      otherPurposeDetail: lead.otherPurposeDetail || '',
       category: lead.category || '',
       otherCategoryDetail: lead.otherCategoryDetail || '',
       helpRequested: lead.helpRequested,
@@ -118,6 +130,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
         campaignId: lead.campaignId || '',
         campaignName: lead.campaignName || '',
         purpose: lead.purpose,
+        otherPurposeDetail: lead.otherPurposeDetail || '',
         category: lead.category || '',
         otherCategoryDetail: lead.otherCategoryDetail || '',
         helpRequested: lead.helpRequested,
@@ -146,6 +159,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
     if(values.campaignId) formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     formData.append("purpose", values.purpose);
+    if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     formData.append("helpRequested", String(values.helpRequested));
@@ -242,6 +256,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                                 field.onChange(value);
                                 form.setValue('category', '');
                                 form.setValue('otherCategoryDetail', '');
+                                form.setValue('otherPurposeDetail', '');
                             }} defaultValue={field.value} disabled={!isEditing}>
                                 <FormControl>
                                 <SelectTrigger>
@@ -258,7 +273,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                             </FormItem>
                         )}
                     />
-                    {selectedPurpose && (
+                    {selectedPurpose && selectedPurpose !== 'Other' && (
                         <FormField
                             control={form.control}
                             name="category"
@@ -283,23 +298,37 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                         />
                     )}
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {selectedCategory === 'Other' && (
-                        <FormField
-                            control={form.control}
-                            name="otherCategoryDetail"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Please specify "Other" details</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., Specific textbook name" {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                 </div>
+                 
+                 {selectedPurpose === 'Other' && (
+                    <FormField
+                        control={form.control}
+                        name="otherPurposeDetail"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Please specify "Other" purpose</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., House Repair" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+                {selectedCategory === 'Other' && (
+                    <FormField
+                        control={form.control}
+                        name="otherCategoryDetail"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Please specify "Other" category details</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., Specific textbook name" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField
