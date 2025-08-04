@@ -12,16 +12,19 @@ import { getOpenLeads } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
 import { getAllLeads } from "@/services/lead-service";
 import { useEffect, useState } from "react";
-import type { Quote, Donation, Lead } from "@/services/types";
+import type { Quote, Donation, Lead, Campaign } from "@/services/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 import { useRouter } from "next/navigation";
+import { getAllCampaigns } from "@/services/campaign-service";
+import { format } from "date-fns";
 
 export default function LandingPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [featuredLeads, setFeaturedLeads] = useState<Lead[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [stats, setStats] = useState({ totalRaised: 0, beneficiariesHelped: 0, casesClosed: 0 });
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -30,15 +33,17 @@ export default function LandingPage() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const [fetchedQuotes, openLeads, allDonations, allLeads] = await Promise.all([
+                const [fetchedQuotes, openLeads, allDonations, allLeads, fetchedCampaigns] = await Promise.all([
                     getRandomQuotes(3),
                     getOpenLeads(),
                     getAllDonations(),
                     getAllLeads(),
+                    getAllCampaigns(),
                 ]);
                 
                 setQuotes(fetchedQuotes);
                 setFeaturedLeads(openLeads.slice(0, 3));
+                setCampaigns(fetchedCampaigns);
 
                 const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
                 const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
@@ -83,18 +88,11 @@ export default function LandingPage() {
         },
     ];
     
-     const exampleCampaigns = [
-        { name: "Zakat Drive 2026", purpose: "Collect Zakat for Ramadan", status: "Upcoming", raised: 0, goal: 600000, startDate: "Mar 2026", endDate: "Apr 2026" },
-        { name: "Zakat Drive 2025", purpose: "Collect Zakat for Ramadan", status: "Completed", raised: 500000, goal: 500000, startDate: "Mar 2025", endDate: "Apr 2025" },
-        { name: "Hospital Emergency Fund", purpose: "Support critical surgery cases", status: "Ongoing", raised: 150000, goal: 300000, startDate: "Jan 2025", endDate: "Dec 2025" },
-        { name: "Monthly Relief", purpose: "Provide monthly support to 50 families", status: "Ongoing", raised: 750000, goal: 1200000, startDate: "Jan 2025", endDate: "Dec 2025" },
-        { name: "Education Support 2024", purpose: "Raise funds for school fees", status: "Completed", raised: 250000, goal: 250000, startDate: "Jun 2024", endDate: "Aug 2024" },
-    ];
-    
     const statusColors: Record<string, string> = {
-        "Ongoing": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+        "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
         "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
         "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+        "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
     };
 
 
@@ -206,7 +204,7 @@ export default function LandingPage() {
             )}
 
             {/* Our Campaigns Section */}
-            <section id="example-campaigns">
+            <section id="our-campaigns">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Campaigns</h2>
                     <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
@@ -217,52 +215,60 @@ export default function LandingPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                            <CheckCircle className="text-primary"/>
-                           Types of Campaigns
+                           Active & Recent Campaigns
                         </CardTitle>
                         <CardDescription>
-                            We focus on several key areas to provide comprehensive support to our community.
+                            An overview of our fundraising campaigns.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Sr. No.</TableHead>
-                                    <TableHead className="w-[25%]">Campaign</TableHead>
-                                    <TableHead>Dates</TableHead>
-                                    <TableHead className="w-[30%]">Funding Progress</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {exampleCampaigns.map((campaign, index) => {
-                                    const progress = campaign.goal > 0 ? (campaign.raised / campaign.goal) * 100 : 100;
-                                    return (
-                                        <TableRow key={campaign.name}>
-                                            <TableCell>{index + 1}</TableCell>
-                                            <TableCell>
-                                                <div className="font-medium">{campaign.name}</div>
-                                                <div className="text-xs text-muted-foreground">{campaign.purpose}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {campaign.startDate} - {campaign.endDate}
-                                            </TableCell>
-                                            <TableCell>
-                                                 <div className="flex flex-col gap-2">
-                                                    <Progress value={progress} />
-                                                    <span className="text-xs text-muted-foreground">
-                                                        ₹{campaign.raised.toLocaleString()} / ₹{campaign.goal.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className={cn(statusColors[campaign.status])}>{campaign.status}</Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
+                       {loading ? (
+                           <div className="flex items-center justify-center py-10">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="ml-2">Loading campaigns...</p>
+                            </div>
+                       ) : campaigns.length > 0 ? (
+                           <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Campaign</TableHead>
+                                        <TableHead>Dates</TableHead>
+                                        <TableHead className="w-[30%]">Funding Goal</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {campaigns.slice(0, 5).map((campaign) => {
+                                        const raisedAmount = campaign.status === 'Completed' ? campaign.goal : campaign.goal / 2; // Placeholder logic
+                                        const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+                                        return (
+                                            <TableRow key={campaign.id}>
+                                                <TableCell>
+                                                    <div className="font-medium">{campaign.name}</div>
+                                                    <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {format(campaign.startDate.toDate(), "dd MMM yyyy")} - {format(campaign.endDate.toDate(), "dd MMM yyyy")}
+                                                </TableCell>
+                                                <TableCell>
+                                                     <div className="flex flex-col gap-2">
+                                                        <Progress value={progress} />
+                                                        <span className="text-xs text-muted-foreground">
+                                                            ₹{raisedAmount.toLocaleString()} / ₹{campaign.goal.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline" className={cn(statusColors[campaign.status])}>{campaign.status}</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                       ) : (
+                           <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                       )}
                     </CardContent>
                 </Card>
             </section>
