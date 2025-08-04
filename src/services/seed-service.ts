@@ -64,8 +64,8 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     contactEmail: "contact@baitulmalsolapur.org",
     contactPhone: "919372145889",
     website: "https://baitulmalsolapur.org",
-    upiId: "919372145889@paytm",
-    qrCodeUrl: "https://placehold.co/200x200.png",
+    upiId: "9372145889@paytm",
+    qrCodeUrl: "https://storage.googleapis.com/static.invertase.io/assets/phonepe-qr-code.png",
 };
 
 export type SeedItemResult = { name: string; status: 'Created' | 'Updated' | 'Skipped (already exists)' | 'Failed' };

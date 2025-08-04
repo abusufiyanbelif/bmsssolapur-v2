@@ -140,12 +140,14 @@ export default async function OrganizationPage() {
                         </div>
                         {organization.qrCodeUrl && (
                              <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50">
-                                <h3 className="font-semibold text-center">Scan to Pay with UPI</h3>
+                                <Image src="/phonepe-logo.svg" alt="PhonePe Logo" width={100} height={40} data-ai-hint="PhonePe logo" />
+                                <p className="text-sm font-semibold text-muted-foreground">ACCEPTED HERE</p>
                                 <div className="relative w-56 h-56">
                                      <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
                                 </div>
+                                 <p className="text-sm font-bold">Maaz Shaikh</p>
                                 <p className="text-sm text-muted-foreground text-center">
-                                    You can use any UPI app like Google Pay, PhonePe, or Paytm to donate directly.
+                                    Scan & Pay Using Any UPI App
                                 </p>
                              </div>
                         )}
