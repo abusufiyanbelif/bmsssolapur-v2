@@ -15,11 +15,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CreditCard } from "lucide-react";
+import { Copy, CreditCard, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import type { Organization } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ export function DonateToOrgDialog({ children, organization }: DonateToOrgDialogP
   const [amount, setAmount] = useState(2500);
   const [tipPercentage, setTipPercentage] = useState(10);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   if (!organization) return <>{children}</>;
 
@@ -46,6 +48,8 @@ export function DonateToOrgDialog({ children, organization }: DonateToOrgDialogP
         });
     }
   }
+
+  const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${totalAmount}&cu=INR&tn=Donation%20to%20Baitul%20Mal%20Samajik%20Sanstha`;
 
   return (
     <Dialog onOpenChange={(open) => !open && setStep(1)}>
@@ -121,6 +125,15 @@ export function DonateToOrgDialog({ children, organization }: DonateToOrgDialogP
 
                 <div className="p-4 rounded-lg border space-y-4">
                     <h4 className="font-semibold flex items-center gap-2"><CreditCard /> Pay using any UPI app</h4>
+                    
+                    {isMobile && (
+                         <Button asChild className="w-full" size="lg">
+                            <a href={upiLink}>
+                                Pay with UPI App <ExternalLink className="ml-2 h-4 w-4" />
+                            </a>
+                        </Button>
+                    )}
+
                     <div className="flex items-center justify-center p-2 border rounded-md bg-background">
                        {organization.qrCodeUrl && (
                          <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={160} height={160} data-ai-hint="qr code" />
