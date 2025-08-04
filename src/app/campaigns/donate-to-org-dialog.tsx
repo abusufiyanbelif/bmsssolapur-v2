@@ -19,6 +19,7 @@ import { Copy, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import type { Organization } from "@/services/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
