@@ -20,14 +20,24 @@ export function CampaignList({ leads }: CampaignListProps) {
         router.push('/login');
     }
 
+    const handleScrollToTop = () => {
+        const element = document.getElementById('page-header');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     if (leads.length === 0) {
         return (
             <div className="text-center py-20 bg-muted/50 rounded-lg">
                 <HandHeart className="mx-auto h-12 w-12 text-primary" />
                 <h3 className="text-xl font-semibold mt-4">All Active Cases Are Funded!</h3>
                 <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
-                    Your generosity is making a real difference. You can still support our mission by donating to the organization's general fund, which helps us prepare for future cases and emergencies. Please use the UPI details above to contribute.
+                    Your generosity is making a real difference. You can still support our mission by donating to the organization's general fund, which helps us prepare for future cases and emergencies.
                 </p>
+                 <Button onClick={handleScrollToTop} className="mt-6">
+                    Donate to Organization
+                </Button>
             </div>
         );
     }
