@@ -66,14 +66,21 @@ const allNavItems: NavItem[] = [
         ]
     },
     
-    // Super Admin - Other
+    // Super Admin - Organization & Settings
     { href: "/admin/organization", label: "Organization", icon: Building, allowedRoles: ["Super Admin"] },
-    { href: "/admin/settings", label: "App Settings", icon: Settings, allowedRoles: ["Super Admin"] },
-    { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
-    { href: "/services", label: "Services Summary", icon: Server, allowedRoles: ["Super Admin"] },
-    { href: "/dependencies", label: "Dependency Map", icon: Share2, allowedRoles: ["Super Admin"] },
-    { href: "/validator", label: "Configuration Validator", icon: ShieldCheck, allowedRoles: ["Super Admin"] },
-    { href: "/personas", label: "AI Personas", icon: BrainCircuit, allowedRoles: ["Super Admin"] },
+    { 
+        label: "App Settings", 
+        icon: Settings, 
+        allowedRoles: ["Super Admin"],
+        subItems: [
+            { href: "/admin/settings", label: "General Settings" },
+            { href: "/admin/seed", label: "Seed Database", icon: Database },
+            { href: "/services", label: "Services Summary", icon: Server },
+            { href: "/dependencies", label: "Dependency Map", icon: Share2 },
+            { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
+            { href: "/personas", label: "AI Personas", icon: BrainCircuit },
+        ]
+    },
     
     // Shared / Profile (Visible to all logged-in users)
     { href: "/profile", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
