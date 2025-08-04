@@ -27,11 +27,11 @@ export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
 const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
-export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'dateCreated' | 'verifiedStatus' | 'verifiers' | 'donations' >, adminUser: { id: string, name: string }) => {
+export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
-    const newLead: Omit<Lead, 'id'> & { id: string } = {
+    const newLead: Lead = {
       ...leadData,
       id: leadRef.id,
       helpGiven: 0,
@@ -46,6 +46,7 @@ export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'upda
       },
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
+      isLoan: leadData.isLoan || false,
     };
     await setDoc(leadRef, newLead);
     return newLead;
