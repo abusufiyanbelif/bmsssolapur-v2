@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Donation, Lead, Quote, LeadPurpose, LeadStatus, DonationType } from "@/services/types";
+import type { User, Donation, Lead, Quote, LeadPurpose, DonationType } from "@/services/types";
 import { getAllUsers } from "@/services/user-service";
 import { getOpenLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
@@ -257,7 +257,8 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
     'Fitr': Wheat,
     'Lillah': Building,
     'Kaffarah': Shield,
-    'Split': DollarSign
+    'Split': DollarSign,
+    'Any': DollarSign,
   }
 
   
