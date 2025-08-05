@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getAllUsers, updateUser } from "@/services/user-service";
@@ -12,6 +12,7 @@ import type { User } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 const groupMapping: Record<string, string> = {
@@ -56,15 +57,25 @@ const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User)
                     <p className="text-sm text-muted-foreground">{member.phone}</p>
                 </div>
             </div>
-            <DeleteConfirmationDialog
-                itemType="board member"
-                itemName={member.name}
-                onDelete={handleRemove}
-            >
-                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            </DeleteConfirmationDialog>
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DeleteConfirmationDialog
+                        itemType="board member"
+                        itemName={member.name}
+                        onDelete={handleRemove}
+                    >
+                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove from Board
+                        </DropdownMenuItem>
+                    </DeleteConfirmationDialog>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 };
