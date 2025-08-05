@@ -158,6 +158,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     },
   });
 
+  const { formState: { isDirty } } = form;
   const selectedPurpose = form.watch("purpose");
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
@@ -633,29 +634,31 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
             )}
             />
 
-            <FormField
-            control={form.control}
-            name="isLoan"
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                    <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={true}
-                    />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                    <FormLabel>
-                    Is this a repayable loan?
-                    </FormLabel>
-                    <FormDescription>
-                      This is automatically selected if the purpose is "Loan".
-                    </FormDescription>
-                </div>
-                </FormItem>
+            {selectedPurpose === 'Loan' && (
+                 <FormField
+                    control={form.control}
+                    name="isLoan"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={true}
+                            />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                            <FormLabel>
+                            Is this a repayable loan?
+                            </FormLabel>
+                            <FormDescription>
+                            This is automatically selected if the purpose is "Loan".
+                            </FormDescription>
+                        </div>
+                        </FormItem>
+                    )}
+                />
             )}
-            />
 
             <FormField
             control={form.control}
@@ -679,9 +682,9 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
             )}
             />
 
-            <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Lead
+            <Button type="submit" disabled={isSubmitting || !isDirty}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Lead
             </Button>
         </form>
         </Form>
