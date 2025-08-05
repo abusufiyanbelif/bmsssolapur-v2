@@ -103,14 +103,9 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
         const existingUser = await getUser(id);
         
         if (existingUser) {
-             // User exists, update them with the seed data
-            await updateUser(existingUser.id!, {
-                roles: userData.roles,
-                password: userData.password,
-                groups: userData.groups || [],
-                privileges: userData.privileges || [],
-                isActive: userData.isActive,
-            });
+             // User exists, update them with the seed data.
+             // This ensures that any changes to the seed data are reflected.
+            await updateUser(existingUser.id!, userData);
             results.push({ name: userData.name, status: 'Updated' });
 
         } else {
