@@ -226,40 +226,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                      <div className="w-full flex-1 flex justify-end items-center gap-4">
                         {user.isLoggedIn ? (
                             <>
-                             {notificationCount > 0 && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="relative">
-                                            <Bell className="h-5 w-5" />
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <Bell className="h-5 w-5" />
+                                        {notificationCount > 0 && (
                                             <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                                                 {notificationCount}
                                             </span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-80" align="end">
-                                        <DropdownMenuLabel>Pending Actions</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
-                                        {pendingLeads.slice(0, 5).map(lead => (
-                                            <DropdownMenuItem key={lead.id} asChild>
-                                                 <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start">
-                                                    <p className="font-semibold text-destructive">Verify: {lead.name}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated.toDate(), { addSuffix: true })}
-                                                    </p>
-                                                 </Link>
-                                            </DropdownMenuItem>
-                                        ))}
-                                         {notificationCount > 5 && (
-                                            <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem asChild>
-                                                <Link href="/admin/leads?verification=Pending">View All Pending Leads</Link>
-                                            </DropdownMenuItem>
-                                            </>
                                         )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-80" align="end">
+                                    <DropdownMenuLabel>Pending Actions ({notificationCount})</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {notificationCount > 0 ? (
+                                        <>
+                                            {pendingLeads.slice(0, 5).map(lead => (
+                                                <DropdownMenuItem key={lead.id} asChild>
+                                                     <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start">
+                                                        <p className="font-semibold text-destructive">Verify: {lead.name}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated.toDate(), { addSuffix: true })}
+                                                        </p>
+                                                     </Link>
+                                                </DropdownMenuItem>
+                                            ))}
+                                             {notificationCount > 5 && (
+                                                <>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/admin/leads?verification=Pending">View All Pending Leads</Link>
+                                                </DropdownMenuItem>
+                                                </>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                                            No pending actions.
+                                        </div>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
