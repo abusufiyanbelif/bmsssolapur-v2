@@ -8,6 +8,7 @@ import { AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/services/types";
+import Link from "next/link";
 
 // Static data for Board Members
 const boardMembers = {
@@ -103,6 +104,8 @@ export default async function OrganizationPage() {
             </div>
         );
     };
+    
+    const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&cu=INR`;
 
     return (
         <div className="flex-1 space-y-6">
@@ -139,15 +142,17 @@ export default async function OrganizationPage() {
                             </div>
                         </div>
                         {organization.qrCodeUrl && (
-                             <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50">
-                                <div className="relative w-56 h-56">
-                                     <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
-                                </div>
+                            <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50">
+                                <a href={upiLink} className="block cursor-pointer">
+                                    <div className="relative w-56 h-56">
+                                        <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                                    </div>
+                                </a>
                                 <p className="text-sm font-bold">{organization.upiId}</p>
                                 <p className="text-sm text-muted-foreground text-center">
-                                    Scan & Pay Using Any UPI App (Google Pay, PhonePe, etc.)
+                                    Scan with any UPI App or tap to pay on mobile.
                                 </p>
-                             </div>
+                            </div>
                         )}
                     </div>
                 </CardContent>

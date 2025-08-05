@@ -156,11 +156,14 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                         </Button>
                     )}
 
-                    <div className="flex items-center justify-center p-2 border rounded-md bg-background">
-                       {organization.qrCodeUrl && (
-                         <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={160} height={160} data-ai-hint="qr code" />
-                       )}
-                    </div>
+                    <a href={upiLink} className="block cursor-pointer">
+                        <div className="flex items-center justify-center p-2 border rounded-md bg-background hover:bg-muted transition-colors">
+                        {organization.qrCodeUrl && (
+                            <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={160} height={160} data-ai-hint="qr code" />
+                        )}
+                        </div>
+                    </a>
+
                      <div className="relative">
                         <p className="font-mono text-center text-sm bg-background px-2 absolute -top-3 left-1/2 -translate-x-1/2 text-muted-foreground">OR</p>
                         <div className="border-t"></div>
