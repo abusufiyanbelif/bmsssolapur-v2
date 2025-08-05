@@ -34,6 +34,7 @@ interface UserHomePageProps {
 }
 
 export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
+  const router = useRouter();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [cases, setCases] = useState<Lead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -43,10 +44,17 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
   const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  
+  // Immediately redirect if user is an admin
+  useEffect(() => {
+    if (user && user.isLoggedIn && ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
+      router.replace('/admin');
+    }
+  }, [user, activeRole, router]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!user || !user.isLoggedIn || !activeRole) {
+      if (!user || !user.isLoggedIn || !activeRole || ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
         setLoading(false);
         return;
       }
@@ -107,13 +115,14 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
             case 'Admin':
             case 'Super Admin':
             case 'Finance Admin':
-                return 'Admin Dashboard';
+                return 'Redirecting to Admin Dashboard...';
             default: return `Welcome, ${user.name}`;
         }
     }
 
   const renderContent = () => {
-    if (loading) {
+    // Admins are redirected, so they'll see the loader briefly.
+    if (loading || ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
       return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
     }
     if (error) {
@@ -134,20 +143,6 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
       dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} allLeads={allLeads} allUsers={allUsers} />;
     } else if (activeRole === 'Beneficiary') {
       dashboardContent = <BeneficiaryDashboard cases={cases} quotes={quotes} />;
-    } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
-        dashboardContent = (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Welcome, Administrator</CardTitle>
-                    <CardDescription>You have successfully logged into the admin control panel. Please use the navigation menu on the left to manage the application's users, donations, and leads.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button asChild>
-                        <Link href="/admin">Go to Full Dashboard</Link>
-                    </Button>
-                </CardContent>
-            </Card>
-        )
     } else {
         dashboardContent = <p>You do not have a role that has a default dashboard. Please select a role from your profile.</p>;
     }
