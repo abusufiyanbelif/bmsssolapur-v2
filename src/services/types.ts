@@ -31,6 +31,9 @@ export type Privilege =
 export interface User {
   id?: string;
   name: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   email?: string;
   phone: string;
   password?: string;
@@ -43,6 +46,7 @@ export interface User {
     pincode?: string;
   };
   gender?: 'Male' | 'Female' | 'Other';
+  beneficiaryType?: 'Adult' | 'Old Age' | 'Kid';
   isAnonymous?: boolean; 
   anonymousId?: string; 
   occupation?: string;

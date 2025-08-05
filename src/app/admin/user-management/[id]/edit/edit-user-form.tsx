@@ -157,7 +157,9 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
 ];
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
+  firstName: z.string().min(2, "First name must be at least 2 characters."),
+  middleName: z.string().optional(),
+  lastName: z.string().min(1, "Last name is required."),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
@@ -165,6 +167,7 @@ const formSchema = z.object({
   isAnonymous: z.boolean().default(false),
   isActive: z.boolean().default(true),
   gender: z.enum(["Male", "Female", "Other"]),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -199,12 +202,15 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: user.name,
+      firstName: user.firstName,
+      middleName: user.middleName || '',
+      lastName: user.lastName,
       phone: user.phone,
       roles: user.roles,
       isAnonymous: user.isAnonymous || false,
       isActive: user.isActive,
       gender: user.gender || 'Other',
+      beneficiaryType: user.beneficiaryType,
       addressLine1: user.address?.addressLine1 || '',
       city: user.address?.city || 'Solapur',
       state: user.address?.state || 'Maharashtra',
@@ -224,12 +230,15 @@ export function EditUserForm({ user }: EditUserFormProps) {
   
   const handleCancel = () => {
       reset({
-          name: user.name,
+          firstName: user.firstName,
+          middleName: user.middleName || '',
+          lastName: user.lastName,
           phone: user.phone,
           roles: user.roles,
           isAnonymous: user.isAnonymous || false,
           isActive: user.isActive,
           gender: user.gender || 'Other',
+          beneficiaryType: user.beneficiaryType,
           addressLine1: user.address?.addressLine1 || '',
           city: user.address?.city || 'Solapur',
           state: user.address?.state || 'Maharashtra',
@@ -249,13 +258,16 @@ export function EditUserForm({ user }: EditUserFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append("name", values.name);
+    if(values.firstName) formData.append("firstName", values.firstName);
+    if(values.middleName) formData.append("middleName", values.middleName);
+    if(values.lastName) formData.append("lastName", values.lastName);
     formData.append("email", user.email || '');
     formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
     if(values.isActive) formData.append("isActive", "on");
     if(values.isAnonymous) formData.append("isAnonymous", "on");
     formData.append("gender", values.gender);
+    if(values.beneficiaryType) formData.append("beneficiaryType", values.beneficiaryType);
     if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
     if(values.city) formData.append("city", values.city);
     if(values.state) formData.append("state", values.state);
@@ -312,20 +324,48 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
                     <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <FormField
                         control={form.control}
-                        name="name"
+                        name="firstName"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel>First Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="Enter user's full name" {...field} disabled={!isEditing} />
+                                <Input placeholder="First Name" {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
                         />
+                        <FormField
+                        control={form.control}
+                        name="middleName"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Middle Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Middle Name" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Last Name" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
                             control={form.control}
                             name="gender"
@@ -564,9 +604,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         </FormItem>
                     )}
                     />
-
+                    
                     {selectedRoles.includes("Beneficiary") && (
-                        <FormField
+                        <>
+                            <FormField
                             control={form.control}
                             name="isAnonymous"
                             render={({ field }) => (
@@ -588,7 +629,45 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 </div>
                                 </FormItem>
                             )}
-                        />
+                            />
+                             <FormField
+                                control={form.control}
+                                name="beneficiaryType"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                    <FormLabel>Beneficiary Type</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        className="flex flex-row space-x-4 pt-2"
+                                        disabled={!isEditing}
+                                        >
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="Adult" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">Adult</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="Old Age" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">Old Age</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                            <RadioGroupItem value="Kid" />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">Kid</FormLabel>
+                                        </FormItem>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </>
                     )}
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>

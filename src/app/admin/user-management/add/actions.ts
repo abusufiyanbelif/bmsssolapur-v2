@@ -16,12 +16,15 @@ export async function handleAddUser(
   formData: FormData
 ): Promise<FormState> {
   const rawFormData = {
-    name: formData.get("name") as string,
+    firstName: formData.get("firstName") as string,
+    middleName: formData.get("middleName") as string,
+    lastName: formData.get("lastName") as string,
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
     isAnonymous: formData.get("isAnonymous") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
+    beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | undefined,
     
     addressLine1: formData.get("addressLine1") as string | undefined,
     city: formData.get("city") as string | undefined,
@@ -41,7 +44,7 @@ export async function handleAddUser(
     createProfile: formData.get("createProfile") === 'on',
   };
   
-  if (!rawFormData.name || !rawFormData.email || rawFormData.roles.length === 0) {
+  if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.email || rawFormData.roles.length === 0) {
       return { success: false, error: "Missing required fields: Name, Email, and Role." };
   }
   
@@ -52,13 +55,17 @@ export async function handleAddUser(
   
   try {
     const newUserData: Omit<User, 'id' | 'createdAt'> = {
-        name: rawFormData.name,
+        name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
+        firstName: rawFormData.firstName,
+        middleName: rawFormData.middleName,
+        lastName: rawFormData.lastName,
         email: rawFormData.email,
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: true, // Default to active
         isAnonymous: rawFormData.isAnonymous,
         gender: rawFormData.gender,
+        beneficiaryType: rawFormData.beneficiaryType,
         
         address: {
             addressLine1: rawFormData.addressLine1 || '',

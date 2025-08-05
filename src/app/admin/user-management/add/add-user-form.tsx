@@ -41,7 +41,9 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
 ];
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
+  firstName: z.string().min(2, "First name must be at least 2 characters."),
+  middleName: z.string().optional(),
+  lastName: z.string().min(1, "Last name is required."),
   email: z.string().email("Please enter a valid email address."),
   phone: z.string().optional(),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -50,6 +52,7 @@ const formSchema = z.object({
   createProfile: z.boolean().default(false),
   isAnonymous: z.boolean().default(false),
   gender: z.enum(["Male", "Female", "Other"]),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -89,7 +92,9 @@ export function AddUserForm() {
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      middleName: "",
+      lastName: "",
       email: "",
       phone: "",
       roles: ["Donor"],
@@ -110,13 +115,16 @@ export function AddUserForm() {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append("name", values.name);
+    if(values.firstName) formData.append("firstName", values.firstName);
+    if(values.middleName) formData.append("middleName", values.middleName);
+    if(values.lastName) formData.append("lastName", values.lastName);
     formData.append("email", values.email);
     if(values.phone) formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
     if(values.createProfile) formData.append("createProfile", "on");
     if(values.isAnonymous) formData.append("isAnonymous", "on");
     formData.append("gender", values.gender);
+    if(values.beneficiaryType) formData.append("beneficiaryType", values.beneficiaryType);
     if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
     if(values.city) formData.append("city", values.city);
     if(values.state) formData.append("state", values.state);
@@ -156,58 +164,47 @@ export function AddUserForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter user's full name" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             <FormField
                 control={form.control}
-                name="gender"
+                name="firstName"
                 render={({ field }) => (
-                    <FormItem className="space-y-3">
-                    <FormLabel>Gender</FormLabel>
+                    <FormItem>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl>
-                        <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-row space-x-4 pt-2"
-                        >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="Male" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Male</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="Female" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Female</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="Other" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Other</FormLabel>
-                        </FormItem>
-                        </RadioGroup>
+                        <Input placeholder="First Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="middleName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Middle Name (Optional)</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Middle Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Last Name" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
             />
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
@@ -236,6 +233,43 @@ export function AddUserForm() {
             )}
             />
         </div>
+        
+         <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+                <FormItem className="space-y-3">
+                <FormLabel>Gender</FormLabel>
+                <FormControl>
+                    <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex flex-row space-x-4 pt-2"
+                    >
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                        <RadioGroupItem value="Male" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Male</FormLabel>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                        <RadioGroupItem value="Female" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Female</FormLabel>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                        <RadioGroupItem value="Other" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Other</FormLabel>
+                    </FormItem>
+                    </RadioGroup>
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
 
         <h3 className="text-lg font-semibold border-b pb-2">Address Details</h3>
          <FormField
@@ -460,6 +494,43 @@ export function AddUserForm() {
                             If checked, a unique ID will be generated and their real name will be hidden from public view.
                             </FormDescription>
                         </div>
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="beneficiaryType"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                        <FormLabel>Beneficiary Type</FormLabel>
+                        <FormDescription>Categorize the beneficiary for reporting and aid purposes.</FormDescription>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-row space-x-4 pt-2"
+                            >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="Adult" />
+                                </FormControl>
+                                <FormLabel className="font-normal">Adult</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="Old Age" />
+                                </FormControl>
+                                <FormLabel className="font-normal">Old Age</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="Kid" />
+                                </FormControl>
+                                <FormLabel className="font-normal">Kid</FormLabel>
+                            </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
                         </FormItem>
                     )}
                 />

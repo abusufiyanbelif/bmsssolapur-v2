@@ -15,13 +15,16 @@ export async function handleUpdateUser(
   formData: FormData
 ): Promise<FormState> {
   const rawFormData = {
-    name: formData.get("name") as string,
+    firstName: formData.get("firstName") as string,
+    middleName: formData.get("middleName") as string,
+    lastName: formData.get("lastName") as string,
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
     isActive: formData.get("isActive") === 'on',
     isAnonymous: formData.get("isAnonymous") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
+    beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | undefined,
     
     addressLine1: formData.get("addressLine1") as string | undefined,
     city: formData.get("city") as string | undefined,
@@ -37,19 +40,23 @@ export async function handleUpdateUser(
     aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
   };
   
-  if (!rawFormData.name || !rawFormData.phone || rawFormData.roles.length === 0) {
+  if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
       return { success: false, error: "Missing required fields." };
   }
   
   try {
     const updates: Partial<User> = {
-        name: rawFormData.name,
+        name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
+        firstName: rawFormData.firstName,
+        middleName: rawFormData.middleName,
+        lastName: rawFormData.lastName,
         // Email cannot be changed
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: rawFormData.isActive,
         isAnonymous: rawFormData.isAnonymous,
         gender: rawFormData.gender,
+        beneficiaryType: rawFormData.beneficiaryType,
         
         address: {
             addressLine1: rawFormData.addressLine1 || '',

@@ -9,7 +9,7 @@ interface FormState {
     error?: string;
 }
 
-type UpdateProfilePayload = Pick<User, 'name' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber'> & {
+type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber' | 'beneficiaryType'> & {
     address: {
         addressLine1: string;
         city: string;
@@ -36,10 +36,14 @@ export async function handleUpdateProfile(
     
     // We only allow updating a subset of fields from the profile page
     const updates: Partial<User> = {
-      name: data.name,
+      name: `${data.firstName} ${data.middleName || ''} ${data.lastName}`.replace(/\s+/g, ' ').trim(),
+      firstName: data.firstName,
+      middleName: data.middleName,
+      lastName: data.lastName,
       phone: data.phone,
       address: data.address,
       gender: data.gender,
+      beneficiaryType: data.beneficiaryType,
       occupation: data.occupation,
       familyMembers: data.familyMembers,
       isWidow: data.isWidow,

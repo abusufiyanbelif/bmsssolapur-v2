@@ -54,7 +54,10 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
 
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
-        name: user.name,
+        name: `${user.firstName || ''} ${user.middleName || ''} ${user.lastName || ''}`.replace(/\s+/g, ' ').trim(),
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
         email: user.email,
         phone: user.phone,
         password: user.password,
@@ -67,6 +70,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
             pincode: user.address?.pincode || '',
         },
         gender: user.gender,
+        beneficiaryType: user.beneficiaryType,
         isAnonymous: user.isAnonymous || false,
         anonymousId: anonymousId,
         occupation: user.occupation,

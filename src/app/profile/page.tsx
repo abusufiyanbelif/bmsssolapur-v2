@@ -26,7 +26,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const profileFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
+  firstName: z.string().min(2, "First name must be at least 2 characters."),
+  middleName: z.string().optional(),
+  lastName: z.string().min(1, "Last name is required."),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
@@ -34,6 +36,7 @@ const profileFormSchema = z.object({
   country: z.string().optional(),
   pincode: z.string().optional(),
   gender: z.enum(['Male', 'Female', 'Other']),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid"]).optional(),
   occupation: z.string().optional(),
   familyMembers: z.coerce.number().optional(),
   isWidow: z.boolean().default(false),
@@ -79,7 +82,9 @@ export default function ProfilePage() {
         if (fetchedUser) {
           setUser(fetchedUser);
           form.reset({
-              name: fetchedUser.name,
+              firstName: fetchedUser.firstName,
+              middleName: fetchedUser.middleName,
+              lastName: fetchedUser.lastName,
               phone: fetchedUser.phone,
               addressLine1: fetchedUser.address?.addressLine1 || '',
               city: fetchedUser.address?.city || '',
@@ -87,6 +92,7 @@ export default function ProfilePage() {
               country: fetchedUser.address?.country || '',
               pincode: fetchedUser.address?.pincode || '',
               gender: fetchedUser.gender || 'Other',
+              beneficiaryType: fetchedUser.beneficiaryType,
               occupation: fetchedUser.occupation || '',
               familyMembers: fetchedUser.familyMembers || 0,
               isWidow: fetchedUser.isWidow || false,
@@ -115,7 +121,9 @@ export default function ProfilePage() {
       if (!user?.id) return;
       setIsSubmitting(true);
       const result = await handleUpdateProfile(user.id, {
-          name: values.name,
+          firstName: values.firstName,
+          middleName: values.middleName,
+          lastName: values.lastName,
           phone: values.phone,
           address: {
               addressLine1: values.addressLine1 || '',
@@ -125,6 +133,7 @@ export default function ProfilePage() {
               pincode: values.pincode || '',
           },
           gender: values.gender,
+          beneficiaryType: values.beneficiaryType,
           occupation: values.occupation,
           familyMembers: values.familyMembers || 0,
           isWidow: values.isWidow,
@@ -161,6 +170,9 @@ export default function ProfilePage() {
   }
 
   const userInitials = user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+  const selectedRoles = form.watch("roles") || user.roles;
+  const isBeneficiary = user.roles.includes('Beneficiary');
+
 
   return (
     <div className="flex-1 space-y-4">
@@ -207,13 +219,13 @@ export default function ProfilePage() {
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                      <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                         <FormField
                                             control={form.control}
-                                            name="name"
+                                            name="firstName"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Full Name</FormLabel>
+                                                    <FormLabel>First Name</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} disabled={!isEditing} />
                                                     </FormControl>
@@ -221,6 +233,34 @@ export default function ProfilePage() {
                                                 </FormItem>
                                             )}
                                         />
+                                          <FormField
+                                            control={form.control}
+                                            name="middleName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Middle Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                          <FormField
+                                            control={form.control}
+                                            name="lastName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Last Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} disabled={!isEditing} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="gender"
@@ -349,59 +389,99 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     
-                                     <h3 className="text-lg font-semibold border-b pb-2">Family & Occupation</h3>
-                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                         <FormField
-                                            control={form.control}
-                                            name="occupation"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Occupation</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} disabled={!isEditing} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                          <FormField
-                                            control={form.control}
-                                            name="familyMembers"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Number of Family Members</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} disabled={!isEditing} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                     </div>
-                                      <FormField
-                                        control={form.control}
-                                        name="isWidow"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                            <FormControl>
-                                                <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                                disabled={!isEditing}
+                                    {isBeneficiary && (
+                                        <>
+                                            <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormField
+                                                control={form.control}
+                                                name="occupation"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Occupation</FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} disabled={!isEditing} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                                 />
-                                            </FormControl>
-                                            <div className="space-y-1 leading-none">
-                                                <FormLabel>
-                                                Are you a Widow?
-                                                </FormLabel>
-                                                <FormDescription>
-                                                This information helps us understand your situation better.
-                                                </FormDescription>
+                                                <FormField
+                                                control={form.control}
+                                                name="familyMembers"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Number of Family Members</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" {...field} disabled={!isEditing} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                                />
                                             </div>
-                                            </FormItem>
-                                        )}
-                                    />
-
+                                            <FormField
+                                                control={form.control}
+                                                name="beneficiaryType"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                    <FormLabel>Beneficiary Type</FormLabel>
+                                                    <FormControl>
+                                                        <RadioGroup
+                                                        onValueChange={field.onChange}
+                                                        defaultValue={field.value}
+                                                        className="flex flex-row space-x-4 pt-2"
+                                                        disabled={!isEditing}
+                                                        >
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                            <RadioGroupItem value="Adult" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">Adult</FormLabel>
+                                                        </FormItem>
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                            <RadioGroupItem value="Old Age" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">Old Age</FormLabel>
+                                                        </FormItem>
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                            <RadioGroupItem value="Kid" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">Kid</FormLabel>
+                                                        </FormItem>
+                                                        </RadioGroup>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                                />
+                                            <FormField
+                                                control={form.control}
+                                                name="isWidow"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                    <FormControl>
+                                                        <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                        disabled={!isEditing || form.getValues('gender') !== 'Female'}
+                                                        />
+                                                    </FormControl>
+                                                    <div className="space-y-1 leading-none">
+                                                        <FormLabel>
+                                                        Are you a Widow?
+                                                        </FormLabel>
+                                                        <FormDescription>
+                                                        This information helps us understand your situation better. (Only applicable for Female gender).
+                                                        </FormDescription>
+                                                    </div>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </>
+                                    )}
 
                                      <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>
                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
