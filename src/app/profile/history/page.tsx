@@ -1,11 +1,11 @@
 
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { getUserActivity, type ActivityLog } from "@/services/activity-log-service";
 import { Loader2, AlertCircle, ListChecks } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, formatDistanceToNow } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 
@@ -54,13 +54,25 @@ const ActivityItem = ({ log }: { log: ActivityLog }) => {
   );
 };
 
-export function ActivityFeed({ userId }: ActivityFeedProps) {
+export default function ActivityHistoryPage() {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+        setUserId(storedUserId);
+    } else {
+        setError("You must be logged in to view activity history.");
+        setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchActivities = async () => {
+      if (!userId) return;
       try {
         setLoading(true);
         setError(null);
@@ -73,37 +85,53 @@ export function ActivityFeed({ userId }: ActivityFeedProps) {
         setLoading(false);
       }
     };
-    fetchActivities();
+    if (userId) {
+        fetchActivities();
+    }
   }, [userId]);
 
-  if (loading) {
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="ml-2">Loading activity...</p>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (activities.length === 0) {
+      return <p className="text-center text-muted-foreground py-10">No activities recorded yet.</p>;
+    }
+
     return (
-      <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <p className="ml-2">Loading activity...</p>
+      <div className="space-y-6">
+        {activities.map((log) => (
+          <ActivityItem key={log.id} log={log} />
+        ))}
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (activities.length === 0) {
-    return <p className="text-center text-muted-foreground py-10">No activities recorded yet.</p>;
-  }
-
   return (
-    <div className="space-y-6">
-      {activities.map((log) => (
-        <ActivityItem key={log.id} log={log} />
-      ))}
-    </div>
-  );
+     <Card>
+        <CardHeader>
+            <CardTitle>Activity History</CardTitle>
+            <CardDescription>A log of actions you have performed in the system.</CardDescription>
+        </CardHeader>
+        <CardContent>
+           {renderContent()}
+        </CardContent>
+    </Card>
+  )
 }
