@@ -27,15 +27,36 @@ const USERS_COLLECTION = 'users';
 export type { User, UserRole };
 
 
+// Function to get a user by their custom userId field
+export const getUserByUserId = async (userId: string): Promise<User | null> => {
+    if (!isConfigValid) {
+        console.warn("Firebase not configured. Skipping user fetch by userId.");
+        return null;
+    }
+    try {
+        const q = query(collection(db, USERS_COLLECTION), where("userId", "==", userId), limit(1));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            return { id: userDoc.id, ...userDoc.data() } as User;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error getting user by userId: ${userId}`, error);
+        throw new Error('Failed to get user by userId.');
+    }
+};
+
+
 // Function to create or update a user
 export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     // Check for duplicate User ID
     if (user.userId) {
-      const idExists = await getUser(user.userId);
+      const idExists = await getUserByUserId(user.userId);
       if (idExists && idExists.id !== user.id) {
-        throw new Error(`A user with the ID ${user.userId} already exists.`);
+        throw new Error(`A user with the ID '${user.userId}' already exists.`);
       }
     } else {
         throw new Error("User ID is a mandatory field.");
@@ -263,5 +284,3 @@ export const getAllUsers = async (): Promise<User[]> => {
         throw new Error('Failed to get all users.');
     }
 }
-
-    

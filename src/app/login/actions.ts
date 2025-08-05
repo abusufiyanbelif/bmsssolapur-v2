@@ -3,7 +3,7 @@
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db, isConfigValid } from '@/services/firebase';
-import { User, getUserByPhone, getUserByEmail, createUser, getUserByName, getUser } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, createUser, getUserByName, getUser, getUserByUserId } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 
@@ -36,7 +36,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             user = await getUserByPhone(identifier);
         } else {
             // If not an email or phone, assume it's a User ID
-            user = await getUser(identifier);
+            user = await getUserByUserId(identifier);
         }
         
         if (!user) {
