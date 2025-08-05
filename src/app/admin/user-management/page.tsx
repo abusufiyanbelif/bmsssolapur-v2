@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -15,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, Edit, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, Edit, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteUser } from "./actions";
+import { handleDeleteUser, handleToggleUserStatus } from "./actions";
 import type { User, UserRole } from "@/services/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,6 +96,15 @@ export default function UserManagementPage() {
         });
         fetchUsers();
     }
+    
+    const onStatusToggled = (newStatus: boolean) => {
+        toast({
+            variant: "success",
+            title: "Status Updated",
+            description: `User has been successfully ${newStatus ? 'activated' : 'deactivated'}.`,
+        });
+        fetchUsers();
+    };
 
     const handleSearch = () => {
         setCurrentPage(1);
@@ -148,8 +158,8 @@ export default function UserManagementPage() {
     }, [itemsPerPage]);
 
     const renderActions = (user: User) => {
-        // Prevent deleting the currently logged-in user or the original super admin
-        const isDeletable = user.userId !== currentUserId && user.userId !== 'admin.user';
+        // Prevent deleting or deactivating the currently logged-in user or the original super admin
+        const isProtectedUser = user.userId === currentUserId || user.userId === 'admin.user';
 
         return (
             <DropdownMenu>
@@ -165,7 +175,26 @@ export default function UserManagementPage() {
                             <Edit className="mr-2 h-4 w-4" /> Manage
                         </Link>
                     </DropdownMenuItem>
-                    {isDeletable && (
+
+                    {!isProtectedUser && (
+                        user.isActive ? (
+                             <DropdownMenuItem onSelect={async () => {
+                                const result = await handleToggleUserStatus(user.id!, false);
+                                if (result.success) onStatusToggled(false);
+                            }}>
+                                <UserX className="mr-2 h-4 w-4" /> Deactivate
+                            </DropdownMenuItem>
+                        ) : (
+                             <DropdownMenuItem onSelect={async () => {
+                                const result = await handleToggleUserStatus(user.id!, true);
+                                if (result.success) onStatusToggled(true);
+                            }}>
+                                <UserCheck className="mr-2 h-4 w-4" /> Activate
+                            </DropdownMenuItem>
+                        )
+                    )}
+
+                    {!isProtectedUser && (
                         <>
                             <DropdownMenuSeparator />
                             <DeleteConfirmationDialog
