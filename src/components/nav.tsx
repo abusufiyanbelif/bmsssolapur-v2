@@ -142,7 +142,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     }
 
     return (
-        <nav className="grid items-start px-2 text-sm font-medium lg:px-4 overflow-y-auto">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
                 if (item.subItems) {

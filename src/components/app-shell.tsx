@@ -187,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <HeaderTitle />
                     </div>
                     {isSessionReady && (
-                        <div className="flex-1">
+                        <div className="flex-1 overflow-y-auto">
                             <Nav 
                                 userRoles={user.roles} 
                                 activeRole={activeRole}
