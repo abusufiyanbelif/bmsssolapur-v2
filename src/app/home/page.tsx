@@ -115,7 +115,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 
     let dashboardContent;
     if (activeRole === 'Donor') {
-      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} user={user} />;
+      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} />;
     } else if (activeRole === 'Beneficiary') {
       dashboardContent = <BeneficiaryDashboard cases={cases} quotes={quotes} />;
     } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
@@ -159,7 +159,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 }
 
 
-function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], user: User }) {
+function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[] }) {
   const isMobile = useIsMobile();
   const router = useRouter();
   const [purposeInput, setPurposeInput] = useState('all');

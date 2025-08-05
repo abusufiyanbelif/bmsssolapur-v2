@@ -56,13 +56,13 @@ function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }
     return (
          <Card>
             <CardHeader>
-                <CardTitle>Monthly Donation Pledge</CardTitle>
+                <CardTitle>Notification & Pledge Settings</CardTitle>
                 <CardDescription>Manage your recurring donation commitment and related notification settings.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4 p-4 border rounded-lg">
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="monthly-pledge-switch" className="font-semibold">Enable Monthly Pledge</Label>
+                        <Label htmlFor="monthly-pledge-switch" className="font-semibold">Enable Monthly Donation Pledge</Label>
                         <Switch
                             id="monthly-pledge-switch"
                             checked={monthlyPledgeEnabled}

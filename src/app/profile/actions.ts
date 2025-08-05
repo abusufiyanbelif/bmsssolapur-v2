@@ -25,7 +25,7 @@ type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' |
 
 export async function handleUpdateProfile(
   userId: string,
-  data: UpdateProfilePayload
+  data: Partial<UpdateProfilePayload>
 ): Promise<FormState> {
   try {
     if (!userId) {
@@ -33,21 +33,11 @@ export async function handleUpdateProfile(
     }
     
     // We only allow updating a subset of fields from the profile page
-    const updates: Partial<User> = {
-      name: `${data.firstName} ${data.middleName || ''} ${data.lastName}`.replace(/\s+/g, ' ').trim(),
-      firstName: data.firstName,
-      middleName: data.middleName,
-      lastName: data.lastName,
-      phone: data.phone,
-      address: data.address,
-      gender: data.gender,
-      beneficiaryType: data.beneficiaryType,
-      occupation: data.occupation,
-      familyMembers: data.familyMembers,
-      isWidow: data.isWidow,
-      panNumber: data.panNumber,
-      aadhaarNumber: data.aadhaarNumber,
-    };
+    const updates: Partial<User> = { ...data };
+    
+    if (data.firstName || data.middleName || data.lastName) {
+       updates.name = `${data.firstName || ''} ${data.middleName || ''} ${data.lastName || ''}`.replace(/\s+/g, ' ').trim();
+    }
     
     await updateUser(userId, updates);
     

@@ -103,32 +103,15 @@ export default function ProfileSettingsPage() {
         if (userId) {
             fetchUser();
         }
-    }, [userId]);
+    }, [userId, form]);
 
 
     async function onSubmit(values: ProfileFormValues) {
         if (!user?.id) return;
         setIsSubmitting(true);
         const result = await handleUpdateProfile(user.id, {
-            firstName: values.firstName,
-            middleName: values.middleName,
-            lastName: values.lastName,
-            phone: values.phone,
-            address: {
-                addressLine1: values.addressLine1 || '',
-                city: values.city || '',
-                state: values.state || '',
-                country: values.country || '',
-                pincode: values.pincode || '',
-            },
-            gender: values.gender,
-            beneficiaryType: values.beneficiaryType,
-            occupation: values.occupation,
-            familyMembers: values.familyMembers || 0,
-            isWidow: values.isWidow,
-            panNumber: values.panNumber,
-            aadhaarNumber: values.aadhaarNumber,
-            enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
+            ...values, // Send all form values
+            enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false, // Preserve existing value
         });
         
         if (result.success) {
