@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -490,6 +490,37 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
     const isMobile = useIsMobile();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
+    
+    const {
+        totalAidReceived,
+        activeCases,
+        casesClosed,
+        totalRequested
+    } = useMemo(() => {
+        let totalAidReceived = 0;
+        let activeCases = 0;
+        let casesClosed = 0;
+        let totalRequested = 0;
+
+        cases.forEach(caseItem => {
+            totalRequested += caseItem.helpRequested;
+            if (caseItem.status === 'Closed') {
+                casesClosed++;
+                totalAidReceived += caseItem.helpGiven;
+            }
+            if (caseItem.status === 'Pending' || caseItem.status === 'Partial') {
+                activeCases++;
+            }
+        });
+        return { totalAidReceived, activeCases, casesClosed, totalRequested };
+    }, [cases]);
+
+    const stats = [
+        { title: "Total Aid Received", value: `₹${totalAidReceived.toLocaleString()}`, icon: PiggyBank },
+        { title: "Active Cases", value: activeCases, icon: PackageOpen },
+        { title: "Cases Closed", value: casesClosed, icon: Check },
+        { title: "Total Aid Requested", value: `₹${totalRequested.toLocaleString()}`, icon: History },
+    ];
 
     const paginatedCases = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -617,58 +648,74 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
 
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-                <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle className="flex items-center gap-2">
-                                <FileText className="text-primary" />
-                                My Case History
-                            </CardTitle>
-                            <CardDescription>
-                            Here is the status of all your help requests.
-                            </CardDescription>
-                        </div>
-                         <div className="flex flex-col sm:flex-row gap-2">
-                            <Button asChild variant="secondary">
-                                <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
-                            </Button>
-                            <Button asChild>
-                                <Link href="/campaigns"><HandHeart className="mr-2" />Donate Now</Link>
-                            </Button>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {cases.length > 0 ? (
-                        <>
-                            {isMobile ? renderMobileCards() : renderDesktopTable()}
-                            {totalPages > 1 && renderPaginationControls()}
-                        </>
-                    ) : (
-                    <div className="text-center py-10">
-                        <p className="text-muted-foreground">You have not submitted any help requests.</p>
-                        <Button asChild className="mt-4">
-                            <Link href="/request-help">Request Help Now</Link>
-                        </Button>
-                    </div>
-                    )}
-                </CardContent>
-                 {cases.length > 0 && (
-                     <CardFooter>
-                        <Button asChild variant="secondary" className="w-full">
-                            <Link href="/my-cases">
-                                View Full Case History <ArrowRight className="ml-2" />
-                            </Link>
-                        </Button>
-                    </CardFooter>
-                )}
-                </Card>
+        <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {stats.map(stat => (
+                    <Card key={stat.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                            <stat.icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stat.value}</div>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
-            <div className="lg:col-span-1">
-                <InspirationalQuotes quotes={quotes} loading={false} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="text-primary" />
+                                    My Case History
+                                </CardTitle>
+                                <CardDescription>
+                                Here is the status of all your help requests.
+                                </CardDescription>
+                            </div>
+                             <div className="flex flex-col sm:flex-row gap-2">
+                                <Button asChild variant="secondary">
+                                    <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
+                                </Button>
+                                <Button asChild>
+                                    <Link href="/campaigns"><HandHeart className="mr-2" />Donate Now</Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {cases.length > 0 ? (
+                            <>
+                                {isMobile ? renderMobileCards() : renderDesktopTable()}
+                                {totalPages > 1 && renderPaginationControls()}
+                            </>
+                        ) : (
+                        <div className="text-center py-10">
+                            <p className="text-muted-foreground">You have not submitted any help requests.</p>
+                            <Button asChild className="mt-4">
+                                <Link href="/request-help">Request Help Now</Link>
+                            </Button>
+                        </div>
+                        )}
+                    </CardContent>
+                     {cases.length > 0 && (
+                         <CardFooter>
+                            <Button asChild variant="secondary" className="w-full">
+                                <Link href="/my-cases">
+                                    View Full Case History <ArrowRight className="ml-2" />
+                                </Link>
+                            </Button>
+                        </CardFooter>
+                    )}
+                    </Card>
+                </div>
+                <div className="lg:col-span-1">
+                    <InspirationalQuotes quotes={quotes} loading={false} />
+                </div>
             </div>
         </div>
     )
