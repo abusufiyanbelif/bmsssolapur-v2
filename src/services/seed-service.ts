@@ -4,7 +4,7 @@
  * @fileOverview A service to seed the database with initial data.
  */
 
-import { createUser, User, UserRole, getUserByName, getUserByPhone, getAllUsers, updateUser, getUser } from './user-service';
+import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers, updateUser, getUser, getUserByUserId } from './user-service';
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
@@ -100,7 +100,17 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             continue;
         }
         
-        const existingUser = await getUser(id);
+        // Find user by any unique identifier to decide if they exist
+        let existingUser: User | null = null;
+        if (userData.userId) {
+            existingUser = await getUserByUserId(userData.userId);
+        }
+        if (!existingUser && userData.email) {
+            existingUser = await getUserByEmail(userData.email);
+        }
+        if (!existingUser) {
+            existingUser = await getUserByPhone(userData.phone);
+        }
         
         if (existingUser) {
              // User exists, update them with the seed data.
@@ -112,7 +122,6 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             // User does not exist, create them
             await createUser({
                 ...userData,
-                id: id,
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now()
             });
@@ -204,7 +213,7 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             donorId: randomDonor.id!,
             donorName: randomDonor.name,
             amount: leadData.helpGiven,
-            type: leadData.category,
+            type: leadData.category as DonationType,
             purpose: 'Loan and Relief Fund',
             status: 'Allocated',
             isAnonymous: false,
