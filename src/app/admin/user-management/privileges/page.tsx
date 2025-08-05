@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit } from "lucide-react";
+import { KeySquare, Shield, UserCog, HandHeart, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 type Role = {
-  name: 'Super Admin' | 'Admin' | 'Finance Admin' | 'Donor' | 'Beneficiary';
+  name: 'Super Admin' | 'Admin' | 'Finance Admin' | 'Donor' | 'Beneficiary' | 'Referral';
   icon: React.ElementType;
 };
 
@@ -31,9 +31,10 @@ type Privilege = {
 const allRoles: Record<string, Role> = {
     'Super Admin': { name: 'Super Admin', icon: Shield },
     'Admin': { name: 'Admin', icon: UserCog },
-    'Finance Admin': { name: 'Finance Admin', icon: HandCoins },
+    'Finance Admin': { name: 'Finance Admin', icon: HandHeart },
     'Donor': { name: 'Donor', icon: Users },
     'Beneficiary': { name: 'Beneficiary', icon: User },
+    'Referral': { name: 'Referral', icon: User },
 };
 
 const allPrivileges: Privilege[] = [
@@ -53,7 +54,7 @@ const allPrivileges: Privilege[] = [
     { name: "canDeleteDonors", description: "Allows permanently deleting donor profiles.", icon: Trash2, type: 'Delete', roles: [allRoles['Super Admin']] },
     { name: "canManageLeads", description: "Allows creating, editing, and managing all help requests (leads).", icon: FileText, type: 'Manage', roles: [allRoles['Super Admin'], allRoles['Admin']] },
     { name: "canVerifyLeads", description: "Allows verifying or rejecting the authenticity of a lead.", icon: CheckSquare, type: 'Edit', roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canManageDonations", description: "Allows recording, editing, and managing all donation records.", icon: HandCoins, type: 'Manage', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
+    { name: "canManageDonations", description: "Allows recording, editing, and managing all donation records.", icon: HandHeart, type: 'Manage', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canVerifyDonations", description: "Allows changing a donation's status (e.g., from 'Pending' to 'Verified').", icon: DollarSign, type: 'Edit', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canViewFinancials", description: "Allows viewing financial reports, dashboards, and analytics.", icon: BarChart2, type: 'View', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canExportData", description: "Allows exporting data from the system, like donation or user lists.", icon: Download, type: 'View', roles: [allRoles['Super Admin']] },
@@ -62,7 +63,7 @@ const allPrivileges: Privilege[] = [
     { name: "canViewSystemInternals", description: "Allows viewing developer-oriented pages like Services Summary and Dependency Map.", icon: Share2, type: 'View', roles: [allRoles['Super Admin']] },
     { name: "canManageAIPersonas", description: "Allows creating and managing AI personas for automated communications.", icon: BrainCircuit, type: 'Manage', roles: [allRoles['Super Admin']] },
     { name: "canManageOwnProfile", description: "Allows a user to edit their own profile information.", icon: UserCog, type: 'Edit', roles: Object.values(allRoles) },
-    { name: "canViewOwnDonations", description: "Allows a donor to see their personal donation history.", icon: HandCoins, type: 'View', roles: [allRoles['Donor']] },
+    { name: "canViewOwnDonations", description: "Allows a donor to see their personal donation history.", icon: HandHeart, type: 'View', roles: [allRoles['Donor']] },
     { name: "canRequestHelp", description: "Allows a beneficiary to submit a new help request.", icon: RequestHelpIcon, type: 'Create', roles: [allRoles['Beneficiary']] },
     { name: "canViewOwnCases", description: "Allows a beneficiary to view the status and history of their own cases.", icon: FileText, type: 'View', roles: [allRoles['Beneficiary']] },
 ];
@@ -80,6 +81,7 @@ const typeColors: Record<PrivilegeType, string> = {
 
 
 export default function UserPrivilegesPage() {
+    const router = useRouter();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [nameInput, setNameInput] = useState('');
@@ -232,15 +234,15 @@ export default function UserPrivilegesPage() {
                                 <TableCell>
                                      <div className="flex flex-wrap gap-2">
                                         {privilege.roles.map(role => (
-                                            <Link 
+                                             <Badge 
                                                 key={role.name}
-                                                href={`/admin/user-management/roles?highlight=${encodeURIComponent(role.name)}`}
+                                                variant="secondary"
+                                                onClick={() => router.push('/admin/user-management/roles')}
+                                                className="flex items-center gap-2 hover:bg-primary/20 transition-colors cursor-pointer"
                                             >
-                                                <Badge variant="secondary" className="flex items-center gap-2 hover:bg-primary/20 transition-colors">
-                                                    <role.icon className="h-3 w-3" />
-                                                    {role.name}
-                                                </Badge>
-                                            </Link>
+                                                <role.icon className="h-3 w-3" />
+                                                {role.name}
+                                            </Badge>
                                         ))}
                                         {privilege.roles.length === 0 && <span className="text-xs text-muted-foreground">N/A</span>}
                                     </div>
