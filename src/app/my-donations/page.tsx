@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart } from "lucide-react";
+import { Download, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart, Save } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
+import { getUser, updateUser } from "@/services/user-service";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
@@ -13,8 +14,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Donation, DonationStatus } from "@/services/types";
+import type { Donation, DonationStatus, User } from "@/services/types";
 import Link from "next/link";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -24,8 +28,86 @@ const statusColors: Record<DonationStatus, string> = {
 };
 
 
+function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }) {
+    const { toast } = useToast();
+    const [monthlyPledgeEnabled, setMonthlyPledgeEnabled] = useState(user.monthlyPledgeEnabled || false);
+    const [monthlyPledgeAmount, setMonthlyPledgeAmount] = useState(user.monthlyPledgeAmount || 0);
+    const [enableMonthlyDonationReminder, setEnableMonthlyDonationReminder] = useState(user.enableMonthlyDonationReminder || false);
+    const [isSavingPledge, setIsSavingPledge] = useState(false);
+
+    const handleSavePledge = async () => {
+        setIsSavingPledge(true);
+        try {
+            await updateUser(user.id!, {
+                monthlyPledgeEnabled,
+                monthlyPledgeAmount: Number(monthlyPledgeAmount),
+                enableMonthlyDonationReminder,
+            });
+            toast({ variant: 'success', title: 'Settings Updated', description: 'Your pledge and notification settings have been saved.' });
+            onUpdate(); // Callback to re-fetch user data in parent
+        } catch(e) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save your settings.' });
+            console.error(e);
+        } finally {
+            setIsSavingPledge(false);
+        }
+    };
+
+    return (
+         <Card>
+            <CardHeader>
+                <CardTitle>Monthly Donation Pledge</CardTitle>
+                <CardDescription>Manage your recurring donation commitment and related notification settings.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="monthly-pledge-switch" className="font-semibold">Enable Monthly Pledge</Label>
+                        <Switch
+                            id="monthly-pledge-switch"
+                            checked={monthlyPledgeEnabled}
+                            onCheckedChange={setMonthlyPledgeEnabled}
+                        />
+                    </div>
+                     {monthlyPledgeEnabled && (
+                        <div className="space-y-2 pt-2">
+                            <Label htmlFor="pledge-amount">My Monthly Pledge Amount (₹)</Label>
+                            <Input
+                                id="pledge-amount"
+                                type="number"
+                                value={monthlyPledgeAmount}
+                                onChange={(e) => setMonthlyPledgeAmount(Number(e.target.value))}
+                                placeholder="e.g., 500"
+                            />
+                        </div>
+                    )}
+                </div>
+                 <div className="space-y-4 p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="monthly-reminder-switch" className="font-semibold">Notification & Pledge Settings</Label>
+                         <Switch
+                            id="monthly-reminder-switch"
+                            checked={enableMonthlyDonationReminder}
+                            onCheckedChange={setEnableMonthlyDonationReminder}
+                        />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Receive a monthly email reminder to make a donation.</p>
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button onClick={handleSavePledge} disabled={isSavingPledge}>
+                    {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Settings
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+}
+
+
 export default function MyDonationsPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -46,16 +128,18 @@ export default function MyDonationsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!userId) return;
-    
-    const fetchDonations = async () => {
+  const fetchData = async () => {
+      if (!userId) return;
       try {
         setLoading(true);
-        const userDonations = await getDonationsByUserId(userId);
-        // Sort by most recent first
+        const [userDonations, fetchedUser] = await Promise.all([
+          getDonationsByUserId(userId),
+          getUser(userId)
+        ]);
+        
         userDonations.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
         setDonations(userDonations);
+        setUser(fetchedUser);
         setError(null);
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
@@ -66,7 +150,8 @@ export default function MyDonationsPage() {
       }
     };
 
-    fetchDonations();
+  useEffect(() => {
+    fetchData();
   }, [userId]);
   
     const paginatedDonations = useMemo(() => {
@@ -222,7 +307,7 @@ export default function MyDonationsPage() {
 
 
   const renderContent = () => {
-    if (loading) {
+    if (loading && !user) {
       return (
           <div className="flex items-center justify-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -265,26 +350,29 @@ export default function MyDonationsPage() {
   
   return (
     <div className="flex-1 space-y-4">
-      <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Donations</h2>
-           <Button asChild>
+        <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Donations</h2>
+             <Button asChild>
                 <Link href="/campaigns">
                     <HandHeart className="mr-2 h-4 w-4" />
                     Donate Now
                 </Link>
             </Button>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Donation History</CardTitle>
-          <CardDescription>
-            A record of all your generous contributions. Thank you for your support.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {renderContent()}
-        </CardContent>
-      </Card>
+        </div>
+        
+        {user && <PledgeSettings user={user} onUpdate={fetchData} />}
+        
+        <Card>
+            <CardHeader>
+            <CardTitle>Donation History</CardTitle>
+            <CardDescription>
+                A record of all your generous contributions. Thank you for your support.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {renderContent()}
+            </CardContent>
+        </Card>
     </div>
   );
 }

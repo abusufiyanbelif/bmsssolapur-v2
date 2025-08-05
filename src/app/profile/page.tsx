@@ -511,27 +511,6 @@ export default function ProfilePage() {
                                             )}
                                         />
                                     </div>
-
-                                    <h3 className="text-lg font-semibold border-b pb-2">Notification Settings</h3>
-                                    <FormField
-                                        control={form.control}
-                                        name="enableMonthlyDonationReminder"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">Monthly Donation Reminders</FormLabel>
-                                                    <FormDescription>Receive a monthly email reminder to make a donation.</FormDescription>
-                                                </div>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                        disabled={!isEditing}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
                                     
                                     {isEditing && (
                                         <Button type="submit" disabled={isSubmitting || !isDirty}>
