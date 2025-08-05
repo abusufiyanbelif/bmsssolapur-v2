@@ -35,6 +35,9 @@ const allPrivileges: Privilege[] = [
     // Super Admin & Admin
     { name: "all", description: "Grants unrestricted access to all features and settings.", icon: Shield, roles: [allRoles['Super Admin']] },
     { name: "canManageUsers", description: "Allows creating, editing, and deleting all user accounts.", icon: UserCog, roles: [allRoles['Super Admin']] },
+    { name: "canViewBoardMembers", description: "Allows viewing the list of board members.", icon: Users, roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canAddBoardMembers", description: "Allows adding new members to the board.", icon: UserPlus, roles: [allRoles['Super Admin']] },
+    { name: "canRemoveBoardMembers", description: "Allows removing members from the board.", icon: Trash2, roles: [allRoles['Super Admin']] },
     { name: "canAddBeneficiaries", description: "Allows creating new beneficiary profiles.", icon: UserPlus, roles: [allRoles['Super Admin'], allRoles['Admin']] },
     { name: "canEditBeneficiaries", description: "Allows editing existing beneficiary profiles.", icon: User, roles: [allRoles['Super Admin'], allRoles['Admin']] },
     { name: "canDeleteBeneficiaries", description: "Allows deleting beneficiary profiles.", icon: Trash2, roles: [allRoles['Super Admin']] },
