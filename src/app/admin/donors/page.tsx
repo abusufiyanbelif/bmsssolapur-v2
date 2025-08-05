@@ -15,16 +15,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, MoreHorizontal, UserCheck, UserX, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User } from "@/services/types";
+import { handleDeleteUser, handleToggleUserStatus } from "../user-management/actions";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
@@ -44,6 +48,8 @@ export default function DonorsPage() {
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
 
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -69,26 +75,46 @@ export default function DonorsPage() {
             sort: sortInput
         });
     };
+    
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            const allUsers = await getAllUsers();
+            const donorUsers = allUsers.filter(u => u.roles.includes('Donor'));
+            setDonors(donorUsers);
+            setError(null);
+        } catch (e) {
+            setError("Failed to fetch donors. Please try again later.");
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setLoading(true);
-                const allUsers = await getAllUsers();
-                const donorUsers = allUsers.filter(u => u.roles.includes('Donor'));
-                setDonors(donorUsers);
-                setError(null);
-            } catch (e) {
-                setError("Failed to fetch donors. Please try again later.");
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchUsers();
+        const storedUserId = localStorage.getItem('userId');
+        setCurrentUserId(storedUserId);
     }, []);
     
+    const onUserDeleted = () => {
+        toast({
+            title: "User Deleted",
+            description: "The user has been successfully removed.",
+        });
+        fetchUsers();
+    }
+    
+    const onStatusToggled = (newStatus: boolean) => {
+        toast({
+            variant: "success",
+            title: "Status Updated",
+            description: `User has been successfully ${newStatus ? 'activated' : 'deactivated'}.`,
+        });
+        fetchUsers();
+    };
+
     const filteredDonors = useMemo(() => {
         let filtered = donors.filter(user => {
             const nameMatch = appliedFilters.name === '' || user.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
@@ -126,6 +152,54 @@ export default function DonorsPage() {
     useEffect(() => {
         setCurrentPage(1);
     }, [itemsPerPage]);
+    
+     const renderActions = (user: User) => {
+        const isSystemAdmin = user.userId === 'admin.user';
+        const isCurrentUser = user.id === currentUserId;
+        const isProtectedUser = isSystemAdmin || isCurrentUser;
+
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    {user.isActive ? (
+                        <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
+                            const result = await handleToggleUserStatus(user.id!, false);
+                            if (result.success) onStatusToggled(false);
+                        }}>
+                            <UserX className="mr-2 h-4 w-4" /> Deactivate
+                        </DropdownMenuItem>
+                    ) : (
+                        <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
+                            const result = await handleToggleUserStatus(user.id!, true);
+                            if (result.success) onStatusToggled(true);
+                        }}>
+                            <UserCheck className="mr-2 h-4 w-4" /> Activate
+                        </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuSeparator />
+                    
+                    <DeleteConfirmationDialog
+                        itemType="user"
+                        itemName={user.name}
+                        onDelete={() => handleDeleteUser(user.id!)}
+                        onSuccess={onUserDeleted}
+                    >
+                         <DropdownMenuItem disabled={isProtectedUser} onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                    </DeleteConfirmationDialog>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    }
+
 
     const renderDesktopTable = () => (
         <Table>
@@ -143,7 +217,11 @@ export default function DonorsPage() {
                 {paginatedDonors.map((user, index) => (
                     <TableRow key={user.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell className="font-medium">
+                            <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                                {user.name}
+                            </Link>
+                        </TableCell>
                         <TableCell>
                             <div className="flex flex-col">
                                 <span>{user.phone}</span>
@@ -157,11 +235,7 @@ export default function DonorsPage() {
                         </TableCell>
                         <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
-                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/admin/user-management/${user.id}/edit`}>
-                                    <UserCog className="mr-2 h-3 w-3" /> Manage
-                                </Link>
-                            </Button>
+                           {renderActions(user)}
                         </TableCell>
                     </TableRow>
                 ))}
@@ -175,7 +249,12 @@ export default function DonorsPage() {
                 <Card key={user.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {user.name}</CardTitle>
+                             <CardTitle className="text-lg">
+                                #{ (currentPage - 1) * itemsPerPage + index + 1 }: 
+                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary ml-2">
+                                    {user.name}
+                                </Link>
+                            </CardTitle>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
@@ -189,11 +268,7 @@ export default function DonorsPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                        <Button variant="outline" size="sm" asChild>
-                           <Link href={`/admin/user-management/${user.id}/edit`}>
-                                <UserCog className="mr-2 h-3 w-3" /> Manage User
-                            </Link>
-                        </Button>
+                       {renderActions(user)}
                     </CardFooter>
                 </Card>
             ))}
@@ -379,3 +454,5 @@ export default function DonorsPage() {
     </div>
   )
 }
+
+    
