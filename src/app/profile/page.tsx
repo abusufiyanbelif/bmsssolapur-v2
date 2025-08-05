@@ -42,7 +42,6 @@ const profileFormSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
-  enableMonthlyDonationReminder: z.boolean().default(false),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -96,7 +95,6 @@ export default function ProfilePage() {
               isWidow: fetchedUser.isWidow || false,
               panNumber: fetchedUser.panNumber || '',
               aadhaarNumber: fetchedUser.aadhaarNumber || '',
-              enableMonthlyDonationReminder: fetchedUser.enableMonthlyDonationReminder || false,
           });
         } else {
           setError("User not found.");
@@ -109,7 +107,9 @@ export default function ProfilePage() {
     };
     
   useEffect(() => {
-    fetchUser();
+    if (userId) {
+        fetchUser();
+    }
   }, [userId]);
 
 
@@ -135,7 +135,8 @@ export default function ProfilePage() {
           isWidow: values.isWidow,
           panNumber: values.panNumber,
           aadhaarNumber: values.aadhaarNumber,
-          enableMonthlyDonationReminder: values.enableMonthlyDonationReminder
+          // This field is managed on My Donations page now, pass a dummy value or handle in action
+          enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
       });
       
       if (result.success) {

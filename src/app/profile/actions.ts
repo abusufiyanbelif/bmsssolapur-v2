@@ -10,7 +10,7 @@ interface FormState {
     error?: string;
 }
 
-type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber' | 'beneficiaryType'> & {
+type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber' | 'beneficiaryType' | 'enableMonthlyDonationReminder'> & {
     address: {
         addressLine1: string;
         city: string;
@@ -20,7 +20,6 @@ type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' |
     };
     familyMembers: number;
     isWidow: boolean;
-    enableMonthlyDonationReminder: boolean;
 };
 
 
@@ -48,7 +47,6 @@ export async function handleUpdateProfile(
       isWidow: data.isWidow,
       panNumber: data.panNumber,
       aadhaarNumber: data.aadhaarNumber,
-      enableMonthlyDonationReminder: data.enableMonthlyDonationReminder,
     };
     
     await updateUser(userId, updates);

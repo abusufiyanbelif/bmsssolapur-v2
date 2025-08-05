@@ -84,14 +84,14 @@ function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }
                 </div>
                  <div className="space-y-4 p-4 border rounded-lg">
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="monthly-reminder-switch" className="font-semibold">Notification & Pledge Settings</Label>
+                        <Label htmlFor="monthly-reminder-switch" className="font-semibold">Enable Monthly Donation Reminder</Label>
                          <Switch
                             id="monthly-reminder-switch"
                             checked={enableMonthlyDonationReminder}
                             onCheckedChange={setEnableMonthlyDonationReminder}
                         />
                     </div>
-                    <p className="text-sm text-muted-foreground">Receive a monthly email reminder to make a donation.</p>
+                    <p className="text-sm text-muted-foreground">If enabled, you will receive an email reminder to make your monthly donation.</p>
                 </div>
             </CardContent>
             <CardFooter>
@@ -151,7 +151,9 @@ export default function MyDonationsPage() {
     };
 
   useEffect(() => {
-    fetchData();
+    if (userId) {
+        fetchData();
+    }
   }, [userId]);
   
     const paginatedDonations = useMemo(() => {
@@ -360,7 +362,7 @@ export default function MyDonationsPage() {
             </Button>
         </div>
         
-        {user && <PledgeSettings user={user} onUpdate={fetchData} />}
+        {user && user.roles.includes('Donor') && <PledgeSettings user={user} onUpdate={fetchData} />}
         
         <Card>
             <CardHeader>
