@@ -55,13 +55,6 @@ export default async function DashboardPage() {
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
 
-  const beneficiaryTypes = [
-    { title: "Families Helped", value: familiesHelpedCount, icon: HomeIcon, href: "/admin/leads?beneficiaryType=Family" },
-    { title: "Adults Helped", value: adultsHelpedCount, icon: PersonStanding, href: "/admin/leads?beneficiaryType=Adult" },
-    { title: "Kids Helped", value: kidsHelpedCount, icon: Baby, href: "/admin/leads?beneficiaryType=Kid" },
-    { title: "Widows Helped", value: widowsHelpedCount, icon: HeartHandshake, href: "/admin/leads?beneficiaryType=Widow" },
-  ];
-
   const mainMetrics = [
     {
       title: "Total Verified Funds",
@@ -77,6 +70,62 @@ export default async function DashboardPage() {
       description: "Total funds given to leads.",
       href: "/admin/leads",
     },
+     {
+      title: "Total Funds in Hand",
+      value: `₹${pendingToDisburse.toLocaleString()}`,
+      icon: PiggyBank,
+      description: "Verified funds ready to be disbursed.",
+      href: "/admin/donations",
+    },
+     {
+      title: "Cases Closed",
+      value: casesClosed.toString(),
+      icon: CheckCircle,
+      description: "Total leads successfully completed.",
+      href: "/admin/leads?status=Closed",
+    },
+     {
+      title: "Cases Pending",
+      value: casesPending.toString(),
+      icon: Hourglass,
+      description: "Leads currently open for funding.",
+      href: "/admin/leads?status=Pending",
+    },
+     {
+      title: "Beneficiaries Helped",
+      value: beneficiariesHelpedCount.toString(),
+      icon: Users,
+      description: "Total unique beneficiaries supported.",
+      href: "/admin/beneficiaries",
+    },
+     {
+      title: "Adults Helped",
+      value: adultsHelpedCount.toString(),
+      icon: PersonStanding,
+      description: "Total adults who received support.",
+      href: "/admin/beneficiaries?type=Adult",
+    },
+     {
+      title: "Kids Helped",
+      value: kidsHelpedCount.toString(),
+      icon: Baby,
+      description: "Total children who received support.",
+      href: "/admin/beneficiaries?type=Kid",
+    },
+     {
+      title: "Families Helped",
+      value: familiesHelpedCount.toString(),
+      icon: HomeIcon,
+      description: "Total families who received support.",
+      href: "/admin/beneficiaries?type=Family",
+    },
+     {
+      title: "Widows Helped",
+      value: widowsHelpedCount.toString(),
+      icon: HeartHandshake,
+      description: "Total widows who received support.",
+      href: "/admin/beneficiaries?isWidow=true",
+    },
   ];
 
 
@@ -86,7 +135,7 @@ export default async function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Dashboard</h2>
       </div>
       <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {mainMetrics.map((metric) => (
               <Link href={metric.href} key={metric.title}>
                 <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
@@ -101,25 +150,6 @@ export default async function DashboardPage() {
                 </Card>
               </Link>
           ))}
-           <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Beneficiaries Breakdown</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="pt-2">
-                   <div className="space-y-2">
-                       {beneficiaryTypes.map(item => (
-                           <Link href={item.href} key={item.title} className="flex items-center justify-between rounded-md p-2 hover:bg-muted">
-                               <div className="flex items-center gap-3">
-                                   <item.icon className="h-5 w-5 text-muted-foreground" />
-                                   <span className="text-sm font-medium">{item.title}</span>
-                               </div>
-                               <span className="font-bold text-lg">{item.value}</span>
-                           </Link>
-                       ))}
-                   </div>
-                </CardContent>
-            </Card>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
            <Card className="col-span-1">
