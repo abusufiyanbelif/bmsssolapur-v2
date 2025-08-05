@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
@@ -29,6 +29,7 @@ export default async function DashboardPage() {
   const beneficiariesHelpedCount = helpedBeneficiaries.length;
   const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
   const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
+  const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
   const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
   
   const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
@@ -54,8 +55,14 @@ export default async function DashboardPage() {
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
 
+  const beneficiaryTypes = [
+    { title: "Families Helped", value: familiesHelpedCount, icon: HomeIcon, href: "/admin/beneficiaries?type=Family" },
+    { title: "Adults Helped", value: adultsHelpedCount, icon: PersonStanding, href: "/admin/beneficiaries?type=Adult" },
+    { title: "Kids Helped", value: kidsHelpedCount, icon: Baby, href: "/admin/beneficiaries?type=Kid" },
+    { title: "Widows Helped", value: widowsHelpedCount, icon: HeartHandshake, href: "/admin/beneficiaries?isWidow=true" },
+  ];
 
-  const metrics = [
+  const mainMetrics = [
     {
       title: "Total Verified Funds",
       value: `₹${totalRaised.toLocaleString()}`,
@@ -70,35 +77,8 @@ export default async function DashboardPage() {
       description: "Total funds given to leads.",
       href: "/admin/leads",
     },
-     {
-      title: "Families Helped",
-      value: `${beneficiariesHelpedCount}`,
-      icon: Users,
-      description: "Total unique beneficiaries supported.",
-      href: "/admin/beneficiaries",
-    },
-    {
-      title: "Adults Helped",
-      value: adultsHelpedCount,
-      icon: PersonStanding,
-      description: "Adult beneficiaries supported.",
-      href: "/admin/beneficiaries?type=Adult",
-    },
-    {
-      title: "Kids Helped",
-      value: kidsHelpedCount,
-      icon: Baby,
-      description: "Child beneficiaries supported.",
-      href: "/admin/beneficiaries?type=Kid",
-    },
-    {
-      title: "Widows Helped",
-      value: widowsHelpedCount,
-      icon: HeartHandshake,
-      description: "Widowed beneficiaries supported.",
-      href: "/admin/beneficiaries?isWidow=true",
-    },
   ];
+
 
   return (
     <div className="flex-1 space-y-4">
@@ -107,25 +87,39 @@ export default async function DashboardPage() {
       </div>
       <div className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {metrics.map((metric) => {
-            const cardContent = (
-              <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+          {mainMetrics.map((metric) => (
+              <Link href={metric.href} key={metric.title}>
+                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                    <metric.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                    <div className="text-2xl font-bold">{metric.value}</div>
+                    <p className="text-xs text-muted-foreground">{metric.description}</p>
+                    </CardContent>
+                </Card>
+              </Link>
+          ))}
+           <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                  <metric.icon className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Beneficiaries Breakdown</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{metric.value}</div>
-                  <p className="text-xs text-muted-foreground">{metric.description}</p>
+                <CardContent className="pt-2">
+                   <div className="space-y-2">
+                       {beneficiaryTypes.map(item => (
+                           <Link href={item.href} key={item.title} className="flex items-center justify-between rounded-md p-2 hover:bg-muted">
+                               <div className="flex items-center gap-3">
+                                   <item.icon className="h-5 w-5 text-muted-foreground" />
+                                   <span className="text-sm font-medium">{item.title}</span>
+                               </div>
+                               <span className="font-bold text-lg">{item.value}</span>
+                           </Link>
+                       ))}
+                   </div>
                 </CardContent>
-              </Card>
-            );
-
-            if (metric.href) {
-              return <Link href={metric.href} key={metric.title}>{cardContent}</Link>;
-            }
-            return <div key={metric.title}>{cardContent}</div>;
-          })}
+            </Card>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
            <Card className="col-span-1">
