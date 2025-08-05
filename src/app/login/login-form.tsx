@@ -201,16 +201,11 @@ export function LoginForm() {
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-4">
                         <Label>Login With</Label>
-                        <RadioGroup defaultValue="username" onValueChange={(value) => setLoginMethod(value as any)} className="grid grid-cols-3 gap-2">
+                        <RadioGroup defaultValue="username" onValueChange={(value) => setLoginMethod(value as any)} className="grid grid-cols-2 gap-2">
                             <Label htmlFor="method-username" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <RadioGroupItem value="username" id="method-username" className="sr-only" />
                                 <User className="mb-2 h-5 w-5"/>
                                 <span className="text-xs">Username</span>
-                            </Label>
-                             <Label htmlFor="method-email" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <RadioGroupItem value="email" id="method-email" className="sr-only" />
-                                <Mail className="mb-2 h-5 w-5"/>
-                                 <span className="text-xs">Email</span>
                             </Label>
                              <Label htmlFor="method-phone" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <RadioGroupItem value="phone" id="method-phone" className="sr-only" />
@@ -252,14 +247,6 @@ export function LoginForm() {
                 </form>
             </TabsContent>
           </Tabs>
-           <div className="relative w-full my-6">
-                <Separator />
-                <span className="absolute left-1/2 -translate-x-1/2 -top-3 bg-card px-2 text-xs text-muted-foreground">OR</span>
-            </div>
-            <Button variant="outline" className="w-full" onClick={onGoogleSignIn} disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                Sign in with Google
-            </Button>
         </CardContent>
         <CardFooter className="flex-col gap-4 pt-6">
             <Separator />
