@@ -19,7 +19,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     }
     const identifier = formData.get("identifier") as string;
     const password = formData.get("password") as string;
-    const loginMethod = formData.get("loginMethod") as 'username' | 'email' | 'phone';
+    const loginMethod = formData.get("loginMethod") as 'email' | 'phone';
 
     if (!identifier || !password || !loginMethod) {
         return { success: false, error: "Identifier, password, and login method are required." };
@@ -42,15 +42,6 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
                     return { success: false, error: "Please enter a valid 10-digit phone number." };
                 }
                 user = await getUserByPhone(identifier);
-                break;
-            case 'username':
-                user = await getUserByName(identifier);
-                if (!user) {
-                    user = await getUserByEmail(identifier);
-                }
-                if (!user) {
-                    user = await getUserByPhone(identifier);
-                }
                 break;
             default:
                 return { success: false, error: "Invalid login method specified." };

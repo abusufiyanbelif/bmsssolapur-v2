@@ -28,7 +28,7 @@ export function LoginForm() {
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
-  const [loginMethod, setLoginMethod] = useState<'username' | 'email' | 'phone'>('username');
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string} | null>(null);
 
   useEffect(() => {
@@ -201,11 +201,11 @@ export function LoginForm() {
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-4">
                         <Label>Login With</Label>
-                        <RadioGroup defaultValue="username" onValueChange={(value) => setLoginMethod(value as any)} className="grid grid-cols-2 gap-2">
-                            <Label htmlFor="method-username" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <RadioGroupItem value="username" id="method-username" className="sr-only" />
-                                <User className="mb-2 h-5 w-5"/>
-                                <span className="text-xs">Username</span>
+                        <RadioGroup defaultValue="email" onValueChange={(value) => setLoginMethod(value as any)} className="grid grid-cols-2 gap-2">
+                             <Label htmlFor="method-email" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                <RadioGroupItem value="email" id="method-email" className="sr-only" />
+                                <Mail className="mb-2 h-5 w-5"/>
+                                <span className="text-xs">Email</span>
                             </Label>
                              <Label htmlFor="method-phone" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <RadioGroupItem value="phone" id="method-phone" className="sr-only" />
@@ -217,15 +217,13 @@ export function LoginForm() {
 
                     <div className="space-y-2">
                       <Label htmlFor="identifier">{
-                        loginMethod === 'username' ? 'Username / Email / Phone' :
                         loginMethod === 'email' ? 'Email Address' : 'Phone Number (10 digits)'
                       }</Label>
                       <Input 
                         id="identifier" 
                         name="identifier" 
-                        type={loginMethod === 'email' ? 'email' : loginMethod === 'phone' ? 'tel' : 'text'}
+                        type={loginMethod === 'email' ? 'email' : 'tel'}
                         placeholder={
-                            loginMethod === 'username' ? 'e.g., Abusufiyan Belif' :
                             loginMethod === 'email' ? 'user@example.com' : '9876543210'
                         }
                         required 
