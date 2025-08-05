@@ -67,22 +67,23 @@ export function RegisterForm() {
 
     const result = await handleRegister(formData);
 
-    if (result.success) {
+    if (result.success && result.user) {
       toast({
         variant: "success",
-        title: "Registration Successful",
-        description: "Your account has been created. Please log in to continue.",
+        title: "Registration Successful!",
+        description: `Your User ID is "${result.user.userId}". Redirecting to login...`,
         icon: <CheckCircle />,
+        duration: 5000,
       });
-      router.push('/login');
+      setTimeout(() => router.push('/login'), 3000); // Give user time to read toast
     } else {
       toast({
         variant: "destructive",
         title: "Registration Failed",
         description: result.error || "An unknown error occurred.",
       });
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
@@ -180,5 +181,3 @@ export function RegisterForm() {
     </Form>
   );
 }
-
-    

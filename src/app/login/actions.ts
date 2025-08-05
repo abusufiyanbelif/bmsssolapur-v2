@@ -3,7 +3,7 @@
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db, isConfigValid } from '@/services/firebase';
-import { User, getUserByPhone, getUserByEmail, createUser, getUserByName } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, createUser, getUserByName, getUser } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 
@@ -19,32 +19,24 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     }
     const identifier = formData.get("identifier") as string;
     const password = formData.get("password") as string;
-    const loginMethod = formData.get("loginMethod") as 'email' | 'phone';
 
-    if (!identifier || !password || !loginMethod) {
-        return { success: false, error: "Identifier, password, and login method are required." };
+    if (!identifier || !password) {
+        return { success: false, error: "Identifier and password are required." };
     }
 
     try {
         let user: User | null = null;
         
-        switch (loginMethod) {
-            case 'email':
-                const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
-                if (!isEmail) {
-                    return { success: false, error: "Please enter a valid email address." };
-                }
-                user = await getUserByEmail(identifier);
-                break;
-            case 'phone':
-                const phoneRegex = /^[0-9]{10}$/;
-                if (!phoneRegex.test(identifier)) {
-                    return { success: false, error: "Please enter a valid 10-digit phone number." };
-                }
-                user = await getUserByPhone(identifier);
-                break;
-            default:
-                return { success: false, error: "Invalid login method specified." };
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+        const isPhone = /^[0-9]{10}$/.test(identifier);
+
+        if (isEmail) {
+            user = await getUserByEmail(identifier);
+        } else if (isPhone) {
+            user = await getUserByPhone(identifier);
+        } else {
+            // If not an email or phone, assume it's a User ID
+            user = await getUser(identifier);
         }
         
         if (!user) {

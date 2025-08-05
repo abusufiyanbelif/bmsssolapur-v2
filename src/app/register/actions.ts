@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 interface RegisterState {
     success: boolean;
     error?: string;
+    user?: User;
 }
 
 export async function handleRegister(formData: FormData): Promise<RegisterState> {
@@ -23,8 +24,8 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
   const phone = formData.get("phone") as string;
   const userId = formData.get("userId") as string;
 
-  if (!firstName || !lastName || !phone || !password) {
-    return { success: false, error: "First Name, Last Name, Phone, and Password are required." };
+  if (!firstName || !lastName || !phone || !password || !userId) {
+    return { success: false, error: "First Name, Last Name, User ID, Phone, and Password are required." };
   }
    if (password.length < 6) {
     return { success: false, error: "Password must be at least 6 characters long." };
@@ -64,9 +65,9 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       gender: 'Other',
     };
 
-    await createUser(newUser);
+    const createdUser = await createUser(newUser);
 
-    return { success: true };
+    return { success: true, user: createdUser };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown database error occurred during registration.";
     return { success: false, error };

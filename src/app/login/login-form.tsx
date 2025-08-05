@@ -28,7 +28,6 @@ export function LoginForm() {
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string} | null>(null);
 
   useEffect(() => {
@@ -57,7 +56,6 @@ export function LoginForm() {
     event.preventDefault();
     setIsSubmitting(true);
     const formData = new FormData(event.currentTarget);
-    formData.append('loginMethod', loginMethod);
 
     const result = await handleLogin(formData);
 
@@ -199,35 +197,14 @@ export function LoginForm() {
             </TabsContent>
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
-                    <div className="space-y-4">
-                        <Label>Login With</Label>
-                        <RadioGroup defaultValue="email" onValueChange={(value) => setLoginMethod(value as any)} className="grid grid-cols-2 gap-2">
-                             <Label htmlFor="method-email" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <RadioGroupItem value="email" id="method-email" className="sr-only" />
-                                <Mail className="mb-2 h-5 w-5"/>
-                                <span className="text-xs">Email</span>
-                            </Label>
-                             <Label htmlFor="method-phone" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <RadioGroupItem value="phone" id="method-phone" className="sr-only" />
-                                <Phone className="mb-2 h-5 w-5"/>
-                                 <span className="text-xs">Phone</span>
-                            </Label>
-                        </RadioGroup>
-                    </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="identifier">{
-                        loginMethod === 'email' ? 'Email Address' : 'Phone Number (10 digits)'
-                      }</Label>
+                      <Label htmlFor="identifier">User ID, Email, or Phone</Label>
                       <Input 
                         id="identifier" 
                         name="identifier" 
-                        type={loginMethod === 'email' ? 'email' : 'tel'}
-                        placeholder={
-                            loginMethod === 'email' ? 'user@example.com' : '9876543210'
-                        }
+                        type="text"
+                        placeholder="e.g., john.doe or user@example.com"
                         required 
-                        maxLength={loginMethod === 'phone' ? 10 : undefined}
                       />
                     </div>
                     <div className="space-y-2">
