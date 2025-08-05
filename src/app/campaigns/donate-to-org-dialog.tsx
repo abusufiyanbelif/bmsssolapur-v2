@@ -9,13 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CreditCard, ExternalLink, X } from "lucide-react";
+import { Copy, CreditCard, ExternalLink, X, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import type { Organization, User } from "@/services/types";
@@ -173,17 +174,20 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                         </div>
                     </div>
                 </div>
-                 <Alert>
-                    <AlertTitle>Important Note</AlertTitle>
+                 <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Important: Manual Verification Required</AlertTitle>
                     <AlertDescription>
-                        After completing the payment, an admin will manually verify and record your donation in the system. Thank you for your generosity!
+                        After completing the payment in your UPI app, you must **manually return** to this application. Your donation will be marked as "Pending" until an administrator verifies the transaction. Thank you for your generosity!
                     </AlertDescription>
                 </Alert>
             </div>
             <DialogFooter>
-                <Button onClick={() => setStep(1)} variant="outline">
-                    Back
-                </Button>
+                <DialogClose asChild>
+                    <Button onClick={() => setStep(1)} variant="outline">
+                        Cancel
+                    </Button>
+                </DialogClose>
             </DialogFooter>
            </>
         )}
