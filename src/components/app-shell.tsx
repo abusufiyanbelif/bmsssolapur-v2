@@ -275,7 +275,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                         <div className="flex flex-col space-y-1">
                                             <p className="text-sm font-medium leading-none">{user.name}</p>
                                             <p className="text-xs leading-none text-muted-foreground">
-                                                ID: {user.userId}
+                                                ID: {user.userId || user.id}
                                             </p>
                                         </div>
                                     </DropdownMenuLabel>
