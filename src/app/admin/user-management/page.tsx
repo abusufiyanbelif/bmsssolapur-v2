@@ -158,8 +158,11 @@ export default function UserManagementPage() {
     }, [itemsPerPage]);
 
     const renderActions = (user: User) => {
-        // Prevent deleting or deactivating the currently logged-in user or the original super admin
-        const isProtectedUser = user.userId === currentUserId || user.userId === 'admin.user';
+        // The primary system admin cannot be deactivated or deleted.
+        const isSystemAdmin = user.userId === 'admin.user';
+        // A user cannot deactivate or delete their own account.
+        const isCurrentUser = user.id === currentUserId;
+        const isProtectedUser = isSystemAdmin || isCurrentUser;
 
         return (
             <DropdownMenu>
