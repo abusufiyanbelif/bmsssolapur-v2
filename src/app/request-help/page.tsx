@@ -33,6 +33,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -258,7 +259,7 @@ export default function RequestHelpPage() {
                         </div>
                          <div className="flex justify-between">
                             <span className="text-muted-foreground">Category</span>
-                            <span className="font-semibold">{submittedLead.subCategory}</span>
+                            <span className="font-semibold">{submittedLead.category}</span>
                         </div>
                          <div className="flex justify-between">
                             <span className="text-muted-foreground">Amount Requested</span>
@@ -271,7 +272,10 @@ export default function RequestHelpPage() {
                     </div>
                 )}
                  <AlertDialogFooter>
-                    <AlertDialogAction onClick={handleDialogClose}>OK</AlertDialogAction>
+                    <AlertDialogCancel onClick={handleDialogClose}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                        <Link href="/my-cases">View My Cases</Link>
+                    </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

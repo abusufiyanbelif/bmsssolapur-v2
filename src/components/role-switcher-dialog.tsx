@@ -9,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogProps
+  DialogProps,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -127,8 +128,15 @@ export function RoleSwitcherDialog({ open, onOpenChange, availableRoles, onRoleC
                 )
             })}
         </div>
-        <DialogFooter>
-            <Button onClick={handleContinue} disabled={!selectedRole} className="w-full">
+        <DialogFooter className="sm:justify-between">
+            {(!isMandatory && !requiredRole) && (
+                <DialogClose asChild>
+                    <Button type="button" variant="secondary">
+                        Cancel
+                    </Button>
+                </DialogClose>
+            )}
+            <Button onClick={handleContinue} disabled={!selectedRole} className="w-full sm:w-auto">
                 Continue as {selectedRole || '...'}
             </Button>
         </DialogFooter>
