@@ -16,8 +16,9 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import type { Donation } from "@/services/types"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { format } from "date-fns"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const chartConfig = {
   donations: {
@@ -30,13 +31,18 @@ interface DonationsChartProps {
   donations: Donation[]
 }
 
+type TimeRangeOption = "3" | "6" | "12";
+
 export function DonationsChart({ donations }: DonationsChartProps) {
+  const [timeRange, setTimeRange] = useState<TimeRangeOption>("6");
+
   const chartData = useMemo(() => {
     const now = new Date()
     const monthlyTotals: { [key: string]: number } = {}
+    const monthsToShow = parseInt(timeRange, 10);
 
-    // Initialize the last 6 months with 0
-    for (let i = 5; i >= 0; i--) {
+    // Initialize the last N months with 0
+    for (let i = monthsToShow - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthKey = format(d, "MMM yyyy")
       monthlyTotals[monthKey] = 0
@@ -57,13 +63,27 @@ export function DonationsChart({ donations }: DonationsChartProps) {
       month: month.split(' ')[0],
       donations: total,
     }))
-  }, [donations])
+  }, [donations, timeRange])
 
   return (
     <Card className="col-span-4">
-      <CardHeader>
-        <CardTitle className="font-headline">Donations Overview</CardTitle>
-        <CardDescription>Verified donations from the last 6 months.</CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+            <CardTitle className="font-headline">Donations Overview</CardTitle>
+            <CardDescription>Verified donations from the selected time period.</CardDescription>
+        </div>
+        <div className="w-[150px]">
+             <Select value={timeRange} onValueChange={(value: TimeRangeOption) => setTimeRange(value)}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select range" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="3">Last 3 Months</SelectItem>
+                    <SelectItem value="6">Last 6 Months</SelectItem>
+                    <SelectItem value="12">Last 12 Months</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
