@@ -19,10 +19,16 @@ type UserGroup = {
 
 const allGroups: UserGroup[] = [
     { 
-        name: "Founder / Co-Founder",
-        description: "The core leadership and founding members of the organization. They typically have the highest level of administrative access.",
+        name: "Founder",
+        description: "The primary founding members of the organization. They typically have the highest level of administrative access.",
         icon: Users,
         typicalRoles: ["Super Admin"]
+    },
+    { 
+        name: "Co-Founder",
+        description: "Core leadership members who were part of the founding team.",
+        icon: Users,
+        typicalRoles: ["Super Admin", "Admin"]
     },
     { 
         name: "Finance Team",
