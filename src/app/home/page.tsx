@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Donation, Lead, Quote, LeadPurpose, LeadStatus } from "@/services/types";
+import type { User, Donation, Lead, Quote, LeadPurpose, LeadStatus, DonationType } from "@/services/types";
 import { getAllUsers } from "@/services/user-service";
 import { getOpenLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
@@ -126,13 +126,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
       );
     }
     if (!user || !user.isLoggedIn) {
-       return (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Not Logged In</AlertTitle>
-          <AlertDescription>Please log in to view your dashboard.</AlertDescription>
-        </Alert>
-      );
+       return null; // Should be handled by app-shell loading state
     }
 
     let dashboardContent;
@@ -244,6 +238,28 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
   const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
   const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
   const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
+  
+  const donationTypeBreakdown = donations
+    .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+    .reduce((acc, donation) => {
+      const type = donation.type;
+      if (!acc[type]) {
+        acc[type] = { total: 0, count: 0 };
+      }
+      acc[type].total += donation.amount;
+      acc[type].count += 1;
+      return acc;
+    }, {} as Record<DonationType, { total: number, count: number }>);
+
+  const donationTypeIcons: Record<DonationType, React.ElementType> = {
+    'Zakat': HandCoins,
+    'Sadaqah': Gift,
+    'Fitr': Wheat,
+    'Lillah': Building,
+    'Kaffarah': Shield,
+    'Split': DollarSign
+  }
+
   
   return (
     <div className="space-y-6">
@@ -370,7 +386,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
                     </Link>
                     <Link href="/campaigns">
                         <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <HandHeart className="h-6 w-6 text-primary" />
+                            <HeartHandshake className="h-6 w-6 text-primary" />
                             <div>
                                 <p className="font-bold text-lg">{widowsHelpedCount}</p>
                                 <p className="text-xs text-muted-foreground">Widows Helped</p>
@@ -383,50 +399,83 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
         </div>
       </div>
       
-      {/* Recent Donations */}
-       <Card>
-        <CardHeader>
-            <CardTitle>Recent Donations</CardTitle>
-            <CardDescription>A look at your latest contributions.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {donations.length > 0 ? (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Sr. No.</TableHead>
-                            <TableHead>Date</TableHead>
-                            {!isMobile && <TableHead>Type</TableHead>}
-                            {!isMobile && <TableHead>Purpose</TableHead>}
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {donations.slice(0, 5).map((d, index) => (
-                            <TableRow key={d.id}>
-                                <TableCell>{index + 1}</TableCell>
-                                <TableCell>{format(d.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
-                                {!isMobile && <TableCell>{d.type}</TableCell>}
-                                {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
-                                <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
-                                <TableCell className="text-right font-semibold">₹{d.amount.toLocaleString()}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            ): (
-                <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
-            )}
-        </CardContent>
-        <CardFooter>
-            <Button asChild variant="secondary" className="w-full">
-            <Link href="/my-donations">
-                View All My Donations <ArrowRight className="ml-2" />
-            </Link>
-            </Button>
-        </CardFooter>
-      </Card>
+      {/* Recent Donations and Breakdown */}
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Donations</CardTitle>
+                        <CardDescription>A look at your latest contributions.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {donations.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Sr. No.</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        {!isMobile && <TableHead>Type</TableHead>}
+                                        {!isMobile && <TableHead>Purpose</TableHead>}
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {donations.slice(0, 5).map((d, index) => (
+                                        <TableRow key={d.id}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>{format(d.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
+                                            {!isMobile && <TableCell>{d.type}</TableCell>}
+                                            {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
+                                            <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
+                                            <TableCell className="text-right font-semibold">₹{d.amount.toLocaleString()}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ): (
+                            <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
+                        )}
+                    </CardContent>
+                    <CardFooter>
+                        <Button asChild variant="secondary" className="w-full">
+                        <Link href="/my-donations">
+                            View All My Donations <ArrowRight className="ml-2" />
+                        </Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+            <div className="lg:col-span-1">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 font-headline">
+                            <DollarSign />
+                            My Donation Breakdown
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {Object.entries(donationTypeBreakdown).map(([type, data]) => {
+                            const Icon = donationTypeIcons[type as DonationType] || DollarSign;
+                            return (
+                                <div key={type} className="p-3 border rounded-lg flex items-center gap-4">
+                                    <Icon className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <p className="font-semibold">{type}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            ₹{data.total.toLocaleString()} ({data.count} {data.count > 1 ? 'donations' : 'donation'})
+                                        </p>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                         {Object.keys(donationTypeBreakdown).length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-4">No verified donations to display.</p>
+                         )}
+                    </CardContent>
+                </Card>
+            </div>
+       </div>
     </div>
   )
 }

@@ -1,9 +1,9 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getAllDonations } from "@/services/donation-service";
+import { getAllDonations, DonationType } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import Link from "next/link";
@@ -99,6 +99,27 @@ export default async function DashboardPage() {
       href: "/admin/beneficiaries",
     },
   ];
+  
+  const donationTypeBreakdown = allDonations
+    .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+    .reduce((acc, donation) => {
+      const type = donation.type;
+      if (!acc[type]) {
+        acc[type] = { total: 0, count: 0 };
+      }
+      acc[type].total += donation.amount;
+      acc[type].count += 1;
+      return acc;
+    }, {} as Record<DonationType, { total: number, count: number }>);
+
+  const donationTypeIcons: Record<DonationType, React.ElementType> = {
+    'Zakat': HandCoins,
+    'Sadaqah': Gift,
+    'Fitr': Wheat,
+    'Lillah': Building,
+    'Kaffarah': Shield,
+    'Split': DollarSign
+  }
 
 
   return (
@@ -251,8 +272,36 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-headline">
+                    <DollarSign />
+                    Donation Type Breakdown
+                </CardTitle>
+                <CardDescription>
+                    A breakdown of verified funds received by category.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                 {Object.entries(donationTypeBreakdown).map(([type, data]) => {
+                    const Icon = donationTypeIcons[type as DonationType] || DollarSign;
+                    return (
+                        <Link href={`/admin/donations?type=${type}`} key={type}>
+                            <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors">
+                                <Icon className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                                <div>
+                                    <p className="font-semibold text-lg">{type}</p>
+                                    <p className="text-2xl font-bold text-foreground">₹{data.total.toLocaleString()}</p>
+                                    <p className="text-xs text-muted-foreground">{data.count} donations</p>
+                                </div>
+                            </div>
+                        </Link>
+                    )
+                })}
+            </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
-
