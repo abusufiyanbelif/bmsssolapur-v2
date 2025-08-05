@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, Edit, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX } from "lucide-react";
@@ -163,16 +163,6 @@ export default function UserManagementPage() {
         const isCurrentUser = user.id === currentUserId;
         const isProtectedUser = isSystemAdmin || isCurrentUser;
 
-        const hasOtherActions = !isProtectedUser;
-
-        if (!hasOtherActions) {
-            return (
-                <Link href={`/admin/user-management/${user.id}/edit`} className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
-                    <Edit className="mr-2 h-4 w-4" /> Manage
-                </Link>
-            )
-        }
-
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -183,14 +173,14 @@ export default function UserManagementPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     {user.isActive ? (
-                            <DropdownMenuItem onSelect={async () => {
+                        <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, false);
                             if (result.success) onStatusToggled(false);
                         }}>
                             <UserX className="mr-2 h-4 w-4" /> Deactivate
                         </DropdownMenuItem>
                     ) : (
-                            <DropdownMenuItem onSelect={async () => {
+                        <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, true);
                             if (result.success) onStatusToggled(true);
                         }}>
@@ -198,21 +188,18 @@ export default function UserManagementPage() {
                         </DropdownMenuItem>
                     )}
 
-                    {!isProtectedUser && (
-                        <>
-                            <DropdownMenuSeparator />
-                            <DeleteConfirmationDialog
-                                itemType="user"
-                                itemName={user.name}
-                                onDelete={() => handleDeleteUser(user.id!)}
-                                onSuccess={onUserDeleted}
-                            >
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </DropdownMenuItem>
-                            </DeleteConfirmationDialog>
-                        </>
-                    )}
+                    <DropdownMenuSeparator />
+                    
+                    <DeleteConfirmationDialog
+                        itemType="user"
+                        itemName={user.name}
+                        onDelete={() => handleDeleteUser(user.id!)}
+                        onSuccess={onUserDeleted}
+                    >
+                         <DropdownMenuItem disabled={isProtectedUser} onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                    </DeleteConfirmationDialog>
                 </DropdownMenuContent>
             </DropdownMenu>
         );
