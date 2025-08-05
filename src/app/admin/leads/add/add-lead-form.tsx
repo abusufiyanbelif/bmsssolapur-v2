@@ -50,7 +50,7 @@ import {
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
-const donationTypes: DonationType[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
+const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
@@ -460,56 +460,67 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                 />
             )}
             
-             <FormField
-                control={form.control}
-                name="acceptableDonationTypes"
-                render={() => (
-                    <FormItem className="space-y-3 p-4 border rounded-lg">
-                    <div className="mb-4">
-                        <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
-                        <FormDescription>
-                        Select which types of donations can be allocated to this lead.
-                        </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {donationTypes.map((type) => (
-                        <FormField
-                            key={type}
-                            control={form.control}
-                            name="acceptableDonationTypes"
-                            render={({ field }) => {
-                            return (
-                                <FormItem
-                                key={type}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value?.includes(type)}
-                                    onCheckedChange={(checked) => {
-                                        return checked
-                                        ? field.onChange([...(field.value || []), type])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                                (value) => value !== type
-                                            )
-                                            )
-                                    }}
-                                    />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                    {type}
-                                </FormLabel>
-                                </FormItem>
-                            )
-                            }}
-                        />
-                        ))}
-                    </div>
-                    <FormMessage />
+            <FormField
+              control={form.control}
+              name="acceptableDonationTypes"
+              render={() => (
+                <FormItem className="space-y-3 p-4 border rounded-lg">
+                  <div className="mb-4">
+                    <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                    <FormDescription>
+                      Select which types of donations can be allocated to this lead.
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 font-bold">
+                        <FormControl>
+                            <Checkbox
+                                checked={form.watch('acceptableDonationTypes').length === donationTypes.length}
+                                onCheckedChange={(checked) => {
+                                    form.setValue('acceptableDonationTypes', checked ? donationTypes : []);
+                                }}
+                            />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                            Any
+                        </FormLabel>
                     </FormItem>
-                )}
-                />
+
+                    {donationTypes.map((type) => (
+                      <FormField
+                        key={type}
+                        control={form.control}
+                        name="acceptableDonationTypes"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={type}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(type)}
+                                  onCheckedChange={(checked) => {
+                                    const newValues = checked
+                                      ? [...(field.value || []), type]
+                                      : field.value?.filter((value) => value !== type);
+                                    field.onChange(newValues);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {type}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField

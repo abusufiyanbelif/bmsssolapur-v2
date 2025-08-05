@@ -43,7 +43,7 @@ import { Campaign, getAllCampaigns } from "@/services/campaign-service";
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
 const leadStatuses = ["Pending", "Partial", "Closed"] as const;
 const leadVerificationStatuses = ["Pending", "Verified", "Rejected"] as const;
-const donationTypes: DonationType[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
+const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
 
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other'>, string[]> = {
@@ -341,55 +341,66 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                 )}
 
                 <FormField
-                control={form.control}
-                name="acceptableDonationTypes"
-                render={() => (
+                  control={form.control}
+                  name="acceptableDonationTypes"
+                  render={() => (
                     <FormItem className="space-y-3 p-4 border rounded-lg">
-                    <div className="mb-4">
+                      <div className="mb-4">
                         <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
                         <FormDescription>
-                        Select which types of donations can be allocated to this lead.
+                          Select which types of donations can be allocated to this lead.
                         </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 font-bold">
+                            <FormControl>
+                                <Checkbox
+                                    checked={form.watch('acceptableDonationTypes').length === donationTypes.length}
+                                    onCheckedChange={(checked) => {
+                                        form.setValue('acceptableDonationTypes', checked ? donationTypes : [], { shouldDirty: true });
+                                    }}
+                                    disabled={!isEditing}
+                                />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                                Any
+                            </FormLabel>
+                        </FormItem>
                         {donationTypes.map((type) => (
-                        <FormField
+                          <FormField
                             key={type}
                             control={form.control}
                             name="acceptableDonationTypes"
                             render={({ field }) => {
-                            return (
+                              return (
                                 <FormItem
-                                key={type}
-                                className="flex flex-row items-start space-x-3 space-y-0"
+                                  key={type}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
                                 >
-                                <FormControl>
+                                  <FormControl>
                                     <Checkbox
-                                    checked={field.value?.includes(type)}
-                                    onCheckedChange={(checked) => {
-                                        return checked
-                                        ? field.onChange([...(field.value || []), type])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                                (value) => value !== type
-                                            )
-                                            )
-                                    }}
-                                     disabled={!isEditing}
+                                      checked={field.value?.includes(type)}
+                                      onCheckedChange={(checked) => {
+                                        const newValues = checked
+                                          ? [...(field.value || []), type]
+                                          : field.value?.filter((value) => value !== type);
+                                        field.onChange(newValues);
+                                      }}
+                                      disabled={!isEditing}
                                     />
-                                </FormControl>
-                                <FormLabel className="font-normal">
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
                                     {type}
-                                </FormLabel>
+                                  </FormLabel>
                                 </FormItem>
-                            )
+                              );
                             }}
-                        />
+                          />
                         ))}
-                    </div>
-                    <FormMessage />
+                      </div>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
