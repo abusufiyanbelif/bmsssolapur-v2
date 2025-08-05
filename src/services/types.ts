@@ -46,7 +46,7 @@ export interface User {
     pincode?: string;
   };
   gender?: 'Male' | 'Female' | 'Other';
-  beneficiaryType?: 'Adult' | 'Old Age' | 'Kid';
+  beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family';
   isAnonymous?: boolean; 
   anonymousId?: string; 
   occupation?: string;

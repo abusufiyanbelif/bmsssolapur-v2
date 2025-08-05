@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { createUser } from "@/services/user-service";
@@ -24,7 +25,7 @@ export async function handleAddUser(
     roles: formData.getAll("roles") as UserRole[],
     isAnonymous: formData.get("isAnonymous") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
-    beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | undefined,
+    beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
     
     addressLine1: formData.get("addressLine1") as string | undefined,
     city: formData.get("city") as string | undefined,

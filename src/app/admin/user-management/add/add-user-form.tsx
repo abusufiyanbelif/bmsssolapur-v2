@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,7 +53,7 @@ const formSchema = z.object({
   createProfile: z.boolean().default(false),
   isAnonymous: z.boolean().default(false),
   gender: z.enum(["Male", "Female", "Other"]),
-  beneficiaryType: z.enum(["Adult", "Old Age", "Kid"]).optional(),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -527,6 +528,12 @@ export function AddUserForm() {
                                 <RadioGroupItem value="Kid" />
                                 </FormControl>
                                 <FormLabel className="font-normal">Kid</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="Family" />
+                                </FormControl>
+                                <FormLabel className="font-normal">Family</FormLabel>
                             </FormItem>
                             </RadioGroup>
                         </FormControl>

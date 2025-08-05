@@ -36,7 +36,7 @@ const profileFormSchema = z.object({
   country: z.string().optional(),
   pincode: z.string().optional(),
   gender: z.enum(['Male', 'Female', 'Other']),
-  beneficiaryType: z.enum(["Adult", "Old Age", "Kid"]).optional(),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family"]).optional(),
   occupation: z.string().optional(),
   familyMembers: z.coerce.number().optional(),
   isWidow: z.boolean().default(false),
@@ -450,6 +450,12 @@ export default function ProfilePage() {
                                                             <RadioGroupItem value="Kid" />
                                                             </FormControl>
                                                             <FormLabel className="font-normal">Kid</FormLabel>
+                                                        </FormItem>
+                                                         <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                            <RadioGroupItem value="Family" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">Family</FormLabel>
                                                         </FormItem>
                                                         </RadioGroup>
                                                     </FormControl>

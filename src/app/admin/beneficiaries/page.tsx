@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,11 +31,12 @@ import type { User } from "@/services/types";
 type StatusFilter = 'all' | 'active' | 'inactive';
 const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 
-type TypeFilter = 'all' | 'Adult' | 'Kid' | 'Old Age' | 'Widow';
+type TypeFilter = 'all' | 'Adult' | 'Kid' | 'Old Age' | 'Widow' | 'Family';
 const typeOptions: { value: TypeFilter, label: string, icon?: React.ElementType }[] = [
     { value: 'all', label: 'All Types' },
     { value: 'Adult', label: 'Adults', icon: PersonStanding },
     { value: 'Kid', label: 'Kids', icon: Baby },
+    { value: 'Family', label: 'Families', icon: Home },
     { value: 'Widow', label: 'Widows', icon: HeartHandshake },
 ];
 
@@ -64,7 +65,7 @@ function BeneficiariesPageContent() {
     let initialTypeFilter: TypeFilter = 'all';
     if(widowFromUrl === 'true') {
         initialTypeFilter = 'Widow';
-    } else if (typeFromUrl && ['Adult', 'Kid', 'Old Age'].includes(typeFromUrl)) {
+    } else if (typeFromUrl && ['Adult', 'Kid', 'Old Age', 'Family'].includes(typeFromUrl)) {
         initialTypeFilter = typeFromUrl as TypeFilter;
     }
 
