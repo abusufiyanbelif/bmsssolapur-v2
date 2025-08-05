@@ -45,6 +45,12 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
                 break;
             case 'username':
                 user = await getUserByName(identifier);
+                if (!user) {
+                    user = await getUserByEmail(identifier);
+                }
+                if (!user) {
+                    user = await getUserByPhone(identifier);
+                }
                 break;
             default:
                 return { success: false, error: "Invalid login method specified." };

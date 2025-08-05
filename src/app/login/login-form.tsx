@@ -222,7 +222,7 @@ export function LoginForm() {
 
                     <div className="space-y-2">
                       <Label htmlFor="identifier">{
-                        loginMethod === 'username' ? 'Username' :
+                        loginMethod === 'username' ? 'Username / Email / Phone' :
                         loginMethod === 'email' ? 'Email Address' : 'Phone Number (10 digits)'
                       }</Label>
                       <Input 
