@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users, User, Home, Loader2 } from "lucide-react";
+import { LogIn, LogOut, Menu, Users, User, Home, Loader2, Bell, AlertTriangle } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
@@ -21,14 +21,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "./nav";
-import type { User as UserType } from "@/services/user-service";
+import type { User as UserType, Lead as LeadType } from "@/services/types";
 import { getUser } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
+import { formatDistanceToNow } from "date-fns";
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
     const [isSessionReady, setIsSessionReady] = useState(false);
+    const [pendingLeads, setPendingLeads] = useState<LeadType[]>([]);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -57,32 +60,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 const fetchedUser = await getUser(storedUserId);
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
-                    // Ensure the saved role is actually one the user has, otherwise default
                     const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
                     
                     if (localStorage.getItem('activeRole') !== activeRole) {
                          localStorage.setItem('activeRole', activeRole);
                     }
                     
-                    setUser({
+                     const userData = {
                         ...fetchedUser,
                         isLoggedIn: true,
                         activeRole: activeRole,
                         initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
                         avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
-                    });
+                    };
+                    setUser(userData);
+                    
+                    if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
+                        const allLeads = await getAllLeads();
+                        setPendingLeads(allLeads.filter(l => l.verifiedStatus === 'Pending'));
+                    }
 
-                    // Show role switcher on first load after login if flag is set and user has multiple roles
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
-                        localStorage.removeItem('showRoleSwitcher'); // Consume the flag
-                        // Session is NOT ready until a role is chosen
+                        localStorage.removeItem('showRoleSwitcher'); 
                         setIsSessionReady(false);
                     } else {
                         setIsSessionReady(true);
                     }
                 } else {
-                    // If user ID is invalid, log them out.
                     handleLogout();
                 }
             } else {
@@ -91,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }
         };
         checkUser();
-    }, []); // Run only once on initial mount
+    }, []); 
 
 
     const handleRoleChange = (newRole: string) => {
@@ -116,7 +121,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
         
-        // This is a robust way to ensure the entire app re-syncs with the new role.
         window.location.reload();
     };
     
@@ -134,7 +138,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     const handleOpenChange = (open: boolean) => {
-        // Prevent closing the dialog if a role switch is mandatory for the session to be ready
         if (!open && !isSessionReady && user && user.roles.length > 1) {
             return; 
         }
@@ -144,7 +147,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // Pass user and activeRole as props to children
     const childrenWithProps = Children.map(children, child => {
         if (isValidElement(child)) {
             return cloneElement(child as React.ReactElement<any>, { user, activeRole: user?.activeRole });
@@ -164,6 +166,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const activeRole = user.activeRole;
+    const notificationCount = pendingLeads.length; // Can be expanded for other roles
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
@@ -222,6 +225,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </Sheet>
                      <div className="w-full flex-1 flex justify-end items-center gap-4">
                         {user.isLoggedIn ? (
+                            <>
+                             {notificationCount > 0 && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="relative">
+                                            <Bell className="h-5 w-5" />
+                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                                {notificationCount}
+                                            </span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-80" align="end">
+                                        <DropdownMenuLabel>Pending Actions</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {pendingLeads.slice(0, 5).map(lead => (
+                                            <DropdownMenuItem key={lead.id} asChild>
+                                                 <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start">
+                                                    <p className="font-semibold text-destructive">Verify: {lead.name}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated.toDate(), { addSuffix: true })}
+                                                    </p>
+                                                 </Link>
+                                            </DropdownMenuItem>
+                                        ))}
+                                         {notificationCount > 5 && (
+                                            <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem asChild>
+                                                <Link href="/admin/leads?verification=Pending">View All Pending Leads</Link>
+                                            </DropdownMenuItem>
+                                            </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -236,7 +275,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                         <div className="flex flex-col space-y-1">
                                             <p className="text-sm font-medium leading-none">{user.name}</p>
                                             <p className="text-xs leading-none text-muted-foreground">
-                                                {user.userId}
+                                                ID: {user.userId}
                                             </p>
                                         </div>
                                     </DropdownMenuLabel>
@@ -266,6 +305,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                            </>
                         ) : (
                              <>
                                 {pathname !== '/login' && (
