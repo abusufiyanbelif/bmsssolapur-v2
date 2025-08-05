@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building } from "lucide-react";
+import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,8 @@ const allPrivileges: Privilege[] = [
     { name: "canViewBoardMembers", description: "Allows viewing the list of board members.", icon: Users, roles: [allRoles['Super Admin'], allRoles['Admin']] },
     { name: "canAddBoardMembers", description: "Allows adding new members to the board.", icon: UserPlus, roles: [allRoles['Super Admin']] },
     { name: "canRemoveBoardMembers", description: "Allows removing members from the board.", icon: Trash2, roles: [allRoles['Super Admin']] },
+    { name: "canManageOrganizationProfile", description: "Allows editing the organization's public profile and contact details.", icon: Building, roles: [allRoles['Super Admin']] },
+    { name: "canManageCampaigns", description: "Allows creating, editing, and deleting fundraising campaigns.", icon: Megaphone, roles: [allRoles['Super Admin'], allRoles['Admin']] },
     { name: "canAddBeneficiaries", description: "Allows creating new beneficiary profiles.", icon: UserPlus, roles: [allRoles['Super Admin'], allRoles['Admin']] },
     { name: "canEditBeneficiaries", description: "Allows editing existing beneficiary profiles.", icon: User, roles: [allRoles['Super Admin'], allRoles['Admin']] },
     { name: "canDeleteBeneficiaries", description: "Allows deleting beneficiary profiles.", icon: Trash2, roles: [allRoles['Super Admin']] },
@@ -49,7 +51,6 @@ const allPrivileges: Privilege[] = [
     { name: "canManageDonations", description: "Allows recording, editing, and managing all donations.", icon: HandCoins, roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canVerifyDonations", description: "Allows verifying the authenticity of received donations.", icon: DollarSign, roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canViewFinancials", description: "Allows viewing financial reports and dashboards.", icon: BarChart2, roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
-    { name: "canManageOrganizationProfile", description: "Allows editing the organization's public profile and contact details.", icon: Building, roles: [allRoles['Super Admin']] },
     { name: "canExportData", description: "Allows exporting data from the system, like donation or user lists.", icon: Download, roles: [allRoles['Super Admin']] },
     { name: "canManageSettings", description: "Allows changing global application settings.", icon: Settings, roles: [allRoles['Super Admin']] },
 
