@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -14,10 +15,12 @@ import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle, UserPlus } from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
+  firstName: z.string().min(2, "First name must be at least 2 characters."),
+  lastName: z.string().min(1, "Last name is required."),
+  email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
+  userId: z.string().optional(),
 });
 
 type RegisterFormValues = z.infer<typeof formSchema>;
@@ -30,18 +33,22 @@ export function RegisterForm() {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       phone: "",
       password: "",
+      userId: "",
     },
   });
 
   const onSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     const formData = new FormData();
-    formData.append("name", values.name);
-    formData.append("email", values.email);
+    formData.append("firstName", values.firstName);
+    formData.append("lastName", values.lastName);
+    if(values.email) formData.append("email", values.email);
+    if(values.userId) formData.append("userId", values.userId);
     formData.append("phone", values.phone);
     formData.append("password", values.password);
 
@@ -68,14 +75,42 @@ export function RegisterForm() {
   return (
     <Form {...form}>
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                    <Input type="text" placeholder="Enter your first name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                    <Input type="text" placeholder="Enter your last name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+         <FormField
           control={form.control}
-          name="name"
+          name="userId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>User ID (Optional)</FormLabel>
               <FormControl>
-                <Input type="text" placeholder="Enter your full name" {...field} />
+                <Input type="text" placeholder="Create a custom user ID" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -86,7 +121,7 @@ export function RegisterForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email Address</FormLabel>
+              <FormLabel>Email Address (Optional)</FormLabel>
               <FormControl>
                 <Input type="email" placeholder="you@example.com" {...field} />
               </FormControl>

@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { getUserByEmail, getUserByPhone, createUser, User } from '@/services/user-service';
@@ -15,30 +16,34 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
     return { success: false, error: "Firebase is not configured. Cannot process registration." };
   }
 
-  const name = formData.get("name") as string;
+  const firstName = formData.get("firstName") as string;
+  const lastName = formData.get("lastName") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const phone = formData.get("phone") as string;
+  const userId = formData.get("userId") as string;
 
-  if (!name || !email || !password || !phone) {
-    return { success: false, error: "Name, email, phone, and password are required." };
+  if (!firstName || !lastName || !phone || !password) {
+    return { success: false, error: "First Name, Last Name, Phone, and Password are required." };
   }
    if (password.length < 6) {
     return { success: false, error: "Password must be at least 6 characters long." };
   }
-   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return { success: false, error: "Please enter a valid email address." };
     }
-    if (!/^[0-9]{10}$/.test(phone)) {
-        return { success: false, error: "Please enter a valid 10-digit phone number." };
-    }
+  if (!/^[0-9]{10}$/.test(phone)) {
+      return { success: false, error: "Please enter a valid 10-digit phone number." };
+  }
 
 
   try {
     // Check if user already exists
-    const existingUserByEmail = await getUserByEmail(email);
-    if (existingUserByEmail) {
-      return { success: false, error: "A user with this email address already exists. Please login instead." };
+    if (email) {
+        const existingUserByEmail = await getUserByEmail(email);
+        if (existingUserByEmail) {
+        return { success: false, error: "A user with this email address already exists. Please login instead." };
+        }
     }
      const existingPhone = await getUserByPhone(phone);
     if (existingPhone) {
@@ -46,10 +51,13 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
     }
 
     const newUser: Omit<User, 'id'> = {
-      name,
-      email,
+      name: `${firstName} ${lastName}`.trim(),
+      firstName,
+      lastName,
+      email: email || undefined,
       phone,
       password,
+      userId: userId || undefined,
       roles: ["Donor"], // Default role for new registrations
       isActive: true,
       createdAt: Timestamp.now(),

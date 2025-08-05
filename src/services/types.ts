@@ -30,10 +30,11 @@ export type Privilege =
 
 export interface User {
   id?: string;
+  userId?: string; // Custom, user-defined ID
   name: string;
-  firstName?: string;
+  firstName: string;
   middleName?: string;
-  lastName?: string;
+  lastName: string;
   email?: string;
   phone: string;
   password?: string;

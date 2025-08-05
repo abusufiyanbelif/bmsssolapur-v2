@@ -158,6 +158,7 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
 ];
 
 const formSchema = z.object({
+  userId: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
@@ -203,6 +204,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      userId: user.userId || '',
       firstName: user.firstName,
       middleName: user.middleName || '',
       lastName: user.lastName,
@@ -231,6 +233,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   
   const handleCancel = () => {
       reset({
+          userId: user.userId || '',
           firstName: user.firstName,
           middleName: user.middleName || '',
           lastName: user.lastName,
@@ -325,6 +328,20 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
                     <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+                     <FormField
+                        control={form.control}
+                        name="userId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>User ID</FormLabel>
+                            <FormControl>
+                                <Input {...field} disabled />
+                            </FormControl>
+                             <FormDescription>The user's custom ID cannot be changed.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <FormField
                         control={form.control}

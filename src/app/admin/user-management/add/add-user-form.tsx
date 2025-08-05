@@ -42,11 +42,12 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
 ];
 
 const formSchema = z.object({
+  userId: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
-  email: z.string().email("Please enter a valid email address."),
-  phone: z.string().optional(),
+  email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
@@ -64,15 +65,6 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
-}).refine(data => {
-    // If creating a beneficiary profile, phone number is required
-    if (data.roles.includes("Beneficiary") && data.createProfile) {
-        return data.phone && /^[0-9]{10}$/.test(data.phone);
-    }
-    return true;
-}, {
-    message: "A valid 10-digit phone number is required to create a profile.",
-    path: ["phone"],
 });
 
 
@@ -116,11 +108,12 @@ export function AddUserForm() {
     setIsSubmitting(true);
     
     const formData = new FormData();
+    if(values.userId) formData.append("userId", values.userId);
     if(values.firstName) formData.append("firstName", values.firstName);
     if(values.middleName) formData.append("middleName", values.middleName);
     if(values.lastName) formData.append("lastName", values.lastName);
-    formData.append("email", values.email);
-    if(values.phone) formData.append("phone", values.phone);
+    if(values.email) formData.append("email", values.email);
+    formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
     if(values.createProfile) formData.append("createProfile", "on");
     if(values.isAnonymous) formData.append("isAnonymous", "on");
@@ -165,6 +158,20 @@ export function AddUserForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+        <FormField
+            control={form.control}
+            name="userId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>User ID (Optional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Create a custom user ID" {...field} />
+                </FormControl>
+                 <FormDescription>A unique identifier for this user.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <FormField
                 control={form.control}
@@ -212,7 +219,7 @@ export function AddUserForm() {
             name="email"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>Email Address (Optional)</FormLabel>
                 <FormControl>
                     <Input type="email" placeholder="user@example.com" {...field} />
                 </FormControl>

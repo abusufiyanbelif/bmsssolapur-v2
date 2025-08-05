@@ -17,6 +17,7 @@ export async function handleAddUser(
   formData: FormData
 ): Promise<FormState> {
   const rawFormData = {
+    userId: formData.get("userId") as string | undefined,
     firstName: formData.get("firstName") as string,
     middleName: formData.get("middleName") as string,
     lastName: formData.get("lastName") as string,
@@ -45,22 +46,18 @@ export async function handleAddUser(
     createProfile: formData.get("createProfile") === 'on',
   };
   
-  if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.email || rawFormData.roles.length === 0) {
-      return { success: false, error: "Missing required fields: Name, Email, and Role." };
-  }
-  
-  // If creating a beneficiary profile, phone is mandatory.
-  if (rawFormData.roles.includes('Beneficiary') && rawFormData.createProfile && !rawFormData.phone) {
-      return { success: false, error: "A phone number is required to create a beneficiary profile." };
+  if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
+      return { success: false, error: "Missing required fields: First Name, Last Name, Phone, and Role." };
   }
   
   try {
     const newUserData: Omit<User, 'id' | 'createdAt'> = {
         name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
+        userId: rawFormData.userId,
         firstName: rawFormData.firstName,
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
-        email: rawFormData.email,
+        email: rawFormData.email || undefined,
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: true, // Default to active
