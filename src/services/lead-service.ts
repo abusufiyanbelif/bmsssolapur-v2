@@ -39,6 +39,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
       helpRequested: leadData.helpRequested!,
       purpose: leadData.purpose!,
       donationType: leadData.donationType!,
+      acceptableDonationTypes: leadData.acceptableDonationTypes || [],
       helpGiven: 0,
       status: 'Pending',
       verifiedStatus: 'Pending',

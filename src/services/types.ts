@@ -124,6 +124,7 @@ export interface Lead {
   otherPurposeDetail?: string;
   category?: string;
   otherCategoryDetail?: string;
+  acceptableDonationTypes?: DonationType[];
   helpRequested: number;
   helpGiven: number;
   dueDate?: Date;

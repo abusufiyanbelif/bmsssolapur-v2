@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,7 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState, useEffect, useRef } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -49,6 +50,7 @@ import {
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
+const donationTypes: DonationType[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
@@ -73,6 +75,9 @@ const formSchema = z.object({
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
+  acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: "You have to select at least one donation type.",
+  }),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
@@ -144,6 +149,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
       isLoan: false,
       helpRequested: 0,
       campaignId: 'none',
+      acceptableDonationTypes: [],
     },
   });
 
@@ -176,6 +182,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
+    values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
     formData.append("isLoan", values.isLoan ? "on" : "off");
@@ -203,6 +210,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
         beneficiaryType: 'existing',
         isLoan: false,
         helpRequested: 0,
+        acceptableDonationTypes: [],
       });
     } else {
       toast({
@@ -451,6 +459,57 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     )}
                 />
             )}
+            
+             <FormField
+                control={form.control}
+                name="acceptableDonationTypes"
+                render={() => (
+                    <FormItem className="space-y-3 p-4 border rounded-lg">
+                    <div className="mb-4">
+                        <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                        <FormDescription>
+                        Select which types of donations can be allocated to this lead.
+                        </FormDescription>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {donationTypes.map((type) => (
+                        <FormField
+                            key={type}
+                            control={form.control}
+                            name="acceptableDonationTypes"
+                            render={({ field }) => {
+                            return (
+                                <FormItem
+                                key={type}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value?.includes(type)}
+                                    onCheckedChange={(checked) => {
+                                        return checked
+                                        ? field.onChange([...(field.value || []), type])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                                (value) => value !== type
+                                            )
+                                            )
+                                    }}
+                                    />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                    {type}
+                                </FormLabel>
+                                </FormItem>
+                            )
+                            }}
+                        />
+                        ))}
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField

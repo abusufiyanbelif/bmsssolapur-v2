@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
@@ -53,6 +54,7 @@ export async function handleUpdateLead(
         donationType: purposeCategoryMap[purpose], // Infer category from purpose
         category: rawFormData.category as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
+        acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
         helpRequested: parseFloat(rawFormData.helpRequested as string),
         dueDate: rawFormData.dueDate ? new Date(rawFormData.dueDate as string) : undefined,
         caseDetails: rawFormData.caseDetails as string | undefined,

@@ -1,11 +1,12 @@
 
+
 import { getLead, Lead } from "@/services/lead-service";
 import { getUser, User } from "@/services/user-service";
 import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -105,7 +106,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                  <div className="flex items-center">
                                      <span className="text-muted-foreground mr-2">Type:</span> 
                                      <Badge variant="secondary">{lead.isLoan ? "Loan" : "Aid"}</Badge>
-                                </div>
+                                 </div>
                                 {dueDate && (
                                      <div className="flex items-center">
                                          <span className="text-muted-foreground mr-2">Due Date:</span> 
@@ -139,6 +140,19 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                 <Label>Case Details</Label>
                                 <p className="text-sm text-muted-foreground mt-1">{lead.caseDetails || "No details provided."}</p>
                             </div>
+                             {lead.acceptableDonationTypes && lead.acceptableDonationTypes.length > 0 && (
+                                <div>
+                                    <Label className="flex items-center gap-2">
+                                        <Coins />
+                                        Acceptable Donation Types
+                                    </Label>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {lead.acceptableDonationTypes.map(type => (
+                                            <Badge key={type} variant="secondary">{type}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                             )}
                          </CardContent>
                     </Card>
 

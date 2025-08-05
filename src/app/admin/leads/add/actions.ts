@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId } from "@/services/lead-service";
@@ -50,6 +51,7 @@ export async function handleAddLead(
       otherPurposeDetail: formData.get("otherPurposeDetail") as string | undefined,
       category: formData.get("category") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
+      acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
       helpRequested: parseFloat(formData.get("helpRequested") as string),
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
       isLoan: formData.get("isLoan") === 'on',
@@ -125,6 +127,7 @@ export async function handleAddLead(
         donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose
         category: rawFormData.category,
         otherCategoryDetail: rawFormData.category === 'Other' ? rawFormData.otherCategoryDetail : undefined,
+        acceptableDonationTypes: rawFormData.acceptableDonationTypes,
         helpRequested: rawFormData.helpRequested,
         dueDate: rawFormData.dueDate,
         isLoan: rawFormData.isLoan,

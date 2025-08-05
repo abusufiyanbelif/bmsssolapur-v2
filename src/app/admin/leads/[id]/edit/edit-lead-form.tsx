@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,7 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, Info, Edit, Save, X } from "lucide-react";
-import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus } from "@/services/lead-service";
+import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -42,6 +43,8 @@ import { Campaign, getAllCampaigns } from "@/services/campaign-service";
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
 const leadStatuses = ["Pending", "Partial", "Closed"] as const;
 const leadVerificationStatuses = ["Pending", "Verified", "Rejected"] as const;
+const donationTypes: DonationType[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
+
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
@@ -58,6 +61,9 @@ const formSchema = z.object({
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
+  acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: "You have to select at least one donation type.",
+  }),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   dueDate: z.date().optional(),
   caseDetails: z.string().optional(),
@@ -112,6 +118,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
       otherPurposeDetail: lead.otherPurposeDetail || '',
       category: lead.category || '',
       otherCategoryDetail: lead.otherCategoryDetail || '',
+      acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
       dueDate: lead.dueDate ? (lead.dueDate as any).toDate() : undefined,
       caseDetails: lead.caseDetails || '',
@@ -133,6 +140,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
         otherPurposeDetail: lead.otherPurposeDetail || '',
         category: lead.category || '',
         otherCategoryDetail: lead.otherCategoryDetail || '',
+        acceptableDonationTypes: lead.acceptableDonationTypes || [],
         helpRequested: lead.helpRequested,
         dueDate: lead.dueDate ? (lead.dueDate as any).toDate() : undefined,
         caseDetails: lead.caseDetails || '',
@@ -162,6 +170,7 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
+    values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
     if(values.isLoan) formData.append("isLoan", "on");
@@ -330,6 +339,58 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                         )}
                     />
                 )}
+
+                <FormField
+                control={form.control}
+                name="acceptableDonationTypes"
+                render={() => (
+                    <FormItem className="space-y-3 p-4 border rounded-lg">
+                    <div className="mb-4">
+                        <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                        <FormDescription>
+                        Select which types of donations can be allocated to this lead.
+                        </FormDescription>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {donationTypes.map((type) => (
+                        <FormField
+                            key={type}
+                            control={form.control}
+                            name="acceptableDonationTypes"
+                            render={({ field }) => {
+                            return (
+                                <FormItem
+                                key={type}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value?.includes(type)}
+                                    onCheckedChange={(checked) => {
+                                        return checked
+                                        ? field.onChange([...(field.value || []), type])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                                (value) => value !== type
+                                            )
+                                            )
+                                    }}
+                                     disabled={!isEditing}
+                                    />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                    {type}
+                                </FormLabel>
+                                </FormItem>
+                            )
+                            }}
+                        />
+                        ))}
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField
