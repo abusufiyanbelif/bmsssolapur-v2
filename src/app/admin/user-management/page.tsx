@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -164,6 +163,16 @@ export default function UserManagementPage() {
         const isCurrentUser = user.id === currentUserId;
         const isProtectedUser = isSystemAdmin || isCurrentUser;
 
+        const hasOtherActions = !isProtectedUser;
+
+        if (!hasOtherActions) {
+            return (
+                <Link href={`/admin/user-management/${user.id}/edit`} className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
+                    <Edit className="mr-2 h-4 w-4" /> Manage
+                </Link>
+            )
+        }
+
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -173,28 +182,20 @@ export default function UserManagementPage() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                        <Link href={`/admin/user-management/${user.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" /> Manage
-                        </Link>
-                    </DropdownMenuItem>
-
-                    {!isProtectedUser && (
-                        user.isActive ? (
-                             <DropdownMenuItem onSelect={async () => {
-                                const result = await handleToggleUserStatus(user.id!, false);
-                                if (result.success) onStatusToggled(false);
-                            }}>
-                                <UserX className="mr-2 h-4 w-4" /> Deactivate
-                            </DropdownMenuItem>
-                        ) : (
-                             <DropdownMenuItem onSelect={async () => {
-                                const result = await handleToggleUserStatus(user.id!, true);
-                                if (result.success) onStatusToggled(true);
-                            }}>
-                                <UserCheck className="mr-2 h-4 w-4" /> Activate
-                            </DropdownMenuItem>
-                        )
+                    {user.isActive ? (
+                            <DropdownMenuItem onSelect={async () => {
+                            const result = await handleToggleUserStatus(user.id!, false);
+                            if (result.success) onStatusToggled(false);
+                        }}>
+                            <UserX className="mr-2 h-4 w-4" /> Deactivate
+                        </DropdownMenuItem>
+                    ) : (
+                            <DropdownMenuItem onSelect={async () => {
+                            const result = await handleToggleUserStatus(user.id!, true);
+                            if (result.success) onStatusToggled(true);
+                        }}>
+                            <UserCheck className="mr-2 h-4 w-4" /> Activate
+                        </DropdownMenuItem>
                     )}
 
                     {!isProtectedUser && (
@@ -235,7 +236,11 @@ export default function UserManagementPage() {
                 {paginatedUsers.map((user, index) => (
                     <TableRow key={user.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell className="font-medium">
+                            <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                                {user.name}
+                            </Link>
+                        </TableCell>
                         <TableCell>
                             <div className="flex flex-col">
                                 <span>{user.phone}</span>
@@ -268,7 +273,12 @@ export default function UserManagementPage() {
                 <Card key={user.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {user.name}</CardTitle>
+                            <CardTitle className="text-lg">
+                                #{ (currentPage - 1) * itemsPerPage + index + 1 }: 
+                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary ml-2">
+                                    {user.name}
+                                </Link>
+                            </CardTitle>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
