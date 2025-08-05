@@ -48,6 +48,7 @@ export default function UserManagementPage() {
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -83,6 +84,8 @@ export default function UserManagementPage() {
     
     useEffect(() => {
         fetchUsers();
+        const storedUserId = localStorage.getItem('userId');
+        setCurrentUserId(storedUserId);
     }, []);
     
     const onUserDeleted = () => {
@@ -145,7 +148,8 @@ export default function UserManagementPage() {
     }, [itemsPerPage]);
 
     const renderActions = (user: User) => {
-        const isDeletable = !user.roles.includes('Super Admin') && user.name !== 'Donor' && user.name !== 'Beneficiary' && user.name !== 'Anonymous Donor';
+        // Prevent deleting the currently logged-in user or the original super admin
+        const isDeletable = user.userId !== currentUserId && user.userId !== 'admin.user';
 
         return (
             <DropdownMenu>
