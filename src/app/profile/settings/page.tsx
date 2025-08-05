@@ -103,7 +103,7 @@ export default function ProfileSettingsPage() {
         if (userId) {
             fetchUser();
         }
-    }, [userId, form]);
+    }, [userId]);
 
 
     async function onSubmit(values: ProfileFormValues) {
