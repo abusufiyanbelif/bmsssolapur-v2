@@ -93,50 +93,50 @@ function SetPasswordSection({ userId }: { userId: string }) {
                  <CardDescription>These actions are irreversible. Please proceed with caution.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end justify-between rounded-lg border border-destructive/20 p-4 gap-4">
-                        <div className="flex-grow space-y-2">
-                             <FormField
-                                control={form.control}
-                                name="newPassword"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-base">Set New Password</FormLabel>
-                                        <FormControl>
-                                            <Input type="password" placeholder="Enter new password" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                            <AlertDialogTrigger asChild>
-                               <Button variant="destructive" type="button" disabled={!form.formState.isValid}>
-                                    <RefreshCw className="mr-2 h-4 w-4" /> Set Password
-                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
+                 <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="destructive" type="button">
+                            <RefreshCw className="mr-2 h-4 w-4" /> Set New Password
+                       </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)}>
                                 <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogTitle>Set a New Password</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will change the user's password immediately. They will lose access with their old password.
+                                    This action will change the user's password immediately. They will lose access with their old password.
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
+                                <div className="py-4">
+                                     <FormField
+                                        control={form.control}
+                                        name="newPassword"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>New Password</FormLabel>
+                                                <FormControl>
+                                                    <Input type="password" placeholder="Enter new password" {...field} autoFocus />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <AlertDialogFooter>
                                 <AlertDialogCancel disabled={isSubmitting} onClick={() => setIsDialogOpen(false)}>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                    onClick={form.handleSubmit(onSubmit)}
-                                    disabled={isSubmitting}
+                                    type="submit"
+                                    disabled={isSubmitting || !form.formState.isValid}
                                 >
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Yes, set new password
+                                    Set Password
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </form>
-                </Form>
+                            </form>
+                        </Form>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );
