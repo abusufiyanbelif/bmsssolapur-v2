@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { KeySquare, ShieldCheck, UserCog, FileText, CheckSquare, HandCoins, DollarSign, BarChart2, Download, Settings } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { KeySquare, ShieldCheck, UserCog, FileText, CheckSquare, HandCoins, DollarSign, BarChart2, Download, Settings, Users, UserPlus, Trash2 } from "lucide-react";
 
 type Privilege = {
   name: string;
@@ -10,7 +11,10 @@ type Privilege = {
 
 const allPrivileges: Privilege[] = [
     { name: "all", description: "Grants unrestricted access to all features and settings.", icon: ShieldCheck },
-    { name: "canManageUsers", description: "Allows creating, editing, and deleting user accounts.", icon: UserCog },
+    { name: "canManageUsers", description: "Allows creating, editing, and deleting all user accounts.", icon: UserCog },
+    { name: "canAddBeneficiaries", description: "Allows creating new beneficiary profiles.", icon: UserPlus },
+    { name: "canEditBeneficiaries", description: "Allows editing existing beneficiary profiles.", icon: Users },
+    { name: "canDeleteBeneficiaries", description: "Allows deleting beneficiary profiles.", icon: Trash2 },
     { name: "canManageLeads", description: "Allows creating, editing, and managing help requests (leads).", icon: FileText },
     { name: "canVerifyLeads", description: "Allows verifying or rejecting the authenticity of a lead.", icon: CheckSquare },
     { name: "canManageDonations", description: "Allows recording, editing, and managing all donations.", icon: HandCoins },
@@ -36,17 +40,29 @@ export default function UserPrivilegesPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {allPrivileges.map(privilege => (
-                        <div key={privilege.name} className="flex items-start gap-4 rounded-lg border p-4">
-                            <privilege.icon className="h-8 w-8 text-accent flex-shrink-0" />
-                            <div>
-                                <p className="font-semibold">{privilege.name}</p>
-                                <p className="text-sm text-muted-foreground">{privilege.description}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[50px]">Sr. No.</TableHead>
+                            <TableHead>Privilege</TableHead>
+                            <TableHead>Description</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {allPrivileges.map((privilege, index) => (
+                            <TableRow key={privilege.name}>
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell className="font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <privilege.icon className="h-4 w-4 text-muted-foreground" />
+                                        <span>{privilege.name}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>{privilege.description}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </CardContent>
         </Card>
     </div>
