@@ -89,6 +89,21 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
     fetchQuotes();
 
   }, [user, activeRole]);
+  
+   const getPageTitle = () => {
+        if (!user || !user.isLoggedIn) {
+            return "Welcome";
+        }
+        switch(activeRole) {
+            case 'Donor': return 'Donor Dashboard';
+            case 'Beneficiary': return 'Beneficiary Dashboard';
+            case 'Admin':
+            case 'Super Admin':
+            case 'Finance Admin':
+                return 'Admin Dashboard';
+            default: return `Welcome, ${user.name}`;
+        }
+    }
 
   const renderContent = () => {
     if (loading) {
@@ -122,8 +137,8 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
         dashboardContent = (
             <Card>
                 <CardHeader>
-                    <CardTitle>Admin Dashboard</CardTitle>
-                    <CardDescription>Welcome to the admin control panel. Use the navigation menu to manage users, donations, and leads.</CardDescription>
+                    <CardTitle>Welcome, Administrator</CardTitle>
+                    <CardDescription>You have successfully logged into the admin control panel. Please use the navigation menu on the left to manage the application's users, donations, and leads.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button asChild>
@@ -143,11 +158,11 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
     <div className="flex-1 space-y-6">
       <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
-            Welcome{loading || !user?.isLoggedIn ? '' : `, ${user?.name || 'Guest'}`}!
+            {getPageTitle()}
         </h2>
         <p className="text-muted-foreground">
           {activeRole && user?.isLoggedIn ? (
-            <>You are currently viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.</>
+            <>Welcome back, {user.name}. You are viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.</>
           ) : (
             "Please log in to continue."
           )}

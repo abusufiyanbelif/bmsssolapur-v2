@@ -34,8 +34,7 @@ const allNavItems: NavItem[] = [
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (for non-admins)
-    { href: "/home", label: "Home", icon: Home, allowedRoles: ["Donor", "Referral"] },
-    { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Beneficiary"] },
+    { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
     
     // Donor
     { href: "/campaigns", label: "Verified Cases", icon: FileCheck, allowedRoles: ["Donor"] },
