@@ -96,7 +96,7 @@ export interface Donation {
 // Lead-related types
 export type LeadStatus = 'Pending' | 'Partial' | 'Closed';
 export type LeadVerificationStatus = 'Pending' | 'Verified' | 'Rejected';
-export type LeadPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Other';
+export type LeadPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Loan' | 'Other';
 
 export interface Verifier {
     verifierId: string;

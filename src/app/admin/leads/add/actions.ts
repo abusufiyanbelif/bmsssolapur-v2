@@ -20,7 +20,8 @@ const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
     'Medical': 'Sadaqah',
     'Relief Fund': 'Lillah',
     'Deen': 'Sadaqah',
-    'Other': 'Sadaqah', // Defaulting 'Other' purpose to Sadaqah, can be adjusted
+    'Loan': 'Lillah', // Loans are a form of Lillah
+    'Other': 'Sadaqah',
 };
 
 // In a real app, you would upload the file to a storage service like Firebase Storage

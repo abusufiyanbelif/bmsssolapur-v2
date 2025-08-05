@@ -19,6 +19,7 @@ const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
     'Medical': 'Sadaqah',
     'Relief Fund': 'Lillah',
     'Deen': 'Sadaqah',
+    'Loan': 'Lillah', // Loans are a form of Lillah
     'Other': 'Sadaqah',
 };
 

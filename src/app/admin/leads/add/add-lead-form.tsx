@@ -49,15 +49,17 @@ import {
 } from "@/components/ui/alert-dialog";
 
 
-const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Other'] as const;
-const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'];
+const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
+const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
-const categoryOptions: Record<Exclude<LeadPurpose, 'Other'>, string[]> = {
+const categoryOptions: Record<Exclude<LeadPurpose, 'Other' | 'Loan'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
 };
+
+const loanCategoryOptions = ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'];
 
 
 const formSchema = z.object({
@@ -94,7 +96,10 @@ const formSchema = z.object({
     path: ["otherPurposeDetail"],
 })
 .refine(data => {
-    if (data.purpose && categoryOptions[data.purpose as Exclude<LeadPurpose, 'Other'>] && data.category === 'Other') {
+    if (data.purpose === 'Loan' && data.category === 'Other') {
+        return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
+    }
+    if (data.purpose && categoryOptions[data.purpose as Exclude<LeadPurpose, 'Other' | 'Loan'>] && data.category === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
     }
     return true;
@@ -156,6 +161,14 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   const selectedPurpose = form.watch("purpose");
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
+
+  useEffect(() => {
+    if (selectedPurpose === 'Loan') {
+        form.setValue('isLoan', true);
+    } else {
+        form.setValue('isLoan', false);
+    }
+  }, [selectedPurpose, form]);
 
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
@@ -416,7 +429,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {categoryOptions[selectedPurpose].map(sub => (
+                                    {(selectedPurpose === 'Loan' ? loanCategoryOptions : categoryOptions[selectedPurpose as Exclude<LeadPurpose, 'Other' | 'Loan'>]).map(sub => (
                                         <SelectItem key={sub} value={sub}>{sub}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -472,26 +485,37 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     </FormDescription>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 font-bold">
-                        <FormControl>
-                            <Checkbox
-                                checked={form.watch('acceptableDonationTypes').length === donationTypes.length}
-                                onCheckedChange={(checked) => {
-                                    form.setValue('acceptableDonationTypes', checked ? donationTypes : []);
-                                }}
-                            />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                            Any
-                        </FormLabel>
-                    </FormItem>
-
                     {donationTypes.map((type) => (
                       <FormField
                         key={type}
                         control={form.control}
                         name="acceptableDonationTypes"
                         render={({ field }) => {
+                          const allOtherTypes = donationTypes.filter(t => t !== 'Any');
+                          const handleAnyChange = (checked: boolean) => {
+                             field.onChange(checked ? allOtherTypes : []);
+                          }
+                          const isAnyChecked = field.value?.includes('Any') || (field.value?.length === allOtherTypes.length);
+
+                          if (type === 'Any') {
+                            return (
+                                <FormItem
+                                key={type}
+                                className="flex flex-row items-start space-x-3 space-y-0 font-bold"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={isAnyChecked}
+                                    onCheckedChange={(checked) => handleAnyChange(!!checked)}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {type}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }
+
                           return (
                             <FormItem
                               key={type}
@@ -501,10 +525,17 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                                 <Checkbox
                                   checked={field.value?.includes(type)}
                                   onCheckedChange={(checked) => {
-                                    const newValues = checked
+                                    const newValue = checked
                                       ? [...(field.value || []), type]
                                       : field.value?.filter((value) => value !== type);
-                                    field.onChange(newValues);
+                                    
+                                    // If all others are checked, check 'Any' as well
+                                    if (newValue.length === allOtherTypes.length) {
+                                      field.onChange(donationTypes);
+                                    } else {
+                                      // Remove 'Any' if not all are checked
+                                      field.onChange(newValue.filter(v => v !== 'Any'));
+                                    }
                                   }}
                                 />
                               </FormControl>
@@ -611,6 +642,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     <Checkbox
                     checked={field.value}
                     onCheckedChange={field.onChange}
+                    disabled={true}
                     />
                 </FormControl>
                 <div className="space-y-1 leading-none">
@@ -618,7 +650,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     Is this a repayable loan?
                     </FormLabel>
                     <FormDescription>
-                    If checked, this case will be marked as a loan that is expected to be repaid.
+                      This is automatically selected if the purpose is "Loan".
                     </FormDescription>
                 </div>
                 </FormItem>
