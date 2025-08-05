@@ -85,7 +85,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                             <AvatarFallback>{userInitials}</AvatarFallback>
                         </Avatar>
                         <CardTitle>{user.name}</CardTitle>
-                        <CardDescription>{user.email}</CardDescription>
+                        <CardDescription>{user.userId}</CardDescription>
                         <Badge variant="outline" className={user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
                             {user.isActive ? 'Active' : 'Inactive'}
                         </Badge>
