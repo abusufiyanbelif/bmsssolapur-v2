@@ -110,14 +110,16 @@ export default function UserGroupsPage() {
                  <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-[50px]">Sr. No.</TableHead>
                             <TableHead className="w-[250px]">Group Name</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Typical Roles</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedGroups.map((group) => (
+                        {paginatedGroups.map((group, index) => (
                             <TableRow key={group.name}>
+                                <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                                 <TableCell className="font-medium">
                                     <div className="flex items-center gap-3">
                                         <group.icon className="h-5 w-5 text-accent" />
