@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight } from "lucide-react";
+import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ const allRoles: Record<string, Role> = {
 };
 
 const allPrivileges: Privilege[] = [
+    // Super Admin & Admin
     { name: "all", description: "Grants unrestricted access to all features and settings.", icon: Shield, roles: [allRoles['Super Admin']] },
     { name: "canManageUsers", description: "Allows creating, editing, and deleting all user accounts.", icon: UserCog, roles: [allRoles['Super Admin']] },
     { name: "canAddBeneficiaries", description: "Allows creating new beneficiary profiles.", icon: UserPlus, roles: [allRoles['Super Admin'], allRoles['Admin']] },
@@ -47,6 +48,12 @@ const allPrivileges: Privilege[] = [
     { name: "canViewFinancials", description: "Allows viewing financial reports and dashboards.", icon: BarChart2, roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canExportData", description: "Allows exporting data from the system, like donation or user lists.", icon: Download, roles: [allRoles['Super Admin']] },
     { name: "canManageSettings", description: "Allows changing global application settings.", icon: Settings, roles: [allRoles['Super Admin']] },
+
+    // User-specific
+    { name: "canManageOwnProfile", description: "Allows a user to edit their own profile information.", icon: UserCog, roles: [allRoles['Donor'], allRoles['Beneficiary'], allRoles['Admin'], allRoles['Finance Admin'], allRoles['Super Admin']] },
+    { name: "canViewOwnDonations", description: "Allows a donor to see their personal donation history.", icon: HandCoins, roles: [allRoles['Donor']] },
+    { name: "canRequestHelp", description: "Allows a beneficiary to submit a new help request.", icon: RequestHelpIcon, roles: [allRoles['Beneficiary']] },
+    { name: "canViewOwnCases", description: "Allows a beneficiary to view the status and history of their own cases.", icon: FileText, roles: [allRoles['Beneficiary']] },
 ];
 
 
