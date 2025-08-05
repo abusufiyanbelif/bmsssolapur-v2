@@ -354,29 +354,6 @@ export default function ProfileSettingsPage() {
                                         </FormItem>
                                     )}
                                     />
-                                <FormField
-                                    control={form.control}
-                                    name="isWidow"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                        <FormControl>
-                                            <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            disabled={!isEditing || form.getValues('gender') !== 'Female'}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>
-                                            Are you a Widow?
-                                            </FormLabel>
-                                            <FormDescription>
-                                            This information helps us understand your situation better. (Only applicable for Female gender).
-                                            </FormDescription>
-                                        </div>
-                                        </FormItem>
-                                    )}
-                                />
                             </>
                         )}
 
