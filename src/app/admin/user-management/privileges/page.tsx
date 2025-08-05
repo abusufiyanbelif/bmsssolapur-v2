@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 type Role = {
   name: 'Super Admin' | 'Admin' | 'Finance Admin' | 'Donor' | 'Beneficiary';
@@ -149,10 +151,15 @@ export default function UserPrivilegesPage() {
                                 <TableCell>
                                      <div className="flex flex-wrap gap-2">
                                         {privilege.roles.map(role => (
-                                            <Badge key={role.name} variant="secondary" className="flex items-center gap-2">
-                                                <role.icon className="h-3 w-3" />
-                                                {role.name}
-                                            </Badge>
+                                            <Link 
+                                                key={role.name}
+                                                href={`/admin/user-management/roles?highlight=${encodeURIComponent(role.name)}`}
+                                            >
+                                                <Badge variant="secondary" className="flex items-center gap-2 hover:bg-primary/20 transition-colors">
+                                                    <role.icon className="h-3 w-3" />
+                                                    {role.name}
+                                                </Badge>
+                                            </Link>
                                         ))}
                                         {privilege.roles.length === 0 && <span className="text-xs text-muted-foreground">N/A</span>}
                                     </div>

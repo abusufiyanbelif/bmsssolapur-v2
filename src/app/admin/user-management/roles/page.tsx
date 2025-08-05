@@ -1,7 +1,10 @@
 
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Shield, KeySquare, HandHeart, User, UserCog, Users } from "lucide-react";
 
 type Privilege = {
@@ -65,55 +68,78 @@ const allRoles: Role[] = [
 ];
 
 
+function UserRolesContent() {
+    const searchParams = useSearchParams();
+    const highlightRole = searchParams.get('highlight');
+    const highlightedItemRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (highlightRole && highlightedItemRef.current) {
+            setTimeout(() => {
+                highlightedItemRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                });
+            }, 100); // Small delay to ensure the accordion has opened
+        }
+    }, [highlightRole]);
+
+    return (
+        <div className="flex-1 space-y-4">
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Roles</h2>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-6 w-6 text-primary" />
+                        Manage User Roles
+                    </CardTitle>
+                    <CardDescription>
+                        Define roles and assign a collection of privileges to them. This page is currently a read-only view of the system's intended role structure.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Accordion type="single" collapsible defaultValue={highlightRole || undefined} className="w-full">
+                        {allRoles.map(role => (
+                            <AccordionItem value={role.name} key={role.name} ref={role.name === highlightRole ? highlightedItemRef : null}>
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-4">
+                                        <role.icon className="h-5 w-5 text-primary" />
+                                        <div>
+                                            <p className="font-semibold text-base">{role.name}</p>
+                                            <p className="text-sm text-muted-foreground text-left">{role.description}</p>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {role.privileges.length > 0 ? (
+                                        <div className="space-y-3 pl-12">
+                                            <h4 className="font-semibold flex items-center gap-2"><KeySquare className="h-4 w-4 text-accent" /> Allocated Privileges</h4>
+                                            <ul className="list-disc pl-5 space-y-2">
+                                                {role.privileges.map(privilege => (
+                                                    <li key={privilege.name}>
+                                                        <span className="font-medium">{privilege.name}:</span>
+                                                        <span className="text-muted-foreground ml-2">{privilege.description}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted-foreground text-center py-4">This role has no special system privileges.</p>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
 export default function UserRolesPage() {
-  return (
-    <div className="flex-1 space-y-4">
-        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Roles</h2>
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-6 w-6 text-primary" />
-                    Manage User Roles
-                </CardTitle>
-                <CardDescription>
-                    Define roles and assign a collection of privileges to them. This page is currently a read-only view of the system's intended role structure.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Accordion type="single" collapsible className="w-full">
-                    {allRoles.map(role => (
-                        <AccordionItem value={role.name} key={role.name}>
-                            <AccordionTrigger>
-                                <div className="flex items-center gap-4">
-                                    <role.icon className="h-5 w-5 text-primary" />
-                                    <div>
-                                        <p className="font-semibold text-base">{role.name}</p>
-                                        <p className="text-sm text-muted-foreground text-left">{role.description}</p>
-                                    </div>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                                {role.privileges.length > 0 ? (
-                                    <div className="space-y-3 pl-12">
-                                        <h4 className="font-semibold flex items-center gap-2"><KeySquare className="h-4 w-4 text-accent" /> Allocated Privileges</h4>
-                                        <ul className="list-disc pl-5 space-y-2">
-                                            {role.privileges.map(privilege => (
-                                                <li key={privilege.name}>
-                                                    <span className="font-medium">{privilege.name}:</span>
-                                                    <span className="text-muted-foreground ml-2">{privilege.description}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ) : (
-                                    <p className="text-muted-foreground text-center py-4">This role has no special system privileges.</p>
-                                )}
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
-            </CardContent>
-        </Card>
-    </div>
-  );
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <UserRolesContent />
+        </Suspense>
+    )
 }
