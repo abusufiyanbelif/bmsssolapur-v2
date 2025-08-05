@@ -7,14 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2 } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
-import { getLeadsByBeneficiaryId } from "@/services/lead-service";
+import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
 import type { User, Donation, Lead, Quote, LeadPurpose, LeadStatus } from "@/services/types";
+import { getAllUsers } from "@/services/user-service";
 import { getOpenLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,8 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
   const [error, setError] = useState<string | null>(null);
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -55,14 +58,20 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
         setDonations([]);
         setCases([]);
         setOpenLeads([]);
+        setAllLeads([]);
+        setAllUsers([]);
 
         if (activeRole === 'Donor') {
-          const [donorDonations, availableLeads] = await Promise.all([
+          const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers] = await Promise.all([
              getDonationsByUserId(user.id!),
-             getOpenLeads()
+             getOpenLeads(),
+             getAllLeads(),
+             getAllUsers()
           ]);
           setDonations(donorDonations);
           setOpenLeads(availableLeads);
+          setAllLeads(fetchedAllLeads);
+          setAllUsers(fetchedAllUsers);
         } else if (activeRole === 'Beneficiary') {
           const beneficiaryCases = await getLeadsByBeneficiaryId(user.id!);
           setCases(beneficiaryCases);
@@ -128,7 +137,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 
     let dashboardContent;
     if (activeRole === 'Donor') {
-      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} />;
+      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} allLeads={allLeads} allUsers={allUsers} />;
     } else if (activeRole === 'Beneficiary') {
       dashboardContent = <BeneficiaryDashboard cases={cases} quotes={quotes} />;
     } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
@@ -153,17 +162,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
   };
   
   if (!user || !user.isLoggedIn) {
-    return (
-      <div className="flex-1 space-y-6">
-        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Welcome</h2>
-        <p className="text-muted-foreground">Please log in to continue.</p>
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Not Logged In</AlertTitle>
-          <AlertDescription>Please log in to view your dashboard.</AlertDescription>
-        </Alert>
-      </div>
-    );
+    return null; // Don't render anything if user is not logged in, app-shell will handle it
   }
 
   return (
@@ -182,7 +181,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
 }
 
 
-function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[] }) {
+function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[] }) {
   const isMobile = useIsMobile();
   const router = useRouter();
   const [purposeInput, setPurposeInput] = useState('all');
@@ -237,6 +236,14 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
     { title: "Donations Made", value: donations.length, icon: FileText, href: "/my-donations" },
     { title: "Campaigns Supported", value: uniqueCampaignsFunded, icon: Target, href: "/my-donations" },
   ];
+  
+  const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+  const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
+  
+  const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
+  const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
+  const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
+  const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
   
   return (
     <div className="space-y-6">
@@ -325,7 +332,53 @@ function DonorDashboard({ donations, openLeads, quotes }: { donations: Donation[
                 </CardFooter>
             </Card>
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline">
+                        <Users />
+                        Beneficiaries Breakdown
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <Link href="/campaigns">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <HomeIcon className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{familiesHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Families Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/campaigns">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <PersonStanding className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{adultsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Adults Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/campaigns">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <Baby className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{kidsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Kids Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/campaigns">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <HandHeart className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{widowsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Widows Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                </CardContent>
+            </Card>
              <InspirationalQuotes quotes={quotes} loading={false} />
         </div>
       </div>
