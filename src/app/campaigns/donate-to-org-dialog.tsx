@@ -178,7 +178,8 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Important: Manual Verification Required</AlertTitle>
                     <AlertDescription>
-                        After completing the payment in your UPI app, you must **manually return** to this application. Your donation will be marked as "Pending" until an administrator verifies the transaction. Thank you for your generosity!
+                        After completing the payment in your UPI app, you must **manually return** to this application. Your donation will be marked as "Pending" until an administrator verifies the transaction.
+                         <span className="block mt-2 font-semibold">If you see a "risk" warning in your UPI app, please try paying by scanning the QR code or manually entering the UPI ID instead of using the direct payment button.</span>
                     </AlertDescription>
                 </Alert>
             </div>
