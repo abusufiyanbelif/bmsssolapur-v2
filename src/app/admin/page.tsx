@@ -98,34 +98,6 @@ export default async function DashboardPage() {
       description: "Total unique beneficiaries supported.",
       href: "/admin/beneficiaries",
     },
-     {
-      title: "Adults Helped",
-      value: adultsHelpedCount.toString(),
-      icon: PersonStanding,
-      description: "Total adults who received support.",
-      href: "/admin/beneficiaries?type=Adult",
-    },
-     {
-      title: "Kids Helped",
-      value: kidsHelpedCount.toString(),
-      icon: Baby,
-      description: "Total children who received support.",
-      href: "/admin/beneficiaries?type=Kid",
-    },
-     {
-      title: "Families Helped",
-      value: familiesHelpedCount.toString(),
-      icon: HomeIcon,
-      description: "Total families who received support.",
-      href: "/admin/beneficiaries?type=Family",
-    },
-     {
-      title: "Widows Helped",
-      value: widowsHelpedCount.toString(),
-      icon: HeartHandshake,
-      description: "Total widows who received support.",
-      href: "/admin/beneficiaries?isWidow=true",
-    },
   ];
 
 
@@ -135,7 +107,7 @@ export default async function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Dashboard</h2>
       </div>
       <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {mainMetrics.map((metric) => (
               <Link href={metric.href} key={metric.title}>
                 <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
@@ -151,12 +123,12 @@ export default async function DashboardPage() {
               </Link>
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-           <Card className="col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+           <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline text-destructive">
                     <AlertTriangle />
-                    Action Required
+                    Action Required: Pending Verifications
                 </CardTitle>
                 <CardDescription>
                     These leads are awaiting verification from an administrator before they can be funded.
@@ -193,18 +165,67 @@ export default async function DashboardPage() {
                 )}
             </CardContent>
           </Card>
-           <Card className="col-span-1">
+            <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline">
+                        <Users />
+                        Beneficiaries Breakdown
+                    </CardTitle>
+                    <CardDescription>
+                        A breakdown of the different types of beneficiaries supported.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <Link href="/admin/leads?beneficiaryType=Family">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <HomeIcon className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{familiesHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Families Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/admin/leads?beneficiaryType=Adult">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <PersonStanding className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{adultsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Adults Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/admin/leads?beneficiaryType=Kid">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <Baby className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{kidsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Kids Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/admin/leads?beneficiaryType=Widow">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <HeartHandshake className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{widowsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Widows Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                </CardContent>
+            </Card>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+           <DonationsChart donations={allDonations} />
+          <Card className="col-span-4 md:col-span-3">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline text-accent">
-                    <Award />
-                    Top Donors
-                </CardTitle>
-                <CardDescription>
+              <CardTitle className="font-headline">Top Donors</CardTitle>
+                 <CardDescription>
                     Our most generous supporters. Thank you for your contributions!
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                {topDonors.length > 0 ? (
+              {topDonors.length > 0 ? (
                     <div className="space-y-4">
                         {topDonors.map(donor => (
                              <div key={donor.id} className="flex items-center rounded-lg border p-4">
@@ -221,7 +242,7 @@ export default async function DashboardPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-10">
+                    <div className="text-center py-10 h-full flex flex-col items-center justify-center">
                         <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
                         <h3 className="mt-4 text-lg font-medium">Awaiting Donations</h3>
                         <p className="mt-1 text-sm text-muted-foreground">Donation data is not yet available.</p>
@@ -230,20 +251,8 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-           <DonationsChart donations={allDonations} />
-          <Card className="col-span-4 md:col-span-3">
-            <CardHeader>
-              <CardTitle className="font-headline">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px] flex items-center justify-center text-muted-foreground">
-                <p>Recent activity feed placeholder</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
 }
+
