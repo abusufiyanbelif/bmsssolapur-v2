@@ -228,7 +228,7 @@ function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Don
     });
   }, [openLeads, appliedFilters]);
   
-  const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen"];
+  const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen", "Other"];
 
   const stats = [
     { title: "Total Donated", value: `₹${totalDonated.toLocaleString()}`, icon: HandHeart, href: "/my-donations" },
@@ -263,7 +263,7 @@ function DonorDashboard({ donations, openLeads, quotes, user }: { donations: Don
             <CardContent className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                        <Label htmlFor="monthly-pledge-switch" className="text-base">Enable Monthly Pledge</Label>
+                        <Label htmlFor="monthly-pledge-switch" className="text-base">I want to be a monthly donor</Label>
                         <p className="text-sm text-muted-foreground">I commit to donating monthly to support ongoing cases.</p>
                     </div>
                     <Switch

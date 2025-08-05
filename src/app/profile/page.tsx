@@ -172,6 +172,7 @@ export default function ProfilePage() {
   const userInitials = user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
   const selectedRoles = form.watch("roles") || user.roles;
   const isBeneficiary = user.roles.includes('Beneficiary');
+  const isDonor = user.roles.includes('Donor');
 
 
   return (
@@ -519,42 +520,46 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     
-                                     <h3 className="text-lg font-semibold border-b pb-2">Notification & Pledge Settings</h3>
-                                      <FormField
-                                        control={form.control}
-                                        name="monthlyPledgeEnabled"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">Enable Monthly Pledge</FormLabel>
-                                                    <FormDescription>I commit to donating a set amount each month.</FormDescription>
-                                                </div>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                        disabled={!isEditing}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    {form.watch('monthlyPledgeEnabled') && (
-                                         <FormField
-                                            control={form.control}
-                                            name="monthlyPledgeAmount"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Monthly Pledge Amount (₹)</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} disabled={!isEditing} />
-                                                    </FormControl>
-                                                     <FormDescription>This is your personal goal. You can fulfill your pledge on the home page.</FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
+                                     {isDonor && (
+                                        <>
+                                            <h3 className="text-lg font-semibold border-b pb-2">Monthly Donation Pledge</h3>
+                                            <FormField
+                                                control={form.control}
+                                                name="monthlyPledgeEnabled"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                                        <div className="space-y-0.5">
+                                                            <FormLabel className="text-base">I want to be a monthly donor</FormLabel>
+                                                            <FormDescription>I commit to donating a set amount each month.</FormDescription>
+                                                        </div>
+                                                        <FormControl>
+                                                            <Switch
+                                                                checked={field.value}
+                                                                onCheckedChange={field.onChange}
+                                                                disabled={!isEditing}
+                                                            />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            {form.watch('monthlyPledgeEnabled') && (
+                                                <FormField
+                                                control={form.control}
+                                                name="monthlyPledgeAmount"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Monthly Pledge Amount (₹)</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" {...field} disabled={!isEditing} />
+                                                        </FormControl>
+                                                        <FormDescription>This is your personal goal. You can fulfill your pledge on the home page.</FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
                                             )}
-                                        />
-                                    )}
+                                        </>
+                                     )}
                                     
                                     {isEditing && (
                                         <Button type="submit" disabled={isSubmitting || !isDirty}>
