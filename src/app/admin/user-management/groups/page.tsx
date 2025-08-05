@@ -2,8 +2,13 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Group, Users, ShieldCheck, Banknote } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useState, useMemo } from "react";
+import { Group, Users, ShieldCheck, Banknote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 type UserGroup = {
   name: string;
@@ -40,6 +45,48 @@ const allGroups: UserGroup[] = [
 ];
 
 export default function UserGroupsPage() {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
+
+    const paginatedGroups = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return allGroups.slice(startIndex, startIndex + itemsPerPage);
+    }, [currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(allGroups.length / itemsPerPage);
+
+    const renderPaginationControls = () => (
+        <div className="flex items-center justify-between pt-4">
+            <div className="text-sm text-muted-foreground">
+                Showing {paginatedGroups.length} of {allGroups.length} groups.
+            </div>
+            <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                        value={`${itemsPerPage}`}
+                        onValueChange={(value) => { setItemsPerPage(Number(value)); setCurrentPage(1); }}
+                    >
+                        <SelectTrigger className="h-8 w-[70px]"><SelectValue placeholder={itemsPerPage} /></SelectTrigger>
+                        <SelectContent side="top">
+                            {[5, 10, 20].map(pageSize => <SelectItem key={pageSize} value={`${pageSize}`}>{pageSize}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">Page {currentPage} of {totalPages}</div>
+                <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+                        <ChevronLeft className="h-4 w-4" /><span className="sr-only">Previous</span>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+                        <ChevronRight className="h-4 w-4" /><span className="sr-only">Next</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+
+
   return (
     <div className="flex-1 space-y-4">
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Groups</h2>
@@ -54,33 +101,36 @@ export default function UserGroupsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                 <Accordion type="single" collapsible className="w-full">
-                    {allGroups.map(group => (
-                        <AccordionItem value={group.name} key={group.name}>
-                            <AccordionTrigger>
-                                <div className="flex items-center gap-4">
-                                    <group.icon className="h-5 w-5 text-primary" />
-                                    <div>
-                                        <p className="font-semibold text-base">{group.name}</p>
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[250px]">Group Name</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Typical Roles</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedGroups.map((group) => (
+                            <TableRow key={group.name}>
+                                <TableCell className="font-medium">
+                                    <div className="flex items-center gap-3">
+                                        <group.icon className="h-5 w-5 text-accent" />
+                                        {group.name}
                                     </div>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                               <div className="pl-12 space-y-3">
-                                 <p className="text-muted-foreground">{group.description}</p>
-                                 <div className="flex items-center gap-2">
-                                     <span className="text-sm font-semibold">Typical Roles:</span>
-                                     <div className="flex flex-wrap gap-2">
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">{group.description}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-wrap gap-2">
                                         {group.typicalRoles.map(role => (
-                                            <span key={role} className="text-xs font-medium bg-secondary text-secondary-foreground px-2 py-1 rounded-md">{role}</span>
+                                            <Badge key={role} variant="secondary">{role}</Badge>
                                         ))}
-                                     </div>
-                                 </div>
-                               </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                 {totalPages > 1 && renderPaginationControls()}
             </CardContent>
         </Card>
     </div>
