@@ -56,10 +56,10 @@ export default async function DashboardPage() {
     .slice(0, 5);
 
   const beneficiaryTypes = [
-    { title: "Families Helped", value: familiesHelpedCount, icon: HomeIcon, href: "/admin/beneficiaries?type=Family" },
-    { title: "Adults Helped", value: adultsHelpedCount, icon: PersonStanding, href: "/admin/beneficiaries?type=Adult" },
-    { title: "Kids Helped", value: kidsHelpedCount, icon: Baby, href: "/admin/beneficiaries?type=Kid" },
-    { title: "Widows Helped", value: widowsHelpedCount, icon: HeartHandshake, href: "/admin/beneficiaries?isWidow=true" },
+    { title: "Families Helped", value: familiesHelpedCount, icon: HomeIcon, href: "/admin/leads?beneficiaryType=Family" },
+    { title: "Adults Helped", value: adultsHelpedCount, icon: PersonStanding, href: "/admin/leads?beneficiaryType=Adult" },
+    { title: "Kids Helped", value: kidsHelpedCount, icon: Baby, href: "/admin/leads?beneficiaryType=Kid" },
+    { title: "Widows Helped", value: widowsHelpedCount, icon: HeartHandshake, href: "/admin/leads?beneficiaryType=Widow" },
   ];
 
   const mainMetrics = [

@@ -1,4 +1,5 @@
 
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -16,8 +17,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
+import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -29,6 +31,16 @@ import { Label } from "@/components/ui/label";
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Partial", "Closed"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected"];
+
+type BeneficiaryTypeFilter = 'all' | 'Adult' | 'Kid' | 'Family' | 'Widow';
+const beneficiaryTypeOptions: { value: BeneficiaryTypeFilter, label: string, icon?: React.ElementType }[] = [
+    { value: 'all', label: 'All Types' },
+    { value: 'Adult', label: 'Adults', icon: PersonStanding },
+    { value: 'Kid', label: 'Kids', icon: Baby },
+    { value: 'Family', label: 'Families', icon: Home },
+    { value: 'Widow', label: 'Widows', icon: HeartHandshake },
+];
+
 
 type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc' | 'amount-desc' | 'amount-asc';
 const sortOptions: { value: SortOption, label: string }[] = [
@@ -56,8 +68,10 @@ const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; 
 function LeadsPageContent() {
     const searchParams = useSearchParams();
     const statusFromUrl = searchParams.get('status');
+    const typeFromUrl = searchParams.get('beneficiaryType');
 
     const [leads, setLeads] = useState<Lead[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
@@ -67,6 +81,7 @@ function LeadsPageContent() {
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
     const [verificationInput, setVerificationInput] = useState<string>('all');
+    const [beneficiaryTypeInput, setBeneficiaryTypeInput] = useState<BeneficiaryTypeFilter>(typeFromUrl as BeneficiaryTypeFilter || 'all');
     const [sortInput, setSortInput] = useState<SortOption>('date-desc');
 
     // Applied filter states
@@ -74,6 +89,7 @@ function LeadsPageContent() {
         name: '',
         status: statusFromUrl || 'all',
         verification: 'all',
+        beneficiaryType: typeFromUrl as BeneficiaryTypeFilter || 'all',
         sort: 'date-desc' as SortOption
     });
 
@@ -82,22 +98,36 @@ function LeadsPageContent() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
-        const fetchLeads = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
-                const fetchedLeads = await getAllLeads();
+                const [fetchedLeads, fetchedUsers] = await Promise.all([
+                    getAllLeads(),
+                    getAllUsers()
+                ]);
                 setLeads(fetchedLeads);
+                setUsers(fetchedUsers);
                 setError(null);
             } catch (e) {
-                setError("Failed to fetch leads. Please try again later.");
+                setError("Failed to fetch data. Please try again later.");
                 console.error(e);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchLeads();
+        fetchData();
     }, []);
+
+    const usersById = useMemo(() => {
+        return users.reduce((acc, user) => {
+            if (user.id) {
+                acc[user.id] = user;
+            }
+            return acc;
+        }, {} as Record<string, User>);
+    }, [users]);
+
 
     const handleSearch = () => {
         setCurrentPage(1);
@@ -105,16 +135,29 @@ function LeadsPageContent() {
             name: nameInput,
             status: statusInput,
             verification: verificationInput,
+            beneficiaryType: beneficiaryTypeInput,
             sort: sortInput
         });
     };
     
     const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
+            const beneficiary = usersById[lead.beneficiaryId];
             const nameMatch = appliedFilters.name === '' || lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const statusMatch = appliedFilters.status === 'all' || lead.status === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.verifiedStatus === appliedFilters.verification;
-            return nameMatch && statusMatch && verificationMatch;
+            
+            let typeMatch = true;
+            if (beneficiary && appliedFilters.beneficiaryType !== 'all') {
+                if (appliedFilters.beneficiaryType === 'Widow') {
+                    typeMatch = !!beneficiary.isWidow;
+                } else {
+                    typeMatch = beneficiary.beneficiaryType === appliedFilters.beneficiaryType;
+                }
+            }
+
+
+            return nameMatch && statusMatch && verificationMatch && typeMatch;
         });
 
         return filtered.sort((a, b) => {
@@ -128,7 +171,7 @@ function LeadsPageContent() {
                 default: return 0;
             }
         });
-    }, [leads, appliedFilters]);
+    }, [leads, appliedFilters, usersById]);
     
     const paginatedLeads = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -141,8 +184,9 @@ function LeadsPageContent() {
         setNameInput('');
         setStatusInput('all');
         setVerificationInput('all');
+        setBeneficiaryTypeInput('all');
         setSortInput('date-desc');
-        setAppliedFilters({ name: '', status: 'all', verification: 'all', sort: 'date-desc' });
+        setAppliedFilters({ name: '', status: 'all', verification: 'all', beneficiaryType: 'all', sort: 'date-desc' });
         setCurrentPage(1);
     };
 
@@ -385,8 +429,8 @@ function LeadsPageContent() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 lg:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 xl:col-span-2">
                         <Label htmlFor="nameFilter">Beneficiary Name</Label>
                         <Input 
                             id="nameFilter" 
@@ -394,6 +438,24 @@ function LeadsPageContent() {
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
                         />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="beneficiaryTypeFilter">Beneficiary Type</Label>
+                        <Select value={beneficiaryTypeInput} onValueChange={(v) => setBeneficiaryTypeInput(v as BeneficiaryTypeFilter)}>
+                            <SelectTrigger id="beneficiaryTypeFilter">
+                                <SelectValue placeholder="Filter by type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {beneficiaryTypeOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>
+                                        <div className="flex items-center gap-2">
+                                            {opt.icon && <opt.icon className="h-4 w-4" />}
+                                            {opt.label}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="statusFilter">Case Status</Label>
@@ -417,7 +479,7 @@ function LeadsPageContent() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2 lg:col-span-1">
+                    <div className="space-y-2 xl:col-span-1">
                         <Label htmlFor="sortOption">Sort By</Label>
                         <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
@@ -430,7 +492,7 @@ function LeadsPageContent() {
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="flex items-end gap-4 lg:col-span-full">
+                     <div className="flex items-end gap-4 xl:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                            <Search className="mr-2 h-4 w-4" />
                             Apply Filters
