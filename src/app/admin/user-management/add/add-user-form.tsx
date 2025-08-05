@@ -42,7 +42,7 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
 ];
 
 const formSchema = z.object({
-  userId: z.string().optional(),
+  userId: z.string().min(3, "User ID must be at least 3 characters."),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
@@ -90,6 +90,7 @@ export function AddUserForm() {
       lastName: "",
       email: "",
       phone: "",
+      userId: "",
       roles: ["Donor"],
       createProfile: false,
       isAnonymous: false,
@@ -102,6 +103,18 @@ export function AddUserForm() {
 
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
+  const firstName = form.watch("firstName");
+  const lastName = form.watch("lastName");
+  
+  useEffect(() => {
+    if (firstName && lastName) {
+        const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
+        // Only set the value if the user hasn't typed in the userId field yet
+        if (!form.formState.dirtyFields.userId) {
+            form.setValue('userId', generatedUserId);
+        }
+    }
+  }, [firstName, lastName, form]);
 
 
   async function onSubmit(values: AddUserFormValues) {
@@ -158,20 +171,6 @@ export function AddUserForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-        <FormField
-            control={form.control}
-            name="userId"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>User ID (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Create a custom user ID" {...field} />
-                </FormControl>
-                 <FormDescription>A unique identifier for this user.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              <FormField
                 control={form.control}
@@ -213,6 +212,22 @@ export function AddUserForm() {
                 )}
             />
         </div>
+
+        <FormField
+            control={form.control}
+            name="userId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>User ID</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g., firstname.lastname" {...field} />
+                </FormControl>
+                 <FormDescription>A unique identifier for this user. This will be auto-generated.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
@@ -589,3 +604,5 @@ export function AddUserForm() {
     </Form>
   );
 }
+
+    

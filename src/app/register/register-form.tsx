@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { handleRegister } from "./actions";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle, UserPlus } from "lucide-react";
@@ -20,7 +20,7 @@ const formSchema = z.object({
   email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
-  userId: z.string().optional(),
+  userId: z.string().min(3, "User ID must be at least 3 characters."),
 });
 
 type RegisterFormValues = z.infer<typeof formSchema>;
@@ -41,6 +41,19 @@ export function RegisterForm() {
       userId: "",
     },
   });
+  
+  const firstName = form.watch("firstName");
+  const lastName = form.watch("lastName");
+  
+  useEffect(() => {
+    if (firstName && lastName) {
+        const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
+        // Only set the value if the user hasn't typed in the userId field yet
+        if (!form.formState.dirtyFields.userId) {
+            form.setValue('userId', generatedUserId);
+        }
+    }
+  }, [firstName, lastName, form]);
 
   const onSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
@@ -108,7 +121,7 @@ export function RegisterForm() {
           name="userId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>User ID (Optional)</FormLabel>
+              <FormLabel>User ID</FormLabel>
               <FormControl>
                 <Input type="text" placeholder="Create a custom user ID" {...field} />
               </FormControl>
@@ -167,3 +180,5 @@ export function RegisterForm() {
     </Form>
   );
 }
+
+    

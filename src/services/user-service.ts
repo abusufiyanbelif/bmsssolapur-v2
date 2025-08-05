@@ -31,6 +31,16 @@ export type { User, UserRole };
 export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
+    // Check for duplicate User ID
+    if (user.userId) {
+      const idExists = await getUser(user.userId);
+      if (idExists && idExists.id !== user.id) {
+        throw new Error(`A user with the ID ${user.userId} already exists.`);
+      }
+    } else {
+        throw new Error("User ID is a mandatory field.");
+    }
+
     // Check for duplicate email if one is provided
     if (user.email) {
       const emailExists = await getUserByEmail(user.email);
@@ -44,7 +54,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         throw new Error(`A user with the phone number ${user.phone} already exists.`);
     }
 
-    const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
+    const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(db, USERS_COLLECTION, user.userId);
     
     let anonymousId: string | undefined = user.anonymousId;
     if (user.isAnonymous && !anonymousId) {
@@ -253,3 +263,5 @@ export const getAllUsers = async (): Promise<User[]> => {
         throw new Error('Failed to get all users.');
     }
 }
+
+    
