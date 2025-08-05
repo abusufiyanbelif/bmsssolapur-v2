@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { KeySquare, Shield, UserCog, HandCoins, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -16,10 +18,13 @@ type Role = {
   icon: React.ElementType;
 };
 
+type PrivilegeType = 'View' | 'Create' | 'Edit' | 'Delete' | 'Manage' | 'Special';
+
 type Privilege = {
   name: string;
   description: string;
   icon: React.ElementType;
+  type: PrivilegeType;
   roles: Role[];
 };
 
@@ -32,94 +37,117 @@ const allRoles: Record<string, Role> = {
 };
 
 const allPrivileges: Privilege[] = [
-    // Super Admin & Admin
-    { name: "all", description: "Grants unrestricted access to all features and settings.", icon: Shield, roles: [allRoles['Super Admin']] },
-    { name: "canManageUsers", description: "Allows creating, editing, and deleting all user accounts.", icon: UserCog, roles: [allRoles['Super Admin']] },
-    { name: "canViewBoardMembers", description: "Allows viewing the list of board members.", icon: Users, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canAddBoardMembers", description: "Allows adding new members to the board.", icon: UserPlus, roles: [allRoles['Super Admin']] },
-    { name: "canRemoveBoardMembers", description: "Allows removing members from the board.", icon: Trash2, roles: [allRoles['Super Admin']] },
-    { name: "canManageOrganizationProfile", description: "Allows editing the organization's public profile and contact details.", icon: Building, roles: [allRoles['Super Admin']] },
-    { name: "canManageCampaigns", description: "Allows creating, editing, and deleting fundraising campaigns.", icon: Megaphone, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canAddBeneficiaries", description: "Allows creating new beneficiary profiles.", icon: UserPlus, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canEditBeneficiaries", description: "Allows editing existing beneficiary profiles.", icon: User, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canDeleteBeneficiaries", description: "Allows deleting beneficiary profiles.", icon: Trash2, roles: [allRoles['Super Admin']] },
-    { name: "canAddDonors", description: "Allows creating new donor profiles.", icon: UserPlus, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canEditDonors", description: "Allows editing existing donor profiles.", icon: User, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canDeleteDonors", description: "Allows deleting donor profiles.", icon: Trash2, roles: [allRoles['Super Admin']] },
-    { name: "canManageLeads", description: "Allows creating, editing, and managing help requests (leads).", icon: FileText, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canVerifyLeads", description: "Allows verifying or rejecting the authenticity of a lead.", icon: CheckSquare, roles: [allRoles['Super Admin'], allRoles['Admin']] },
-    { name: "canManageDonations", description: "Allows recording, editing, and managing all donations.", icon: HandCoins, roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
-    { name: "canVerifyDonations", description: "Allows verifying the authenticity of received donations.", icon: DollarSign, roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
-    { name: "canViewFinancials", description: "Allows viewing financial reports and dashboards.", icon: BarChart2, roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
-    { name: "canExportData", description: "Allows exporting data from the system, like donation or user lists.", icon: Download, roles: [allRoles['Super Admin']] },
-    { name: "canManageSettings", description: "Allows changing global application settings.", icon: Settings, roles: [allRoles['Super Admin']] },
-
-    // User-specific
-    { name: "canManageOwnProfile", description: "Allows a user to edit their own profile information.", icon: UserCog, roles: [allRoles['Donor'], allRoles['Beneficiary'], allRoles['Admin'], allRoles['Finance Admin'], allRoles['Super Admin']] },
-    { name: "canViewOwnDonations", description: "Allows a donor to see their personal donation history.", icon: HandCoins, roles: [allRoles['Donor']] },
-    { name: "canRequestHelp", description: "Allows a beneficiary to submit a new help request.", icon: RequestHelpIcon, roles: [allRoles['Beneficiary']] },
-    { name: "canViewOwnCases", description: "Allows a beneficiary to view the status and history of their own cases.", icon: FileText, roles: [allRoles['Beneficiary']] },
+    { name: "all", description: "Grants unrestricted access to all features and settings.", icon: Shield, type: 'Special', roles: [allRoles['Super Admin']] },
+    { name: "canManageUsers", description: "Allows creating, editing, and deleting all user accounts.", icon: UserCog, type: 'Manage', roles: [allRoles['Super Admin']] },
+    { name: "canViewBoardMembers", description: "Allows viewing the list of board members.", icon: Users, type: 'View', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canAddBoardMembers", description: "Allows adding new members to the board.", icon: UserPlus, type: 'Create', roles: [allRoles['Super Admin']] },
+    { name: "canRemoveBoardMembers", description: "Allows removing members from the board.", icon: Trash2, type: 'Delete', roles: [allRoles['Super Admin']] },
+    { name: "canManageOrganizationProfile", description: "Allows editing the organization's public profile and contact details.", icon: Building, type: 'Edit', roles: [allRoles['Super Admin']] },
+    { name: "canManageCampaigns", description: "Allows creating, editing, and deleting fundraising campaigns.", icon: Megaphone, type: 'Manage', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canAddBeneficiaries", description: "Allows creating new beneficiary profiles.", icon: UserPlus, type: 'Create', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canEditBeneficiaries", description: "Allows editing existing beneficiary profiles.", icon: User, type: 'Edit', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canDeleteBeneficiaries", description: "Allows deleting beneficiary profiles.", icon: Trash2, type: 'Delete', roles: [allRoles['Super Admin']] },
+    { name: "canAddDonors", description: "Allows creating new donor profiles.", icon: UserPlus, type: 'Create', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canEditDonors", description: "Allows editing existing donor profiles.", icon: User, type: 'Edit', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canDeleteDonors", description: "Allows deleting donor profiles.", icon: Trash2, type: 'Delete', roles: [allRoles['Super Admin']] },
+    { name: "canManageLeads", description: "Allows creating, editing, and managing help requests (leads).", icon: FileText, type: 'Manage', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canVerifyLeads", description: "Allows verifying or rejecting the authenticity of a lead.", icon: CheckSquare, type: 'Edit', roles: [allRoles['Super Admin'], allRoles['Admin']] },
+    { name: "canManageDonations", description: "Allows recording, editing, and managing all donations.", icon: HandCoins, type: 'Manage', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
+    { name: "canVerifyDonations", description: "Allows verifying the authenticity of received donations.", icon: DollarSign, type: 'Edit', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
+    { name: "canViewFinancials", description: "Allows viewing financial reports and dashboards.", icon: BarChart2, type: 'View', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
+    { name: "canExportData", description: "Allows exporting data from the system, like donation or user lists.", icon: Download, type: 'View', roles: [allRoles['Super Admin']] },
+    { name: "canManageSettings", description: "Allows changing global application settings.", icon: Settings, type: 'Edit', roles: [allRoles['Super Admin']] },
+    { name: "canManageOwnProfile", description: "Allows a user to edit their own profile information.", icon: UserCog, type: 'Edit', roles: Object.values(allRoles) },
+    { name: "canViewOwnDonations", description: "Allows a donor to see their personal donation history.", icon: HandCoins, type: 'View', roles: [allRoles['Donor']] },
+    { name: "canRequestHelp", description: "Allows a beneficiary to submit a new help request.", icon: RequestHelpIcon, type: 'Create', roles: [allRoles['Beneficiary']] },
+    { name: "canViewOwnCases", description: "Allows a beneficiary to view the status and history of their own cases.", icon: FileText, type: 'View', roles: [allRoles['Beneficiary']] },
 ];
+
+const privilegeTypes: PrivilegeType[] = ['View', 'Create', 'Edit', 'Delete', 'Manage', 'Special'];
+
+const typeColors: Record<PrivilegeType, string> = {
+    'View': 'bg-blue-100 text-blue-800',
+    'Create': 'bg-green-100 text-green-800',
+    'Edit': 'bg-yellow-100 text-yellow-800',
+    'Delete': 'bg-red-100 text-red-800',
+    'Manage': 'bg-purple-100 text-purple-800',
+    'Special': 'bg-gray-200 text-gray-800',
+};
 
 
 export default function UserPrivilegesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [nameInput, setNameInput] = useState('');
+    const [roleInput, setRoleInput] = useState('all');
+    const [typeInput, setTypeInput] = useState('all');
+    const [sortInput, setSortInput] = useState('name-asc');
+    
+    const [appliedFilters, setAppliedFilters] = useState({ name: '', role: 'all', type: 'all', sort: 'name-asc' });
+
+    const filteredPrivileges = useMemo(() => {
+        let filtered = allPrivileges.filter(privilege => {
+            const nameMatch = appliedFilters.name === '' || privilege.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const roleMatch = appliedFilters.role === 'all' || privilege.roles.some(r => r.name === appliedFilters.role);
+            const typeMatch = appliedFilters.type === 'all' || privilege.type === appliedFilters.type;
+            return nameMatch && roleMatch && typeMatch;
+        });
+
+        return filtered.sort((a, b) => {
+            if (appliedFilters.sort === 'name-asc') return a.name.localeCompare(b.name);
+            if (appliedFilters.sort === 'name-desc') return b.name.localeCompare(a.name);
+            if (appliedFilters.sort === 'type-asc') return a.type.localeCompare(b.type);
+            if (appliedFilters.sort === 'type-desc') return b.type.localeCompare(a.type);
+            return 0;
+        });
+    }, [appliedFilters]);
 
     const paginatedPrivileges = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
-        return allPrivileges.slice(startIndex, startIndex + itemsPerPage);
-    }, [currentPage, itemsPerPage]);
+        return filteredPrivileges.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredPrivileges, currentPage, itemsPerPage]);
 
-    const totalPages = Math.ceil(allPrivileges.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredPrivileges.length / itemsPerPage);
+
+    const handleSearch = () => {
+        setCurrentPage(1);
+        setAppliedFilters({ name: nameInput, role: roleInput, type: typeInput, sort: sortInput });
+    };
+
+    const resetFilters = () => {
+        setNameInput('');
+        setRoleInput('all');
+        setTypeInput('all');
+        setSortInput('name-asc');
+        setAppliedFilters({ name: '', role: 'all', type: 'all', sort: 'name-asc' });
+        setCurrentPage(1);
+    };
     
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
-                Showing {paginatedPrivileges.length} of {allPrivileges.length} privileges.
+                Showing {paginatedPrivileges.length} of {filteredPrivileges.length} privileges.
             </div>
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2">
                     <p className="text-sm font-medium">Rows per page</p>
                     <Select
                         value={`${itemsPerPage}`}
-                        onValueChange={(value) => {
-                            setItemsPerPage(Number(value))
-                        }}
+                        onValueChange={(value) => { setItemsPerPage(Number(value)); setCurrentPage(1); }}
                     >
-                        <SelectTrigger className="h-8 w-[70px]">
-                        <SelectValue placeholder={itemsPerPage} />
-                        </SelectTrigger>
+                        <SelectTrigger className="h-8 w-[70px]"><SelectValue placeholder={itemsPerPage} /></SelectTrigger>
                         <SelectContent side="top">
-                        {[10, 25, 50].map((pageSize) => (
-                            <SelectItem key={pageSize} value={`${pageSize}`}>
-                            {pageSize}
-                            </SelectItem>
-                        ))}
+                            {[10, 25, 50].map(pageSize => <SelectItem key={pageSize} value={`${pageSize}`}>{pageSize}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                    Page {currentPage} of {totalPages}
-                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">Page {currentPage} of {totalPages}</div>
                 <div className="flex items-center space-x-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="sr-only">Previous</span>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+                        <ChevronLeft className="h-4 w-4" /><span className="sr-only">Previous</span>
                     </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">Next</span>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+                        <ChevronRight className="h-4 w-4" /><span className="sr-only">Next</span>
                     </Button>
                 </div>
             </div>
@@ -140,11 +168,43 @@ export default function UserPrivilegesPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-2">
+                        <Label htmlFor="nameFilter">Privilege Name</Label>
+                        <Input id="nameFilter" placeholder="Filter by name..." value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="typeFilter">Privilege Type</Label>
+                        <Select value={typeInput} onValueChange={(v) => setTypeInput(v)}>
+                            <SelectTrigger id="typeFilter"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Types</SelectItem>
+                                {privilegeTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="roleFilter">Assigned Role</Label>
+                        <Select value={roleInput} onValueChange={(v) => setRoleInput(v)}>
+                            <SelectTrigger id="roleFilter"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Roles</SelectItem>
+                                {Object.values(allRoles).map(r => <SelectItem key={r.name} value={r.name}>{r.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-end gap-4 lg:col-span-full">
+                        <Button onClick={handleSearch} className="w-full"><Search className="mr-2 h-4 w-4" />Apply Filters</Button>
+                        <Button variant="outline" onClick={resetFilters} className="w-full"><FilterX className="mr-2 h-4 w-4" />Clear</Button>
+                    </div>
+                </div>
+
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[50px]">Sr. No.</TableHead>
                             <TableHead>Privilege Name</TableHead>
+                            <TableHead>Type</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Allocated to Roles</TableHead>
                         </TableRow>
@@ -158,6 +218,11 @@ export default function UserPrivilegesPage() {
                                         <privilege.icon className="h-4 w-4 text-accent"/>
                                         {privilege.name}
                                     </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline" className={cn(typeColors[privilege.type])}>
+                                        {privilege.type}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">{privilege.description}</TableCell>
                                 <TableCell>
@@ -181,6 +246,15 @@ export default function UserPrivilegesPage() {
                     </TableBody>
                 </Table>
                 {totalPages > 1 && renderPaginationControls()}
+                 {filteredPrivileges.length === 0 && (
+                    <div className="text-center py-10">
+                        <p className="text-muted-foreground">No privileges match your current filters.</p>
+                        <Button variant="outline" onClick={resetFilters} className="mt-4">
+                            <FilterX className="mr-2 h-4 w-4" />
+                            Clear Filters
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     </div>
