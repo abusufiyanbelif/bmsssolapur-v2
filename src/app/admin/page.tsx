@@ -1,10 +1,11 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
+import { getAllUsers } from "@/services/user-service";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,13 +13,24 @@ import { DonationsChart } from "./donations-chart";
 
 export default async function DashboardPage() {
 
-  const allDonations = await getAllDonations();
-  const allLeads = await getAllLeads();
+  const [allDonations, allLeads, allUsers] = await Promise.all([
+    getAllDonations(),
+    getAllLeads(),
+    getAllUsers(),
+  ]);
 
   const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
   const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
   const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
-  const beneficiariesHelped = allLeads.length;
+  
+  const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+  const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
+  
+  const beneficiariesHelpedCount = helpedBeneficiaries.length;
+  const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
+  const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
+  const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
+  
   const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
   const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
@@ -58,32 +70,33 @@ export default async function DashboardPage() {
       description: "Total funds given to leads.",
       href: "/admin/leads",
     },
-    {
-      title: "Available for Disbursement",
-      value: `₹${pendingToDisburse.toLocaleString()}`,
-      icon: Hourglass,
-      description: "Available funds for distribution.",
-    },
-    {
-      title: "Total Beneficiaries",
-      value: `${beneficiariesHelped} leads`,
+     {
+      title: "Families Helped",
+      value: `${beneficiariesHelpedCount}`,
       icon: Users,
-      description: "Total number of cases managed.",
+      description: "Total unique beneficiaries supported.",
       href: "/admin/beneficiaries",
     },
     {
-      title: "Cases Fully Closed",
-      value: casesClosed.toString(),
-      icon: CheckCircle,
-      description: "Leads where help is complete.",
-      href: "/admin/leads?status=Closed",
+      title: "Adults Helped",
+      value: adultsHelpedCount,
+      icon: PersonStanding,
+      description: "Adult beneficiaries supported.",
+      href: "/admin/beneficiaries?type=Adult",
     },
     {
-      title: "Cases Open",
-      value: casesPending.toString(),
-      icon: PiggyBank,
-      description: "Leads awaiting assistance.",
-      href: "/admin/leads?status=Pending",
+      title: "Kids Helped",
+      value: kidsHelpedCount,
+      icon: Baby,
+      description: "Child beneficiaries supported.",
+      href: "/admin/beneficiaries?type=Kid",
+    },
+    {
+      title: "Widows Helped",
+      value: widowsHelpedCount,
+      icon: HeartHandshake,
+      description: "Widowed beneficiaries supported.",
+      href: "/admin/beneficiaries?isWidow=true",
     },
   ];
 

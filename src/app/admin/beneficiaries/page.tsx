@@ -1,7 +1,9 @@
 
+
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -15,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,6 +31,15 @@ import type { User } from "@/services/types";
 type StatusFilter = 'all' | 'active' | 'inactive';
 const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 
+type TypeFilter = 'all' | 'Adult' | 'Kid' | 'Old Age' | 'Widow';
+const typeOptions: { value: TypeFilter, label: string, icon?: React.ElementType }[] = [
+    { value: 'all', label: 'All Types' },
+    { value: 'Adult', label: 'Adults', icon: PersonStanding },
+    { value: 'Kid', label: 'Kids', icon: Baby },
+    { value: 'Widow', label: 'Widows', icon: HeartHandshake },
+];
+
+
 type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc';
 const sortOptions: { value: SortOption, label: string }[] = [
     { value: 'name-asc', label: 'Name (A-Z)' },
@@ -38,22 +49,36 @@ const sortOptions: { value: SortOption, label: string }[] = [
 ];
 
 
-export default function BeneficiariesPage() {
+function BeneficiariesPageContent() {
+    const searchParams = useSearchParams();
+    const typeFromUrl = searchParams.get('type');
+    const widowFromUrl = searchParams.get('isWidow');
+    
     const [beneficiaries, setBeneficiaries] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
+    
+    // Determine initial type filter from URL
+    let initialTypeFilter: TypeFilter = 'all';
+    if(widowFromUrl === 'true') {
+        initialTypeFilter = 'Widow';
+    } else if (typeFromUrl && ['Adult', 'Kid', 'Old Age'].includes(typeFromUrl)) {
+        initialTypeFilter = typeFromUrl as TypeFilter;
+    }
 
     // Input states
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
+    const [typeInput, setTypeInput] = useState<TypeFilter>(initialTypeFilter);
     const [sortInput, setSortInput] = useState<SortOption>('name-asc');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         name: '',
         status: 'all' as StatusFilter,
+        type: initialTypeFilter,
         sort: 'name-asc' as SortOption
     });
     
@@ -66,6 +91,7 @@ export default function BeneficiariesPage() {
         setAppliedFilters({
             name: nameInput,
             status: statusInput,
+            type: typeInput,
             sort: sortInput
         });
     };
@@ -93,7 +119,10 @@ export default function BeneficiariesPage() {
         let filtered = beneficiaries.filter(user => {
             const nameMatch = appliedFilters.name === '' || user.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
-            return nameMatch && statusMatch;
+            const typeMatch = appliedFilters.type === 'all' || 
+                              (appliedFilters.type === 'Widow' && user.isWidow) || 
+                              user.beneficiaryType === appliedFilters.type;
+            return nameMatch && statusMatch && typeMatch;
         });
 
         return filtered.sort((a, b) => {
@@ -118,8 +147,9 @@ export default function BeneficiariesPage() {
     const resetFilters = () => {
         setNameInput('');
         setStatusInput('all');
+        setTypeInput('all');
         setSortInput('name-asc');
-        setAppliedFilters({ name: '', status: 'all', sort: 'name-asc' });
+        setAppliedFilters({ name: '', status: 'all', type: 'all', sort: 'name-asc' });
         setCurrentPage(1);
     };
     
@@ -133,7 +163,7 @@ export default function BeneficiariesPage() {
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Contact</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined On</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -143,11 +173,16 @@ export default function BeneficiariesPage() {
                 {paginatedBeneficiaries.map((user, index) => (
                     <TableRow key={user.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-medium">
                             <div className="flex flex-col">
-                                <span>{user.phone}</span>
-                                <span className="text-xs text-muted-foreground">{user.email}</span>
+                                <span>{user.name}</span>
+                                <span className="text-xs text-muted-foreground">{user.phone}</span>
+                            </div>
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex flex-wrap gap-2">
+                               {user.beneficiaryType && <Badge variant="outline">{user.beneficiaryType}</Badge>}
+                               {user.isWidow && <Badge variant="outline" className="bg-pink-100 text-pink-800"><HeartHandshake className="mr-1 h-3 w-3" />Widow</Badge>}
                             </div>
                         </TableCell>
                         <TableCell>
@@ -183,6 +218,10 @@ export default function BeneficiariesPage() {
                         <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-sm">
+                        <div className="flex flex-wrap gap-2">
+                            {user.beneficiaryType && <Badge variant="outline">{user.beneficiaryType}</Badge>}
+                            {user.isWidow && <Badge variant="outline" className="bg-pink-100 text-pink-800"><HeartHandshake className="mr-1 h-3 w-3" />Widow</Badge>}
+                        </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">
                              <span>Joined On</span>
                              <span>{format(user.createdAt.toDate(), "dd MMM yyyy")}</span>
@@ -328,8 +367,8 @@ export default function BeneficiariesPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 lg:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-1">
                         <Label htmlFor="nameFilter">Beneficiary Name</Label>
                         <Input 
                             id="nameFilter" 
@@ -337,6 +376,17 @@ export default function BeneficiariesPage() {
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
                         />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="typeFilter">Beneficiary Type</Label>
+                        <Select value={typeInput} onValueChange={(v) => setTypeInput(v as TypeFilter)}>
+                            <SelectTrigger id="typeFilter">
+                                <SelectValue placeholder="Filter by type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {typeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="capitalize">{opt.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="statusFilter">Status</Label>
@@ -362,7 +412,7 @@ export default function BeneficiariesPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 lg:col-span-2">
+                    <div className="flex items-end gap-4 lg:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                             <Search className="mr-2 h-4 w-4" />
                             Apply Filters
@@ -378,4 +428,13 @@ export default function BeneficiariesPage() {
         </Card>
     </div>
   )
+}
+
+
+export default function BeneficiariesPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <BeneficiariesPageContent />
+        </Suspense>
+    )
 }
