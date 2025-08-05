@@ -1,5 +1,3 @@
-
-
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -154,6 +152,20 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
     return dashboardContent;
   };
   
+  if (!user || !user.isLoggedIn) {
+    return (
+      <div className="flex-1 space-y-6">
+        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Welcome</h2>
+        <p className="text-muted-foreground">Please log in to continue.</p>
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Not Logged In</AlertTitle>
+          <AlertDescription>Please log in to view your dashboard.</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-6">
       <div className="space-y-2">
@@ -161,11 +173,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
             {getPageTitle()}
         </h2>
         <p className="text-muted-foreground">
-          {activeRole && user?.isLoggedIn ? (
-            <>Welcome back, {user.name}. You are viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.</>
-          ) : (
-            "Please log in to continue."
-          )}
+          Welcome back, {user.name}. You are viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.
         </p>
       </div>
       {renderContent()}
