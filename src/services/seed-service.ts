@@ -34,6 +34,9 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
 
     // Hardcoded Beneficiary user
     { name: "Beneficiary", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+
+    // Test Beneficiary
+    { name: "Test Beneficiary", userId: "test", firstName: "Test", middleName: "", lastName: "Beneficiary", email: "test.beneficiary@example.com", phone: "3333333333", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
 ];
 
 const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'donationType'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
