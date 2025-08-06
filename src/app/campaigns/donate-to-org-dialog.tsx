@@ -16,12 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, CreditCard, ExternalLink, X, AlertTriangle } from "lucide-react";
+import { Copy, CreditCard, ExternalLink, X, AlertTriangle, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import type { Organization, User } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Link from "next/link";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
@@ -42,18 +43,21 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
   const calculatedTip = tipPercentage > 0 ? Math.round(amount * (tipPercentage / 100)) : customTipAmount;
   const totalAmount = amount + calculatedTip;
   
-  const handleCopyToClipboard = () => {
-    if(organization?.upiId) {
-        navigator.clipboard.writeText(organization.upiId);
-        toast({
-            title: "Copied!",
-            description: "UPI ID has been copied to your clipboard.",
-        });
-    }
+  const handleCopyToClipboard = (textToCopy: string, entity: string) => {
+    navigator.clipboard.writeText(textToCopy);
+    toast({
+        title: "Copied!",
+        description: `${entity} has been copied to your clipboard.`,
+    });
   }
 
   const transactionNote = `Baitul Mal Samajik Sanstha - General fund. User: ${user?.id || 'N/A'}`;
   const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+  
+  const maazPhoneNumber = "9372145889";
+  const maazUpiId = `${maazPhoneNumber}@paytm`;
+  const phoneUpiLink = `upi://pay?pa=${maazUpiId}&pn=Maaz%20Shaikh&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+
 
   return (
     <Dialog onOpenChange={(open) => !open && setStep(1)}>
@@ -150,19 +154,19 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     
                     {isMobile && (
                          <Button asChild className="w-full" size="lg">
-                            <a href={upiLink}>
+                            <Link href={upiLink}>
                                 Pay with UPI App <ExternalLink className="ml-2 h-4 w-4" />
-                            </a>
+                            </Link>
                         </Button>
                     )}
 
-                    <a href={upiLink} className="block cursor-pointer">
+                    <Link href={upiLink} className="block cursor-pointer">
                         <div className="flex items-center justify-center p-2 border rounded-md bg-background hover:bg-muted transition-colors">
                         {organization.qrCodeUrl && (
                             <Image src={organization.qrCodeUrl} alt="UPI QR Code" width={160} height={160} data-ai-hint="qr code" />
                         )}
                         </div>
-                    </a>
+                    </Link>
 
                      <div className="relative">
                         <p className="font-mono text-center text-sm bg-background px-2 absolute -top-3 left-1/2 -translate-x-1/2 text-muted-foreground">OR</p>
@@ -173,8 +177,26 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                         <Label>Pay to this UPI ID</Label>
                         <div className="flex gap-2">
                              <Input value={organization.upiId} readOnly />
-                             <Button variant="secondary" onClick={handleCopyToClipboard}><Copy className="h-4 w-4" /></Button>
+                             <Button variant="secondary" onClick={() => handleCopyToClipboard(organization.upiId, 'UPI ID')}><Copy className="h-4 w-4" /></Button>
                         </div>
+                    </div>
+                     <div className="relative">
+                        <p className="font-mono text-center text-sm bg-background px-2 absolute -top-3 left-1/2 -translate-x-1/2 text-muted-foreground">OR</p>
+                        <div className="border-t"></div>
+                     </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2"><Phone className="h-4 w-4" /> Pay via Phone Number</Label>
+                         <div className="flex gap-2">
+                             <Input value={maazPhoneNumber} readOnly />
+                             <Button variant="secondary" onClick={() => handleCopyToClipboard(maazPhoneNumber, 'Phone Number')}><Copy className="h-4 w-4" /></Button>
+                        </div>
+                         {isMobile && (
+                             <Button asChild className="w-full" size="sm" variant="outline">
+                                <Link href={phoneUpiLink}>
+                                    Pay Maaz Shaikh via UPI
+                                </Link>
+                            </Button>
+                        )}
                     </div>
                 </div>
                  <Alert variant="destructive">
@@ -189,7 +211,7 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
             <DialogFooter>
                 <DialogClose asChild>
                     <Button onClick={() => setStep(1)} variant="outline">
-                        Cancel
+                        Back
                     </Button>
                 </DialogClose>
             </DialogFooter>
@@ -199,3 +221,4 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
     </Dialog>
   );
 }
+
