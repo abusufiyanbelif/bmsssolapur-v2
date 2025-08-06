@@ -18,10 +18,8 @@ import { Label } from "@/components/ui/label";
 import { CreditCard, Loader2, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization, User } from "@/services/types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import Image from "next/image";
-import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
@@ -30,16 +28,18 @@ interface DonateToOrgDialogProps {
 }
 
 export function DonateToOrgDialog({ children, organization, user }: DonateToOrgDialogProps) {
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amount, setAmount] = useState(100); // Default amount
-  const { toast } = useToast();
   const [paymentStep, setPaymentStep] = useState<'details' | 'qr'>('details');
+
 
   if (!organization) return <>{children}</>;
   
   const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&cu=INR&am=${amount}`;
-  
-  const handleProceedToPay = () => {
+
+   const handleProceedToPay = () => {
       if (amount <= 0) {
           toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Please enter an amount greater than zero.'});
           return;
@@ -54,6 +54,7 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
     }
   }
 
+
   return (
     <Dialog onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -64,7 +65,7 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
             Your contribution will support the organization's mission.
           </DialogDescription>
         </DialogHeader>
-        
+
         {paymentStep === 'details' && (
             <div className="space-y-4 py-4">
                 <div className="space-y-2">
@@ -97,14 +98,26 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                      <p className="font-bold text-lg">Amount: ₹{amount}</p>
                      <p className="text-center text-sm font-bold">{organization.upiId}</p>
                 </div>
-                 <Button onClick={() => setPaymentStep('details')} variant="outline" className="w-full">
-                    Back
-                 </Button>
+                 
+                 {isMobile ? (
+                    <Button asChild className="w-full">
+                        <a href={upiLink}>Pay with UPI App</a>
+                    </Button>
+                 ) : (
+                    <p className="text-center text-xs text-muted-foreground pt-2">
+                        Open a UPI app on your phone and scan the code above.
+                    </p>
+                 )}
             </div>
         )}
 
-        <DialogFooter>
-          <p className="text-xs text-muted-foreground text-center w-full">This is a test environment. No real money will be charged.</p>
+         <DialogFooter className="sm:justify-between">
+            {paymentStep === 'qr' && (
+                <Button onClick={() => setPaymentStep('details')} variant="outline" className="w-full sm:w-auto">
+                    Back
+                </Button>
+            )}
+             <p className="text-xs text-muted-foreground text-center w-full mt-2 sm:mt-0">This is a test environment. No real money will be charged.</p>
         </DialogFooter>
       </DialogContent>
     </Dialog>
