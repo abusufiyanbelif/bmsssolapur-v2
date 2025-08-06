@@ -41,6 +41,19 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         upi: { enabled: true },
         other: { enabled: true },
     },
+    paymentGateway: {
+        razorpay: {
+            enabled: false,
+            keyId: '',
+            keySecret: '',
+        },
+        phonepe: {
+            enabled: true,
+            merchantId: '',
+            saltKey: '',
+            saltIndex: 1,
+        }
+    }
 };
 
 /**
@@ -68,6 +81,12 @@ export const getAppSettings = async (): Promise<AppSettings> => {
         services: { ...defaultSettings.services, ...data.services },
         features: { ...defaultSettings.features, ...data.features },
         paymentMethods: { ...defaultSettings.paymentMethods, ...data.paymentMethods },
+        paymentGateway: { 
+            ...defaultSettings.paymentGateway, 
+            ...data.paymentGateway,
+            razorpay: { ...defaultSettings.paymentGateway.razorpay, ...data.paymentGateway?.razorpay },
+            phonepe: { ...defaultSettings.paymentGateway.phonepe, ...data.paymentGateway?.phonepe },
+        },
       };
       return { id: settingsDoc.id, ...mergedSettings } as AppSettings;
     } else {

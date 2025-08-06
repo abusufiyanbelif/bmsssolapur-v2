@@ -223,5 +223,18 @@ export interface AppSettings {
     upi: { enabled: boolean };
     other: { enabled: boolean };
   };
+  paymentGateway: {
+    razorpay: {
+        enabled: boolean;
+        keyId?: string;
+        keySecret?: string;
+    };
+    phonepe: {
+        enabled: boolean;
+        merchantId?: string;
+        saltKey?: string;
+        saltIndex?: number;
+    };
+  };
   updatedAt?: Timestamp;
 }
