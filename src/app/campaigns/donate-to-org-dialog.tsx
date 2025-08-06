@@ -68,8 +68,8 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
             },
             prefill: {
                 name: user?.name || "Anonymous Donor",
-                email: user?.email,
-                contact: user?.phone
+                email: user?.email || "",
+                contact: user?.phone || ""
             },
             notes: {
                 address: organization.address,
