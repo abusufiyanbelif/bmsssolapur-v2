@@ -16,12 +16,6 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
 
-const GoogleIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="mr-2 h-4 w-4">
-        <path fill="#4285F4" d="M21.35 11.1h-9.2v2.8h5.3c-.2 1.9-1.6 3.3-3.5 3.3-2.1 0-3.8-1.7-3.8-3.8s1.7-3.8 3.8-3.8c1.1 0 2.1.4 2.8 1.1l2.1-2.1C16.5 4.7 14.4 4 12 4c-4.4 0-8 3.6-8 8s3.6 8 8 8c4.1 0 7.5-3.1 7.8-7.2-1.3-.9-2.2-2.3-2.45-3.7z"/>
-    </svg>
-);
-
 export function LoginForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,36 +116,6 @@ export function LoginForm() {
       setIsSubmitting(false);
   }
   
-  const onGoogleSignIn = async () => {
-    setIsSubmitting(true);
-    const provider = new GoogleAuthProvider();
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const firebaseUser = result.user;
-
-        const serverResult = await handleGoogleLogin(firebaseUser);
-        
-        if(serverResult.success && serverResult.userId) {
-            setLoginSuccessData({userId: serverResult.userId});
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Login Failed",
-                description: serverResult.error || "An unknown error occurred.",
-            });
-        }
-    } catch(error: any) {
-        toast({
-            variant: "destructive",
-            title: "Google Sign-In Error",
-            description: error.message || "Failed to sign in with Google.",
-        });
-    } finally {
-        setIsSubmitting(false);
-    }
-  }
-
-
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
       <Card className="w-full max-w-sm">
