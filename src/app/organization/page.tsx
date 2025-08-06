@@ -9,6 +9,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/services/types";
 import Link from "next/link";
+import { QrCodeDialog } from "./qr-code-dialog";
 
 // Static data for Board Members
 const boardMembers = {
@@ -105,8 +106,6 @@ export default async function OrganizationPage() {
         );
     };
     
-    const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&cu=INR`;
-
     return (
         <div className="flex-1 space-y-6">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
@@ -142,17 +141,21 @@ export default async function OrganizationPage() {
                             </div>
                         </div>
                         {organization.qrCodeUrl && (
-                            <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50">
-                                <a href={upiLink} className="block cursor-pointer">
+                            <QrCodeDialog
+                                qrCodeUrl={organization.qrCodeUrl}
+                                upiId={organization.upiId!}
+                                orgName={organization.name}
+                            >
+                                <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
                                     <div className="relative w-56 h-56">
                                         <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
                                     </div>
-                                </a>
-                                <p className="text-sm font-bold">{organization.upiId}</p>
-                                <p className="text-sm text-muted-foreground text-center">
-                                    Scan with any UPI App or tap to pay on mobile.
-                                </p>
-                            </div>
+                                    <p className="text-sm font-bold">{organization.upiId}</p>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        Scan with any UPI App or click to view options.
+                                    </p>
+                                </div>
+                            </QrCodeDialog>
                         )}
                     </div>
                 </CardContent>
