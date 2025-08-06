@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, Edit, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff, ArrowUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -34,13 +34,8 @@ const allRoles: (UserRole | 'all')[] = ["all", "Donor", "Beneficiary", "Admin", 
 const statusOptions: ('all' | 'active' | 'inactive')[] = ["all", "active", "inactive"];
 const anonymityOptions: ('all' | 'anonymous' | 'not-anonymous')[] = ["all", "anonymous", "not-anonymous"];
 
-type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc';
-const sortOptions: { value: SortOption, label: string }[] = [
-    { value: 'name-asc', label: 'Name (A-Z)' },
-    { value: 'name-desc', label: 'Name (Z-A)' },
-    { value: 'date-desc', label: 'Joined Date (Newest First)' },
-    { value: 'date-asc', label: 'Joined Date (Oldest First)' },
-];
+type SortableColumn = 'name' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
 
 
 export default function UserManagementPage() {
@@ -56,7 +51,6 @@ export default function UserManagementPage() {
     const [roleInput, setRoleInput] = useState<string>('all');
     const [statusInput, setStatusInput] = useState<string>('all');
     const [anonymityInput, setAnonymityInput] = useState<string>('all');
-    const [sortInput, setSortInput] = useState<SortOption>('name-asc');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
@@ -64,8 +58,11 @@ export default function UserManagementPage() {
         role: 'all',
         status: 'all',
         anonymity: 'all',
-        sort: 'name-asc' as SortOption
     });
+    
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('name');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -115,9 +112,18 @@ export default function UserManagementPage() {
             role: roleInput,
             status: statusInput,
             anonymity: anonymityInput,
-            sort: sortInput
         });
     };
+    
+    const handleSort = (column: SortableColumn) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    }
+
 
     const filteredUsers = useMemo(() => {
         let filtered = users.filter(user => {
@@ -135,15 +141,19 @@ export default function UserManagementPage() {
         });
         
         return filtered.sort((a, b) => {
-             switch(appliedFilters.sort) {
-                case 'date-desc': return b.createdAt.toMillis() - a.createdAt.toMillis();
-                case 'date-asc': return a.createdAt.toMillis() - b.createdAt.toMillis();
-                case 'name-asc': return a.name.localeCompare(b.name);
-                case 'name-desc': return b.name.localeCompare(a.name);
-                default: return 0;
+            const aValue = a[sortColumn];
+            const bValue = b[sortColumn];
+
+            let comparison = 0;
+            if (aValue > bValue) {
+                comparison = 1;
+            } else if (aValue < bValue) {
+                comparison = -1;
             }
+
+            return sortDirection === 'asc' ? comparison : -comparison;
         });
-    }, [users, appliedFilters]);
+    }, [users, appliedFilters, sortColumn, sortDirection]);
     
     const paginatedUsers = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -157,8 +167,7 @@ export default function UserManagementPage() {
         setRoleInput('all');
         setStatusInput('all');
         setAnonymityInput('all');
-        setSortInput('name-asc');
-        setAppliedFilters({ name: '', role: 'all', status: 'all', anonymity: 'all', sort: 'name-asc' });
+        setAppliedFilters({ name: '', role: 'all', status: 'all', anonymity: 'all' });
         setCurrentPage(1);
     };
     
@@ -214,6 +223,11 @@ export default function UserManagementPage() {
             </DropdownMenu>
         );
     }
+    
+    const renderSortIcon = (column: SortableColumn) => {
+        if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+        return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+    };
 
 
     const renderDesktopTable = () => (
@@ -221,12 +235,20 @@ export default function UserManagementPage() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
-                    <TableHead>Name</TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('name')}>
+                           Name {renderSortIcon('name')}
+                        </Button>
+                    </TableHead>
                     <TableHead>User ID</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Roles</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Joined On</TableHead>
+                     <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                            Joined On {renderSortIcon('createdAt')}
+                        </Button>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -451,8 +473,8 @@ export default function UserManagementPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 xl:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="nameFilter">Search by Name or ID</Label>
                         <Input 
                             id="nameFilter" 
@@ -494,20 +516,7 @@ export default function UserManagementPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2 xl:col-span-full">
-                        <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
-                            <SelectTrigger id="sortOption" className="w-full">
-                                <SelectValue placeholder="Sort by..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {sortOptions.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex items-end gap-4 xl:col-span-full">
+                    <div className="flex items-end gap-4 lg:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                            <Search className="mr-2 h-4 w-4" />
                             Apply Filters

@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,13 +36,8 @@ const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 type AnonymityFilter = 'all' | 'anonymous' | 'not-anonymous';
 const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"];
 
-type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc';
-const sortOptions: { value: SortOption, label: string }[] = [
-    { value: 'name-asc', label: 'Name (A-Z)' },
-    { value: 'name-desc', label: 'Name (Z-A)' },
-    { value: 'date-desc', label: 'Joined Date (Newest First)' },
-    { value: 'date-asc', label: 'Joined Date (Oldest First)' },
-];
+type SortableColumn = 'name' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
 
 
 export default function DonorsPage() {
@@ -58,16 +53,18 @@ export default function DonorsPage() {
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
     const [anonymityInput, setAnonymityInput] = useState<AnonymityFilter>('all');
-    const [sortInput, setSortInput] = useState<SortOption>('name-asc');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         name: '',
         status: 'all' as StatusFilter,
         anonymity: 'all' as AnonymityFilter,
-        sort: 'name-asc' as SortOption
     });
     
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('name');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -78,7 +75,6 @@ export default function DonorsPage() {
             name: nameInput,
             status: statusInput,
             anonymity: anonymityInput,
-            sort: sortInput
         });
     };
     
@@ -120,6 +116,15 @@ export default function DonorsPage() {
         });
         fetchUsers();
     };
+    
+    const handleSort = (column: SortableColumn) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    }
 
     const filteredDonors = useMemo(() => {
         let filtered = donors.filter(user => {
@@ -132,16 +137,20 @@ export default function DonorsPage() {
         });
 
         return filtered.sort((a, b) => {
-             switch(appliedFilters.sort) {
-                case 'date-desc': return b.createdAt.toMillis() - a.createdAt.toMillis();
-                case 'date-asc': return a.createdAt.toMillis() - b.createdAt.toMillis();
-                case 'name-asc': return a.name.localeCompare(b.name);
-                case 'name-desc': return b.name.localeCompare(a.name);
-                default: return 0;
+            const aValue = a[sortColumn];
+            const bValue = b[sortColumn];
+
+            let comparison = 0;
+            if (aValue > bValue) {
+                comparison = 1;
+            } else if (aValue < bValue) {
+                comparison = -1;
             }
+
+            return sortDirection === 'asc' ? comparison : -comparison;
         });
 
-    }, [donors, appliedFilters]);
+    }, [donors, appliedFilters, sortColumn, sortDirection]);
 
     const paginatedDonors = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -154,8 +163,7 @@ export default function DonorsPage() {
         setNameInput('');
         setStatusInput('all');
         setAnonymityInput('all');
-        setSortInput('name-asc');
-        setAppliedFilters({ name: '', status: 'all', anonymity: 'all', sort: 'name-asc' });
+        setAppliedFilters({ name: '', status: 'all', anonymity: 'all' });
         setCurrentPage(1);
     };
     
@@ -209,6 +217,11 @@ export default function DonorsPage() {
             </DropdownMenu>
         );
     }
+    
+    const renderSortIcon = (column: SortableColumn) => {
+        if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+        return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+    };
 
 
     const renderDesktopTable = () => (
@@ -216,12 +229,22 @@ export default function DonorsPage() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
-                    <TableHead>Name</TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('name')}>
+                            Name
+                            {renderSortIcon('name')}
+                        </Button>
+                    </TableHead>
                     <TableHead>User ID</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Roles</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Joined On</TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                            Joined On
+                            {renderSortIcon('createdAt')}
+                        </Button>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -443,7 +466,7 @@ export default function DonorsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="nameFilter">Donor Name</Label>
                         <Input 
@@ -472,19 +495,6 @@ export default function DonorsPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {anonymityOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-2 lg:col-span-full">
-                        <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
-                            <SelectTrigger id="sortOption" className="w-full">
-                                <SelectValue placeholder="Sort by..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {sortOptions.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                ))}
                             </SelectContent>
                         </Select>
                     </div>
