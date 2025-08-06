@@ -229,12 +229,14 @@ export default function UserManagementPage() {
                             <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
                                 {user.name}
                             </Link>
-                             {user.isAnonymous && <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
                         </TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{user.userId}</div>
-                            {user.isAnonymous && user.anonymousId && (
-                                <div className="font-mono text-xs text-muted-foreground" title="Anonymous ID">{user.anonymousId}</div>
+                            {user.isAnonymousAsBeneficiary && user.anonymousBeneficiaryId && (
+                                <div className="font-mono text-xs text-muted-foreground" title="Anonymous Beneficiary ID">{user.anonymousBeneficiaryId}</div>
+                            )}
+                            {user.isAnonymousAsDonor && user.anonymousDonorId && (
+                                <div className="font-mono text-xs text-muted-foreground" title="Anonymous Donor ID">{user.anonymousDonorId}</div>
                             )}
                         </TableCell>
                         <TableCell>
@@ -274,7 +276,6 @@ export default function UserManagementPage() {
                                 <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
                                     {user.name}
                                 </Link>
-                                 {user.isAnonymous && <EyeOff className="h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
                             </CardTitle>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
@@ -287,8 +288,11 @@ export default function UserManagementPage() {
                             <span className="text-muted-foreground">User ID</span>
                              <div className="text-right">
                                 <span className="font-mono text-xs">{user.userId}</span>
-                                {user.isAnonymous && user.anonymousId && (
-                                    <div className="font-mono text-xs text-muted-foreground" title="Anonymous ID">{user.anonymousId}</div>
+                                {user.isAnonymousAsBeneficiary && user.anonymousBeneficiaryId && (
+                                    <div className="font-mono text-xs text-muted-foreground" title="Anonymous Beneficiary ID">{user.anonymousBeneficiaryId}</div>
+                                )}
+                                {user.isAnonymousAsDonor && user.anonymousDonorId && (
+                                    <div className="font-mono text-xs text-muted-foreground" title="Anonymous Donor ID">{user.anonymousDonorId}</div>
                                 )}
                             </div>
                         </div>

@@ -31,6 +31,7 @@ import { Loader2 } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { getUser } from "@/services/user-service";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -66,6 +67,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -84,12 +86,18 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
       tipAmount: 0,
     },
   });
-
-  const { watch } = form;
+  
+  const { watch, setValue } = form;
   const paymentMethod = watch("paymentMethod");
   const includeTip = watch("includeTip");
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
+  
+  useEffect(() => {
+    if (selectedDonor) {
+        setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
+    }
+  }, [selectedDonor, setValue]);
   
   const totalAmount = (amount || 0) + (tipAmount || 0);
 
@@ -127,6 +135,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
         description: `Successfully added donation from ${result.donation.donorName}.`,
       });
       form.reset();
+      setSelectedDonor(null);
     } else {
       toast({
         variant: "destructive",
@@ -145,7 +154,14 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Donor</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                    onValueChange={async (value) => {
+                        field.onChange(value);
+                        const donor = await getUser(value);
+                        setSelectedDonor(donor);
+                    }}
+                    defaultValue={field.value}
+                >
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a donor" />
@@ -179,7 +195,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
                   Mark this Donation as Anonymous
                 </FormLabel>
                 <FormDescription>
-                  If checked, the donor's name will be hidden from public view for this specific donation.
+                  If checked, the donor's name will be hidden from public view for this specific donation. This is automatically checked if the user's profile is set to anonymous.
                 </FormDescription>
               </div>
             </FormItem>

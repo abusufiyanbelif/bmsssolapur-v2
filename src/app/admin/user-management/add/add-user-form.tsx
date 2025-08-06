@@ -530,7 +530,7 @@ export function AddUserForm() {
 
          {(isAnonymousBeneficiary || isAnonymousDonor) && (
             <div className="text-sm rounded-lg border bg-muted/50 p-4">
-                A unique, non-identifiable <span className="font-semibold">Anonymous ID</span> will be generated for this user upon creation.
+                Unique anonymous IDs for Donor and Beneficiary roles will be generated for this user upon creation.
             </div>
         )}
 

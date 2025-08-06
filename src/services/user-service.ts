@@ -78,7 +78,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(db, USERS_COLLECTION, user.userId);
     
     // Always generate an anonymous ID for every user upon creation
-    const anonymousId = user.anonymousId || `User-${userRef.id.substring(0, 6).toUpperCase()}`;
+    const anonymousBeneficiaryId = user.anonymousBeneficiaryId || `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
+    const anonymousDonorId = user.anonymousDonorId || `Donor-${userRef.id.substring(0, 6).toUpperCase()}`;
 
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
@@ -102,7 +103,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         beneficiaryType: user.beneficiaryType,
         isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
         isAnonymousAsDonor: user.isAnonymousAsDonor || false,
-        anonymousId: anonymousId,
+        anonymousBeneficiaryId,
+        anonymousDonorId,
         occupation: user.occupation,
         familyMembers: user.familyMembers,
         isWidow: user.isWidow,
@@ -233,13 +235,7 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
         
-        let finalUpdates = { ...updates };
-        if ((updates.isAnonymousAsBeneficiary || updates.isAnonymousAsDonor) && !updates.anonymousId) {
-            const existingUser = await getDoc(userRef);
-            if (existingUser.exists() && !existingUser.data().anonymousId) {
-                finalUpdates.anonymousId = `User-${id.substring(0, 6).toUpperCase()}`;
-            }
-        }
+        const finalUpdates = { ...updates };
 
         await updateDoc(userRef, {
             ...finalUpdates,

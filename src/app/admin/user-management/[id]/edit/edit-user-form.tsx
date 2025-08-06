@@ -671,10 +671,17 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             )}
                         />
                     )}
-                    {(isAnonymousBeneficiary || isAnonymousDonor) && (
+                    {(isAnonymousBeneficiary) && (
                         <div className="space-y-2">
-                            <FormLabel>Anonymous ID</FormLabel>
-                            <Input value={user.anonymousId || "Will be generated on save"} disabled />
+                            <FormLabel>Anonymous Beneficiary ID</FormLabel>
+                            <Input value={user.anonymousBeneficiaryId || "Will be generated on save"} disabled />
+                            <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
+                        </div>
+                    )}
+                     {(isAnonymousDonor) && (
+                        <div className="space-y-2">
+                            <FormLabel>Anonymous Donor ID</FormLabel>
+                            <Input value={user.anonymousDonorId || "Will be generated on save"} disabled />
                             <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
                         </div>
                     )}

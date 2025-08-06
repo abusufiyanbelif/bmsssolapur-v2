@@ -48,8 +48,8 @@ function PublicLeadsList({ leads, organization }: PublicLeadsListProps) {
             {leads.map((lead) => {
                 const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
                 const remainingAmount = lead.helpRequested - lead.helpGiven;
-                const displayName = lead.beneficiary?.isAnonymous 
-                    ? lead.beneficiary?.anonymousId || "Anonymous Beneficiary"
+                const displayName = lead.beneficiary?.isAnonymousAsBeneficiary 
+                    ? lead.beneficiary?.anonymousBeneficiaryId || "Anonymous Beneficiary"
                     : lead.name;
 
                 return (

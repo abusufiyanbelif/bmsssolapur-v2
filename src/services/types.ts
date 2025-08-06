@@ -50,7 +50,8 @@ export interface User {
   beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family';
   isAnonymousAsBeneficiary?: boolean;
   isAnonymousAsDonor?: boolean;
-  anonymousId?: string; 
+  anonymousBeneficiaryId?: string;
+  anonymousDonorId?: string;
   occupation?: string;
   familyMembers?: number;
   isWidow?: boolean;
