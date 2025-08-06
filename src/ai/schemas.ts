@@ -74,3 +74,23 @@ export const QuotesOutputSchema = z.object({
   quotes: z.array(QuoteSchema).describe('An array of inspirational quotes.'),
 });
 export type QuotesOutput = z.infer<typeof QuotesOutputSchema>;
+
+
+// Schema for extracting donation details from an image
+export const ExtractDonationDetailsInputSchema = z.object({
+    photoDataUri: z
+    .string()
+    .describe(
+      "A photo of a payment screenshot, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+});
+export type ExtractDonationDetailsInput = z.infer<typeof ExtractDonationDetailsInputSchema>;
+
+export const ExtractDonationDetailsOutputSchema = z.object({
+  amount: z.number().optional().describe('The total amount of the transaction.'),
+  transactionId: z.string().optional().describe('The transaction ID, reference number, or UTR number.'),
+  date: z.string().optional().describe('The date of the transaction in YYYY-MM-DD format.'),
+  paymentMethod: z.string().optional().describe('The payment method used, e.g., UPI, Bank Transfer.'),
+  donorIdentifier: z.string().optional().describe('Any identified name or UPI ID of the person who sent the money.'),
+});
+export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;

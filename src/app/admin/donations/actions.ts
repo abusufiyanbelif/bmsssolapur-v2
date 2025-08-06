@@ -4,6 +4,7 @@
 import { deleteDonation, updateDonation, createDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
+import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 
 export async function handleDeleteDonation(donationId: string) {
     try {
@@ -47,44 +48,26 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
 }
 
 
-export async function handleCreateDonationFromUpload(formData: FormData, adminUserId: string) {
+export async function handleScanDonationProof(formData: FormData) {
     try {
         const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
-        const donorId = formData.get("donorId") as string;
-
+        
         if (!screenshotFile || screenshotFile.size === 0) {
             return { success: false, error: "No file was uploaded." };
         }
-        if (!donorId) {
-            return { success: false, error: "A donor must be selected." };
-        }
         
-        const [donor, adminUser] = await Promise.all([
-            getUser(donorId),
-            getUser(adminUserId)
-        ]);
-        
-        if (!donor) return { success: false, error: "Selected donor not found." };
-        if (!adminUser) return { success: false, error: "Admin user not found." };
-        
-        const paymentScreenshotUrl = await handleFileUpload(screenshotFile);
+        const arrayBuffer = await screenshotFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = screenshotFile.type;
+        const dataUri = `data:${mimeType};base64,${base64}`;
 
-        const newDonation = await createDonation({
-            donorId: donor.id!,
-            donorName: donor.name,
-            amount: 0, // Admin needs to fill this in
-            type: 'Sadaqah', // Default type
-            status: 'Pending verification',
-            isAnonymous: false,
-            paymentScreenshotUrl,
-            notes: "Created via screenshot upload. Please verify details and amount.",
-        }, adminUser.id!, adminUser.name, adminUser.email);
+        const extractedDetails = await extractDonationDetails({ photoDataUri: dataUri });
         
-        revalidatePath("/admin/donations");
-        return { success: true, donationId: newDonation.id };
+        return { success: true, details: extractedDetails };
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error("Error scanning donation proof:", error);
         return { success: false, error };
     }
 }

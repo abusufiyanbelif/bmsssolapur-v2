@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose } from "@/services/donation-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -448,10 +448,10 @@ function DonationsPageContent() {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Donation Management</h2>
              <div className="flex gap-2">
-                <CreateFromUploadDialog donors={donorUsers} onUploadSuccess={onUploadSuccess}>
+                <CreateFromUploadDialog>
                     <Button variant="outline">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload & Create
+                        <ScanEye className="mr-2 h-4 w-4" />
+                        Scan Screenshot
                     </Button>
                 </CreateFromUploadDialog>
                 <Button asChild>

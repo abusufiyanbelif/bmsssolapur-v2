@@ -26,12 +26,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation } from "./actions";
-import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { Loader2, Info } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
-import { getUser } from "@/services/user-service";
+import { getUser, getUserByUserId } from "@/services/user-service";
+import { useSearchParams } from "next/navigation";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -63,8 +63,9 @@ interface AddDonationFormProps {
   users: User[];
 }
 
-export function AddDonationForm({ users }: AddDonationFormProps) {
+function AddDonationFormContent({ users }: AddDonationFormProps) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
@@ -94,6 +95,26 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
   const tipAmount = watch("tipAmount");
   const isAnonymous = watch("isAnonymous");
   
+  useEffect(() => {
+    const prefillData = async () => {
+        const amountParam = searchParams.get('amount');
+        const transactionIdParam = searchParams.get('transactionId');
+        const donorIdentifierParam = searchParams.get('donorIdentifier');
+
+        if (amountParam) setValue('amount', parseFloat(amountParam));
+        if (transactionIdParam) setValue('transactionId', transactionIdParam);
+
+        if (donorIdentifierParam) {
+            const user = await getUserByUserId(donorIdentifierParam);
+            if (user && user.roles.includes('Donor')) {
+                setValue('donorId', user.id!);
+                setSelectedDonor(user);
+            }
+        }
+    }
+    prefillData();
+  }, [searchParams, setValue]);
+
   useEffect(() => {
     if (selectedDonor) {
         setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
@@ -161,7 +182,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
                         const donor = await getUser(value);
                         setSelectedDonor(donor);
                     }}
-                    defaultValue={field.value}
+                    value={field.value}
                 >
                     <FormControl>
                     <SelectTrigger>
@@ -393,4 +414,12 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
       </form>
     </Form>
   );
+}
+
+export function AddDonationForm(props: AddDonationFormProps) {
+    return (
+        <Suspense fallback={<div>Loading form...</div>}>
+            <AddDonationFormContent {...props} />
+        </Suspense>
+    )
 }
