@@ -31,6 +31,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} h-full`}>
       <body className="font-body antialiased h-full bg-background">
         <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+        <Script async src="https://pay.google.com/gp/p/js/pay.js" />
         <AppShell>
           {children}
         </AppShell>
