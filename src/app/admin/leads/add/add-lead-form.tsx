@@ -158,7 +158,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isValid } } = form;
   const selectedPurpose = form.watch("purpose");
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
@@ -541,184 +541,185 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                                 />
                               </FormControl>
                               <FormLabel className="font-normal">
-                                {type}
-                              </FormLabel>
+                                    {type}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+    
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FormField
+                    control={form.control}
+                    name="helpRequested"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Amount Requested</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="Enter amount" {...field} />
+                        </FormControl>
+                        <FormDescription>The total amount of funds needed.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Due Date (Optional)</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                    date < new Date() || date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormDescription>
+                                The deadline for when funds are needed.
+                            </FormDescription>
+                            <FormMessage />
                             </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        )}
+                    />
+                </div>
+    
+    
                 <FormField
                 control={form.control}
-                name="helpRequested"
+                name="caseDetails"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Amount Requested</FormLabel>
+                    <FormLabel>Case Details</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="Enter amount" {...field} />
+                        <Textarea
+                            placeholder="Provide a brief summary of the case, the reason for the need, and any other relevant information."
+                            className="resize-y min-h-[100px]"
+                            {...field}
+                        />
                     </FormControl>
-                    <FormDescription>The total amount of funds needed.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
-                <FormField
-                    control={form.control}
-                    name="dueDate"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Due Date (Optional)</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
+    
+                {selectedPurpose === 'Loan' && (
+                     <FormField
+                        control={form.control}
+                        name="isLoan"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                             <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={true}
+                                />
                             </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                date < new Date() || date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormDescription>
-                            The deadline for when funds are needed.
-                        </FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-
-
-            <FormField
-            control={form.control}
-            name="caseDetails"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Case Details</FormLabel>
-                <FormControl>
-                    <Textarea
-                        placeholder="Provide a brief summary of the case, the reason for the need, and any other relevant information."
-                        className="resize-y min-h-[100px]"
-                        {...field}
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                Is this a repayable loan?
+                                </FormLabel>
+                                <FormDescription>
+                                This is automatically selected if the purpose is "Loan".
+                                </FormDescription>
+                            </div>
+                            </FormItem>
+                        )}
                     />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-
-            {selectedPurpose === 'Loan' && (
-                 <FormField
-                    control={form.control}
-                    name="isLoan"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                            <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled={true}
-                            />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                            <FormLabel>
-                            Is this a repayable loan?
-                            </FormLabel>
-                            <FormDescription>
-                            This is automatically selected if the purpose is "Loan".
-                            </FormDescription>
-                        </div>
-                        </FormItem>
-                    )}
+                )}
+    
+                <FormField
+                control={form.control}
+                name="verificationDocument"
+                render={({ field: { onChange, value, ...rest } }) => (
+                    <FormItem>
+                    <FormLabel>Verification Document</FormLabel>
+                    <FormControl>
+                        <Input 
+                        type="file" 
+                        accept="image/*,application/pdf"
+                        onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                        {...rest}
+                        />
+                    </FormControl>
+                    <FormDescription>
+                        (Optional) Upload a document for verification purposes (e.g., ID card, medical report).
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
                 />
-            )}
-
-            <FormField
-            control={form.control}
-            name="verificationDocument"
-            render={({ field: { onChange, value, ...rest } }) => (
-                <FormItem>
-                <FormLabel>Verification Document</FormLabel>
-                <FormControl>
-                    <Input 
-                    type="file" 
-                    accept="image/*,application/pdf"
-                    onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
-                    {...rest}
-                    />
-                </FormControl>
-                <FormDescription>
-                    (Optional) Upload a document for verification purposes (e.g., ID card, medical report).
-                </FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-
-            <Button type="submit" disabled={isSubmitting || !isDirty}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Lead
-            </Button>
-        </form>
-        </Form>
-        <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-6 w-6 text-amber-500" />
-                        Duplicate Lead Warning
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This beneficiary already has {duplicateWarning?.length} open lead(s). Are you sure you want to create another one?
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="max-h-60 overflow-y-auto space-y-2 p-2 rounded-md bg-muted">
-                    {duplicateWarning?.map(lead => (
-                        <div key={lead.id} className="text-sm p-2 border bg-background rounded-md">
-                            <p><strong>Purpose:</strong> {lead.purpose}</p>
-                            <p><strong>Amount Requested:</strong> ₹{lead.helpRequested.toLocaleString()}</p>
-                            <p><strong>Status:</strong> {lead.status}</p>
-                        </div>
-                    ))}
-                </div>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => {
-                        setDuplicateWarning(null);
-                        onSubmit(form.getValues(), true);
-                    }}>
-                        Yes, Create Anyway
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    </>
-  );
-}
+    
+                <Button type="submit" disabled={isSubmitting || !isValid}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Lead
+                </Button>
+            </form>
+            </Form>
+            <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-6 w-6 text-amber-500" />
+                            Duplicate Lead Warning
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This beneficiary already has {duplicateWarning?.length} open lead(s). Are you sure you want to create another one?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="max-h-60 overflow-y-auto space-y-2 p-2 rounded-md bg-muted">
+                        {duplicateWarning?.map(lead => (
+                            <div key={lead.id} className="text-sm p-2 border bg-background rounded-md">
+                                <p><strong>Purpose:</strong> {lead.purpose}</p>
+                                <p><strong>Amount Requested:</strong> ₹{lead.helpRequested.toLocaleString()}</p>
+                                <p><strong>Status:</strong> {lead.status}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            setDuplicateWarning(null);
+                            onSubmit(form.getValues(), true);
+                        }}>
+                            Yes, Create Anyway
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+      );
+    }
+    
