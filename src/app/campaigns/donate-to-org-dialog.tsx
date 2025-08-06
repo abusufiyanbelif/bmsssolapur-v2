@@ -77,7 +77,19 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
             },
             theme: {
                 color: "#166534"
-            }
+            },
+            modal: {
+              options: {
+                checkout: {
+                  method: {
+                    netbanking: true,
+                    card: true,
+                    upi: true,
+                    wallet: true,
+                  },
+                },
+              },
+            },
         };
 
         const rzp = new Razorpay(options);
