@@ -51,9 +51,6 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
     const razorpayKey = 'rzp_test_PSMiH7GRjuuPkf';
 
     try {
-        const simulatedOrderId = `order_${Date.now()}`;
-        console.log(`Simulated Razorpay Order ID: ${simulatedOrderId}`);
-
         const options = {
             key: razorpayKey,
             amount: amount * 100,
@@ -61,12 +58,11 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
             name: organization.name,
             description: "Donation to General Fund",
             image: "/logo.svg",
-            order_id: simulatedOrderId,
             handler: function (response: any){
                 toast({ 
                     variant: 'success',
-                    title: "Payment Successful!", 
-                    description: `Thank you! Payment ID: ${response.razorpay_payment_id}`
+                    title: "Test Payment Successful!", 
+                    description: `This is a test. Payment ID: ${response.razorpay_payment_id}`
                 });
                 console.log("Razorpay Response:", response);
             },
