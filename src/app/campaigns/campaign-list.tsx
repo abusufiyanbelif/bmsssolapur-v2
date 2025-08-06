@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { EnrichedLead } from './actions';
 import { HandHeart } from 'lucide-react';
-import { DonateToOrgDialog } from './donate-to-org-dialog';
 import type { Organization } from '@/services/types';
 
 interface CampaignListProps {
@@ -29,13 +28,11 @@ export function CampaignList({ leads, organization }: CampaignListProps) {
                 <HandHeart className="mx-auto h-12 w-12 text-primary" />
                 <h3 className="text-xl font-semibold mt-4">All Active Cases Are Funded!</h3>
                 <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
-                    Your generosity is making a real difference. You can still support our mission by donating to the organization's general fund, which helps us prepare for future cases and emergencies.
+                    Your generosity is making a real difference. Check back later for new cases that need your support.
                 </p>
-                <DonateToOrgDialog organization={organization} user={null}>
-                     <Button className="mt-6">
-                        Donate to Organization
-                    </Button>
-                </DonateToOrgDialog>
+                 <Button className="mt-6" asChild>
+                    <a href="/#impact">View Our Impact</a>
+                </Button>
             </div>
         );
     }

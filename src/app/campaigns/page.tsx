@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { EnrichedLead } from "./actions";
 import type { Organization, User } from "@/services/types";
-import { DonateToOrgDialog } from "./donate-to-org-dialog";
 import { Button } from "@/components/ui/button";
 
 interface CampaignsPageProps {
@@ -49,20 +47,6 @@ export default function CampaignsPage({ user }: CampaignsPageProps) {
     return (
         <div className="flex-1 space-y-4">
             <h2 id="page-header" className="text-3xl font-bold tracking-tight font-headline text-primary scroll-mt-20">Verified Cases for Donation</h2>
-
-             <Card>
-                <CardHeader className="flex flex-col md:flex-row md:items-center justify-between">
-                    <div>
-                        <CardTitle>Donate to the Organization</CardTitle>
-                        <CardDescription>
-                            Your general donation supports our operations and helps us respond quickly to future needs.
-                        </CardDescription>
-                    </div>
-                     <DonateToOrgDialog organization={organization} user={user}>
-                        <Button className="mt-4 md:mt-0">Donate to General Fund</Button>
-                    </DonateToOrgDialog>
-                </CardHeader>
-            </Card>
 
             <Card>
                 <CardHeader>
