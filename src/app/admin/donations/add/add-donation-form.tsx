@@ -92,6 +92,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
   const includeTip = watch("includeTip");
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
+  const isAnonymous = watch("isAnonymous");
   
   useEffect(() => {
     if (selectedDonor) {
@@ -202,6 +203,14 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
           )}
         />
         
+        {isAnonymous && selectedDonor && (
+            <div className="space-y-2">
+                <FormLabel>Anonymous Donor ID</FormLabel>
+                <Input value={selectedDonor.anonymousDonorId || "Will be generated on save"} disabled />
+                <FormDescription>This ID will be used for public display to protect the donor's privacy.</FormDescription>
+            </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}
