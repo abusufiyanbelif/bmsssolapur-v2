@@ -476,78 +476,105 @@ export function AddUserForm() {
         />
         
         {selectedRoles.includes("Beneficiary") && (
-            <>
-                <FormField
-                    control={form.control}
-                    name="isAnonymous"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                            <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                            <FormLabel>
-                            Mark as Anonymous Beneficiary
-                            </FormLabel>
-                            <FormDescription>
-                            If checked, a unique ID will be generated and their real name will be hidden from public view.
-                            </FormDescription>
-                        </div>
-                        </FormItem>
-                    )}
-                />
-                 {isAnonymous && (
-                    <div className="text-sm rounded-lg border bg-muted/50 p-4">
-                        A unique, non-identifiable <span className="font-semibold">Anonymous ID</span> will be generated for this user upon creation.
+            <FormField
+                control={form.control}
+                name="isAnonymous"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                        <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                        <FormLabel>
+                        Mark as Anonymous Beneficiary
+                        </FormLabel>
+                        <FormDescription>
+                        If checked, a unique ID will be generated and their real name will be hidden from public view.
+                        </FormDescription>
                     </div>
+                    </FormItem>
                 )}
-                 <FormField
-                    control={form.control}
-                    name="beneficiaryType"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                        <FormLabel>Beneficiary Type</FormLabel>
-                        <FormDescription>Categorize the beneficiary for reporting and aid purposes.</FormDescription>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-row space-x-4 pt-2"
-                            >
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Adult" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Adult</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Old Age" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Old Age</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Kid" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Kid</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Family" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Family</FormLabel>
-                            </FormItem>
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
+            />
+        )}
+
+        {selectedRoles.includes("Donor") && (
+            <FormField
+                control={form.control}
+                name="isAnonymous"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                        <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                        <FormLabel>
+                        Mark as Anonymous Donor
+                        </FormLabel>
+                        <FormDescription>
+                        If checked, their name will be hidden from public view for all their donations.
+                        </FormDescription>
+                    </div>
+                    </FormItem>
+                )}
+            />
+        )}
+
+         {isAnonymous && (
+            <div className="text-sm rounded-lg border bg-muted/50 p-4">
+                A unique, non-identifiable <span className="font-semibold">Anonymous ID</span> will be generated for this user upon creation.
+            </div>
+        )}
+
+         {selectedRoles.includes("Beneficiary") && (
+            <FormField
+                control={form.control}
+                name="beneficiaryType"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                    <FormLabel>Beneficiary Type</FormLabel>
+                    <FormDescription>Categorize the beneficiary for reporting and aid purposes.</FormDescription>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-row space-x-4 pt-2"
+                        >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Adult" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Adult</FormLabel>
                         </FormItem>
-                    )}
-                />
-            </>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Old Age" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Old Age</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Kid" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Kid</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Family" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Family</FormLabel>
+                        </FormItem>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
         )}
 
         <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>
@@ -588,5 +615,3 @@ export function AddUserForm() {
     </Form>
   );
 }
-
-    
