@@ -34,6 +34,7 @@ export default function RootLayout({
         {/* Payment Gateway SDKs */}
         <Script async src="https://pay.google.com/gp/p/js/pay.js" />
         <Script src="https://mercury.phonepe.com/transact/sdk-v1.js" />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" />
         
         <AppShell>
           {children}
