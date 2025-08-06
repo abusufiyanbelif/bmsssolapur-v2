@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,9 +26,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonation } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, Edit, Save, X } from "lucide-react";
+import { Loader2, Edit, Save, X, Upload } from "lucide-react";
 import type { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UploadProofDialog } from "../../upload-proof-dialog";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -46,9 +48,10 @@ type EditDonationFormValues = z.infer<typeof formSchema>;
 
 interface EditDonationFormProps {
   donation: Donation;
+  onUpdate: () => void;
 }
 
-export function EditDonationForm({ donation }: EditDonationFormProps) {
+export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
@@ -116,6 +119,7 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
         description: `Successfully updated donation from ${donation.donorName}.`,
       });
       form.reset(values);
+      onUpdate();
       setIsEditing(false);
     } else {
       toast({
@@ -136,12 +140,22 @@ export function EditDonationForm({ donation }: EditDonationFormProps) {
                         Update the details for the donation from <span className="font-semibold">{donation.donorName}</span>.
                     </CardDescription>
                 </div>
-                {!isEditing && (
-                    <Button onClick={() => setIsEditing(true)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                    </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {!donation.paymentScreenshotUrl && (
+                         <UploadProofDialog donation={donation} onUploadSuccess={onUpdate}>
+                            <Button variant="outline">
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Proof
+                            </Button>
+                        </UploadProofDialog>
+                    )}
+                    {!isEditing && (
+                        <Button onClick={() => setIsEditing(true)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                        </Button>
+                    )}
+                </div>
             </div>
         </CardHeader>
         <CardContent>

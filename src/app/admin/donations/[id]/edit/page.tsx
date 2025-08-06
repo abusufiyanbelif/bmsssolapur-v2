@@ -1,18 +1,54 @@
 
-import { getDonation } from "@/services/donation-service";
-import { notFound } from "next/navigation";
+
+"use client";
+
+import { getDonation, type Donation } from "@/services/donation-service";
+import { notFound, useRouter } from "next/navigation";
 import { EditDonationForm } from "./edit-donation-form";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
-export default async function EditDonationPage({ params }: { params: { id: string } }) {
-    const donation = await getDonation(params.id);
+export default function EditDonationPage({ params }: { params: { id: string } }) {
+    const [donation, setDonation] = useState<Donation | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
-    if (!donation) {
-        notFound();
+    const fetchDonation = async () => {
+        setLoading(true);
+        try {
+            const fetchedDonation = await getDonation(params.id);
+            if (fetchedDonation) {
+                setDonation(fetchedDonation);
+            } else {
+                notFound();
+            }
+        } catch (e) {
+            setError("Failed to load donation details.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDonation();
+    }, [params.id]);
+
+    if (loading) {
+        return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+    }
+
+    if (error || !donation) {
+        return (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error || "Donation not found."}</AlertDescription>
+            </Alert>
+        );
     }
     
     return (
@@ -30,7 +66,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                 </AlertDescription>
             </Alert>
             
-            <EditDonationForm donation={donation} />
+            <EditDonationForm donation={donation} onUpdate={fetchDonation} />
         </div>
     );
 }

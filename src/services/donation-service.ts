@@ -81,42 +81,48 @@ export const getDonation = async (id: string) => {
 export const updateDonation = async (
     id: string, 
     updates: Partial<Donation>, 
-    adminUser: Pick<User, 'id' | 'name' | 'email'>
+    adminUser?: Pick<User, 'id' | 'name' | 'email'>
 ) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const donationRef = doc(db, DONATIONS_COLLECTION, id);
-        const originalDonation = await getDonation(id);
+        
+        if (adminUser) {
+            const originalDonation = await getDonation(id);
+            await updateDoc(donationRef, updates);
 
-        await updateDoc(donationRef, updates);
-
-        if(originalDonation) {
-            if(updates.status && originalDonation.status !== updates.status) {
-                await logActivity({
-                    userId: adminUser.id!,
-                    userName: adminUser.name,
-                    userEmail: adminUser.email,
-                    role: 'Admin',
-                    activity: 'Status Changed',
-                    details: { 
-                        donationId: id,
-                        from: originalDonation.status,
-                        to: updates.status
-                    }
-                });
-            } else {
-                 await logActivity({
-                    userId: adminUser.id!,
-                    userName: adminUser.name,
-                    userEmail: adminUser.email,
-                    role: 'Admin',
-                    activity: 'Donation Updated',
-                    details: { 
-                        donationId: id,
-                        updates: Object.keys(updates).join(', ')
-                    }
-                 });
+            if(originalDonation) {
+                if(updates.status && originalDonation.status !== updates.status) {
+                    await logActivity({
+                        userId: adminUser.id!,
+                        userName: adminUser.name,
+                        userEmail: adminUser.email,
+                        role: 'Admin',
+                        activity: 'Status Changed',
+                        details: { 
+                            donationId: id,
+                            from: originalDonation.status,
+                            to: updates.status
+                        }
+                    });
+                } else {
+                     await logActivity({
+                        userId: adminUser.id!,
+                        userName: adminUser.name,
+                        userEmail: adminUser.email,
+                        role: 'Admin',
+                        activity: 'Donation Updated',
+                        details: { 
+                            donationId: id,
+                            updates: Object.keys(updates).join(', ')
+                        }
+                     });
+                }
             }
+        } else {
+            // If no admin user is provided, just perform the update without logging.
+            // Useful for simple, non-audited actions like adding a proof URL.
+             await updateDoc(donationRef, updates);
         }
 
     } catch (error) {

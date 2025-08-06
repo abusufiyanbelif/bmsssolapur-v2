@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -16,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -28,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleDeleteDonation } from "./actions";
+import { UploadProofDialog } from "./upload-proof-dialog";
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
@@ -169,6 +171,10 @@ function DonationsPageContent() {
         fetchDonations();
     }
     
+    const onUploadSuccess = () => {
+        fetchDonations();
+    }
+
     const renderSortIcon = (column: SortableColumn) => {
         if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
@@ -256,7 +262,7 @@ function DonationsPageContent() {
                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
                                 {donation.status}
-                            </Badge>
+                             </Badge>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
@@ -297,6 +303,14 @@ function DonationsPageContent() {
                         </Link>
                     </DropdownMenuItem>
                     
+                    <UploadProofDialog donation={donation} onUploadSuccess={onUploadSuccess}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Upload className="mr-2 h-4 w-4" /> Upload Proof
+                        </DropdownMenuItem>
+                    </UploadProofDialog>
+                    
+                    <DropdownMenuSeparator />
+
                     <DeleteConfirmationDialog
                         itemType="donation"
                         itemName={`from ${donation.donorName} for ₹${donation.amount}`}

@@ -373,7 +373,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
                 <FormControl>
                     <Input 
                     type="file" 
-                    accept="image/*"
+                    accept="image/*,application/pdf"
                     onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
                     />
                 </FormControl>
