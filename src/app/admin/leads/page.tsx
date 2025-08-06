@@ -141,7 +141,9 @@ function LeadsPageContent() {
     const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
             const beneficiary = usersById[lead.beneficiaryId];
-            const nameMatch = appliedFilters.name === '' || lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const nameMatch = appliedFilters.name === '' || 
+                              lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
+                              lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const statusMatch = appliedFilters.status === 'all' || lead.status === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.verifiedStatus === appliedFilters.verification;
             
@@ -224,8 +226,8 @@ function LeadsPageContent() {
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>
                                 <div className="font-medium">{lead.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                    Created: {format(lead.dateCreated.toDate(), "dd MMM yyyy")}
+                                <div className="text-xs text-muted-foreground font-mono" title={lead.id}>
+                                    ID: {lead.id?.substring(0,10)}...
                                 </div>
                             </TableCell>
                             <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
@@ -292,6 +294,10 @@ function LeadsPageContent() {
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     {lead.status}
                                 </Badge>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Lead ID</span>
+                                <span className="font-mono text-xs">{lead.id}</span>
                             </div>
                         </CardContent>
                          <CardFooter className="flex justify-end">
@@ -431,10 +437,10 @@ function LeadsPageContent() {
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 xl:col-span-2">
-                        <Label htmlFor="nameFilter">Beneficiary Name</Label>
+                        <Label htmlFor="nameFilter">Beneficiary or Lead ID</Label>
                         <Input 
                             id="nameFilter" 
-                            placeholder="Filter by name..."
+                            placeholder="Filter by name or ID..."
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
                         />
