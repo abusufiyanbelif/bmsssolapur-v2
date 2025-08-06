@@ -27,13 +27,13 @@ const prompt = ai.definePrompt({
     prompt: `You are an expert financial assistant. Analyze the provided image of a payment screenshot.
     Your task is to carefully extract the following details and return them in a structured JSON format:
     
-    - amount: The primary transaction amount. It should be a number.
-    - transactionId: The Transaction ID, UTR, or any other reference number. It should be a string.
+    - amount: The primary transaction amount. It must be a number.
+    - transactionId: The Transaction ID, UTR, or any other reference number. It must be a string.
     - date: The date of the transaction. Format it as YYYY-MM-DD.
-    - paymentMethod: The method of payment (e.g., UPI, Bank Transfer).
-    - donorIdentifier: The name of the sender or their UPI ID, if available.
+    - paymentMethod: The method of payment (e.g., UPI, Bank Transfer, GPay, PhonePe).
+    - donorIdentifier: The name or UPI ID of the person who sent the money (e.g., 'john.doe@okbank' or 'John Doe'). This is a crucial field.
     
-    If a field is not visible in the screenshot, omit it from the output.
+    If a field is not clearly visible in the screenshot, omit it from the output rather than guessing.
 
     Screenshot: {{media url=photoDataUri}}`
 });
