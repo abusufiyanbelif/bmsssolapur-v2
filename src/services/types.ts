@@ -48,7 +48,8 @@ export interface User {
   };
   gender?: 'Male' | 'Female' | 'Other';
   beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family';
-  isAnonymous?: boolean; 
+  isAnonymousAsBeneficiary?: boolean;
+  isAnonymousAsDonor?: boolean;
   anonymousId?: string; 
   occupation?: string;
   familyMembers?: number;

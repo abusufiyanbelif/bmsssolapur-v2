@@ -52,7 +52,8 @@ const formSchema = z.object({
     message: "You have to select at least one role.",
   }),
   createProfile: z.boolean().default(false),
-  isAnonymous: z.boolean().default(false),
+  isAnonymousAsBeneficiary: z.boolean().default(false),
+  isAnonymousAsDonor: z.boolean().default(false),
   gender: z.enum(["Male", "Female", "Other"]),
   beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family"]).optional(),
   addressLine1: z.string().optional(),
@@ -93,7 +94,8 @@ export function AddUserForm() {
       userId: "",
       roles: ["Donor"],
       createProfile: false,
-      isAnonymous: false,
+      isAnonymousAsBeneficiary: false,
+      isAnonymousAsDonor: false,
       isWidow: false,
       city: 'Solapur',
       state: 'Maharashtra',
@@ -105,12 +107,12 @@ export function AddUserForm() {
   const selectedGender = form.watch("gender");
   const firstName = form.watch("firstName");
   const lastName = form.watch("lastName");
-  const isAnonymous = form.watch("isAnonymous");
+  const isAnonymousBeneficiary = form.watch("isAnonymousAsBeneficiary");
+  const isAnonymousDonor = form.watch("isAnonymousAsDonor");
   
   useEffect(() => {
     if (firstName && lastName) {
         const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
-        // Only set the value if the user hasn't typed in the userId field yet
         if (!form.formState.dirtyFields.userId) {
             form.setValue('userId', generatedUserId);
         }
@@ -130,7 +132,8 @@ export function AddUserForm() {
     formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
     if(values.createProfile) formData.append("createProfile", "on");
-    if(values.isAnonymous) formData.append("isAnonymous", "on");
+    if(values.isAnonymousAsBeneficiary) formData.append("isAnonymousAsBeneficiary", "on");
+    if(values.isAnonymousAsDonor) formData.append("isAnonymousAsDonor", "on");
     formData.append("gender", values.gender);
     if(values.beneficiaryType) formData.append("beneficiaryType", values.beneficiaryType);
     if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
@@ -478,7 +481,7 @@ export function AddUserForm() {
         {selectedRoles.includes("Beneficiary") && (
             <FormField
                 control={form.control}
-                name="isAnonymous"
+                name="isAnonymousAsBeneficiary"
                 render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
@@ -492,7 +495,7 @@ export function AddUserForm() {
                         Mark as Anonymous Beneficiary
                         </FormLabel>
                         <FormDescription>
-                        If checked, a unique ID will be generated and their real name will be hidden from public view.
+                        If checked, their name will be hidden from public view and their Anonymous ID will be used instead.
                         </FormDescription>
                     </div>
                     </FormItem>
@@ -503,7 +506,7 @@ export function AddUserForm() {
         {selectedRoles.includes("Donor") && (
             <FormField
                 control={form.control}
-                name="isAnonymous"
+                name="isAnonymousAsDonor"
                 render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
@@ -525,7 +528,7 @@ export function AddUserForm() {
             />
         )}
 
-         {isAnonymous && (
+         {(isAnonymousBeneficiary || isAnonymousDonor) && (
             <div className="text-sm rounded-lg border bg-muted/50 p-4">
                 A unique, non-identifiable <span className="font-semibold">Anonymous ID</span> will be generated for this user upon creation.
             </div>

@@ -23,7 +23,8 @@ export async function handleUpdateUser(
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
     isActive: formData.get("isActive") === 'on',
-    isAnonymous: formData.get("isAnonymous") === 'on',
+    isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
+    isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
     
@@ -55,7 +56,8 @@ export async function handleUpdateUser(
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: rawFormData.isActive,
-        isAnonymous: rawFormData.isAnonymous,
+        isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
+        isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
         gender: rawFormData.gender,
         beneficiaryType: rawFormData.beneficiaryType,
         

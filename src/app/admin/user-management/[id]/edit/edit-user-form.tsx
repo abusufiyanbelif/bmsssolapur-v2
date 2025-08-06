@@ -158,7 +158,8 @@ const formSchema = z.object({
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
-  isAnonymous: z.boolean().default(false),
+  isAnonymousAsBeneficiary: z.boolean().default(false),
+  isAnonymousAsDonor: z.boolean().default(false),
   isActive: z.boolean().default(true),
   gender: z.enum(["Male", "Female", "Other"]),
   beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family"]).optional(),
@@ -202,7 +203,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
       lastName: user.lastName,
       phone: user.phone,
       roles: user.roles,
-      isAnonymous: user.isAnonymous || false,
+      isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
+      isAnonymousAsDonor: user.isAnonymousAsDonor || false,
       isActive: user.isActive,
       gender: user.gender || 'Other',
       beneficiaryType: user.beneficiaryType,
@@ -222,7 +224,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const { formState: { isDirty }, reset } = form;
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
-  const isAnonymous = form.watch("isAnonymous");
+  const isAnonymousBeneficiary = form.watch("isAnonymousAsBeneficiary");
+  const isAnonymousDonor = form.watch("isAnonymousAsDonor");
   
   const handleCancel = () => {
       reset({
@@ -232,7 +235,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
           lastName: user.lastName,
           phone: user.phone,
           roles: user.roles,
-          isAnonymous: user.isAnonymous || false,
+          isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
+          isAnonymousAsDonor: user.isAnonymousAsDonor || false,
           isActive: user.isActive,
           gender: user.gender || 'Other',
           beneficiaryType: user.beneficiaryType,
@@ -262,7 +266,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
     formData.append("phone", values.phone);
     values.roles.forEach(role => formData.append("roles", role));
     if(values.isActive) formData.append("isActive", "on");
-    if(values.isAnonymous) formData.append("isAnonymous", "on");
+    if(values.isAnonymousAsBeneficiary) formData.append("isAnonymousAsBeneficiary", "on");
+    if(values.isAnonymousAsDonor) formData.append("isAnonymousAsDonor", "on");
     formData.append("gender", values.gender);
     if(values.beneficiaryType) formData.append("beneficiaryType", values.beneficiaryType);
     if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
@@ -619,7 +624,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     {selectedRoles.includes("Beneficiary") && (
                         <FormField
                             control={form.control}
-                            name="isAnonymous"
+                            name="isAnonymousAsBeneficiary"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                 <FormControl>
@@ -644,7 +649,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     {selectedRoles.includes("Donor") && (
                          <FormField
                             control={form.control}
-                            name="isAnonymous"
+                            name="isAnonymousAsDonor"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                 <FormControl>
@@ -666,7 +671,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             )}
                         />
                     )}
-                    {isAnonymous && (
+                    {(isAnonymousBeneficiary || isAnonymousDonor) && (
                         <div className="space-y-2">
                             <FormLabel>Anonymous ID</FormLabel>
                             <Input value={user.anonymousId || "Will be generated on save"} disabled />

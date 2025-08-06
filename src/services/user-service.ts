@@ -78,7 +78,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(db, USERS_COLLECTION, user.userId);
     
     // Always generate an anonymous ID for every user upon creation
-    const anonymousId = user.anonymousId || `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
+    const anonymousId = user.anonymousId || `User-${userRef.id.substring(0, 6).toUpperCase()}`;
 
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
@@ -100,7 +100,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         },
         gender: user.gender,
         beneficiaryType: user.beneficiaryType,
-        isAnonymous: user.isAnonymous || false,
+        isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
+        isAnonymousAsDonor: user.isAnonymousAsDonor || false,
         anonymousId: anonymousId,
         occupation: user.occupation,
         familyMembers: user.familyMembers,
@@ -146,7 +147,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
 // Function to get a user by ID
 export const getUser = async (id: string): Promise<User | null> => {
   if (!isConfigValid) {
-    console.warn("Firebase is not configured. Skipping user fetch.");
+    console.warn("Firebase not configured. Skipping user fetch.");
     return null;
   }
   try {
@@ -233,10 +234,10 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
         const userRef = doc(db, USERS_COLLECTION, id);
         
         let finalUpdates = { ...updates };
-        if (updates.isAnonymous && !updates.anonymousId) {
+        if ((updates.isAnonymousAsBeneficiary || updates.isAnonymousAsDonor) && !updates.anonymousId) {
             const existingUser = await getDoc(userRef);
             if (existingUser.exists() && !existingUser.data().anonymousId) {
-                finalUpdates.anonymousId = `Beneficiary-${id.substring(0, 6).toUpperCase()}`;
+                finalUpdates.anonymousId = `User-${id.substring(0, 6).toUpperCase()}`;
             }
         }
 

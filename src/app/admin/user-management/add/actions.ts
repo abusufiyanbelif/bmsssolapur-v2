@@ -24,7 +24,8 @@ export async function handleAddUser(
     email: formData.get("email") as string,
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
-    isAnonymous: formData.get("isAnonymous") === 'on',
+    isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
+    isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
     
@@ -61,7 +62,8 @@ export async function handleAddUser(
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: true, // Default to active
-        isAnonymous: rawFormData.isAnonymous,
+        isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
+        isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
         gender: rawFormData.gender,
         beneficiaryType: rawFormData.beneficiaryType,
         
