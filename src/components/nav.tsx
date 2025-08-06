@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link"
@@ -6,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -29,7 +30,8 @@ type NavItem = {
 const allNavItems: NavItem[] = [
     // Guest
     { href: "/", label: "Home", icon: Home, allowedRoles: ["Guest"] },
-    { href: "/campaigns", label: "Verified Cases", icon: Megaphone, allowedRoles: ["Guest"] },
+    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Guest"] },
+    { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Guest"] },
     { href: "/donate", label: "Donate", icon: HandHeart, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
@@ -38,13 +40,13 @@ const allNavItems: NavItem[] = [
     
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
-    { href: "/campaigns", label: "Verified Cases", icon: FileCheck, allowedRoles: ["Donor"] },
+    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
+    { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
     { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
-    { href: "/campaigns", label: "View Public Cases", icon: Megaphone, allowedRoles: ["Beneficiary"] },
     
     // Admin
     { href: "/admin", label: "Dashboard", icon: Home, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },

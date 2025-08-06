@@ -1,25 +1,17 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getOpenLeads } from "@/app/campaigns/actions";
+import { getActiveCampaigns } from "./actions";
 import { CampaignList } from "./campaign-list";
-import { getCurrentOrganization } from "@/services/organization-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CreditCard, Copy, Loader2, AlertCircle } from "lucide-react";
-import Image from "next/image";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { EnrichedLead } from "./actions";
-import type { Organization, User } from "@/services/types";
-import { Button } from "@/components/ui/button";
+import type { Campaign } from "@/services/types";
 
-interface CampaignsPageProps {
-  user: User | null;
-}
-
-export default function CampaignsPage({ user }: CampaignsPageProps) {
-    const [leads, setLeads] = useState<EnrichedLead[]>([]);
-    const [organization, setOrganization] = useState<Organization | null>(null);
+export default function CampaignsPage() {
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -28,12 +20,8 @@ export default function CampaignsPage({ user }: CampaignsPageProps) {
             try {
                 setLoading(true);
                 setError(null);
-                const [fetchedLeads, fetchedOrganization] = await Promise.all([
-                    getOpenLeads(),
-                    getCurrentOrganization()
-                ]);
-                setLeads(fetchedLeads);
-                setOrganization(fetchedOrganization);
+                const fetchedCampaigns = await getActiveCampaigns();
+                setCampaigns(fetchedCampaigns);
             } catch (e) {
                 setError("Failed to load campaign data. Please try again later.");
                 console.error(e);
@@ -46,20 +34,20 @@ export default function CampaignsPage({ user }: CampaignsPageProps) {
     
     return (
         <div className="flex-1 space-y-4">
-            <h2 id="page-header" className="text-3xl font-bold tracking-tight font-headline text-primary scroll-mt-20">Verified Cases for Donation</h2>
+            <h2 id="page-header" className="text-3xl font-bold tracking-tight font-headline text-primary scroll-mt-20">Fundraising Campaigns</h2>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Support an Individual Case</CardTitle>
+                    <CardTitle>Our Special Campaigns</CardTitle>
                     <CardDescription>
-                        Browse through the verified cases that are currently seeking support. Your donation can make a difference.
+                        Browse through our focused fundraising campaigns. Your donation can help us achieve these specific goals.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
                         <div className="flex items-center justify-center py-10">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="ml-2">Loading cases...</p>
+                            <p className="ml-2">Loading campaigns...</p>
                         </div>
                     ) : error ? (
                          <Alert variant="destructive" className="my-4">
@@ -68,7 +56,7 @@ export default function CampaignsPage({ user }: CampaignsPageProps) {
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     ) : (
-                        <CampaignList leads={leads} organization={organization} />
+                        <CampaignList campaigns={campaigns} />
                     )}
                 </CardContent>
             </Card>

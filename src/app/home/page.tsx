@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
 import type { User, Donation, Lead, Quote, LeadPurpose, DonationType } from "@/services/types";
 import { getAllUsers } from "@/services/user-service";
-import { getOpenLeads, EnrichedLead } from "@/app/campaigns/actions";
+import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -72,7 +72,7 @@ export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
         if (activeRole === 'Donor') {
           const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers] = await Promise.all([
              getDonationsByUserId(user.id!),
-             getOpenLeads(),
+             getOpenGeneralLeads(),
              getAllLeads(),
              getAllUsers()
           ]);
@@ -281,8 +281,8 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Open Cases for Funding</CardTitle>
-                    <CardDescription>Browse verified cases that need your support. Your contribution can make a difference.</CardDescription>
+                    <CardTitle>Open General Cases</CardTitle>
+                    <CardDescription>Browse verified general cases that need your support.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
@@ -327,19 +327,22 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
                                         </p>
                                     </div>
                                     <Button asChild size="sm">
-                                        <Link href="/campaigns">Donate</Link>
+                                        <Link href="/public-leads">Donate</Link>
                                     </Button>
                                 </div>
                                 );
                             })}
                         </div>
                     ) : (
-                        <p className="text-center text-muted-foreground py-6">No cases match your filters. Try clearing them.</p>
+                        <p className="text-center text-muted-foreground py-6">No general cases match your filters. Try clearing them.</p>
                     )}
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col items-stretch gap-4">
                     <Button asChild variant="secondary" className="w-full">
-                        <Link href="/campaigns">View All Open Cases <ArrowRight className="ml-2" /></Link>
+                        <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
+                    </Button>
+                     <Button asChild variant="default" className="w-full">
+                        <Link href="/campaigns">View Fundraising Campaigns <Megaphone className="ml-2" /></Link>
                     </Button>
                 </CardFooter>
             </Card>
@@ -353,7 +356,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <Link href="/campaigns">
+                     <Link href="/public-leads">
                         <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
                             <HomeIcon className="h-6 w-6 text-primary" />
                             <div>
@@ -362,7 +365,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
                             </div>
                         </div>
                     </Link>
-                    <Link href="/campaigns">
+                    <Link href="/public-leads">
                         <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
                             <PersonStanding className="h-6 w-6 text-primary" />
                             <div>
@@ -371,7 +374,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
                             </div>
                         </div>
                     </Link>
-                    <Link href="/campaigns">
+                    <Link href="/public-leads">
                         <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
                             <Baby className="h-6 w-6 text-primary" />
                             <div>
@@ -380,7 +383,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
                             </div>
                         </div>
                     </Link>
-                    <Link href="/campaigns">
+                    <Link href="/public-leads">
                         <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
                             <HeartHandshake className="h-6 w-6 text-primary" />
                             <div>
@@ -676,9 +679,6 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
                              <div className="flex flex-col sm:flex-row gap-2">
                                 <Button asChild variant="secondary">
                                     <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
-                                </Button>
-                                <Button asChild>
-                                    <Link href="/campaigns"><HandHeart className="mr-2" />Donate Now</Link>
                                 </Button>
                             </div>
                         </div>

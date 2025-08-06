@@ -1,37 +1,47 @@
 
+
 "use client";
 
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { EnrichedLead } from './actions';
-import { HandHeart } from 'lucide-react';
-import type { Organization } from '@/services/types';
+import { Badge } from '@/components/ui/badge';
+import { HandHeart, Target } from 'lucide-react';
+import { format, formatDistanceToNowStrict } from 'date-fns';
+import type { Campaign } from '@/services/types';
+import { cn } from '@/lib/utils';
 
 interface CampaignListProps {
-    leads: EnrichedLead[];
-    organization: Organization | null;
+    campaigns: Campaign[];
 }
 
-export function CampaignList({ leads, organization }: CampaignListProps) {
+const statusColors: Record<string, string> = {
+    "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+};
+
+
+export function CampaignList({ campaigns }: CampaignListProps) {
     const router = useRouter();
     
-    const handleDonateClick = () => {
-        sessionStorage.setItem('redirectAfterLogin', '/campaigns');
+    const handleDonateClick = (campaignId: string) => {
+        // You might want to direct them to a campaign-specific donation page in the future.
+        // For now, we'll use the generic donation page.
+        sessionStorage.setItem('redirectAfterLogin', '/donate');
         router.push('/login');
     }
 
-    if (leads.length === 0) {
+    if (campaigns.length === 0) {
         return (
             <div className="text-center py-20 bg-muted/50 rounded-lg">
-                <HandHeart className="mx-auto h-12 w-12 text-primary" />
-                <h3 className="text-xl font-semibold mt-4">All Active Cases Are Funded!</h3>
+                <Target className="mx-auto h-12 w-12 text-primary" />
+                <h3 className="text-xl font-semibold mt-4">No Active Campaigns</h3>
                 <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
-                    Your generosity is making a real difference. Check back later for new cases that need your support.
+                    There are no special fundraising campaigns running at the moment. Please check out our general cases that need support.
                 </p>
                  <Button className="mt-6" asChild>
-                    <a href="/#impact">View Our Impact</a>
+                    <a href="/public-leads">View General Cases</a>
                 </Button>
             </div>
         );
@@ -39,37 +49,35 @@ export function CampaignList({ leads, organization }: CampaignListProps) {
 
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {leads.map((lead) => {
-                const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
-                const remainingAmount = lead.helpRequested - lead.helpGiven;
-                const displayName = lead.beneficiary?.isAnonymous 
-                    ? lead.beneficiary?.anonymousId || "Anonymous Beneficiary"
-                    : lead.name;
-
+            {campaigns.map((campaign) => {
+                const isUpcoming = campaign.status === 'Upcoming';
+                const daysRemaining = formatDistanceToNowStrict(campaign.endDate.toDate(), { unit: 'day' });
                 return (
-                    <Card key={lead.id} className="flex flex-col">
+                    <Card key={campaign.id} className="flex flex-col">
                         <CardHeader>
-                            <CardTitle>{displayName}</CardTitle>
+                            <div className="flex justify-between items-start gap-4">
+                                <CardTitle>{campaign.name}</CardTitle>
+                                 <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
+                                    {campaign.status}
+                                </Badge>
+                            </div>
                             <CardDescription>
-                                Seeking help for: <span className="font-semibold">{lead.purpose} {lead.category ? `(${lead.category})` : ''}</span>
+                                {format(campaign.startDate.toDate(), 'dd MMM')} - {format(campaign.endDate.toDate(), 'dd MMM, yyyy')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">
-                            <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{lead.caseDetails || "No details provided."}</p>
-                            <Progress value={progress} className="mb-2" />
-                            <div className="flex justify-between text-sm">
-                                <span className="font-semibold">Raised: ₹{lead.helpGiven.toLocaleString()}</span>
-                                <span className="text-muted-foreground">Goal: ₹{lead.helpRequested.toLocaleString()}</span>
+                            <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{campaign.description || "No details provided."}</p>
+                            <div className="text-sm">
+                                <span className="font-semibold">Goal: ₹{campaign.goal.toLocaleString()}</span>
                             </div>
                         </CardContent>
                         <CardFooter className='flex-col items-start gap-4'>
-                            {remainingAmount > 0 && 
-                                <p className="text-primary font-bold text-center w-full">
-                                    ₹{remainingAmount.toLocaleString()} still needed
-                                </p>
-                            }
-                            <Button onClick={handleDonateClick} className="w-full">
-                                Donate Now
+                            <p className="text-primary font-bold text-center w-full">
+                                {isUpcoming ? `Starts in ${formatDistanceToNowStrict(campaign.startDate.toDate())}` : `${daysRemaining} remaining`}
+                            </p>
+                            <Button onClick={() => handleDonateClick(campaign.id!)} className="w-full" disabled={isUpcoming}>
+                                <HandHeart className="mr-2 h-4 w-4" />
+                                {isUpcoming ? 'Starting Soon' : 'Donate to Campaign'}
                             </Button>
                         </CardFooter>
                     </Card>
