@@ -62,8 +62,8 @@ export interface User {
   enableMonthlyDonationReminder?: boolean;
   monthlyPledgeEnabled?: boolean;
   monthlyPledgeAmount?: number;
-  createdAt: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt: Timestamp | Date;
+  updatedAt?: Timestamp | Date;
 }
 
 // Donation-related types
@@ -154,12 +154,12 @@ export interface Campaign {
   id?: string;
   name: string;
   description: string;
-  startDate: Timestamp;
-  endDate: Timestamp;
+  startDate: Date | Timestamp;
+  endDate: Date | Timestamp;
   goal: number;
   status: CampaignStatus;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date | Timestamp;
+  updatedAt: Date | Timestamp;
 }
 
 

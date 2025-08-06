@@ -56,7 +56,17 @@ export const getCampaign = async (id: string): Promise<Campaign | null> => {
   try {
     const campaignDoc = await getDoc(doc(db, CAMPAIGNS_COLLECTION, id));
     if (campaignDoc.exists()) {
-      return { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
+      const data = campaignDoc.data();
+      // Manually convert Timestamps to Dates
+      const campaign: Campaign = {
+        id: campaignDoc.id,
+        ...data,
+        startDate: (data.startDate as Timestamp).toDate(),
+        endDate: (data.endDate as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
+      } as Campaign;
+      return campaign;
     }
     return null;
   } catch (error) {
@@ -79,7 +89,17 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
     const querySnapshot = await getDocs(campaignsQuery);
     const campaigns: Campaign[] = [];
     querySnapshot.forEach((doc) => {
-      campaigns.push({ id: doc.id, ...doc.data() } as Campaign);
+      const data = doc.data();
+      // Manually convert Timestamps to Dates before sending to client
+       const campaign: Campaign = {
+        id: doc.id,
+        ...data,
+        startDate: (data.startDate as Timestamp).toDate(),
+        endDate: (data.endDate as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
+      } as Campaign;
+      campaigns.push(campaign);
     });
     return campaigns;
   } catch (error) {

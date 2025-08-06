@@ -51,7 +51,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {campaigns.map((campaign) => {
                 const isUpcoming = campaign.status === 'Upcoming';
-                const daysRemaining = formatDistanceToNowStrict(campaign.endDate.toDate(), { unit: 'day' });
+                const daysRemaining = formatDistanceToNowStrict(campaign.endDate, { unit: 'day' });
                 return (
                     <Card key={campaign.id} className="flex flex-col">
                         <CardHeader>
@@ -62,7 +62,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                                 </Badge>
                             </div>
                             <CardDescription>
-                                {format(campaign.startDate.toDate(), 'dd MMM')} - {format(campaign.endDate.toDate(), 'dd MMM, yyyy')}
+                                {format(campaign.startDate, 'dd MMM')} - {format(campaign.endDate, 'dd MMM, yyyy')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">
@@ -73,7 +73,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                         </CardContent>
                         <CardFooter className='flex-col items-start gap-4'>
                             <p className="text-primary font-bold text-center w-full">
-                                {isUpcoming ? `Starts in ${formatDistanceToNowStrict(campaign.startDate.toDate())}` : `${daysRemaining} remaining`}
+                                {isUpcoming ? `Starts in ${formatDistanceToNowStrict(campaign.startDate)}` : `${daysRemaining} remaining`}
                             </p>
                             <Button onClick={() => handleDonateClick(campaign.id!)} className="w-full" disabled={isUpcoming}>
                                 <HandHeart className="mr-2 h-4 w-4" />
