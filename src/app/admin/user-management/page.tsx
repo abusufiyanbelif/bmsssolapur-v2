@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -119,7 +120,8 @@ export default function UserManagementPage() {
         let filtered = users.filter(user => {
             const nameMatch = appliedFilters.name === '' || 
                               user.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
-                              user.id?.toLowerCase().includes(appliedFilters.name.toLowerCase());
+                              user.id?.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
+                              user.userId?.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const roleMatch = appliedFilters.role === 'all' || user.roles.includes(appliedFilters.role as UserRole);
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
             return nameMatch && roleMatch && statusMatch;
@@ -212,6 +214,7 @@ export default function UserManagementPage() {
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>Name</TableHead>
+                    <TableHead>User ID</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Roles</TableHead>
                     <TableHead>Status</TableHead>
@@ -228,6 +231,7 @@ export default function UserManagementPage() {
                                 {user.name}
                             </Link>
                         </TableCell>
+                        <TableCell className="font-mono text-xs">{user.userId}</TableCell>
                         <TableCell>
                             <div className="flex flex-col">
                                 <span>{user.phone}</span>
@@ -273,6 +277,10 @@ export default function UserManagementPage() {
                         <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">User ID</span>
+                            <span className="font-mono text-xs">{user.userId}</span>
+                        </div>
                         <div>
                             <h4 className="font-semibold mb-2">Roles</h4>
                              <div className="flex flex-wrap gap-1">
