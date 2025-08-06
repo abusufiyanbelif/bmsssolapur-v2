@@ -47,23 +47,15 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
   const handleRazorpayPayment = async () => {
     setIsSubmitting(true);
     toast({ title: "Initiating Payment...", description: "Please wait while we create a secure payment order." });
-
-    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID === 'YOUR_RAZORPAY_TEST_KEY_ID') {
-        toast({
-            variant: "destructive",
-            title: "Configuration Error",
-            description: "Razorpay Key ID is not configured. Please add it to the .env file.",
-        });
-        setIsSubmitting(false);
-        return;
-    }
+    
+    const razorpayKey = 'rzp_test_PSMiH7GRjuuPkf';
 
     try {
         const simulatedOrderId = `order_${Date.now()}`;
         console.log(`Simulated Razorpay Order ID: ${simulatedOrderId}`);
 
         const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            key: razorpayKey,
             amount: amount * 100,
             currency: "INR",
             name: organization.name,
