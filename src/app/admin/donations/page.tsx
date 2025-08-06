@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose } from "@/services/donation-service";
+import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -30,6 +31,8 @@ import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleDeleteDonation } from "./actions";
 import { UploadProofDialog } from "./upload-proof-dialog";
+import { CreateFromUploadDialog } from "./create-from-upload-dialog";
+
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
@@ -52,6 +55,7 @@ function DonationsPageContent() {
     const typeFromUrl = searchParams.get('type');
 
     const [donations, setDonations] = useState<Donation[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -80,11 +84,15 @@ function DonationsPageContent() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
 
-    const fetchDonations = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const fetchedDonations = await getAllDonations();
+            const [fetchedDonations, fetchedUsers] = await Promise.all([
+                getAllDonations(),
+                getAllUsers()
+            ]);
             setDonations(fetchedDonations);
+            setAllUsers(fetchedUsers);
             setError(null);
         } catch (e) {
             setError("Failed to fetch donations. Please try again later.");
@@ -96,7 +104,7 @@ function DonationsPageContent() {
 
 
     useEffect(() => {
-        fetchDonations();
+        fetchData();
     }, []);
 
     const handleSearch = () => {
@@ -168,11 +176,11 @@ function DonationsPageContent() {
             title: "Donation Deleted",
             description: "The donation record has been successfully removed.",
         });
-        fetchDonations();
+        fetchData();
     }
     
     const onUploadSuccess = () => {
-        fetchDonations();
+        fetchData();
     }
 
     const renderSortIcon = (column: SortableColumn) => {
@@ -432,17 +440,27 @@ function DonationsPageContent() {
             </>
         );
     }
+    
+    const donorUsers = allUsers.filter(u => u.roles.includes('Donor'));
 
   return (
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Donation Management</h2>
-            <Button asChild>
-                <Link href="/admin/donations/add">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Donation
-                </Link>
-            </Button>
+             <div className="flex gap-2">
+                <CreateFromUploadDialog donors={donorUsers} onUploadSuccess={onUploadSuccess}>
+                    <Button variant="outline">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload & Create
+                    </Button>
+                </CreateFromUploadDialog>
+                <Button asChild>
+                    <Link href="/admin/donations/add">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Manually
+                    </Link>
+                </Button>
+            </div>
         </div>
         <Card>
             <CardHeader>
