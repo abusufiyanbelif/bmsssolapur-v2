@@ -67,7 +67,9 @@ const formSchema = z.object({
   beneficiaryId: z.string().optional(),
   
   // New beneficiary fields
-  newBeneficiaryName: z.string().optional(),
+  newBeneficiaryFirstName: z.string().optional(),
+  newBeneficiaryMiddleName: z.string().optional(),
+  newBeneficiaryLastName: z.string().optional(),
   newBeneficiaryPhone: z.string().optional(),
   newBeneficiaryEmail: z.string().email().optional(),
 
@@ -117,12 +119,12 @@ const formSchema = z.object({
     path: ["beneficiaryId"],
 }).refine(data => {
     if (data.beneficiaryType === 'new') {
-        return !!data.newBeneficiaryName && !!data.newBeneficiaryPhone;
+        return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone;
     }
     return true;
 }, {
-    message: "New beneficiary name and phone are required.",
-    path: ["newBeneficiaryName"], // Report error on one of the fields
+    message: "First Name, Last Name and Phone are required for a new beneficiary.",
+    path: ["newBeneficiaryFirstName"], // Report error on one of the fields
 });
 
 
@@ -187,7 +189,9 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     formData.append("adminUserId", adminUserId);
     formData.append("beneficiaryType", values.beneficiaryType);
     if(values.beneficiaryId) formData.append("beneficiaryId", values.beneficiaryId);
-    if(values.newBeneficiaryName) formData.append("newBeneficiaryName", values.newBeneficiaryName);
+    if(values.newBeneficiaryFirstName) formData.append("newBeneficiaryFirstName", values.newBeneficiaryFirstName);
+    if(values.newBeneficiaryMiddleName) formData.append("newBeneficiaryMiddleName", values.newBeneficiaryMiddleName);
+    if(values.newBeneficiaryLastName) formData.append("newBeneficiaryLastName", values.newBeneficiaryLastName);
     if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
     if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
@@ -251,7 +255,9 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                         onValueChange={(value) => {
                             field.onChange(value);
                             form.setValue('beneficiaryId', undefined);
-                            form.setValue('newBeneficiaryName', '');
+                            form.setValue('newBeneficiaryFirstName', '');
+                            form.setValue('newBeneficiaryMiddleName', '');
+                            form.setValue('newBeneficiaryLastName', '');
                             form.setValue('newBeneficiaryPhone', '');
                             form.setValue('newBeneficiaryEmail', '');
                         }}
@@ -309,20 +315,30 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
             {beneficiaryType === 'new' && (
                 <div className="space-y-4 p-4 border rounded-lg">
                     <h3 className="font-medium">New Beneficiary Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="newBeneficiaryName"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Full Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Enter beneficiary's full name" {...field} />
-                                </FormControl>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>First Name</FormLabel>
+                                <FormControl><Input placeholder="First Name" {...field} /></FormControl>
                                 <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="newBeneficiaryMiddleName" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Middle Name</FormLabel>
+                                <FormControl><Input placeholder="Middle Name" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <FormField control={form.control} name="newBeneficiaryLastName" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormControl><Input placeholder="Last Name" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="newBeneficiaryPhone"
@@ -336,20 +352,20 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="newBeneficiaryEmail"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Email (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input type="email" placeholder="beneficiary@example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </div>
-                    <FormField
-                        control={form.control}
-                        name="newBeneficiaryEmail"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
-                            <FormControl>
-                                <Input type="email" placeholder="beneficiary@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                 </div>
             )}
 

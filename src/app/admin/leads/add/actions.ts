@@ -43,7 +43,9 @@ export async function handleAddLead(
   const rawFormData = {
       beneficiaryType: formData.get("beneficiaryType") as 'existing' | 'new',
       beneficiaryId: formData.get("beneficiaryId") as string | undefined,
-      newBeneficiaryName: formData.get("newBeneficiaryName") as string | undefined,
+      newBeneficiaryFirstName: formData.get("newBeneficiaryFirstName") as string | undefined,
+      newBeneficiaryMiddleName: formData.get("newBeneficiaryMiddleName") as string | undefined,
+      newBeneficiaryLastName: formData.get("newBeneficiaryLastName") as string | undefined,
       newBeneficiaryPhone: formData.get("newBeneficiaryPhone") as string | undefined,
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
       campaignId: formData.get("campaignId") as string | undefined,
@@ -74,14 +76,22 @@ export async function handleAddLead(
     }
     
     if (rawFormData.beneficiaryType === 'new') {
-        if (!rawFormData.newBeneficiaryName || !rawFormData.newBeneficiaryPhone) {
-            return { success: false, error: "New beneficiary name and phone number are required." };
+        const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail } = rawFormData;
+
+        if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone) {
+            return { success: false, error: "New beneficiary First Name, Last Name, and Phone number are required." };
         }
+        
+        const newBeneficiaryName = `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim();
+
         try {
             beneficiaryUser = await createUser({
-                name: rawFormData.newBeneficiaryName,
-                phone: rawFormData.newBeneficiaryPhone,
-                email: rawFormData.newBeneficiaryEmail || `${rawFormData.newBeneficiaryPhone}@example.com`,
+                name: newBeneficiaryName,
+                firstName: newBeneficiaryFirstName,
+                middleName: newBeneficiaryMiddleName || '',
+                lastName: newBeneficiaryLastName,
+                phone: newBeneficiaryPhone,
+                email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
                 roles: ['Beneficiary'],
                 isActive: true,
                 createdAt: Timestamp.now(),
