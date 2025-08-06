@@ -34,7 +34,7 @@ import type { User } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { useRouter } from 'next/navigation';
 
-const donationPurposes = ['Zakat', 'Sadaqah', 'Fitrah', 'Relief Fund'] as const;
+const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
 
 const formSchema = z.object({
   purpose: z.enum(donationPurposes),
@@ -82,7 +82,7 @@ export default function DonatePage() {
       if(user) {
           form.setValue('donorName', user.name);
           form.setValue('phone', user.phone);
-          form.setValue('email', user.email);
+          form.setValue('email', user.email || undefined);
       }
   }, [user, form]);
 

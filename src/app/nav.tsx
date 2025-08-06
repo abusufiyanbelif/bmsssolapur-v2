@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { 
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
-    FileCheck, FileText, Banknote, UserPlus, Lock, BookText,
+    FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
     Database, Building
 } from "lucide-react"
@@ -26,6 +26,7 @@ const allNavItems: NavItem[] = [
     // Guest
     { href: "/", label: "Home", icon: Home, allowedRoles: ["Guest"] },
     { href: "/campaigns", label: "Approved Campaigns", icon: Megaphone, allowedRoles: ["Guest"] },
+    { href: "/donate", label: "Donate", icon: HandHeart, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (for non-admins)
