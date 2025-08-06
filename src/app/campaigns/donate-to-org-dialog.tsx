@@ -15,11 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CreditCard, Loader2, QrCode } from "lucide-react";
+import { CreditCard, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization, User } from "@/services/types";
-import Image from "next/image";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { startPhonePePayment } from "./phonepe-actions";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
@@ -32,28 +32,50 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
   const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amount, setAmount] = useState(100); // Default amount
-  const [paymentStep, setPaymentStep] = useState<'details' | 'qr'>('details');
-
 
   if (!organization) return <>{children}</>;
   
-  const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&cu=INR&am=${amount}`;
-
-   const handleProceedToPay = () => {
+  const handlePayment = async () => {
       if (amount <= 0) {
           toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Please enter an amount greater than zero.'});
           return;
       }
-      setPaymentStep('qr');
+      setIsSubmitting(true);
+      
+      try {
+        const result = await startPhonePePayment({
+            amount: amount,
+            userId: user?.id || 'GUEST_USER',
+            userName: user?.name || 'Anonymous Donor',
+            userPhone: user?.phone,
+        });
+
+        if (result.success && result.redirectUrl) {
+            toast({ variant: 'success', title: 'Redirecting to PhonePe...', description: 'Please complete your payment.' });
+            // This will redirect the user to the PhonePe payment page
+            window.location.href = result.redirectUrl;
+        } else {
+            throw new Error(result.error || 'Failed to initiate payment.');
+        }
+
+      } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+          toast({
+              variant: 'destructive',
+              title: 'Payment Initiation Failed',
+              description: errorMessage,
+          });
+      } finally {
+          setIsSubmitting(false);
+      }
   }
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
         // Reset state when dialog is closed
-        setTimeout(() => setPaymentStep('details'), 200);
+        setAmount(100);
     }
   }
-
 
   return (
     <Dialog onOpenChange={handleOpenChange}>
@@ -65,59 +87,25 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
             Your contribution will support the organization's mission.
           </DialogDescription>
         </DialogHeader>
-
-        {paymentStep === 'details' && (
-            <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                    <Label htmlFor="amount">Amount (INR)</Label>
-                    <Input
-                        id="amount"
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(Number(e.target.value))}
-                        className="font-semibold text-lg"
-                        min="1"
-                    />
-                </div>
-                 <Button onClick={handleProceedToPay} className="w-full" size="lg" disabled={isSubmitting || amount <= 0}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                    Proceed to Pay
-                </Button>
+        <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <Label htmlFor="amount">Amount (INR)</Label>
+                <Input
+                    id="amount"
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                    className="font-semibold text-lg"
+                    min="1"
+                />
             </div>
-        )}
-
-        {paymentStep === 'qr' && (
-             <div className="space-y-4 py-4">
-                <p className="text-sm font-semibold text-center text-muted-foreground">Scan the QR code with any UPI app</p>
-                <div className="flex flex-col items-center gap-4">
-                    <div className="p-4 border rounded-lg bg-background">
-                        <div className="relative w-48 h-48">
-                                <Image src={organization.qrCodeUrl || 'https://placehold.co/400x400.png'} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
-                        </div>
-                    </div>
-                     <p className="font-bold text-lg">Amount: ₹{amount}</p>
-                     <p className="text-center text-sm font-bold">{organization.upiId}</p>
-                </div>
-                 
-                 {isMobile ? (
-                    <Button asChild className="w-full">
-                        <a href={upiLink}>Pay with UPI App</a>
-                    </Button>
-                 ) : (
-                    <p className="text-center text-xs text-muted-foreground pt-2">
-                        Open a UPI app on your phone and scan the code above.
-                    </p>
-                 )}
-            </div>
-        )}
-
-         <DialogFooter className="sm:justify-between">
-            {paymentStep === 'qr' && (
-                <Button onClick={() => setPaymentStep('details')} variant="outline" className="w-full sm:w-auto">
-                    Back
-                </Button>
-            )}
-             <p className="text-xs text-muted-foreground text-center w-full mt-2 sm:mt-0">This is a test environment. No real money will be charged.</p>
+             <Button onClick={handlePayment} className="w-full" size="lg" disabled={isSubmitting || amount <= 0}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                Proceed to Pay
+            </Button>
+        </div>
+         <DialogFooter>
+             <p className="text-xs text-muted-foreground text-center w-full mt-2 sm:mt-0">This is a test environment that simulates a redirect to the PhonePe payment page.</p>
         </DialogFooter>
       </DialogContent>
     </Dialog>
