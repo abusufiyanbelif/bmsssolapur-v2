@@ -20,6 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Organization, User } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import Image from "next/image";
+import { Separator } from "@/components/ui/separator";
 
 // This makes the Razorpay object available in the window scope
 declare const Razorpay: any;
@@ -35,10 +37,14 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amount, setAmount] = useState(100); // Default amount
   const { toast } = useToast();
+  const [paymentStep, setPaymentStep] = useState(false);
 
   if (!organization) return <>{children}</>;
+  
+  const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&cu=INR&am=${amount}`;
+  const upiPhoneLink = `upi://pay?pa=${organization.contactPhone}@paytm&pn=${encodeURIComponent(organization.name)}&cu=INR&am=${amount}&tn=Donation to Baitulmal`;
 
-  const handlePayment = async () => {
+  const handleRazorpayPayment = async () => {
     setIsSubmitting(true);
     toast({ title: "Initiating Payment...", description: "Please wait while we create a secure payment order." });
 
@@ -52,20 +58,13 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
         return;
     }
 
-
     try {
-        // In a real implementation, this would call a server action
-        // to create a Razorpay order and get the order ID.
-        // const { order } = await createRazorpayOrder({ amount });
-        
-        // For this prototype, we'll simulate the order creation client-side.
         const simulatedOrderId = `order_${Date.now()}`;
         console.log(`Simulated Razorpay Order ID: ${simulatedOrderId}`);
 
-
         const options = {
             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-            amount: amount * 100, // Amount is in currency subunits.
+            amount: amount * 100,
             currency: "INR",
             name: organization.name,
             description: "Donation to General Fund",
@@ -77,8 +76,6 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     title: "Payment Successful!", 
                     description: `Thank you! Payment ID: ${response.razorpay_payment_id}`
                 });
-                // TODO: Call a server action here to verify the payment signature
-                // and update the donations database with the new record.
                 console.log("Razorpay Response:", response);
             },
             prefill: {
@@ -114,20 +111,19 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
         });
         console.error(error);
     } finally {
-        // Razorpay handles the modal, so we can set submitting to false immediately.
         setIsSubmitting(false);
     }
   };
 
 
   return (
-    <Dialog>
+    <Dialog open={paymentStep} onOpenChange={setPaymentStep}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Make a Secure Donation</DialogTitle>
           <DialogDescription>
-            Your contribution will support the organization's mission. All payments are processed securely via Razorpay.
+            Your contribution will support the organization's mission. All payments are processed securely.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -135,7 +131,7 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>You are in Test Mode</AlertTitle>
                 <AlertDescription>
-                   You can use Razorpay's official test cards or UPI IDs to test the payment flow. No real money will be charged.
+                   You can use test card details or test UPI IDs to test the payment flow. No real money will be charged.
                 </AlertDescription>
             </Alert>
             <div className="space-y-2">
@@ -148,12 +144,30 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     className="font-semibold text-lg"
                 />
             </div>
+            
+            <Separator />
+            
+            <p className="text-sm font-semibold text-center text-muted-foreground">Choose a Payment Method</p>
+
+            <div className="space-y-4">
+                <Button onClick={handleRazorpayPayment} className="w-full" size="lg" disabled={isSubmitting || amount <= 0}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                    Pay with Card, UPI, or Wallets
+                </Button>
+                
+                 <div className="flex flex-col items-center gap-4">
+                    <p className="text-xs text-muted-foreground">Or pay directly:</p>
+                    <a href={upiLink} className="block cursor-pointer border rounded-lg p-4 bg-muted/50 hover:bg-muted transition-colors">
+                        <div className="relative w-40 h-40">
+                             <Image src={organization.qrCodeUrl || 'https://placehold.co/400x400.png'} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                        </div>
+                        <p className="text-center text-sm font-bold mt-2">{organization.upiId}</p>
+                    </a>
+                </div>
+            </div>
         </div>
         <DialogFooter>
-          <Button onClick={handlePayment} className="w-full" size="lg" disabled={isSubmitting || amount <= 0}>
-             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-            Proceed to Pay ₹{amount.toLocaleString()}
-          </Button>
+          <p className="text-xs text-muted-foreground text-center w-full">By continuing, you agree to our terms of service.</p>
         </DialogFooter>
       </DialogContent>
     </Dialog>
