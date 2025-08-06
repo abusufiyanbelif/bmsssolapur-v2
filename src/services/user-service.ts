@@ -77,11 +77,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
 
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(db, USERS_COLLECTION, user.userId);
     
-    let anonymousId: string | undefined = user.anonymousId;
-    if (user.isAnonymous && !anonymousId) {
-        // Generate a unique anonymous ID if it doesn't exist
-        anonymousId = `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
-    }
+    // Always generate an anonymous ID for every user upon creation
+    const anonymousId = user.anonymousId || `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
 
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
@@ -167,7 +164,7 @@ export const getUser = async (id: string): Promise<User | null> => {
 // Function to get a user by name (for the special 'admin' case)
 export const getUserByName = async (name: string): Promise<User | null> => {
   if (!isConfigValid) {
-    console.warn("Firebase is not configured. Skipping user fetch by name.");
+    console.warn("Firebase not configured. Skipping user fetch by name.");
     return null;
   }
   try {
@@ -187,7 +184,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
 // Function to get a user by phone number
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
   if (!isConfigValid) {
-    console.warn("Firebase is not configured. Skipping user fetch by phone.");
+    console.warn("Firebase not configured. Skipping user fetch by phone.");
     return null;
   }
   try {
@@ -211,7 +208,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
 // Function to get a user by email
 export const getUserByEmail = async (email: string): Promise<User | null> => {
   if (!isConfigValid) {
-    console.warn("Firebase is not configured. Skipping user fetch by email.");
+    console.warn("Firebase not configured. Skipping user fetch by email.");
     return null;
   }
   try {

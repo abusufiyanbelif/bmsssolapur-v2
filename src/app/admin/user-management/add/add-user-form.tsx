@@ -105,6 +105,7 @@ export function AddUserForm() {
   const selectedGender = form.watch("gender");
   const firstName = form.watch("firstName");
   const lastName = form.watch("lastName");
+  const isAnonymous = form.watch("isAnonymous");
   
   useEffect(() => {
     if (firstName && lastName) {
@@ -478,28 +479,6 @@ export function AddUserForm() {
             <>
                 <FormField
                     control={form.control}
-                    name="createProfile"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                            <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                            <FormLabel>
-                            Create Beneficiary Profile
-                            </FormLabel>
-                            <FormDescription>
-                            If checked, a profile will be created for the beneficiary, and a phone number becomes mandatory.
-                            </FormDescription>
-                        </div>
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
                     name="isAnonymous"
                     render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
@@ -520,6 +499,11 @@ export function AddUserForm() {
                         </FormItem>
                     )}
                 />
+                 {isAnonymous && (
+                    <div className="text-sm rounded-lg border bg-muted/50 p-4">
+                        A unique, non-identifiable <span className="font-semibold">Anonymous ID</span> will be generated for this user upon creation.
+                    </div>
+                )}
                  <FormField
                     control={form.control}
                     name="beneficiaryType"

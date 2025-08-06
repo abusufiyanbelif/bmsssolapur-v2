@@ -222,6 +222,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const { formState: { isDirty }, reset } = form;
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
+  const isAnonymous = form.watch("isAnonymous");
   
   const handleCancel = () => {
       reset({
@@ -634,12 +635,19 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     Mark as Anonymous Beneficiary
                                     </FormLabel>
                                     <FormDescription>
-                                    If checked, a unique ID will be generated and their real name will be hidden from public view. The current anonymous ID is: {user.anonymousId || "Not set"}.
+                                    If checked, their name will be hidden from public view and their Anonymous ID will be used instead.
                                     </FormDescription>
                                 </div>
                                 </FormItem>
                             )}
                             />
+                            {isAnonymous && (
+                                <div className="space-y-2">
+                                    <FormLabel>Anonymous ID</FormLabel>
+                                    <Input value={user.anonymousId || "Will be generated on save"} disabled />
+                                    <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
+                                </div>
+                            )}
                              <FormField
                                 control={form.control}
                                 name="beneficiaryType"
