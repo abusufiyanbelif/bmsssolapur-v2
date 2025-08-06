@@ -166,7 +166,7 @@ export default function CampaignsPage() {
                             <div className="flex justify-between items-start gap-4">
                                 <div>
                                     <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                                    <CardDescription>{format(campaign.startDate.toDate(), "dd MMM yyyy")} - {format(campaign.endDate.toDate(), "dd MMM yyyy")}</CardDescription>
+                                    <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
                                     {campaign.status}

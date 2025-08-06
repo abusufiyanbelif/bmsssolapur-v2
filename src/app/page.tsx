@@ -8,7 +8,7 @@ import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, 
 import { getRandomQuotes } from "@/services/quotes-service";
 import Image from "next/image";
 import { getAllDonations } from "@/services/donation-service";
-import { getOpenLeads } from "@/app/campaigns/actions";
+import { getOpenGeneralLeads as getOpenLeads } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
 import { getAllLeads } from "@/services/lead-service";
 import { useEffect, useState } from "react";
@@ -248,7 +248,7 @@ export default function LandingPage() {
                                                     <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {format(campaign.startDate.toDate(), "dd MMM yyyy")} - {format(campaign.endDate.toDate(), "dd MMM yyyy")}
+                                                    {format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}
                                                 </TableCell>
                                                 <TableCell>
                                                      <div className="flex flex-col gap-2">
