@@ -14,6 +14,8 @@ import {
     ExtractDonationDetailsOutput,
     ExtractDonationDetailsOutputSchema
 } from '@/ai/schemas';
+import { googleAI } from '@genkit-ai/googleai';
+
 
 export async function extractDonationDetails(input: ExtractDonationDetailsInput): Promise<ExtractDonationDetailsOutput> {
   return extractDonationDetailsFlow(input);
@@ -46,7 +48,12 @@ const extractDonationDetailsFlow = ai.defineFlow(
     outputSchema: ExtractDonationDetailsOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
+    const { output } = await ai.generate({
+        model: googleAI.model('gemini-pro-vision'),
+        prompt: prompt.prompt!,
+        input: input,
+        output: { schema: ExtractDonationDetailsOutputSchema }
+    });
     return output!;
   }
 );
