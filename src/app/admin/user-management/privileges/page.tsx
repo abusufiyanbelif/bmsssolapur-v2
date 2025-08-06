@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KeySquare, Shield, UserCog, HandHeart, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit } from "lucide-react";
+import { KeySquare, Shield, UserCog, HandHeart, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -79,6 +79,8 @@ const typeColors: Record<PrivilegeType, string> = {
     'Special': 'bg-gray-200 text-gray-800',
 };
 
+type SortableColumn = 'name' | 'type';
+type SortDirection = 'asc' | 'desc';
 
 export default function UserPrivilegesPage() {
     const router = useRouter();
@@ -87,9 +89,11 @@ export default function UserPrivilegesPage() {
     const [nameInput, setNameInput] = useState('');
     const [roleInput, setRoleInput] = useState('all');
     const [typeInput, setTypeInput] = useState('all');
-    const [sortInput, setSortInput] = useState('name-asc');
+
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('name');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
     
-    const [appliedFilters, setAppliedFilters] = useState({ name: '', role: 'all', type: 'all', sort: 'name-asc' });
+    const [appliedFilters, setAppliedFilters] = useState({ name: '', role: 'all', type: 'all' });
 
     const filteredPrivileges = useMemo(() => {
         let filtered = allPrivileges.filter(privilege => {
@@ -100,13 +104,19 @@ export default function UserPrivilegesPage() {
         });
 
         return filtered.sort((a, b) => {
-            if (appliedFilters.sort === 'name-asc') return a.name.localeCompare(b.name);
-            if (appliedFilters.sort === 'name-desc') return b.name.localeCompare(a.name);
-            if (appliedFilters.sort === 'type-asc') return a.type.localeCompare(b.type);
-            if (appliedFilters.sort === 'type-desc') return b.type.localeCompare(a.type);
-            return 0;
+            const aValue = a[sortColumn];
+            const bValue = b[sortColumn];
+
+            let comparison = 0;
+            if (aValue > bValue) {
+                comparison = 1;
+            } else if (aValue < bValue) {
+                comparison = -1;
+            }
+
+            return sortDirection === 'asc' ? comparison : -comparison;
         });
-    }, [appliedFilters]);
+    }, [appliedFilters, sortColumn, sortDirection]);
 
     const paginatedPrivileges = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -117,18 +127,31 @@ export default function UserPrivilegesPage() {
 
     const handleSearch = () => {
         setCurrentPage(1);
-        setAppliedFilters({ name: nameInput, role: roleInput, type: typeInput, sort: sortInput });
+        setAppliedFilters({ name: nameInput, role: roleInput, type: typeInput });
     };
+
+    const handleSort = (column: SortableColumn) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    }
 
     const resetFilters = () => {
         setNameInput('');
         setRoleInput('all');
         setTypeInput('all');
-        setSortInput('name-asc');
-        setAppliedFilters({ name: '', role: 'all', type: 'all', sort: 'name-asc' });
+        setAppliedFilters({ name: '', role: 'all', type: 'all' });
         setCurrentPage(1);
     };
     
+    const renderSortIcon = (column: SortableColumn) => {
+        if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+        return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+    };
+
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
@@ -174,8 +197,8 @@ export default function UserPrivilegesPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 lg:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2">
                         <Label htmlFor="nameFilter">Privilege Name</Label>
                         <Input id="nameFilter" placeholder="Filter by name..." value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
                     </div>
@@ -208,9 +231,16 @@ export default function UserPrivilegesPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[50px]">Sr. No.</TableHead>
-                            <TableHead>Privilege Name</TableHead>
-                            <TableHead>Type</TableHead>
+                            <TableHead>
+                                <Button variant="ghost" onClick={() => handleSort('name')}>
+                                    Privilege Name {renderSortIcon('name')}
+                                </Button>
+                            </TableHead>
+                            <TableHead>
+                                 <Button variant="ghost" onClick={() => handleSort('type')}>
+                                    Type {renderSortIcon('type')}
+                                </Button>
+                            </TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Allocated to Roles</TableHead>
                         </TableRow>
@@ -218,7 +248,6 @@ export default function UserPrivilegesPage() {
                     <TableBody>
                         {paginatedPrivileges.map((privilege, index) => (
                             <TableRow key={privilege.name}>
-                                <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                                 <TableCell>
                                     <div className="font-medium flex items-center gap-2">
                                         <privilege.icon className="h-4 w-4 text-accent"/>

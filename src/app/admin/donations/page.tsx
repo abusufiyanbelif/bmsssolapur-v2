@@ -33,15 +33,9 @@ const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification"
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
 const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
 
-type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc' | 'amount-desc' | 'amount-asc';
-const sortOptions: { value: SortOption, label: string }[] = [
-    { value: 'date-desc', label: 'Date (Newest First)' },
-    { value: 'date-asc', label: 'Date (Oldest First)' },
-    { value: 'name-asc', label: 'Donor Name (A-Z)' },
-    { value: 'name-desc', label: 'Donor Name (Z-A)' },
-    { value: 'amount-desc', label: 'Amount (High to Low)' },
-    { value: 'amount-asc', label: 'Amount (Low to High)' },
-];
+type SortableColumn = 'donorName' | 'amount' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -53,6 +47,7 @@ const statusColors: Record<DonationStatus, string> = {
 function DonationsPageContent() {
     const searchParams = useSearchParams();
     const statusFromUrl = searchParams.get('status');
+    const typeFromUrl = searchParams.get('type');
 
     const [donations, setDonations] = useState<Donation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -60,19 +55,21 @@ function DonationsPageContent() {
     
     // Input states
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
-    const [typeInput, setTypeInput] = useState<string>('all');
+    const [typeInput, setTypeInput] = useState<string>(typeFromUrl || 'all');
     const [purposeInput, setPurposeInput] = useState<string>('all');
     const [nameInput, setNameInput] = useState<string>('');
-    const [sortInput, setSortInput] = useState<SortOption>('date-desc');
-
+    
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         status: statusFromUrl || 'all',
-        type: 'all',
+        type: typeFromUrl || 'all',
         purpose: 'all',
         name: '',
-        sort: 'date-desc' as SortOption
     });
+
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('createdAt');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -107,9 +104,17 @@ function DonationsPageContent() {
             type: typeInput,
             purpose: purposeInput,
             name: nameInput,
-            sort: sortInput
         });
     };
+    
+     const handleSort = (column: SortableColumn) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    }
 
     const filteredDonations = useMemo(() => {
         let filtered = donations.filter(donation => {
@@ -121,18 +126,20 @@ function DonationsPageContent() {
         });
 
         return filtered.sort((a, b) => {
-            switch(appliedFilters.sort) {
-                case 'date-desc': return b.createdAt.toMillis() - a.createdAt.toMillis();
-                case 'date-asc': return a.createdAt.toMillis() - b.createdAt.toMillis();
-                case 'name-asc': return a.donorName.localeCompare(b.donorName);
-                case 'name-desc': return b.donorName.localeCompare(a.donorName);
-                case 'amount-desc': return b.amount - a.amount;
-                case 'amount-asc': return a.amount - b.amount;
-                default: return 0;
+            const aValue = a[sortColumn];
+            const bValue = b[sortColumn];
+
+            let comparison = 0;
+            if (aValue > bValue) {
+                comparison = 1;
+            } else if (aValue < bValue) {
+                comparison = -1;
             }
+
+            return sortDirection === 'asc' ? comparison : -comparison;
         });
 
-    }, [donations, appliedFilters]);
+    }, [donations, appliedFilters, sortColumn, sortDirection]);
 
     const paginatedDonations = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -150,8 +157,7 @@ function DonationsPageContent() {
         setTypeInput('all');
         setPurposeInput('all');
         setNameInput('');
-        setSortInput('date-desc');
-        setAppliedFilters({ status: 'all', type: 'all', purpose: 'all', name: '', sort: 'date-desc' });
+        setAppliedFilters({ status: 'all', type: 'all', purpose: 'all', name: '' });
         setCurrentPage(1);
     };
 
@@ -160,9 +166,13 @@ function DonationsPageContent() {
             title: "Donation Deleted",
             description: "The donation record has been successfully removed.",
         });
-        // Re-fetch donations to update the list
         fetchDonations();
     }
+    
+    const renderSortIcon = (column: SortableColumn) => {
+        if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+        return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+    };
 
 
     const renderDesktopTable = () => (
@@ -170,9 +180,21 @@ function DonationsPageContent() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Donor</TableHead>
-                    <TableHead>Amount</TableHead>
+                    <TableHead>
+                         <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                           Date {renderSortIcon('createdAt')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('donorName')}>
+                           Donor {renderSortIcon('donorName')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('amount')}>
+                            Amount {renderSortIcon('amount')}
+                        </Button>
+                    </TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Purpose</TableHead>
                     <TableHead>Status</TableHead>
@@ -416,8 +438,8 @@ function DonationsPageContent() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 xl:col-span-2">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="donorName">Donor Name</Label>
                         <Input 
                             id="donorName" 
@@ -459,20 +481,7 @@ function DonationsPageContent() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
-                            <SelectTrigger id="sortOption" className="w-full">
-                                <SelectValue placeholder="Sort by..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {sortOptions.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex items-end gap-4 xl:col-span-full">
+                    <div className="flex items-end gap-4 lg:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                             <Search className="mr-2 h-4 w-4" />
                             Apply Filters

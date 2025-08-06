@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -40,15 +40,8 @@ const beneficiaryTypeOptions: { value: BeneficiaryTypeFilter, label: string, ico
 ];
 
 
-type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc' | 'amount-desc' | 'amount-asc';
-const sortOptions: { value: SortOption, label: string }[] = [
-    { value: 'date-desc', label: 'Date Created (Newest First)' },
-    { value: 'date-asc', label: 'Date Created (Oldest First)' },
-    { value: 'name-asc', label: 'Beneficiary Name (A-Z)' },
-    { value: 'name-desc', label: 'Beneficiary Name (Z-A)' },
-    { value: 'amount-desc', label: 'Amount Requested (High-Low)' },
-    { value: 'amount-asc', label: 'Amount Requested (Low-High)' },
-];
+type SortableColumn = 'name' | 'helpRequested' | 'helpGiven' | 'dateCreated' | 'closedAt';
+type SortDirection = 'asc' | 'desc';
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -66,6 +59,7 @@ const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; 
 function LeadsPageContent() {
     const searchParams = useSearchParams();
     const statusFromUrl = searchParams.get('status');
+    const verificationFromUrl = searchParams.get('verification');
     const typeFromUrl = searchParams.get('beneficiaryType');
 
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -78,18 +72,20 @@ function LeadsPageContent() {
     // Input states
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
-    const [verificationInput, setVerificationInput] = useState<string>('all');
+    const [verificationInput, setVerificationInput] = useState<string>(verificationFromUrl || 'all');
     const [beneficiaryTypeInput, setBeneficiaryTypeInput] = useState<BeneficiaryTypeFilter>(typeFromUrl as BeneficiaryTypeFilter || 'all');
-    const [sortInput, setSortInput] = useState<SortOption>('date-desc');
-
+    
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         name: '',
         status: statusFromUrl || 'all',
-        verification: 'all',
+        verification: verificationFromUrl || 'all',
         beneficiaryType: typeFromUrl as BeneficiaryTypeFilter || 'all',
-        sort: 'date-desc' as SortOption
     });
+
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('dateCreated');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -134,10 +130,18 @@ function LeadsPageContent() {
             status: statusInput,
             verification: verificationInput,
             beneficiaryType: beneficiaryTypeInput,
-            sort: sortInput
         });
     };
     
+    const handleSort = (column: SortableColumn) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    }
+
     const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
             const beneficiary = usersById[lead.beneficiaryId];
@@ -156,22 +160,29 @@ function LeadsPageContent() {
                 }
             }
 
-
             return nameMatch && statusMatch && verificationMatch && typeMatch;
         });
 
-        return filtered.sort((a, b) => {
-             switch(appliedFilters.sort) {
-                case 'date-desc': return b.dateCreated.toMillis() - a.dateCreated.toMillis();
-                case 'date-asc': return a.dateCreated.toMillis() - b.dateCreated.toMillis();
-                case 'name-asc': return a.name.localeCompare(b.name);
-                case 'name-desc': return b.name.localeCompare(a.name);
-                case 'amount-desc': return b.helpRequested - a.helpRequested;
-                case 'amount-asc': return a.helpRequested - b.helpRequested;
-                default: return 0;
+       return filtered.sort((a, b) => {
+            const aValue = a[sortColumn];
+            const bValue = b[sortColumn];
+
+            let comparison = 0;
+            // Handle date/timestamp objects
+            if (aValue instanceof Date && bValue instanceof Date) {
+                comparison = aValue.getTime() - bValue.getTime();
+            } else if (aValue && typeof aValue === 'object' && 'toDate' in aValue && bValue && typeof bValue === 'object' && 'toDate' in bValue) {
+                comparison = (aValue as any).toDate().getTime() - (bValue as any).toDate().getTime();
+            } else if (aValue > bValue) {
+                comparison = 1;
+            } else if (aValue < bValue) {
+                comparison = -1;
             }
+            
+            return sortDirection === 'asc' ? comparison : -comparison;
         });
-    }, [leads, appliedFilters, usersById]);
+
+    }, [leads, appliedFilters, usersById, sortColumn, sortDirection]);
     
     const paginatedLeads = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -185,14 +196,18 @@ function LeadsPageContent() {
         setStatusInput('all');
         setVerificationInput('all');
         setBeneficiaryTypeInput('all');
-        setSortInput('date-desc');
-        setAppliedFilters({ name: '', status: 'all', verification: 'all', beneficiaryType: 'all', sort: 'date-desc' });
+        setAppliedFilters({ name: '', status: 'all', verification: 'all', beneficiaryType: 'all' });
         setCurrentPage(1);
     };
 
     useEffect(() => {
         setCurrentPage(1);
     }, [itemsPerPage]);
+
+    const renderSortIcon = (column: SortableColumn) => {
+        if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+        return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+    };
     
     const renderActionButton = (lead: Lead) => (
         <Button variant="outline" size="sm" asChild>
@@ -207,13 +222,33 @@ function LeadsPageContent() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
-                    <TableHead>Beneficiary</TableHead>
-                    <TableHead>Amount Req.</TableHead>
-                    <TableHead>Amount Given</TableHead>
-                    <TableHead>Amount Pending</TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('dateCreated')}>
+                            Date Created {renderSortIcon('dateCreated')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                         <Button variant="ghost" onClick={() => handleSort('name')}>
+                            Beneficiary {renderSortIcon('name')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('helpRequested')}>
+                           Amount Req. {renderSortIcon('helpRequested')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                         <Button variant="ghost" onClick={() => handleSort('helpGiven')}>
+                            Amount Given {renderSortIcon('helpGiven')}
+                        </Button>
+                    </TableHead>
                     <TableHead>Case Status</TableHead>
                     <TableHead>Verification</TableHead>
-                    <TableHead>Date Closed</TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('closedAt')}>
+                            Date Closed {renderSortIcon('closedAt')}
+                        </Button>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -224,6 +259,7 @@ function LeadsPageContent() {
                     return (
                         <TableRow key={lead.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                            <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
                             <TableCell>
                                 <div className="font-medium">{lead.name}</div>
                                 <div className="text-xs text-muted-foreground font-mono" title={lead.id}>
@@ -232,7 +268,6 @@ function LeadsPageContent() {
                             </TableCell>
                             <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
                             <TableCell className="font-semibold text-green-600">₹{lead.helpGiven.toLocaleString()}</TableCell>
-                             <TableCell className="font-semibold text-destructive">₹{pendingAmount.toLocaleString()}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     {lead.status}
@@ -284,10 +319,6 @@ function LeadsPageContent() {
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Amount Given</span>
                                 <span className="font-semibold text-green-600">₹{lead.helpGiven.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Amount Pending</span>
-                                <span className="font-semibold text-destructive">₹{pendingAmount.toLocaleString()}</span>
                             </div>
                              <div className="flex justify-between">
                                 <span className="text-muted-foreground">Case Status</span>
@@ -435,7 +466,7 @@ function LeadsPageContent() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 xl:col-span-2">
                         <Label htmlFor="nameFilter">Beneficiary or Lead ID</Label>
                         <Input 
@@ -482,19 +513,6 @@ function LeadsPageContent() {
                             </SelectTrigger>
                             <SelectContent>
                                 {verificationOptions.map(v => <SelectItem key={v} value={v} className="capitalize">{v}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2 xl:col-span-1">
-                        <Label htmlFor="sortOption">Sort By</Label>
-                        <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
-                            <SelectTrigger id="sortOption" className="w-full">
-                                <SelectValue placeholder="Sort by..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {sortOptions.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                ))}
                             </SelectContent>
                         </Select>
                     </div>
