@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { AppShell } from '@/components/app-shell';
@@ -30,8 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} h-full`}>
       <body className="font-body antialiased h-full bg-background">
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+        {/* Payment Gateway SDKs */}
         <Script async src="https://pay.google.com/gp/p/js/pay.js" />
+        <Script src="https://mercury.phonepe.com/transact/sdk-v1.js" />
+        
         <AppShell>
           {children}
         </AppShell>
