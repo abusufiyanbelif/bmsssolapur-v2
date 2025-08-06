@@ -34,9 +34,6 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
 
     // Hardcoded Beneficiary user
     { name: "Beneficiary User", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-
-    // Test Beneficiary
-    { name: "Test Beneficiary", userId: "test.beneficiary", firstName: "Test", middleName: "", lastName: "Beneficiary", email: "test.beneficiary@example.com", phone: "3333333333", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other' },
 ];
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -466,3 +463,4 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         };
     }
 };
+
