@@ -33,6 +33,9 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 type StatusFilter = 'all' | 'active' | 'inactive';
 const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 
+type AnonymityFilter = 'all' | 'anonymous' | 'not-anonymous';
+const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"];
+
 type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc';
 const sortOptions: { value: SortOption, label: string }[] = [
     { value: 'name-asc', label: 'Name (A-Z)' },
@@ -54,12 +57,14 @@ export default function DonorsPage() {
     // Input states
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
+    const [anonymityInput, setAnonymityInput] = useState<AnonymityFilter>('all');
     const [sortInput, setSortInput] = useState<SortOption>('name-asc');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         name: '',
         status: 'all' as StatusFilter,
+        anonymity: 'all' as AnonymityFilter,
         sort: 'name-asc' as SortOption
     });
     
@@ -72,6 +77,7 @@ export default function DonorsPage() {
         setAppliedFilters({
             name: nameInput,
             status: statusInput,
+            anonymity: anonymityInput,
             sort: sortInput
         });
     };
@@ -119,7 +125,10 @@ export default function DonorsPage() {
         let filtered = donors.filter(user => {
             const nameMatch = appliedFilters.name === '' || user.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
-            return nameMatch && statusMatch;
+            const anonymityMatch = appliedFilters.anonymity === 'all' ||
+                (appliedFilters.anonymity === 'anonymous' && user.isAnonymousAsDonor) ||
+                (appliedFilters.anonymity === 'not-anonymous' && !user.isAnonymousAsDonor);
+            return nameMatch && statusMatch && anonymityMatch;
         });
 
         return filtered.sort((a, b) => {
@@ -144,8 +153,9 @@ export default function DonorsPage() {
     const resetFilters = () => {
         setNameInput('');
         setStatusInput('all');
+        setAnonymityInput('all');
         setSortInput('name-asc');
-        setAppliedFilters({ name: '', status: 'all', sort: 'name-asc' });
+        setAppliedFilters({ name: '', status: 'all', anonymity: 'all', sort: 'name-asc' });
         setCurrentPage(1);
     };
     
@@ -433,7 +443,7 @@ export default function DonorsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="nameFilter">Donor Name</Label>
                         <Input 
@@ -455,6 +465,17 @@ export default function DonorsPage() {
                         </Select>
                     </div>
                      <div className="space-y-2">
+                        <Label htmlFor="anonymityFilter">Anonymity</Label>
+                        <Select value={anonymityInput} onValueChange={(v) => setAnonymityInput(v as AnonymityFilter)}>
+                            <SelectTrigger id="anonymityFilter">
+                                <SelectValue placeholder="Filter by anonymity" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {anonymityOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2 lg:col-span-full">
                         <Label htmlFor="sortOption">Sort By</Label>
                         <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
@@ -467,7 +488,7 @@ export default function DonorsPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 lg:col-span-2">
+                    <div className="flex items-end gap-4 lg:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                             <Search className="mr-2 h-4 w-4" />
                             Apply Filters

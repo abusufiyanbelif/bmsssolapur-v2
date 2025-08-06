@@ -35,6 +35,9 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 type StatusFilter = 'all' | 'active' | 'inactive';
 const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 
+type AnonymityFilter = 'all' | 'anonymous' | 'not-anonymous';
+const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"];
+
 type TypeFilter = 'all' | 'Adult' | 'Kid' | 'Old Age' | 'Widow' | 'Family';
 const typeOptions: { value: TypeFilter, label: string, icon?: React.ElementType }[] = [
     { value: 'all', label: 'All Types' },
@@ -79,6 +82,7 @@ function BeneficiariesPageContent() {
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
     const [typeInput, setTypeInput] = useState<TypeFilter>(initialTypeFilter);
+    const [anonymityInput, setAnonymityInput] = useState<AnonymityFilter>('all');
     const [sortInput, setSortInput] = useState<SortOption>('name-asc');
     
     // Applied filter states
@@ -86,6 +90,7 @@ function BeneficiariesPageContent() {
         name: '',
         status: 'all' as StatusFilter,
         type: initialTypeFilter,
+        anonymity: 'all' as AnonymityFilter,
         sort: 'name-asc' as SortOption
     });
     
@@ -99,6 +104,7 @@ function BeneficiariesPageContent() {
             name: nameInput,
             status: statusInput,
             type: typeInput,
+            anonymity: anonymityInput,
             sort: sortInput
         });
     };
@@ -149,7 +155,10 @@ function BeneficiariesPageContent() {
             const typeMatch = appliedFilters.type === 'all' || 
                               (appliedFilters.type === 'Widow' && user.isWidow) || 
                               user.beneficiaryType === appliedFilters.type;
-            return nameMatch && statusMatch && typeMatch;
+            const anonymityMatch = appliedFilters.anonymity === 'all' ||
+                (appliedFilters.anonymity === 'anonymous' && user.isAnonymousAsBeneficiary) ||
+                (appliedFilters.anonymity === 'not-anonymous' && !user.isAnonymousAsBeneficiary);
+            return nameMatch && statusMatch && typeMatch && anonymityMatch;
         });
 
         return filtered.sort((a, b) => {
@@ -175,8 +184,9 @@ function BeneficiariesPageContent() {
         setNameInput('');
         setStatusInput('all');
         setTypeInput('all');
+        setAnonymityInput('all');
         setSortInput('name-asc');
-        setAppliedFilters({ name: '', status: 'all', type: 'all', sort: 'name-asc' });
+        setAppliedFilters({ name: '', status: 'all', type: 'all', anonymity: 'all', sort: 'name-asc' });
         setCurrentPage(1);
     };
     
@@ -474,7 +484,7 @@ function BeneficiariesPageContent() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-1">
                         <Label htmlFor="nameFilter">Beneficiary Name</Label>
                         <Input 
@@ -507,6 +517,17 @@ function BeneficiariesPageContent() {
                         </Select>
                     </div>
                      <div className="space-y-2">
+                        <Label htmlFor="anonymityFilter">Anonymity</Label>
+                        <Select value={anonymityInput} onValueChange={(v) => setAnonymityInput(v as AnonymityFilter)}>
+                            <SelectTrigger id="anonymityFilter">
+                                <SelectValue placeholder="Filter by anonymity" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {anonymityOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2 xl:col-span-full">
                         <Label htmlFor="sortOption">Sort By</Label>
                         <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
@@ -519,7 +540,7 @@ function BeneficiariesPageContent() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 lg:col-span-full">
+                    <div className="flex items-end gap-4 xl:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                             <Search className="mr-2 h-4 w-4" />
                             Apply Filters

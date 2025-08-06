@@ -32,6 +32,7 @@ import { Label } from "@/components/ui/label";
 
 const allRoles: (UserRole | 'all')[] = ["all", "Donor", "Beneficiary", "Admin", "Finance Admin", "Super Admin", "Referral"];
 const statusOptions: ('all' | 'active' | 'inactive')[] = ["all", "active", "inactive"];
+const anonymityOptions: ('all' | 'anonymous' | 'not-anonymous')[] = ["all", "anonymous", "not-anonymous"];
 
 type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc';
 const sortOptions: { value: SortOption, label: string }[] = [
@@ -54,6 +55,7 @@ export default function UserManagementPage() {
     const [nameInput, setNameInput] = useState('');
     const [roleInput, setRoleInput] = useState<string>('all');
     const [statusInput, setStatusInput] = useState<string>('all');
+    const [anonymityInput, setAnonymityInput] = useState<string>('all');
     const [sortInput, setSortInput] = useState<SortOption>('name-asc');
     
     // Applied filter states
@@ -61,6 +63,7 @@ export default function UserManagementPage() {
         name: '',
         role: 'all',
         status: 'all',
+        anonymity: 'all',
         sort: 'name-asc' as SortOption
     });
     
@@ -111,6 +114,7 @@ export default function UserManagementPage() {
             name: nameInput,
             role: roleInput,
             status: statusInput,
+            anonymity: anonymityInput,
             sort: sortInput
         });
     };
@@ -123,7 +127,11 @@ export default function UserManagementPage() {
                               user.userId?.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const roleMatch = appliedFilters.role === 'all' || user.roles.includes(appliedFilters.role as UserRole);
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
-            return nameMatch && roleMatch && statusMatch;
+            const anonymityMatch = appliedFilters.anonymity === 'all' ||
+                (appliedFilters.anonymity === 'anonymous' && (user.isAnonymousAsBeneficiary || user.isAnonymousAsDonor)) ||
+                (appliedFilters.anonymity === 'not-anonymous' && !user.isAnonymousAsBeneficiary && !user.isAnonymousAsDonor);
+            
+            return nameMatch && roleMatch && statusMatch && anonymityMatch;
         });
         
         return filtered.sort((a, b) => {
@@ -148,8 +156,9 @@ export default function UserManagementPage() {
         setNameInput('');
         setRoleInput('all');
         setStatusInput('all');
+        setAnonymityInput('all');
         setSortInput('name-asc');
-        setAppliedFilters({ name: '', role: 'all', status: 'all', sort: 'name-asc' });
+        setAppliedFilters({ name: '', role: 'all', status: 'all', anonymity: 'all', sort: 'name-asc' });
         setCurrentPage(1);
     };
     
@@ -442,8 +451,8 @@ export default function UserManagementPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 lg:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 xl:col-span-2">
                         <Label htmlFor="nameFilter">Search by Name or ID</Label>
                         <Input 
                             id="nameFilter" 
@@ -474,7 +483,18 @@ export default function UserManagementPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2 lg:col-span-1">
+                    <div className="space-y-2">
+                        <Label htmlFor="anonymityFilter">Anonymity</Label>
+                        <Select value={anonymityInput} onValueChange={setAnonymityInput}>
+                            <SelectTrigger id="anonymityFilter">
+                                <SelectValue placeholder="Filter by anonymity" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {anonymityOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2 xl:col-span-full">
                         <Label htmlFor="sortOption">Sort By</Label>
                         <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
@@ -487,7 +507,7 @@ export default function UserManagementPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 lg:col-span-full">
+                    <div className="flex items-end gap-4 xl:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                            <Search className="mr-2 h-4 w-4" />
                             Apply Filters
