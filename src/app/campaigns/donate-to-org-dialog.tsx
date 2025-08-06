@@ -15,9 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CreditCard, Smartphone } from "lucide-react";
+import { Smartphone, QrCode } from "lucide-react";
 import type { Organization, User } from "@/services/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Image from "next/image";
 
 interface DonateToOrgDialogProps {
   children: React.ReactNode;
@@ -39,6 +40,10 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
     }
   }
 
+  const handleUpiPay = () => {
+    window.location.href = upiLink;
+  }
+
   return (
     <Dialog onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -46,7 +51,7 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
         <DialogHeader>
           <DialogTitle>Make a Secure Donation</DialogTitle>
           <DialogDescription>
-            Your contribution will support the organization's mission. Enter an amount below.
+            Your contribution will support the organization's mission. Enter an amount and choose a payment method.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -61,20 +66,23 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     min="1"
                 />
             </div>
-             <Button asChild className="w-full" size="lg" disabled={amount <= 0}>
-                <a href={isMobile ? upiLink : '#'} onClick={(e) => {
-                    if (!isMobile) {
-                        e.preventDefault();
-                        alert("Please scan the QR code from the organization page on your mobile to pay via UPI.");
-                    }
-                }}>
+            {organization.qrCodeUrl && (
+                <div className="flex flex-col items-center justify-center gap-2 p-4 border rounded-lg bg-muted/50">
+                     <div className="relative w-40 h-40">
+                        <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                    </div>
+                     <p className="text-sm font-bold">{organization.upiId}</p>
+                     <p className="text-xs text-muted-foreground text-center">
+                        Scan with any UPI App to pay.
+                    </p>
+                </div>
+            )}
+             {isMobile && (
+                <Button onClick={handleUpiPay} className="w-full" size="lg" disabled={amount <= 0}>
                     <Smartphone className="mr-2 h-4 w-4" /> Pay with UPI App
-                </a>
-            </Button>
+                </Button>
+            )}
         </div>
-         <DialogFooter>
-             <p className="text-xs text-muted-foreground text-center w-full mt-2 sm:mt-0">On mobile, this will open your UPI app. On desktop, please use the QR code from the organization page.</p>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
