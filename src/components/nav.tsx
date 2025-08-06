@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link"
@@ -31,17 +30,20 @@ const allNavItems: NavItem[] = [
     // Guest
     { href: "/", label: "Home", icon: Home, allowedRoles: ["Guest"] },
     { href: "/campaigns", label: "Verified Cases", icon: Megaphone, allowedRoles: ["Guest"] },
+    { href: "/donate", label: "Donate", icon: HandHeart, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (for non-admins)
     { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
     
     // Donor
+    { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
     { href: "/campaigns", label: "Verified Cases", icon: FileCheck, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
+    { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
     { href: "/campaigns", label: "View Public Cases", icon: Megaphone, allowedRoles: ["Beneficiary"] },
     
     // Admin

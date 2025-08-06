@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -15,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllDonations, type Donation, type DonationStatus, type DonationType } from "@/services/donation-service";
+import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose } from "@/services/donation-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,6 +31,7 @@ import { handleDeleteDonation } from "./actions";
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
+const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
 
 type SortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc' | 'amount-desc' | 'amount-asc';
 const sortOptions: { value: SortOption, label: string }[] = [
@@ -61,6 +61,7 @@ function DonationsPageContent() {
     // Input states
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
     const [typeInput, setTypeInput] = useState<string>('all');
+    const [purposeInput, setPurposeInput] = useState<string>('all');
     const [nameInput, setNameInput] = useState<string>('');
     const [sortInput, setSortInput] = useState<SortOption>('date-desc');
 
@@ -68,6 +69,7 @@ function DonationsPageContent() {
     const [appliedFilters, setAppliedFilters] = useState({
         status: statusFromUrl || 'all',
         type: 'all',
+        purpose: 'all',
         name: '',
         sort: 'date-desc' as SortOption
     });
@@ -103,6 +105,7 @@ function DonationsPageContent() {
         setAppliedFilters({
             status: statusInput,
             type: typeInput,
+            purpose: purposeInput,
             name: nameInput,
             sort: sortInput
         });
@@ -112,8 +115,9 @@ function DonationsPageContent() {
         let filtered = donations.filter(donation => {
             const statusMatch = appliedFilters.status === 'all' || donation.status === appliedFilters.status;
             const typeMatch = appliedFilters.type === 'all' || donation.type === appliedFilters.type;
+            const purposeMatch = appliedFilters.purpose === 'all' || donation.purpose === appliedFilters.purpose;
             const nameMatch = appliedFilters.name === '' || donation.donorName.toLowerCase().includes(appliedFilters.name.toLowerCase());
-            return statusMatch && typeMatch && nameMatch;
+            return statusMatch && typeMatch && nameMatch && purposeMatch;
         });
 
         return filtered.sort((a, b) => {
@@ -144,9 +148,10 @@ function DonationsPageContent() {
     const resetFilters = () => {
         setStatusInput('all');
         setTypeInput('all');
+        setPurposeInput('all');
         setNameInput('');
         setSortInput('date-desc');
-        setAppliedFilters({ status: 'all', type: 'all', name: '', sort: 'date-desc' });
+        setAppliedFilters({ status: 'all', type: 'all', purpose: 'all', name: '', sort: 'date-desc' });
         setCurrentPage(1);
     };
 
@@ -399,8 +404,8 @@ function DonationsPageContent() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 lg:col-span-2">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 xl:col-span-2">
                         <Label htmlFor="donorName">Donor Name</Label>
                         <Input 
                             id="donorName" 
@@ -421,7 +426,7 @@ function DonationsPageContent() {
                         </Select>
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="typeFilter">Donation Type</Label>
+                        <Label htmlFor="typeFilter">Category</Label>
                         <Select value={typeInput} onValueChange={setTypeInput}>
                             <SelectTrigger id="typeFilter">
                                 <SelectValue placeholder="Filter by type" />
@@ -431,7 +436,18 @@ function DonationsPageContent() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2 lg:col-span-1">
+                    <div className="space-y-2">
+                        <Label htmlFor="purposeFilter">Purpose</Label>
+                        <Select value={purposeInput} onValueChange={setPurposeInput}>
+                            <SelectTrigger id="purposeFilter">
+                                <SelectValue placeholder="Filter by purpose" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {purposeOptions.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
                         <Label htmlFor="sortOption">Sort By</Label>
                         <Select value={sortInput} onValueChange={(v) => setSortInput(v as SortOption)}>
                             <SelectTrigger id="sortOption" className="w-full">
@@ -444,7 +460,7 @@ function DonationsPageContent() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 lg:col-span-full">
+                    <div className="flex items-end gap-4 xl:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                             <Search className="mr-2 h-4 w-4" />
                             Apply Filters
