@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { User } from "@/services/types";
+import type { User, UserRole } from "@/services/types";
 import { handleDeleteUser, handleToggleUserStatus } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 
@@ -237,6 +237,9 @@ function BeneficiariesPageContent() {
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>Name</TableHead>
+                    <TableHead>User ID</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Roles</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined On</TableHead>
@@ -248,11 +251,20 @@ function BeneficiariesPageContent() {
                     <TableRow key={user.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell className="font-medium">
+                            <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                                {user.name}
+                            </Link>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{user.userId}</TableCell>
+                        <TableCell>
                             <div className="flex flex-col">
-                                 <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
-                                    {user.name}
-                                </Link>
-                                <span className="text-xs text-muted-foreground">{user.phone}</span>
+                                <span>{user.phone}</span>
+                                <span className="text-xs text-muted-foreground">{user.email}</span>
+                            </div>
+                        </TableCell>
+                         <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
                             </div>
                         </TableCell>
                         <TableCell>
@@ -295,9 +307,19 @@ function BeneficiariesPageContent() {
                         <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">User ID</span>
+                            <span className="font-mono text-xs">{user.userId}</span>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                             {user.beneficiaryType && <Badge variant="outline">{user.beneficiaryType}</Badge>}
                             {user.isWidow && <Badge variant="outline" className="bg-pink-100 text-pink-800"><HeartHandshake className="mr-1 h-3 w-3" />Widow</Badge>}
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-2">Roles</h4>
+                             <div className="flex flex-wrap gap-1">
+                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
+                            </div>
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">
                              <span>Joined On</span>
@@ -511,5 +533,3 @@ export default function BeneficiariesPage() {
         </Suspense>
     )
 }
-
-    

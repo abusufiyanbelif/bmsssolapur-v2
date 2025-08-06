@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { User } from "@/services/types";
+import type { User, UserRole } from "@/services/types";
 import { handleDeleteUser, handleToggleUserStatus } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 
@@ -207,7 +207,9 @@ export default function DonorsPage() {
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>Name</TableHead>
+                    <TableHead>User ID</TableHead>
                     <TableHead>Contact</TableHead>
+                    <TableHead>Roles</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined On</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -222,10 +224,16 @@ export default function DonorsPage() {
                                 {user.name}
                             </Link>
                         </TableCell>
+                         <TableCell className="font-mono text-xs">{user.userId}</TableCell>
                         <TableCell>
                             <div className="flex flex-col">
                                 <span>{user.phone}</span>
                                 <span className="text-xs text-muted-foreground">{user.email}</span>
+                            </div>
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
                             </div>
                         </TableCell>
                         <TableCell>
@@ -262,6 +270,16 @@ export default function DonorsPage() {
                         <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">User ID</span>
+                            <span className="font-mono text-xs">{user.userId}</span>
+                        </div>
+                         <div>
+                            <h4 className="font-semibold mb-2">Roles</h4>
+                             <div className="flex flex-wrap gap-1">
+                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
+                            </div>
+                        </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">
                              <span>Joined On</span>
                              <span>{format(user.createdAt.toDate(), "dd MMM yyyy")}</span>
@@ -454,5 +472,3 @@ export default function DonorsPage() {
     </div>
   )
 }
-
-    
