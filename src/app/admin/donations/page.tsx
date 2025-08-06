@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose } from "@/services/donation-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -188,7 +188,10 @@ function DonationsPageContent() {
                             <div className="flex items-center gap-2">
                                 <span>{donation.donorName}</span>
                                 {donation.isAnonymous && (
-                                    <Badge variant="secondary">Anonymous</Badge>
+                                    <Badge variant="secondary" title="This donation is marked as anonymous for public display">
+                                        <EyeOff className="mr-1 h-3 w-3" />
+                                        Anonymous
+                                    </Badge>
                                 )}
                             </div>
                         </TableCell>
@@ -217,7 +220,17 @@ function DonationsPageContent() {
                         <div className="flex justify-between items-start">
                              <div>
                                 <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: ₹{donation.amount.toFixed(2)}</CardTitle>
-                                <CardDescription>{donation.donorName}</CardDescription>
+                                <CardDescription>
+                                    <div className="flex items-center gap-2">
+                                        <span>{donation.donorName}</span>
+                                        {donation.isAnonymous && (
+                                            <Badge variant="secondary" title="This donation is marked as anonymous for public display">
+                                                <EyeOff className="mr-1 h-3 w-3" />
+                                                Anonymous
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </CardDescription>
                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
                                 {donation.status}
@@ -237,7 +250,6 @@ function DonationsPageContent() {
                             <span className="text-muted-foreground">Purpose</span>
                             <span>{donation.purpose || 'N/A'}</span>
                         </div>
-                        {donation.isAnonymous && <Badge variant="secondary">Anonymous</Badge>}
                     </CardContent>
                     <CardFooter className="flex justify-end">
                        {renderActions(donation)}

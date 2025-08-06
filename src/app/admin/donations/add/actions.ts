@@ -31,9 +31,17 @@ export async function handleAddDonation(
 
   try {
     const adminUser = await getUser(adminUserId); // Fetch admin user details for logging
-
     if (!adminUser) {
         return { success: false, error: "Admin user not found for logging." };
+    }
+    
+    const donorId = formData.get("donorId") as string;
+    if (!donorId) {
+        return { success: false, error: "Donor ID is missing." };
+    }
+    const donor = await getUser(donorId);
+    if (!donor) {
+        return { success: false, error: "Selected donor user not found." };
     }
 
     const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
@@ -43,9 +51,9 @@ export async function handleAddDonation(
     }
     
     const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
-        donorId: formData.get("donorId") as string,
-        donorName: formData.get("donorName") as string,
-        isAnonymous: formData.get("isAnonymous") === 'true',
+        donorId: donor.id!,
+        donorName: donor.name, // Always store the real name for internal records
+        isAnonymous: formData.get("isAnonymous") === 'true', // Flag for public display logic
         amount: parseFloat(formData.get("amount") as string),
         type: formData.get("type") as DonationType,
         purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
@@ -69,6 +77,7 @@ export async function handleAddDonation(
             type: 'Sadaqah', // Tips can be categorized as Sadaqah
             purpose: 'To Organization Use', // This is key for tracking
             notes: `Tip from donation transaction ID: ${newDonationData.transactionId}`,
+            isAnonymous: true, // Tips for the org should likely always be anonymous publicly
         };
          await createDonation(
             tipDonationData,

@@ -36,7 +36,7 @@ const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as cons
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 
 const formSchema = z.object({
-  donorId: z.string().optional(),
+  donorId: z.string().min(1, "Please select a donor."),
   isAnonymous: z.boolean().default(false),
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
   type: z.enum(donationTypes),
@@ -46,14 +46,6 @@ const formSchema = z.object({
   paymentMethod: z.enum(["Bank Transfer", "Cash", "UPI / QR Code", "Other"]),
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
-}).refine(data => {
-    if (!data.isAnonymous) {
-        return !!data.donorId && data.donorId.length > 0;
-    }
-    return true;
-}, {
-    message: "Please select a donor.",
-    path: ["donorId"],
 }).refine(data => {
     if (data.includeTip) {
         return !!data.tipAmount && data.tipAmount > 0;
@@ -80,7 +72,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     setAdminUserId(storedUserId);
   }, []);
   
-  const anonymousDonor = users.find(u => u.name === "Anonymous Donor");
+  const donorUsers = users.filter(u => u.roles.includes('Donor'));
 
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(formSchema),
@@ -93,8 +85,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     },
   });
 
-  const { watch, formState: { errors } } = form;
-  const isAnonymous = watch("isAnonymous");
+  const { watch } = form;
   const paymentMethod = watch("paymentMethod");
   const includeTip = watch("includeTip");
   const amount = watch("amount");
@@ -114,12 +105,8 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    const donorId = isAnonymous ? anonymousDonor!.id! : values.donorId!;
-    const donorName = isAnonymous ? "Anonymous Donor" : users.find(u => u.id === values.donorId)?.name || "Unknown";
-
     formData.append("adminUserId", adminUserId);
-    formData.append("donorId", donorId);
-    formData.append("donorName", donorName);
+    formData.append("donorId", values.donorId!);
     formData.append("isAnonymous", String(values.isAnonymous));
     formData.append("amount", String(values.amount));
     formData.append("type", values.type);
@@ -153,30 +140,6 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
         <FormField
-          control={form.control}
-          name="isAnonymous"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Donate Anonymously
-                </FormLabel>
-                <FormDescription>
-                  If checked, the donation will be linked to a generic "Anonymous Donor" profile.
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-        
-        {!isAnonymous && (
-            <FormField
             control={form.control}
             name="donorId"
             render={({ field }) => (
@@ -189,7 +152,7 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {users.filter(u => u.name !== "Anonymous Donor").map(user => (
+                    {donorUsers.map(user => (
                         <SelectItem key={user.id} value={user.id!}>
                             {user.name} ({user.phone})
                         </SelectItem>
@@ -200,7 +163,28 @@ export function AddDonationForm({ users }: AddDonationFormProps) {
                 </FormItem>
             )}
             />
-        )}
+        <FormField
+          control={form.control}
+          name="isAnonymous"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Mark this Donation as Anonymous
+                </FormLabel>
+                <FormDescription>
+                  If checked, the donor's name will be hidden from public view for this specific donation.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
