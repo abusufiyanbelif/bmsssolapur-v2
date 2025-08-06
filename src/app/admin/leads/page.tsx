@@ -1,5 +1,3 @@
-
-
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -206,6 +204,7 @@ function LeadsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>Beneficiary</TableHead>
                     <TableHead>Amount Req.</TableHead>
                     <TableHead>Amount Given</TableHead>
@@ -222,6 +221,7 @@ function LeadsPageContent() {
                     const pendingAmount = lead.helpRequested - lead.helpGiven;
                     return (
                         <TableRow key={lead.id}>
+                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>
                                 <div className="font-medium">{lead.name}</div>
                                 <div className="text-xs text-muted-foreground">
