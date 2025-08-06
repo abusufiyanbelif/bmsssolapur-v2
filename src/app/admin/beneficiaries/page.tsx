@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home, MoreHorizontal, UserCheck, UserX, Trash2 } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -254,8 +254,14 @@ function BeneficiariesPageContent() {
                             <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
                                 {user.name}
                             </Link>
+                             {user.isAnonymous && <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{user.userId}</TableCell>
+                        <TableCell>
+                            <div className="font-mono text-xs">{user.userId}</div>
+                            {user.isAnonymous && user.anonymousId && (
+                                <div className="font-mono text-xs text-muted-foreground" title="Anonymous ID">{user.anonymousId}</div>
+                            )}
+                        </TableCell>
                         <TableCell>
                             <div className="flex flex-col">
                                 <span>{user.phone}</span>
@@ -294,11 +300,12 @@ function BeneficiariesPageContent() {
                 <Card key={user.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                             <CardTitle className="text-lg">
+                             <CardTitle className="text-lg flex items-center gap-2">
                                 #{ (currentPage - 1) * itemsPerPage + index + 1 }: 
-                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary ml-2">
+                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
                                     {user.name}
                                 </Link>
+                                 {user.isAnonymous && <EyeOff className="h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
                             </CardTitle>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
@@ -309,7 +316,12 @@ function BeneficiariesPageContent() {
                     <CardContent className="space-y-4 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">User ID</span>
-                            <span className="font-mono text-xs">{user.userId}</span>
+                            <div className="text-right">
+                                <span className="font-mono text-xs">{user.userId}</span>
+                                {user.isAnonymous && user.anonymousId && (
+                                    <div className="font-mono text-xs text-muted-foreground" title="Anonymous ID">{user.anonymousId}</div>
+                                )}
+                            </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {user.beneficiaryType && <Badge variant="outline">{user.beneficiaryType}</Badge>}
