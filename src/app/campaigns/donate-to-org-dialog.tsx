@@ -194,8 +194,9 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                             </Button>
                         ) : (
                              <div className="flex gap-2">
-                                 <Input value={maazPhoneNumber} readOnly />
-                                 <Button variant="secondary" onClick={() => handleCopyToClipboard(maazPhoneNumber, 'Phone Number')}><Copy className="h-4 w-4" /></Button>
+                                <p className="text-sm text-muted-foreground p-2">
+                                    You can also pay directly to <span className="font-semibold text-foreground">Maaz Shaikh</span> at phone number <span className="font-semibold text-foreground">{maazPhoneNumber}</span> using your UPI app.
+                                </p>
                             </div>
                         )}
                     </div>
