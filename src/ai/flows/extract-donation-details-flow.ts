@@ -50,7 +50,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
   async (input) => {
     const { output } = await ai.generate({
         model: googleAI.model('gemini-pro-vision'),
-        prompt: prompt.prompt!,
+        prompt: prompt, // Pass the entire prompt object
         input: input,
         output: { schema: ExtractDonationDetailsOutputSchema }
     });
