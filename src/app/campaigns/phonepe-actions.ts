@@ -29,6 +29,8 @@ export async function startPhonePePayment(payload: PhonePePaymentRequest): Promi
     const merchantId = 'PGTESTPAYUAT'; // This is a test merchant ID
     const saltKey = '099eb0cd-02cf-4e2a-8aca-3e6c6aff0399'; // This is a test salt key
     const saltIndex = 1;
+    const appBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
 
     // --- PhonePe Payload Structure ---
     const paymentData = {
@@ -36,9 +38,9 @@ export async function startPhonePePayment(payload: PhonePePaymentRequest): Promi
         merchantTransactionId: `TXN-${uuidv4()}`,
         merchantUserId: payload.userId,
         amount: payload.amount * 100, // Amount in paise
-        redirectUrl: 'https://www.google.com/?payment-status=success', // A dummy URL to return to
-        redirectMode: 'POST',
-        callbackUrl: 'https://www.google.com/?payment-status=success', // Server-to-server callback
+        redirectUrl: `${appBaseUrl}/payment-status/success`, // A dummy URL to return to
+        redirectMode: 'GET', // Changed from POST to GET to match simulator
+        callbackUrl: `${appBaseUrl}/api/payment-callback`, // Server-to-server callback
         mobileNumber: payload.userPhone || '9999999999',
         paymentInstrument: {
             type: 'PAY_PAGE'
