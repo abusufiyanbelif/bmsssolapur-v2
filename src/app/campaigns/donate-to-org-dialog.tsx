@@ -186,16 +186,17 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                      </div>
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Phone className="h-4 w-4" /> Pay via Phone Number</Label>
-                         <div className="flex gap-2">
-                             <Input value={maazPhoneNumber} readOnly />
-                             <Button variant="secondary" onClick={() => handleCopyToClipboard(maazPhoneNumber, 'Phone Number')}><Copy className="h-4 w-4" /></Button>
-                        </div>
-                         {isMobile && (
+                         {isMobile ? (
                              <Button asChild className="w-full" size="sm" variant="outline">
                                 <Link href={phoneUpiLink}>
-                                    Pay Maaz Shaikh via UPI
+                                    Pay Maaz Shaikh ({maazPhoneNumber}) via UPI
                                 </Link>
                             </Button>
+                        ) : (
+                             <div className="flex gap-2">
+                                 <Input value={maazPhoneNumber} readOnly />
+                                 <Button variant="secondary" onClick={() => handleCopyToClipboard(maazPhoneNumber, 'Phone Number')}><Copy className="h-4 w-4" /></Button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -208,10 +209,13 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
                     </AlertDescription>
                 </Alert>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row sm:justify-between w-full">
+                <Button onClick={() => setStep(1)} variant="outline" className="w-full sm:w-auto">
+                    Cancel
+                </Button>
                 <DialogClose asChild>
-                    <Button onClick={() => setStep(1)} variant="outline">
-                        Back
+                    <Button onClick={() => setStep(1)} className="w-full sm:w-auto">
+                       I have paid
                     </Button>
                 </DialogClose>
             </DialogFooter>
@@ -221,4 +225,3 @@ export function DonateToOrgDialog({ children, organization, user }: DonateToOrgD
     </Dialog>
   );
 }
-
