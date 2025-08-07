@@ -105,6 +105,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
 
         if (donorIdentifierParam) {
+            // Attempt to find user by email, phone, or userId from the identifier
             const user = await getUserByUserId(donorIdentifierParam);
             if (user && user.roles.includes('Donor')) {
                 setValue('donorId', user.id!);
