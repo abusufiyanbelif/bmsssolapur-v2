@@ -1,4 +1,5 @@
 
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -26,17 +27,18 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, ScanEye, Edit } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
-import { handleRecordPastDonation } from './upload-proof-action';
+import { handleScanDonationProof } from '../admin/donations/actions';
 import type { User, Lead } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -63,14 +65,6 @@ const payNowFormSchema = z.object({
 });
 
 type PayNowFormValues = z.infer<typeof payNowFormSchema>;
-
-// Schema for uploading proof
-const uploadProofFormSchema = z.object({
-    proof: z.any().refine(file => file instanceof File && file.size > 0, "A screenshot file is required."),
-    notes: z.string().optional(),
-});
-
-type UploadProofFormValues = z.infer<typeof uploadProofFormSchema>;
 
 
 function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null }) {
@@ -255,102 +249,119 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
 }
 
 
-function UploadProofForm({ user }: { user: User | null }) {
+function UploadProofSection({ user }: { user: User | null }) {
     const { toast } = useToast();
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    
-    const form = useForm<UploadProofFormValues>({
-        resolver: zodResolver(uploadProofFormSchema),
-        defaultValues: {
-            notes: "",
-            proof: undefined,
-        },
-    });
+    const router = useRouter();
+    const [isScanning, setIsScanning] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    async function onSubmit(values: UploadProofFormValues) {
-        setIsSubmitting(true);
-        const formData = new FormData();
-        formData.append("proof", values.proof);
-        if (values.notes) formData.append("notes", values.notes);
-        
-        const result = await handleRecordPastDonation(formData, user?.id);
-        
-        if (result.success) {
-            toast({
-                variant: 'success',
-                title: 'Upload Successful',
-                description: "Your donation proof has been submitted for verification. Thank you!"
-            });
-            form.reset({ notes: "", proof: undefined });
-            if(fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+    const fileToDataUrl = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0] || null;
+        setFile(selectedFile);
+        if (selectedFile) {
+            setPreviewUrl(URL.createObjectURL(selectedFile));
         } else {
-            toast({
-                variant: 'destructive',
-                title: 'Upload Failed',
-                description: result.error || 'An unexpected error occurred.'
-            });
+            setPreviewUrl(null);
         }
-
-        setIsSubmitting(false);
     }
     
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                 <FormField
-                    control={form.control}
-                    name="proof"
-                    render={({ field: { onChange, value, ...rest } }) => (
-                        <FormItem>
-                        <FormLabel>Payment Screenshot</FormLabel>
-                        <FormControl>
-                            <Input 
-                            type="file" 
-                            accept="image/*,application/pdf"
-                            ref={fileInputRef}
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                onChange(file);
-                            }}
-                            {...rest}
-                            />
-                        </FormControl>
-                        <FormDescription>
-                            The system will try to automatically read the details from the image.
-                        </FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+    const handleScanAndContinue = async () => {
+        if (!file) return;
+        setIsScanning(true);
+        const formData = new FormData();
+        formData.append("paymentScreenshot", file);
+        
+        const result = await handleScanDonationProof(formData);
+        
+        if (result.success && result.details) {
+            toast({
+                variant: "success",
+                title: "Scan Successful",
+                description: "Redirecting to donation form with pre-filled details.",
+            });
+            
+            const queryParams = new URLSearchParams();
+            if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
+            if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
+            if(result.details.donorIdentifier) queryParams.set('donorIdentifier', result.details.donorIdentifier);
+            if(result.details.notes) queryParams.set('notes', result.details.notes);
+            
+            // Store screenshot in session to be picked up by the add form
+            const dataUrl = await fileToDataUrl(file);
+            sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
 
-                <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl>
-                        <Textarea
-                            placeholder="Add any notes for our team, like if this was for Zakat, Fitr, etc."
-                            className="resize-y"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+            router.push(`/admin/donations/add?${queryParams.toString()}`);
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Scan Failed",
+                description: result.error || "Could not extract details from the image.",
+            });
+        }
+        setIsScanning(false);
+    };
+
+    const handleManualEntry = async () => {
+        if (file) {
+            try {
+                const dataUrl = await fileToDataUrl(file);
+                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+            } catch (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Could not prepare the image for manual entry.",
+                });
+                return;
+            }
+        }
+        router.push('/admin/donations/add');
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="paymentScreenshot">Payment Screenshot</Label>
+                <Input 
+                    id="paymentScreenshot" 
+                    name="paymentScreenshot" 
+                    type="file" 
+                    required 
+                    accept="image/*"
+                    onChange={handleFileChange}
                 />
-                 <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                    Upload and Submit for Verification
+            </div>
+             {previewUrl && (
+                <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
+                     <div className="relative w-full h-64">
+                         <Image src={previewUrl} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
+                    </div>
+                </div>
+            )}
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Button type="button" variant="secondary" onClick={handleManualEntry} disabled={!file}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Enter Manually
                 </Button>
-            </form>
-        </Form>
+                <Button type="button" onClick={handleScanAndContinue} disabled={isScanning || !file}>
+                    {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
+                    Scan with AI
+                </Button>
+            </div>
+        </div>
     );
 }
+
 
 
 function DonatePageContent() {
@@ -438,7 +449,7 @@ function DonatePageContent() {
                 {donationMethod === 'payNow' ? (
                    <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} />
                 ) : (
-                   <UploadProofForm user={user} />
+                   <UploadProofSection user={user} />
                 )}
             </CardContent>
         </Card>
