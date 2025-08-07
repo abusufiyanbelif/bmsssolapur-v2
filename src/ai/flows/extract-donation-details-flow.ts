@@ -26,7 +26,7 @@ const prompt = ai.definePrompt({
     name: 'donationDetailsExtractorPrompt',
     input: { schema: ExtractDonationDetailsInputSchema },
     output: { schema: ExtractDonationDetailsOutputSchema },
-    prompt: `You are an expert financial assistant. Analyze the provided image of a payment screenshot.
+    prompt: `You are an expert financial assistant. Analyze the provided image of a payment screenshot from a UPI app (like GPay, PhonePe, Paytm, etc.).
     Your task is to carefully extract the following details and return them in a structured JSON format:
     
     - amount: The primary transaction amount. It must be a number.
@@ -51,7 +51,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
   async (input) => {
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-pro-vision'),
-        prompt: await prompt(input),
+        prompt: await prompt.render({input}),
     });
     
     return llmResponse.output()!;
