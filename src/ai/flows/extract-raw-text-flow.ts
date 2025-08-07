@@ -22,16 +22,6 @@ export async function extractRawText(input: ExtractRawTextInput): Promise<Extrac
 }
 
 
-const prompt = ai.definePrompt({
-    name: 'rawTextExtractorPrompt',
-    input: { schema: ExtractRawTextInputSchema },
-    output: { schema: ExtractRawTextOutputSchema },
-    prompt: `You are an Optical Character Recognition (OCR) tool. Extract all text from the provided image exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it.
-
-    Image: {{media url=photoDataUri}}`
-});
-
-
 const extractRawTextFlow = ai.defineFlow(
   {
     name: 'extractRawTextFlow',
@@ -42,7 +32,15 @@ const extractRawTextFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-pro-vision'),
-        prompt: await prompt.render({input}),
+        prompt: {
+            text: `You are an Optical Character Recognition (OCR) tool. Extract all text from the provided image exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it.`,
+            media: {
+                url: input.photoDataUri
+            }
+        },
+        output: {
+            schema: ExtractRawTextOutputSchema
+        }
     });
     
     const output = llmResponse.output();
