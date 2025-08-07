@@ -54,6 +54,19 @@ const extractDonationDetailsFlow = ai.defineFlow(
         prompt: await prompt.render({input}),
     });
     
-    return llmResponse.output()!;
+    const output = llmResponse.output();
+
+    if (!output) {
+      throw new Error("The AI model did not return any output. The image might be unreadable.");
+    }
+    
+    if (!output.amount || !output.transactionId) {
+        let missingFields = [];
+        if (!output.amount) missingFields.push("Amount");
+        if (!output.transactionId) missingFields.push("Transaction ID");
+        throw new Error(`Scan failed: Could not extract required fields (${missingFields.join(', ')}). Please try a clearer image or enter details manually.`);
+    }
+
+    return output;
   }
 );
