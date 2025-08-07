@@ -138,6 +138,8 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
              if (activeRole === 'Super Admin') return true;
              if (activeRole === 'Admin' && (adminLinks.includes(sub.href) || financeLinks.includes(sub.href))) return true;
              if (activeRole === 'Finance Admin' && financeLinks.includes(sub.href)) return true;
+             // Let Super Admin see their specific link even if their active role is Admin
+             if (userRoles.includes('Super Admin') && superAdminLinks.includes(sub.href)) return true;
              return false;
         }) || [];
     }
