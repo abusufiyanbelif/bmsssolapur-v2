@@ -140,7 +140,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<Lead[] | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   
@@ -224,7 +224,6 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
         title: "Lead Created",
         description: `Successfully created lead for ${result.lead.name}.`,
       });
-      // Reset form, but explicitly set verificationDocument to undefined to avoid the error.
       form.reset({
         beneficiaryType: 'existing',
         isLoan: false,
@@ -244,8 +243,11 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
         campaignId: 'none',
         campaignName: '',
         dueDate: undefined,
-        verificationDocument: undefined
+        verificationDocument: undefined,
       });
+      if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+      }
     } else {
       toast({
         variant: "destructive",
@@ -258,7 +260,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   return (
     <>
         <Form {...form}>
-        <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
             
             <FormField
                 control={form.control}
@@ -701,6 +703,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                     <FormControl>
                         <Input 
                         type="file" 
+                        ref={fileInputRef}
                         accept="image/*,application/pdf"
                         onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
                         />
