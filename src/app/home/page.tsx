@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon } from "lucide-react";
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -351,7 +351,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
              <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline">
-                        <Users />
+                        <UsersIcon />
                         Beneficiaries Breakdown
                     </CardTitle>
                 </CardHeader>

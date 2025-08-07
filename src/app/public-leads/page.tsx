@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CreditCard, Copy, Loader2, AlertCircle } from "lucide-react";
@@ -14,18 +14,17 @@ import { useRouter } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { HandHeart } from 'lucide-react';
 import { getCurrentOrganization } from "@/services/organization-service";
+import Link from "next/link";
 
 interface PublicLeadsListProps {
     leads: EnrichedLead[];
-    organization: Organization | null;
 }
 
-function PublicLeadsList({ leads, organization }: PublicLeadsListProps) {
+function PublicLeadsList({ leads }: PublicLeadsListProps) {
     const router = useRouter();
     
     const handleDonateClick = () => {
-        sessionStorage.setItem('redirectAfterLogin', '/public-leads');
-        router.push('/login');
+        router.push('/donate');
     }
 
     if (leads.length === 0) {
@@ -37,7 +36,7 @@ function PublicLeadsList({ leads, organization }: PublicLeadsListProps) {
                     Your generosity is making a real difference. Check back later for new general cases that need your support, or view our official Campaigns.
                 </p>
                  <Button className="mt-6" asChild>
-                    <a href="/campaigns">View Campaigns</a>
+                    <Link href="/campaigns">View Campaigns</Link>
                 </Button>
             </div>
         );
@@ -88,7 +87,6 @@ function PublicLeadsList({ leads, organization }: PublicLeadsListProps) {
 
 export default function PublicLeadsPage() {
     const [leads, setLeads] = useState<EnrichedLead[]>([]);
-    const [organization, setOrganization] = useState<Organization | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -97,12 +95,8 @@ export default function PublicLeadsPage() {
             try {
                 setLoading(true);
                 setError(null);
-                const [fetchedLeads, fetchedOrganization] = await Promise.all([
-                    getOpenGeneralLeads(),
-                    getCurrentOrganization()
-                ]);
+                const fetchedLeads = await getOpenGeneralLeads();
                 setLeads(fetchedLeads);
-                setOrganization(fetchedOrganization);
             } catch (e) {
                 setError("Failed to load general cases. Please try again later.");
                 console.error(e);
@@ -137,7 +131,7 @@ export default function PublicLeadsPage() {
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     ) : (
-                        <PublicLeadsList leads={leads} organization={organization} />
+                        <PublicLeadsList leads={leads} />
                     )}
                 </CardContent>
             </Card>
