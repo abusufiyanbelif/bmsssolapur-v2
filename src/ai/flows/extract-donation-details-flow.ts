@@ -30,9 +30,9 @@ const prompt = ai.definePrompt({
     Your task is to carefully extract the following details and return them in a structured JSON format:
     
     - amount: The primary transaction amount. It must be a number.
-    - transactionId: The Transaction ID, UTR, or any other reference number. It must be a string.
+    - transactionId: The Transaction ID, UTR, or any other reference number. It must be a string. If multiple IDs are present (like a Transaction ID and a UTR), prefer the UTR number.
     - date: The date of the transaction. Format it as YYYY-MM-DD.
-    - paymentMethod: The method of payment (e.g., UPI, Bank Transfer, GPay, PhonePe).
+    - paymentMethod: The method or app of payment (e.g., UPI, Bank Transfer, GPay, PhonePe, Paytm). Infer this from the UI if possible.
     - donorIdentifier: The name, phone number or UPI ID of the person who sent the money (e.g., 'john.doe@okbank' or 'John Doe' or '9876543210'). This is a crucial field for identifying the user.
     - notes: Any user-added comments, remarks, or descriptions found in the payment details. This is often labeled as "Add a note", "Message", or "Remarks".
 
