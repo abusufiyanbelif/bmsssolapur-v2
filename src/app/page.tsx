@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -17,6 +18,50 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+
+
+function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+    if (loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <QuoteIcon className="text-primary" />
+                        Food for Thought
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (quotes.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <QuoteIcon className="text-primary" />
+                    Food for Thought
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {quotes.map((quote, index) => (
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                            <p>"{quote.text}"</p>
+                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                        </blockquote>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 function PublicHomePage() {
   const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
@@ -226,24 +271,7 @@ function PublicHomePage() {
             </Card>
         </div>
         <div className="lg:col-span-1">
-           <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
-                    Food for Thought
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-6">
-                    {quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
-                            <p>"{quote.text}"</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
-                        </blockquote>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
+           <InspirationalQuotes quotes={quotes} loading={loading} />
         </div>
       </div>
     </div>
