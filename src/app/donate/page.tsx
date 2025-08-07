@@ -24,15 +24,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
-import type { User } from '@/services/types';
+import type { User, Lead } from '@/services/types';
 import { getUser } from '@/services/user-service';
-import { useRouter } from 'next/navigation';
+import { getLead } from '@/services/lead-service';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
 
@@ -45,6 +46,8 @@ const formSchema = z.object({
   email: z.string().optional(),
   proof: z.any().optional(),
   notes: z.string().optional(),
+  leadId: z.string().optional(),
+  campaignId: z.string().optional(),
 }).refine(data => {
     if (!data.isAnonymous) {
         return !!data.donorName && data.donorName.length > 0;
@@ -57,11 +60,34 @@ const formSchema = z.object({
 
 type DonationFormValues = z.infer<typeof formSchema>;
 
-export default function DonatePage() {
+
+function DonatePageContent() {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [targetLead, setTargetLead] = useState<Lead | null>(null);
+  const [targetCampaignId, setTargetCampaignId] = useState<string | null>(null);
+  const [isLoadingTarget, setIsLoadingTarget] = useState(true);
+
+  const leadId = searchParams.get('leadId');
+  const campaignId = searchParams.get('campaignId');
+
+  useEffect(() => {
+    const fetchTarget = async () => {
+      setIsLoadingTarget(true);
+      if (leadId) {
+        const lead = await getLead(leadId);
+        setTargetLead(lead);
+      } else if (campaignId) {
+        setTargetCampaignId(campaignId);
+      }
+      setIsLoadingTarget(false);
+    }
+    fetchTarget();
+  }, [leadId, campaignId]);
+
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -85,6 +111,17 @@ export default function DonatePage() {
           form.setValue('email', user.email || undefined);
       }
   }, [user, form]);
+  
+   useEffect(() => {
+    if (targetLead) {
+      form.setValue('leadId', targetLead.id);
+      form.setValue('purpose', 'Sadaqah'); // Default purpose when donating to a lead
+    }
+     if (targetCampaignId) {
+      form.setValue('campaignId', targetCampaignId);
+      form.setValue('purpose', 'Sadaqah'); // Default purpose
+    }
+  }, [targetLead, targetCampaignId, form]);
 
   const isAnonymous = form.watch("isAnonymous");
 
@@ -125,6 +162,29 @@ export default function DonatePage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
+                {isLoadingTarget && <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>}
+                
+                {targetLead && (
+                    <Alert className="mb-6">
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>You are donating to a specific case!</AlertTitle>
+                        <AlertDescription>
+                           Your contribution will be directed to help <span className="font-semibold">{targetLead.name}</span> for the purpose of <span className="font-semibold">{targetLead.purpose}</span>.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                
+                {targetCampaignId && (
+                     <Alert className="mb-6">
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>You are donating to a specific campaign!</AlertTitle>
+                        <AlertDescription>
+                           Your contribution will support our <span className="font-semibold">{targetCampaignId.replace(/-/g, ' ')}</span> campaign.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                     
@@ -135,7 +195,7 @@ export default function DonatePage() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Donation Purpose</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!targetLead || !!targetCampaignId}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a purpose" />
@@ -147,6 +207,7 @@ export default function DonatePage() {
                                 ))}
                                 </SelectContent>
                             </Select>
+                             { (!!targetLead || !!targetCampaignId) && <FormDescription>Purpose is automatically set.</FormDescription>}
                             <FormMessage />
                             </FormItem>
                         )}
@@ -250,4 +311,12 @@ export default function DonatePage() {
         </Card>
      </div>
   );
+}
+
+export default function DonatePage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <DonatePageContent />
+        </Suspense>
+    )
 }

@@ -57,11 +57,13 @@ export default function LandingPage() {
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
                 const closedThisMonth = allLeads.filter(lead => {
                     if (lead.status !== 'Closed' || !lead.closedAt) return false;
-                    const closedDate = (lead.closedAt as any).toDate();
+                    const closedDate = (lead.closedAt as any).toDate ? (lead.closedAt as any).toDate() : new Date(lead.closedAt);
                     return closedDate >= startOfMonth;
                 }).sort((a,b) => {
                     if (!a.closedAt || !b.closedAt) return 0;
-                    return (b.closedAt as any).toMillis() - (a.closedAt as any).toMillis()
+                     const dateA = (a.closedAt as any).toDate ? (a.closedAt as any).toDate() : new Date(a.closedAt);
+                    const dateB = (b.closedAt as any).toDate ? (b.closedAt as any).toDate() : new Date(b.closedAt);
+                    return dateB.getTime() - dateA.getTime();
                 });
                 
                 setRecentlyClosedLeads(closedThisMonth.slice(0, 3));
@@ -79,8 +81,7 @@ export default function LandingPage() {
     }, []);
 
     const handleDonateClick = () => {
-        sessionStorage.setItem('redirectAfterLogin', '/campaigns');
-        router.push('/login');
+        router.push('/donate');
     }
 
     const metrics = [
@@ -203,7 +204,7 @@ export default function LandingPage() {
                                                 ₹{remainingAmount.toLocaleString()} still needed
                                             </p>
                                         }
-                                        <Button onClick={handleDonateClick} className="w-full">
+                                        <Button onClick={() => router.push(`/donate?leadId=${lead.id}`)} className="w-full">
                                             Donate Now
                                         </Button>
                                     </CardFooter>
@@ -212,8 +213,8 @@ export default function LandingPage() {
                     })}
                     </div>
                     <div className="mt-12 text-center">
-                        <Button onClick={handleDonateClick} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                            View All Cases
+                        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+                            <Link href="/public-leads">View All Cases</Link>
                         </Button>
                     </div>
                 </section>
@@ -301,7 +302,7 @@ export default function LandingPage() {
                                                     <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}
+                                                    {format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}
                                                 </TableCell>
                                                 <TableCell>
                                                      <div className="flex flex-col gap-2">

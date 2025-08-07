@@ -88,6 +88,8 @@ export interface Donation {
   purpose?: DonationPurpose;
   status: DonationStatus;
   isAnonymous?: boolean;
+  leadId?: string;
+  campaignId?: string;
   paymentScreenshotUrl?: string;
   transactionId?: string;
   createdAt: Timestamp;

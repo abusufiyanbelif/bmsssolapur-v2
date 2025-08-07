@@ -18,6 +18,8 @@ interface DonationFormData {
     isAnonymous: boolean;
     userId?: string;
     notes?: string;
+    leadId?: string;
+    campaignId?: string;
 }
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
@@ -38,6 +40,8 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
         purpose: formData.purpose,
         status: "Pending verification",
         notes: formData.notes,
+        leadId: formData.leadId,
+        campaignId: formData.campaignId,
     };
     
     // The admin user details are hardcoded here as the donation is user-initiated.

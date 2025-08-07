@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Donation service for interacting with Firestore.
  */
@@ -51,7 +52,9 @@ export const createDonation = async (
         details: { 
             donationId: newDonation.id!,
             donorName: newDonation.donorName,
-            amount: newDonation.amount
+            amount: newDonation.amount,
+            linkedLeadId: newDonation.leadId,
+            linkedCampaignId: newDonation.campaignId,
         },
     });
 

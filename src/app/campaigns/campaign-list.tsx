@@ -26,10 +26,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
     const router = useRouter();
     
     const handleDonateClick = (campaignId: string) => {
-        // You might want to direct them to a campaign-specific donation page in the future.
-        // For now, we'll use the generic donation page.
-        sessionStorage.setItem('redirectAfterLogin', '/donate');
-        router.push('/login');
+        router.push(`/donate?campaignId=${campaignId}`);
     }
 
     if (campaigns.length === 0) {
@@ -51,7 +48,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {campaigns.map((campaign) => {
                 const isUpcoming = campaign.status === 'Upcoming';
-                const daysRemaining = formatDistanceToNowStrict(campaign.endDate, { unit: 'day' });
+                const daysRemaining = formatDistanceToNowStrict(campaign.endDate as Date, { unit: 'day' });
                 return (
                     <Card key={campaign.id} className="flex flex-col">
                         <CardHeader>
@@ -62,7 +59,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                                 </Badge>
                             </div>
                             <CardDescription>
-                                {format(campaign.startDate, 'dd MMM')} - {format(campaign.endDate, 'dd MMM, yyyy')}
+                                {format(campaign.startDate as Date, 'dd MMM')} - {format(campaign.endDate as Date, 'dd MMM, yyyy')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">
@@ -73,7 +70,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                         </CardContent>
                         <CardFooter className='flex-col items-start gap-4'>
                             <p className="text-primary font-bold text-center w-full">
-                                {isUpcoming ? `Starts in ${formatDistanceToNowStrict(campaign.startDate)}` : `${daysRemaining} remaining`}
+                                {isUpcoming ? `Starts in ${formatDistanceToNowStrict(campaign.startDate as Date)}` : `${daysRemaining} remaining`}
                             </p>
                             <Button onClick={() => handleDonateClick(campaign.id!)} className="w-full" disabled={isUpcoming}>
                                 <HandHeart className="mr-2 h-4 w-4" />

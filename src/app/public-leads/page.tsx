@@ -23,8 +23,8 @@ interface PublicLeadsListProps {
 function PublicLeadsList({ leads }: PublicLeadsListProps) {
     const router = useRouter();
     
-    const handleDonateClick = () => {
-        router.push('/donate');
+    const handleDonateClick = (leadId: string) => {
+        router.push(`/donate?leadId=${leadId}`);
     }
 
     if (leads.length === 0) {
@@ -73,7 +73,7 @@ function PublicLeadsList({ leads }: PublicLeadsListProps) {
                                     ₹{remainingAmount.toLocaleString()} still needed
                                 </p>
                             }
-                            <Button onClick={handleDonateClick} className="w-full">
+                            <Button onClick={() => handleDonateClick(lead.id!)} className="w-full">
                                 Donate Now
                             </Button>
                         </CardFooter>
