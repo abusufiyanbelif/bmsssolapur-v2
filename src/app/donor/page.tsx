@@ -143,7 +143,7 @@ export default function DonorDashboardPage() {
 }
 
 
-function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allDonations, allCampaigns }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[], allDonations: Donation[], allCampaigns: Campaign[] }) {
+function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allCampaigns }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[], allDonations: Donation[], allCampaigns: Campaign[] }) {
   const isMobile = useIsMobile();
   const router = useRouter();
   const [purposeInput, setPurposeInput] = useState('all');
@@ -218,7 +218,6 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
   
   const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen", "Other"];
   
-  const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
   const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
   
   const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
