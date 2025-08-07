@@ -301,7 +301,7 @@ export default function LandingPage() {
                                                     <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {format((campaign.startDate as any).toDate(), "dd MMM yyyy")} - {format((campaign.endDate as any).toDate(), "dd MMM yyyy")}
+                                                    {format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}
                                                 </TableCell>
                                                 <TableCell>
                                                      <div className="flex flex-col gap-2">
