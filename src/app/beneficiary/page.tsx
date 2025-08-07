@@ -1,3 +1,4 @@
+
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -7,19 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon } from "lucide-react";
-import { getLeadsByBeneficiaryId } from "@/services/lead-service";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass } from "lucide-react";
+import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
 import type { User, Lead, Quote, LeadStatus } from "@/services/types";
-import { getUser } from "@/services/user-service";
+import { getAllUsers, getUser } from "@/services/user-service";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getAllDonations } from "@/services/donation-service";
 
 
 export default function BeneficiaryDashboardPage() {
@@ -28,6 +30,11 @@ export default function BeneficiaryDashboardPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // For common stats
+    const [allDonations, setAllDonations] = useState<Donation[]>([]);
+    const [allLeads, setAllLeads] = useState<Lead[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -48,12 +55,18 @@ export default function BeneficiaryDashboardPage() {
                 }
                 setUser(fetchedUser);
 
-                const [beneficiaryCases, randomQuotes] = await Promise.all([
+                const [beneficiaryCases, randomQuotes, donations, leads, users] = await Promise.all([
                     getLeadsByBeneficiaryId(storedUserId),
-                    getRandomQuotes(3)
+                    getRandomQuotes(3),
+                    getAllDonations(),
+                    getAllLeads(),
+                    getAllUsers(),
                 ]);
                 setCases(beneficiaryCases);
                 setQuotes(randomQuotes);
+                setAllDonations(donations);
+                setAllLeads(leads);
+                setAllUsers(users);
 
             } catch (e) {
                 setError("Failed to load dashboard data.");
@@ -94,7 +107,7 @@ export default function BeneficiaryDashboardPage() {
               Welcome back, {user.name}. Manage your help requests here.
             </p>
         </div>
-      <BeneficiaryDashboard cases={cases} quotes={quotes} />
+      <BeneficiaryDashboard cases={cases} quotes={quotes} allLeads={allLeads} allDonations={allDonations} allUsers={allUsers} />
     </div>
   );
 }
@@ -106,41 +119,48 @@ const statusColors: Record<LeadStatus, string> = {
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
 };
 
-function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[] }) {
+function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers }: { cases: Lead[], quotes: Quote[], allLeads: Lead[], allDonations: Donation[], allUsers: User[] }) {
     const isMobile = useIsMobile();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
     
-    const {
-        totalAidReceived,
-        activeCases,
-        casesClosed,
-        totalRequested
-    } = useMemo(() => {
+    // Global stats
+    const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+    const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+    const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
+    const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+    const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
+    const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+    const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
+
+    const mainMetrics = [
+        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
+        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
+        { title: "Total Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
+        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
+        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
+    ];
+    
+    // Beneficiary specific stats
+    const { totalAidReceived, activeCases, casesClosed: myCasesClosed, totalRequested } = useMemo(() => {
         let totalAidReceived = 0;
         let activeCases = 0;
-        let casesClosed = 0;
+        let myCasesClosed = 0;
         let totalRequested = 0;
 
         cases.forEach(caseItem => {
             totalRequested += caseItem.helpRequested;
+            totalAidReceived += caseItem.helpGiven;
             if (caseItem.status === 'Closed') {
-                casesClosed++;
-                totalAidReceived += caseItem.helpGiven;
+                myCasesClosed++;
             }
             if (caseItem.status === 'Pending' || caseItem.status === 'Partial') {
                 activeCases++;
             }
         });
-        return { totalAidReceived, activeCases, casesClosed, totalRequested };
+        return { totalAidReceived, activeCases, casesClosed: myCasesClosed, totalRequested };
     }, [cases]);
-
-    const stats = [
-        { title: "Total Aid Received", value: `₹${totalAidReceived.toLocaleString()}`, icon: PiggyBank },
-        { title: "Active Cases", value: activeCases, icon: PackageOpen },
-        { title: "Cases Closed", value: casesClosed, icon: Check },
-        { title: "Total Aid Requested", value: `₹${totalRequested.toLocaleString()}`, icon: History },
-    ];
 
     const paginatedCases = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -269,15 +289,15 @@ function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {stats.map(stat => (
-                    <Card key={stat.title}>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {mainMetrics.map((metric) => (
+                    <Card key={metric.title} className="h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                            <stat.icon className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <metric.icon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
+                        <div className="text-2xl font-bold">{metric.value}</div>
                         </CardContent>
                     </Card>
                 ))}

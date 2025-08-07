@@ -1,3 +1,4 @@
+
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -7,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon } from "lucide-react";
-import { getDonationsByUserId } from "@/services/donation-service";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass } from "lucide-react";
+import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -40,6 +41,9 @@ export default function DonorDashboardPage() {
     const [error, setError] = useState<string | null>(null);
     const [quotesLoading, setQuotesLoading] = useState(false);
     const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
+    
+    // For common stats
+    const [allDonations, setAllDonations] = useState<Donation[]>([]);
     const [allLeads, setAllLeads] = useState<Lead[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
 
@@ -62,16 +66,18 @@ export default function DonorDashboardPage() {
                 }
                 setUser(fetchedUser);
 
-                const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers] = await Promise.all([
+                const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers, fetchedAllDonations] = await Promise.all([
                     getDonationsByUserId(storedUserId),
                     getOpenGeneralLeads(),
                     getAllLeads(),
-                    getAllUsers()
+                    getAllUsers(),
+                    getAllDonations(),
                 ]);
                 setDonations(donorDonations);
                 setOpenLeads(availableLeads);
                 setAllLeads(fetchedAllLeads);
                 setAllUsers(fetchedAllUsers);
+                setAllDonations(fetchedAllDonations);
 
             } catch (e) {
                 setError("Failed to load dashboard data.");
@@ -120,13 +126,20 @@ export default function DonorDashboardPage() {
               Welcome back, {user.name}. Thank you for your continued support.
             </p>
         </div>
-      <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} allLeads={allLeads} allUsers={allUsers} />
+      <DonorDashboard 
+        donations={donations} 
+        openLeads={openLeads} 
+        quotes={quotes} 
+        allLeads={allLeads} 
+        allUsers={allUsers} 
+        allDonations={allDonations}
+      />
     </div>
   );
 }
 
 
-function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[] }) {
+function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allDonations }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[], allDonations: Donation[] }) {
   const isMobile = useIsMobile();
   const router = useRouter();
   const [purposeInput, setPurposeInput] = useState('all');
@@ -149,20 +162,25 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
     setSearchInput('');
     setAppliedFilters({ purpose: 'all', search: '' });
   };
+  
+  // Global stats
+    const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+    const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+    const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
+    const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+    const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
+    const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+    const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
-  const totalDonated = useMemo(() => {
-    return donations.reduce((sum, d) => sum + d.amount, 0);
-  }, [donations]);
+    const mainMetrics = [
+        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
+        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
+        { title: "Total Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
+        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
+        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
+    ];
 
-  const uniqueCampaignsFunded = useMemo(() => {
-    const leadIds = new Set();
-    donations.forEach(d => {
-      if(d.allocations) {
-        d.allocations.forEach(a => leadIds.add(a.leadId));
-      }
-    });
-    return leadIds.size;
-  }, [donations]);
 
   const filteredLeads = useMemo(() => {
     return openLeads.filter(lead => {
@@ -175,12 +193,6 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
   }, [openLeads, appliedFilters]);
   
   const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen", "Other"];
-
-  const stats = [
-    { title: "Total Donated", value: `₹${totalDonated.toLocaleString()}`, icon: HandHeart, href: "/my-donations" },
-    { title: "Donations Made", value: donations.length, icon: FileText, href: "/my-donations" },
-    { title: "Campaigns Supported", value: uniqueCampaignsFunded, icon: Target, href: "/my-donations" },
-  ];
   
   const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
   const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
@@ -215,22 +227,19 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
   
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {stats.map(stat => (
-           <Link href={stat.href} key={stat.title}>
-              <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                </CardContent>
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {mainMetrics.map((metric) => (
+              <Card key={metric.title} className="h-full">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                  <metric.icon className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                  </CardContent>
               </Card>
-           </Link>
-        ))}
-      </div>
+          ))}
+        </div>
 
       {/* Open Cases and Quotes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -359,7 +368,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { 
             <div className="lg:col-span-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Recent Donations</CardTitle>
+                        <CardTitle>My Recent Donations</CardTitle>
                         <CardDescription>A look at your latest contributions.</CardDescription>
                     </CardHeader>
                     <CardContent>

@@ -118,7 +118,8 @@ export default async function DashboardPage() {
     'Fitr': Wheat,
     'Lillah': Building,
     'Kaffarah': Shield,
-    'Split': DollarSign
+    'Split': DollarSign,
+    'Any': DollarSign,
   }
 
 
