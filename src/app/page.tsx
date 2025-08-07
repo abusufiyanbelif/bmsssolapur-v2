@@ -59,7 +59,10 @@ export default function LandingPage() {
                     if (lead.status !== 'Closed' || !lead.closedAt) return false;
                     const closedDate = (lead.closedAt as any).toDate();
                     return closedDate >= startOfMonth;
-                }).sort((a,b) => (b.closedAt as any).toMillis() - (a.closedAt as any).toMillis());
+                }).sort((a,b) => {
+                    if (!a.closedAt || !b.closedAt) return 0;
+                    return (b.closedAt as any).toMillis() - (a.closedAt as any).toMillis()
+                });
                 
                 setRecentlyClosedLeads(closedThisMonth.slice(0, 3));
 
