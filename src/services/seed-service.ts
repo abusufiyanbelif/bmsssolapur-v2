@@ -221,11 +221,16 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
 
     for (const leadData of historicalLeadsToSeed) {
         let beneficiaryUser = await getUserByPhone(leadData.beneficiaryPhone);
-
+        
         if (!beneficiaryUser) {
             console.log(`Beneficiary ${leadData.beneficiaryName} with phone ${leadData.beneficiaryPhone} not found, creating...`);
+            const [firstName, ...lastNameParts] = leadData.beneficiaryName.split(' ');
+            const lastName = lastNameParts.join(' ');
             beneficiaryUser = await createUser({
                 name: leadData.beneficiaryName,
+                firstName: firstName || 'Historical',
+                lastName: lastName || 'User',
+                userId: leadData.beneficiaryName.toLowerCase().replace(/\s+/g, '.'),
                 phone: leadData.beneficiaryPhone,
                 roles: ['Beneficiary'],
                 password: 'admin',
