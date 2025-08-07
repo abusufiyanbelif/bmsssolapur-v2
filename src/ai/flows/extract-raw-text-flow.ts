@@ -9,20 +9,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-
-export const ExtractRawTextInputSchema = z.object({
-  photoDataUri: z
-    .string()
-    .describe(
-      "A photo of a document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type ExtractRawTextInput = z.infer<typeof ExtractRawTextInputSchema>;
-
-export const ExtractRawTextOutputSchema = z.object({
-    rawText: z.string().describe("The full, raw text extracted from the image.")
-});
-export type ExtractRawTextOutput = z.infer<typeof ExtractRawTextOutputSchema>;
+import {
+    ExtractRawTextInput,
+    ExtractRawTextInputSchema,
+    ExtractRawTextOutput,
+    ExtractRawTextOutputSchema
+} from '@/ai/schemas';
 
 
 export async function extractRawText(input: ExtractRawTextInput): Promise<ExtractRawTextOutput> {
