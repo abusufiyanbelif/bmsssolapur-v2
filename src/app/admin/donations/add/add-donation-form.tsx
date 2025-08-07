@@ -46,6 +46,7 @@ const formSchema = z.object({
   purpose: z.enum(donationPurposes).optional(),
   transactionId: z.string().min(1, "Transaction ID is required."),
   paymentScreenshot: z.any().optional(),
+  paymentScreenshotDataUrl: z.string().optional(),
   paymentMethod: z.enum(["Bank Transfer", "Cash", "UPI / QR Code", "Other"]),
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
@@ -66,13 +67,6 @@ interface AddDonationFormProps {
   users: User[];
 }
 
-// Helper to convert Base64 Data URL back to a File object
-const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: blob.type });
-};
-
 function AddDonationFormContent({ users }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -80,7 +74,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -101,7 +94,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     },
   });
   
-  const { watch, setValue, trigger } = form;
+  const { watch, setValue } = form;
   const paymentMethod = watch("paymentMethod");
   const includeTip = watch("includeTip");
   const amount = watch("amount");
@@ -135,35 +128,22 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             }
         }
         
-        // Check for manually passed screenshot from dialog
         const screenshotData = sessionStorage.getItem('manualDonationScreenshot');
         if (screenshotData) {
             try {
-                const { dataUrl, name, type } = JSON.parse(screenshotData);
+                const { dataUrl } = JSON.parse(screenshotData);
                 setManualScreenshotPreview(dataUrl);
-
-                // Convert data URL back to a File and set it in the form
-                const screenshotFile = await dataUrlToFile(dataUrl, name);
-                
-                // Use a DataTransfer object to set the file on the input
-                if (fileInputRef.current) {
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(screenshotFile);
-                    fileInputRef.current.files = dataTransfer.files;
-                    setValue('paymentScreenshot', screenshotFile);
-                    trigger('paymentScreenshot');
-                }
+                setValue('paymentScreenshotDataUrl', dataUrl);
             } catch (error) {
                 console.error("Error processing session screenshot", error);
                 toast({ variant: 'destructive', title: "Error", description: "Could not load the screenshot for manual entry." });
             } finally {
-                // Clean up sessionStorage
                 sessionStorage.removeItem('manualDonationScreenshot');
             }
         }
     }
     prefillData();
-  }, [searchParams, setValue, trigger, toast]);
+  }, [searchParams, setValue, toast]);
 
   useEffect(() => {
     if (selectedDonor) {
@@ -195,6 +175,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     if(values.tipAmount) formData.append("tipAmount", String(values.tipAmount));
     if (values.paymentScreenshot) {
         formData.append("paymentScreenshot", values.paymentScreenshot);
+    }
+    if (values.paymentScreenshotDataUrl) {
+        formData.append("paymentScreenshotDataUrl", values.paymentScreenshotDataUrl);
     }
     if(values.notes) formData.append("notes", values.notes);
     
@@ -465,7 +448,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               )}
           />
 
-          {paymentMethod !== "Cash" && (
+          {paymentMethod !== "Cash" && !manualScreenshotPreview && (
               <FormField
               control={form.control}
               name="paymentScreenshot"
@@ -474,16 +457,12 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                   <FormLabel>Payment Screenshot</FormLabel>
                   <FormControl>
                       <Input 
-                        ref={fileInputRef}
                         type="file" 
                         accept="image/*,application/pdf"
                         onChange={(e) => {
                             const file = e.target.files ? e.target.files[0] : null;
                             onChange(file);
-                            // If user manually selects a file, clear the session preview
-                            if(file) setManualScreenshotPreview(null);
                         }}
-                        {...rest}
                       />
                   </FormControl>
                   <FormDescription>

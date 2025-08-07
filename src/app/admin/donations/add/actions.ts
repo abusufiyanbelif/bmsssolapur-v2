@@ -13,12 +13,20 @@ interface FormState {
 }
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. For this prototype, we'll just acknowledge the file was received.
+// and get a URL. This function is a placeholder.
 async function handleFileUpload(file: File): Promise<string> {
     console.log(`Received file: ${file.name}, size: ${file.size} bytes`);
     // Placeholder for file upload logic
     return `https://placehold.co/600x400.png?text=screenshot-placeholder`;
 }
+
+// Helper to convert Base64 Data URL back to a File object
+const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type });
+};
+
 
 export async function handleAddDonation(
   formData: FormData
@@ -45,8 +53,13 @@ export async function handleAddDonation(
     }
 
     const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
+    const screenshotDataUrl = formData.get("paymentScreenshotDataUrl") as string | undefined;
+
     let paymentScreenshotUrl: string | undefined;
-    if (screenshotFile && screenshotFile.size > 0) {
+    if (screenshotDataUrl) {
+        const file = await dataUrlToFile(screenshotDataUrl, 'manual-screenshot.png');
+        paymentScreenshotUrl = await handleFileUpload(file);
+    } else if (screenshotFile && screenshotFile.size > 0) {
         paymentScreenshotUrl = await handleFileUpload(screenshotFile);
     }
     
