@@ -20,6 +20,7 @@ import { Loader2, Upload, ScanEye, Edit } from "lucide-react";
 import { handleScanDonationProof } from "./actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { getUserByPhone, getUserByUpiId } from "@/services/user-service";
 
 interface CreateFromUploadDialogProps {
   children: React.ReactNode;
@@ -76,15 +77,26 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       toast({
         variant: "success",
         title: "Scan Successful",
-        description: "Redirecting to donation form with pre-filled details.",
+        description: "Attempting to find donor and pre-fill form...",
       });
       
       const queryParams = new URLSearchParams();
       if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
       if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
-      if(result.details.donorIdentifier) queryParams.set('donorIdentifier', result.details.donorIdentifier);
       if(result.details.notes) queryParams.set('notes', result.details.notes);
       
+      // Find user by identifier
+      if(result.details.donorIdentifier) {
+        let user = await getUserByUpiId(result.details.donorIdentifier);
+        if(!user) user = await getUserByPhone(result.details.donorIdentifier.slice(-10)); // Try phone
+        if(user) {
+            queryParams.set('donorId', user.id!);
+            toast({ title: "Donor Found!", description: `Prefilling form for ${user.name}.` });
+        } else {
+             queryParams.set('donorIdentifier', result.details.donorIdentifier);
+        }
+      }
+
       // Store screenshot in session to be picked up by the add form
       try {
         const dataUrl = await fileToDataUrl(file);

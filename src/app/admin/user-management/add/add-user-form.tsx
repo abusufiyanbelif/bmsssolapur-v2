@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, Trash2, PlusCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
@@ -66,6 +66,7 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
 
@@ -100,6 +101,7 @@ export function AddUserForm() {
       city: 'Solapur',
       state: 'Maharashtra',
       country: 'India',
+      upiIds: [{ value: "" }],
     },
   });
 
@@ -113,6 +115,7 @@ export function AddUserForm() {
   useEffect(() => {
     if (firstName && lastName) {
         const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
+        // Only set the value if the user hasn't typed in the userId field yet
         if (!form.formState.dirtyFields.userId) {
             form.setValue('userId', generatedUserId);
         }
@@ -146,6 +149,9 @@ export function AddUserForm() {
     if(values.isWidow) formData.append("isWidow", "on");
     if(values.panNumber) formData.append("panNumber", values.panNumber);
     if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
+    values.upiIds?.forEach(upi => {
+        if(upi.value) formData.append("upiIds", upi.value);
+    });
 
     const result = await handleAddUser(formData);
 
@@ -580,7 +586,7 @@ export function AddUserForm() {
             />
         )}
 
-        <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>
+        <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}

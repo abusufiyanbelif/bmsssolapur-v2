@@ -111,6 +111,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         secondaryPhone: user.secondaryPhone,
         aadhaarNumber: user.aadhaarNumber,
         panNumber: user.panNumber,
+        upiIds: user.upiIds || [],
         roles: user.roles || [],
         privileges: user.privileges || [],
         groups: user.groups || [],
@@ -226,6 +227,31 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
   } catch (error) {
     console.error('Error getting user by email: ', error);
     throw new Error('Failed to get user by email.');
+  }
+}
+
+// Function to get a user by UPI ID
+export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
+  if (!isConfigValid) {
+    console.warn("Firebase not configured. Skipping user fetch by UPI ID.");
+    return null;
+  }
+  try {
+    if (!upiId) return null;
+    const q = query(collection(db, USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      return { id: userDoc.id, ...userDoc.data() } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user by UPI ID: ', error);
+    // This could be due to a missing index. Log a helpful message.
+    if (error instanceof Error && error.message.includes('index')) {
+        console.error("Firestore index missing. Please create a composite index in Firestore on the 'users' collection for 'upiIds' (array-contains).");
+    }
+    throw new Error('Failed to get user by UPI ID.');
   }
 }
 

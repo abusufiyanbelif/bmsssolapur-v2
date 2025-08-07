@@ -30,7 +30,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { Loader2, Info, Image as ImageIcon } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getUser, getUserByUserId, getUserByPhone } from "@/services/user-service";
+import { getUser, getUserByUserId, getUserByPhone, getUserByUpiId } from "@/services/user-service";
 import { useSearchParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -108,27 +108,27 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     const prefillData = async () => {
         const amountParam = searchParams.get('amount');
         const transactionIdParam = searchParams.get('transactionId');
+        const donorIdParam = searchParams.get('donorId');
         const donorIdentifierParam = searchParams.get('donorIdentifier');
         const notesParam = searchParams.get('notes');
 
         if (amountParam) setValue('amount', parseFloat(amountParam));
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
         if (notesParam) setValue('notes', notesParam);
-
-        if (donorIdentifierParam) {
-            let user = null;
-            if (donorIdentifierParam.includes('@')) {
-                user = await getUserByUserId(donorIdentifierParam);
-            } else if (/^[0-9]{10,}/.test(donorIdentifierParam)) {
-                user = await getUserByPhone(donorIdentifierParam.slice(-10));
-            } else {
-                 user = await getUserByUserId(donorIdentifierParam);
-            }
+        
+        let foundUser: User | null = null;
+        if(donorIdParam) {
+            foundUser = await getUser(donorIdParam);
+        } else if (donorIdentifierParam) {
+            // This is the fallback if a direct ID wasn't found
+            foundUser = await getUserByUpiId(donorIdentifierParam);
+            if (!foundUser) foundUser = await getUserByPhone(donorIdentifierParam.slice(-10));
+            if (!foundUser) foundUser = await getUserByUserId(donorIdentifierParam);
+        }
             
-            if (user && user.roles.includes('Donor')) {
-                setValue('donorId', user.id!);
-                setSelectedDonor(user);
-            }
+        if (foundUser && foundUser.roles.includes('Donor')) {
+            setValue('donorId', foundUser.id!);
+            setSelectedDonor(foundUser);
         }
         
         const screenshotData = sessionStorage.getItem('manualDonationScreenshot');

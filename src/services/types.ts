@@ -58,6 +58,7 @@ export interface User {
   secondaryPhone?: string; 
   aadhaarNumber?: string; 
   panNumber?: string; 
+  upiIds?: string[];
   roles: UserRole[]; 
   privileges?: Privilege[]; 
   groups?: string[];
