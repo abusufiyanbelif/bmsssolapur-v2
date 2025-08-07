@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, Loader2 } from "lucide-react";
+import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, Loader2, PartyPopper } from "lucide-react";
 import { getRandomQuotes } from "@/services/quotes-service";
 import Image from "next/image";
 import { getAllDonations } from "@/services/donation-service";
@@ -24,6 +24,7 @@ import { format } from "date-fns";
 export default function LandingPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [featuredLeads, setFeaturedLeads] = useState<Lead[]>([]);
+    const [recentlyClosedLeads, setRecentlyClosedLeads] = useState<Lead[]>([]);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [stats, setStats] = useState({ totalRaised: 0, beneficiariesHelped: 0, casesClosed: 0 });
     const [loading, setLoading] = useState(true);
@@ -50,6 +51,18 @@ export default function LandingPage() {
                 const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
                 
                 setStats({ totalRaised, beneficiariesHelped, casesClosed });
+
+                // Filter for recently closed leads
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const closedThisMonth = allLeads.filter(lead => {
+                    if (lead.status !== 'Closed' || !lead.closedAt) return false;
+                    const closedDate = (lead.closedAt as any).toDate();
+                    return closedDate >= startOfMonth;
+                }).sort((a,b) => (b.closedAt as any).toMillis() - (a.closedAt as any).toMillis());
+                
+                setRecentlyClosedLeads(closedThisMonth.slice(0, 3));
+
 
             } catch (error) {
                 console.error("Failed to fetch landing page data:", error);
@@ -154,9 +167,9 @@ export default function LandingPage() {
             ) : featuredLeads.length > 0 && (
                 <section id="featured-campaigns">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Featured Cases</h2>
+                        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Cases Needing Support</h2>
                         <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-                            Choose a cause that speaks to you. Every donation makes a difference.
+                            These are verified, open cases that need your urgent attention. Choose a cause that speaks to you.
                         </p>
                     </div>
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -202,6 +215,43 @@ export default function LandingPage() {
                     </div>
                 </section>
             )}
+            
+            {/* Recently Closed Cases Section */}
+            {loading ? null : recentlyClosedLeads.length > 0 && (
+                <section id="success-stories">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Success Stories: Recently Funded</h2>
+                        <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+                            Alhamdulillah! Thanks to your generous support, these cases have been fully funded.
+                        </p>
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {recentlyClosedLeads.map((lead) => (
+                        <Card key={lead.id} className="flex flex-col bg-green-500/5 border-green-500/20">
+                            <CardHeader>
+                                <CardTitle>{lead.name}</CardTitle>
+                                <CardDescription>
+                                    Funded for: <span className="font-semibold">{lead.purpose} {lead.category && `(${lead.category})`}</span>
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <p className="text-sm text-muted-foreground line-clamp-3">{lead.caseDetails || "No details provided."}</p>
+                            </CardContent>
+                            <CardFooter className="flex items-center justify-between text-sm">
+                                <Badge variant="outline" className="bg-green-100 text-green-800">
+                                    <CheckCircle className="mr-1 h-3 w-3" />
+                                    Closed
+                                </Badge>
+                                 <span className="text-muted-foreground">
+                                    <span className="font-bold text-primary">₹{lead.helpGiven.toLocaleString()}</span> raised
+                                </span>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                    </div>
+                </section>
+            )}
+
 
             {/* Our Campaigns Section */}
             <section id="our-campaigns">
@@ -248,7 +298,7 @@ export default function LandingPage() {
                                                     <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}
+                                                    {format((campaign.startDate as any).toDate(), "dd MMM yyyy")} - {format((campaign.endDate as any).toDate(), "dd MMM yyyy")}
                                                 </TableCell>
                                                 <TableCell>
                                                      <div className="flex flex-col gap-2">
