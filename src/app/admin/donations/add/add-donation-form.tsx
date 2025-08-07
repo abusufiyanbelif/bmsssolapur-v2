@@ -74,6 +74,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -206,6 +207,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         paymentScreenshot: undefined,
         paymentScreenshotDataUrl: undefined,
       });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       setSelectedDonor(null);
       setManualScreenshotPreview(null);
     } else {
@@ -474,10 +478,12 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                       <Input 
                         type="file" 
                         accept="image/*,application/pdf"
+                        ref={fileInputRef}
                         onChange={(e) => {
                             const file = e.target.files ? e.target.files[0] : null;
                             onChange(file);
                         }}
+                        {...rest}
                       />
                   </FormControl>
                   <FormDescription>

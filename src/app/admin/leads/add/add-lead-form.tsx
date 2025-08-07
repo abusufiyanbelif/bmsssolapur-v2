@@ -706,6 +706,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
                         ref={fileInputRef}
                         accept="image/*,application/pdf"
                         onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                        {...rest}
                         />
                     </FormControl>
                     <FormDescription>

@@ -1,3 +1,4 @@
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -301,7 +302,7 @@ function UploadProofForm({ user }: { user: User | null }) {
                  <FormField
                     control={form.control}
                     name="proof"
-                    render={({ field: { onChange, ...fieldProps} }) => (
+                    render={({ field: { onChange, value, ...rest } }) => (
                         <FormItem>
                         <FormLabel>Payment Screenshot</FormLabel>
                         <FormControl>
@@ -309,8 +310,11 @@ function UploadProofForm({ user }: { user: User | null }) {
                             type="file" 
                             accept="image/*,application/pdf"
                             ref={fileInputRef}
-                            onChange={(e) => onChange(e.target.files?.[0])}
-                            {...fieldProps}
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                onChange(file);
+                            }}
+                            {...rest}
                             />
                         </FormControl>
                         <FormDescription>

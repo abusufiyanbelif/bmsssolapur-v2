@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -224,7 +225,7 @@ export default function RequestHelpPage() {
                     <FormField
                     control={form.control}
                     name="verificationDocument"
-                    render={({ field: { onChange, ...fieldProps }}) => (
+                    render={({ field: { onChange, value, ...rest } }) => (
                         <FormItem>
                         <FormLabel>Verification Document</FormLabel>
                         <FormControl>
@@ -233,6 +234,7 @@ export default function RequestHelpPage() {
                             ref={fileInputRef}
                             accept="image/*,application/pdf"
                             onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                            {...rest}
                             />
                         </FormControl>
                         <FormDescription>
