@@ -41,8 +41,22 @@ export default async function DashboardPage() {
   const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
   const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
+  // Monthly contribution logic
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+  const donationsThisMonth = allDonations.filter(d => {
+    const donationDate = d.createdAt.toDate();
+    return donationDate >= startOfMonth && donationDate <= endOfMonth && (d.status === 'Verified' || d.status === 'Allocated');
+  });
+
+  const donorsThisMonthIds = new Set(donationsThisMonth.map(d => d.donorId));
+  
   const monthlyContributors = allUsers.filter(u => u.monthlyPledgeEnabled && u.monthlyPledgeAmount && u.monthlyPledgeAmount > 0);
   const monthlyContributorsCount = monthlyContributors.length;
+  const contributedThisMonthCount = monthlyContributors.filter(p => donorsThisMonthIds.has(p.id!)).length;
+  
   const totalMonthlyPledge = monthlyContributors.reduce((sum, user) => sum + (user.monthlyPledgeAmount || 0), 0);
 
   const pendingVerificationLeads = allLeads
@@ -112,20 +126,6 @@ export default async function DashboardPage() {
       description: "Total unique beneficiaries supported.",
       href: "/admin/beneficiaries",
     },
-    {
-        title: "Monthly Contributors",
-        value: monthlyContributorsCount.toString(),
-        icon: Repeat,
-        description: "Users committed to monthly donations.",
-        href: "/admin/donors",
-    },
-    {
-        title: "Total Monthly Pledge",
-        value: `₹${totalMonthlyPledge.toLocaleString()}`,
-        icon: DollarSign,
-        description: "Total amount pledged per month.",
-        href: "/admin/donors",
-    },
   ];
   
   const donationTypeBreakdown = allDonations
@@ -179,6 +179,30 @@ export default async function DashboardPage() {
                 </Card>
               </Link>
           ))}
+            <Link href="/admin/donors">
+                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Monthly Contributors</CardTitle>
+                    <Repeat className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{contributedThisMonthCount} / {monthlyContributorsCount}</div>
+                        <p className="text-xs text-muted-foreground">Contributed this month vs. total pledged.</p>
+                    </CardContent>
+                </Card>
+            </Link>
+             <Link href="/admin/donors">
+                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Monthly Pledge</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">₹{totalMonthlyPledge.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">Total amount pledged per month.</p>
+                    </CardContent>
+                </Card>
+            </Link>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
            <Card>
@@ -432,4 +456,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
