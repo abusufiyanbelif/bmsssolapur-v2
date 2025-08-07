@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
@@ -40,6 +40,10 @@ export default async function DashboardPage() {
   
   const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
   const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
+
+  const monthlyContributors = allUsers.filter(u => u.monthlyPledgeEnabled && u.monthlyPledgeAmount && u.monthlyPledgeAmount > 0);
+  const monthlyContributorsCount = monthlyContributors.length;
+  const totalMonthlyPledge = monthlyContributors.reduce((sum, user) => sum + (user.monthlyPledgeAmount || 0), 0);
 
   const pendingVerificationLeads = allLeads
     .filter(lead => lead.verifiedStatus === 'Pending')
@@ -108,6 +112,20 @@ export default async function DashboardPage() {
       description: "Total unique beneficiaries supported.",
       href: "/admin/beneficiaries",
     },
+    {
+        title: "Monthly Contributors",
+        value: monthlyContributorsCount.toString(),
+        icon: Repeat,
+        description: "Users committed to monthly donations.",
+        href: "/admin/donors",
+    },
+    {
+        title: "Total Monthly Pledge",
+        value: `₹${totalMonthlyPledge.toLocaleString()}`,
+        icon: DollarSign,
+        description: "Total amount pledged per month.",
+        href: "/admin/donors",
+    },
   ];
   
   const donationTypeBreakdown = allDonations
@@ -146,7 +164,7 @@ export default async function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Dashboard</h2>
       </div>
       <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {mainMetrics.map((metric) => (
               <Link href={metric.href} key={metric.title}>
                 <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
