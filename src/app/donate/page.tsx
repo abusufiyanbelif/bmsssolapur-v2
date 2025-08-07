@@ -359,32 +359,51 @@ function DonatePageContent() {
   const [user, setUser] = useState<User | null>(null);
   const [targetLead, setTargetLead] = useState<Lead | null>(null);
   const [targetCampaignId, setTargetCampaignId] = useState<string | null>(null);
-  const [isLoadingTarget, setIsLoadingTarget] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [donationMethod, setDonationMethod] = useState<'payNow' | 'uploadProof'>('payNow');
 
   const leadId = searchParams.get('leadId');
   const campaignId = searchParams.get('campaignId');
 
   useEffect(() => {
-    const fetchTarget = async () => {
-      setIsLoadingTarget(true);
-      if (leadId) {
-        const lead = await getLead(leadId);
-        setTargetLead(lead);
-      } else if (campaignId) {
-        setTargetCampaignId(campaignId);
+    const checkAuthAndLoadData = async () => {
+      setIsLoading(true);
+      const storedUserId = localStorage.getItem('userId');
+      if (!storedUserId) {
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        router.replace('/login');
+        return;
       }
-      setIsLoadingTarget(false);
-    }
-    fetchTarget();
-  }, [leadId, campaignId]);
+      
+      try {
+        const fetchedUser = await getUser(storedUserId);
+        setUser(fetchedUser);
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem('userId');
-    if (storedUserId) {
-        getUser(storedUserId).then(setUser);
-    }
-  }, []);
+        if (leadId) {
+          const lead = await getLead(leadId);
+          setTargetLead(lead);
+        } else if (campaignId) {
+          setTargetCampaignId(campaignId);
+        }
+      } catch (e) {
+        setError("Failed to load necessary data. Please try again.");
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuthAndLoadData();
+  }, [leadId, campaignId, router]);
+  
+  if (isLoading) {
+    return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
+  }
+
+  if (error) {
+    return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
+  }
   
   return (
      <div className="flex-1 space-y-4">
@@ -415,8 +434,6 @@ function DonatePageContent() {
                         <UploadCloud className="mr-2"/> Upload Proof
                     </Button>
                 </div>
-
-                {isLoadingTarget && <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>}
 
                 {donationMethod === 'payNow' ? (
                    <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} />

@@ -18,6 +18,7 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useRouter } from 'next/navigation';
 
 
 function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
@@ -64,6 +65,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
 }
 
 function PublicHomePage() {
+  const router = useRouter();
   const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [allDonations, setAllDonations] = useState<any[]>([]);
@@ -135,6 +137,12 @@ function PublicHomePage() {
     "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
   };
+  
+  const handleDonateClick = () => {
+    // This will redirect to login, and the login page should handle redirecting back to /donate
+    sessionStorage.setItem('redirectAfterLogin', '/donate');
+    router.push('/login');
+  }
 
 
   if (loading) {
@@ -162,8 +170,8 @@ function PublicHomePage() {
         </CardHeader>
         <CardContent>
           <div className="flex justify-center gap-4">
-            <Button size="lg" asChild>
-              <Link href="/donate">Donate Now <HandHeart className="ml-2" /></Link>
+            <Button size="lg" onClick={handleDonateClick}>
+              Donate Now <HandHeart className="ml-2" />
             </Button>
             <Button size="lg" variant="secondary" asChild>
                 <Link href="/register">Register / Login</Link>
@@ -262,8 +270,8 @@ function PublicHomePage() {
                     ) : (
                         <div className="text-center py-6">
                             <p className="text-muted-foreground">All general cases are currently funded. Please check back soon!</p>
-                            <Button className="mt-4" asChild>
-                                <Link href="/donate">Donate to Organization</Link>
+                            <Button className="mt-4" onClick={handleDonateClick}>
+                                Donate to Organization
                             </Button>
                         </div>
                     )}
