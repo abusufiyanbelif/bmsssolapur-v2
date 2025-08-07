@@ -63,13 +63,13 @@ export function DonationsChart({ donations }: DonationsChartProps) {
     // Filter and aggregate donations that fall within the selected date range
     donations
       .filter(d => {
-        const donationDate = d.createdAt.toDate();
+        const donationDate = d.createdAt instanceof Date ? d.createdAt : d.createdAt.toDate();
         return (d.status === 'Verified' || d.status === 'Allocated') &&
                donationDate >= date.from! &&
                donationDate <= date.to!;
       })
       .forEach(d => {
-        const donationDate = d.createdAt.toDate()
+        const donationDate = d.createdAt instanceof Date ? d.createdAt : d.createdAt.toDate();
         const monthKey = format(donationDate, "MMM yyyy")
         if (monthKey in monthlyTotals) {
           monthlyTotals[monthKey] += d.amount
