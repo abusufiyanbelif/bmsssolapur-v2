@@ -26,7 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleRequestHelp } from "./actions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2, AlertCircle, CheckCircle, HandHeart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -62,6 +62,7 @@ export default function RequestHelpPage() {
   const [loading, setLoading] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [submittedLead, setSubmittedLead] = useState<Lead | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -73,6 +74,9 @@ export default function RequestHelpPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       helpRequested: 0,
+      caseDetails: "",
+      category: undefined,
+      verificationDocument: undefined,
     },
   });
 
@@ -108,13 +112,15 @@ export default function RequestHelpPage() {
 
   const handleDialogClose = () => {
     setShowSuccessDialog(false);
-    // Reset form, but explicitly set verificationDocument to undefined to avoid the error.
     form.reset({
         helpRequested: 0,
         caseDetails: '',
         category: undefined,
         verificationDocument: undefined,
     });
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
     setSubmittedLead(null);
   }
 
@@ -224,7 +230,8 @@ export default function RequestHelpPage() {
                         <FormLabel>Verification Document</FormLabel>
                         <FormControl>
                             <Input 
-                            type="file" 
+                            type="file"
+                            ref={fileInputRef}
                             accept="image/*,application/pdf"
                             onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
                             />

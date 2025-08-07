@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -256,11 +256,13 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
 function UploadProofForm({ user }: { user: User | null }) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     
     const form = useForm<UploadProofFormValues>({
         resolver: zodResolver(uploadProofFormSchema),
         defaultValues: {
             notes: "",
+            proof: undefined,
         },
     });
 
@@ -278,7 +280,10 @@ function UploadProofForm({ user }: { user: User | null }) {
                 title: 'Upload Successful',
                 description: "Your donation proof has been submitted for verification. Thank you!"
             });
-            form.reset();
+            form.reset({ notes: "", proof: undefined });
+            if(fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         } else {
             toast({
                 variant: 'destructive',
@@ -303,6 +308,7 @@ function UploadProofForm({ user }: { user: User | null }) {
                             <Input 
                             type="file" 
                             accept="image/*,application/pdf"
+                            ref={fileInputRef}
                             onChange={(e) => onChange(e.target.files?.[0])}
                             {...fieldProps}
                             />
