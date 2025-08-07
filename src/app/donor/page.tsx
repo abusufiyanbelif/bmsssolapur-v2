@@ -184,6 +184,26 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
         { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
         { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
     ];
+    
+    // Donor specific stats
+    const { myTotalDonated, myDonationCount } = useMemo(() => {
+        let myTotalDonated = 0;
+        let myDonationCount = 0;
+
+        donations.forEach(donation => {
+            // Only count donations that are verified or allocated towards a cause
+            if(donation.status === 'Verified' || donation.status === 'Allocated'){
+                myTotalDonated += donation.amount;
+            }
+            myDonationCount++;
+        });
+        return { myTotalDonated, myDonationCount };
+    }, [donations]);
+
+    const donorMetrics = [
+        { title: "My Total Contributions", value: `₹${myTotalDonated.toLocaleString()}`, icon: HandHeart },
+        { title: "Total Donations Made", value: myDonationCount.toString(), icon: History },
+    ];
 
 
   const filteredLeads = useMemo(() => {
@@ -250,6 +270,20 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                   </CardContent>
               </Card>
           ))}
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2">
+            {donorMetrics.map((metric) => (
+                <Card key={metric.title} className="bg-primary/5">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                    <metric.icon className="h-4 w-4 text-primary" />
+                    </CardHeader>
+                    <CardContent>
+                    <div className="text-2xl font-bold text-primary">{metric.value}</div>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
 
       {/* Open Cases and Quotes */}
