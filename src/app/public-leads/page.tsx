@@ -36,7 +36,7 @@ function PublicLeadsList({ leads }: PublicLeadsListProps) {
                     Your generosity is making a real difference. Check back later for new general cases that need your support, or view our official Campaigns.
                 </p>
                  <Button className="mt-6" asChild>
-                    <Link href="/campaigns">View Campaigns</Link>
+                    <Link href="/donate">Donate to Organization</Link>
                 </Button>
             </div>
         );
