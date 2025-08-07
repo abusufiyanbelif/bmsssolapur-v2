@@ -78,16 +78,22 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         title: "Scan Successful",
         description: "Redirecting to donation form with pre-filled details.",
       });
-      handleDialogClose();
-
+      
       const queryParams = new URLSearchParams();
       if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
       if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
       if(result.details.donorIdentifier) queryParams.set('donorIdentifier', result.details.donorIdentifier);
       if(result.details.notes) queryParams.set('notes', result.details.notes);
       
-      router.push(`/admin/donations/add?${queryParams.toString()}`);
-
+      // Store screenshot in session to be picked up by the add form
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+        handleDialogClose();
+        router.push(`/admin/donations/add?${queryParams.toString()}`);
+      } catch (e) {
+         toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
+      }
     } else {
       toast({
         variant: "destructive",
