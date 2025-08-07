@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Nav } from "./nav";
+import { Nav } from "../app/nav";
 import type { User as UserType, Lead as LeadType } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
@@ -53,6 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     useEffect(() => {
         const checkUser = async () => {
+            setIsSessionReady(false); // Start session check
             const storedUserId = localStorage.getItem('userId');
             const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
@@ -83,7 +84,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                         localStorage.removeItem('showRoleSwitcher'); 
-                        setIsSessionReady(false);
+                        // Session is not ready until role is confirmed
                     } else {
                         setIsSessionReady(true);
                     }
@@ -138,14 +139,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     const handleOpenChange = (open: boolean) => {
-        if (!open && !isSessionReady && user && user.roles.length > 1) {
+        // Prevent closing the dialog if a role selection is mandatory
+        if (!open && isMandatory) {
             return; 
         }
         setIsRoleSwitcherOpen(open);
         if (!open) {
             setRequiredRole(null);
+            // If the role switcher was mandatory, confirm session is ready now.
+            if (isMandatory) setIsSessionReady(true);
         }
     };
+    
+    // Derived state to check if the role switcher is mandatory
+    const isMandatory = !!user && user.isLoggedIn && !isSessionReady && user.roles.length > 1;
 
     const childrenWithProps = Children.map(children, child => {
         if (isValidElement(child)) {
@@ -295,7 +302,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/profile">
+                                        <Link href="/profile/settings">
                                             <User className="mr-2 h-4 w-4" />
                                             <span>Profile</span>
                                         </Link>
@@ -341,7 +348,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     onRoleChange={handleRoleChange}
                     currentUserRole={user.activeRole}
                     requiredRole={requiredRole}
-                    isMandatory={!isSessionReady}
+                    isMandatory={isMandatory}
                 />
             )}
         </div>
