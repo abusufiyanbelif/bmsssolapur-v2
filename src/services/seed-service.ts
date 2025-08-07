@@ -270,9 +270,9 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         const leadDonationAllocation: LeadDonationAllocation = {
             donationId: donation.id!,
             amount: leadData.helpGiven,
-            allocatedAt: Timestamp.fromDate(new Date("2021-12-01")),
             allocatedByUserId: historicalAdmin.id!,
             allocatedByUserName: historicalAdmin.name,
+            allocatedAt: Timestamp.fromDate(new Date("2021-12-01")),
         };
 
         const newLead: Lead = {
@@ -433,40 +433,61 @@ export const seedDatabase = async (): Promise<SeedResult> => {
             orgStatus: 'Failed',
             quotesStatus: 'Failed',
             error: errorMsg,
-        }
+        };
     }
+
+    const results: SeedResult = {
+        userResults: [],
+        donationResults: [],
+        leadResults: [],
+        campaignResults: [],
+        orgStatus: 'Pending...',
+        quotesStatus: 'Pending...',
+    };
+
     try {
         console.log("Seeding core admin users...");
-        const userResults = await seedUsers(adminUsersToSeed);
-        
-        console.log("Seeding Ramadan campaign users...");
-        const campaignUserResults = await seedUsers(ramadanCampaignUsers);
-        
-        const orgStatus = await seedOrganization();
-        const quotesStatus = await seedInitialQuotes();
-        const { donationResults, leadResults } = await seedDonationsAndLeads();
-        const { campaignResults, leadResults: campaignLeadResults, donationResults: campaignDonationResults } = await seedCampaignsAndLinkedLeads();
-        
-        console.log('Database seeding process completed.');
-        return { 
-            userResults: [...userResults, ...campaignUserResults], 
-            orgStatus, 
-            quotesStatus, 
-            leadResults: [...leadResults, ...campaignLeadResults], 
-            donationResults: [...donationResults, ...campaignDonationResults],
-            campaignResults,
-        };
-    } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred during seeding.';
-        console.error('Error seeding database:', errorMsg);
-        return {
-            userResults: [],
-            donationResults: [],
-            leadResults: [],
-            campaignResults: [],
-            orgStatus: 'Failed',
-            quotesStatus: 'Failed',
-            error: errorMsg,
-        };
+        results.userResults.push(...await seedUsers(adminUsersToSeed));
+    } catch (e: any) {
+        return { ...results, error: `Seeding failed during [Admin User Seeding]: ${e.message}` };
     }
+
+    try {
+        console.log("Seeding Ramadan campaign users...");
+        results.userResults.push(...await seedUsers(ramadanCampaignUsers));
+    } catch (e: any) {
+        return { ...results, error: `Seeding failed during [Campaign User Seeding]: ${e.message}` };
+    }
+
+    try {
+        results.orgStatus = await seedOrganization();
+    } catch (e: any) {
+        return { ...results, orgStatus: 'Failed', error: `Seeding failed during [Organization Seeding]: ${e.message}` };
+    }
+
+    try {
+        results.quotesStatus = await seedInitialQuotes();
+    } catch (e: any) {
+        return { ...results, quotesStatus: 'Failed', error: `Seeding failed during [Quotes Seeding]: ${e.message}` };
+    }
+    
+    try {
+        const { donationResults, leadResults } = await seedDonationsAndLeads();
+        results.donationResults.push(...donationResults);
+        results.leadResults.push(...leadResults);
+    } catch (e: any) {
+         return { ...results, error: `Seeding failed during [Historical Data Seeding]: ${e.message}` };
+    }
+    
+    try {
+        const { campaignResults, leadResults: campaignLeadResults, donationResults: campaignDonationResults } = await seedCampaignsAndLinkedLeads();
+        results.campaignResults.push(...campaignResults);
+        results.leadResults.push(...campaignLeadResults);
+        results.donationResults.push(...campaignDonationResults);
+    } catch (e: any) {
+        return { ...results, error: `Seeding failed during [Campaign Data Seeding]: ${e.message}` };
+    }
+
+    console.log('Database seeding process completed successfully.');
+    return results;
 };
