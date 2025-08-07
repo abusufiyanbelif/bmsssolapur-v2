@@ -41,7 +41,7 @@ const extractRawTextFlow = ai.defineFlow(
         }
     });
     
-    const output = llmResponse.output();
+    const output = llmResponse.output;
 
     if (!output?.rawText) {
       throw new Error("The AI model did not return any text. The image might be unreadable or contain no text.");

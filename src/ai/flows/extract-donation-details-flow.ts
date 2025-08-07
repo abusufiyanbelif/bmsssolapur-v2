@@ -54,7 +54,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
         }
     });
     
-    const output = llmResponse.output();
+    const output = llmResponse.output;
 
     if (!output) {
       throw new Error("The AI model did not return any output. The image might be unreadable.");
