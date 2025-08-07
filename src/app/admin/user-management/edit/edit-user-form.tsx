@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateUser, handleSetPassword } from "../[id]/edit/actions";
+import { handleUpdateUser, handleSetPassword } from "@/app/admin/user-management/[id]/edit/actions";
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
