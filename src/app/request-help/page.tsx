@@ -108,7 +108,12 @@ export default function RequestHelpPage() {
 
   const handleDialogClose = () => {
     setShowSuccessDialog(false);
-    form.reset();
+    // Reset form, but explicitly set verificationDocument to undefined to avoid the error.
+    form.reset({
+        helpRequested: 0,
+        caseDetails: '',
+        verificationDocument: undefined,
+    });
     setSubmittedLead(null);
   }
 

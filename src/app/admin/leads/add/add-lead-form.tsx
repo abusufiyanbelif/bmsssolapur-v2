@@ -224,11 +224,21 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
         title: "Lead Created",
         description: `Successfully created lead for ${result.lead.name}.`,
       });
+      // Reset form, but explicitly set verificationDocument to undefined to avoid the error.
       form.reset({
+        ...form.getValues(),
+        verificationDocument: undefined,
         beneficiaryType: 'existing',
         isLoan: false,
         helpRequested: 0,
         acceptableDonationTypes: [],
+        newBeneficiaryFirstName: '',
+        newBeneficiaryLastName: '',
+        newBeneficiaryPhone: '',
+        newBeneficiaryEmail: '',
+        beneficiaryId: '',
+        caseDetails: '',
+        category: '',
       });
     } else {
       toast({
