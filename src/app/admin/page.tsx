@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
@@ -82,6 +82,10 @@ export default async function DashboardPage() {
     .map(([name, data]) => ({ name, ...data }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
+
+    const completedCampaignsCount = allCampaigns.filter(c => c.status === 'Completed').length;
+    const activeCampaignsCount = allCampaigns.filter(c => c.status === 'Active').length;
+    const upcomingCampaignsCount = allCampaigns.filter(c => c.status === 'Upcoming').length;
 
   const mainMetrics = [
     {
@@ -289,7 +293,7 @@ export default async function DashboardPage() {
           </Card>
         </div>
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="lg:col-span-3">
+            <Card className="lg:col-span-2">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline">
                         <Users />
@@ -326,6 +330,37 @@ export default async function DashboardPage() {
                             <HeartHandshake className="h-8 w-8 text-primary" />
                             <p className="font-bold text-2xl">{widowsHelpedCount}</p>
                             <p className="text-sm text-muted-foreground">Widows</p>
+                        </div>
+                    </Link>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline">
+                        <Megaphone />
+                        Campaigns Breakdown
+                    </CardTitle>
+                    <CardDescription>
+                        Status of all fundraising campaigns.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Link href="/admin/campaigns?status=Completed">
+                        <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
+                            <span className="font-medium">Completed</span>
+                            <Badge variant="secondary">{completedCampaignsCount}</Badge>
+                        </div>
+                    </Link>
+                    <Link href="/admin/campaigns?status=Active">
+                        <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
+                            <span className="font-medium">Active</span>
+                            <Badge variant="secondary">{activeCampaignsCount}</Badge>
+                        </div>
+                    </Link>
+                    <Link href="/admin/campaigns?status=Upcoming">
+                        <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
+                            <span className="font-medium">Upcoming</span>
+                            <Badge variant="secondary">{upcomingCampaignsCount}</Badge>
                         </div>
                     </Link>
                 </CardContent>
