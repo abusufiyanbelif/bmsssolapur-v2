@@ -52,6 +52,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
       if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
       if(result.details.donorIdentifier) queryParams.set('donorIdentifier', result.details.donorIdentifier);
+      if(result.details.notes) queryParams.set('notes', result.details.notes);
       
       router.push(`/admin/donations/add?${queryParams.toString()}`);
 

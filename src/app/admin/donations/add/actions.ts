@@ -59,6 +59,7 @@ export async function handleAddDonation(
         purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
         status: "Pending verification",
         transactionId: formData.get("transactionId") as string,
+        notes: formData.get("notes") as string | undefined,
         paymentScreenshotUrl: paymentScreenshotUrl,
     };
 

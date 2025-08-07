@@ -32,6 +32,7 @@ import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByUserId } from "@/services/user-service";
 import { useSearchParams } from "next/navigation";
+import { Textarea } from "@/components/ui/textarea";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -47,6 +48,7 @@ const formSchema = z.object({
   paymentMethod: z.enum(["Bank Transfer", "Cash", "UPI / QR Code", "Other"]),
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
+  notes: z.string().optional(),
 }).refine(data => {
     if (data.includeTip) {
         return !!data.tipAmount && data.tipAmount > 0;
@@ -85,6 +87,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       paymentMethod: "UPI / QR Code",
       includeTip: false,
       tipAmount: 0,
+      notes: "",
     },
   });
   
@@ -100,9 +103,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         const amountParam = searchParams.get('amount');
         const transactionIdParam = searchParams.get('transactionId');
         const donorIdentifierParam = searchParams.get('donorIdentifier');
+        const notesParam = searchParams.get('notes');
 
         if (amountParam) setValue('amount', parseFloat(amountParam));
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
+        if (notesParam) setValue('notes', notesParam);
 
         if (donorIdentifierParam) {
             // Attempt to find user by email, phone, or userId from the identifier
@@ -147,6 +152,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     if (values.paymentScreenshot) {
         formData.append("paymentScreenshot", values.paymentScreenshot);
     }
+    if(values.notes) formData.append("notes", values.notes);
     
     const result = await handleAddDonation(formData);
 
@@ -383,6 +389,21 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               <FormMessage />
             </FormItem>
           )}
+        />
+        
+        <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Notes (Optional)</FormLabel>
+                <FormControl>
+                    <Textarea placeholder="Add any internal notes, or comments from the screenshot." {...field} />
+                </FormControl>
+                    <FormDescription>These notes are for internal use only and not visible to the donor.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
         />
 
         {paymentMethod !== "Cash" && (
