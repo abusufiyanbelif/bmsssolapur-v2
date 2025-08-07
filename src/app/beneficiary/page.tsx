@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle } from "lucide-react";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -173,6 +173,13 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
         return { totalAidReceived, activeCases, casesClosed: myCasesClosed, totalRequested };
     }, [cases]);
 
+    const beneficiaryMetrics = [
+        { title: "Total Aid Received", value: `₹${totalAidReceived.toLocaleString()}`, icon: HandHeart },
+        { title: "Total Requested", value: `₹${totalRequested.toLocaleString()}`, icon: FilePlus2 },
+        { title: "Active Cases", value: activeCases.toString(), icon: Hourglass },
+        { title: "Closed Cases", value: myCasesClosed.toString(), icon: CheckCircle },
+    ];
+
     const paginatedCases = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return cases.slice(startIndex, startIndex + itemsPerPage);
@@ -313,6 +320,21 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
                     </Card>
                 ))}
             </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {beneficiaryMetrics.map((metric) => (
+                     <Card key={metric.title} className="bg-primary/5">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <metric.icon className="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                        <div className="text-2xl font-bold text-primary">{metric.value}</div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
