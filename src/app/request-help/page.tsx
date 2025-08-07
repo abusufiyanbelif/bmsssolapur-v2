@@ -113,6 +113,7 @@ export default function RequestHelpPage() {
         helpRequested: 0,
         caseDetails: '',
         verificationDocument: undefined,
+        category: undefined,
     });
     setSubmittedLead(null);
   }

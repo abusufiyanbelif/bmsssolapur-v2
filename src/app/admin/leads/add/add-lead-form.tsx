@@ -233,12 +233,19 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
         helpRequested: 0,
         acceptableDonationTypes: [],
         newBeneficiaryFirstName: '',
+        newBeneficiaryMiddleName: '',
         newBeneficiaryLastName: '',
         newBeneficiaryPhone: '',
         newBeneficiaryEmail: '',
         beneficiaryId: '',
         caseDetails: '',
         category: '',
+        otherCategoryDetail: '',
+        otherPurposeDetail: '',
+        purpose: undefined,
+        campaignId: 'none',
+        campaignName: '',
+        dueDate: undefined,
       });
     } else {
       toast({
