@@ -35,16 +35,18 @@ const allNavItems: NavItem[] = [
     { href: "/donate", label: "Donate", icon: HandHeart, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
-    // Authenticated User Home (for non-admins)
-    { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
+    // Authenticated User Home
+    { href: "/home", label: "Home", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
     
     // Donor
+    { href: "/donor", label: "Dashboard", icon: Home, allowedRoles: ["Donor"] },
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
     { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
     { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
 
     // Beneficiary
+    { href: "/beneficiary", label: "Dashboard", icon: Home, allowedRoles: ["Beneficiary"] },
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
     { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
     

@@ -11,6 +11,7 @@ interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
+    redirectTo?: string;
 }
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
@@ -54,7 +55,13 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
         
-        return { success: true, userId: user.id };
+        const primaryRole = user.roles[0];
+        let redirectTo = '/home'; // Default fallback
+        if (primaryRole === 'Donor') redirectTo = '/donor';
+        if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
+        if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
+
+        return { success: true, userId: user.id, redirectTo };
 
     } catch (e) {
         console.error("Login error:", e);
@@ -120,8 +127,14 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         if (!user) {
              return { success: false, error: "User with this phone number not found." };
         }
+        
+        const primaryRole = user.roles[0];
+        let redirectTo = '/home'; // Default fallback
+        if (primaryRole === 'Donor') redirectTo = '/donor';
+        if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
+        if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
 
-        return { success: true, userId: user.id! };
+        return { success: true, userId: user.id!, redirectTo };
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";

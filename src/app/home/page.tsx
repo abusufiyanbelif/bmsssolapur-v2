@@ -1,764 +1,356 @@
-// In a real app, this would be a server component fetching data for the logged-in user.
-// For now, we'll keep it as a client component and simulate the data fetching.
+// src/app/home/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon } from "lucide-react";
-import { getDonationsByUserId } from "@/services/donation-service";
-import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { ArrowRight, HandHeart, Users, CheckCircle, Quote as QuoteIcon, Target, Loader2, PartyPopper } from "lucide-react";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Donation, Lead, Quote, LeadPurpose, DonationType } from "@/services/types";
-import { getAllUsers } from "@/services/user-service";
-import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
+import Image from "next/image";
+import { getAllDonations } from "@/services/donation-service";
+import { getOpenGeneralLeads as getOpenLeads } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { getAllLeads } from "@/services/lead-service";
+import { useEffect, useState } from "react";
+import type { Quote, Donation, Lead, Campaign } from "@/services/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
-import { updateUser } from "@/services/user-service";
-import { useToast } from "@/hooks/use-toast";
+import { Logo } from "@/components/logo";
+import { useRouter } from "next/navigation";
+import { getAllCampaigns } from "@/services/campaign-service";
+import { format } from "date-fns";
 
-interface UserHomePageProps {
-  user: (User & { isLoggedIn: boolean; }) | null;
-  activeRole: string;
-}
+export default function LandingPage() {
+    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [featuredLeads, setFeaturedLeads] = useState<Lead[]>([]);
+    const [recentlyClosedLeads, setRecentlyClosedLeads] = useState<Lead[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [stats, setStats] = useState({ totalRaised: 0, beneficiariesHelped: 0, casesClosed: 0 });
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
-export default function UserHomePage({ user, activeRole }: UserHomePageProps) {
-  const router = useRouter();
-  const [donations, setDonations] = useState<Donation[]>([]);
-  const [cases, setCases] = useState<Lead[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [quotesLoading, setQuotesLoading] = useState(false);
-  const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
-  const [allLeads, setAllLeads] = useState<Lead[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  
-  // Immediately redirect if user is an admin
-  useEffect(() => {
-    if (user && user.isLoggedIn && ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
-      router.replace('/admin');
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const [fetchedQuotes, openLeads, allDonations, allLeads, fetchedCampaigns] = await Promise.all([
+                    getRandomQuotes(3),
+                    getOpenLeads(),
+                    getAllDonations(),
+                    getAllLeads(),
+                    getAllCampaigns(),
+                ]);
+                
+                setQuotes(fetchedQuotes);
+                setFeaturedLeads(openLeads.slice(0, 3));
+                setCampaigns(fetchedCampaigns);
+
+                const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+                const beneficiariesHelped = new Set(allLeads.map(l => l.beneficiaryId)).size;
+                const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+                
+                setStats({ totalRaised, beneficiariesHelped, casesClosed });
+
+                // Filter for recently closed leads
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const closedThisMonth = allLeads.filter(lead => {
+                    if (lead.status !== 'Closed' || !lead.closedAt) return false;
+                     // Handle both Timestamp and Date objects
+                    const closedDate = (lead.closedAt as any).toDate ? (lead.closedAt as any).toDate() : new Date(lead.closedAt);
+                    return closedDate >= startOfMonth;
+                }).sort((a,b) => {
+                    if (!a.closedAt || !b.closedAt) return 0;
+                     const dateA = (a.closedAt as any).toDate ? (a.closedAt as any).toDate() : new Date(a.closedAt);
+                    const dateB = (b.closedAt as any).toDate ? (b.closedAt as any).toDate() : new Date(b.closedAt);
+                    return dateB.getTime() - dateA.getTime();
+                });
+                
+                setRecentlyClosedLeads(closedThisMonth.slice(0, 3));
+
+
+            } catch (error) {
+                console.error("Failed to fetch landing page data:", error);
+                // Set stats to 0 or show an error state if fetching fails
+                setStats({ totalRaised: 0, beneficiariesHelped: 0, casesClosed: 0 });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleDonateClick = () => {
+        router.push('/donate');
     }
-  }, [user, activeRole, router]);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user || !user.isLoggedIn || !activeRole || ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
-        setLoading(false);
-        return;
-      }
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        setDonations([]);
-        setCases([]);
-        setOpenLeads([]);
-        setAllLeads([]);
-        setAllUsers([]);
-
-        if (activeRole === 'Donor') {
-          const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers] = await Promise.all([
-             getDonationsByUserId(user.id!),
-             getOpenGeneralLeads(),
-             getAllLeads(),
-             getAllUsers()
-          ]);
-          setDonations(donorDonations);
-          setOpenLeads(availableLeads);
-          setAllLeads(fetchedAllLeads);
-          setAllUsers(fetchedAllUsers);
-        } else if (activeRole === 'Beneficiary') {
-          const beneficiaryCases = await getLeadsByBeneficiaryId(user.id!);
-          setCases(beneficiaryCases);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-        setError(`Failed to load dashboard data: ${errorMessage}`);
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+    const metrics = [
+        {
+            title: "Total Verified Funds Raised",
+            value: `₹${stats.totalRaised.toLocaleString()}`,
+            icon: HandHeart,
+            description: "Total verified donations received to date.",
+        },
+        {
+            title: "Beneficiaries Helped",
+            value: stats.beneficiariesHelped.toString(),
+            icon: Users,
+            description: "Unique individuals and families supported.",
+        },
+        {
+            title: "Cases Successfully Closed",
+            value: stats.casesClosed.toString(),
+            icon: Target,
+            description: "Help requests that have been fully funded.",
+        },
+    ];
+    
+    const statusColors: Record<string, string> = {
+        "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+        "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
+        "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+        "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
     };
-    
-    const fetchQuotes = async () => {
-        setQuotesLoading(true);
-        const randomQuotes = await getRandomQuotes(3);
-        setQuotes(randomQuotes);
-        setQuotesLoading(false);
-    }
-    
-    fetchDashboardData();
-    fetchQuotes();
-
-  }, [user, activeRole]);
-  
-   const getPageTitle = () => {
-        if (!user || !user.isLoggedIn) {
-            return "Welcome";
-        }
-        switch(activeRole) {
-            case 'Donor': return 'Donor Dashboard';
-            case 'Beneficiary': return 'Beneficiary Dashboard';
-            case 'Admin':
-            case 'Super Admin':
-            case 'Finance Admin':
-                return 'Redirecting to Admin Dashboard...';
-            default: return `Welcome, ${user.name}`;
-        }
-    }
-
-  const renderContent = () => {
-    // Admins are redirected, so they'll see the loader briefly.
-    if (loading || ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
-      return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-    }
-    if (error) {
-      return (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      );
-    }
-    if (!user || !user.isLoggedIn) {
-       return null; // Should be handled by app-shell loading state
-    }
-
-    let dashboardContent;
-    if (activeRole === 'Donor') {
-      dashboardContent = <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} allLeads={allLeads} allUsers={allUsers} />;
-    } else if (activeRole === 'Beneficiary') {
-      dashboardContent = <BeneficiaryDashboard cases={cases} quotes={quotes} />;
-    } else {
-        dashboardContent = <p>You do not have a role that has a default dashboard. Please select a role from your profile.</p>;
-    }
-
-    return dashboardContent;
-  };
-  
-  if (!user || !user.isLoggedIn) {
-    return null; // Don't render anything if user is not logged in, app-shell will handle it
-  }
-
-  return (
-    <div className="flex-1 space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
-            {getPageTitle()}
-        </h2>
-        <p className="text-muted-foreground">
-          Welcome back, {user.name}. You are viewing the dashboard as a <span className="font-semibold text-primary">{activeRole}</span>.
-        </p>
-      </div>
-      {renderContent()}
-    </div>
-  );
-}
 
 
-function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[] }) {
-  const isMobile = useIsMobile();
-  const router = useRouter();
-  const [purposeInput, setPurposeInput] = useState('all');
-  const [searchInput, setSearchInput] = useState('');
-  
-  const [appliedFilters, setAppliedFilters] = useState({
-      purpose: 'all',
-      search: ''
-  });
+    return (
+        <div className="flex-1 space-y-8">
+            {/* Hero Section */}
+            <section className="text-center py-20 px-4 bg-secondary rounded-lg">
+                <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline text-primary">
+                    Your small help can make a large impact.
+                </h1>
+                <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
+                    Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
+                </p>
+                <div className="mt-8 flex justify-center gap-4">
+                    <Button onClick={handleDonateClick} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                        Donate Now <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                </div>
+            </section>
 
-  const handleSearch = () => {
-    setAppliedFilters({
-        purpose: purposeInput,
-        search: searchInput
-    })
-  };
-
-  const resetFilters = () => {
-    setPurposeInput('all');
-    setSearchInput('');
-    setAppliedFilters({ purpose: 'all', search: '' });
-  };
-
-  const totalDonated = useMemo(() => {
-    return donations.reduce((sum, d) => sum + d.amount, 0);
-  }, [donations]);
-
-  const uniqueCampaignsFunded = useMemo(() => {
-    const leadIds = new Set();
-    donations.forEach(d => {
-      if(d.allocations) {
-        d.allocations.forEach(a => leadIds.add(a.leadId));
-      }
-    });
-    return leadIds.size;
-  }, [donations]);
-
-  const filteredLeads = useMemo(() => {
-    return openLeads.filter(lead => {
-      const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
-      const searchMatch = appliedFilters.search === '' || 
-        lead.name.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
-        (lead.caseDetails && lead.caseDetails.toLowerCase().includes(appliedFilters.search.toLowerCase()));
-      return purposeMatch && searchMatch;
-    });
-  }, [openLeads, appliedFilters]);
-  
-  const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen", "Other"];
-
-  const stats = [
-    { title: "Total Donated", value: `₹${totalDonated.toLocaleString()}`, icon: HandHeart, href: "/my-donations" },
-    { title: "Donations Made", value: donations.length, icon: FileText, href: "/my-donations" },
-    { title: "Campaigns Supported", value: uniqueCampaignsFunded, icon: Target, href: "/my-donations" },
-  ];
-  
-  const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
-  const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
-  
-  const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
-  const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
-  const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
-  const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
-  
-  const donationTypeBreakdown = donations
-    .filter(d => d.status === 'Verified' || d.status === 'Allocated')
-    .reduce((acc, donation) => {
-      const type = donation.type;
-      if (!acc[type]) {
-        acc[type] = { total: 0, count: 0 };
-      }
-      acc[type].total += donation.amount;
-      acc[type].count += 1;
-      return acc;
-    }, {} as Record<DonationType, { total: number, count: number }>);
-
-  const donationTypeIcons: Record<DonationType, React.ElementType> = {
-    'Zakat': HandCoins,
-    'Sadaqah': Gift,
-    'Fitr': Wheat,
-    'Lillah': Building,
-    'Kaffarah': Shield,
-    'Split': DollarSign,
-    'Any': DollarSign,
-  }
-
-  
-  return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {stats.map(stat => (
-           <Link href={stat.href} key={stat.title}>
-              <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                </CardContent>
-              </Card>
-           </Link>
-        ))}
-      </div>
-
-      {/* Open Cases and Quotes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Open General Cases</CardTitle>
-                    <CardDescription>Browse verified general cases that need your support.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="search">Search Cases</Label>
-                            <Input id="search" placeholder="Search by name or details..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="purposeFilter">Filter by Purpose</Label>
-                            <Select value={purposeInput} onValueChange={setPurposeInput}>
-                                <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    {purposeOptions.map(p => <SelectItem key={p} value={p} className="capitalize">{p === 'all' ? 'All Purposes' : p}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-end gap-2 md:flex-col lg:flex-row">
-                            <Button onClick={handleSearch} className="w-full">
-                                <Search className="mr-2 h-4 w-4" />
-                                Search
-                            </Button>
-                             <Button onClick={resetFilters} variant="outline" className="w-full">
-                                <FilterX className="mr-2 h-4 w-4" />
-                                Clear
-                            </Button>
-                        </div>
+             {/* Public Dashboard Section */}
+            <section id="impact">
+                 <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Impact</h2>
+                    <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+                        We believe in complete transparency. Here's a live look at the impact your generosity has created. Together, we are making a difference.
+                    </p>
+                </div>
+                {loading ? (
+                    <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="ml-2">Loading impact stats...</p>
                     </div>
-
-                    {filteredLeads.length > 0 ? (
-                        <div className="space-y-4">
-                            {filteredLeads.slice(0, 4).map(lead => {
-                                const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
-                                const remainingAmount = lead.helpRequested - lead.helpGiven;
-                                return (
-                                <div key={lead.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                    <div className="flex-grow">
-                                        <p className="font-semibold">{lead.name}</p>
-                                        <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.category}</p>
-                                        <Progress value={progress} className="my-2" />
-                                        <p className="text-xs text-muted-foreground">
-                                            <span className="font-bold text-primary">₹{remainingAmount.toLocaleString()}</span> still needed of ₹{lead.helpRequested.toLocaleString()} goal.
-                                        </p>
-                                    </div>
-                                    <Button asChild size="sm">
-                                        <Link href="/public-leads">Donate</Link>
-                                    </Button>
+                ) : (
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    {metrics.map((metric) => (
+                        <Card key={metric.title}>
+                            <CardContent className="flex flex-col items-center justify-center p-6 gap-4">
+                                <div className="p-4 bg-primary/10 rounded-full">
+                                    <metric.icon className="h-8 w-8 text-primary" />
                                 </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-center text-muted-foreground py-6">No general cases match your filters. Try clearing them.</p>
-                    )}
-                </CardContent>
-                <CardFooter className="flex flex-col items-stretch gap-4">
-                    <Button asChild variant="secondary" className="w-full">
-                        <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
-                    </Button>
-                     <Button asChild variant="default" className="w-full">
-                        <Link href="/campaigns">View Fundraising Campaigns <Megaphone className="ml-2" /></Link>
-                    </Button>
-                </CardFooter>
-            </Card>
-        </div>
-        <div className="lg:col-span-1 space-y-6">
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline">
-                        <UsersIcon />
-                        Beneficiaries Breakdown
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <HomeIcon className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{familiesHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Families Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                    <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <PersonStanding className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{adultsHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Adults Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                    <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <Baby className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{kidsHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Kids Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                    <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <HeartHandshake className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{widowsHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Widows Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                </CardContent>
-            </Card>
-             <InspirationalQuotes quotes={quotes} loading={false} />
-        </div>
-      </div>
-      
-      {/* Recent Donations and Breakdown */}
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-                <Card>
+                                <div className="text-center">
+                                    <p className="text-3xl font-bold text-primary">{metric.value}</p>
+                                    <p className="text-sm text-muted-foreground mt-1">{metric.description}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                    </div>
+                )}
+            </section>
+
+            {/* Featured Campaigns Section */}
+            {loading ? (
+                <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="ml-2">Loading featured campaigns...</p>
+                </div>
+            ) : featuredLeads.length > 0 && (
+                <section id="featured-campaigns">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Cases Needing Support</h2>
+                        <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+                            These are verified, open cases that need your urgent attention. Choose a cause that speaks to you.
+                        </p>
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {featuredLeads.map((lead) => {
+                            const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
+                            const remainingAmount = lead.helpRequested - lead.helpGiven;
+                            return (
+                                <Card key={lead.id} className="flex flex-col">
+                                    <CardHeader>
+                                        <CardTitle>{lead.name}</CardTitle>
+                                        <CardDescription>
+                                            Seeking help for: <span className="font-semibold">{lead.purpose} {lead.category && `(${lead.category})`}</span>
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow space-y-4">
+                                        <p className="text-sm text-muted-foreground line-clamp-3">{lead.caseDetails || "No details provided."}</p>
+                                        <div>
+                                            <Progress value={progress} className="mb-2" />
+                                            <div className="flex justify-between text-sm">
+                                                <span className="font-semibold text-primary">Raised: ₹{lead.helpGiven.toLocaleString()}</span>
+                                                <span className="text-muted-foreground">Goal: ₹{lead.helpRequested.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter className='flex-col items-stretch gap-4'>
+                                        {remainingAmount > 0 && 
+                                            <p className="text-destructive font-bold text-center w-full">
+                                                ₹{remainingAmount.toLocaleString()} still needed
+                                            </p>
+                                        }
+                                        <Button onClick={() => router.push(`/donate?leadId=${lead.id}`)} className="w-full">
+                                            Donate Now
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            )
+                    })}
+                    </div>
+                    <div className="mt-12 text-center">
+                        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+                            <Link href="/public-leads">View All Cases</Link>
+                        </Button>
+                    </div>
+                </section>
+            )}
+            
+            {/* Recently Closed Cases Section */}
+            {loading ? null : recentlyClosedLeads.length > 0 && (
+                <section id="success-stories">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Success Stories: Recently Funded</h2>
+                        <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+                            Alhamdulillah! Thanks to your generous support, these cases have been fully funded.
+                        </p>
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {recentlyClosedLeads.map((lead) => (
+                        <Card key={lead.id} className="flex flex-col bg-green-500/5 border-green-500/20">
+                            <CardHeader>
+                                <CardTitle>{lead.name}</CardTitle>
+                                <CardDescription>
+                                    Funded for: <span className="font-semibold">{lead.purpose} {lead.category && `(${lead.category})`}</span>
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <p className="text-sm text-muted-foreground line-clamp-3">{lead.caseDetails || "No details provided."}</p>
+                            </CardContent>
+                            <CardFooter className="flex items-center justify-between text-sm">
+                                <Badge variant="outline" className="bg-green-100 text-green-800">
+                                    <CheckCircle className="mr-1 h-3 w-3" />
+                                    Closed
+                                </Badge>
+                                 <span className="text-muted-foreground">
+                                    <span className="font-bold text-primary">₹{lead.helpGiven.toLocaleString()}</span> raised
+                                </span>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                    </div>
+                </section>
+            )}
+
+
+            {/* Our Campaigns Section */}
+            <section id="our-campaigns">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Our Campaigns</h2>
+                    <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+                        We run various campaigns throughout the year to address the community's needs.
+                    </p>
+                </div>
+                 <Card>
                     <CardHeader>
-                        <CardTitle>Recent Donations</CardTitle>
-                        <CardDescription>A look at your latest contributions.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                           <CheckCircle className="text-primary"/>
+                           Active & Recent Campaigns
+                        </CardTitle>
+                        <CardDescription>
+                            An overview of our fundraising campaigns.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {donations.length > 0 ? (
-                            <Table>
+                       {loading ? (
+                           <div className="flex items-center justify-center py-10">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="ml-2">Loading campaigns...</p>
+                            </div>
+                       ) : campaigns.length > 0 ? (
+                           <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Sr. No.</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        {!isMobile && <TableHead>Type</TableHead>}
-                                        {!isMobile && <TableHead>Purpose</TableHead>}
+                                        <TableHead>Campaign</TableHead>
+                                        <TableHead>Dates</TableHead>
+                                        <TableHead className="w-[30%]">Funding Goal</TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Amount</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {donations.slice(0, 5).map((d, index) => (
-                                        <TableRow key={d.id}>
-                                            <TableCell>{index + 1}</TableCell>
-                                            <TableCell>{format(d.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
-                                            {!isMobile && <TableCell>{d.type}</TableCell>}
-                                            {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
-                                            <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
-                                            <TableCell className="text-right font-semibold">₹{d.amount.toLocaleString()}</TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {campaigns.slice(0, 5).map((campaign) => {
+                                        const raisedAmount = campaign.status === 'Completed' ? campaign.goal : campaign.goal / 2; // Placeholder logic
+                                        const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+                                        return (
+                                            <TableRow key={campaign.id}>
+                                                <TableCell>
+                                                    <div className="font-medium">{campaign.name}</div>
+                                                    <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}
+                                                </TableCell>
+                                                <TableCell>
+                                                     <div className="flex flex-col gap-2">
+                                                        <Progress value={progress} />
+                                                        <span className="text-xs text-muted-foreground">
+                                                            ₹{raisedAmount.toLocaleString()} / ₹{campaign.goal.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline" className={cn(statusColors[campaign.status])}>{campaign.status}</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
                                 </TableBody>
                             </Table>
-                        ): (
-                            <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
-                        )}
-                    </CardContent>
-                    <CardFooter>
-                        <Button asChild variant="secondary" className="w-full">
-                        <Link href="/my-donations">
-                            View All My Donations <ArrowRight className="ml-2" />
-                        </Link>
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </div>
-            <div className="lg:col-span-1">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 font-headline">
-                            <DollarSign />
-                            My Donation Breakdown
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {Object.entries(donationTypeBreakdown).map(([type, data]) => {
-                            const Icon = donationTypeIcons[type as DonationType] || DollarSign;
-                            return (
-                                <div key={type} className="p-3 border rounded-lg flex items-center gap-4">
-                                    <Icon className="h-6 w-6 text-primary" />
-                                    <div>
-                                        <p className="font-semibold">{type}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            ₹{data.total.toLocaleString()} ({data.count} {data.count > 1 ? 'donations' : 'donation'})
-                                        </p>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                         {Object.keys(donationTypeBreakdown).length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">No verified donations to display.</p>
-                         )}
+                       ) : (
+                           <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                       )}
                     </CardContent>
                 </Card>
-            </div>
-       </div>
-    </div>
-  )
-}
+            </section>
 
-const statusColors: Record<LeadStatus, string> = {
-    "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-    "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
-    "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
-};
 
-function BeneficiaryDashboard({ cases, quotes }: { cases: Lead[], quotes: Quote[] }) {
-    const isMobile = useIsMobile();
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
-    
-    const {
-        totalAidReceived,
-        activeCases,
-        casesClosed,
-        totalRequested
-    } = useMemo(() => {
-        let totalAidReceived = 0;
-        let activeCases = 0;
-        let casesClosed = 0;
-        let totalRequested = 0;
-
-        cases.forEach(caseItem => {
-            totalRequested += caseItem.helpRequested;
-            if (caseItem.status === 'Closed') {
-                casesClosed++;
-                totalAidReceived += caseItem.helpGiven;
-            }
-            if (caseItem.status === 'Pending' || caseItem.status === 'Partial') {
-                activeCases++;
-            }
-        });
-        return { totalAidReceived, activeCases, casesClosed, totalRequested };
-    }, [cases]);
-
-    const stats = [
-        { title: "Total Aid Received", value: `₹${totalAidReceived.toLocaleString()}`, icon: PiggyBank },
-        { title: "Active Cases", value: activeCases, icon: PackageOpen },
-        { title: "Cases Closed", value: casesClosed, icon: Check },
-        { title: "Total Aid Requested", value: `₹${totalRequested.toLocaleString()}`, icon: History },
-    ];
-
-    const paginatedCases = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return cases.slice(startIndex, startIndex + itemsPerPage);
-    }, [cases, currentPage, itemsPerPage]);
-
-    const totalPages = Math.ceil(cases.length / itemsPerPage);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [itemsPerPage]);
-
-    const renderDesktopTable = () => (
-         <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Date Submitted</TableHead>
-                    <TableHead>Purpose</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[30%]">Funding Progress</TableHead>
-                    <TableHead className="text-right">Amount Requested</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {paginatedCases.map((caseItem) => {
-                    const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
-                    const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
-                    const donationCount = caseItem.donations?.length || 0;
-                    return (
-                        <TableRow key={caseItem.id}>
-                            <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
-                            <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
-                                    {caseItem.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex flex-col gap-2">
-                                    <Progress value={progress}  />
-                                    <div className="text-xs text-muted-foreground flex justify-between">
-                                        <span>Raised: <span className="font-semibold text-foreground">₹{caseItem.helpGiven.toLocaleString()}</span></span>
-                                        {remainingAmount > 0 && <span className="text-destructive">Pending: ₹{remainingAmount.toLocaleString()}</span>}
-                                    </div>
-                                     <span className="text-xs text-muted-foreground">{donationCount} allocation(s) from organization</span>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right font-semibold">₹{caseItem.helpRequested.toLocaleString()}</TableCell>
-                        </TableRow>
-                    )
-                })}
-            </TableBody>
-        </Table>
-    );
-
-     const renderMobileCards = () => (
-        <div className="space-y-4">
-            {paginatedCases.map((caseItem, index) => {
-                const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
-                const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
-                const donationCount = caseItem.donations?.length || 0;
-                return (
-                    <Card key={caseItem.id}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
-                                    <CardDescription>Submitted: {format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
-                                </div>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
-                                    {caseItem.status}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <div className="flex justify-between text-sm mb-2">
-                                    <span className="font-semibold">Goal</span>
-                                    <span className="font-semibold">₹{caseItem.helpRequested.toLocaleString()}</span>
-                                </div>
-                                <Progress value={progress} />
-                                <div className="flex justify-between text-xs mt-2 text-muted-foreground">
-                                    <span>Raised: ₹{caseItem.helpGiven.toLocaleString()}</span>
-                                    <span>{progress.toFixed(0)}%</span>
-                                </div>
-                                 <div className="flex justify-between text-xs mt-1">
-                                    <span className="text-destructive">Pending: ₹{remainingAmount.toLocaleString()}</span>
-                                    <span>{donationCount} allocation(s)</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-            })}
-        </div>
-    );
-    
-     const renderPaginationControls = () => (
-        <div className="flex items-center justify-end pt-4 gap-4">
-                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                    Page {currentPage} of {totalPages}
+            {/* Wisdom and Reflection Section */}
+            <section id="wisdom">
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Wisdom & Reflection</h2>
+                    <p className="mt-2 text-muted-foreground">A little inspiration for your journey of giving.</p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="sr-only">Previous</span>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">Next</span>
-                    </Button>
-                </div>
-        </div>
-    );
-
-
-    return (
-        <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {stats.map(stat => (
-                    <Card key={stat.title}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                            <stat.icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="text-primary" />
-                                    My Case History
-                                </CardTitle>
-                                <CardDescription>
-                                Here is the status of all your help requests.
-                                </CardDescription>
-                            </div>
-                             <div className="flex flex-col sm:flex-row gap-2">
-                                <Button asChild variant="secondary">
-                                    <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {cases.length > 0 ? (
-                            <>
-                                {isMobile ? renderMobileCards() : renderDesktopTable()}
-                                {totalPages > 1 && renderPaginationControls()}
-                            </>
-                        ) : (
-                        <div className="text-center py-10">
-                            <p className="text-muted-foreground">You have not submitted any help requests.</p>
-                            <Button asChild className="mt-4">
-                                <Link href="/request-help">Request Help Now</Link>
-                            </Button>
-                        </div>
-                        )}
-                    </CardContent>
-                     {cases.length > 0 && (
-                         <CardFooter>
-                            <Button asChild variant="secondary" className="w-full">
-                                <Link href="/my-cases">
-                                    View Full Case History <ArrowRight className="ml-2" />
-                                </Link>
-                            </Button>
-                        </CardFooter>
-                    )}
-                    </Card>
-                </div>
-                <div className="lg:col-span-1">
-                    <InspirationalQuotes quotes={quotes} loading={false} />
-                </div>
-            </div>
-        </div>
-    )
-}
-
-function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
-    if (loading) {
-        return (
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <QuoteIcon className="text-primary" />
-                        Food for Thought
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
-                </CardContent>
-            </Card>
-        )
-    }
-
-    if (quotes.length === 0) {
-        return null;
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
-                    Food for Thought
-                </CardTitle>
-                <CardDescription>
-                    A little inspiration for your journey.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
-                            <p>"{quote.text}"</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
-                        </blockquote>
+                         <Card key={index} className="flex flex-col p-6">
+                            <CardContent className="flex-grow flex flex-col gap-4 p-0">
+                                <QuoteIcon className="w-8 h-8 text-accent" />
+                                <blockquote className="italic text-muted-foreground flex-grow">
+                                    "{quote.text}"
+                                </blockquote>
+                            </CardContent>
+                            <CardFooter className="p-0 mt-4">
+                                 <cite className="w-full text-right text-sm not-italic text-primary font-medium">— {quote.source}</cite>
+                            </CardFooter>
+                        </Card>
                     ))}
                 </div>
-            </CardContent>
-        </Card>
+            </section>
+        </div>
     );
 }

@@ -1,0 +1,482 @@
+// In a real app, this would be a server component fetching data for the logged-in user.
+// For now, we'll keep it as a client component and simulate the data fetching.
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon } from "lucide-react";
+import { getDonationsByUserId } from "@/services/donation-service";
+import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { getRandomQuotes } from "@/services/quotes-service";
+import type { User, Donation, Lead, Quote, LeadPurpose, DonationType } from "@/services/types";
+import { getAllUsers, getUser } from "@/services/user-service";
+import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { updateUser } from "@/services/user-service";
+import { useToast } from "@/hooks/use-toast";
+
+interface DonorDashboardPageProps {
+  user: (User & { isLoggedIn: boolean; }) | null;
+}
+
+export default function DonorDashboardPage() {
+    const [user, setUser] = useState<User | null>(null);
+    const [donations, setDonations] = useState<Donation[]>([]);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [quotesLoading, setQuotesLoading] = useState(false);
+    const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
+    const [allLeads, setAllLeads] = useState<Lead[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            setLoading(true);
+            const storedUserId = localStorage.getItem('userId');
+            if (!storedUserId) {
+                setError("No user session found. Please log in.");
+                setLoading(false);
+                return;
+            }
+            
+            try {
+                const fetchedUser = await getUser(storedUserId);
+                if (!fetchedUser || !fetchedUser.roles.includes('Donor')) {
+                    setError("You do not have permission to view this page.");
+                    setLoading(false);
+                    return;
+                }
+                setUser(fetchedUser);
+
+                const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers] = await Promise.all([
+                    getDonationsByUserId(storedUserId),
+                    getOpenGeneralLeads(),
+                    getAllLeads(),
+                    getAllUsers()
+                ]);
+                setDonations(donorDonations);
+                setOpenLeads(availableLeads);
+                setAllLeads(fetchedAllLeads);
+                setAllUsers(fetchedAllUsers);
+
+            } catch (e) {
+                setError("Failed to load dashboard data.");
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const fetchQuotes = async () => {
+            setQuotesLoading(true);
+            const randomQuotes = await getRandomQuotes(3);
+            setQuotes(randomQuotes);
+            setQuotesLoading(false);
+        }
+
+        fetchInitialData();
+        fetchQuotes();
+    }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (!user) {
+      return null; // Or a message indicating no user data
+  }
+
+  return (
+    <div className="flex-1 space-y-6">
+       <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
+                Donor Dashboard
+            </h2>
+            <p className="text-muted-foreground">
+              Welcome back, {user.name}. Thank you for your continued support.
+            </p>
+        </div>
+      <DonorDashboard donations={donations} openLeads={openLeads} quotes={quotes} allLeads={allLeads} allUsers={allUsers} />
+    </div>
+  );
+}
+
+
+function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[] }) {
+  const isMobile = useIsMobile();
+  const router = useRouter();
+  const [purposeInput, setPurposeInput] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  
+  const [appliedFilters, setAppliedFilters] = useState({
+      purpose: 'all',
+      search: ''
+  });
+
+  const handleSearch = () => {
+    setAppliedFilters({
+        purpose: purposeInput,
+        search: searchInput
+    })
+  };
+
+  const resetFilters = () => {
+    setPurposeInput('all');
+    setSearchInput('');
+    setAppliedFilters({ purpose: 'all', search: '' });
+  };
+
+  const totalDonated = useMemo(() => {
+    return donations.reduce((sum, d) => sum + d.amount, 0);
+  }, [donations]);
+
+  const uniqueCampaignsFunded = useMemo(() => {
+    const leadIds = new Set();
+    donations.forEach(d => {
+      if(d.allocations) {
+        d.allocations.forEach(a => leadIds.add(a.leadId));
+      }
+    });
+    return leadIds.size;
+  }, [donations]);
+
+  const filteredLeads = useMemo(() => {
+    return openLeads.filter(lead => {
+      const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
+      const searchMatch = appliedFilters.search === '' || 
+        lead.name.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
+        (lead.caseDetails && lead.caseDetails.toLowerCase().includes(appliedFilters.search.toLowerCase()));
+      return purposeMatch && searchMatch;
+    });
+  }, [openLeads, appliedFilters]);
+  
+  const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen", "Other"];
+
+  const stats = [
+    { title: "Total Donated", value: `₹${totalDonated.toLocaleString()}`, icon: HandHeart, href: "/my-donations" },
+    { title: "Donations Made", value: donations.length, icon: FileText, href: "/my-donations" },
+    { title: "Campaigns Supported", value: uniqueCampaignsFunded, icon: Target, href: "/my-donations" },
+  ];
+  
+  const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+  const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
+  
+  const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
+  const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
+  const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
+  const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
+  
+  const donationTypeBreakdown = donations
+    .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+    .reduce((acc, donation) => {
+      const type = donation.type;
+      if (!acc[type]) {
+        acc[type] = { total: 0, count: 0 };
+      }
+      acc[type].total += donation.amount;
+      acc[type].count += 1;
+      return acc;
+    }, {} as Record<DonationType, { total: number, count: number }>);
+
+  const donationTypeIcons: Record<DonationType, React.ElementType> = {
+    'Zakat': HandCoins,
+    'Sadaqah': Gift,
+    'Fitr': Wheat,
+    'Lillah': Building,
+    'Kaffarah': Shield,
+    'Split': DollarSign,
+    'Any': DollarSign,
+  }
+
+  
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {stats.map(stat => (
+           <Link href={stat.href} key={stat.title}>
+              <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                </CardContent>
+              </Card>
+           </Link>
+        ))}
+      </div>
+
+      {/* Open Cases and Quotes */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Open General Cases</CardTitle>
+                    <CardDescription>Browse verified general cases that need your support.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                        <div className="flex-1 space-y-2">
+                            <Label htmlFor="search">Search Cases</Label>
+                            <Input id="search" placeholder="Search by name or details..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            <Label htmlFor="purposeFilter">Filter by Purpose</Label>
+                            <Select value={purposeInput} onValueChange={setPurposeInput}>
+                                <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {purposeOptions.map(p => <SelectItem key={p} value={p} className="capitalize">{p === 'all' ? 'All Purposes' : p}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-end gap-2 md:flex-col lg:flex-row">
+                            <Button onClick={handleSearch} className="w-full">
+                                <Search className="mr-2 h-4 w-4" />
+                                Search
+                            </Button>
+                             <Button onClick={resetFilters} variant="outline" className="w-full">
+                                <FilterX className="mr-2 h-4 w-4" />
+                                Clear
+                            </Button>
+                        </div>
+                    </div>
+
+                    {filteredLeads.length > 0 ? (
+                        <div className="space-y-4">
+                            {filteredLeads.slice(0, 4).map(lead => {
+                                const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
+                                const remainingAmount = lead.helpRequested - lead.helpGiven;
+                                return (
+                                <div key={lead.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div className="flex-grow">
+                                        <p className="font-semibold">{lead.name}</p>
+                                        <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.category}</p>
+                                        <Progress value={progress} className="my-2" />
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-bold text-primary">₹{remainingAmount.toLocaleString()}</span> still needed of ₹{lead.helpRequested.toLocaleString()} goal.
+                                        </p>
+                                    </div>
+                                    <Button asChild size="sm">
+                                        <Link href="/public-leads">Donate</Link>
+                                    </Button>
+                                </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-center text-muted-foreground py-6">No general cases match your filters. Try clearing them.</p>
+                    )}
+                </CardContent>
+                <CardFooter className="flex flex-col items-stretch gap-4">
+                    <Button asChild variant="secondary" className="w-full">
+                        <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
+                    </Button>
+                     <Button asChild variant="default" className="w-full">
+                        <Link href="/campaigns">View Fundraising Campaigns <Megaphone className="ml-2" /></Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+        <div className="lg:col-span-1 space-y-6">
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline">
+                        <UsersIcon />
+                        Beneficiaries Breakdown
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <Link href="/public-leads">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <HomeIcon className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{familiesHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Families Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/public-leads">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <PersonStanding className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{adultsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Adults Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/public-leads">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <Baby className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{kidsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Kids Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/public-leads">
+                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
+                            <HeartHandshake className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-bold text-lg">{widowsHelpedCount}</p>
+                                <p className="text-xs text-muted-foreground">Widows Helped</p>
+                            </div>
+                        </div>
+                    </Link>
+                </CardContent>
+            </Card>
+             <InspirationalQuotes quotes={quotes} loading={false} />
+        </div>
+      </div>
+      
+      {/* Recent Donations and Breakdown */}
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Donations</CardTitle>
+                        <CardDescription>A look at your latest contributions.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {donations.length > 0 ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Sr. No.</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        {!isMobile && <TableHead>Type</TableHead>}
+                                        {!isMobile && <TableHead>Purpose</TableHead>}
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {donations.slice(0, 5).map((d, index) => (
+                                        <TableRow key={d.id}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>{format(d.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
+                                            {!isMobile && <TableCell>{d.type}</TableCell>}
+                                            {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
+                                            <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
+                                            <TableCell className="text-right font-semibold">₹{d.amount.toLocaleString()}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ): (
+                            <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
+                        )}
+                    </CardContent>
+                    <CardFooter>
+                        <Button asChild variant="secondary" className="w-full">
+                        <Link href="/my-donations">
+                            View All My Donations <ArrowRight className="ml-2" />
+                        </Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+            <div className="lg:col-span-1">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 font-headline">
+                            <DollarSign />
+                            My Donation Breakdown
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {Object.entries(donationTypeBreakdown).map(([type, data]) => {
+                            const Icon = donationTypeIcons[type as DonationType] || DollarSign;
+                            return (
+                                <div key={type} className="p-3 border rounded-lg flex items-center gap-4">
+                                    <Icon className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <p className="font-semibold">{type}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            ₹{data.total.toLocaleString()} ({data.count} {data.count > 1 ? 'donations' : 'donation'})
+                                        </p>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                         {Object.keys(donationTypeBreakdown).length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-4">No verified donations to display.</p>
+                         )}
+                    </CardContent>
+                </Card>
+            </div>
+       </div>
+    </div>
+  )
+}
+
+function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+    if (loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <QuoteIcon className="text-primary" />
+                        Food for Thought
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (quotes.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <QuoteIcon className="text-primary" />
+                    Food for Thought
+                </CardTitle>
+                <CardDescription>
+                    A little inspiration for your journey.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {quotes.map((quote, index) => (
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                            <p>"{quote.text}"</p>
+                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                        </blockquote>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}

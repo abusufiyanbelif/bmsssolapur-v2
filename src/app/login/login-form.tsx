@@ -22,10 +22,10 @@ export function LoginForm() {
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
-  const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string} | null>(null);
+  const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string, redirectTo?: string} | null>(null);
 
   useEffect(() => {
-    if (loginSuccessData?.userId) {
+    if (loginSuccessData?.userId && loginSuccessData?.redirectTo) {
       toast({
         variant: "success",
         title: "Login Successful",
@@ -38,11 +38,11 @@ export function LoginForm() {
       // Set a flag to show the role switcher on the next page load
       localStorage.setItem('showRoleSwitcher', 'true');
       
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || loginSuccessData.redirectTo;
       sessionStorage.removeItem('redirectAfterLogin'); // Clean up the stored path
 
       // Use a standard redirect to avoid router issues in this context
-      window.location.href = redirectPath || '/home';
+      window.location.href = redirectPath;
     }
   }, [loginSuccessData, toast]);
 
@@ -54,7 +54,7 @@ export function LoginForm() {
     const result = await handleLogin(formData);
 
     if (result.success) {
-      setLoginSuccessData({userId: result.userId});
+      setLoginSuccessData({userId: result.userId, redirectTo: result.redirectTo});
     } else {
       toast({
         variant: "destructive",
@@ -104,7 +104,7 @@ export function LoginForm() {
       const result = await handleVerifyOtp(formData);
 
        if (result.success) {
-            setLoginSuccessData({userId: result.userId});
+            setLoginSuccessData({userId: result.userId, redirectTo: result.redirectTo});
         } else {
             toast({
                 variant: "destructive",
