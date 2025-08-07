@@ -49,6 +49,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
     outputSchema: ExtractDonationDetailsOutputSchema,
   },
   async (input) => {
+    
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-pro-vision'),
         prompt: await prompt.render({input}),
@@ -60,6 +61,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
       throw new Error("The AI model did not return any output. The image might be unreadable.");
     }
     
+    // Check for essential fields and provide a specific error if they are missing.
     if (!output.amount || !output.transactionId) {
         let missingFields = [];
         if (!output.amount) missingFields.push("Amount");
