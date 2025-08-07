@@ -22,11 +22,7 @@ export async function extractDonationDetails(input: ExtractDonationDetailsInput)
 }
 
 
-const prompt = ai.definePrompt({
-    name: 'donationDetailsExtractorPrompt',
-    input: { schema: ExtractDonationDetailsInputSchema },
-    output: { schema: ExtractDonationDetailsOutputSchema },
-    prompt: `You are an expert financial assistant. Analyze the provided image of a payment screenshot from a UPI app (like GPay, PhonePe, Paytm, etc.).
+const promptText = `You are an expert financial assistant. Analyze the provided image of a payment screenshot from a UPI app (like GPay, PhonePe, Paytm, etc.).
     Your task is to carefully extract the following details and return them in a structured JSON format:
     
     - amount: The primary transaction amount. It must be a number.
@@ -36,10 +32,7 @@ const prompt = ai.definePrompt({
     - donorIdentifier: The name, phone number or UPI ID of the person who sent the money (e.g., 'john.doe@okbank' or 'John Doe' or '9876543210'). This is a crucial field for identifying the user.
     - notes: Any user-added comments, remarks, or descriptions found in the payment details. This is often labeled as "Add a note", "Message", or "Remarks".
 
-    If a field is not clearly visible in the screenshot, omit it from the output rather than guessing.
-
-    Screenshot: {{media url=photoDataUri}}`
-});
+    If a field is not clearly visible in the screenshot, omit it from the output rather than guessing.`;
 
 
 const extractDonationDetailsFlow = ai.defineFlow(
@@ -51,8 +44,14 @@ const extractDonationDetailsFlow = ai.defineFlow(
   async (input) => {
     
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-pro-vision'),
-        prompt: await prompt.render({input}),
+        model: googleAI.model('gemini-1.5-flash-latest'),
+        prompt: [
+            { text: promptText },
+            { media: { url: input.photoDataUri } }
+        ],
+        output: {
+            schema: ExtractDonationDetailsOutputSchema
+        }
     });
     
     const output = llmResponse.output();
