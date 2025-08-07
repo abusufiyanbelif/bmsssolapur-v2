@@ -213,14 +213,14 @@ export default function RequestHelpPage() {
                     <FormField
                     control={form.control}
                     name="verificationDocument"
-                    render={({ field }) => (
+                    render={({ field: { onChange, ...fieldProps }}) => (
                         <FormItem>
                         <FormLabel>Verification Document</FormLabel>
                         <FormControl>
                             <Input 
                             type="file" 
                             accept="image/*,application/pdf"
-                            onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
+                            onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
                             />
                         </FormControl>
                         <FormDescription>
