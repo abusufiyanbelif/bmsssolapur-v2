@@ -42,7 +42,8 @@ const extractRawTextFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-pro-vision'),
-        prompt: await prompt.render({input}),
+        prompt: prompt.prompt!, // Use the raw prompt string
+        input: input, // Pass the structured input separately
     });
     
     const output = llmResponse.output();
