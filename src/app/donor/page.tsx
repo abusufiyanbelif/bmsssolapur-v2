@@ -1,4 +1,3 @@
-
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -15,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Donation, Lead, Quote, LeadPurpose, DonationType } from "@/services/types";
+import type { User, Donation, Lead, Quote, LeadPurpose, DonationType, Campaign } from "@/services/types";
 import { getAllUsers, getUser } from "@/services/user-service";
 import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Progress } from "@/components/ui/progress";
@@ -28,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { updateUser } from "@/services/user-service";
 import { useToast } from "@/hooks/use-toast";
+import { getAllCampaigns } from "@/services/campaign-service";
 
 interface DonorDashboardPageProps {
   user: (User & { isLoggedIn: boolean; }) | null;
@@ -46,6 +46,7 @@ export default function DonorDashboardPage() {
     const [allDonations, setAllDonations] = useState<Donation[]>([]);
     const [allLeads, setAllLeads] = useState<Lead[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -66,18 +67,20 @@ export default function DonorDashboardPage() {
                 }
                 setUser(fetchedUser);
 
-                const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers, fetchedAllDonations] = await Promise.all([
+                const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers, fetchedAllDonations, fetchedCampaigns] = await Promise.all([
                     getDonationsByUserId(storedUserId),
                     getOpenGeneralLeads(),
                     getAllLeads(),
                     getAllUsers(),
                     getAllDonations(),
+                    getAllCampaigns(),
                 ]);
                 setDonations(donorDonations);
                 setOpenLeads(availableLeads);
                 setAllLeads(fetchedAllLeads);
                 setAllUsers(fetchedAllUsers);
                 setAllDonations(fetchedAllDonations);
+                setAllCampaigns(fetchedCampaigns);
 
             } catch (e) {
                 setError("Failed to load dashboard data.");
@@ -133,13 +136,14 @@ export default function DonorDashboardPage() {
         allLeads={allLeads} 
         allUsers={allUsers} 
         allDonations={allDonations}
+        allCampaigns={allCampaigns}
       />
     </div>
   );
 }
 
 
-function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allDonations }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[], allDonations: Donation[] }) {
+function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allDonations, allCampaigns }: { donations: Donation[], openLeads: EnrichedLead[], quotes: Quote[], allLeads: Lead[], allUsers: User[], allDonations: Donation[], allCampaigns: Campaign[] }) {
   const isMobile = useIsMobile();
   const router = useRouter();
   const [purposeInput, setPurposeInput] = useState('all');
@@ -223,6 +227,13 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
     'Split': DollarSign,
     'Any': DollarSign,
   }
+
+  const campaignStatusColors: Record<string, string> = {
+    "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
+    "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
+  };
 
   
   return (
@@ -363,6 +374,49 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
         </div>
       </div>
       
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="text-primary"/>
+                    Active &amp; Recent Campaigns
+                </CardTitle>
+                <CardDescription>
+                    An overview of our fundraising campaigns.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {allCampaigns.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Campaign</TableHead>
+                                <TableHead>Dates</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {allCampaigns.slice(0, 5).map((campaign) => (
+                                <TableRow key={campaign.id}>
+                                    <TableCell>
+                                        <div className="font-medium">{campaign.name}</div>
+                                        <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={cn(campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                )}
+            </CardContent>
+        </Card>
+
       {/* Recent Donations and Breakdown */}
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">

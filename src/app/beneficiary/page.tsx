@@ -1,4 +1,3 @@
-
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -14,14 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Lead, Quote, LeadStatus } from "@/services/types";
+import type { User, Lead, Quote, LeadStatus, Campaign } from "@/services/types";
 import { getAllUsers, getUser } from "@/services/user-service";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAllDonations } from "@/services/donation-service";
+import { getAllDonations, Donation } from "@/services/donation-service";
+import { getAllCampaigns } from "@/services/campaign-service";
 
 
 export default function BeneficiaryDashboardPage() {
@@ -35,6 +35,7 @@ export default function BeneficiaryDashboardPage() {
     const [allDonations, setAllDonations] = useState<Donation[]>([]);
     const [allLeads, setAllLeads] = useState<Lead[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -55,18 +56,20 @@ export default function BeneficiaryDashboardPage() {
                 }
                 setUser(fetchedUser);
 
-                const [beneficiaryCases, randomQuotes, donations, leads, users] = await Promise.all([
+                const [beneficiaryCases, randomQuotes, donations, leads, users, campaigns] = await Promise.all([
                     getLeadsByBeneficiaryId(storedUserId),
                     getRandomQuotes(3),
                     getAllDonations(),
                     getAllLeads(),
                     getAllUsers(),
+                    getAllCampaigns(),
                 ]);
                 setCases(beneficiaryCases);
                 setQuotes(randomQuotes);
                 setAllDonations(donations);
                 setAllLeads(leads);
                 setAllUsers(users);
+                setAllCampaigns(campaigns);
 
             } catch (e) {
                 setError("Failed to load dashboard data.");
@@ -107,7 +110,7 @@ export default function BeneficiaryDashboardPage() {
               Welcome back, {user.name}. Manage your help requests here.
             </p>
         </div>
-      <BeneficiaryDashboard cases={cases} quotes={quotes} allLeads={allLeads} allDonations={allDonations} allUsers={allUsers} />
+      <BeneficiaryDashboard cases={cases} quotes={quotes} allLeads={allLeads} allDonations={allDonations} allUsers={allUsers} allCampaigns={allCampaigns} />
     </div>
   );
 }
@@ -119,7 +122,15 @@ const statusColors: Record<LeadStatus, string> = {
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
 };
 
-function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers }: { cases: Lead[], quotes: Quote[], allLeads: Lead[], allDonations: Donation[], allUsers: User[] }) {
+const campaignStatusColors: Record<string, string> = {
+    "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
+    "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
+};
+
+
+function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers, allCampaigns }: { cases: Lead[], quotes: Quote[], allLeads: Lead[], allDonations: Donation[], allUsers: User[], allCampaigns: Campaign[] }) {
     const isMobile = useIsMobile();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -354,6 +365,49 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers 
                     <InspirationalQuotes quotes={quotes} loading={false} />
                 </div>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <CheckCircle className="text-primary"/>
+                        Active &amp; Recent Campaigns
+                    </CardTitle>
+                    <CardDescription>
+                        An overview of our fundraising campaigns.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {allCampaigns.length > 0 ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Campaign</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {allCampaigns.slice(0, 5).map((campaign) => (
+                                    <TableRow key={campaign.id}>
+                                        <TableCell>
+                                            <div className="font-medium">{campaign.name}</div>
+                                            <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={cn(campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     )
 }

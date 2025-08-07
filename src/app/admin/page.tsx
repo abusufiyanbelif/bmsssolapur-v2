@@ -4,19 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType } from "@/services/donation-service";
-import { getAllLeads } from "@/services/lead-service";
+import { getAllLeads, Lead } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DonationsChart } from "./donations-chart";
+import { getAllCampaigns, Campaign } from "@/services/campaign-service";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 export default async function DashboardPage() {
 
-  const [allDonations, allLeads, allUsers] = await Promise.all([
+  const [allDonations, allLeads, allUsers, allCampaigns] = await Promise.all([
     getAllDonations(),
     getAllLeads(),
     getAllUsers(),
+    getAllCampaigns(),
   ]);
 
   const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
@@ -121,6 +127,13 @@ export default async function DashboardPage() {
     'Split': DollarSign,
     'Any': DollarSign,
   }
+
+  const campaignStatusColors: Record<string, string> = {
+    "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
+    "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
+};
 
 
   return (
@@ -273,6 +286,62 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="text-primary"/>
+                    Active &amp; Recent Campaigns
+                </CardTitle>
+                <CardDescription>
+                    An overview of our fundraising campaigns.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {allCampaigns.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Campaign</TableHead>
+                                <TableHead>Dates</TableHead>
+                                <TableHead className="w-[30%]">Funding Goal</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {allCampaigns.slice(0, 5).map((campaign) => {
+                                const raisedAmount = (campaign as any).raisedAmount || 0; // Fallback if not calculated
+                                const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+                                return (
+                                    <TableRow key={campaign.id}>
+                                        <TableCell>
+                                            <div className="font-medium">{campaign.name}</div>
+                                            <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-2">
+                                                <Progress value={progress} />
+                                                <span className="text-xs text-muted-foreground">
+                                                    ₹{raisedAmount.toLocaleString()} / ₹{campaign.goal.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={cn(campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                )}
+            </CardContent>
+        </Card>
         
         <Card>
             <CardHeader>
