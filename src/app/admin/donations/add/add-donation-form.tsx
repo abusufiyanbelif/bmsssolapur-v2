@@ -30,7 +30,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Loader2, Info } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getUser, getUserByUserId } from "@/services/user-service";
+import { getUser, getUserByUserId, getUserByPhone } from "@/services/user-service";
 import { useSearchParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -111,7 +111,15 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
 
         if (donorIdentifierParam) {
             // Attempt to find user by email, phone, or userId from the identifier
-            const user = await getUserByUserId(donorIdentifierParam);
+            let user = null;
+            if (donorIdentifierParam.includes('@')) {
+                user = await getUserByUserId(donorIdentifierParam); // For UPI IDs
+            } else if (/^[0-9]{10}$/.test(donorIdentifierParam)) {
+                user = await getUserByPhone(donorIdentifierParam);
+            } else {
+                 user = await getUserByUserId(donorIdentifierParam); // For user IDs
+            }
+            
             if (user && user.roles.includes('Donor')) {
                 setValue('donorId', user.id!);
                 setSelectedDonor(user);

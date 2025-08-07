@@ -90,8 +90,8 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   amount: z.number().optional().describe('The total amount of the transaction.'),
   transactionId: z.string().optional().describe('The transaction ID, reference number, or UTR number.'),
   date: z.string().optional().describe('The date of the transaction in YYYY-MM-DD format.'),
-  paymentMethod: z.string().optional().describe('The payment method used, e.g., UPI, Bank Transfer.'),
-  donorIdentifier: z.string().optional().describe('Any identified name or UPI ID of the person who sent the money.'),
-  notes: z.string().optional().describe('Any user-added comments or notes found in the screenshot.'),
+  paymentMethod: z.string().optional().describe('The payment method used, e.g., UPI, GPay, PhonePe, Bank Transfer.'),
+  donorIdentifier: z.string().optional().describe('Any identified name, phone number, or UPI ID of the person who sent the money.'),
+  notes: z.string().optional().describe('Any user-added comments, remarks, or notes found in the screenshot.'),
 });
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;

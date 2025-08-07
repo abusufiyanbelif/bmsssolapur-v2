@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
     - transactionId: The Transaction ID, UTR, or any other reference number. It must be a string.
     - date: The date of the transaction. Format it as YYYY-MM-DD.
     - paymentMethod: The method of payment (e.g., UPI, Bank Transfer, GPay, PhonePe).
-    - donorIdentifier: The name or UPI ID of the person who sent the money (e.g., 'john.doe@okbank' or 'John Doe'). This is a crucial field.
+    - donorIdentifier: The name, phone number or UPI ID of the person who sent the money (e.g., 'john.doe@okbank' or 'John Doe' or '9876543210'). This is a crucial field for identifying the user.
     - notes: Any user-added comments, remarks, or descriptions found in the payment details. This is often labeled as "Add a note", "Message", or "Remarks".
 
     If a field is not clearly visible in the screenshot, omit it from the output rather than guessing.
