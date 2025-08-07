@@ -91,6 +91,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       includeTip: false,
       tipAmount: 0,
       notes: "",
+      paymentScreenshot: undefined,
+      paymentScreenshotDataUrl: undefined,
     },
   });
   
