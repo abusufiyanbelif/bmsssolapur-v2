@@ -35,8 +35,11 @@ function PublicLeadsList({ leads }: PublicLeadsListProps) {
                 <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
                     Your generosity is making a real difference. Check back later for new general cases that need your support, or view our official Campaigns.
                 </p>
-                 <Button className="mt-6" asChild>
-                    <Link href="/donate">Donate to Organization</Link>
+                 <Button className="mt-6" onClick={() => {
+                    sessionStorage.setItem('redirectAfterLogin', '/donate');
+                    router.push('/login');
+                 }}>
+                    Donate to Organization
                 </Button>
             </div>
         );
