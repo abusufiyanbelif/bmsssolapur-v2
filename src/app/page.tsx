@@ -155,9 +155,9 @@ function PublicHomePage() {
       {/* Hero Section */}
       <Card className="text-center shadow-lg bg-primary/5">
         <CardHeader>
-          <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Join Us in Making a Difference</CardTitle>
+          <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Your small help can make a large impact.</CardTitle>
           <CardDescription className="max-w-2xl mx-auto text-lg text-muted-foreground pt-2">
-            Your contribution, big or small, empowers us to provide essential aid for education, health, and relief to those in need in Solapur.
+            Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -279,4 +279,3 @@ function PublicHomePage() {
 }
 
 export default PublicHomePage;
-
