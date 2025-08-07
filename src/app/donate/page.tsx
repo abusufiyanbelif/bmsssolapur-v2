@@ -1,5 +1,3 @@
-
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -28,11 +26,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, ScanEye, Edit } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, ScanEye, Edit, FileText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { handleCreatePendingDonation } from './actions';
+import { handleCreatePendingDonation, handleGetRawText } from './actions';
 import { handleScanDonationProof } from '../admin/donations/actions';
 import type { User, Lead } from '@/services/types';
 import { getUser } from '@/services/user-service';
@@ -254,8 +252,11 @@ function UploadProofSection({ user }: { user: User | null }) {
     const { toast } = useToast();
     const router = useRouter();
     const [isScanning, setIsScanning] = useState(false);
+    const [isGettingText, setIsGettingText] = useState(false);
+    const [rawText, setRawText] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const formRef = useRef<HTMLFormElement>(null);
 
     const fileToDataUrl = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -269,12 +270,34 @@ function UploadProofSection({ user }: { user: User | null }) {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0] || null;
         setFile(selectedFile);
+        setRawText(null); // Clear previous text when file changes
         if (selectedFile) {
             setPreviewUrl(URL.createObjectURL(selectedFile));
         } else {
             setPreviewUrl(null);
         }
     }
+
+    const handleGetText = async () => {
+        if (!file) return;
+        setIsGettingText(true);
+        setRawText(null);
+        const formData = new FormData();
+        formData.append("paymentScreenshot", file);
+        
+        const result = await handleGetRawText(formData);
+
+        if (result.success && result.text) {
+            setRawText(result.text);
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Text Extraction Failed",
+                description: result.error || "Could not get text from the image.",
+            });
+        }
+        setIsGettingText(false);
+    };
     
     const handleScanAndContinue = async () => {
         if (!file) return;
@@ -349,14 +372,24 @@ function UploadProofSection({ user }: { user: User | null }) {
                     </div>
                 </div>
             )}
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button type="button" variant="secondary" onClick={handleManualEntry} disabled={!file}>
+             {rawText && (
+                <div className="space-y-2">
+                    <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                    <Textarea id="rawTextOutput" readOnly value={rawText} className="h-48 font-mono text-xs" />
+                </div>
+            )}
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Button type="button" variant="secondary" onClick={handleManualEntry} disabled={!file || isGettingText || isScanning}>
                     <Edit className="mr-2 h-4 w-4" />
                     Enter Manually
                 </Button>
-                <Button type="button" onClick={handleScanAndContinue} disabled={isScanning || !file}>
+                <Button type="button" variant="outline" onClick={handleGetText} disabled={isGettingText || isScanning || !file}>
+                    {isGettingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                    Get Text
+                </Button>
+                <Button type="button" onClick={handleScanAndContinue} disabled={isScanning || isGettingText || !file} className="lg:col-span-1">
                     {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
-                    Scan with AI
+                    Scan Details
                 </Button>
             </div>
         </div>

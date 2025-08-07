@@ -4,6 +4,7 @@
 import { createDonation } from "@/services/donation-service";
 import type { Donation, DonationPurpose } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
+import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
 
 interface FormState {
     success: boolean;
@@ -59,4 +60,34 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
       error: error,
     };
   }
+}
+
+interface GetTextResult {
+    success: boolean;
+    text?: string;
+    error?: string;
+}
+
+export async function handleGetRawText(formData: FormData): Promise<GetTextResult> {
+    try {
+        const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
+        
+        if (!screenshotFile || screenshotFile.size === 0) {
+            return { success: false, error: "No file was uploaded." };
+        }
+        
+        const arrayBuffer = await screenshotFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = screenshotFile.type;
+        const dataUri = `data:${mimeType};base64,${base64}`;
+
+        const { rawText } = await extractRawText({ photoDataUri: dataUri });
+        
+        return { success: true, text: rawText };
+
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error("Error getting raw text:", error);
+        return { success: false, error };
+    }
 }
