@@ -233,7 +233,7 @@ function PublicHomePage() {
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Open General Cases</CardTitle>
+                    <CardTitle>General Help Cases</CardTitle>
                     <CardDescription>These are verified, individual cases that need your direct support right now.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -260,14 +260,21 @@ function PublicHomePage() {
                             })}
                         </div>
                     ) : (
-                        <p className="text-center text-muted-foreground py-6">All general cases are currently funded. Please check back soon!</p>
+                        <div className="text-center py-6">
+                            <p className="text-muted-foreground">All general cases are currently funded. Please check back soon!</p>
+                            <Button className="mt-4" asChild>
+                                <Link href="/donate">Donate to Organization</Link>
+                            </Button>
+                        </div>
                     )}
                 </CardContent>
-                <CardFooter>
-                    <Button asChild variant="secondary" className="w-full">
-                        <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
-                    </Button>
-                </CardFooter>
+                {openLeads.length > 0 && (
+                    <CardFooter>
+                        <Button asChild variant="secondary" className="w-full">
+                            <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
+                        </Button>
+                    </CardFooter>
+                )}
             </Card>
         </div>
         <div className="lg:col-span-1">
