@@ -190,7 +190,20 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         title: "Donation Added",
         description: `Successfully added donation from ${result.donation.donorName}.`,
       });
-      form.reset();
+      form.reset({
+        donorId: '',
+        isAnonymous: false,
+        amount: 0,
+        paymentMethod: "UPI / QR Code",
+        includeTip: false,
+        tipAmount: 0,
+        notes: "",
+        transactionId: "",
+        purpose: undefined,
+        type: undefined,
+        paymentScreenshot: undefined,
+        paymentScreenshotDataUrl: undefined,
+      });
       setSelectedDonor(null);
       setManualScreenshotPreview(null);
     } else {

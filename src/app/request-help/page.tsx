@@ -112,8 +112,8 @@ export default function RequestHelpPage() {
     form.reset({
         helpRequested: 0,
         caseDetails: '',
-        verificationDocument: undefined,
         category: undefined,
+        verificationDocument: undefined,
     });
     setSubmittedLead(null);
   }

@@ -226,8 +226,6 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
       });
       // Reset form, but explicitly set verificationDocument to undefined to avoid the error.
       form.reset({
-        ...form.getValues(),
-        verificationDocument: undefined,
         beneficiaryType: 'existing',
         isLoan: false,
         helpRequested: 0,
@@ -246,6 +244,7 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
         campaignId: 'none',
         campaignName: '',
         dueDate: undefined,
+        verificationDocument: undefined
       });
     } else {
       toast({
