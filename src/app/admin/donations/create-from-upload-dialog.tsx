@@ -25,6 +25,17 @@ interface CreateFromUploadDialogProps {
   children: React.ReactNode;
 }
 
+// Helper to convert file to Base64 Data URL
+const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
+
 export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -86,7 +97,25 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
     }
   };
   
-  const handleManualEntry = () => {
+  const handleManualEntry = async () => {
+    if (file) {
+        try {
+            const dataUrl = await fileToDataUrl(file);
+            // Store the image data in sessionStorage to be retrieved on the next page
+            sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({
+                dataUrl,
+                name: file.name,
+                type: file.type,
+            }));
+        } catch (error) {
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not prepare the image for manual entry.",
+            });
+            return;
+        }
+    }
     handleDialogClose();
     router.push('/admin/donations/add');
   };
@@ -98,7 +127,12 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+            handleDialogClose(); // Reset state when dialog is closed
+        }
+        setOpen(isOpen);
+    }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -128,7 +162,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
             )}
         </div>
         <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button type="button" variant="secondary" onClick={handleManualEntry} disabled={!file}>
+            <Button type="button" variant="secondary" onClick={handleManualEntry}>
                 <Edit className="mr-2 h-4 w-4" />
                 Enter Manually
             </Button>
