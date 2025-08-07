@@ -63,13 +63,24 @@ export function DonationsChart({ donations }: DonationsChartProps) {
     // Filter and aggregate donations that fall within the selected date range
     donations
       .filter(d => {
-        const donationDate = d.createdAt instanceof Date ? d.createdAt : d.createdAt.toDate();
+        // Handle both Firestore Timestamps and JS Date objects
+        const donationDate = d.createdAt && typeof (d.createdAt as any).toDate === 'function' 
+            ? (d.createdAt as any).toDate() 
+            : d.createdAt;
+        
+        if (!(donationDate instanceof Date)) return false;
+
         return (d.status === 'Verified' || d.status === 'Allocated') &&
                donationDate >= date.from! &&
                donationDate <= date.to!;
       })
       .forEach(d => {
-        const donationDate = d.createdAt instanceof Date ? d.createdAt : d.createdAt.toDate();
+        const donationDate = d.createdAt && typeof (d.createdAt as any).toDate === 'function' 
+            ? (d.createdAt as any).toDate() 
+            : d.createdAt;
+            
+        if (!(donationDate instanceof Date)) return;
+
         const monthKey = format(donationDate, "MMM yyyy")
         if (monthKey in monthlyTotals) {
           monthlyTotals[monthKey] += d.amount
