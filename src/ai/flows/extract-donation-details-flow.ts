@@ -51,8 +51,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
     // The prompt() function takes the input and returns a structured message for the model.
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-pro-vision'),
-        prompt: await prompt(input), // Correctly render the prompt with the input
-        output: { schema: ExtractDonationDetailsOutputSchema }
+        prompt: await prompt(input),
     });
     
     return llmResponse.output!;
