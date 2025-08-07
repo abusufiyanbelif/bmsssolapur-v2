@@ -30,7 +30,8 @@ import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { handleCreatePendingDonation, handleRecordPastDonation } from './actions';
+import { handleCreatePendingDonation } from './actions';
+import { handleRecordPastDonation } from './upload-proof-action';
 import type { User, Lead } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
