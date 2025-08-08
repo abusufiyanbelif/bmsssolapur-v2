@@ -56,7 +56,13 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
         const querySnapshot = await getDocs(q);
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
-            activities.push({ id: doc.id, ...(doc.data() as Omit<ActivityLog, 'id'>) });
+            const data = doc.data();
+            const activity: ActivityLog = {
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate(),
+            } as ActivityLog;
+            activities.push(activity);
         });
         return activities;
     } catch (error) {

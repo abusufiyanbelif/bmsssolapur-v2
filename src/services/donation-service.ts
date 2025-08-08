@@ -73,7 +73,14 @@ export const getDonation = async (id: string) => {
   try {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
     if (donationDoc.exists()) {
-      return { id: donationDoc.id, ...donationDoc.data() } as Donation;
+      const data = donationDoc.data();
+      return { 
+        id: donationDoc.id, 
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
+        verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+      } as Donation;
     }
     return null;
   } catch (error) {
@@ -155,16 +162,26 @@ export const getAllDonations = async (): Promise<Donation[]> => {
       return [];
     }
     try {
-        const donationsQuery = query(collection(db, DONATIONS_COLLECTION));
+        const donationsQuery = query(collection(db, DONATIONS_COLLECTION), orderBy("donationDate", "desc"));
         const querySnapshot = await getDocs(donationsQuery);
         const donations: Donation[] = [];
         querySnapshot.forEach((doc) => {
-            donations.push({ id: doc.id, ...doc.data() } as Donation);
+            const data = doc.data();
+            donations.push({ 
+              id: doc.id, 
+              ...data,
+              createdAt: (data.createdAt as Timestamp).toDate(),
+              donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
+              verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+            } as Donation);
         });
         return donations;
     } catch (error) {
         console.error("Error getting all donations: ", error);
-        throw new Error('Failed to get all donations.');
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing for 'donations' collection on 'donationDate' (desc).");
+        }
+        return [];
     }
 }
 
@@ -175,19 +192,26 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
         const donationsQuery = query(
             collection(db, DONATIONS_COLLECTION), 
             where("donorId", "==", userId),
-            orderBy("createdAt", "desc")
+            orderBy("donationDate", "desc")
         );
         const querySnapshot = await getDocs(donationsQuery);
         const donations: Donation[] = [];
         querySnapshot.forEach((doc) => {
-            donations.push({ id: doc.id, ...doc.data() } as Donation);
+            const data = doc.data();
+            donations.push({
+              id: doc.id,
+              ...data,
+              createdAt: (data.createdAt as Timestamp).toDate(),
+              donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
+              verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+            } as Donation);
         });
         return donations;
     } catch (error) {
         console.error("Error getting user donations: ", error);
         // This could be due to a missing index. Log a helpful message.
         if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'donorId' (ascending) and 'createdAt' (descending).");
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'donorId' (ascending) and 'donationDate' (descending).");
         }
         throw new Error('Failed to get user donations.');
     }

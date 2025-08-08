@@ -38,7 +38,13 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
-            return { id: userDoc.id, ...userDoc.data() } as User;
+            const data = userDoc.data();
+            return {
+              id: userDoc.id,
+              ...data,
+              createdAt: (data.createdAt as Timestamp).toDate(),
+              updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+            } as User;
         }
         return null;
     } catch (error) {
@@ -156,7 +162,13 @@ export const getUser = async (id: string): Promise<User | null> => {
   try {
     const userDoc = await getDoc(doc(db, USERS_COLLECTION, id));
     if (userDoc.exists()) {
-      return { id: userDoc.id, ...userDoc.data() } as User;
+      const data = userDoc.data();
+      return { 
+        id: userDoc.id, 
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
     }
     return null;
   } catch (error) {
@@ -176,7 +188,13 @@ export const getUserByName = async (name: string): Promise<User | null> => {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
-      return { id: userDoc.id, ...userDoc.data() } as User;
+      const data = userDoc.data();
+      return {
+        id: userDoc.id,
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
     }
     return null;
   } catch (error) {
@@ -196,7 +214,13 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
-      return { id: userDoc.id, ...userDoc.data() } as User;
+      const data = userDoc.data();
+       return {
+        id: userDoc.id,
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
     }
     return null;
   } catch (error) {
@@ -221,7 +245,13 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
-      return { id: userDoc.id, ...userDoc.data() } as User;
+      const data = userDoc.data();
+      return {
+        id: userDoc.id,
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
     }
     return null;
   } catch (error) {
@@ -242,7 +272,13 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
-      return { id: userDoc.id, ...userDoc.data() } as User;
+      const data = userDoc.data();
+       return {
+        id: userDoc.id,
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
     }
     return null;
   } catch (error) {
@@ -296,7 +332,13 @@ export const getAllUsers = async (): Promise<User[]> => {
         const querySnapshot = await getDocs(usersQuery);
         const users: User[] = [];
         querySnapshot.forEach((doc) => {
-            users.push({ id: doc.id, ...(doc.data() as Omit<User, 'id'>) });
+            const data = doc.data();
+            users.push({ 
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+            } as User);
         });
         return users;
     } catch (error) {
