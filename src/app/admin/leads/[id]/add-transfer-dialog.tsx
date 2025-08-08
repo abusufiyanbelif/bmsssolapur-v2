@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Loader2, FileUp, ScanEye, AlertTriangle, FileText } from "lucide-react";
-import { handleFundTransfer, handleScanTransferProof } from "./actions";
+import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect } from "lucide-react";
+import { handleFundTransfer, handleScanTransferProof, handleGetRawText } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
@@ -33,9 +33,11 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isExtractingText, setIsExtractingText] = useState(false);
   const [open, setOpen] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [scannedDetails, setScannedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
+  const [rawText, setRawText] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -79,6 +81,28 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     setIsScanning(false);
   };
   
+   const handleExtractText = async () => {
+    if (!file) {
+      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file to extract text from.' });
+      return;
+    }
+    
+    setIsExtractingText(true);
+    setRawText(null);
+    const formData = new FormData();
+    formData.append("proof", file);
+    
+    const result = await handleGetRawText(formData);
+    
+    if (result.success && result.text) {
+        setRawText(result.text);
+        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for review.' });
+    } else {
+        toast({ variant: 'destructive', title: 'Text Extraction Failed', description: result.error || 'Could not extract text from the image.' });
+    }
+    setIsExtractingText(false);
+  };
+  
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -101,6 +125,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
       setScannedDetails(null);
       setFile(null);
       setPreviewUrl(null);
+      setRawText(null);
       if(formRef.current) formRef.current.reset();
       router.refresh(); 
     } else {
@@ -114,6 +139,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         setScannedDetails(null);
         setFile(null);
         setPreviewUrl(null);
+        setRawText(null);
       }
       setOpen(isOpen)
     }}>
@@ -202,17 +228,20 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                         <Button type="button" variant="outline" size="icon" onClick={handleScan} disabled={!file || isScanning}>
                             {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
                         </Button>
+                        <Button type="button" variant="outline" size="icon" onClick={handleExtractText} disabled={!file || isExtractingText}>
+                            {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
+                        </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">A screenshot or PDF receipt of the transaction is required.</p>
                 </div>
                  {previewUrl ? (
                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
-                        <div className="relative w-full h-80">
+                        <div className="relative w-full h-64">
                             <Image src={previewUrl} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
                         </div>
                     </div>
                 ) : (
-                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center justify-center gap-4 h-80">
+                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center justify-center gap-4 h-64">
                         <FileText className="h-16 w-16 text-muted-foreground"/>
                         <p className="text-sm text-muted-foreground">Upload an image to see a preview</p>
                     </div>
@@ -224,6 +253,12 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                         <AlertTitle>Review Auto-Filled Details</AlertTitle>
                         <AlertDescription>The form has been populated with scanned data. Please verify all details before submitting.</AlertDescription>
                     </Alert>
+                )}
+                 {rawText && (
+                    <div className="space-y-2">
+                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                        <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
+                    </div>
                 )}
             </div>
             

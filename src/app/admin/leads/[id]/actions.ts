@@ -9,6 +9,7 @@ import { getUser } from "@/services/user-service";
 import { FundTransfer } from "@/services/types";
 import { arrayUnion, increment } from "firebase/firestore";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 
 export async function handleDeleteLead(leadId: string) {
@@ -171,5 +172,30 @@ export async function handleScanTransferProof(formData: FormData): Promise<{succ
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         console.error("Error scanning transfer proof:", error);
         return { success: false, error: error };
+    }
+}
+
+
+export async function handleGetRawText(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
+    try {
+        const proofFile = formData.get("proof") as File | undefined;
+        
+        if (!proofFile || proofFile.size === 0) {
+            return { success: false, error: "No file was uploaded to scan." };
+        }
+        
+        const arrayBuffer = await proofFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = proofFile.type;
+        const dataUri = `data:${mimeType};base64,${base64}`;
+
+        const { rawText } = await extractRawText({ photoDataUri: dataUri });
+        
+        return { success: true, text: rawText };
+
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error("Error getting raw text:", error);
+        return { success: false, error };
     }
 }
