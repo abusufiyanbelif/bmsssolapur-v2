@@ -20,9 +20,11 @@ import {
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
 import type { Donation, DonationStatus, DonationType, DonationPurpose, User } from './types';
+import { getUser } from './user-service';
 
 // Re-export types for backward compatibility if other services import from here
 export type { Donation, DonationStatus, DonationType, DonationPurpose };
+export { getUser };
 
 const DONATIONS_COLLECTION = 'donations';
 

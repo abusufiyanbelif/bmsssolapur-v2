@@ -26,17 +26,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, ScanEye, Edit, FileText } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { handleCreatePendingDonation, handleGetRawText } from './actions';
-import { handleScanDonationProof } from '../admin/donations/actions';
+import { handleCreatePendingDonation } from './actions';
+import { handleRecordPastDonation } from './upload-proof-action';
 import type { User, Lead } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 
@@ -251,119 +250,65 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
 function UploadProofSection({ user }: { user: User | null }) {
     const { toast } = useToast();
     const router = useRouter();
-    const [isScanning, setIsScanning] = useState(false);
-    const [isGettingText, setIsGettingText] = useState(false);
-    const [rawText, setRawText] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const formRef = useRef<HTMLFormElement>(null);
-
-    const fileToDataUrl = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    };
+    const notesRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0] || null;
         setFile(selectedFile);
-        setRawText(null); // Clear previous text when file changes
         if (selectedFile) {
             setPreviewUrl(URL.createObjectURL(selectedFile));
         } else {
             setPreviewUrl(null);
         }
     }
-
-    const handleGetText = async () => {
-        if (!file) return;
-        setIsGettingText(true);
-        setRawText(null);
-        const formData = new FormData();
-        formData.append("paymentScreenshot", file);
-        
-        const result = await handleGetRawText(formData);
-
-        if (result.success && result.text) {
-            setRawText(result.text);
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Text Extraction Failed",
-                description: result.error || "Could not get text from the image.",
-            });
-        }
-        setIsGettingText(false);
-    };
     
-    const handleScanAndContinue = async () => {
-        if (!file) return;
-        setIsScanning(true);
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!file) {
+            toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to upload.' });
+            return;
+        }
+        setIsSubmitting(true);
         const formData = new FormData();
-        formData.append("paymentScreenshot", file);
+        formData.append("proof", file);
+        if (notesRef.current?.value) {
+            formData.append("notes", notesRef.current.value);
+        }
         
-        const result = await handleScanDonationProof(formData);
-        
-        if (result.success && result.details) {
-            toast({
-                variant: "success",
-                title: "Scan Successful",
-                description: "Redirecting to donation form with pre-filled details.",
-            });
-            
-            const queryParams = new URLSearchParams();
-            if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
-            if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
-            if(result.details.donorIdentifier) queryParams.set('donorIdentifier', result.details.donorIdentifier);
-            if(result.details.notes) queryParams.set('notes', result.details.notes);
-            
-            // Store screenshot in session to be picked up by the add form
-            const dataUrl = await fileToDataUrl(file);
-            sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+        const result = await handleRecordPastDonation(formData, user?.id);
 
-            router.push(`/admin/donations/add?${queryParams.toString()}`);
+        if (result.success) {
+            toast({ variant: 'success', title: "Upload Successful", description: "Your proof has been submitted for verification. Thank you!" });
+            setFile(null);
+            setPreviewUrl(null);
+            if (notesRef.current) notesRef.current.value = "";
+            if (fileInputRef.current) fileInputRef.current.value = "";
         } else {
-            toast({
-                variant: "destructive",
-                title: "Scan Failed",
-                description: result.error || "Could not extract details from the image.",
-            });
+             toast({ variant: 'destructive', title: "Upload Failed", description: result.error || "An unknown error occurred." });
         }
-        setIsScanning(false);
-    };
-
-    const handleManualEntry = async () => {
-        if (file) {
-            try {
-                const dataUrl = await fileToDataUrl(file);
-                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
-            } catch (error) {
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Could not prepare the image for manual entry.",
-                });
-                return;
-            }
-        }
-        router.push('/admin/donations/add');
+        setIsSubmitting(false);
     };
 
     return (
-        <div className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
                 <Label htmlFor="paymentScreenshot">Payment Screenshot</Label>
                 <Input 
                     id="paymentScreenshot" 
-                    name="paymentScreenshot" 
+                    name="proof" 
                     type="file" 
                     required 
                     accept="image/*"
                     onChange={handleFileChange}
+                    ref={fileInputRef}
                 />
+                 <FormDescription>
+                    Upload a screenshot of a payment you have already made.
+                </FormDescription>
             </div>
              {previewUrl && (
                 <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
@@ -372,27 +317,20 @@ function UploadProofSection({ user }: { user: User | null }) {
                     </div>
                 </div>
             )}
-             {rawText && (
-                <div className="space-y-2">
-                    <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                    <Textarea id="rawTextOutput" readOnly value={rawText} className="h-48 font-mono text-xs" />
-                </div>
-            )}
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Button type="button" variant="secondary" onClick={handleManualEntry} disabled={!file || isGettingText || isScanning}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Enter Manually
-                </Button>
-                <Button type="button" variant="outline" onClick={handleGetText} disabled={isGettingText || isScanning || !file}>
-                    {isGettingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                    Get Text
-                </Button>
-                <Button type="button" onClick={handleScanAndContinue} disabled={isScanning || isGettingText || !file} className="lg:col-span-1">
-                    {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
-                    Scan Details
-                </Button>
+             <div className="space-y-2">
+                <Label htmlFor="upload_notes">Notes (Optional)</Label>
+                <Textarea 
+                    id="upload_notes"
+                    name="notes"
+                    placeholder="Provide any additional details, like the transaction ID or a message." 
+                    ref={notesRef}
+                />
             </div>
-        </div>
+            <Button type="submit" disabled={isSubmitting || !file} className="w-full">
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                Upload and Submit for Verification
+            </Button>
+        </form>
     );
 }
 
@@ -450,6 +388,8 @@ function DonatePageContent() {
     return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
   }
   
+  const isAdmin = user?.roles.includes('Admin') || user?.roles.includes('Super Admin');
+
   return (
      <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
@@ -482,6 +422,17 @@ function DonatePageContent() {
 
                 {donationMethod === 'payNow' ? (
                    <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} />
+                ) : isAdmin ? (
+                   <div className="text-center p-4 border-dashed border-2 rounded-md">
+                     <AlertCircle className="mx-auto h-8 w-8 text-amber-500" />
+                     <h3 className="mt-2 font-semibold">Admin Workflow</h3>
+                     <p className="text-sm text-muted-foreground">
+                        Admins should use the "Scan Screenshot" button on the main Donations page to upload proof and automatically create donation records.
+                     </p>
+                      <Button asChild className="mt-4">
+                        <a href="/admin/donations">Go to Donations Page</a>
+                      </Button>
+                   </div>
                 ) : (
                    <UploadProofSection user={user} />
                 )}
