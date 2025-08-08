@@ -3,7 +3,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser, handleSetPassword } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X } from "lucide-react";
+import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -173,6 +173,7 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
 type EditUserFormValues = z.infer<typeof formSchema>;
@@ -218,10 +219,12 @@ export function EditUserForm({ user }: EditUserFormProps) {
       isWidow: user.isWidow || false,
       panNumber: user.panNumber || '',
       aadhaarNumber: user.aadhaarNumber || '',
+      upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
     },
   });
 
-  const { formState: { isDirty }, reset } = form;
+  const { formState: { isDirty }, reset, control } = form;
+  const { fields, append, remove } = useFieldArray({ control, name: "upiIds" });
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
   const isAnonymousBeneficiary = form.watch("isAnonymousAsBeneficiary");
@@ -250,6 +253,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           isWidow: user.isWidow || false,
           panNumber: user.panNumber || '',
           aadhaarNumber: user.aadhaarNumber || '',
+          upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
       });
       setIsEditing(false);
   }
@@ -280,6 +284,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
     if(values.isWidow) formData.append("isWidow", "on");
     if(values.panNumber) formData.append("panNumber", values.panNumber);
     if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
+
+    values.upiIds?.forEach(upi => {
+        if(upi.value) formData.append("upiIds", upi.value);
+    });
 
     const result = await handleUpdateUser(user.id!, formData);
 
@@ -731,7 +739,44 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         />
                     )}
                     
-                    <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>
+                    <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
+                     <div className="space-y-4">
+                        <FormLabel>UPI IDs</FormLabel>
+                        <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
+                        {fields.map((field, index) => (
+                            <FormField
+                            control={form.control}
+                            key={field.id}
+                            name={`upiIds.${index}.value`}
+                            render={({ field }) => (
+                                <FormItem>
+                                <div className="flex items-center gap-2">
+                                    <FormControl>
+                                    <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
+                                    </FormControl>
+                                    {isEditing && (
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                    )}
+                                </div>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        ))}
+                        {isEditing && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => append({ value: "" })}
+                            >
+                                <PlusCircle className="mr-2" />
+                                Add UPI ID
+                            </Button>
+                        )}
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
                         control={form.control}

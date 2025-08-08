@@ -3,7 +3,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,6 +100,11 @@ function AddUserFormContent() {
       country: 'India',
       upiIds: [{ value: "" }],
     },
+  });
+
+   const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "upiIds"
   });
   
   useEffect(() => {
@@ -599,6 +604,39 @@ function AddUserFormContent() {
         )}
 
         <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
+         <div className="space-y-4">
+            <FormLabel>UPI IDs (Optional)</FormLabel>
+            <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
+            {fields.map((field, index) => (
+            <FormField
+              control={form.control}
+              key={field.id}
+              name={`upiIds.${index}.value`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., username@okhdfc" />
+                    </FormControl>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ value: "" })}
+            >
+                <PlusCircle className="mr-2" />
+                Add UPI ID
+            </Button>
+         </div>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
             control={form.control}

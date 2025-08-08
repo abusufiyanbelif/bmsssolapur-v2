@@ -32,7 +32,6 @@ const allNavItems: NavItem[] = [
     { href: "/", label: "Home", icon: Home, allowedRoles: ["Guest"] },
     { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Guest"] },
     { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Guest"] },
-    { href: "/donate", label: "Donate", icon: HandHeart, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (common entry point)
