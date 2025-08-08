@@ -89,14 +89,14 @@ export type ExtractDonationDetailsInput = z.infer<typeof ExtractDonationDetailsI
 
 export const ExtractDonationDetailsOutputSchema = z.object({
   amount: z.number().optional().describe('The primary transaction amount. It must be a number.'),
-  transactionId: z.string().optional().describe("The Transaction ID or reference number. If multiple IDs are present, prefer the one labeled 'Transaction ID' or 'Reference No.'."),
+  transactionId: z.string().optional().describe("The Transaction ID, Order ID, or reference number. If multiple IDs are present, prefer the one labeled 'Transaction ID' or 'Reference No.'."),
   utrNumber: z.string().optional().describe("The UTR number if it is explicitly visible. It's often a long number."),
   date: z.string().optional().describe('The date of the transaction. Format it as YYYY-MM-DD.'),
   time: z.string().optional().describe('The time of the transaction. Format it as hh:mm am/pm.'),
   paymentApp: z.string().optional().describe('The method or app of payment (e.g., UPI, Bank Transfer, GPay, PhonePe, Paytm). Infer this from the UI.'),
   paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer.'),
   senderName: z.string().optional().describe("The full name of the person who sent the money (e.g., 'From John Doe')."),
-  senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial (e.g., 'From account ...1234')."),
+  senderAccountNumber: z.string().optional().describe("The sender's bank account number or phone number, even if partial (e.g., 'From account ...1234' or '...linked to 1234567890')."),
   recipientName: z.string().optional().describe("The full name of the person who received the money (e.g., 'To Jane Doe')."),
   recipientPhone: z.string().optional().describe("The recipient's phone number if visible."),
   recipientUpiId: z.string().optional().describe("The recipient's UPI ID if visible (e.g., 'to-username@okbank')."),
