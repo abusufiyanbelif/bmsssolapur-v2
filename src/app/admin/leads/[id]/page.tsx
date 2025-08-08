@@ -6,7 +6,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Label } from "@/components/ui/label";
 import { DeleteLeadButton } from "./delete-lead-button";
 import { Separator } from "@/components/ui/separator";
+import { UploadDocumentDialog } from "./upload-document-dialog";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -58,8 +59,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
     const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
     const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
-    const dueDate = lead.dueDate ? lead.dueDate : null;
-    const closedDate = lead.closedAt ? lead.closedAt : null;
+    const dueDate = lead.dueDate;
+    const closedDate = lead.closedAt;
 
     return (
         <div className="flex-1 space-y-6">
@@ -161,14 +162,17 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                     </Card>
 
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Paperclip />
-                                Attached Documents
-                            </CardTitle>
-                             <CardDescription>
-                               Supporting documents uploaded for this case.
-                            </CardDescription>
+                        <CardHeader className="flex flex-row justify-between items-start">
+                             <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Paperclip />
+                                    Attached Documents
+                                </CardTitle>
+                                <CardDescription>
+                                Supporting documents uploaded for this case.
+                                </CardDescription>
+                            </div>
+                            <UploadDocumentDialog leadId={lead.id!} />
                         </CardHeader>
                          <CardContent>
                              {lead.verificationDocumentUrl ? (
