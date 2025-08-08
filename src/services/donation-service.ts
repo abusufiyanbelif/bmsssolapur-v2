@@ -68,7 +68,7 @@ export const createDonation = async (
 };
 
 // Function to get a donation by ID
-export const getDonation = async (id: string) => {
+export const getDonation = async (id: string): Promise<Donation | null> => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
