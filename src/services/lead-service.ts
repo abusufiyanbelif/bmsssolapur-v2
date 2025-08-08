@@ -19,10 +19,12 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User } from './types';
+import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType } from './types';
 
 // Re-export types for backward compatibility
 export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
+
+const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
 export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'>>, adminUser: { id: string, name: string }) => {
@@ -63,7 +65,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     Object.keys(newLead).forEach(key => {
         const typedKey = key as keyof Lead;
         if (newLead[typedKey] === undefined) {
-            delete newLead[typedKey];
+            delete (newLead as any)[typedKey];
         }
     });
 
