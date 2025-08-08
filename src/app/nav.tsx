@@ -8,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -58,6 +58,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/campaigns", label: "Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
+            { href: "/admin/transfers", label: "All Beneficiaries Transfer", icon: ArrowRightLeft },
         ]
     },
 
@@ -130,13 +131,13 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     };
     
     const filterSubItems = (item: NavItem) => {
-        const adminLinks = ["/admin/leads", "/admin/campaigns"];
-        const financeLinks = ["/admin/donations"];
+        const adminLinks = ["/admin/leads", "/admin/campaigns", "/admin/transfers"];
+        const financeLinks = ["/admin/donations", "/admin/transfers"];
         const superAdminLinks = ["/admin/organization"];
 
         return item.subItems?.filter(sub => {
              if (activeRole === 'Super Admin') return true;
-             if (activeRole === 'Admin' && (adminLinks.includes(sub.href) || financeLinks.includes(sub.href))) return true;
+             if (activeRole === 'Admin' && (adminLinks.includes(sub.href))) return true;
              if (activeRole === 'Finance Admin' && financeLinks.includes(sub.href)) return true;
              // Let Super Admin see their specific link even if their active role is Admin
              if (userRoles.includes('Super Admin') && superAdminLinks.includes(sub.href)) return true;
