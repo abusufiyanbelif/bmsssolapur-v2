@@ -188,7 +188,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         <TableRow>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Amount</TableHead>
-                                            <TableHead>Transferred By</TableHead>
+                                            <TableHead>From</TableHead>
+                                            <TableHead>To</TableHead>
                                             <TableHead className="text-right">Proof</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -197,12 +198,16 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                             <TableRow key={index}>
                                                 <TableCell>
                                                   <p>{format(transfer.transferredAt as any, "dd MMM yyyy, p")}</p>
-                                                  <p className="text-xs text-muted-foreground">{transfer.paymentApp}</p>
+                                                  <p className="text-xs text-muted-foreground">{transfer.paymentApp} ({transfer.status})</p>
                                                 </TableCell>
                                                 <TableCell className="font-semibold">₹{transfer.amount.toLocaleString()}</TableCell>
                                                 <TableCell>
-                                                  <p>{transfer.transferredByUserName}</p>
-                                                  <p className="font-mono text-xs text-muted-foreground">{transfer.transactionId}</p>
+                                                  <p>{transfer.senderName || 'N/A'}</p>
+                                                  <p className="font-mono text-xs text-muted-foreground">{transfer.senderAccountNumber || 'N/A'}</p>
+                                                </TableCell>
+                                                 <TableCell>
+                                                  <p>{transfer.recipientName || 'N/A'}</p>
+                                                  <p className="font-mono text-xs text-muted-foreground">{transfer.recipientAccountNumber || transfer.recipientUpiId || 'N/A'}</p>
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button asChild variant="outline" size="sm">

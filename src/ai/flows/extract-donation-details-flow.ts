@@ -22,22 +22,24 @@ export async function extractDonationDetails(input: ExtractDonationDetailsInput)
   return extractDonationDetailsFlow(input);
 }
 
+const promptText = `You are an expert financial assistant specializing in parsing payment receipts. Analyze the provided image of a payment screenshot from apps like GPay, PhonePe, Paytm, etc., or a bank transfer confirmation.
+    Your task is to carefully extract the following details. Be precise. If a field is not visible, omit it entirely from the output.
 
-const promptText = `You are an expert financial assistant. Analyze the provided image of a payment screenshot from a UPI app (like GPay, PhonePe, Paytm, etc.).
-    Your task is to carefully extract the following details and return them in a structured JSON format:
-    
-    - amount: The primary transaction amount. It must be a number.
-    - transactionId: The Transaction ID, UTR, or any other reference number. It must be a string. If multiple IDs are present (like a Transaction ID and a UTR), prefer the UTR number.
-    - date: The date of the transaction. Format it as YYYY-MM-DD.
-    - paymentApp: The method or app of payment (e.g., UPI, Bank Transfer, GPay, PhonePe, Paytm). Infer this from the UI if possible.
-    - donorName: The full name of the person who sent the money (e.g., 'Bhagnagri Zainul'). Look for fields like "Received from" or "Paid by". Do NOT include phone numbers or UPI IDs in this field.
-    - donorPhone: The donor's 10-digit phone number if it is explicitly visible. This should only contain digits.
-    - donorUpiId: The donor's UPI ID if it is explicitly visible (it will contain an '@' symbol, e.g., 'username@okhdfc').
-    - bankAccountNumber: The donor's bank account number. Often this is partially masked (e.g., "From account XXXXXX1234"). Extract the visible part.
-    - notes: Any user-added comments, remarks, or descriptions found in the payment details. This is often labeled as "Add a note", "Message", or "Remarks".
-
-    If a field is not clearly visible in the screenshot, omit it from the output rather than guessing. Pay close attention to distinguishing between the name, phone number, and UPI ID.`;
-
+    - amount: The primary transaction amount. Must be a number.
+    - transactionId: The main Transaction ID or Reference Number.
+    - utrNumber: The UTR number, often a separate long number.
+    - date: The date of the transaction. Format as YYYY-MM-DD.
+    - time: The time of the transaction, e.g., "06:05 pm".
+    - paymentApp: The app used (e.g., GPay, PhonePe, Paytm). Infer from the UI.
+    - paymentMethod: The method used, like "UPI" or "Bank Transfer".
+    - senderName: The full name of the person who sent the money.
+    - senderAccountNumber: The sender's bank account number, even if partial (e.g., "...1234").
+    - recipientName: The full name of the person who received the money.
+    - recipientAccountNumber: The recipient's bank account number, even if partial.
+    - recipientUpiId: The recipient's UPI ID.
+    - status: The transaction status (e.g., Successful, Completed).
+    - notes: Any user-added comments, remarks, or descriptions.
+`;
 
 const extractDonationDetailsFlow = ai.defineFlow(
   {
@@ -65,10 +67,10 @@ const extractDonationDetailsFlow = ai.defineFlow(
     }
     
     // Check for essential fields and provide a specific error if they are missing.
-    if (!output.amount || !output.transactionId) {
+    if (!output.amount || (!output.transactionId && !output.utrNumber)) {
         let missingFields = [];
         if (!output.amount) missingFields.push("Amount");
-        if (!output.transactionId) missingFields.push("Transaction ID");
+        if (!output.transactionId && !output.utrNumber) missingFields.push("Transaction ID or UTR");
         throw new Error(`Scan failed: Could not extract required fields (${missingFields.join(', ')}). Please try a clearer image or enter details manually.`);
     }
 

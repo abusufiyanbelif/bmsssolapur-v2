@@ -82,17 +82,13 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
 export async function handleFundTransfer(leadId: string, formData: FormData) {
      try {
         const adminUserId = formData.get("adminUserId") as string;
-        const amount = parseFloat(formData.get("amount") as string);
-        const notes = formData.get("notes") as string;
-        const transactionId = formData.get("transactionId") as string;
-        const recipientName = formData.get("recipientName") as string;
-        const recipientPhone = formData.get("recipientPhone") as string;
-        const paymentApp = formData.get("paymentApp") as string;
-        const senderAccountNumber = formData.get("senderAccountNumber") as string;
+        const amountStr = formData.get("amount") as string;
+        const amount = amountStr ? parseFloat(amountStr) : 0;
+        
         const proofFile = formData.get("proof") as File | undefined;
 
         if (!adminUserId || isNaN(amount) || !proofFile) {
-            return { success: false, error: "Missing required fields for fund transfer." };
+            return { success: false, error: "Missing required fields for fund transfer (Admin, Amount, Proof)." };
         }
 
         const [adminUser, lead] = await Promise.all([
@@ -110,14 +106,20 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             transferredByUserId: adminUserId,
             transferredByUserName: adminUser.name,
             amount: amount,
-            transferredAt: new Date() as any, // Will be converted by serverTimestamp
-            notes: notes,
+            transferredAt: new Date() as any,
             proofUrl: proofUrl,
-            transactionId: transactionId,
-            recipientName: recipientName,
-            recipientPhone: recipientPhone,
-            paymentApp: paymentApp,
-            senderAccountNumber: senderAccountNumber,
+            notes: formData.get("notes") as string | undefined,
+            transactionId: formData.get("transactionId") as string | undefined,
+            utrNumber: formData.get("utrNumber") as string | undefined,
+            senderName: formData.get("senderName") as string | undefined,
+            senderAccountNumber: formData.get("senderAccountNumber") as string | undefined,
+            recipientName: formData.get("recipientName") as string | undefined,
+            recipientPhone: formData.get("recipientPhone") as string | undefined,
+            recipientUpiId: formData.get("recipientUpiId") as string | undefined,
+            recipientAccountNumber: formData.get("recipientAccountNumber") as string | undefined,
+            paymentApp: formData.get("paymentApp") as string | undefined,
+            paymentMethod: formData.get("paymentMethod") as string | undefined,
+            status: formData.get("status") as string | undefined,
         };
 
         await updateLead(leadId, {
@@ -125,7 +127,6 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             helpGiven: increment(amount),
         });
 
-        // Optionally, log this activity
         await logActivity({
             userId: adminUser.id!,
             userName: adminUser.name,

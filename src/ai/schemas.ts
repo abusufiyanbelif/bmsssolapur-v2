@@ -1,6 +1,5 @@
 
 
-
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -89,16 +88,22 @@ export const ExtractDonationDetailsInputSchema = z.object({
 export type ExtractDonationDetailsInput = z.infer<typeof ExtractDonationDetailsInputSchema>;
 
 export const ExtractDonationDetailsOutputSchema = z.object({
-  amount: z.number().optional().describe('The total amount of the transaction.'),
-  transactionId: z.string().optional().describe('The transaction ID, reference number, or UTR number.'),
-  date: z.string().optional().describe('The date of the transaction in YYYY-MM-DD format.'),
-  paymentApp: z.string().optional().describe('The payment app used, e.g., Google Pay, PhonePe, Paytm.'),
-  donorName: z.string().optional().describe("The full name of the person who sent the money (e.g., 'John Doe' or 'Bhagnagri Zainul'). Do not include phone numbers or UPI IDs here."),
-  donorPhone: z.string().optional().describe("The donor's 10-digit phone number if visible. Do not include '@' symbols or names."),
-  donorUpiId: z.string().optional().describe("The donor's UPI ID if visible (e.g., 'username@okbank')."),
-  bankAccountNumber: z.string().optional().describe("The donor's bank account number, even if partial (e.g., 'XXXXXX1234')."),
-  notes: z.string().optional().describe('Any user-added comments, remarks, or notes found in the screenshot.'),
+  amount: z.number().optional().describe('The primary transaction amount. It must be a number.'),
+  transactionId: z.string().optional().describe("The Transaction ID or reference number. If multiple IDs are present, prefer the one labeled 'Transaction ID' or 'Reference No.'."),
+  utrNumber: z.string().optional().describe("The UTR number if it is explicitly visible. It's often a long number."),
+  date: z.string().optional().describe('The date of the transaction. Format it as YYYY-MM-DD.'),
+  time: z.string().optional().describe('The time of the transaction. Format it as hh:mm am/pm.'),
+  paymentApp: z.string().optional().describe('The method or app of payment (e.g., UPI, Bank Transfer, GPay, PhonePe, Paytm). Infer this from the UI.'),
+  paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer.'),
+  senderName: z.string().optional().describe("The full name of the person who sent the money (e.g., 'From John Doe')."),
+  senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial (e.g., 'From account ...1234')."),
+  recipientName: z.string().optional().describe("The full name of the person who received the money (e.g., 'To Jane Doe')."),
+  recipientAccountNumber: z.string().optional().describe("The recipient's bank account number, even if partial (e.g., 'To account ...5678')."),
+  recipientUpiId: z.string().optional().describe("The recipient's UPI ID if visible (e.g., 'to-username@okbank')."),
+  status: z.string().optional().describe('The status of the transaction (e.g., Successful, Completed, Received).'),
+  notes: z.string().optional().describe('Any user-added comments, remarks, or descriptions found in the payment details.'),
 });
+
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
 
 

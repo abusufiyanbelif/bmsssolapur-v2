@@ -131,10 +131,16 @@ export interface FundTransfer {
     notes?: string;
     proofUrl: string;
     transactionId?: string;
+    utrNumber?: string;
+    senderName?: string;
+    senderAccountNumber?: string;
     recipientName?: string;
     recipientPhone?: string;
+    recipientUpiId?: string;
+    recipientAccountNumber?: string;
     paymentApp?: string;
-    senderAccountNumber?: string;
+    paymentMethod?: string;
+    status?: string;
 }
 
 export interface Lead {
