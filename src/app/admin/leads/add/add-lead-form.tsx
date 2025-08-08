@@ -111,20 +111,15 @@ const formSchema = z.object({
 })
 .refine(data => {
     if (data.beneficiaryType === 'existing') {
-        return !!data.beneficiaryId;
+        return !!data.beneficiaryId && data.beneficiaryId !== '';
     }
-    return true;
-}, {
-    message: "Please select an existing beneficiary.",
-    path: ["beneficiaryId"],
-}).refine(data => {
     if (data.beneficiaryType === 'new') {
         return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone;
     }
-    return true;
+    return false; // Should be either 'existing' or 'new'
 }, {
-    message: "First Name, Last Name and Phone are required for a new beneficiary.",
-    path: ["newBeneficiaryFirstName"], // Report error on one of the fields
+    message: "Please either select an existing beneficiary or fill out the details for a new one.",
+    path: ["beneficiaryId"], // Report error on the most likely field
 });
 
 
