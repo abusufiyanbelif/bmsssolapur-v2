@@ -315,7 +315,7 @@ function BeneficiariesPageContent() {
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                              {renderActions(user)}
                         </TableCell>
@@ -366,7 +366,7 @@ function BeneficiariesPageContent() {
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">
                              <span>Joined On</span>
-                             <span>{format(user.createdAt.toDate(), "dd MMM yyyy")}</span>
+                             <span>{format(user.createdAt, "dd MMM yyyy")}</span>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
