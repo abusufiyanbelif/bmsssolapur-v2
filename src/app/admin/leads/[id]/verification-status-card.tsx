@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { ShieldCheck, UserCheck, UserX, Clock, Users } from "lucide-react";
+import { ShieldCheck, UserCheck, UserX, Clock, Users, CheckCircle } from "lucide-react";
 import type { Lead, User } from "@/services/types";
 import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

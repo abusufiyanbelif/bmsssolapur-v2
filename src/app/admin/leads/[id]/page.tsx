@@ -53,6 +53,7 @@ const verificationStatusConfig: Record<Lead['verifiedStatus'], { color: string; 
     "Rejected": { color: "bg-red-500/20 text-red-700 border-red-500/30", icon: ShieldX },
     "More Info Required": { color: "bg-blue-500/20 text-blue-700 border-blue-500/30", icon: MoreHorizontal },
     "Duplicate": { color: "bg-purple-500/20 text-purple-700 border-purple-500/30", icon: Ban },
+    "Other": { color: "bg-gray-500/20 text-gray-700 border-gray-500/30", icon: MoreHorizontal },
 };
 
 type AllocatedDonation = Donation & { amountAllocated: number, allocatedByUserName: string, allocatedAt: any };
