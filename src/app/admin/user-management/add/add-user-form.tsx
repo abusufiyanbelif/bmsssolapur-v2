@@ -108,19 +108,18 @@ function AddUserFormContent() {
   });
   
   useEffect(() => {
-    const donorIdentifier = searchParams.get('donorIdentifier');
-    if (donorIdentifier) {
-        // Simple logic to parse name from identifier
-        const namePart = donorIdentifier.split('/')[0].trim();
-        const [firstName, ...lastNameParts] = namePart.split(' ');
-        form.setValue('firstName', firstName || '');
-        form.setValue('lastName', lastNameParts.join(' ') || '');
-        
-        // Check if identifier is a UPI ID and pre-fill
-        if (donorIdentifier.includes('@')) {
-            form.setValue('upiIds', [{ value: donorIdentifier }]);
-        }
+    const donorName = searchParams.get('donorName');
+    const donorPhone = searchParams.get('donorPhone');
+    const donorUpiId = searchParams.get('donorUpiId');
+
+    if (donorName) {
+        const nameParts = donorName.split(' ');
+        form.setValue('firstName', nameParts[0] || '');
+        form.setValue('lastName', nameParts.slice(1).join(' ') || '');
     }
+    if(donorPhone) form.setValue('phone', donorPhone);
+    if(donorUpiId) form.setValue('upiIds', [{value: donorUpiId}]);
+    
   }, [searchParams, form]);
 
   const selectedRoles = form.watch("roles");

@@ -90,8 +90,10 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   amount: z.number().optional().describe('The total amount of the transaction.'),
   transactionId: z.string().optional().describe('The transaction ID, reference number, or UTR number.'),
   date: z.string().optional().describe('The date of the transaction in YYYY-MM-DD format.'),
-  paymentMethod: z.string().optional().describe('The payment method used, e.g., UPI, GPay, PhonePe, Bank Transfer.'),
-  donorIdentifier: z.string().optional().describe('Any identified name, phone number, or UPI ID of the person who sent the money.'),
+  paymentApp: z.string().optional().describe('The payment app used, e.g., Google Pay, PhonePe, Paytm.'),
+  donorName: z.string().optional().describe("The full name of the person who sent the money (e.g., 'John Doe' or 'Bhagnagri Zainul'). Do not include phone numbers or UPI IDs here."),
+  donorPhone: z.string().optional().describe("The donor's 10-digit phone number if visible. Do not include '@' symbols or names."),
+  donorUpiId: z.string().optional().describe("The donor's UPI ID if visible (e.g., 'username@okbank')."),
   notes: z.string().optional().describe('Any user-added comments, remarks, or notes found in the screenshot.'),
 });
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;

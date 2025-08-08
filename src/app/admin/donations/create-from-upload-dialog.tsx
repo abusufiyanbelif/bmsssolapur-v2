@@ -84,20 +84,23 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
       if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
       if(result.details.notes) queryParams.set('notes', result.details.notes);
+      if(result.details.date) queryParams.set('date', result.details.date);
+      if(result.details.paymentApp) queryParams.set('paymentApp', result.details.paymentApp);
+      if(result.details.donorUpiId) queryParams.set('donorUpiId', result.details.donorUpiId);
+      if(result.details.donorPhone) queryParams.set('donorPhone', result.details.donorPhone);
+      if(result.details.donorName) queryParams.set('donorName', result.details.donorName);
       
       let userFound = false;
-      // Find user by identifier
-      if(result.details.donorIdentifier) {
-        let user = await getUserByUpiId(result.details.donorIdentifier);
-        if(!user) user = await getUserByPhone(result.details.donorIdentifier.slice(-10)); // Try phone
-        if(!user) user = await getUserByUserId(result.details.donorIdentifier);
-        if(user) {
-            queryParams.set('donorId', user.id!);
-            userFound = true;
-            toast({ title: "Donor Found!", description: `Prefilling form for ${user.name}.` });
-        } else {
-             queryParams.set('donorIdentifier', result.details.donorIdentifier);
-        }
+      // Improved User Search Logic
+      let user = null;
+      if (result.details.donorUpiId) user = await getUserByUpiId(result.details.donorUpiId);
+      if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
+      // We don't search by name as it's less reliable
+
+      if(user) {
+          queryParams.set('donorId', user.id!);
+          userFound = true;
+          toast({ title: "Donor Found!", description: `Prefilling form for ${user.name}.` });
       }
 
       // Store screenshot in session to be picked up by the add form
