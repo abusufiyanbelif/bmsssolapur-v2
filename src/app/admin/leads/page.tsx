@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
-const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Partial", "Closed", "On Hold", "Cancelled"];
+const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected", "More Info Required", "Duplicate"];
 
 type BeneficiaryTypeFilter = 'all' | 'Adult' | 'Kid' | 'Family' | 'Widow';
@@ -46,10 +46,24 @@ type SortDirection = 'asc' | 'desc';
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
+    "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Complete": "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
     "On Hold": "bg-orange-500/20 text-orange-700 border-orange-500/30",
     "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
+};
+
+const statusIcons: Record<LeadStatus, React.ElementType> = {
+    "Pending": Clock,
+    "Ready For Help": Package,
+    "Publish": Eye,
+    "Partial": Clock,
+    "Complete": CheckCircle,
+    "Closed": CheckCircle,
+    "On Hold": MoreHorizontal,
+    "Cancelled": Ban,
 };
 
 const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; icon: React.ElementType }> = {
@@ -258,6 +272,7 @@ function LeadsPageContent() {
             <TableBody>
                 {paginatedLeads.map((lead, index) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+                    const StatusIcon = statusIcons[lead.status];
                     return (
                         <TableRow key={lead.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
@@ -272,6 +287,7 @@ function LeadsPageContent() {
                             <TableCell className="font-semibold text-green-600">₹{lead.helpGiven.toLocaleString()}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                    <StatusIcon className="mr-1 h-3 w-3" />
                                     {lead.status}
                                 </Badge>
                             </TableCell>
@@ -298,6 +314,7 @@ function LeadsPageContent() {
         <div className="space-y-4">
             {paginatedLeads.map((lead, index) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+                 const StatusIcon = statusIcons[lead.status];
                  return (
                     <Card key={lead.id}>
                         <CardHeader>
@@ -324,6 +341,7 @@ function LeadsPageContent() {
                              <div className="flex justify-between">
                                 <span className="text-muted-foreground">Case Status</span>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                    <StatusIcon className="mr-1 h-3 w-3" />
                                     {lead.status}
                                 </Badge>
                             </div>
@@ -454,7 +472,7 @@ function LeadsPageContent() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Leads Management</h2>
             <Button asChild>
                 <Link href="/admin/leads/add">
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                    <PlusCircle className="mr-2" />
                     Add Lead
                 </Link>
             </Button>

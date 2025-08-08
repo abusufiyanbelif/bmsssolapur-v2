@@ -41,7 +41,7 @@ import { Campaign, getAllCampaigns } from "@/services/campaign-service";
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
-const leadStatuses: LeadStatus[] = ["Pending", "Partial", "Closed", "On Hold", "Cancelled"];
+const leadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected", "More Info Required", "Duplicate"];
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 

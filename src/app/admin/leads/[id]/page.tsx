@@ -6,7 +6,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp, Eye, Package } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -25,10 +25,24 @@ import { AuditTrail } from "./audit-trail";
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
+    "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Complete": "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
     "On Hold": "bg-orange-500/20 text-orange-700 border-orange-500/30",
     "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
+};
+
+const statusIcons: Record<Lead['status'], React.ElementType> = {
+    "Pending": Clock,
+    "Ready For Help": Package,
+    "Publish": Eye,
+    "Partial": Clock,
+    "Complete": CheckCircle,
+    "Closed": CheckCircle,
+    "On Hold": MoreHorizontal,
+    "Cancelled": Ban,
 };
 
 const verificationStatusConfig: Record<Lead['verifiedStatus'], { color: string; icon: React.ElementType }> = {
@@ -61,6 +75,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     
     const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+    const StatusIcon = statusIcons[lead.status];
     const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
     const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
     const dueDate = lead.dueDate;
@@ -106,7 +121,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             <div className="flex flex-wrap gap-4 text-sm">
                                 <div className="flex items-center">
                                     <span className="text-muted-foreground mr-2">Case Status:</span> 
-                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>{lead.status}</Badge>
+                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                      <StatusIcon className="mr-1 h-3 w-3" />
+                                      {lead.status}
+                                    </Badge>
                                 </div>
                                 <div className="flex items-center">
                                      <span className="text-muted-foreground mr-2">Verification:</span> 

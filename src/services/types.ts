@@ -104,7 +104,7 @@ export interface Donation {
 }
 
 // Lead-related types
-export type LeadStatus = 'Pending' | 'Partial' | 'Closed' | 'On Hold' | 'Cancelled';
+export type LeadStatus = 'Pending' | 'Ready For Help' | 'Publish' | 'Partial' | 'Complete' | 'Closed' | 'On Hold' | 'Cancelled';
 export type LeadVerificationStatus = 'Pending' | 'Verified' | 'Rejected' | 'More Info Required' | 'Duplicate';
 export type LeadPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Loan' | 'Other';
 
