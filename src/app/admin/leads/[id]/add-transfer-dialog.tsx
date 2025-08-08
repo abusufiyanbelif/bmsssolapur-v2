@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect } from "lucide-react";
 import { handleFundTransfer, handleScanTransferProof, handleGetRawText } from "./actions";
 import { useRouter } from "next/navigation";
@@ -41,6 +42,21 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  
+  const form = useForm();
+  const { setValue, register, handleSubmit } = form;
+
+  useEffect(() => {
+    if (scannedDetails) {
+        // Use Object.entries to iterate and set values
+        for (const [key, value] of Object.entries(scannedDetails)) {
+            if (value !== undefined && value !== null) {
+                setValue(key, value);
+            }
+        }
+    }
+  }, [scannedDetails, setValue]);
+
 
   useEffect(() => {
     if (file) {
@@ -103,16 +119,19 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     setIsExtractingText(false);
   };
   
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const onFormSubmit = async (data: any) => {
     if (!adminUserId) {
       toast({ variant: "destructive", title: "Authentication Error", description: "Could not identify the logged-in administrator. Please log out and back in." });
       return;
     }
 
     setIsSubmitting(true);
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData();
+    for (const key in data) {
+        if (data[key]) {
+            formData.append(key, data[key]);
+        }
+    }
     formData.append("adminUserId", adminUserId);
     if(file) formData.append("proof", file);
 
@@ -126,7 +145,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
       setFile(null);
       setPreviewUrl(null);
       setRawText(null);
-      if(formRef.current) formRef.current.reset();
+      form.reset();
       router.refresh(); 
     } else {
       toast({ variant: "destructive", title: "Submission Failed", description: result.error || "An unknown error occurred." });
@@ -140,6 +159,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         setFile(null);
         setPreviewUrl(null);
         setRawText(null);
+        form.reset();
       }
       setOpen(isOpen)
     }}>
@@ -156,7 +176,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
             Fill out the details below to record a payment. Scan the proof to auto-fill details.
           </DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-x-8 gap-y-4 max-h-[80vh] overflow-y-auto pr-2">
+        <form ref={formRef} onSubmit={handleSubmit(onFormSubmit)} className="grid md:grid-cols-2 gap-x-8 gap-y-4 max-h-[80vh] overflow-y-auto pr-2">
             
             {/* Left Column - Form Fields */}
             <div className="space-y-4">
@@ -164,58 +184,58 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="amount">Amount (₹)</Label>
-                        <Input id="amount" name="amount" type="number" required placeholder="e.g., 5000" defaultValue={scannedDetails?.amount} />
+                        <Input id="amount" {...register("amount")} type="number" required placeholder="e.g., 5000" />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="status">Status</Label>
-                        <Input id="status" name="status" type="text" placeholder="e.g., Successful" defaultValue={scannedDetails?.status}/>
+                        <Input id="status" {...register("status")} type="text" placeholder="e.g., Successful" />
                     </div>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="transactionId">Transaction ID</Label>
-                    <Input id="transactionId" name="transactionId" type="text" placeholder="Enter transaction reference" defaultValue={scannedDetails?.transactionId} />
+                    <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter transaction reference" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="utrNumber">UTR Number</Label>
-                    <Input id="utrNumber" name="utrNumber" type="text" placeholder="Enter UTR number" defaultValue={scannedDetails?.utrNumber} />
+                    <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">
                         <Label htmlFor="paymentApp">Payment App</Label>
-                        <Input id="paymentApp" name="paymentApp" type="text" placeholder="e.g., PhonePe" defaultValue={scannedDetails?.paymentApp}/>
+                        <Input id="paymentApp" {...register("paymentApp")} type="text" placeholder="e.g., PhonePe" />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="paymentMethod">Payment Method</Label>
-                        <Input id="paymentMethod" name="paymentMethod" type="text" placeholder="e.g., UPI" defaultValue={scannedDetails?.paymentMethod}/>
+                        <Input id="paymentMethod" {...register("paymentMethod")} type="text" placeholder="e.g., UPI" />
                     </div>
                 </div>
 
                 <h3 className="font-semibold text-lg border-b pb-2 pt-4">Participant Details</h3>
                 <div className="space-y-2">
                     <Label htmlFor="senderName">Sender Name</Label>
-                    <Input id="senderName" name="senderName" type="text" placeholder="As per bank records" defaultValue={scannedDetails?.senderName} />
+                    <Input id="senderName" {...register("senderName")} type="text" placeholder="As per bank records" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="senderAccountNumber">Sender Account Number</Label>
-                    <Input id="senderAccountNumber" name="senderAccountNumber" type="text" placeholder="e.g., XXXXXX1234" defaultValue={scannedDetails?.senderAccountNumber} />
+                    <Input id="senderAccountNumber" {...register("senderAccountNumber")} type="text" placeholder="e.g., XXXXXX1234" />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="recipientName">Recipient Name</Label>
-                    <Input id="recipientName" name="recipientName" type="text" placeholder="As per bank records" defaultValue={scannedDetails?.recipientName} />
+                    <Input id="recipientName" {...register("recipientName")} type="text" placeholder="As per bank records" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="recipientAccountNumber">Recipient Account Number</Label>
-                    <Input id="recipientAccountNumber" name="recipientAccountNumber" type="text" placeholder="e.g., XXXXXX5678" defaultValue={scannedDetails?.recipientAccountNumber} />
+                    <Input id="recipientAccountNumber" {...register("recipientAccountNumber")} type="text" placeholder="e.g., XXXXXX5678" />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="recipientUpiId">Recipient UPI ID</Label>
-                    <Input id="recipientUpiId" name="recipientUpiId" type="text" placeholder="e.g., username@upi" defaultValue={scannedDetails?.recipientUpiId} />
+                    <Input id="recipientUpiId" {...register("recipientUpiId")} type="text" placeholder="e.g., username@upi" />
                 </div>
 
                 <h3 className="font-semibold text-lg border-b pb-2 pt-4">Additional Info</h3>
                 <div className="space-y-2">
                     <Label htmlFor="notes">Notes</Label>
-                    <Textarea id="notes" name="notes" placeholder="e.g., Bank transfer reference, payment details..." defaultValue={scannedDetails?.notes} />
+                    <Textarea id="notes" {...register("notes")} placeholder="e.g., Bank transfer reference, payment details..." />
                 </div>
             </div>
 
