@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link"
@@ -7,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -57,6 +58,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/campaigns", label: "Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
+            { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft },
         ]
     },
 
@@ -129,7 +131,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     };
     
     const filterSubItems = (item: NavItem) => {
-        const adminLinks = ["/admin/leads", "/admin/campaigns"];
+        const adminLinks = ["/admin/leads", "/admin/campaigns", "/admin/transfers"];
         const financeLinks = ["/admin/donations"];
         const superAdminLinks = ["/admin/organization"];
 
