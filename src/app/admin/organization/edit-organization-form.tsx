@@ -119,185 +119,200 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-8">
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Organization Name</FormLabel>
-                            <FormControl>
-                                <Input {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Address</FormLabel>
-                            <FormControl>
-                                <Input {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="registrationNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Registration Number</FormLabel>
-                            <FormControl>
-                                <Input {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="panNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>PAN Number</FormLabel>
-                            <FormControl>
-                                <Input {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-             <div className="md:col-span-1 space-y-4">
-                <Label>QR Code Preview</Label>
-                <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                    {previewUrl ? (
-                         <div className="relative w-48 h-48">
-                                <Image src={previewUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
-                            </div>
-                    ): (
-                        <p className="text-sm text-muted-foreground text-center p-8">
-                           Upload a QR code image below to see a preview.
-                        </p>
-                    )}
+    <Card>
+        <CardHeader>
+            <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle>Manage Organization Details</CardTitle>
+                    <CardDescription>
+                        Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
+                    </CardDescription>
                 </div>
+                 {!isEditing && (
+                    <Button onClick={() => setIsEditing(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                    </Button>
+                )}
             </div>
-        </div>
+        </CardHeader>
+        <CardContent>
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <div className="grid md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 space-y-8">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Organization Name</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Address</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="registrationNumber"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Registration Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="panNumber"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>PAN Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <div className="md:col-span-1 space-y-4">
+                        <Label>QR Code Preview</Label>
+                        <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
+                            {previewUrl ? (
+                                <div className="relative w-48 h-48">
+                                        <Image src={previewUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                                    </div>
+                            ): (
+                                <p className="text-sm text-muted-foreground text-center p-8">
+                                Upload a QR code image below to see a preview.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
-        <h3 className="text-lg font-semibold border-b pb-2">Contact & Payment Details</h3>
+                <h3 className="text-lg font-semibold border-b pb-2">Contact & Payment Details</h3>
 
-        <div className="grid md:grid-cols-2 gap-8">
-            <FormField
+                <div className="grid md:grid-cols-2 gap-8">
+                    <FormField
+                        control={form.control}
+                        name="contactEmail"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Contact Email</FormLabel>
+                                <FormControl>
+                                    <Input type="email" {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="contactPhone"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Contact Phone</FormLabel>
+                                <FormControl>
+                                    <Input {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="website"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Website URL</FormLabel>
+                                <FormControl>
+                                    <Input type="url" {...field} placeholder="https://example.com" disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="upiId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>UPI ID</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="yourname@okhdfcbank" disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                
+                <FormField
                 control={form.control}
-                name="contactEmail"
+                name="qrCodeFile"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Contact Email</FormLabel>
-                        <FormControl>
-                            <Input type="email" {...field} disabled={!isEditing} />
-                        </FormControl>
-                        <FormMessage />
+                    <FormLabel>Upload New QR Code</FormLabel>
+                    <FormControl>
+                        <Input 
+                        type="file" 
+                        accept="image/png, image/jpeg, image/jpg"
+                        disabled={!isEditing}
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            field.onChange(file);
+                            if (file) {
+                                setPreviewUrl(URL.createObjectURL(file));
+                            } else {
+                                setPreviewUrl(organization.qrCodeUrl || '');
+                            }
+                        }}
+                        />
+                    </FormControl>
+                    <FormDescription>
+                        Upload a new QR code image. This will replace the existing one.
+                    </FormDescription>
+                    <FormMessage />
                     </FormItem>
                 )}
-            />
-             <FormField
-                control={form.control}
-                name="contactPhone"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Contact Phone</FormLabel>
-                        <FormControl>
-                            <Input {...field} disabled={!isEditing} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Website URL</FormLabel>
-                        <FormControl>
-                            <Input type="url" {...field} placeholder="https://example.com" disabled={!isEditing} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="upiId"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>UPI ID</FormLabel>
-                        <FormControl>
-                            <Input {...field} placeholder="yourname@okhdfcbank" disabled={!isEditing} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="qrCodeFile"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Upload New QR Code</FormLabel>
-              <FormControl>
-                <Input 
-                  type="file" 
-                  accept="image/png, image/jpeg, image/jpg"
-                  disabled={!isEditing}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    field.onChange(file);
-                    if (file) {
-                        setPreviewUrl(URL.createObjectURL(file));
-                    } else {
-                        setPreviewUrl(organization.qrCodeUrl || '');
-                    }
-                  }}
                 />
-              </FormControl>
-              <FormDescription>
-                Upload a new QR code image. This will replace the existing one.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
 
-        {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} size="lg">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Details
-            </Button>
-        ) : (
-            <div className="flex gap-4">
-                 <Button type="submit" disabled={isSubmitting || !isDirty} size="lg">
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Changes
-                </Button>
-                <Button type="button" variant="outline" onClick={handleCancel} size="lg" disabled={isSubmitting}>
-                    <X className="mr-2 h-4 w-4" />
-                    Cancel
-                </Button>
-            </div>
-        )}
-      </form>
-    </Form>
+                {isEditing && (
+                    <div className="flex gap-4">
+                        <Button type="submit" disabled={isSubmitting || !isDirty} size="lg">
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleCancel} size="lg" disabled={isSubmitting}>
+                            <X className="mr-2 h-4 w-4" />
+                            Cancel
+                        </Button>
+                    </div>
+                )}
+            </form>
+            </Form>
+        </CardContent>
+    </Card>
   );
 }

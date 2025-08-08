@@ -26,17 +26,7 @@ export default async function OrganizationSettingsPage() {
     return (
         <div className="flex-1 space-y-4">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Profile</h2>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Manage Organization Details</CardTitle>
-                    <CardDescription>
-                        Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <EditOrganizationForm organization={organization} />
-                </CardContent>
-            </Card>
+            <EditOrganizationForm organization={organization} />
         </div>
     );
 }

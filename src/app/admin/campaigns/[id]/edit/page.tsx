@@ -20,17 +20,7 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
                 Back to All Campaigns
             </Link>
             
-            <Card>
-                <CardHeader>
-                    <CardTitle>Edit Campaign</CardTitle>
-                    <CardDescription>
-                        Update the details for the "{campaign.name}" campaign.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <CampaignForm campaign={campaign} />
-                </CardContent>
-            </Card>
+            <CampaignForm campaign={campaign} />
         </div>
     );
 }
