@@ -21,6 +21,8 @@ import { UploadDocumentDialog } from "./upload-document-dialog";
 import { ActivityLog, getUserActivity } from "@/services/activity-log-service";
 import { AddTransferDialog } from "./add-transfer-dialog";
 import { AuditTrail } from "./audit-trail";
+import { VerificationStatusCard } from "./verification-status-card";
+import { getAllUsers } from "@/services/user-service";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -62,7 +64,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         notFound();
     }
     
-    const [beneficiary, allocatedDonations, activityLogs] = await Promise.all([
+    const [beneficiary, allocatedDonations, activityLogs, allUsers] = await Promise.all([
         getUser(lead.beneficiaryId),
         Promise.all(
             (lead.donations || []).map(async (alloc) => {
@@ -70,7 +72,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                 return donation ? { ...donation, amountAllocated: alloc.amount, allocatedByUserName: alloc.allocatedByUserName, allocatedAt: alloc.allocatedAt } : null;
             })
         ),
-        getUserActivity(lead.beneficiaryId) // Fetching activity for the beneficiary
+        getUserActivity(lead.beneficiaryId), // Fetching activity for the beneficiary
+        getAllUsers(), // Fetch all users to identify approvers
     ]);
     
     const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
@@ -351,6 +354,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             )}
                         </CardContent>
                     </Card>
+                    <VerificationStatusCard lead={lead} allApprovers={allUsers} />
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
