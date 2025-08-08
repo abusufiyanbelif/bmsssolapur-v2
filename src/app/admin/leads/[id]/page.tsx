@@ -6,7 +6,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -19,6 +19,7 @@ import { DeleteLeadButton } from "./delete-lead-button";
 import { Separator } from "@/components/ui/separator";
 import { UploadDocumentDialog } from "./upload-document-dialog";
 import { ActivityLog, getUserActivity } from "@/services/activity-log-service";
+import { AddTransferDialog } from "./add-transfer-dialog";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -168,6 +169,51 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
                     <Card>
                         <CardHeader className="flex flex-row justify-between items-start">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Banknote />
+                                    Fund Transfers
+                                </CardTitle>
+                                <CardDescription>
+                                    A record of all funds transferred to the beneficiary for this case.
+                                </CardDescription>
+                            </div>
+                             <AddTransferDialog leadId={lead.id!} />
+                        </CardHeader>
+                        <CardContent>
+                           {lead.fundTransfers && lead.fundTransfers.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Amount</TableHead>
+                                            <TableHead>Transferred By</TableHead>
+                                            <TableHead className="text-right">Proof</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {lead.fundTransfers.map((transfer, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>{format(transfer.transferredAt, "dd MMM yyyy")}</TableCell>
+                                                <TableCell className="font-semibold">₹{transfer.amount.toLocaleString()}</TableCell>
+                                                <TableCell>{transfer.transferredByUserName}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button asChild variant="outline" size="sm">
+                                                        <Link href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">View Proof</Link>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                           ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No fund transfers have been recorded for this lead yet.</p>
+                           )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row justify-between items-start">
                              <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Paperclip />
@@ -201,7 +247,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                      <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Banknote />
+                                <HandHeart />
                                 Allocated Donations ({validAllocatedDonations.length})
                             </CardTitle>
                              <CardDescription>
@@ -271,6 +317,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     <Paperclip className="h-5 w-5 text-blue-600" />
                                     <div className="text-sm">
                                         <p>Document <span className="font-semibold">{log.details.fileName}</span> uploaded by <span className="font-semibold">{log.userName}</span></p>
+                                        <p className="text-xs text-muted-foreground">{format(log.timestamp as Date, 'PPP p')}</p>
+                                    </div>
+                                </div>
+                             ))}
+                              {leadSpecificActivity.filter(log => log.activity === 'Fund Transfer Recorded').map(log => (
+                                <div key={log.id} className="flex gap-4 items-center">
+                                    <Banknote className="h-5 w-5 text-emerald-600" />
+                                    <div className="text-sm">
+                                        <p>Fund transfer of <span className="font-semibold">₹{log.details.amount?.toLocaleString()}</span> recorded by <span className="font-semibold">{log.userName}</span></p>
                                         <p className="text-xs text-muted-foreground">{format(log.timestamp as Date, 'PPP p')}</p>
                                     </div>
                                 </div>

@@ -123,6 +123,15 @@ export interface LeadDonationAllocation {
     allocatedAt: Timestamp;
 }
 
+export interface FundTransfer {
+    transferredByUserId: string;
+    transferredByUserName: string;
+    amount: number;
+    transferredAt: Timestamp;
+    notes?: string;
+    proofUrl: string;
+}
+
 export interface Lead {
   id?: string;
   name: string;
@@ -141,6 +150,7 @@ export interface Lead {
   isLoan: boolean;
   verifiers?: Verifier[];
   donations?: LeadDonationAllocation[];
+  fundTransfers?: FundTransfer[];
   caseDetails?: string;
   verificationDocumentUrl?: string;
   verifiedStatus: LeadVerificationStatus;
