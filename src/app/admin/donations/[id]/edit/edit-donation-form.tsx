@@ -27,21 +27,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonation } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, Edit, Save, X, Upload } from "lucide-react";
+import { Loader2, Edit, Save, X, Upload, CalendarIcon } from "lucide-react";
 import type { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UploadProofDialog } from "../../upload-proof-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const donationStatuses = ["Pending verification", "Verified", "Failed/Incomplete", "Allocated"] as const;
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'];
 
 const formSchema = z.object({
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
+  donationDate: z.date(),
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
   status: z.enum(donationStatuses),
   transactionId: z.string().min(1, "Transaction ID is required."),
+  donorUpiId: z.string().optional(),
+  paymentApp: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -68,10 +76,13 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: donation.amount,
+      donationDate: (donation.donationDate as any).toDate(),
       type: donation.type as Exclude<DonationType, 'Split'>,
       purpose: donation.purpose,
       status: donation.status,
       transactionId: donation.transactionId || '',
+      donorUpiId: donation.donorUpiId || '',
+      paymentApp: donation.paymentApp || '',
       notes: donation.notes || '',
     },
   });
@@ -81,10 +92,13 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
   const handleCancel = () => {
     reset({
         amount: donation.amount,
+        donationDate: (donation.donationDate as any).toDate(),
         type: donation.type as Exclude<DonationType, 'Split'>,
         purpose: donation.purpose,
         status: donation.status,
         transactionId: donation.transactionId || '',
+        donorUpiId: donation.donorUpiId || '',
+        paymentApp: donation.paymentApp || '',
         notes: donation.notes || '',
     });
     setIsEditing(false);
@@ -104,8 +118,11 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
     
     const formData = new FormData();
     formData.append("amount", String(values.amount));
+    formData.append("donationDate", values.donationDate.toISOString());
     formData.append("type", values.type);
     if (values.purpose) formData.append("purpose", values.purpose);
+    if (values.donorUpiId) formData.append("donorUpiId", values.donorUpiId);
+    if (values.paymentApp) formData.append("paymentApp", values.paymentApp);
     formData.append("status", values.status);
     formData.append("transactionId", values.transactionId);
     if (values.notes) formData.append("notes", values.notes);
@@ -162,19 +179,60 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-                <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Amount</FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing}/>
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Amount</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing}/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="donationDate"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Donation Date</FormLabel>
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                <Button
+                                    variant={"outline"}
+                                    disabled={!isEditing}
+                                    className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                >
+                                    {field.value ? (
+                                    format(field.value, "PPP")
+                                    ) : (
+                                    <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField
@@ -220,6 +278,44 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
                         <FormMessage />
                         </FormItem>
                     )}
+                    />
+                </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <FormField
+                        control={form.control}
+                        name="paymentApp"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Payment App</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select payment app" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {paymentApps.map(method => (
+                                    <SelectItem key={method} value={method}>{method}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="donorUpiId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Donor UPI ID</FormLabel>
+                            <FormControl>
+                            <Input placeholder="e.g., username@okhdfc" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
                     />
                 </div>
 

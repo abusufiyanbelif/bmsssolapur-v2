@@ -27,27 +27,34 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon } from "lucide-react";
+import { Loader2, Info, Image as ImageIcon, CalendarIcon } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByUserId, getUserByPhone, getUserByUpiId } from "@/services/user-service";
 import { useSearchParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'];
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
   isAnonymous: z.boolean().default(false),
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
+  donationDate: z.date(),
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
   transactionId: z.string().min(1, "Transaction ID is required."),
+  donorUpiId: z.string().optional(),
+  paymentApp: z.string().optional(),
   paymentScreenshot: z.any().optional(),
   paymentScreenshotDataUrl: z.string().optional(),
-  paymentMethod: z.enum(["Bank Transfer", "Cash", "UPI / QR Code", "Other"]),
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
   notes: z.string().optional(),
@@ -88,7 +95,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     defaultValues: {
       isAnonymous: false,
       amount: 0,
-      paymentMethod: "UPI / QR Code",
+      donationDate: new Date(),
       includeTip: false,
       tipAmount: 0,
       notes: "",
@@ -98,7 +105,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   });
   
   const { watch, setValue } = form;
-  const paymentMethod = watch("paymentMethod");
   const includeTip = watch("includeTip");
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
@@ -111,10 +117,17 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         const donorIdParam = searchParams.get('donorId');
         const donorIdentifierParam = searchParams.get('donorIdentifier');
         const notesParam = searchParams.get('notes');
+        const dateParam = searchParams.get('date');
+        const paymentMethodParam = searchParams.get('paymentMethod');
 
         if (amountParam) setValue('amount', parseFloat(amountParam));
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
         if (notesParam) setValue('notes', notesParam);
+        if (dateParam) setValue('donationDate', new Date(dateParam));
+        if (paymentMethodParam) setValue('paymentApp', paymentMethodParam);
+        if (donorIdentifierParam && donorIdentifierParam.includes('@')) {
+            setValue('donorUpiId', donorIdentifierParam);
+        }
         
         let foundUser: User | null = null;
         if(donorIdParam) {
@@ -151,6 +164,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   useEffect(() => {
     if (selectedDonor) {
         setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
+        if (selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
+             setValue('donorUpiId', selectedDonor.upiIds[0]);
+        }
     }
   }, [selectedDonor, setValue]);
   
@@ -172,8 +188,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     formData.append("donorId", values.donorId!);
     formData.append("isAnonymous", String(values.isAnonymous));
     formData.append("amount", String(values.amount));
+    formData.append("donationDate", values.donationDate.toISOString());
     formData.append("type", values.type);
     if(values.purpose) formData.append("purpose", values.purpose);
+    if(values.donorUpiId) formData.append("donorUpiId", values.donorUpiId);
+    if(values.paymentApp) formData.append("paymentApp", values.paymentApp);
     formData.append("transactionId", values.transactionId);
     if(values.tipAmount) formData.append("tipAmount", String(values.tipAmount));
     if (values.paymentScreenshot) {
@@ -197,13 +216,15 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         donorId: '',
         isAnonymous: false,
         amount: 0,
-        paymentMethod: "UPI / QR Code",
+        donationDate: new Date(),
         includeTip: false,
         tipAmount: 0,
         notes: "",
         transactionId: "",
         purpose: undefined,
         type: undefined,
+        paymentApp: undefined,
+        donorUpiId: '',
         paymentScreenshot: undefined,
         paymentScreenshotDataUrl: undefined,
       });
@@ -299,46 +320,61 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                   <FormDescription>This ID will be used for public display to protect the donor's privacy.</FormDescription>
               </div>
           )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Primary Donation Amount</FormLabel>
-                  <FormControl>
-                      <Input type="number" placeholder="Enter amount" {...field} />
-                  </FormControl>
-                   <FormDescription>The main amount for the donation's purpose.</FormDescription>
-                  <FormMessage />
-                  </FormItem>
-              )}
-              />
-              <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Method</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select payment method" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {["UPI / QR Code", "Bank Transfer", "Cash", "Other"].map(method => (
-                          <SelectItem key={method} value={method}>{method}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Primary Donation Amount</FormLabel>
+                <FormControl>
+                    <Input type="number" placeholder="Enter amount" {...field} />
+                </FormControl>
+                    <FormDescription>The main amount for the donation's purpose.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="donationDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Donation Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>The date the transaction was made.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
           <FormField
             control={form.control}
             name="includeTip"
@@ -434,7 +470,43 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               )}
               />
           </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                    control={form.control}
+                    name="paymentApp"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Payment App</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select payment app" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {paymentApps.map(method => (
+                                <SelectItem key={method} value={method}>{method}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="donorUpiId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Donor UPI ID</FormLabel>
+                        <FormControl>
+                        <Input placeholder="e.g., username@okhdfc" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
           <FormField
             control={form.control}
             name="transactionId"
@@ -467,7 +539,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               )}
           />
 
-          {paymentMethod !== "Cash" && !manualScreenshotPreview && (
+          {!manualScreenshotPreview && (
               <FormField
               control={form.control}
               name="paymentScreenshot"

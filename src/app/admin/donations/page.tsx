@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -37,7 +38,7 @@ const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification"
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
 const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
 
-type SortableColumn = 'donorName' | 'amount' | 'createdAt';
+type SortableColumn = 'donorName' | 'amount' | 'donationDate';
 type SortDirection = 'asc' | 'desc';
 
 
@@ -73,7 +74,7 @@ function DonationsPageContent() {
     });
 
     // Sorting state
-    const [sortColumn, setSortColumn] = useState<SortableColumn>('createdAt');
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('donationDate');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     // Pagination states
@@ -139,7 +140,10 @@ function DonationsPageContent() {
             const bValue = b[sortColumn];
 
             let comparison = 0;
-            if (aValue > bValue) {
+            // Handle date/timestamp objects
+            if (aValue && bValue && (aValue as any).toDate && (bValue as any).toDate) {
+                comparison = (aValue as any).toDate().getTime() - (bValue as any).toDate().getTime();
+            } else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
                 comparison = -1;
@@ -194,8 +198,8 @@ function DonationsPageContent() {
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>
-                         <Button variant="ghost" onClick={() => handleSort('createdAt')}>
-                           Date {renderSortIcon('createdAt')}
+                         <Button variant="ghost" onClick={() => handleSort('donationDate')}>
+                           Date {renderSortIcon('donationDate')}
                         </Button>
                     </TableHead>
                     <TableHead>
@@ -208,8 +212,8 @@ function DonationsPageContent() {
                             Amount {renderSortIcon('amount')}
                         </Button>
                     </TableHead>
+                    <TableHead>Payment App</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Purpose</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -218,7 +222,7 @@ function DonationsPageContent() {
                 {paginatedDonations.map((donation, index) => (
                     <TableRow key={donation.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                        <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format((donation.donationDate as any).toDate(), "dd MMM yyyy")}</TableCell>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                                 <span>{donation.donorName}</span>
@@ -231,8 +235,8 @@ function DonationsPageContent() {
                             </div>
                         </TableCell>
                         <TableCell>₹{donation.amount.toFixed(2)}</TableCell>
+                        <TableCell>{donation.paymentApp || 'N/A'}</TableCell>
                         <TableCell>{donation.type}</TableCell>
-                        <TableCell>{donation.purpose || 'N/A'}</TableCell>
                         <TableCell>
                             <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
                                 {donation.status}
@@ -275,15 +279,15 @@ function DonationsPageContent() {
                     <CardContent className="space-y-3 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Date</span>
-                            <span>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</span>
+                            <span>{format((donation.donationDate as any).toDate(), "dd MMM yyyy")}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Category</span>
                             <span>{donation.type}</span>
                         </div>
                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Purpose</span>
-                            <span>{donation.purpose || 'N/A'}</span>
+                            <span className="text-muted-foreground">Payment App</span>
+                            <span>{donation.paymentApp || 'N/A'}</span>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">

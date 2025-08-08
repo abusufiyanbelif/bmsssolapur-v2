@@ -5,6 +5,7 @@ import { createDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType } from "@/services/types";
+import { Timestamp } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -63,6 +64,9 @@ export async function handleAddDonation(
         paymentScreenshotUrl = await handleFileUpload(screenshotFile);
     }
     
+    const donationDateStr = formData.get("donationDate") as string;
+    const donationDate = donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now();
+    
     const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
         donorId: donor.id!,
         donorName: donor.name, // Always store the real name for internal records
@@ -72,6 +76,9 @@ export async function handleAddDonation(
         purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
         status: "Pending verification",
         transactionId: formData.get("transactionId") as string,
+        donationDate: donationDate,
+        donorUpiId: formData.get("donorUpiId") as string | undefined,
+        paymentApp: formData.get("paymentApp") as string | undefined,
         notes: formData.get("notes") as string | undefined,
         paymentScreenshotUrl: paymentScreenshotUrl,
     };

@@ -5,6 +5,7 @@ import { updateDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, DonationStatus } from "@/services/types";
+import { Timestamp } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -23,6 +24,7 @@ export async function handleUpdateDonation(
     if (!adminUser) {
         return { success: false, error: "Admin performing the update could not be found." };
     }
+    const donationDateStr = rawFormData.donationDate as string;
 
     const updates: Partial<Donation> = {
         amount: parseFloat(rawFormData.amount as string),
@@ -30,6 +32,9 @@ export async function handleUpdateDonation(
         purpose: rawFormData.purpose ? rawFormData.purpose as DonationPurpose : undefined,
         status: rawFormData.status as DonationStatus,
         transactionId: rawFormData.transactionId as string,
+        donationDate: donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now(),
+        donorUpiId: rawFormData.donorUpiId as string | undefined,
+        paymentApp: rawFormData.paymentApp as string | undefined,
         notes: rawFormData.notes as string | undefined,
     };
 
