@@ -47,7 +47,7 @@ export default async function DashboardPage() {
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   
   const donationsThisMonth = allDonations.filter(d => {
-    const donationDate = d.createdAt.toDate();
+    const donationDate = (d.createdAt as any).toDate ? (d.createdAt as any).toDate() : d.createdAt;
     return donationDate >= startOfMonth && donationDate <= endOfMonth && (d.status === 'Verified' || d.status === 'Allocated');
   });
 
@@ -61,11 +61,11 @@ export default async function DashboardPage() {
 
   const pendingVerificationLeads = allLeads
     .filter(lead => lead.verifiedStatus === 'Pending')
-    .sort((a, b) => a.dateCreated.toMillis() - b.dateCreated.toMillis());
+    .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
 
   const pendingVerificationDonations = allDonations
     .filter(donation => donation.status === 'Pending verification')
-    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    .sort((a, b) => (b.createdAt as any) - (a.createdAt as any));
     
   const donationsByDonor = allDonations
     .filter(d => (d.status === 'Verified' || d.status === 'Allocated') && !d.isAnonymous)
@@ -230,7 +230,7 @@ export default async function DashboardPage() {
                                         Requested <span className="font-medium text-foreground">₹{lead.helpRequested.toLocaleString()}</span> for {lead.purpose}
                                     </p>
                                      <p className="text-xs text-muted-foreground">
-                                        Submitted on {format(lead.dateCreated.toDate(), 'dd MMM, yyyy')}
+                                        Submitted on {format(lead.dateCreated as Date, 'dd MMM, yyyy')}
                                     </p>
                                 </div>
                                 <Button asChild size="sm">
@@ -271,7 +271,7 @@ export default async function DashboardPage() {
                                         Donated <span className="font-medium text-foreground">₹{donation.amount.toLocaleString()}</span> for {donation.type}
                                     </p>
                                      <p className="text-xs text-muted-foreground">
-                                        Received {formatDistanceToNow(donation.createdAt.toDate(), { addSuffix: true })}
+                                        Received {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
                                     </p>
                                 </div>
                                 <Button asChild size="sm">
