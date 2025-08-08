@@ -42,7 +42,7 @@ import { Campaign, getAllCampaigns } from "@/services/campaign-service";
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
 const leadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
-const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected", "More Info Required", "Duplicate"];
+const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
 
@@ -557,29 +557,31 @@ export function EditLeadForm({ lead, campaigns }: EditLeadFormProps) {
                     />
                 </div>
                 
-                 <FormField
-                  control={form.control}
-                  name="isLoan"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={true}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Is this a repayable loan?
-                        </FormLabel>
-                        <FormDescription>
-                          This is automatically selected if the purpose is "Loan".
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                 {selectedPurpose === 'Loan' && (
+                     <FormField
+                        control={form.control}
+                        name="isLoan"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={true}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                Is this a repayable loan?
+                                </FormLabel>
+                                <FormDescription>
+                                This is automatically selected if the purpose is "Loan".
+                                </FormDescription>
+                            </div>
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 {isEditing && (
                     <div className="flex gap-4">
