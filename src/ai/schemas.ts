@@ -89,21 +89,21 @@ export type ExtractDonationDetailsInput = z.infer<typeof ExtractDonationDetailsI
 
 export const ExtractDonationDetailsOutputSchema = z.object({
   amount: z.number().optional().describe('The primary transaction amount. It must be a number.'),
-  transactionId: z.string().optional().describe("The Transaction ID, Order ID, or reference number. If multiple IDs are present, prefer the one labeled 'Transaction ID' or 'Reference No.'."),
+  transactionId: z.string().optional().describe("The primary Transaction ID, Order ID, or Reference Number. If a 'UPI Reference No' is present, prefer that. Otherwise, use the main transaction ID."),
   utrNumber: z.string().optional().describe("The UTR number if it is explicitly visible. It's often a long number."),
   date: z.string().optional().describe('The date of the transaction. Format it as YYYY-MM-DD.'),
   time: z.string().optional().describe('The time of the transaction. Format it as hh:mm am/pm.'),
-  paymentApp: z.string().optional().describe('The method or app of payment (e.g., UPI, Bank Transfer, GPay, PhonePe, Paytm). Infer this from the UI.'),
-  paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer.'),
-  senderName: z.string().optional().describe("The full name of the person who sent the money (e.g., 'From John Doe')."),
-  senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial (e.g., 'From account ...1234'). Do NOT extract a phone number here; use the 'donorPhone' field for that."),
-  recipientName: z.string().optional().describe("The full name of the person who received the money (e.g., 'To Jane Doe')."),
+  paymentApp: z.string().optional().describe('The method or app of payment (e.g., GPay, PhonePe, Paytm). Infer this from the UI, especially logos like "पे" for PhonePe or "Paytm Bank".'),
+  paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer. Often found near the transaction ID.'),
+  senderName: z.string().optional().describe("The full name of the person who sent the money, often found under a 'FROM' or 'Debited From' heading."),
+  senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial. Look for labels like 'A/c No.', 'From account ...1234', or a phone number explicitly linked to the account like '...linked to 1234567890'. Do NOT extract a standalone phone number here."),
+  recipientName: z.string().optional().describe("The full name of the person who received the money, often found under a 'TO' heading."),
   donorPhone: z.string().optional().describe("The sender's phone number, especially if it is specified as the linked account (e.g., '...linked to 1234567890')."),
-  recipientPhone: z.string().optional().describe("The recipient's phone number if visible."),
-  recipientUpiId: z.string().optional().describe("The recipient's UPI ID if visible (e.g., 'to-username@okbank')."),
+  recipientPhone: z.string().optional().describe("The recipient's phone number if visible, often near the recipient's name."),
+  recipientUpiId: z.string().optional().describe("The recipient's UPI ID if visible (e.g., 'username@okhdfc'). This is often found directly under the recipient's name."),
   recipientAccountNumber: z.string().optional().describe("The recipient's bank account number, even if partial (e.g., 'To account ...5678')."),
   status: z.string().optional().describe('The status of the transaction (e.g., Successful, Completed, Received).'),
-  notes: z.string().optional().describe('Any user-added comments, remarks, or descriptions found in the payment details.'),
+  notes: z.string().optional().describe('Any user-added comments, remarks, or descriptions found in the payment details. Also labeled as "Message".'),
 });
 
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
