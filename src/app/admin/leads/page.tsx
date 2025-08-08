@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -259,7 +260,7 @@ function LeadsPageContent() {
                     return (
                         <TableRow key={lead.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                            <TableCell>{format(lead.dateCreated.toDate(), "dd MMM yyyy")}</TableCell>
+                            <TableCell>{format(lead.dateCreated, "dd MMM yyyy")}</TableCell>
                             <TableCell>
                                 <div className="font-medium">{lead.name}</div>
                                 <div className="text-xs text-muted-foreground font-mono" title={lead.id}>
@@ -280,7 +281,7 @@ function LeadsPageContent() {
                                 </Badge>
                             </TableCell>
                             <TableCell>
-                                {lead.closedAt ? format(lead.closedAt.toDate(), "dd MMM yyyy") : 'N/A'}
+                                {lead.closedAt ? format(lead.closedAt, "dd MMM yyyy") : 'N/A'}
                             </TableCell>
                             <TableCell className="text-right">
                                 {renderActionButton(lead)}
@@ -303,7 +304,7 @@ function LeadsPageContent() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {lead.name}</CardTitle>
-                                    <CardDescription>Created: {format(lead.dateCreated.toDate(), "dd MMM yyyy")}</CardDescription>
+                                    <CardDescription>Created: {format(lead.dateCreated, "dd MMM yyyy")}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
