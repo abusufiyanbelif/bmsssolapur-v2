@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -27,7 +25,7 @@ export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
 const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
-export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'>>, adminUser: { id: string, name: string }) => {
+export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'campaignName' | 'otherCategoryDetail'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
@@ -129,6 +127,21 @@ export const deleteLead = async (id: string) => {
         throw new Error('Failed to delete lead.');
     }
 }
+
+// Quick status update functions
+export const updateLeadStatus = async (id: string, newStatus: LeadStatus) => {
+    return updateLead(id, { status: newStatus });
+};
+
+export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVerificationStatus) => {
+    // If verifying, also set status to Ready For Help
+    const updates: Partial<Lead> = { verifiedStatus: newStatus };
+    if (newStatus === 'Verified') {
+        updates.status = 'Ready For Help';
+    }
+    return updateLead(id, updates);
+};
+
 
 // Function to get all leads
 export const getAllLeads = async (): Promise<Lead[]> => {

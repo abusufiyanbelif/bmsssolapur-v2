@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -15,10 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
+import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -27,6 +26,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
@@ -111,25 +112,25 @@ function LeadsPageContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const [fetchedLeads, fetchedUsers] = await Promise.all([
-                    getAllLeads(),
-                    getAllUsers()
-                ]);
-                setLeads(fetchedLeads);
-                setUsers(fetchedUsers);
-                setError(null);
-            } catch (e) {
-                setError("Failed to fetch data. Please try again later.");
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [fetchedLeads, fetchedUsers] = await Promise.all([
+                getAllLeads(),
+                getAllUsers()
+            ]);
+            setLeads(fetchedLeads);
+            setUsers(fetchedUsers);
+            setError(null);
+        } catch (e) {
+            setError("Failed to fetch data. Please try again later.");
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchData();
     }, []);
 
@@ -227,12 +228,80 @@ function LeadsPageContent() {
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
     
-    const renderActionButton = (lead: Lead) => (
-        <Button variant="outline" size="sm" asChild>
-            <Link href={`/admin/leads/${lead.id}`}>
-                <Eye className="mr-2 h-3 w-3" /> View
-            </Link>
-        </Button>
+    const handleQuickStatusChange = async (leadId: string, type: 'case' | 'verification', newStatus: LeadStatus | LeadVerificationStatus) => {
+        try {
+            if (type === 'case') {
+                await updateLeadStatus(leadId, newStatus as LeadStatus);
+            } else {
+                await updateLeadVerificationStatus(leadId, newStatus as LeadVerificationStatus);
+            }
+            toast({
+                title: "Status Updated",
+                description: `Lead status changed to "${newStatus}".`,
+                variant: 'success'
+            });
+            fetchData(); // Refresh data
+        } catch (e) {
+            toast({
+                title: "Error",
+                description: "Failed to update lead status.",
+                variant: 'destructive'
+            });
+        }
+    };
+    
+    const renderActions = (lead: Lead) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                 <DropdownMenuItem asChild>
+                    <Link href={`/admin/leads/${lead.id}`}>
+                        <Eye className="mr-2 h-4 w-4" /> View Details
+                    </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                    <Link href={`/admin/leads/${lead.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" /> Edit Lead
+                    </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+
+                {lead.verifiedStatus === 'Pending' && (
+                    <>
+                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'verification', 'Verified')}>
+                            <ShieldCheck className="mr-2 h-4 w-4 text-green-600" /> Quick Verify
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'verification', 'Rejected')} className="text-destructive focus:text-destructive">
+                            <ShieldX className="mr-2 h-4 w-4" /> Quick Reject
+                        </DropdownMenuItem>
+                    </>
+                )}
+
+                {lead.verifiedStatus === 'Verified' && lead.status === 'Ready For Help' && (
+                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Publish')}>
+                        <UploadCloud className="mr-2 h-4 w-4 text-blue-600" /> Publish Lead
+                    </DropdownMenuItem>
+                )}
+                
+                {lead.status === 'Publish' && (
+                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Ready For Help')}>
+                        <DownloadCloud className="mr-2 h-4 w-4 text-gray-600" /> Unpublish Lead
+                    </DropdownMenuItem>
+                )}
+
+                {lead.status === 'Complete' && (
+                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Closed')}>
+                        <CheckCircle className="mr-2 h-4 w-4 text-green-600" /> Quick Close Case
+                    </DropdownMenuItem>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 
     const renderDesktopTable = () => (
@@ -302,7 +371,7 @@ function LeadsPageContent() {
                                 {lead.closedAt ? format(lead.closedAt, "dd MMM yyyy") : 'N/A'}
                             </TableCell>
                             <TableCell className="text-right">
-                                {renderActionButton(lead)}
+                                {renderActions(lead)}
                             </TableCell>
                         </TableRow>
                     );
@@ -352,7 +421,7 @@ function LeadsPageContent() {
                             </div>
                         </CardContent>
                          <CardFooter className="flex justify-end">
-                            {renderActionButton(lead)}
+                            {renderActions(lead)}
                          </CardFooter>
                     </Card>
                 );
