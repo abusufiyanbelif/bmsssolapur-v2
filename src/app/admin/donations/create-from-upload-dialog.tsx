@@ -86,21 +86,21 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.notes) queryParams.set('notes', result.details.notes);
       if(result.details.date) queryParams.set('date', result.details.date);
       if(result.details.paymentApp) queryParams.set('paymentApp', result.details.paymentApp);
+      
+      // Pass all potential donor identifiers to the next page
       if(result.details.donorUpiId) queryParams.set('donorUpiId', result.details.donorUpiId);
       if(result.details.donorPhone) queryParams.set('donorPhone', result.details.donorPhone);
       if(result.details.donorName) queryParams.set('donorName', result.details.donorName);
       
       let userFound = false;
-      // Improved User Search Logic
       let user = null;
       if (result.details.donorUpiId) user = await getUserByUpiId(result.details.donorUpiId);
       if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
-      // We don't search by name as it's less reliable
 
       if(user) {
           queryParams.set('donorId', user.id!);
           userFound = true;
-          toast({ title: "Donor Found!", description: `Prefilling form for ${user.name}.` });
+          toast({ title: "Donor Found!", description: `Found existing user: ${user.name}. Redirecting to donation form.` });
       }
 
       // Store screenshot in session to be picked up by the add form
@@ -108,6 +108,10 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         const dataUrl = await fileToDataUrl(file);
         sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
         handleDialogClose();
+
+        // **This is the updated logic**
+        // If a user was found, go directly to the donation form.
+        // Otherwise, go to the user creation form.
         const destination = userFound ? '/admin/donations/add' : '/admin/user-management/add';
         router.push(`${destination}?${queryParams.toString()}`);
       } catch (e) {
