@@ -17,9 +17,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Loader2, FileUp } from "lucide-react";
-import { handleFundTransfer } from "./actions";
+import { Loader2, FileUp, ScanEye } from "lucide-react";
+import { handleFundTransfer, handleScanTransferProof } from "./actions";
 import { useRouter } from "next/navigation";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface AddTransferDialogProps {
   leadId: string;
@@ -29,8 +31,11 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [open, setOpen] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [scannedText, setScannedText] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -39,6 +44,27 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         setAdminUserId(storedUserId);
       }
   }, [open]);
+  
+  const handleScan = async () => {
+    if (!file) {
+      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file to scan.' });
+      return;
+    }
+    
+    setIsScanning(true);
+    setScannedText(null);
+    const formData = new FormData();
+    formData.append("proof", file);
+    
+    const result = await handleScanTransferProof(formData);
+    
+    if (result.success && result.text) {
+        setScannedText(result.text);
+    } else {
+        toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || 'Could not extract text from the image.' });
+    }
+    setIsScanning(false);
+  };
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,6 +93,8 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         description: "The fund transfer has been successfully recorded for this lead.",
       });
       setOpen(false);
+      setScannedText(null);
+      setFile(null);
       router.refresh(); // Refresh the page to show the new transfer
     } else {
       toast({
@@ -103,9 +131,27 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
             </div>
             <div className="space-y-2">
                 <Label htmlFor="proof">Proof of Transfer</Label>
-                <Input id="proof" name="proof" type="file" required accept="image/*,application/pdf" />
+                <div className="flex gap-2">
+                    <Input id="proof" name="proof" type="file" required accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                    <Button type="button" variant="outline" size="icon" onClick={handleScan} disabled={!file || isScanning}>
+                        {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
+                    </Button>
+                </div>
                  <p className="text-xs text-muted-foreground">A screenshot or PDF receipt of the transaction is required.</p>
             </div>
+            
+            {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center py-4"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning image...</div>}
+
+            {scannedText && (
+                 <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Scanned Details</AlertTitle>
+                    <AlertDescription className="mt-2 max-h-40 overflow-y-auto bg-muted p-2 rounded-md">
+                        <pre className="text-xs whitespace-pre-wrap font-mono">{scannedText}</pre>
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary" disabled={isSubmitting}>
