@@ -188,14 +188,15 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
                 </div>
             )}
         </div>
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
             <Button type="button" variant="secondary" onClick={handleManualEntry}>
                 <Edit className="mr-2 h-4 w-4" />
                 Enter Manually
             </Button>
-            <div className="flex sm:justify-end gap-2">
-                 <DialogClose asChild>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                <DialogClose asChild>
                     <Button type="button" variant="outline">
+                        <X className="mr-2 h-4 w-4" />
                         Cancel
                     </Button>
                 </DialogClose>
