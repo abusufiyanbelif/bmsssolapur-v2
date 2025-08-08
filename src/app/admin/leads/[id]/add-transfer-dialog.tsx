@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -97,6 +98,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
       setOpen(false);
       setScannedDetails(null);
       setFile(null);
+      if(formRef.current) formRef.current.reset();
       router.refresh(); // Refresh the page to show the new transfer
     } else {
       toast({
@@ -108,7 +110,13 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if(!isOpen) {
+        setScannedDetails(null);
+        setFile(null);
+      }
+      setOpen(isOpen)
+    }}>
       <DialogTrigger asChild>
         <Button variant="default">
             <FileUp className="mr-2 h-4 w-4" />
@@ -123,13 +131,33 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
-            <div className="space-y-2">
-                <Label htmlFor="amount">Amount Transferred (₹)</Label>
-                <Input id="amount" name="amount" type="number" required placeholder="e.g., 5000" defaultValue={scannedDetails?.amount} />
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                  <Label htmlFor="amount">Amount Transferred (₹)</Label>
+                  <Input id="amount" name="amount" type="number" required placeholder="e.g., 5000" defaultValue={scannedDetails?.amount} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="paymentApp">Payment App</Label>
+                  <Input id="paymentApp" name="paymentApp" type="text" placeholder="e.g., PhonePe" defaultValue={scannedDetails?.paymentApp}/>
+              </div>
             </div>
-            <div className="space-y-2">
+             <div className="space-y-2">
                 <Label htmlFor="transactionId">Transaction ID / UTR</Label>
                 <Input id="transactionId" name="transactionId" type="text" required placeholder="Enter transaction reference" defaultValue={scannedDetails?.transactionId} />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                  <Label htmlFor="recipientName">Recipient Name</Label>
+                  <Input id="recipientName" name="recipientName" type="text" placeholder="As per bank records" />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="recipientPhone">Recipient Phone</Label>
+                  <Input id="recipientPhone" name="recipientPhone" type="tel" placeholder="10-digit number" />
+              </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="senderAccountNumber">Sender Bank Account</Label>
+                <Input id="senderAccountNumber" name="senderAccountNumber" type="text" placeholder="e.g., XXXXXX1234" defaultValue={scannedDetails?.bankAccountNumber} />
             </div>
              <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
@@ -153,10 +181,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Scanned Details Preview</AlertTitle>
                     <AlertDescription className="mt-2 text-xs space-y-1">
-                        <p><strong>Sender:</strong> {scannedDetails.donorName || 'N/A'}</p>
-                        <p><strong>UPI ID:</strong> {scannedDetails.donorUpiId || 'N/A'}</p>
-                        <p><strong>Bank Acc:</strong> {scannedDetails.bankAccountNumber || 'N/A'}</p>
-                        <p><strong>Date:</strong> {scannedDetails.date || 'N/A'}</p>
+                        <p>The form has been populated with the scanned data. Please verify the details below and fill in any missing fields like the recipient's name and phone number.</p>
                     </AlertDescription>
                 </Alert>
             )}

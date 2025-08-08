@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { deleteLead, getLead, updateLead } from "@/services/lead-service";
@@ -84,6 +85,10 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const amount = parseFloat(formData.get("amount") as string);
         const notes = formData.get("notes") as string;
         const transactionId = formData.get("transactionId") as string;
+        const recipientName = formData.get("recipientName") as string;
+        const recipientPhone = formData.get("recipientPhone") as string;
+        const paymentApp = formData.get("paymentApp") as string;
+        const senderAccountNumber = formData.get("senderAccountNumber") as string;
         const proofFile = formData.get("proof") as File | undefined;
 
         if (!adminUserId || isNaN(amount) || !proofFile) {
@@ -109,6 +114,10 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             notes: notes,
             proofUrl: proofUrl,
             transactionId: transactionId,
+            recipientName: recipientName,
+            recipientPhone: recipientPhone,
+            paymentApp: paymentApp,
+            senderAccountNumber: senderAccountNumber,
         };
 
         await updateLead(leadId, {
