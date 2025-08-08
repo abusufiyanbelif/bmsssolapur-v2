@@ -246,8 +246,8 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
     } else {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: result.error || "An unknown error occurred.",
+        title: "Error Creating Lead",
+        description: result.error || "An unknown error occurred. Please check the form and try again.",
       });
     }
   }
