@@ -123,7 +123,7 @@ export async function handleAddLead(
         }
     }
       
-    let verificationDocumentUrl = "";
+    let verificationDocumentUrl: string | undefined;
     if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
@@ -131,8 +131,8 @@ export async function handleAddLead(
     const newLeadData = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
-        campaignId: rawFormData.campaignId,
-        campaignName: rawFormData.campaignName,
+        campaignId: rawFormData.campaignId === 'none' ? undefined : rawFormData.campaignId,
+        campaignName: rawFormData.campaignName || undefined,
         purpose: rawFormData.purpose,
         otherPurposeDetail: rawFormData.purpose === 'Other' ? rawFormData.otherPurposeDetail : undefined,
         donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose

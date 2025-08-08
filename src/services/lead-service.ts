@@ -19,46 +19,59 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose } from './types';
+import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User } from './types';
 
 // Re-export types for backward compatibility
 export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
-
-const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
 export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(collection(db, LEADS_COLLECTION));
+    
     const newLead: Lead = {
-      ...leadData,
       id: leadRef.id,
       name: leadData.name!,
       beneficiaryId: leadData.beneficiaryId!,
-      helpRequested: leadData.helpRequested!,
+      campaignId: leadData.campaignId || undefined,
+      campaignName: leadData.campaignName || undefined,
       purpose: leadData.purpose!,
+      otherPurposeDetail: leadData.otherPurposeDetail || undefined,
       donationType: leadData.donationType!,
       acceptableDonationTypes: leadData.acceptableDonationTypes || [],
+      category: leadData.category,
+      otherCategoryDetail: leadData.otherCategoryDetail || undefined,
+      helpRequested: leadData.helpRequested!,
       helpGiven: 0,
       status: 'Pending',
       verifiedStatus: 'Pending',
       verifiers: [],
       donations: [],
+      caseDetails: leadData.caseDetails,
+      verificationDocumentUrl: leadData.verificationDocumentUrl,
+      adminAddedBy: { id: adminUser.id, name: adminUser.name },
       dateCreated: Timestamp.now(),
-      adminAddedBy: {
-        id: adminUser.id,
-        name: adminUser.name
-      },
+      dueDate: leadData.dueDate ? Timestamp.fromDate(leadData.dueDate) : undefined,
+      closedAt: undefined,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       isLoan: leadData.isLoan || false,
     };
+    
+    // Remove undefined fields to prevent Firestore errors
+    Object.keys(newLead).forEach(key => {
+        const typedKey = key as keyof Lead;
+        if (newLead[typedKey] === undefined) {
+            delete newLead[typedKey];
+        }
+    });
+
     await setDoc(leadRef, newLead);
     return newLead;
   } catch (error) {
     console.error('Error creating lead: ', error);
-    throw new Error('Failed to create lead.');
+    throw new Error('Failed to create lead in Firestore.');
   }
 };
 
@@ -68,7 +81,19 @@ export const getLead = async (id: string): Promise<Lead | null> => {
   try {
     const leadDoc = await getDoc(doc(db, LEADS_COLLECTION, id));
     if (leadDoc.exists()) {
-      return { id: leadDoc.id, ...leadDoc.data() } as Lead;
+      const data = leadDoc.data();
+      // Manually convert Timestamps to Dates for client-side compatibility
+      return { 
+        id: leadDoc.id, 
+        ...data,
+        dateCreated: (data.dateCreated as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
+        closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
+        dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : undefined,
+        verifiers: data.verifiers?.map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })) || [],
+        donations: data.donations?.map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })) || [],
+      } as Lead;
     }
     return null;
   } catch (error) {
@@ -110,11 +135,11 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         return [];
     }
     try {
-        const leadsQuery = query(collection(db, LEADS_COLLECTION));
+        const leadsQuery = query(collection(db, LEADS_COLLECTION), orderBy("dateCreated", "desc"));
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
-            const data = doc.data() as Lead;
+            const data = doc.data() as Omit<Lead, 'id'>;
             leads.push({ 
               id: doc.id,
               ...data,
@@ -128,7 +153,10 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         return leads;
     } catch (error) {
         console.error("Error getting all leads: ", error);
-        throw new Error('Failed to get all leads.');
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a descending index on 'dateCreated' for the 'leads' collection.");
+        }
+        return [];
     }
 }
 
