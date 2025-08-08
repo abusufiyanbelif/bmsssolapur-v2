@@ -6,7 +6,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { DeleteLeadButton } from "./delete-lead-button";
 import { Separator } from "@/components/ui/separator";
 import { UploadDocumentDialog } from "./upload-document-dialog";
+import { ActivityLog, getUserActivity } from "@/services/activity-log-service";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -45,14 +46,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         notFound();
     }
     
-    const [beneficiary, allocatedDonations] = await Promise.all([
+    const [beneficiary, allocatedDonations, activityLogs] = await Promise.all([
         getUser(lead.beneficiaryId),
         Promise.all(
             (lead.donations || []).map(async (alloc) => {
                 const donation = await getDonation(alloc.donationId);
                 return donation ? { ...donation, amountAllocated: alloc.amount, allocatedByUserName: alloc.allocatedByUserName, allocatedAt: alloc.allocatedAt } : null;
             })
-        )
+        ),
+        getUserActivity(lead.beneficiaryId) // Fetching activity for the beneficiary
     ]);
     
     const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
@@ -61,6 +63,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
     const dueDate = lead.dueDate;
     const closedDate = lead.closedAt;
+
+    const leadSpecificActivity = activityLogs.filter(log => log.details.leadId === lead.id || log.details.linkedLeadId === lead.id);
+
 
     return (
         <div className="flex-1 space-y-6">
@@ -236,7 +241,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                      <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <ShieldCheck />
+                                <History />
                                 Audit Trail
                             </CardTitle>
                              <CardDescription>
@@ -251,19 +256,26 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                      <p className="text-xs text-muted-foreground">{format(lead.dateCreated, 'PPP p')}</p>
                                  </div>
                              </div>
-                             <Separator />
-                             {lead.verifiers?.length > 0 ? (
-                                lead.verifiers.map((verifier, index) => (
-                                    <div key={index} className="flex gap-4 items-center">
-                                        <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-                                        <div className="text-sm">
-                                            <p>Verified by <span className="font-semibold">{verifier.verifierName}</span></p>
-                                            <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt.toDate(), 'PPP p')}</p>
-                                            {verifier.notes && <p className="text-xs italic text-muted-foreground mt-1">"{verifier.notes}"</p>}
-                                        </div>
+                             {lead.verifiers?.length > 0 && lead.verifiers.map((verifier, index) => (
+                                <div key={index} className="flex gap-4 items-center">
+                                    <ShieldCheck className="h-5 w-5 text-green-600" />
+                                    <div className="text-sm">
+                                        <p>Verified by <span className="font-semibold">{verifier.verifierName}</span></p>
+                                        <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt, 'PPP p')}</p>
+                                        {verifier.notes && <p className="text-xs italic text-muted-foreground mt-1">"{verifier.notes}"</p>}
                                     </div>
-                                ))
-                             ) : (
+                                </div>
+                             ))}
+                             {leadSpecificActivity.filter(log => log.activity === 'Document Uploaded').map(log => (
+                                <div key={log.id} className="flex gap-4 items-center">
+                                    <Paperclip className="h-5 w-5 text-blue-600" />
+                                    <div className="text-sm">
+                                        <p>Document <span className="font-semibold">{log.details.fileName}</span> uploaded by <span className="font-semibold">{log.userName}</span></p>
+                                        <p className="text-xs text-muted-foreground">{format(log.timestamp as Date, 'PPP p')}</p>
+                                    </div>
+                                </div>
+                             ))}
+                             {(lead.verifiers?.length === 0 && leadSpecificActivity.filter(log => log.activity === 'Document Uploaded').length === 0) && (
                                   <div className="flex gap-4 items-center">
                                         <ShieldAlert className="h-5 w-5 text-muted-foreground" />
                                         <div className="text-sm">

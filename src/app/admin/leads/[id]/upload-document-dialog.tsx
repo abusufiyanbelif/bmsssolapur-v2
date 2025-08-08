@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { handleUploadVerificationDocument } from "./actions";
 import { useRouter } from "next/navigation";
@@ -29,13 +29,32 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+      const storedUserId = localStorage.getItem('userId');
+      if(storedUserId) {
+        setAdminUserId(storedUserId);
+      }
+  }, [open]);
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!adminUserId) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Could not identify the logged-in administrator. Please log out and back in.",
+        });
+        return;
+    }
+
     setIsUploading(true);
 
     const formData = new FormData(event.currentTarget);
+    formData.append("adminUserId", adminUserId);
     const result = await handleUploadVerificationDocument(leadId, formData);
 
     setIsUploading(false);
@@ -47,7 +66,7 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
         description: "The verification document has been attached to the lead.",
       });
       setOpen(false);
-      // No need to call router.refresh() if the revalidatePath in the action works
+      router.refresh(); // Refresh the page to show the new document and audit trail
     } else {
       toast({
         variant: "destructive",
