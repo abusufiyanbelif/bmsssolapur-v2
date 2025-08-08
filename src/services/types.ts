@@ -141,6 +141,8 @@ export interface FundTransfer {
     paymentApp?: string;
     paymentMethod?: string;
     status?: string;
+    date?: string;
+    time?: string;
 }
 
 export interface Lead {

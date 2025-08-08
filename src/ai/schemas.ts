@@ -98,8 +98,9 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   senderName: z.string().optional().describe("The full name of the person who sent the money (e.g., 'From John Doe')."),
   senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial (e.g., 'From account ...1234')."),
   recipientName: z.string().optional().describe("The full name of the person who received the money (e.g., 'To Jane Doe')."),
-  recipientAccountNumber: z.string().optional().describe("The recipient's bank account number, even if partial (e.g., 'To account ...5678')."),
+  recipientPhone: z.string().optional().describe("The recipient's phone number if visible."),
   recipientUpiId: z.string().optional().describe("The recipient's UPI ID if visible (e.g., 'to-username@okbank')."),
+  recipientAccountNumber: z.string().optional().describe("The recipient's bank account number, even if partial (e.g., 'To account ...5678')."),
   status: z.string().optional().describe('The status of the transaction (e.g., Successful, Completed, Received).'),
   notes: z.string().optional().describe('Any user-added comments, remarks, or descriptions found in the payment details.'),
 });
