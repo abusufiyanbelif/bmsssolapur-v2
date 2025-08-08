@@ -150,6 +150,7 @@ export async function handleAddLead(
     
     revalidatePath("/admin/leads");
     revalidatePath("/admin/leads/add"); // To refresh the user list if a new one was added
+    revalidatePath("/admin"); // Revalidate the admin dashboard to show new pending lead
 
     return {
       success: true,
