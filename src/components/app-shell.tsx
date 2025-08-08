@@ -254,7 +254,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                                      <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start">
                                                         <p className="font-semibold text-destructive">Verify: {lead.name}</p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated.toDate(), { addSuffix: true })}
+                                                            Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated, { addSuffix: true })}
                                                         </p>
                                                      </Link>
                                                 </DropdownMenuItem>
