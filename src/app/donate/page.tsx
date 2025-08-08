@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -363,6 +362,13 @@ function DonatePageContent() {
       try {
         const fetchedUser = await getUser(storedUserId);
         setUser(fetchedUser);
+        
+        // If user is an Admin, redirect them to the admin dashboard instead of showing this page.
+        const isAdmin = fetchedUser?.roles.includes('Admin') || fetchedUser?.roles.includes('Super Admin');
+        if (isAdmin) {
+            router.replace('/admin');
+            return;
+        }
 
         if (leadId) {
           const lead = await getLead(leadId);
@@ -389,8 +395,6 @@ function DonatePageContent() {
     return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
   }
   
-  const isAdmin = user?.roles.includes('Admin') || user?.roles.includes('Super Admin');
-
   return (
      <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
@@ -423,17 +427,6 @@ function DonatePageContent() {
 
                 {donationMethod === 'payNow' ? (
                    <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} />
-                ) : isAdmin ? (
-                   <div className="text-center p-4 border-dashed border-2 rounded-md">
-                     <AlertCircle className="mx-auto h-8 w-8 text-amber-500" />
-                     <h3 className="mt-2 font-semibold">Admin Workflow</h3>
-                     <p className="text-sm text-muted-foreground">
-                        Admins should use the "Scan Screenshot" button on the main Donations page to upload proof and automatically create donation records.
-                     </p>
-                      <Button asChild className="mt-4">
-                        <a href="/admin/donations">Go to Donations Page</a>
-                      </Button>
-                   </div>
                 ) : (
                    <UploadProofSection user={user} />
                 )}
