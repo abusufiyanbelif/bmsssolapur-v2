@@ -58,7 +58,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/campaigns", label: "Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
-            { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft },
+            { href: "/admin/transfers", label: "All Beneficiaries Transfer", icon: ArrowRightLeft },
         ]
     },
 
