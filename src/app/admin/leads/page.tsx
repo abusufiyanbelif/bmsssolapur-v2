@@ -172,8 +172,6 @@ function LeadsPageContent() {
             // Handle date/timestamp objects
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (aValue && typeof aValue === 'object' && 'toDate' in aValue && bValue && typeof bValue === 'object' && 'toDate' in bValue) {
-                comparison = (aValue as any).toDate().getTime() - (bValue as any).toDate().getTime();
             } else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
@@ -256,7 +254,6 @@ function LeadsPageContent() {
             <TableBody>
                 {paginatedLeads.map((lead, index) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
-                    const pendingAmount = lead.helpRequested - lead.helpGiven;
                     return (
                         <TableRow key={lead.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
@@ -297,8 +294,7 @@ function LeadsPageContent() {
         <div className="space-y-4">
             {paginatedLeads.map((lead, index) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
-                 const pendingAmount = lead.helpRequested - lead.helpGiven;
-                return (
+                 return (
                     <Card key={lead.id}>
                         <CardHeader>
                             <div className="flex justify-between items-start">

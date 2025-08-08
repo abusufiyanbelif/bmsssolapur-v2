@@ -61,7 +61,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
     const output = llmResponse.output;
 
     if (!output) {
-      throw new Error("The AI model did not return any output. The image might be unreadable.");
+      throw new Error("The AI model did not return any output. The image might be unreadable or of a non-payment type.");
     }
     
     // Check for essential fields and provide a specific error if they are missing.

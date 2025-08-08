@@ -111,7 +111,7 @@ const formSchema = z.object({
 })
 .refine(data => {
     if (data.beneficiaryType === 'existing') {
-        return !!data.beneficiaryId && data.beneficiaryId !== '';
+        return !!data.beneficiaryId && data.beneficiaryId.trim() !== '';
     }
     if (data.beneficiaryType === 'new') {
         return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone;

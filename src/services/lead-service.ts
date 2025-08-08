@@ -63,7 +63,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 };
 
 // Function to get a lead by ID
-export const getLead = async (id: string) => {
+export const getLead = async (id: string): Promise<Lead | null> => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadDoc = await getDoc(doc(db, LEADS_COLLECTION, id));
