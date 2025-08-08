@@ -32,9 +32,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} h-full`}>
       <body className="font-body antialiased h-full bg-background">
         {/* Payment Gateway SDKs */}
-        <Script async src="https://pay.google.com/gp/p/js/pay.js" />
-        <Script src="https://mercury.phonepe.com/transact/sdk-v1.js" />
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+        <Script src="https://pay.google.com/gp/p/js/pay.js" strategy="afterInteractive" />
+        <Script src="https://mercury.phonepe.com/transact/sdk-v1.js" strategy="afterInteractive" />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
         
         <AppShell>
           {children}
