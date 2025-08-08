@@ -20,7 +20,7 @@ import { Loader2, Upload, ScanEye, Edit } from "lucide-react";
 import { handleScanDonationProof } from "./actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getUserByPhone, getUserByUpiId } from "@/services/user-service";
+import { getUserByPhone, getUserByUpiId, getUserByUserId } from "@/services/user-service";
 
 interface CreateFromUploadDialogProps {
   children: React.ReactNode;
@@ -85,12 +85,15 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
       if(result.details.notes) queryParams.set('notes', result.details.notes);
       
+      let userFound = false;
       // Find user by identifier
       if(result.details.donorIdentifier) {
         let user = await getUserByUpiId(result.details.donorIdentifier);
         if(!user) user = await getUserByPhone(result.details.donorIdentifier.slice(-10)); // Try phone
+        if(!user) user = await getUserByUserId(result.details.donorIdentifier);
         if(user) {
             queryParams.set('donorId', user.id!);
+            userFound = true;
             toast({ title: "Donor Found!", description: `Prefilling form for ${user.name}.` });
         } else {
              queryParams.set('donorIdentifier', result.details.donorIdentifier);
@@ -102,7 +105,8 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         const dataUrl = await fileToDataUrl(file);
         sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
         handleDialogClose();
-        router.push(`/admin/donations/add?${queryParams.toString()}`);
+        const destination = userFound ? '/admin/donations/add' : '/admin/user-management/add';
+        router.push(`${destination}?${queryParams.toString()}`);
       } catch (e) {
          toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
       }

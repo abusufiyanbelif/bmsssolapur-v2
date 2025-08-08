@@ -19,12 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser } from "./actions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Loader2, CheckCircle, Trash2, PlusCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
+import { useSearchParams } from 'next/navigation';
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -72,8 +73,9 @@ const formSchema = z.object({
 
 type AddUserFormValues = z.infer<typeof formSchema>;
 
-export function AddUserForm() {
+function AddUserFormContent() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
 
@@ -88,22 +90,33 @@ export function AddUserForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: "",
-      middleName: "",
       lastName: "",
       email: "",
       phone: "",
       userId: "",
       roles: ["Donor"],
-      createProfile: false,
-      isAnonymousAsBeneficiary: false,
-      isAnonymousAsDonor: false,
-      isWidow: false,
       city: 'Solapur',
       state: 'Maharashtra',
       country: 'India',
       upiIds: [{ value: "" }],
     },
   });
+  
+  useEffect(() => {
+    const donorIdentifier = searchParams.get('donorIdentifier');
+    if (donorIdentifier) {
+        // Simple logic to parse name from identifier
+        const namePart = donorIdentifier.split('/')[0].trim();
+        const [firstName, ...lastNameParts] = namePart.split(' ');
+        form.setValue('firstName', firstName || '');
+        form.setValue('lastName', lastNameParts.join(' ') || '');
+        
+        // Check if identifier is a UPI ID and pre-fill
+        if (donorIdentifier.includes('@')) {
+            form.setValue('upiIds', [{ value: donorIdentifier }]);
+        }
+    }
+  }, [searchParams, form]);
 
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
@@ -115,7 +128,6 @@ export function AddUserForm() {
   useEffect(() => {
     if (firstName && lastName) {
         const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
-        // Only set the value if the user hasn't typed in the userId field yet
         if (!form.formState.dirtyFields.userId) {
             form.setValue('userId', generatedUserId);
         }
@@ -623,4 +635,12 @@ export function AddUserForm() {
       </form>
     </Form>
   );
+}
+
+export function AddUserForm() {
+    return (
+        <Suspense fallback={<div>Loading form...</div>}>
+            <AddUserFormContent />
+        </Suspense>
+    )
 }
