@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { UploadDocumentDialog } from "./upload-document-dialog";
 import { ActivityLog, getUserActivity } from "@/services/activity-log-service";
 import { AddTransferDialog } from "./add-transfer-dialog";
+import { AuditTrail } from "./audit-trail";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -284,62 +285,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                              )}
                          </CardContent>
                     </Card>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <History />
-                                Audit Trail
-                            </CardTitle>
-                             <CardDescription>
-                               A log of key actions performed on this lead.
-                            </CardDescription>
-                        </CardHeader>
-                         <CardContent className="space-y-4">
-                             <div className="flex gap-4 items-center">
-                                 <UserPlus className="h-5 w-5 text-muted-foreground" />
-                                 <div className="text-sm">
-                                     <p>Lead Created by <span className="font-semibold">{lead.adminAddedBy?.name || 'Unknown'}</span></p>
-                                     <p className="text-xs text-muted-foreground">{format(lead.dateCreated, 'PPP p')}</p>
-                                 </div>
-                             </div>
-                             {lead.verifiers?.length > 0 && lead.verifiers.map((verifier, index) => (
-                                <div key={index} className="flex gap-4 items-center">
-                                    <ShieldCheck className="h-5 w-5 text-green-600" />
-                                    <div className="text-sm">
-                                        <p>Verified by <span className="font-semibold">{verifier.verifierName}</span></p>
-                                        <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt, 'PPP p')}</p>
-                                        {verifier.notes && <p className="text-xs italic text-muted-foreground mt-1">"{verifier.notes}"</p>}
-                                    </div>
-                                </div>
-                             ))}
-                             {leadSpecificActivity.filter(log => log.activity === 'Document Uploaded').map(log => (
-                                <div key={log.id} className="flex gap-4 items-center">
-                                    <Paperclip className="h-5 w-5 text-blue-600" />
-                                    <div className="text-sm">
-                                        <p>Document <span className="font-semibold">{log.details.fileName}</span> uploaded by <span className="font-semibold">{log.userName}</span></p>
-                                        <p className="text-xs text-muted-foreground">{format(log.timestamp as Date, 'PPP p')}</p>
-                                    </div>
-                                </div>
-                             ))}
-                              {leadSpecificActivity.filter(log => log.activity === 'Fund Transfer Recorded').map(log => (
-                                <div key={log.id} className="flex gap-4 items-center">
-                                    <Banknote className="h-5 w-5 text-emerald-600" />
-                                    <div className="text-sm">
-                                        <p>Fund transfer of <span className="font-semibold">₹{log.details.amount?.toLocaleString()}</span> recorded by <span className="font-semibold">{log.userName}</span></p>
-                                        <p className="text-xs text-muted-foreground">{format(log.timestamp as Date, 'PPP p')}</p>
-                                    </div>
-                                </div>
-                             ))}
-                             {(lead.verifiers?.length === 0 && leadSpecificActivity.filter(log => log.activity === 'Document Uploaded').length === 0) && (
-                                  <div className="flex gap-4 items-center">
-                                        <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-                                        <div className="text-sm">
-                                            <p>Awaiting verification</p>
-                                        </div>
-                                    </div>
-                             )}
-                         </CardContent>
-                    </Card>
+                    
+                    <AuditTrail lead={lead} activityLogs={activityLogs} />
+
                 </div>
                 
                 {/* Right Column */}
