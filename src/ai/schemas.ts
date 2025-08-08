@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -94,6 +95,7 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   donorName: z.string().optional().describe("The full name of the person who sent the money (e.g., 'John Doe' or 'Bhagnagri Zainul'). Do not include phone numbers or UPI IDs here."),
   donorPhone: z.string().optional().describe("The donor's 10-digit phone number if visible. Do not include '@' symbols or names."),
   donorUpiId: z.string().optional().describe("The donor's UPI ID if visible (e.g., 'username@okbank')."),
+  bankAccountNumber: z.string().optional().describe("The donor's bank account number, even if partial (e.g., 'XXXXXX1234')."),
   notes: z.string().optional().describe('Any user-added comments, remarks, or notes found in the screenshot.'),
 });
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;

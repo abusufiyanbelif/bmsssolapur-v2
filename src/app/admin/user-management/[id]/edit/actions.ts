@@ -40,6 +40,7 @@ export async function handleUpdateUser(
     
     panNumber: formData.get("panNumber") as string | undefined,
     aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
+    bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
   };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
@@ -75,6 +76,7 @@ export async function handleUpdateUser(
 
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
+        bankAccountNumber: rawFormData.bankAccountNumber || '',
     };
 
     await updateUser(userId, updates);

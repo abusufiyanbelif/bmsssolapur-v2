@@ -117,6 +117,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         secondaryPhone: user.secondaryPhone,
         aadhaarNumber: user.aadhaarNumber,
         panNumber: user.panNumber,
+        bankAccountNumber: user.bankAccountNumber,
         upiIds: user.upiIds || [],
         roles: user.roles || [],
         privileges: user.privileges || [],
@@ -288,6 +289,36 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
         console.error("Firestore index missing. Please create a composite index in Firestore on the 'users' collection for 'upiIds' (array-contains).");
     }
     throw new Error('Failed to get user by UPI ID.');
+  }
+}
+
+// Function to get a user by Bank Account Number
+export const getUserByBankAccountNumber = async (accountNumber: string): Promise<User | null> => {
+  if (!isConfigValid) {
+    console.warn("Firebase not configured. Skipping user fetch by bank account.");
+    return null;
+  }
+  try {
+    if (!accountNumber) return null;
+    const q = query(collection(db, USERS_COLLECTION), where("bankAccountNumber", "==", accountNumber), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      const data = userDoc.data();
+       return {
+        id: userDoc.id,
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user by bank account number: ', error);
+    if (error instanceof Error && error.message.includes('index')) {
+        console.error("Firestore index missing. Please create a single-field index in Firestore on the 'users' collection for 'bankAccountNumber' (ascending).");
+    }
+    throw new Error('Failed to get user by bank account number.');
   }
 }
 

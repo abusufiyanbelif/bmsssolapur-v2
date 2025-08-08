@@ -67,6 +67,7 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -111,6 +112,7 @@ function AddUserFormContent() {
     const donorName = searchParams.get('donorName');
     const donorPhone = searchParams.get('donorPhone');
     const donorUpiId = searchParams.get('donorUpiId');
+    const bankAccountNumber = searchParams.get('bankAccountNumber');
 
     if (donorName) {
         const nameParts = donorName.split(' ');
@@ -118,6 +120,7 @@ function AddUserFormContent() {
         form.setValue('lastName', nameParts.slice(1).join(' ') || '');
     }
     if(donorPhone) form.setValue('phone', donorPhone);
+    if(bankAccountNumber) form.setValue('bankAccountNumber', bankAccountNumber);
     if(donorUpiId) form.setValue('upiIds', [{value: donorUpiId}]);
     
   }, [searchParams, form]);
@@ -165,6 +168,7 @@ function AddUserFormContent() {
     if(values.isWidow) formData.append("isWidow", "on");
     if(values.panNumber) formData.append("panNumber", values.panNumber);
     if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
+    if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
     values.upiIds?.forEach(upi => {
         if(upi.value) formData.append("upiIds", upi.value);
     });
@@ -664,6 +668,19 @@ function AddUserFormContent() {
             )}
             />
         </div>
+        <FormField
+            control={form.control}
+            name="bankAccountNumber"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Bank Account Number (Optional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter bank account number" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
         
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -173,6 +173,7 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -219,6 +220,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
       isWidow: user.isWidow || false,
       panNumber: user.panNumber || '',
       aadhaarNumber: user.aadhaarNumber || '',
+      bankAccountNumber: user.bankAccountNumber || '',
       upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
     },
   });
@@ -253,6 +255,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           isWidow: user.isWidow || false,
           panNumber: user.panNumber || '',
           aadhaarNumber: user.aadhaarNumber || '',
+          bankAccountNumber: user.bankAccountNumber || '',
           upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
       });
       setIsEditing(false);
@@ -284,6 +287,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
     if(values.isWidow) formData.append("isWidow", "on");
     if(values.panNumber) formData.append("panNumber", values.panNumber);
     if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
+    if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
 
     values.upiIds?.forEach(upi => {
         if(upi.value) formData.append("upiIds", upi.value);
@@ -805,6 +809,19 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         )}
                         />
                     </div>
+                     <FormField
+                        control={form.control}
+                        name="bankAccountNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Bank Account Number (Optional)</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter bank account number" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     <FormField
                     control={form.control}

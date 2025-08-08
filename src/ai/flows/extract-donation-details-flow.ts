@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting donation details from an image.
@@ -29,9 +30,10 @@ const promptText = `You are an expert financial assistant. Analyze the provided 
     - transactionId: The Transaction ID, UTR, or any other reference number. It must be a string. If multiple IDs are present (like a Transaction ID and a UTR), prefer the UTR number.
     - date: The date of the transaction. Format it as YYYY-MM-DD.
     - paymentApp: The method or app of payment (e.g., UPI, Bank Transfer, GPay, PhonePe, Paytm). Infer this from the UI if possible.
-    - donorName: The full name of the person who sent the money (e.g., 'Bhagnagri Zainul'). Look for fields like "Received from". Do NOT include phone numbers or UPI IDs in this field.
+    - donorName: The full name of the person who sent the money (e.g., 'Bhagnagri Zainul'). Look for fields like "Received from" or "Paid by". Do NOT include phone numbers or UPI IDs in this field.
     - donorPhone: The donor's 10-digit phone number if it is explicitly visible. This should only contain digits.
     - donorUpiId: The donor's UPI ID if it is explicitly visible (it will contain an '@' symbol, e.g., 'username@okhdfc').
+    - bankAccountNumber: The donor's bank account number. Often this is partially masked (e.g., "From account XXXXXX1234"). Extract the visible part.
     - notes: Any user-added comments, remarks, or descriptions found in the payment details. This is often labeled as "Add a note", "Message", or "Remarks".
 
     If a field is not clearly visible in the screenshot, omit it from the output rather than guessing. Pay close attention to distinguishing between the name, phone number, and UPI ID.`;

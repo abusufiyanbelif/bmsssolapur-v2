@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -20,7 +21,7 @@ import { Loader2, Upload, ScanEye, Edit, X } from "lucide-react";
 import { handleScanDonationProof } from "./actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getUserByPhone, getUserByUpiId, getUserByUserId } from "@/services/user-service";
+import { getUserByPhone, getUserByUpiId, getUserByUserId, getUserByBankAccountNumber } from "@/services/user-service";
 
 interface CreateFromUploadDialogProps {
   children: React.ReactNode;
@@ -87,15 +88,16 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.date) queryParams.set('date', result.details.date);
       if(result.details.paymentApp) queryParams.set('paymentApp', result.details.paymentApp);
       
-      // Pass all potential donor identifiers to the next page
       if(result.details.donorUpiId) queryParams.set('donorUpiId', result.details.donorUpiId);
       if(result.details.donorPhone) queryParams.set('donorPhone', result.details.donorPhone);
       if(result.details.donorName) queryParams.set('donorName', result.details.donorName);
+      if(result.details.bankAccountNumber) queryParams.set('bankAccountNumber', result.details.bankAccountNumber);
       
       let userFound = false;
       let user = null;
       if (result.details.donorUpiId) user = await getUserByUpiId(result.details.donorUpiId);
       if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
+      if (!user && result.details.bankAccountNumber) user = await getUserByBankAccountNumber(result.details.bankAccountNumber);
 
       if(user) {
           queryParams.set('donorId', user.id!);
@@ -109,9 +111,6 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
         handleDialogClose();
 
-        // **This is the updated logic**
-        // If a user was found, go directly to the donation form.
-        // Otherwise, go to the user creation form.
         const destination = userFound ? '/admin/donations/add' : '/admin/user-management/add';
         router.push(`${destination}?${queryParams.toString()}`);
       } catch (e) {
