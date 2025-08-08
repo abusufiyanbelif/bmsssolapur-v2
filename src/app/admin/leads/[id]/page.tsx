@@ -6,7 +6,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -156,6 +156,35 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         ))}
                                     </div>
                                 </div>
+                             )}
+                         </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Paperclip />
+                                Attached Documents
+                            </CardTitle>
+                             <CardDescription>
+                               Supporting documents uploaded for this case.
+                            </CardDescription>
+                        </CardHeader>
+                         <CardContent>
+                             {lead.verificationDocumentUrl ? (
+                                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                                    <div className="flex items-center gap-3">
+                                        <FileText className="h-5 w-5 text-muted-foreground" />
+                                        <p className="font-semibold">Verification Document</p>
+                                    </div>
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={lead.verificationDocumentUrl} target="_blank" rel="noopener noreferrer">
+                                            View Document
+                                        </Link>
+                                    </Button>
+                                </div>
+                             ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No documents have been uploaded for this lead.</p>
                              )}
                          </CardContent>
                     </Card>
