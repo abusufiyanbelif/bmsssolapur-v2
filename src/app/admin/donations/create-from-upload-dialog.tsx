@@ -75,12 +75,6 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
     setIsScanning(false);
 
     if (result.success && result.details) {
-      toast({
-        variant: "success",
-        title: "Scan Successful",
-        description: "Attempting to find donor and pre-fill form...",
-      });
-      
       const queryParams = new URLSearchParams();
       if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
       if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
@@ -103,6 +97,12 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
           queryParams.set('donorId', user.id!);
           userFound = true;
           toast({ title: "Donor Found!", description: `Found existing user: ${user.name}. Redirecting to donation form.` });
+      } else {
+          toast({
+            variant: "success",
+            title: "Scan Successful",
+            description: "No existing donor found. Redirecting to create a new user profile...",
+          });
       }
 
       // Store screenshot in session to be picked up by the add form
@@ -189,9 +189,9 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
                 </div>
             )}
         </div>
-        <DialogFooter className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-             <DialogClose asChild>
-                <Button type="button" variant="outline" className="w-full sm:col-span-3">
+        <DialogFooter>
+            <DialogClose asChild>
+                <Button type="button" variant="outline">
                     <X className="mr-2 h-4 w-4" /> Cancel
                 </Button>
             </DialogClose>
