@@ -141,7 +141,7 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
-            const data = doc.data() as Omit<Lead, 'id'>;
+            const data = doc.data();
             leads.push({ 
               id: doc.id,
               ...data,
@@ -150,7 +150,7 @@ export const getAllLeads = async (): Promise<Lead[]> => {
               updatedAt: (data.updatedAt as Timestamp).toDate(),
               closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
               dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined, // Handle potential timestamp
-            });
+            } as Lead);
         });
         return leads;
     } catch (error) {
@@ -174,12 +174,12 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
-            const data = doc.data() as Lead;
+            const data = doc.data() as Omit<Lead, 'id'>;
             leads.push({ 
                 id: doc.id, 
                 ...data,
                 createdAt: (data.createdAt as Timestamp).toDate()
-            });
+            } as Lead);
         });
         return leads;
     } catch (error) {

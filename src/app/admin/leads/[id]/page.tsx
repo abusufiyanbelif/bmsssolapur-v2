@@ -54,8 +54,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
     const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
     const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
-    const dueDate = lead.dueDate ? (lead.dueDate as any).toDate() : null;
-    const closedDate = lead.closedAt ? (lead.closedAt as any).toDate() : null;
+    const dueDate = lead.dueDate ? lead.dueDate : null;
+    const closedDate = lead.closedAt ? lead.closedAt : null;
 
     return (
         <div className="flex-1 space-y-6">
@@ -211,7 +211,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                  <UserPlus className="h-5 w-5 text-muted-foreground" />
                                  <div className="text-sm">
                                      <p>Lead Created by <span className="font-semibold">{lead.adminAddedBy?.name || 'Unknown'}</span></p>
-                                     <p className="text-xs text-muted-foreground">{format(lead.dateCreated.toDate(), 'PPP p')}</p>
+                                     <p className="text-xs text-muted-foreground">{format(lead.dateCreated, 'PPP p')}</p>
                                  </div>
                              </div>
                              <Separator />
@@ -221,7 +221,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         <ShieldCheck className="h-5 w-5 text-muted-foreground" />
                                         <div className="text-sm">
                                             <p>Verified by <span className="font-semibold">{verifier.verifierName}</span></p>
-                                            <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt.toDate(), 'PPP p')}</p>
+                                            <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt, 'PPP p')}</p>
                                             {verifier.notes && <p className="text-xs italic text-muted-foreground mt-1">"{verifier.notes}"</p>}
                                         </div>
                                     </div>
@@ -294,7 +294,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Member Since</span>
-                                        <span className="font-semibold">{format(beneficiary.createdAt.toDate(), 'dd MMM yyyy')}</span>
+                                        <span className="font-semibold">{format(beneficiary.createdAt, 'dd MMM yyyy')}</span>
                                     </div>
                                 </>
                             ) : (
