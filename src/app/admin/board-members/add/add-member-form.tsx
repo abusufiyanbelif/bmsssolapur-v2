@@ -28,7 +28,7 @@ import type { User } from "@/services/types";
 import { useRouter } from "next/navigation";
 
 
-const boardRoles = ['Founder', 'Co-Founder', 'Finance', 'Member of Organization'] as const;
+const boardRoles = ['Founder', 'Co-Founder', 'Finance', 'Member of Organization', 'Lead Approver'] as const;
 
 const formSchema = z.object({
   userId: z.string().min(1, "Please select a user."),
@@ -107,11 +107,11 @@ export function AddMemberForm({ users }: AddMemberFormProps) {
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign Board Role</FormLabel>
+              <FormLabel>Assign Group / Role</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a role for the board member" />
+                    <SelectValue placeholder="Select a group or role" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -127,7 +127,7 @@ export function AddMemberForm({ users }: AddMemberFormProps) {
         
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Add to Board
+          Add to Group
         </Button>
       </form>
     </Form>

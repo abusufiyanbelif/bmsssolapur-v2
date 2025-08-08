@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2, MoreHorizontal } from "lucide-react";
+import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2, MoreHorizontal, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getAllUsers, updateUser } from "@/services/user-service";
@@ -20,6 +20,7 @@ const groupMapping: Record<string, string> = {
     'Co-Founder': 'cofounder',
     'Finance': 'finance',
     'Member of Organization': 'members',
+    'Lead Approver': 'leadApprovers',
 };
 
 const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User) => void }) => {
@@ -71,7 +72,7 @@ const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User)
                         onDelete={handleRemove}
                     >
                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove from Board
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove from Group
                         </DropdownMenuItem>
                     </DeleteConfirmationDialog>
                 </DropdownMenuContent>
@@ -81,7 +82,7 @@ const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User)
 };
 
 export default function BoardMembersPage() {
-    const [boardMembers, setBoardMembers] = useState<Record<string, User[]>>({ founder: [], cofounder: [], finance: [], members: [] });
+    const [boardMembers, setBoardMembers] = useState<Record<string, User[]>>({ founder: [], cofounder: [], finance: [], members: [], leadApprovers: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -89,7 +90,7 @@ export default function BoardMembersPage() {
         try {
             setLoading(true);
             const allUsers = await getAllUsers();
-            const categorizedMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [] };
+            const categorizedMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [], leadApprovers: [] };
 
             allUsers.forEach(user => {
                 user.groups?.forEach(group => {
@@ -158,6 +159,14 @@ export default function BoardMembersPage() {
                         </div>
                     </div>
                 )}
+                {boardMembers.leadApprovers.length > 0 && (
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Lead Approvers</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {boardMembers.leadApprovers.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
+                        </div>
+                    </div>
+                )}
                 {boardMembers.finance.length > 0 && (
                     <div>
                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Banknote className="h-5 w-5" /> Finance</h3>
@@ -182,11 +191,11 @@ export default function BoardMembersPage() {
     return (
         <div className="flex-1 space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Board Members</h2>
+                <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Team Management</h2>
                  <Button asChild>
                     <Link href="/admin/board-members/add">
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Member
+                        Add Member to Group
                     </Link>
                 </Button>
             </div>
@@ -197,7 +206,7 @@ export default function BoardMembersPage() {
                         Our Team
                     </CardTitle>
                     <CardDescription>
-                        The dedicated individuals leading our organization and its mission.
+                        The dedicated individuals leading our organization and its mission, organized by groups.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
