@@ -1,3 +1,5 @@
+
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -361,7 +363,6 @@ function DonatePageContent() {
       
       try {
         const fetchedUser = await getUser(storedUserId);
-        setUser(fetchedUser);
         
         // If user is an Admin, redirect them to the admin dashboard instead of showing this page.
         const isAdmin = fetchedUser?.roles.includes('Admin') || fetchedUser?.roles.includes('Super Admin');
@@ -369,6 +370,8 @@ function DonatePageContent() {
             router.replace('/admin');
             return;
         }
+
+        setUser(fetchedUser);
 
         if (leadId) {
           const lead = await getLead(leadId);

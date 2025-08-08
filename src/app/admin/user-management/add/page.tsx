@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddUserForm } from "./add-user-form";
 
@@ -20,5 +21,3 @@ export default async function AddUserPage() {
         </div>
     );
 }
-
-    

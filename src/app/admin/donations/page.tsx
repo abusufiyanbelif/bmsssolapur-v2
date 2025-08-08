@@ -1,4 +1,5 @@
 
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -141,8 +142,8 @@ function DonationsPageContent() {
 
             let comparison = 0;
             // Handle date/timestamp objects
-            if (aValue && bValue && (aValue as any).toDate && (bValue as any).toDate) {
-                comparison = (aValue as any).toDate().getTime() - (bValue as any).toDate().getTime();
+            if (aValue instanceof Date && bValue instanceof Date) {
+                comparison = aValue.getTime() - bValue.getTime();
             } else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
@@ -222,7 +223,7 @@ function DonationsPageContent() {
                 {paginatedDonations.map((donation, index) => (
                     <TableRow key={donation.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                        <TableCell>{format((donation.donationDate as any).toDate(), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(new Date(donation.donationDate), "dd MMM yyyy")}</TableCell>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                                 <span>{donation.donorName}</span>
@@ -279,7 +280,7 @@ function DonationsPageContent() {
                     <CardContent className="space-y-3 text-sm">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Date</span>
-                            <span>{format((donation.donationDate as any).toDate(), "dd MMM yyyy")}</span>
+                            <span>{format(new Date(donation.donationDate), "dd MMM yyyy")}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Category</span>

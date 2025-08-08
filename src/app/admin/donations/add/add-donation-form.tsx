@@ -30,7 +30,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { Loader2, Info, Image as ImageIcon, CalendarIcon } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getUser, getUserByUserId, getUserByPhone, getUserByUpiId } from "@/services/user-service";
+import { getUser } from "@/services/user-service";
 import { useSearchParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -115,28 +115,21 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         const amountParam = searchParams.get('amount');
         const transactionIdParam = searchParams.get('transactionId');
         const donorIdParam = searchParams.get('donorId');
-        const donorIdentifierParam = searchParams.get('donorIdentifier');
         const notesParam = searchParams.get('notes');
         const dateParam = searchParams.get('date');
-        const paymentMethodParam = searchParams.get('paymentMethod');
+        const paymentAppParam = searchParams.get('paymentApp');
+        const donorUpiIdParam = searchParams.get('donorUpiId');
 
         if (amountParam) setValue('amount', parseFloat(amountParam));
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
         if (notesParam) setValue('notes', notesParam);
         if (dateParam) setValue('donationDate', new Date(dateParam));
-        if (paymentMethodParam) setValue('paymentApp', paymentMethodParam);
-        if (donorIdentifierParam && donorIdentifierParam.includes('@')) {
-            setValue('donorUpiId', donorIdentifierParam);
-        }
+        if (paymentAppParam) setValue('paymentApp', paymentAppParam);
+        if (donorUpiIdParam) setValue('donorUpiId', donorUpiIdParam);
         
         let foundUser: User | null = null;
         if(donorIdParam) {
             foundUser = await getUser(donorIdParam);
-        } else if (donorIdentifierParam) {
-            // This is the fallback if a direct ID wasn't found
-            foundUser = await getUserByUpiId(donorIdentifierParam);
-            if (!foundUser) foundUser = await getUserByPhone(donorIdentifierParam.slice(-10));
-            if (!foundUser) foundUser = await getUserByUserId(donorIdentifierParam);
         }
             
         if (foundUser && foundUser.roles.includes('Donor')) {
@@ -159,6 +152,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         }
     }
     prefillData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, setValue, toast]);
 
   useEffect(() => {

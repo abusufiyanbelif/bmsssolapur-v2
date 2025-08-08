@@ -82,20 +82,21 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.date) queryParams.set('date', result.details.date);
       if(result.details.paymentApp) queryParams.set('paymentApp', result.details.paymentApp);
       
+      // Pass all potential identifiers to the next page
       if(result.details.donorUpiId) queryParams.set('donorUpiId', result.details.donorUpiId);
       if(result.details.donorPhone) queryParams.set('donorPhone', result.details.donorPhone);
       if(result.details.donorName) queryParams.set('donorName', result.details.donorName);
       if(result.details.bankAccountNumber) queryParams.set('bankAccountNumber', result.details.bankAccountNumber);
       
-      let userFound = false;
+      // Check if a user exists with any of the identifiers
       let user = null;
       if (result.details.donorUpiId) user = await getUserByUpiId(result.details.donorUpiId);
       if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
       if (!user && result.details.bankAccountNumber) user = await getUserByBankAccountNumber(result.details.bankAccountNumber);
 
+      const destination = user ? '/admin/donations/add' : '/admin/user-management/add';
       if(user) {
           queryParams.set('donorId', user.id!);
-          userFound = true;
           toast({ title: "Donor Found!", description: `Found existing user: ${user.name}. Redirecting to donation form.` });
       } else {
           toast({
@@ -110,8 +111,6 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         const dataUrl = await fileToDataUrl(file);
         sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
         handleDialogClose();
-
-        const destination = userFound ? '/admin/donations/add' : '/admin/user-management/add';
         router.push(`${destination}?${queryParams.toString()}`);
       } catch (e) {
          toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
@@ -189,20 +188,22 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
                 </div>
             )}
         </div>
-        <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="outline">
-                    <X className="mr-2 h-4 w-4" /> Cancel
-                </Button>
-            </DialogClose>
+        <DialogFooter className="sm:justify-between">
             <Button type="button" variant="secondary" onClick={handleManualEntry}>
                 <Edit className="mr-2 h-4 w-4" />
                 Enter Manually
             </Button>
-            <Button type="button" onClick={handleScanAndContinue} disabled={isScanning || !file}>
-                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
-                Scan and Continue
-            </Button>
+            <div className="flex sm:justify-end gap-2">
+                 <DialogClose asChild>
+                    <Button type="button" variant="outline">
+                        Cancel
+                    </Button>
+                </DialogClose>
+                <Button type="button" onClick={handleScanAndContinue} disabled={isScanning || !file}>
+                    {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
+                    Scan and Continue
+                </Button>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -35,6 +35,7 @@ export default function EditDonationPage({ params }: { params: { id: string } })
 
     useEffect(() => {
         fetchDonation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [params.id]);
 
     if (loading) {
@@ -57,14 +58,6 @@ export default function EditDonationPage({ params }: { params: { id: string } })
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to All Donations
             </Link>
-            
-            <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Editing Donation</AlertTitle>
-                <AlertDescription>
-                   You are editing a donation record. Changes will be logged in the activity feed.
-                </AlertDescription>
-            </Alert>
             
             <EditDonationForm donation={donation} onUpdate={fetchDonation} />
         </div>

@@ -23,7 +23,8 @@ export async function handleUpdateUser(
     phone: formData.get("phone") as string,
     roles: formData.getAll("roles") as UserRole[],
     isActive: formData.get("isActive") === 'on',
-    isAnonymous: formData.get("isAnonymous") === 'on',
+    isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
+    isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
     gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
     beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
     
@@ -39,6 +40,8 @@ export async function handleUpdateUser(
     
     panNumber: formData.get("panNumber") as string | undefined,
     aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
+    bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
+    upiIds: formData.getAll("upiIds") as string[],
   };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
@@ -51,11 +54,12 @@ export async function handleUpdateUser(
         firstName: rawFormData.firstName,
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
-        // Email and User ID cannot be changed
+        // Email cannot be changed
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: rawFormData.isActive,
-        isAnonymous: rawFormData.isAnonymous,
+        isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
+        isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
         gender: rawFormData.gender,
         beneficiaryType: rawFormData.beneficiaryType,
         
@@ -73,6 +77,8 @@ export async function handleUpdateUser(
 
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
+        bankAccountNumber: rawFormData.bankAccountNumber || '',
+        upiIds: rawFormData.upiIds.filter(id => id.trim() !== ''),
     };
 
     await updateUser(userId, updates);
@@ -80,6 +86,7 @@ export async function handleUpdateUser(
     revalidatePath("/admin/user-management");
     revalidatePath(`/admin/user-management/${userId}/edit`);
     revalidatePath("/admin/beneficiaries");
+    revalidatePath("/admin/donors");
 
 
     return {

@@ -58,12 +58,12 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            const activity: ActivityLog = {
+            activities.push({
                 id: doc.id,
                 ...data,
+                // Ensure timestamp is a plain JS Date object for serialization
                 timestamp: (data.timestamp as Timestamp).toDate(),
-            } as ActivityLog;
-            activities.push(activity);
+            } as ActivityLog);
         });
         return activities;
     } catch (error) {

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -141,7 +142,9 @@ export default function DonorsPage() {
             const bValue = b[sortColumn];
 
             let comparison = 0;
-            if (aValue > bValue) {
+            if (aValue instanceof Date && bValue instanceof Date) {
+                comparison = aValue.getTime() - bValue.getTime();
+            } else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
                 comparison = -1;
@@ -280,7 +283,7 @@ export default function DonorsPage() {
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                            {renderActions(user)}
                         </TableCell>
@@ -327,7 +330,7 @@ export default function DonorsPage() {
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">
                              <span>Joined On</span>
-                             <span>{format(user.createdAt.toDate(), "dd MMM yyyy")}</span>
+                             <span>{format(user.createdAt, "dd MMM yyyy")}</span>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">

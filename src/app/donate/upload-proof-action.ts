@@ -1,4 +1,5 @@
 
+
 // src/app/donate/upload-proof-action.ts
 "use server";
 
@@ -21,8 +22,8 @@ async function handleFileUpload(file: File): Promise<string> {
 }
 
 // Function to normalize names for comparison (e.g., "John F. Doe" vs "John Doe")
-const normalizeName = (name: string) => {
-    return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+const normalizeString = (str: string) => {
+    return str.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 export async function handleRecordPastDonation(formData: FormData, userId?: string): Promise<FormState> {
@@ -50,16 +51,15 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
         const details = await extractDonationDetails({ photoDataUri: dataUri });
 
         // --- VALIDATION STEP ---
-        if (details.donorIdentifier) {
-            const extractedName = details.donorIdentifier.split('/')[0].trim();
+        if (details.donorName) {
+            const extractedName = details.donorName;
             const loggedInUserName = loggedInUser.name;
-            const phone = loggedInUser.phone;
-            const upiIds = loggedInUser.upiIds || [];
             
-            const isNameMatch = normalizeName(extractedName).includes(normalizeName(loggedInUserName));
-            const isIdentifierMatch = details.donorIdentifier.includes(phone) || upiIds.some(id => details.donorIdentifier?.includes(id));
+            // A simple check if one name string contains the other, ignoring case and spaces.
+            const isNameMatch = normalizeString(loggedInUserName).includes(normalizeString(extractedName)) || 
+                                normalizeString(extractedName).includes(normalizeString(loggedInUserName));
 
-            if (!isNameMatch && !isIdentifierMatch) {
+            if (!isNameMatch) {
                 return { 
                     success: false, 
                     error: `The name on the screenshot ("${extractedName}") does not appear to match your account name ("${loggedInUserName}"). Please upload the correct screenshot.`
@@ -84,6 +84,9 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
             notes: `Scanned from user upload. Extracted notes: "${details.notes || 'N/A'}". User notes: "${notes || 'N/A'}"`,
             transactionId: details.transactionId,
             paymentScreenshotUrl: paymentScreenshotUrl,
+            donationDate: details.date ? new Date(details.date) : new Date(),
+            paymentApp: details.paymentApp,
+            donorUpiId: details.donorUpiId,
         };
         
         await createDonation(

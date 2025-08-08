@@ -114,9 +114,16 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
-            const leadData = doc.data() as Omit<Lead, 'id'>;
-            // Ensure campaignName is a string, default to empty string if null/undefined
-            leads.push({ id: doc.id, ...leadData, campaignName: leadData.campaignName || '' });
+            const data = doc.data() as Lead;
+            leads.push({ 
+              id: doc.id,
+              ...data,
+              dateCreated: (data.dateCreated as Timestamp).toDate(),
+              createdAt: (data.createdAt as Timestamp).toDate(),
+              updatedAt: (data.updatedAt as Timestamp).toDate(),
+              closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
+              dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined, // Handle potential timestamp
+            });
         });
         return leads;
     } catch (error) {
@@ -137,7 +144,12 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
-            leads.push({ id: doc.id, ...doc.data() } as Lead);
+            const data = doc.data() as Lead;
+            leads.push({ 
+                id: doc.id, 
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate()
+            });
         });
         return leads;
     } catch (error) {
