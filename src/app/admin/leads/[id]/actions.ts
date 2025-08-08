@@ -7,7 +7,8 @@ import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
 import { FundTransfer } from "@/services/types";
 import { arrayUnion, increment } from "firebase/firestore";
-import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
+import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 
 export async function handleDeleteLead(leadId: string) {
     try {
@@ -82,6 +83,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const adminUserId = formData.get("adminUserId") as string;
         const amount = parseFloat(formData.get("amount") as string);
         const notes = formData.get("notes") as string;
+        const transactionId = formData.get("transactionId") as string;
         const proofFile = formData.get("proof") as File | undefined;
 
         if (!adminUserId || isNaN(amount) || !proofFile) {
@@ -106,6 +108,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             transferredAt: new Date() as any, // Will be converted by serverTimestamp
             notes: notes,
             proofUrl: proofUrl,
+            transactionId: transactionId,
         };
 
         await updateLead(leadId, {
@@ -137,7 +140,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
 }
 
 
-export async function handleScanTransferProof(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
+export async function handleScanTransferProof(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
     try {
         const proofFile = formData.get("proof") as File | undefined;
         
@@ -150,9 +153,9 @@ export async function handleScanTransferProof(formData: FormData): Promise<{succ
         const mimeType = proofFile.type;
         const dataUri = `data:${mimeType};base64,${base64}`;
 
-        const extractedResult = await extractRawText({ photoDataUri: dataUri });
+        const extractedDetails = await extractDonationDetails({ photoDataUri: dataUri });
         
-        return { success: true, text: extractedResult.rawText };
+        return { success: true, details: extractedDetails };
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";

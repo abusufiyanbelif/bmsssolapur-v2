@@ -22,6 +22,7 @@ import { handleFundTransfer, handleScanTransferProof } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 
 interface AddTransferDialogProps {
   leadId: string;
@@ -34,7 +35,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [open, setOpen] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
-  const [scannedText, setScannedText] = useState<string | null>(null);
+  const [scannedDetails, setScannedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -52,16 +53,17 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     }
     
     setIsScanning(true);
-    setScannedText(null);
+    setScannedDetails(null);
     const formData = new FormData();
     formData.append("proof", file);
     
     const result = await handleScanTransferProof(formData);
     
-    if (result.success && result.text) {
-        setScannedText(result.text);
+    if (result.success && result.details) {
+        setScannedDetails(result.details);
+        toast({ variant: 'success', title: 'Scan Successful', description: 'Fields have been auto-filled.' });
     } else {
-        toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || 'Could not extract text from the image.' });
+        toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || 'Could not extract details from the image.' });
     }
     setIsScanning(false);
   };
@@ -93,7 +95,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         description: "The fund transfer has been successfully recorded for this lead.",
       });
       setOpen(false);
-      setScannedText(null);
+      setScannedDetails(null);
       setFile(null);
       router.refresh(); // Refresh the page to show the new transfer
     } else {
@@ -113,21 +115,25 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
             Add Transfer
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Record Fund Transfer</DialogTitle>
           <DialogDescription>
-            Fill out the details below to record a payment made to the beneficiary for this case.
+            Fill out the details below to record a payment made to the beneficiary for this case. You can scan the proof to auto-fill details.
           </DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 py-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="space-y-2">
                 <Label htmlFor="amount">Amount Transferred (₹)</Label>
-                <Input id="amount" name="amount" type="number" required placeholder="e.g., 5000" />
+                <Input id="amount" name="amount" type="number" required placeholder="e.g., 5000" defaultValue={scannedDetails?.amount} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="transactionId">Transaction ID / UTR</Label>
+                <Input id="transactionId" name="transactionId" type="text" required placeholder="Enter transaction reference" defaultValue={scannedDetails?.transactionId} />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="notes">Notes (Optional)</Label>
-                <Textarea id="notes" name="notes" placeholder="e.g., Bank transfer reference, payment details..." />
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea id="notes" name="notes" placeholder="e.g., Bank transfer reference, payment details..." defaultValue={scannedDetails?.notes} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="proof">Proof of Transfer</Label>
@@ -142,12 +148,15 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
             
             {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center py-4"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning image...</div>}
 
-            {scannedText && (
+            {scannedDetails && (
                  <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Scanned Details</AlertTitle>
-                    <AlertDescription className="mt-2 max-h-40 overflow-y-auto bg-muted p-2 rounded-md">
-                        <pre className="text-xs whitespace-pre-wrap font-mono">{scannedText}</pre>
+                    <AlertTitle>Scanned Details Preview</AlertTitle>
+                    <AlertDescription className="mt-2 text-xs space-y-1">
+                        <p><strong>Sender:</strong> {scannedDetails.donorName || 'N/A'}</p>
+                        <p><strong>UPI ID:</strong> {scannedDetails.donorUpiId || 'N/A'}</p>
+                        <p><strong>Bank Acc:</strong> {scannedDetails.bankAccountNumber || 'N/A'}</p>
+                        <p><strong>Date:</strong> {scannedDetails.date || 'N/A'}</p>
                     </AlertDescription>
                 </Alert>
             )}

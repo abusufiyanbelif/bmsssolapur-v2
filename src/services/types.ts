@@ -130,6 +130,7 @@ export interface FundTransfer {
     transferredAt: Timestamp;
     notes?: string;
     proofUrl: string;
+    transactionId?: string;
 }
 
 export interface Lead {

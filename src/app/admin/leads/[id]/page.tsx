@@ -188,6 +188,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         <TableRow>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Amount</TableHead>
+                                            <TableHead>Transaction ID</TableHead>
                                             <TableHead>Transferred By</TableHead>
                                             <TableHead className="text-right">Proof</TableHead>
                                         </TableRow>
@@ -195,8 +196,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     <TableBody>
                                         {lead.fundTransfers.map((transfer, index) => (
                                             <TableRow key={index}>
-                                                <TableCell>{format(transfer.transferredAt, "dd MMM yyyy")}</TableCell>
+                                                <TableCell>{format(transfer.transferredAt as any, "dd MMM yyyy")}</TableCell>
                                                 <TableCell className="font-semibold">₹{transfer.amount.toLocaleString()}</TableCell>
+                                                <TableCell className="font-mono text-xs">{transfer.transactionId || 'N/A'}</TableCell>
                                                 <TableCell>{transfer.transferredByUserName}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Button asChild variant="outline" size="sm">
