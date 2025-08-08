@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Download, Copy, Check } from "lucide-react";
+import { Download, Copy, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
@@ -107,7 +107,9 @@ export function QrCodeDialog({
                 <Download className="mr-2 h-4 w-4" /> Download
             </Button>
             <DialogClose asChild>
-                <Button>Close</Button>
+                <Button variant="outline">
+                    <X className="mr-2 h-4 w-4" />Cancel
+                </Button>
             </DialogClose>
         </DialogFooter>
       </DialogContent>

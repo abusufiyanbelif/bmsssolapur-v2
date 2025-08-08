@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Upload, ScanEye, Edit } from "lucide-react";
+import { Loader2, Upload, ScanEye, Edit, X } from "lucide-react";
 import { handleScanDonationProof } from "./actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -190,7 +190,12 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
                 </div>
             )}
         </div>
-        <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <DialogFooter className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+             <DialogClose asChild>
+                <Button type="button" variant="outline" className="w-full sm:col-span-3">
+                    <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+            </DialogClose>
             <Button type="button" variant="secondary" onClick={handleManualEntry}>
                 <Edit className="mr-2 h-4 w-4" />
                 Enter Manually
