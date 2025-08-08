@@ -6,7 +6,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -23,12 +23,16 @@ const statusColors: Record<Lead['status'], string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
+    "On Hold": "bg-orange-500/20 text-orange-700 border-orange-500/30",
+    "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
 
 const verificationStatusConfig: Record<Lead['verifiedStatus'], { color: string; icon: React.ElementType }> = {
     "Pending": { color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30", icon: ShieldAlert },
     "Verified": { color: "bg-green-500/20 text-green-700 border-green-500/30", icon: ShieldCheck },
     "Rejected": { color: "bg-red-500/20 text-red-700 border-red-500/30", icon: ShieldX },
+    "More Info Required": { color: "bg-blue-500/20 text-blue-700 border-blue-500/30", icon: MoreHorizontal },
+    "Duplicate": { color: "bg-purple-500/20 text-purple-700 border-purple-500/30", icon: Ban },
 };
 
 type AllocatedDonation = Donation & { amountAllocated: number, allocatedByUserName: string, allocatedAt: any };
@@ -221,7 +225,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         <ShieldCheck className="h-5 w-5 text-muted-foreground" />
                                         <div className="text-sm">
                                             <p>Verified by <span className="font-semibold">{verifier.verifierName}</span></p>
-                                            <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt, 'PPP p')}</p>
+                                            <p className="text-xs text-muted-foreground">{format(verifier.verifiedAt.toDate(), 'PPP p')}</p>
                                             {verifier.notes && <p className="text-xs italic text-muted-foreground mt-1">"{verifier.notes}"</p>}
                                         </div>
                                     </div>

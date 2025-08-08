@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -103,8 +104,8 @@ export interface Donation {
 }
 
 // Lead-related types
-export type LeadStatus = 'Pending' | 'Partial' | 'Closed';
-export type LeadVerificationStatus = 'Pending' | 'Verified' | 'Rejected';
+export type LeadStatus = 'Pending' | 'Partial' | 'Closed' | 'On Hold' | 'Cancelled';
+export type LeadVerificationStatus = 'Pending' | 'Verified' | 'Rejected' | 'More Info Required' | 'Duplicate';
 export type LeadPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Loan' | 'Other';
 
 export interface Verifier {

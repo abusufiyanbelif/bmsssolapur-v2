@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -28,8 +28,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
-const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Partial", "Closed"];
-const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected"];
+const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Partial", "Closed", "On Hold", "Cancelled"];
+const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected", "More Info Required", "Duplicate"];
 
 type BeneficiaryTypeFilter = 'all' | 'Adult' | 'Kid' | 'Family' | 'Widow';
 const beneficiaryTypeOptions: { value: BeneficiaryTypeFilter, label: string, icon?: React.ElementType }[] = [
@@ -48,12 +48,16 @@ const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
+    "On Hold": "bg-orange-500/20 text-orange-700 border-orange-500/30",
+    "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
 
 const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; icon: React.ElementType }> = {
     "Pending": { color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30", icon: ShieldAlert },
     "Verified": { color: "bg-green-500/20 text-green-700 border-green-500/30", icon: ShieldCheck },
     "Rejected": { color: "bg-red-500/20 text-red-700 border-red-500/30", icon: ShieldX },
+    "More Info Required": { color: "bg-blue-500/20 text-blue-700 border-blue-500/30", icon: MoreHorizontal },
+    "Duplicate": { color: "bg-purple-500/20 text-purple-700 border-purple-500/30", icon: Ban },
 };
 
 
@@ -305,7 +309,7 @@ function LeadsPageContent() {
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
                                     {lead.verifiedStatus}
-                                </Badge>
+                                 </Badge>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
