@@ -123,3 +123,10 @@ export const ExtractRawTextOutputSchema = z.object({
     rawText: z.string().describe("The full, raw text extracted from the image.")
 });
 export type ExtractRawTextOutput = z.infer<typeof ExtractRawTextOutputSchema>;
+
+
+// Schema for extracting details from raw text
+export const ExtractDetailsFromTextInputSchema = z.object({
+  rawText: z.string().describe("A block of raw text from a payment receipt to be parsed."),
+});
+export type ExtractDetailsFromTextInput = z.infer<typeof ExtractDetailsFromTextInputSchema>;

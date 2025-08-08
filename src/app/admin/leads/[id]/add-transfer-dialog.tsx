@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect } from "lucide-react";
-import { handleFundTransfer, handleScanTransferProof, handleGetRawText } from "./actions";
+import { handleFundTransfer, handleScanTransferProof, handleGetRawText, handleExtractDetailsFromText } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
@@ -44,14 +44,14 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const formRef = useRef<HTMLFormElement>(null);
   
   const form = useForm();
-  const { setValue, register, handleSubmit } = form;
+  const { setValue, register, handleSubmit, getValues } = form;
 
   useEffect(() => {
     if (scannedDetails) {
         // Use Object.entries to iterate and set values
         for (const [key, value] of Object.entries(scannedDetails)) {
             if (value !== undefined && value !== null) {
-                setValue(key, value);
+                setValue(key as any, value);
             }
         }
     }
@@ -83,6 +83,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     
     setIsScanning(true);
     setScannedDetails(null);
+    setRawText(null);
     const formData = new FormData();
     formData.append("proof", file);
     
@@ -105,16 +106,30 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     
     setIsExtractingText(true);
     setRawText(null);
+    setScannedDetails(null); // Clear previous structured scan
     const formData = new FormData();
     formData.append("proof", file);
     
-    const result = await handleGetRawText(formData);
+    const textResult = await handleGetRawText(formData);
     
-    if (result.success && result.text) {
-        setRawText(result.text);
-        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for review.' });
+    if (textResult.success && textResult.text) {
+        setRawText(textResult.text);
+        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available. Now attempting to fill empty fields.' });
+
+        // Now, try to parse the raw text to fill in any gaps
+        const parseResult = await handleExtractDetailsFromText(textResult.text);
+        if (parseResult.success && parseResult.details) {
+            // Iterate and set only the fields that are currently empty
+            for (const [key, value] of Object.entries(parseResult.details)) {
+                if (value !== undefined && value !== null && !getValues(key)) {
+                    setValue(key as any, value);
+                }
+            }
+            toast({ variant: 'default', title: 'Form Fields Updated', description: 'Empty fields have been populated from the extracted text.' });
+        }
+
     } else {
-        toast({ variant: 'destructive', title: 'Text Extraction Failed', description: result.error || 'Could not extract text from the image.' });
+        toast({ variant: 'destructive', title: 'Text Extraction Failed', description: textResult.error || 'Could not extract text from the image.' });
     }
     setIsExtractingText(false);
   };
@@ -256,12 +271,12 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                 </div>
                  {previewUrl ? (
                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
-                        <div className="relative w-full h-64">
+                        <div className="relative w-full h-80">
                             <Image src={previewUrl} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
                         </div>
                     </div>
                 ) : (
-                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center justify-center gap-4 h-64">
+                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center justify-center gap-4 h-80">
                         <FileText className="h-16 w-16 text-muted-foreground"/>
                         <p className="text-sm text-muted-foreground">Upload an image to see a preview</p>
                     </div>

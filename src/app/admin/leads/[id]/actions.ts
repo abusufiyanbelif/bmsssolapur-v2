@@ -11,6 +11,7 @@ import { arrayUnion, increment } from "firebase/firestore";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
+import { extractDetailsFromText } from "@/ai/flows/extract-details-from-text-flow";
 
 export async function handleDeleteLead(leadId: string) {
     try {
@@ -197,5 +198,22 @@ export async function handleGetRawText(formData: FormData): Promise<{success: bo
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         console.error("Error getting raw text:", error);
         return { success: false, error };
+    }
+}
+
+export async function handleExtractDetailsFromText(rawText: string): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
+    try {
+        if (!rawText) {
+            return { success: false, error: "No text provided for extraction." };
+        }
+
+        const extractedDetails = await extractDetailsFromText({ rawText });
+        
+        return { success: true, details: extractedDetails };
+
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error("Error extracting details from text:", error);
+        return { success: false, error: error };
     }
 }
