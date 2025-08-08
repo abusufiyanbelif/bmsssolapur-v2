@@ -86,13 +86,13 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.donorUpiId) queryParams.set('donorUpiId', result.details.donorUpiId);
       if(result.details.donorPhone) queryParams.set('donorPhone', result.details.donorPhone);
       if(result.details.donorName) queryParams.set('donorName', result.details.donorName);
-      if(result.details.bankAccountNumber) queryParams.set('bankAccountNumber', result.details.bankAccountNumber);
+      if(result.details.senderAccountNumber) queryParams.set('bankAccountNumber', result.details.senderAccountNumber);
       
       // Check if a user exists with any of the identifiers
       let user = null;
       if (result.details.donorUpiId) user = await getUserByUpiId(result.details.donorUpiId);
       if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
-      if (!user && result.details.bankAccountNumber) user = await getUserByBankAccountNumber(result.details.bankAccountNumber);
+      if (!user && result.details.senderAccountNumber) user = await getUserByBankAccountNumber(result.details.senderAccountNumber);
 
       const destination = user ? '/admin/donations/add' : '/admin/user-management/add';
       if(user) {
