@@ -55,11 +55,11 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/organization", label: "Organization Profile" },
-            { href: "/admin/board-management", label: "Board Members" },
-            { href: "/admin/campaigns", label: "All Campaigns" },
-            { href: "/admin/leads", label: "Lead/ Case Management" },
-            { href: "/admin/donations", label: "Donations Management" },
+            { href: "/admin/organization", label: "Organization Profile", icon: Info },
+            { href: "/admin/board-management", label: "Board Members", icon: Users },
+            { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone },
+            { href: "/admin/leads", label: "Lead/ Case Management", icon: FileText },
+            { href: "/admin/donations", label: "Donations Management", icon: HandHeart },
             { href: "/admin/transfers", label: "Beneficiaries Transfer Management", icon: ArrowRightLeft },
         ]
     },
@@ -70,7 +70,7 @@ const allNavItems: NavItem[] = [
         icon: UserCog, 
         allowedRoles: ["Super Admin"],
         subItems: [
-            { href: "/admin/user-management", label: "All Users" },
+            { href: "/admin/user-management", label: "All Users", icon: Users },
             { href: "/admin/donors", label: "All Donors" },
             { href: "/admin/beneficiaries", label: "All Beneficiaries" },
         ]
