@@ -62,8 +62,8 @@ const allNavItems: NavItem[] = [
                 label: "Lead/ Case Management", 
                 icon: FileText,
                 subItems: [
-                    { href: "/admin/leads", label: "All Leads" },
-                    { 
+                     { href: "/admin/leads", label: "All Leads" },
+                     { 
                         label: "Lead by Type",
                         subItems: [
                              { href: "/admin/leads?beneficiaryType=Family", label: "Family", icon: HomeIcon },
