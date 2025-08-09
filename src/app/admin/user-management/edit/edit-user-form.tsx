@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateUser, handleSetPassword } from "./actions";
+import { handleUpdateUser, handleSetPassword } from "../edit/actions";
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -173,7 +173,10 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  bankAccountName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
+  upiPhone: z.string().optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -220,7 +223,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
       isWidow: user.isWidow || false,
       panNumber: user.panNumber || '',
       aadhaarNumber: user.aadhaarNumber || '',
+      bankAccountName: user.bankAccountName || '',
       bankAccountNumber: user.bankAccountNumber || '',
+      bankIfscCode: user.bankIfscCode || '',
+      upiPhone: user.upiPhone || '',
       upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
     },
   });
@@ -255,7 +261,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
           isWidow: user.isWidow || false,
           panNumber: user.panNumber || '',
           aadhaarNumber: user.aadhaarNumber || '',
+          bankAccountName: user.bankAccountName || '',
           bankAccountNumber: user.bankAccountNumber || '',
+          bankIfscCode: user.bankIfscCode || '',
+          upiPhone: user.upiPhone || '',
           upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
       });
       setIsEditing(false);
@@ -287,7 +296,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
     if(values.isWidow) formData.append("isWidow", "on");
     if(values.panNumber) formData.append("panNumber", values.panNumber);
     if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
+    if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
     if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
+    if(values.bankIfscCode) formData.append("bankIfscCode", values.bankIfscCode);
+    if(values.upiPhone) formData.append("upiPhone", values.upiPhone);
 
     values.upiIds?.forEach(upi => {
         if(upi.value) formData.append("upiIds", upi.value);
@@ -745,6 +757,60 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
                      <div className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="bankAccountName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Full Name as per Bank Account</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} placeholder="Enter full name on bank account" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <FormField
+                            control={form.control}
+                            name="bankAccountNumber"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Bank Account Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} placeholder="Enter account number" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <FormField
+                            control={form.control}
+                            name="bankIfscCode"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>IFSC Code</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} placeholder="Enter IFSC code" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        </div>
+                         <FormField
+                            control={form.control}
+                            name="upiPhone"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>UPI Phone Number</FormLabel>
+                                    <FormControl>
+                                        <Input type="tel" maxLength={10} {...field} disabled={!isEditing} placeholder="10-digit UPI linked phone" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormLabel>UPI IDs</FormLabel>
                         <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
                         {fields.map((field, index) => (
@@ -809,19 +875,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         )}
                         />
                     </div>
-                     <FormField
-                        control={form.control}
-                        name="bankAccountNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Bank Account Number (Optional)</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter bank account number" {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
 
                     <FormField
                     control={form.control}

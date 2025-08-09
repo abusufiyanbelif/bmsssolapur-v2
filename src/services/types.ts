@@ -58,7 +58,10 @@ export interface User {
   secondaryPhone?: string; 
   aadhaarNumber?: string; 
   panNumber?: string; 
+  bankAccountName?: string;
   bankAccountNumber?: string;
+  bankIfscCode?: string;
+  upiPhone?: string;
   upiIds?: string[];
   roles: UserRole[]; 
   privileges?: Privilege[]; 

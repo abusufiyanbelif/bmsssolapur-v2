@@ -40,7 +40,10 @@ export async function handleUpdateUser(
     
     panNumber: formData.get("panNumber") as string | undefined,
     aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
+    bankAccountName: formData.get("bankAccountName") as string | undefined,
     bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
+    bankIfscCode: formData.get("bankIfscCode") as string | undefined,
+    upiPhone: formData.get("upiPhone") as string | undefined,
   };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
@@ -76,7 +79,10 @@ export async function handleUpdateUser(
 
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
+        bankAccountName: rawFormData.bankAccountName || '',
         bankAccountNumber: rawFormData.bankAccountNumber || '',
+        bankIfscCode: rawFormData.bankIfscCode || '',
+        upiPhone: rawFormData.upiPhone || '',
     };
 
     await updateUser(userId, updates);

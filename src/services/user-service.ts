@@ -117,7 +117,10 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         secondaryPhone: user.secondaryPhone,
         aadhaarNumber: user.aadhaarNumber,
         panNumber: user.panNumber,
-        bankAccountNumber: user.bankAccountNumber,
+        bankAccountName: user.bankAccountName || '',
+        bankAccountNumber: user.bankAccountNumber || '',
+        bankIfscCode: user.bankIfscCode || '',
+        upiPhone: user.upiPhone || '',
         upiIds: user.upiIds || [],
         roles: user.roles || [],
         privileges: user.privileges || [],
@@ -134,7 +137,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
     Object.keys(finalUserData).forEach(key => {
         const typedKey = key as keyof User;
         if (finalUserData[typedKey] === undefined) {
-            delete finalUserData[typedKey];
+            delete (finalUserData as any)[typedKey];
         }
     });
 

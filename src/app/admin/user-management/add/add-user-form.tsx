@@ -67,7 +67,10 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  bankAccountName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
+  upiPhone: z.string().optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -168,7 +171,10 @@ function AddUserFormContent() {
     if(values.isWidow) formData.append("isWidow", "on");
     if(values.panNumber) formData.append("panNumber", values.panNumber);
     if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
+    if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
     if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
+    if(values.bankIfscCode) formData.append("bankIfscCode", values.bankIfscCode);
+    if(values.upiPhone) formData.append("upiPhone", values.upiPhone);
     values.upiIds?.forEach(upi => {
         if(upi.value) formData.append("upiIds", upi.value);
     });
@@ -606,6 +612,92 @@ function AddUserFormContent() {
         )}
 
         <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <FormField
+            control={form.control}
+            name="panNumber"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>PAN Number (Optional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter PAN number" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+            control={form.control}
+            name="aadhaarNumber"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Aadhaar Number (Optional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter Aadhaar number" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+         <FormField
+            control={form.control}
+            name="bankAccountName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Full Name as per Bank Account</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter full name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+                control={form.control}
+                name="bankAccountNumber"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Bank Account Number (Optional)</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter bank account number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="bankIfscCode"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>IFSC Code (Optional)</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter IFSC code" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <FormField
+                control={form.control}
+                name="upiPhone"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>UPI Phone Number (Optional)</FormLabel>
+                    <FormControl>
+                        <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+
          <div className="space-y-4">
             <FormLabel>UPI IDs (Optional)</FormLabel>
             <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
@@ -639,47 +731,6 @@ function AddUserFormContent() {
                 Add UPI ID
             </Button>
          </div>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-            control={form.control}
-            name="panNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>PAN Number (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter PAN number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
-            control={form.control}
-            name="aadhaarNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Aadhaar Number (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter Aadhaar number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-        <FormField
-            control={form.control}
-            name="bankAccountNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Bank Account Number (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter bank account number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
         
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
