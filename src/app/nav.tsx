@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link"
@@ -56,7 +55,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/organization", label: "Org Profile" },
-            { href: "/admin/board-members", label: "Team Management" },
+            { href: "/admin/board-members", label: "Board Members" },
             { href: "/admin/campaigns", label: "Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
