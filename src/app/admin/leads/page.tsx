@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import type { LeadPriority } from "@/services/types";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
@@ -74,6 +75,13 @@ const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; 
     "More Info Required": { color: "bg-blue-500/20 text-blue-700 border-blue-500/30", icon: MoreHorizontal },
     "Duplicate": { color: "bg-purple-500/20 text-purple-700 border-purple-500/30", icon: Ban },
     "Other": { color: "bg-gray-500/20 text-gray-700 border-gray-500/30", icon: MoreHorizontal },
+};
+
+const priorityConfig: Record<LeadPriority, { color: string; icon?: React.ElementType }> = {
+    "Urgent": { color: "border-red-500 bg-red-500/10 text-red-700", icon: AlertTriangle },
+    "High": { color: "border-orange-500 bg-orange-500/10 text-orange-700" },
+    "Medium": { color: "border-blue-500 bg-blue-500/10 text-blue-700" },
+    "Low": { color: "border-gray-500 bg-gray-500/10 text-gray-700" },
 };
 
 
@@ -324,18 +332,9 @@ function LeadsPageContent() {
                            Amount Req. {renderSortIcon('helpRequested')}
                         </Button>
                     </TableHead>
-                    <TableHead>
-                         <Button variant="ghost" onClick={() => handleSort('helpGiven')}>
-                            Amount Given {renderSortIcon('helpGiven')}
-                        </Button>
-                    </TableHead>
+                    <TableHead>Priority</TableHead>
                     <TableHead>Case Status</TableHead>
                     <TableHead>Verification</TableHead>
-                    <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort('closedAt')}>
-                            Date Closed {renderSortIcon('closedAt')}
-                        </Button>
-                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -343,6 +342,7 @@ function LeadsPageContent() {
                 {paginatedLeads.map((lead, index) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                     const StatusIcon = statusIcons[lead.status];
+                    const priorityConf = priorityConfig[lead.priority || 'Medium'];
                     return (
                         <TableRow key={lead.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
@@ -354,7 +354,12 @@ function LeadsPageContent() {
                                 </div>
                             </TableCell>
                             <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
-                            <TableCell className="font-semibold text-green-600">₹{lead.helpGiven.toLocaleString()}</TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={cn("capitalize", priorityConf.color)}>
+                                    {priorityConf.icon && <priorityConf.icon className="mr-1 h-3 w-3" />}
+                                    {lead.priority || 'Medium'}
+                                </Badge>
+                            </TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     <StatusIcon className="mr-1 h-3 w-3" />
@@ -366,9 +371,6 @@ function LeadsPageContent() {
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
                                     {lead.verifiedStatus}
                                 </Badge>
-                            </TableCell>
-                            <TableCell>
-                                {lead.closedAt ? format(lead.closedAt, "dd MMM yyyy") : 'N/A'}
                             </TableCell>
                             <TableCell className="text-right">
                                 {renderActions(lead)}
@@ -385,6 +387,7 @@ function LeadsPageContent() {
             {paginatedLeads.map((lead, index) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                  const StatusIcon = statusIcons[lead.status];
+                 const priorityConf = priorityConfig[lead.priority || 'Medium'];
                  return (
                     <Card key={lead.id}>
                         <CardHeader>
@@ -404,9 +407,12 @@ function LeadsPageContent() {
                                 <span className="text-muted-foreground">Amount Requested</span>
                                 <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Amount Given</span>
-                                <span className="font-semibold text-green-600">₹{lead.helpGiven.toLocaleString()}</span>
+                             <div className="flex justify-between">
+                                <span className="text-muted-foreground">Priority</span>
+                                <Badge variant="outline" className={cn("capitalize", priorityConf.color)}>
+                                    {priorityConf.icon && <priorityConf.icon className="mr-1 h-3 w-3" />}
+                                    {lead.priority || 'Medium'}
+                                </Badge>
                             </div>
                              <div className="flex justify-between">
                                 <span className="text-muted-foreground">Case Status</span>

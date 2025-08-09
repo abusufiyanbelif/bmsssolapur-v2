@@ -5,7 +5,7 @@
 import { createLead, getOpenLeadsByBeneficiaryId } from "@/services/lead-service";
 import { getUser, createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Lead, LeadPurpose, User, DonationType, Campaign } from "@/services/types";
+import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 
 interface FormState {
@@ -54,6 +54,7 @@ export async function handleAddLead(
       otherPurposeDetail: formData.get("otherPurposeDetail") as string | undefined,
       category: formData.get("category") as string,
       otherCategoryDetail: formData.get("otherCategoryDetail") as string | undefined,
+      priority: formData.get("priority") as LeadPriority,
       acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
       helpRequested: parseFloat(formData.get("helpRequested") as string),
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
@@ -138,6 +139,7 @@ export async function handleAddLead(
         donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose
         category: rawFormData.category,
         otherCategoryDetail: rawFormData.category === 'Other' ? rawFormData.otherCategoryDetail : undefined,
+        priority: rawFormData.priority,
         acceptableDonationTypes: rawFormData.acceptableDonationTypes,
         helpRequested: rawFormData.helpRequested,
         dueDate: rawFormData.dueDate,

@@ -31,7 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState, useEffect, useRef } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -51,6 +51,7 @@ import {
 
 const allLeadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
+const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other' | 'Loan'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
@@ -79,6 +80,7 @@ const formSchema = z.object({
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
+  priority: z.enum(leadPriorities),
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
@@ -155,6 +157,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
       helpRequested: 0,
       campaignId: 'none',
       acceptableDonationTypes: [],
+      priority: 'Medium',
     },
   });
 
@@ -198,6 +201,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
+    formData.append("priority", values.priority);
     values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
@@ -238,6 +242,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
         otherCategoryDetail: '',
         otherPurposeDetail: '',
         purpose: undefined,
+        priority: 'Medium',
         campaignId: 'none',
         campaignName: '',
         dueDate: undefined,
@@ -646,6 +651,30 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
                         )}
                     />
                 </div>
+                
+                 <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Set a priority level" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {leadPriorities.map(p => (
+                                <SelectItem key={p} value={p}>{p}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormDescription>Set the urgency of this case.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
     
     
                 <FormField

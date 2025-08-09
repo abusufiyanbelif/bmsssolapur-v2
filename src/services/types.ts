@@ -110,6 +110,7 @@ export interface Donation {
 export type LeadStatus = 'Pending' | 'Ready For Help' | 'Publish' | 'Partial' | 'Complete' | 'Closed' | 'On Hold' | 'Cancelled';
 export type LeadVerificationStatus = 'Pending' | 'Verified' | 'Rejected' | 'More Info Required' | 'Duplicate' | 'Other';
 export type LeadPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Loan' | 'Other';
+export type LeadPriority = 'Urgent' | 'High' | 'Medium' | 'Low';
 
 export interface Verifier {
     verifierId: string;
@@ -163,6 +164,7 @@ export interface Lead {
   helpRequested: number;
   helpGiven: number;
   status: LeadStatus;
+  priority?: LeadPriority;
   isLoan: boolean;
   verifiers?: Verifier[];
   donations?: LeadDonationAllocation[];
