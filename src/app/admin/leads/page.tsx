@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -28,6 +28,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { LeadPriority } from "@/services/types";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
@@ -97,6 +99,7 @@ function LeadsPageContent() {
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
+    const [popoverOpen, setPopoverOpen] = useState(false);
     
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -542,6 +545,8 @@ function LeadsPageContent() {
         )
     }
 
+    const beneficiaryUsers = users.filter(u => u.roles.includes('Beneficiary'));
+
   return (
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
@@ -563,13 +568,53 @@ function LeadsPageContent() {
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 xl:col-span-2">
-                        <Label htmlFor="nameFilter">Beneficiary or Lead ID</Label>
-                        <Input 
-                            id="nameFilter" 
-                            placeholder="Filter by name or ID..."
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value)}
-                        />
+                        <Label htmlFor="nameFilter">Beneficiary</Label>
+                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-full justify-between font-normal"
+                                >
+                                {nameInput
+                                    ? beneficiaryUsers.find((user) => user.name.toLowerCase() === nameInput.toLowerCase())?.name
+                                    : "Select a beneficiary..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput 
+                                        placeholder="Search beneficiary..."
+                                        value={nameInput}
+                                        onValueChange={setNameInput}
+                                    />
+                                    <CommandList>
+                                        <CommandEmpty>No beneficiaries found.</CommandEmpty>
+                                        <CommandGroup>
+                                        {beneficiaryUsers.map((user) => (
+                                            <CommandItem
+                                            value={user.name}
+                                            key={user.id}
+                                            onSelect={(currentValue) => {
+                                                setNameInput(currentValue === nameInput ? "" : currentValue);
+                                                setPopoverOpen(false);
+                                            }}
+                                            >
+                                            <Check
+                                                className={cn(
+                                                "mr-2 h-4 w-4",
+                                                nameInput.toLowerCase() === user.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {user.name}
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="beneficiaryTypeFilter">Beneficiary Type</Label>
