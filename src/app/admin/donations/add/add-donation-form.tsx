@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText } from "lucide-react";
+import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2 } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -53,7 +53,7 @@ const formSchema = z.object({
   transactionId: z.string().min(1, "Transaction ID is required."),
   donorUpiId: z.string().optional(),
   paymentApp: z.string().optional(),
-  paymentScreenshot: z.any().optional(),
+  paymentScreenshots: z.array(z.instanceof(File)).optional(),
   paymentScreenshotDataUrl: z.string().optional(),
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
@@ -74,6 +74,11 @@ interface AddDonationFormProps {
   users: User[];
 }
 
+interface FilePreview {
+    file: File;
+    previewUrl: string;
+}
+
 function AddDonationFormContent({ users }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -81,8 +86,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
-  const [localFile, setLocalFile] = useState<File | null>(null);
-  const [localFilePreview, setLocalFilePreview] = useState<string | null>(null);
+  const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,7 +105,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       includeTip: false,
       tipAmount: 0,
       notes: "",
-      paymentScreenshot: undefined,
+      paymentScreenshots: [],
       paymentScreenshotDataUrl: undefined,
     },
   });
@@ -169,19 +173,23 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const totalAmount = (amount || 0) + (tipAmount || 0);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setLocalFile(file);
-    if (localFilePreview) {
-        URL.revokeObjectURL(localFilePreview);
-    }
-    if (file) {
-        setValue('paymentScreenshot', file);
-        setLocalFilePreview(URL.createObjectURL(file));
-    } else {
-        setValue('paymentScreenshot', undefined);
-        setLocalFilePreview(null);
+    const files = e.target.files;
+    if (files) {
+        const newFilePreviews = Array.from(files).map(file => ({
+            file,
+            previewUrl: URL.createObjectURL(file)
+        }));
+        const allFiles = [...localFiles, ...newFilePreviews];
+        setLocalFiles(allFiles);
+        setValue('paymentScreenshots', allFiles.map(f => f.file));
     }
   };
+
+  const removeFile = (index: number) => {
+    const updatedFiles = localFiles.filter((_, i) => i !== index);
+    setLocalFiles(updatedFiles);
+    setValue('paymentScreenshots', updatedFiles.map(f => f.file));
+  }
 
 
   async function onSubmit(values: AddDonationFormValues) {
@@ -207,9 +215,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     if(values.paymentApp) formData.append("paymentApp", values.paymentApp);
     formData.append("transactionId", values.transactionId);
     if(values.tipAmount) formData.append("tipAmount", String(values.tipAmount));
-    if (values.paymentScreenshot) {
-        formData.append("paymentScreenshot", values.paymentScreenshot);
-    }
+    
+    values.paymentScreenshots?.forEach(file => {
+        formData.append("paymentScreenshots", file);
+    });
+    
     if (values.paymentScreenshotDataUrl) {
         formData.append("paymentScreenshotDataUrl", values.paymentScreenshotDataUrl);
     }
@@ -237,7 +247,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         type: undefined,
         paymentApp: undefined,
         donorUpiId: '',
-        paymentScreenshot: undefined,
+        paymentScreenshots: [],
         paymentScreenshotDataUrl: undefined,
       });
       if (fileInputRef.current) {
@@ -245,8 +255,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       }
       setSelectedDonor(null);
       setManualScreenshotPreview(null);
-      setLocalFile(null);
-      setLocalFilePreview(null);
+      setLocalFiles([]);
     } else {
       toast({
         variant: "destructive",
@@ -556,20 +565,21 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
           {!manualScreenshotPreview && (
               <FormField
               control={form.control}
-              name="paymentScreenshot"
+              name="paymentScreenshots"
               render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Screenshot</FormLabel>
+                    <FormLabel>Payment Screenshots</FormLabel>
                     <FormControl>
                         <Input 
                             type="file" 
                             accept="image/*,application/pdf"
                             ref={fileInputRef}
                             onChange={handleFileChange}
+                            multiple
                         />
                     </FormControl>
                     <FormDescription>
-                        Upload a screenshot of the payment for verification.
+                        Upload one or more screenshots of the payment for verification.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -577,18 +587,29 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               />
           )}
 
-          {localFilePreview && (
-            <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
-              {localFile?.type.startsWith('image/') ? (
-                  <div className="relative w-full h-64">
-                      <Image src={localFilePreview} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
-                  </div>
-              ) : (
-                  <div className="flex items-center gap-3 p-4">
-                      <FileText className="h-8 w-8 text-primary" />
-                      <p className="text-sm font-semibold">{localFile?.name}</p>
-                  </div>
-              )}
+          {localFiles.length > 0 && (
+            <div className="p-2 border rounded-md bg-muted/50 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {localFiles.map((fp, index) => (
+                <div key={index} className="relative group aspect-square">
+                   {fp.file.type.startsWith('image/') ? (
+                    <Image src={fp.previewUrl} alt={`Preview ${index + 1}`} fill className="object-cover rounded-md" data-ai-hint="payment screenshot" />
+                    ) : (
+                    <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
+                        <FileText className="h-8 w-8 text-primary" />
+                        <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
+                    </div>
+                    )}
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeFile(index)}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+              ))}
             </div>
           )}
 

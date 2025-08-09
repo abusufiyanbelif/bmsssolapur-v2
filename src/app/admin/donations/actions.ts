@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { deleteDonation, updateDonation, createDonation } from "@/services/donation-service";
@@ -35,7 +36,7 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
 
         const paymentScreenshotUrl = await handleFileUpload(screenshotFile);
 
-        await updateDonation(donationId, { paymentScreenshotUrl });
+        await updateDonation(donationId, { paymentScreenshotUrls: [paymentScreenshotUrl] });
         
         revalidatePath("/admin/donations");
         

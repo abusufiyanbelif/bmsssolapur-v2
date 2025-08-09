@@ -92,7 +92,7 @@ export interface Donation {
   isAnonymous?: boolean;
   leadId?: string;
   campaignId?: string;
-  paymentScreenshotUrl?: string;
+  paymentScreenshotUrls?: string[];
   transactionId?: string;
   donationDate: Timestamp | Date;
   donorUpiId?: string;

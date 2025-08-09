@@ -53,15 +53,18 @@ export async function handleAddDonation(
         return { success: false, error: "Selected donor user not found." };
     }
 
-    const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
+    const screenshotFiles = formData.getAll("paymentScreenshots") as File[];
     const screenshotDataUrl = formData.get("paymentScreenshotDataUrl") as string | undefined;
 
-    let paymentScreenshotUrl: string | undefined;
+    let paymentScreenshotUrls: string[] = [];
     if (screenshotDataUrl) {
         const file = await dataUrlToFile(screenshotDataUrl, 'manual-screenshot.png');
-        paymentScreenshotUrl = await handleFileUpload(file);
-    } else if (screenshotFile && screenshotFile.size > 0) {
-        paymentScreenshotUrl = await handleFileUpload(screenshotFile);
+        const url = await handleFileUpload(file);
+        paymentScreenshotUrls.push(url);
+    } else if (screenshotFiles && screenshotFiles.length > 0) {
+        paymentScreenshotUrls = await Promise.all(
+            screenshotFiles.map(file => handleFileUpload(file))
+        );
     }
     
     const donationDateStr = formData.get("donationDate") as string;
@@ -80,7 +83,7 @@ export async function handleAddDonation(
         donorUpiId: formData.get("donorUpiId") as string | undefined,
         paymentApp: formData.get("paymentApp") as string | undefined,
         notes: formData.get("notes") as string | undefined,
-        paymentScreenshotUrl: paymentScreenshotUrl,
+        paymentScreenshotUrls: paymentScreenshotUrls,
     };
 
     const newDonation = await createDonation(

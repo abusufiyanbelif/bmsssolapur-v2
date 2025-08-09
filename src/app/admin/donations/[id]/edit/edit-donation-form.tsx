@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonation } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, Edit, Save, X, Upload, CalendarIcon } from "lucide-react";
+import { Loader2, Edit, Save, X, Upload, CalendarIcon, FileText } from "lucide-react";
 import type { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UploadProofDialog } from "../../upload-proof-dialog";
@@ -35,6 +35,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import Image from 'next/image';
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -159,7 +160,7 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
                     </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                    {!donation.paymentScreenshotUrl && (
+                    {(!donation.paymentScreenshotUrls || donation.paymentScreenshotUrls.length === 0) && (
                          <UploadProofDialog donation={donation} onUploadSuccess={onUpdate}>
                             <Button variant="outline">
                                 <Upload className="mr-2 h-4 w-4" />
@@ -177,6 +178,18 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
             </div>
         </CardHeader>
         <CardContent>
+            {donation.paymentScreenshotUrls && donation.paymentScreenshotUrls.length > 0 && (
+                 <div className="mb-8">
+                    <h3 className="font-semibold text-lg mb-4">Uploaded Proofs</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/50">
+                        {donation.paymentScreenshotUrls.map((url, index) => (
+                           <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="relative group aspect-square">
+                               <Image src={url} alt={`Proof ${index + 1}`} fill className="object-cover rounded-md" data-ai-hint="payment screenshot" />
+                           </a>
+                        ))}
+                    </div>
+                </div>
+            )}
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
