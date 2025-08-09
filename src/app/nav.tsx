@@ -57,8 +57,6 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info },
             { href: "/admin/board-management", label: "Board Members", icon: Users },
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone },
-            { href: "/admin/donations", label: "Donations Management", icon: HandHeart },
-            { href: "/admin/transfers", label: "Beneficiaries Transfer", icon: ArrowRightLeft },
             { href: "/admin/organization/configuration", label: "Configuration", icon: Settings },
         ]
     },
@@ -71,6 +69,28 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/leads", label: "All Leads", icon: FileText },
             { href: "/admin/leads/configuration", label: "Configuration", icon: Settings },
+        ]
+    },
+    
+     // Admin - Donations Management (Collapsible)
+    {
+        label: "Donations Management",
+        icon: HandHeart,
+        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        subItems: [
+            { href: "/admin/donations", label: "All Donations", icon: HandHeart },
+            { href: "/admin/donations/configuration", label: "Configuration", icon: Settings },
+        ]
+    },
+    
+     // Admin - Beneficiaries Transfer Management (Collapsible)
+    {
+        label: "Beneficiaries Transfer",
+        icon: ArrowRightLeft,
+        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        subItems: [
+            { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft },
+            { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings },
         ]
     },
 
