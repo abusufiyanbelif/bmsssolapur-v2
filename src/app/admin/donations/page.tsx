@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose } from "@/services/donation-service";
+import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose, type PaymentMethod } from "@/services/donation-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye } from "lucide-react";
@@ -213,7 +213,7 @@ function DonationsPageContent() {
                             Amount {renderSortIcon('amount')}
                         </Button>
                     </TableHead>
-                    <TableHead>Payment App</TableHead>
+                    <TableHead>Payment Method</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -236,7 +236,7 @@ function DonationsPageContent() {
                             </div>
                         </TableCell>
                         <TableCell>₹{donation.amount.toFixed(2)}</TableCell>
-                        <TableCell>{donation.paymentApp || 'N/A'}</TableCell>
+                        <TableCell>{donation.paymentMethod || 'N/A'}</TableCell>
                         <TableCell>{donation.type}</TableCell>
                         <TableCell>
                             <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
@@ -287,8 +287,8 @@ function DonationsPageContent() {
                             <span>{donation.type}</span>
                         </div>
                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Payment App</span>
-                            <span>{donation.paymentApp || 'N/A'}</span>
+                            <span className="text-muted-foreground">Payment Method</span>
+                            <span>{donation.paymentMethod || 'N/A'}</span>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">

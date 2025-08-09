@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonation } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, Edit, Save, X, Upload, CalendarIcon, FileText } from "lucide-react";
-import type { Donation, DonationStatus, DonationType, DonationPurpose } from "@/services/types";
+import type { Donation, DonationStatus, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UploadProofDialog } from "../../upload-proof-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,7 +40,7 @@ import Image from 'next/image';
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const donationStatuses = ["Pending verification", "Verified", "Failed/Incomplete", "Allocated"] as const;
-const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'];
+const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 
 const formSchema = z.object({
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
@@ -48,9 +48,11 @@ const formSchema = z.object({
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
   status: z.enum(donationStatuses),
-  transactionId: z.string().min(1, "Transaction ID is required."),
+  transactionId: z.string().optional(),
   donorUpiId: z.string().optional(),
-  paymentApp: z.string().optional(),
+  donorPhone: z.string().optional(),
+  donorBankAccount: z.string().optional(),
+  paymentMethod: z.enum(paymentMethods).optional(),
   notes: z.string().optional(),
 });
 
@@ -68,7 +70,6 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    // In a real app, this would be handled by a more robust session management.
     const storedUserId = localStorage.getItem('userId');
     setAdminUserId(storedUserId);
   }, []);
@@ -83,7 +84,9 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
       status: donation.status,
       transactionId: donation.transactionId || '',
       donorUpiId: donation.donorUpiId || '',
-      paymentApp: donation.paymentApp || '',
+      donorPhone: donation.donorPhone || '',
+      donorBankAccount: donation.donorBankAccount || '',
+      paymentMethod: donation.paymentMethod || undefined,
       notes: donation.notes || '',
     },
   });
@@ -99,7 +102,9 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
         status: donation.status,
         transactionId: donation.transactionId || '',
         donorUpiId: donation.donorUpiId || '',
-        paymentApp: donation.paymentApp || '',
+        donorPhone: donation.donorPhone || '',
+        donorBankAccount: donation.donorBankAccount || '',
+        paymentMethod: donation.paymentMethod || undefined,
         notes: donation.notes || '',
     });
     setIsEditing(false);
@@ -118,15 +123,13 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append("amount", String(values.amount));
-    formData.append("donationDate", values.donationDate.toISOString());
-    formData.append("type", values.type);
-    if (values.purpose) formData.append("purpose", values.purpose);
-    if (values.donorUpiId) formData.append("donorUpiId", values.donorUpiId);
-    if (values.paymentApp) formData.append("paymentApp", values.paymentApp);
-    formData.append("status", values.status);
-    formData.append("transactionId", values.transactionId);
-    if (values.notes) formData.append("notes", values.notes);
+    Object.entries(values).forEach(([key, value]) => {
+        if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+        } else if (value !== undefined && value !== null) {
+            formData.append(key, String(value));
+        }
+    });
     
     const result = await handleUpdateDonation(donation.id!, formData, adminUserId);
 
@@ -297,18 +300,18 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <FormField
                         control={form.control}
-                        name="paymentApp"
+                        name="paymentMethod"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Payment App</FormLabel>
+                                <FormLabel>Payment Method</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select payment app" />
+                                        <SelectValue placeholder="Select payment method" />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    {paymentApps.map(method => (
+                                    {paymentMethods.map(method => (
                                     <SelectItem key={method} value={method}>{method}</SelectItem>
                                     ))}
                                     </SelectContent>
@@ -331,6 +334,35 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
                         )}
                     />
                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <FormField
+                        control={form.control}
+                        name="donorPhone"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Donor Phone</FormLabel>
+                            <FormControl>
+                            <Input placeholder="10-digit phone number" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="donorBankAccount"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Donor Bank Account</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Last 4 digits or full number" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+
 
                 <FormField
                     control={form.control}

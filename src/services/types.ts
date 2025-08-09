@@ -74,6 +74,7 @@ export interface User {
 export type DonationStatus = 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Allocated';
 export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah' | 'Split' | 'Any';
 export type DonationPurpose = 'Education' | 'Deen' | 'Hospital' | 'Loan and Relief Fund' | 'To Organization Use' | 'Loan Repayment';
+export type PaymentMethod = 'Online (UPI/Card)' | 'Bank Transfer' | 'Cash' | 'Other';
 
 export interface Allocation {
   leadId: string;
@@ -96,7 +97,9 @@ export interface Donation {
   transactionId?: string;
   donationDate: Timestamp | Date;
   donorUpiId?: string;
-  paymentApp?: string;
+  donorPhone?: string;
+  donorBankAccount?: string;
+  paymentMethod?: PaymentMethod;
   createdAt: Timestamp;
   verifiedAt?: Timestamp;
   allocations?: Allocation[];

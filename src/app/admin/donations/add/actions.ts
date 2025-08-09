@@ -4,7 +4,7 @@
 import { createDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Donation, DonationPurpose, DonationType } from "@/services/types";
+import type { Donation, DonationPurpose, DonationType, PaymentMethod } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 
 interface FormState {
@@ -78,10 +78,12 @@ export async function handleAddDonation(
         type: formData.get("type") as DonationType,
         purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
         status: "Pending verification",
-        transactionId: formData.get("transactionId") as string,
+        transactionId: formData.get("transactionId") as string | undefined,
         donationDate: donationDate,
         donorUpiId: formData.get("donorUpiId") as string | undefined,
-        paymentApp: formData.get("paymentApp") as string | undefined,
+        donorPhone: formData.get("donorPhone") as string | undefined,
+        donorBankAccount: formData.get("donorBankAccount") as string | undefined,
+        paymentMethod: formData.get("paymentMethod") as PaymentMethod | undefined,
         notes: formData.get("notes") as string | undefined,
         paymentScreenshotUrls: paymentScreenshotUrls,
     };

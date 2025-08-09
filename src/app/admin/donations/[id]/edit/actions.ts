@@ -4,7 +4,7 @@
 import { updateDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Donation, DonationPurpose, DonationType, DonationStatus } from "@/services/types";
+import type { Donation, DonationPurpose, DonationType, DonationStatus, PaymentMethod } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 
 interface FormState {
@@ -34,7 +34,9 @@ export async function handleUpdateDonation(
         transactionId: rawFormData.transactionId as string,
         donationDate: donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now(),
         donorUpiId: rawFormData.donorUpiId as string | undefined,
-        paymentApp: rawFormData.paymentApp as string | undefined,
+        donorPhone: rawFormData.donorPhone as string | undefined,
+        donorBankAccount: rawFormData.donorBankAccount as string | undefined,
+        paymentMethod: rawFormData.paymentMethod as PaymentMethod | undefined,
         notes: rawFormData.notes as string | undefined,
     };
 

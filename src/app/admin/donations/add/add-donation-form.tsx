@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
 import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2 } from "lucide-react";
-import type { User, DonationType, DonationPurpose } from "@/services/types";
+import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
 import { useSearchParams } from "next/navigation";
@@ -41,7 +41,7 @@ import { format } from "date-fns";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
-const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'];
+const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -50,9 +50,11 @@ const formSchema = z.object({
   donationDate: z.date(),
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
-  transactionId: z.string().min(1, "Transaction ID is required."),
+  transactionId: z.string().optional(),
   donorUpiId: z.string().optional(),
-  paymentApp: z.string().optional(),
+  donorPhone: z.string().optional(),
+  donorBankAccount: z.string().optional(),
+  paymentMethod: z.enum(paymentMethods).optional(),
   paymentScreenshots: z.array(z.instanceof(File)).optional(),
   paymentScreenshotDataUrl: z.string().optional(),
   includeTip: z.boolean().default(false),
@@ -123,15 +125,17 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         const donorIdParam = searchParams.get('donorId');
         const notesParam = searchParams.get('notes');
         const dateParam = searchParams.get('date');
-        const paymentAppParam = searchParams.get('paymentApp');
         const donorUpiIdParam = searchParams.get('donorUpiId');
+        const donorPhoneParam = searchParams.get('donorPhone');
+        const donorBankAccountParam = searchParams.get('bankAccountNumber');
 
         if (amountParam) setValue('amount', parseFloat(amountParam));
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
         if (notesParam) setValue('notes', notesParam);
         if (dateParam) setValue('donationDate', new Date(dateParam));
-        if (paymentAppParam) setValue('paymentApp', paymentAppParam);
         if (donorUpiIdParam) setValue('donorUpiId', donorUpiIdParam);
+        if (donorPhoneParam) setValue('donorPhone', donorPhoneParam);
+        if (donorBankAccountParam) setValue('donorBankAccount', donorBankAccountParam);
         
         let foundUser: User | null = null;
         if(donorIdParam) {
@@ -167,6 +171,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         if (selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
              setValue('donorUpiId', selectedDonor.upiIds[0]);
         }
+        if (selectedDonor.phone) setValue('donorPhone', selectedDonor.phone);
+        if (selectedDonor.bankAccountNumber) setValue('donorBankAccount', selectedDonor.bankAccountNumber);
     }
   }, [selectedDonor, setValue]);
   
@@ -212,8 +218,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     formData.append("type", values.type);
     if(values.purpose) formData.append("purpose", values.purpose);
     if(values.donorUpiId) formData.append("donorUpiId", values.donorUpiId);
-    if(values.paymentApp) formData.append("paymentApp", values.paymentApp);
-    formData.append("transactionId", values.transactionId);
+    if(values.donorPhone) formData.append("donorPhone", values.donorPhone);
+    if(values.donorBankAccount) formData.append("donorBankAccount", values.donorBankAccount);
+    if(values.paymentMethod) formData.append("paymentMethod", values.paymentMethod);
+    if(values.transactionId) formData.append("transactionId", values.transactionId);
     if(values.tipAmount) formData.append("tipAmount", String(values.tipAmount));
     
     values.paymentScreenshots?.forEach(file => {
@@ -245,8 +253,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         transactionId: "",
         purpose: undefined,
         type: undefined,
-        paymentApp: undefined,
+        paymentMethod: undefined,
         donorUpiId: '',
+        donorPhone: '',
+        donorBankAccount: '',
         paymentScreenshots: [],
         paymentScreenshotDataUrl: undefined,
       });
@@ -496,24 +506,53 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                     control={form.control}
-                    name="paymentApp"
+                    name="paymentMethod"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Payment App</FormLabel>
+                            <FormLabel>Payment Method</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select payment app" />
+                                    <SelectValue placeholder="Select payment method" />
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                {paymentApps.map(method => (
+                                {paymentMethods.map(method => (
                                 <SelectItem key={method} value={method}>{method}</SelectItem>
                                 ))}
                                 </SelectContent>
                             </Select>
                             <FormMessage />
                         </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="transactionId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Transaction ID (Optional)</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Enter reference number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+            <h4 className="font-semibold text-sm">Donor Contact Details (for reference)</h4>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                    control={form.control}
+                    name="donorPhone"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Donor Phone</FormLabel>
+                        <FormControl>
+                            <Input placeholder="10-digit phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
                     )}
                 />
                  <FormField
@@ -530,22 +569,19 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     )}
                 />
             </div>
-          <FormField
-            control={form.control}
-            name="transactionId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Transaction ID / Reference</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter reference number" {...field} />
-                </FormControl>
-                 <FormDescription>
-                  This ID should match the bank transaction. It will be used for both the donation and the tip.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+             <FormField
+                    control={form.control}
+                    name="donorBankAccount"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Donor Bank Account (Optional)</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Last 4 digits or full number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
           
           <FormField
               control={form.control}
