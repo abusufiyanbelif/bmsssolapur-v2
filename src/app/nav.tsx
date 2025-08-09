@@ -62,7 +62,7 @@ const allNavItems: NavItem[] = [
                 label: "Lead/ Case Management", 
                 icon: FileText,
                 subItems: [
-                    { href: "/admin/leads", label: "All Leads" },
+                    { href: "/admin/leads", label: "All Leads", icon: FileText },
                     { 
                         label: "Lead by Type",
                         subItems: [
@@ -90,8 +90,6 @@ const allNavItems: NavItem[] = [
             { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users },
         ]
     },
-    
-    // Super Admin - Access Management (Collapsible)
      { 
         label: "Access Management", 
         icon: KeySquare, 
