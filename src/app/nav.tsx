@@ -17,6 +17,7 @@ type NavSubItem = {
     label: string;
     icon?: React.ElementType;
     subItems?: NavSubItem[]; // For nested collapsibles
+    allowedRoles?: string[];
 };
 
 type NavItem = {
@@ -54,10 +55,10 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/organization", label: "Organization Profile", icon: Info },
-            { href: "/admin/board-management", label: "Board Members", icon: Users },
-            { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone },
-            { href: "/admin/organization/configuration", label: "Configuration", icon: Wrench },
+            { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/organization/configuration", label: "Configuration", icon: Wrench, allowedRoles: ["Super Admin"] },
         ]
     },
 
@@ -67,8 +68,8 @@ const allNavItems: NavItem[] = [
         icon: FileCheck,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/leads", label: "All Leads", icon: FileText },
-            { href: "/admin/leads/configuration", label: "Configuration", icon: BookText },
+            { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/leads/configuration", label: "Configuration", icon: BookText, allowedRoles: ["Super Admin"] },
         ]
     },
     
@@ -78,8 +79,8 @@ const allNavItems: NavItem[] = [
         icon: HandHeart,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/donations", label: "All Donations", icon: HandHeart },
-            { href: "/admin/donations/configuration", label: "Configuration", icon: Banknote },
+            { href: "/admin/donations", label: "All Donations", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/donations/configuration", label: "Configuration", icon: Banknote, allowedRoles: ["Super Admin"] },
         ]
     },
     
@@ -89,8 +90,8 @@ const allNavItems: NavItem[] = [
         icon: ArrowRightLeft,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft },
-            { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
 
@@ -161,7 +162,7 @@ const NavLink = ({ item, isActive, onClick, paddingLeft }: { item: NavItem | Nav
     );
 };
 
-const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubItem, pathname: string, level?: number }) => {
+const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRoleSwitchRequired }: { item: NavItem | NavSubItem, pathname: string, level?: number, userRoles: string[], activeRole: string, onRoleSwitchRequired: (requiredRole: string) => void }) => {
     const Icon = item.icon;
     const isAnySubItemActive = item.subItems?.some(sub => sub.href && pathname.startsWith(sub.href)) || 
                                item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href))) ||
@@ -169,7 +170,14 @@ const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubI
 
     const paddingLeft = level > 0 ? `pl-${level * 4}` : '';
     
-    // This component now handles both being a direct link AND a collapsible trigger
+    // Filter sub-items based on the active role
+    const visibleSubItems = item.subItems?.filter(subItem => {
+        if (!subItem.allowedRoles) return true; // if no roles specified, it's visible to all parent roles
+        return subItem.allowedRoles.includes(activeRole);
+    }) || [];
+
+    if(visibleSubItems.length === 0) return null;
+    
     const TriggerContent = (
         <div className={cn(
             "flex items-center w-full gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
@@ -191,9 +199,9 @@ const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubI
                 )}
             </CollapsibleTrigger>
             <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
-                {item.subItems?.map(subItem => {
+                {visibleSubItems.map(subItem => {
                     if (subItem.subItems) {
-                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} />
+                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />
                     }
                     const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
                     return <NavLink key={subItem.href} item={subItem} isActive={isSubActive} />
@@ -233,7 +241,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
                  if (item.subItems) {
-                    return <NavCollapsible key={key} item={item} pathname={pathname} />;
+                    return <NavCollapsible key={key} item={item} pathname={pathname} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />;
                 }
                 const isActive = (item.href === '/' && pathname === '/') || 
                                  (item.href && item.href !== '/' && pathname.startsWith(item.href));
