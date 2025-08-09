@@ -57,16 +57,20 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info },
             { href: "/admin/board-management", label: "Board Members", icon: Users },
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone },
-            { 
-                label: "Lead Management", 
-                icon: FileText,
-                subItems: [
-                    { href: "/admin/leads", label: "All Leads", icon: FileText },
-                    { href: "/admin/leads/configuration", label: "Configuration", icon: Settings },
-                ]
-            },
             { href: "/admin/donations", label: "Donations Management", icon: HandHeart },
-            { href: "/admin/transfers", label: "Beneficiaries Transfer Management", icon: ArrowRightLeft },
+            { href: "/admin/transfers", label: "Beneficiaries Transfer", icon: ArrowRightLeft },
+            { href: "/admin/organization/configuration", label: "Configuration", icon: Settings },
+        ]
+    },
+
+     // Admin - Lead Management (Collapsible)
+    {
+        label: "Lead Management",
+        icon: FileText,
+        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        subItems: [
+            { href: "/admin/leads", label: "All Leads", icon: FileText },
+            { href: "/admin/leads/configuration", label: "Configuration", icon: Settings },
         ]
     },
 
@@ -79,6 +83,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/user-management", label: "All Users", icon: Users },
             { href: "/admin/donors", label: "All Donors", icon: Users },
             { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users },
+            { href: "/admin/user-management/configuration", label: "Configuration", icon: Settings },
         ]
     },
      { 
@@ -89,6 +94,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
             { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
             { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
+            { href: "/admin/user-management/access-configuration", label: "Configuration", icon: Settings },
         ]
     },
     
