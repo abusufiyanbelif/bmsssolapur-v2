@@ -40,6 +40,8 @@ const allNavItems: NavItem[] = [
     
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
+    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
+    { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
 
     // Beneficiary
@@ -48,7 +50,7 @@ const allNavItems: NavItem[] = [
     
     // Admin - Organization (Collapsible)
     {
-        label: "Organization",
+        label: "Organization Management",
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
