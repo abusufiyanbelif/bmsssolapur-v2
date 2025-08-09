@@ -60,3 +60,33 @@ export async function handleRemoveApprover(userId: string, group: string): Promi
     return { success: false, error: error };
   }
 }
+
+export async function handleMakeMandatory(userId: string): Promise<FormState> {
+  try {
+    // Atomically remove from optional and add to mandatory
+    await updateUser(userId, { 
+      groups: arrayUnion('Mandatory Lead Approver', 'Lead Approver') as any 
+    });
+    revalidatePath("/admin/leads/configuration");
+    return { success: true };
+  } catch(e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return { success: false, error: error };
+  }
+}
+
+
+export async function handleMakeOptional(userId: string): Promise<FormState> {
+  try {
+    // Atomically remove from mandatory
+    await updateUser(userId, { 
+      groups: arrayRemove('Mandatory Lead Approver') as any
+    });
+    revalidatePath("/admin/leads/configuration");
+    return { success: true };
+  } catch(e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return { success: false, error: error };
+  }
+}
+
