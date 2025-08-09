@@ -249,6 +249,9 @@ export interface AppSettings {
             saltIndex: number;
         }
     },
+    leadConfiguration?: {
+      disabledPurposes: string[];
+    },
     updatedAt?: Timestamp;
 }
 

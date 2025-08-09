@@ -53,6 +53,9 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
             saltKey: '',
             saltIndex: 1,
         }
+    },
+    leadConfiguration: {
+        disabledPurposes: [],
     }
 };
 
@@ -87,6 +90,7 @@ export const getAppSettings = async (): Promise<AppSettings> => {
             razorpay: { ...defaultSettings.paymentGateway.razorpay, ...data.paymentGateway?.razorpay },
             phonepe: { ...defaultSettings.paymentGateway.phonepe, ...data.paymentGateway?.phonepe },
         },
+        leadConfiguration: { ...defaultSettings.leadConfiguration, ...data.leadConfiguration }
       };
       return { id: settingsDoc.id, ...mergedSettings } as AppSettings;
     } else {

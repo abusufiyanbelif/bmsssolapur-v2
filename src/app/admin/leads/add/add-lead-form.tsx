@@ -49,7 +49,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 
-const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
+const allLeadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other' | 'Loan'>, string[]> = {
@@ -75,7 +75,7 @@ const formSchema = z.object({
 
   campaignId: z.string().optional(),
   campaignName: z.string().optional(),
-  purpose: z.enum(leadPurposes),
+  purpose: z.enum(allLeadPurposes),
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
@@ -128,9 +128,10 @@ type AddLeadFormValues = z.infer<typeof formSchema>;
 interface AddLeadFormProps {
   users: User[];
   campaigns: Campaign[];
+  disabledPurposes: string[];
 }
 
-export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
+export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
@@ -139,6 +140,8 @@ export function AddLeadForm({ users, campaigns }: AddLeadFormProps) {
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   
+  const leadPurposes = allLeadPurposes.filter(p => !disabledPurposes.includes(p));
+
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     setAdminUserId(storedUserId);

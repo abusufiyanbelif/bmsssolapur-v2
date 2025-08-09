@@ -1,13 +1,16 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddLeadForm } from "./add-lead-form";
 import { getAllUsers } from "@/services/user-service";
 import { getAllCampaigns } from "@/services/campaign-service";
+import { getAppSettings } from "@/services/app-settings-service";
 
 export default async function AddLeadPage() {
-    const [users, campaigns] = await Promise.all([
+    const [users, campaigns, settings] = await Promise.all([
         getAllUsers(),
-        getAllCampaigns()
+        getAllCampaigns(),
+        getAppSettings(),
     ]);
     
     return (
@@ -21,7 +24,11 @@ export default async function AddLeadPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddLeadForm users={users} campaigns={campaigns} />
+                    <AddLeadForm 
+                        users={users} 
+                        campaigns={campaigns} 
+                        disabledPurposes={settings.leadConfiguration?.disabledPurposes || []} 
+                    />
                 </CardContent>
             </Card>
         </div>
