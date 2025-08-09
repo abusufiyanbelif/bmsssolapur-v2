@@ -198,10 +198,10 @@ function AddUserFormContent() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+      <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
         
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <FormField
                 control={form.control}
                 name="firstName"
@@ -209,7 +209,7 @@ function AddUserFormContent() {
                     <FormItem>
                     <FormLabel>First Name</FormLabel>
                     <FormControl>
-                        <Input placeholder="First Name" {...field} />
+                        <Input type="text" placeholder="Enter your first name" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -222,7 +222,7 @@ function AddUserFormContent() {
                     <FormItem>
                     <FormLabel>Middle Name (Optional)</FormLabel>
                     <FormControl>
-                        <Input placeholder="Middle Name" {...field} />
+                        <Input type="text" placeholder="Enter your middle name" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -235,7 +235,7 @@ function AddUserFormContent() {
                     <FormItem>
                     <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                        <Input placeholder="Last Name" {...field} />
+                        <Input type="text" placeholder="Enter your last name" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -243,48 +243,47 @@ function AddUserFormContent() {
             />
         </div>
 
-        <FormField
-            control={form.control}
-            name="userId"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>User ID</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., firstname.lastname" {...field} />
-                </FormControl>
-                 <FormDescription>A unique identifier for this user. This will be auto-generated.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
+         <FormField
+          control={form.control}
+          name="userId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>User ID</FormLabel>
+              <FormControl>
+                <Input type="text" placeholder="Create a custom user ID" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Email Address (Optional)</FormLabel>
-                <FormControl>
-                    <Input type="email" placeholder="user@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Phone Number (10 digits)</FormLabel>
-                <FormControl>
-                    <Input type="tel" maxLength={10} placeholder="9876543210" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email Address (Optional)</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="you@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone Number</FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="10-digit number" maxLength={10} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         </div>
         
          <FormField
@@ -338,7 +337,7 @@ function AddUserFormContent() {
                 </FormItem>
             )}
             />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
                 name="city"
@@ -366,7 +365,7 @@ function AddUserFormContent() {
                 )}
                 />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
                 name="state"
@@ -397,7 +396,7 @@ function AddUserFormContent() {
 
 
         <h3 className="text-lg font-semibold border-b pb-2">Family & Occupation</h3>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
                 name="occupation"
@@ -640,7 +639,7 @@ function AddUserFormContent() {
                 Add UPI ID
             </Button>
          </div>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
             control={form.control}
             name="panNumber"
