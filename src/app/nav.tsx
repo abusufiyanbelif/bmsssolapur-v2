@@ -58,22 +58,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info },
             { href: "/admin/board-management", label: "Board Members", icon: Users },
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone },
-            { 
-                label: "Lead/ Case Management", 
-                icon: FileText,
-                subItems: [
-                     { href: "/admin/leads", label: "All Leads" },
-                     { 
-                        label: "Lead by Type",
-                        subItems: [
-                             { href: "/admin/leads?beneficiaryType=Family", label: "Family", icon: HomeIcon },
-                             { href: "/admin/leads?beneficiaryType=Adult", label: "Adult", icon: PersonStanding },
-                             { href: "/admin/leads?beneficiaryType=Kid", label: "Kid", icon: Baby },
-                             { href: "/admin/leads?beneficiaryType=Widow", label: "Widow", icon: HandHeart },
-                        ]
-                    }
-                ]
-            },
+            { href: "/admin/leads", label: "Lead/ Case Management", icon: FileText },
             { href: "/admin/donations", label: "Donations Management", icon: HandHeart },
             { href: "/admin/transfers", label: "Beneficiaries Transfer Management", icon: ArrowRightLeft },
         ]
