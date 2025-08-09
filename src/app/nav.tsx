@@ -94,6 +94,16 @@ const allNavItems: NavItem[] = [
             { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
+     // Admin - Beneficiary Management (Collapsible)
+    {
+        label: "Beneficiary Management",
+        icon: Baby,
+        allowedRoles: ["Super Admin"],
+        subItems: [
+            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Super Admin"] },
+            { href: "/admin/beneficiaries/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
+        ]
+    },
 
     // Super Admin - User Management (Collapsible)
     { 
@@ -103,7 +113,6 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/user-management", label: "All Users", icon: Users },
             { href: "/admin/donors", label: "All Donors", icon: HomeIcon },
-            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Baby },
             { href: "/admin/user-management/configuration", label: "Configuration", icon: UserCog },
         ]
     },
