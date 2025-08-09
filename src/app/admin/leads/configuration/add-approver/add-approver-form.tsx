@@ -24,13 +24,16 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { handleAddApprover } from "../actions";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown } from "lucide-react";
 import type { User } from "@/services/types";
 import { useRouter } from "next/navigation";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 
 const formSchema = z.object({
-  userId: z.string().min(1, "Please select a user."),
+  userId: z.string({ required_error: "Please select a user." }).min(1, "Please select a user."),
   approverType: z.enum(['Mandatory', 'Optional']),
 });
 
@@ -44,6 +47,7 @@ export function AddApproverForm({ users }: AddApproverFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   // Show only admins who are NOT already any kind of approver
   const eligibleUsers = users.filter(u => 
@@ -90,26 +94,59 @@ export function AddApproverForm({ users }: AddApproverFormProps) {
           control={form.control}
           name="userId"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Select User</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user with Admin privileges" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {eligibleUsers.length > 0 ? (
-                    eligibleUsers.map(user => (
-                        <SelectItem key={user.id} value={user.id!}>
-                          {user.name} ({user.phone})
-                        </SelectItem>
-                      ))
-                  ) : (
-                    <div className="p-4 text-sm text-center text-muted-foreground">No eligible users found.</div>
-                  )}
-                </SelectContent>
-              </Select>
+               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value
+                        ? eligibleUsers.find(
+                            (user) => user.id === field.value
+                          )?.name
+                        : "Select a user"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search user..." />
+                    <CommandList>
+                        <CommandEmpty>No users found.</CommandEmpty>
+                        <CommandGroup>
+                        {eligibleUsers.map((user) => (
+                            <CommandItem
+                            value={user.name}
+                            key={user.id}
+                            onSelect={() => {
+                                form.setValue("userId", user.id!);
+                                setPopoverOpen(false);
+                            }}
+                            >
+                            <Check
+                                className={cn(
+                                "mr-2 h-4 w-4",
+                                user.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                            />
+                            {user.name} ({user.phone})
+                            </CommandItem>
+                        ))}
+                        </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
