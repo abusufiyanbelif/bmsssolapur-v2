@@ -59,9 +59,9 @@ const allNavItems: NavItem[] = [
             { href: "/admin/campaigns", label: "All Campaigns" },
             { href: "/admin/leads", label: "Lead/ Case Management" },
             { href: "/admin/donations", label: "Donations Management" },
+            { href: "/admin/transfers", label: "Beneficiaries Transfer Management", icon: ArrowRightLeft },
         ]
     },
-    { href: "/admin/transfers", label: "Beneficiaries Transfer Management", icon: ArrowRightLeft, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
 
     // Super Admin - User Management (Collapsible)
     { 
