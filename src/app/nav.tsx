@@ -56,6 +56,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/organization", label: "Org Profile" },
+            { href: "/admin/board-members", label: "Team Management" },
             { href: "/admin/campaigns", label: "Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
@@ -72,7 +73,6 @@ const allNavItems: NavItem[] = [
             { href: "/admin/user-management", label: "All Users" },
             { href: "/admin/donors", label: "All Donors" },
             { href: "/admin/beneficiaries", label: "All Beneficiaries" },
-            { href: "/admin/board-members", label: "Team Management" },
             { 
                 label: "Access Management", 
                 icon: KeySquare,
