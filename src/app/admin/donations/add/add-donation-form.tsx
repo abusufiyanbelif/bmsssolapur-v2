@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon, CalendarIcon } from "lucide-react";
+import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText } from "lucide-react";
 import type { User, DonationType, DonationPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -81,6 +81,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
+  const [localFile, setLocalFile] = useState<File | null>(null);
+  const [localFilePreview, setLocalFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -166,6 +168,22 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   
   const totalAmount = (amount || 0) + (tipAmount || 0);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setLocalFile(file);
+    if (localFilePreview) {
+        URL.revokeObjectURL(localFilePreview);
+    }
+    if (file) {
+        setValue('paymentScreenshot', file);
+        setLocalFilePreview(URL.createObjectURL(file));
+    } else {
+        setValue('paymentScreenshot', undefined);
+        setLocalFilePreview(null);
+    }
+  };
+
+
   async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
         toast({
@@ -227,6 +245,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       }
       setSelectedDonor(null);
       setManualScreenshotPreview(null);
+      setLocalFile(null);
+      setLocalFilePreview(null);
     } else {
       toast({
         variant: "destructive",
@@ -537,28 +557,39 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               <FormField
               control={form.control}
               name="paymentScreenshot"
-              render={({ field: { onChange, value, ...rest } }) => (
+              render={({ field }) => (
                   <FormItem>
-                  <FormLabel>Payment Screenshot</FormLabel>
-                  <FormControl>
-                      <Input 
-                        type="file" 
-                        accept="image/*,application/pdf"
-                        ref={fileInputRef}
-                        onChange={(e) => {
-                            const file = e.target.files ? e.target.files[0] : null;
-                            onChange(file);
-                        }}
-                        {...rest}
-                      />
-                  </FormControl>
-                  <FormDescription>
-                      Upload a screenshot of the payment for verification.
-                  </FormDescription>
-                  <FormMessage />
+                    <FormLabel>Payment Screenshot</FormLabel>
+                    <FormControl>
+                        <Input 
+                            type="file" 
+                            accept="image/*,application/pdf"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                        />
+                    </FormControl>
+                    <FormDescription>
+                        Upload a screenshot of the payment for verification.
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
               )}
               />
+          )}
+
+          {localFilePreview && (
+            <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
+              {localFile?.type.startsWith('image/') ? (
+                  <div className="relative w-full h-64">
+                      <Image src={localFilePreview} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
+                  </div>
+              ) : (
+                  <div className="flex items-center gap-3 p-4">
+                      <FileText className="h-8 w-8 text-primary" />
+                      <p className="text-sm font-semibold">{localFile?.name}</p>
+                  </div>
+              )}
+            </div>
           )}
 
           <Button type="submit" disabled={isSubmitting}>
