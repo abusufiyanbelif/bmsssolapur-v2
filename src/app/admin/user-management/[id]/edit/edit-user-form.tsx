@@ -26,7 +26,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { User, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { UserActivityFeed } from "./user-activity-feed";
 
 
 const setPasswordSchema = z.object({
@@ -263,6 +263,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
 
 
   async function onSubmit(values: EditUserFormValues) {
+    if(!currentAdmin?.id) {
+        toast({ variant: "destructive", title: "Error", description: "Admin user not found. Cannot perform update." });
+        return;
+    }
     setIsSubmitting(true);
     
     const formData = new FormData();
@@ -293,7 +297,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         if(upi.value) formData.append("upiIds", upi.value);
     });
 
-    const result = await handleUpdateUser(user.id!, formData);
+    const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
 
     setIsSubmitting(false);
 
@@ -744,43 +748,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     )}
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
-                     <div className="space-y-4">
-                        <FormLabel>UPI IDs</FormLabel>
-                        <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
-                        {fields.map((field, index) => (
-                            <FormField
-                            control={form.control}
-                            key={field.id}
-                            name={`upiIds.${index}.value`}
-                            render={({ field }) => (
-                                <FormItem>
-                                <div className="flex items-center gap-2">
-                                    <FormControl>
-                                    <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
-                                    </FormControl>
-                                    {isEditing && (
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                    )}
-                                </div>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                        ))}
-                        {isEditing && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => append({ value: "" })}
-                            >
-                                <PlusCircle className="mr-2" />
-                                Add UPI ID
-                            </Button>
-                        )}
-                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
                         control={form.control}
@@ -822,6 +789,44 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             </FormItem>
                         )}
                     />
+                    
+                    <div className="space-y-4">
+                        <FormLabel>UPI IDs</FormLabel>
+                        <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
+                        {fields.map((field, index) => (
+                            <FormField
+                            control={form.control}
+                            key={field.id}
+                            name={`upiIds.${index}.value`}
+                            render={({ field }) => (
+                                <FormItem>
+                                <div className="flex items-center gap-2">
+                                    <FormControl>
+                                    <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
+                                    </FormControl>
+                                    {isEditing && (
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                    )}
+                                </div>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        ))}
+                        {isEditing && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => append({ value: "" })}
+                            >
+                                <PlusCircle className="mr-2" />
+                                Add UPI ID
+                            </Button>
+                        )}
+                    </div>
 
                     <FormField
                     control={form.control}
@@ -867,6 +872,12 @@ export function EditUserForm({ user }: EditUserFormProps) {
         <div className="mt-6">
             <SetPasswordSection userId={user.id!} />
         </div>
+
+        {currentAdmin?.roles.includes("Super Admin") && (
+            <div className="mt-6">
+                <UserActivityFeed userId={user.id!} />
+            </div>
+        )}
     </>
   );
 }

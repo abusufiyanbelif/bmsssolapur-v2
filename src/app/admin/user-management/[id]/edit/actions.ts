@@ -2,18 +2,54 @@
 
 "use server";
 
-import { updateUser } from "@/services/user-service";
+import { getUser, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { User, UserRole } from "@/services/types";
+import { logActivity } from "@/services/activity-log-service";
 
 interface FormState {
     success: boolean;
     error?: string;
 }
 
+// Helper function to find differences between two objects for logging
+const getChangedFields = (original: User, updates: Partial<User>) => {
+    const changes: Record<string, { from: any; to: any }> = {};
+    for (const key in updates) {
+        const typedKey = key as keyof User;
+        
+        // Handle nested address object
+        if (typedKey === 'address' && typeof updates.address === 'object' && updates.address !== null) {
+            for (const addressKey in updates.address) {
+                const typedAddressKey = addressKey as keyof User['address'];
+                if (original.address?.[typedAddressKey] !== updates.address?.[typedAddressKey]) {
+                     changes[`address.${typedAddressKey}`] = { from: original.address?.[typedAddressKey] || 'N/A', to: updates.address?.[typedAddressKey] };
+                }
+            }
+            continue;
+        }
+
+        // Handle array of strings like 'roles' or 'upiIds'
+        if (Array.isArray(original[typedKey]) && Array.isArray(updates[typedKey])) {
+            const fromStr = (original[typedKey] as any[]).join(', ') || '[]';
+            const toStr = (updates[typedKey] as any[]).join(', ') || '[]';
+            if (fromStr !== toStr) {
+                changes[typedKey] = { from: fromStr, to: toStr };
+            }
+            continue;
+        }
+
+        if (original[typedKey] !== updates[typedKey]) {
+             changes[typedKey] = { from: original[typedKey] || 'N/A', to: updates[typedKey] };
+        }
+    }
+    return changes;
+}
+
 export async function handleUpdateUser(
   userId: string,
-  formData: FormData
+  formData: FormData,
+  adminUserId: string,
 ): Promise<FormState> {
   const rawFormData = {
     firstName: formData.get("firstName") as string,
@@ -51,12 +87,18 @@ export async function handleUpdateUser(
   }
   
   try {
+    const [originalUser, adminUser] = await Promise.all([
+        getUser(userId),
+        getUser(adminUserId),
+    ]);
+    if(!originalUser) return { success: false, error: "User to be updated not found." };
+    if(!adminUser) return { success: false, error: "Admin performing the action not found." };
+
     const updates: Partial<User> = {
         name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
         firstName: rawFormData.firstName,
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
-        // Email cannot be changed
         phone: rawFormData.phone,
         roles: rawFormData.roles,
         isActive: rawFormData.isActive,
@@ -84,9 +126,26 @@ export async function handleUpdateUser(
         bankIfscCode: rawFormData.bankIfscCode || '',
         upiPhone: rawFormData.upiPhone || '',
     };
+    
+    const changes = getChangedFields(originalUser, updates);
 
     await updateUser(userId, updates);
     
+    if (Object.keys(changes).length > 0) {
+        await logActivity({
+            userId: adminUserId,
+            userName: adminUser.name,
+            userEmail: adminUser.email,
+            role: "Super Admin", // Or a more dynamic role
+            activity: "User Profile Updated",
+            details: {
+                targetUserId: userId,
+                targetUserName: originalUser.name,
+                changes: changes
+            }
+        });
+    }
+
     revalidatePath("/admin/user-management");
     revalidatePath(`/admin/user-management/${userId}/edit`);
     revalidatePath("/admin/beneficiaries");

@@ -40,6 +40,7 @@ export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>
 
 /**
  * Fetches all activity logs for a specific user.
+ * This fetches activities *performed by* the user.
  * @param userId The ID of the user.
  * @returns An array of activity log objects.
  */
@@ -71,6 +72,44 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
         // This could be due to a missing index. Log a helpful message.
         if (error instanceof Error && error.message.includes('index')) {
              console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'userId' (ascending) and 'timestamp' (descending).");
+        }
+        return [];
+    }
+}
+
+
+/**
+ * Fetches all activity logs where a specific user was the target of the action.
+ * e.g., get all logs where `details.targetUserId` is the given user.
+ * @param targetUserId The ID of the user who was the subject of the action.
+ * @returns An array of activity log objects.
+ */
+export const getTargetUserActivity = async (targetUserId: string): Promise<ActivityLog[]> => {
+    if (!isConfigValid) {
+        console.log("Firebase not configured. Skipping activity fetch.");
+        return [];
+    }
+    try {
+        const q = query(
+            collection(db, ACTIVITY_LOG_COLLECTION),
+            where("details.targetUserId", "==", targetUserId),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const activities: ActivityLog[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            activities.push({
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate(),
+            } as ActivityLog);
+        });
+        return activities;
+    } catch (error) {
+        console.error("Error fetching target user activity:", error);
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.targetUserId' (ascending) and 'timestamp' (descending).");
         }
         return [];
     }
