@@ -28,7 +28,7 @@ import type { User } from "@/services/types";
 import { useRouter } from "next/navigation";
 
 
-const boardRoles = ['Founder', 'Co-Founder', 'Finance', 'Member of Organization', 'Lead Approver'] as const;
+const boardRoles = ['Founder', 'Co-Founder', 'Finance', 'Member of Organization'] as const;
 
 const formSchema = z.object({
   userId: z.string().min(1, "Please select a user."),
