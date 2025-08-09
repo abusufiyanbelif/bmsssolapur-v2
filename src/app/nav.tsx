@@ -54,9 +54,14 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/organization", label: "Org Profile" },
-            { href: "/admin/board-members", label: "Board Members" },
-            { href: "/admin/campaigns", label: "Campaigns" },
+            { 
+                label: "Organization Profile", 
+                href: "/admin/organization",
+                subItems: [
+                    { href: "/admin/board-members", label: "Board Members" },
+                ]
+            },
+            { href: "/admin/campaigns", label: "All Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
             { href: "/admin/transfers", label: "All Beneficiaries Transfer", icon: ArrowRightLeft },
@@ -109,7 +114,7 @@ interface NavProps {
     onRoleSwitchRequired: (requiredRole: string) => void;
 }
 
-const NavLink = ({ item, isActive, onClick }: { item: NavItem | NavSubItem, isActive: boolean, onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void }) => {
+const NavLink = ({ item, isActive, onClick, paddingLeft }: { item: NavItem | NavSubItem, isActive: boolean, onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void, paddingLeft?: string }) => {
     const Icon = item.icon;
     return (
         <Link
@@ -117,7 +122,8 @@ const NavLink = ({ item, isActive, onClick }: { item: NavItem | NavSubItem, isAc
             onClick={onClick}
             className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                isActive && "bg-muted text-primary"
+                isActive && "bg-muted text-primary",
+                paddingLeft
             )}
         >
             {Icon && <Icon className="h-4 w-4" />}
@@ -129,29 +135,38 @@ const NavLink = ({ item, isActive, onClick }: { item: NavItem | NavSubItem, isAc
 const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubItem, pathname: string, level?: number }) => {
     const Icon = item.icon;
     const isAnySubItemActive = item.subItems?.some(sub => sub.href && pathname.startsWith(sub.href)) || 
-                               item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href)));
-    
+                               item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href))) ||
+                               (item.href && pathname.startsWith(item.href));
+
     const paddingLeft = level > 0 ? `pl-${level * 4}` : '';
+    
+    // This component now handles both being a direct link AND a collapsible trigger
+    const TriggerContent = (
+        <div className={cn(
+            "flex items-center w-full gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+            isAnySubItemActive && "text-primary"
+        )}>
+            {Icon && <Icon className="h-4 w-4" />}
+            {item.label}
+            <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
+        </div>
+    );
 
     return (
-        <Collapsible key={item.label} defaultOpen={isAnySubItemActive}>
-            <CollapsibleTrigger className="w-full">
-                 <div className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    isAnySubItemActive && "text-primary",
-                    paddingLeft
-                )}>
-                    {Icon && <Icon className="h-4 w-4" />}
-                    {item.label}
-                    <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
-                </div>
+        <Collapsible key={item.label} defaultOpen={isAnySubItemActive} className={paddingLeft}>
+            <CollapsibleTrigger asChild>
+                {item.href ? (
+                    <Link href={item.href}>{TriggerContent}</Link>
+                ) : (
+                    <div className="w-full cursor-pointer">{TriggerContent}</div>
+                )}
             </CollapsibleTrigger>
             <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
                 {item.subItems?.map(subItem => {
-                    const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
                     if (subItem.subItems) {
                         return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} />
                     }
+                    const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
                     return <NavLink key={subItem.href} item={subItem} isActive={isSubActive} />
                 })}
             </CollapsibleContent>
