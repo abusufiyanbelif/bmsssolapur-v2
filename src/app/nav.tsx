@@ -59,15 +59,15 @@ const allNavItems: NavItem[] = [
                 label: "Organization Profile", 
                 href: "/admin/organization",
                 subItems: [
-                    { href: "/admin/board-management", label: "Board Management" },
+                    { href: "/admin/board-management", label: "Board Members" },
                 ]
             },
-            { href: "/admin/transfers", label: "All Beneficiaries Transfer", icon: ArrowRightLeft },
         ]
     },
-    { href: "/admin/campaigns", label: "Campaigns Management", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+    { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     { href: "/admin/leads", label: "Lead/ Case Management", icon: FileText, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
     { href: "/admin/donations", label: "Donations Management", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+    { href: "/admin/transfers", label: "Beneficiaries Transfer Management", icon: ArrowRightLeft, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
 
     // Super Admin - User Management (Collapsible)
     { 
