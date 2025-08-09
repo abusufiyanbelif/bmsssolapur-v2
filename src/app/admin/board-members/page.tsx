@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2, MoreHorizontal, ShieldCheck } from "lucide-react";
+import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getAllUsers, updateUser } from "@/services/user-service";
@@ -20,7 +20,6 @@ const groupMapping: Record<string, string> = {
     'Co-Founder': 'cofounder',
     'Finance': 'finance',
     'Member of Organization': 'members',
-    'Lead Approver': 'leadApprovers',
 };
 
 const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User) => void }) => {
@@ -82,7 +81,7 @@ const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User)
 };
 
 export default function BoardMembersPage() {
-    const [boardMembers, setBoardMembers] = useState<Record<string, User[]>>({ founder: [], cofounder: [], finance: [], members: [], leadApprovers: [] });
+    const [boardMembers, setBoardMembers] = useState<Record<string, User[]>>({ founder: [], cofounder: [], finance: [], members: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -90,7 +89,7 @@ export default function BoardMembersPage() {
         try {
             setLoading(true);
             const allUsers = await getAllUsers();
-            const categorizedMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [], leadApprovers: [] };
+            const categorizedMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [] };
 
             allUsers.forEach(user => {
                 user.groups?.forEach(group => {
@@ -156,14 +155,6 @@ export default function BoardMembersPage() {
                         <h3 className="text-lg font-semibold mb-4">Co-Founder</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {boardMembers.cofounder.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
-                        </div>
-                    </div>
-                )}
-                {boardMembers.leadApprovers.length > 0 && (
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Lead Approvers</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {boardMembers.leadApprovers.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
                         </div>
                     </div>
                 )}
