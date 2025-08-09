@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +31,7 @@ import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   userId: z.string().min(1, "Please select a user."),
+  approverType: z.enum(['Mandatory', 'Optional']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,28 +45,33 @@ export function AddApproverForm({ users }: AddApproverFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Show only admins who are NOT already approvers
+  // Show only admins who are NOT already any kind of approver
   const eligibleUsers = users.filter(u => 
     (u.roles.includes("Admin") || u.roles.includes("Super Admin")) && 
-    !u.groups?.includes("Lead Approver")
+    !u.groups?.includes("Lead Approver") &&
+    !u.groups?.includes("Mandatory Lead Approver")
   );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+        approverType: 'Optional'
+    }
   });
 
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     
-    const result = await handleAddApprover(values.userId);
+    const groupToAssign = values.approverType === 'Mandatory' ? 'Mandatory Lead Approver' : 'Lead Approver';
+    const result = await handleAddApprover(values.userId, groupToAssign);
 
     setIsSubmitting(false);
 
     if (result.success) {
       toast({
         title: "Approver Added",
-        description: `Successfully added user to the Lead Approver group.`,
+        description: `Successfully added user to the ${values.approverType} Approver group.`,
       });
       router.push("/admin/leads/configuration");
     } else {
@@ -101,6 +108,27 @@ export function AddApproverForm({ users }: AddApproverFormProps) {
                   ) : (
                     <div className="p-4 text-sm text-center text-muted-foreground">No eligible users found.</div>
                   )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="approverType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Approver Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an approver type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Optional">Optional</SelectItem>
+                  <SelectItem value="Mandatory">Mandatory</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

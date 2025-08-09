@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -10,32 +11,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { handleRemoveApprover } from "./actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { getAllUsers } from "@/services/user-service";
 
 interface ApproversListProps {
     initialApprovers: User[];
+    group: 'Mandatory Lead Approver' | 'Lead Approver';
 }
 
-export function ApproversList({ initialApprovers }: ApproversListProps) {
+export function ApproversList({ initialApprovers, group }: ApproversListProps) {
     const { toast } = useToast();
     const [approvers, setApprovers] = useState(initialApprovers);
 
     const onApproverRemoved = async (userId: string) => {
         toast({
             title: "Approver Removed",
-            description: "The user has been removed from the Lead Approver group.",
+            description: "The user has been removed from the approver group.",
         });
         // Optimistic update
         setApprovers(prev => prev.filter(a => a.id !== userId));
-        
-        // Or re-fetch from server for consistency
-        // const updatedUsers = await getAllUsers();
-        // setApprovers(updatedUsers.filter(u => u.groups?.includes('Lead Approver')));
     }
     
     if (approvers.length === 0) {
         return (
-            <p className="text-sm text-muted-foreground text-center py-4">No users have been assigned as Lead Approvers yet.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">No users assigned to this group yet.</p>
         );
     }
     
@@ -66,7 +63,7 @@ export function ApproversList({ initialApprovers }: ApproversListProps) {
                                 <DeleteConfirmationDialog
                                     itemType="approver"
                                     itemName={approver.name}
-                                    onDelete={() => handleRemoveApprover(approver.id!)}
+                                    onDelete={() => handleRemoveApprover(approver.id!, group)}
                                     onSuccess={() => onApproverRemoved(approver.id!)}
                                 >
                                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
@@ -81,4 +78,3 @@ export function ApproversList({ initialApprovers }: ApproversListProps) {
         </div>
     );
 }
-

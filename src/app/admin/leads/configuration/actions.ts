@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { updateAppSettings } from "@/services/app-settings-service";
@@ -38,9 +39,9 @@ export async function handleUpdateLeadConfiguration(
   }
 }
 
-export async function handleAddApprover(userId: string): Promise<FormState> {
+export async function handleAddApprover(userId: string, group: string): Promise<FormState> {
   try {
-    await updateUser(userId, { groups: arrayUnion("Lead Approver") as any });
+    await updateUser(userId, { groups: arrayUnion(group) as any });
     revalidatePath("/admin/leads/configuration");
     return { success: true };
   } catch(e) {
@@ -49,9 +50,9 @@ export async function handleAddApprover(userId: string): Promise<FormState> {
   }
 }
 
-export async function handleRemoveApprover(userId: string): Promise<FormState> {
+export async function handleRemoveApprover(userId: string, group: string): Promise<FormState> {
   try {
-    await updateUser(userId, { groups: arrayRemove("Lead Approver") as any });
+    await updateUser(userId, { groups: arrayRemove(group) as any });
     revalidatePath("/admin/leads/configuration");
     return { success: true };
   } catch(e) {

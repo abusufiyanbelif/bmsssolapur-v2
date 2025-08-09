@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -15,10 +16,6 @@ interface VerificationStatusCardProps {
     allApprovers: User[];
 }
 
-// User IDs of mandatory approvers
-const mandatoryApproverUserIds = ['moosa.shaikh', 'aburehan.bedrekar', 'maaz.shaikh'];
-
-
 export function VerificationStatusCard({ lead, allApprovers }: VerificationStatusCardProps) {
 
     const {
@@ -33,10 +30,9 @@ export function VerificationStatusCard({ lead, allApprovers }: VerificationStatu
     } = useMemo(() => {
         const verifierIds = new Set(lead.verifiers?.map(v => v.verifierId) || []);
 
-        const allLeadApprovers = allApprovers.filter(u => u.groups?.includes('Lead Approver'));
-        
-        const mandatory = allLeadApprovers.filter(u => mandatoryApproverUserIds.includes(u.userId!));
-        const optional = allLeadApprovers.filter(u => !mandatoryApproverUserIds.includes(u.userId!));
+        const mandatory = allApprovers.filter(u => u.groups?.includes('Mandatory Lead Approver'));
+        const optional = allApprovers.filter(u => u.groups?.includes('Lead Approver') && !u.groups?.includes('Mandatory Lead Approver'));
+        const allLeadApprovers = [...mandatory, ...optional];
 
         const mandatoryApproved = mandatory.filter(u => verifierIds.has(u.id!));
         const optionalApproved = optional.filter(u => verifierIds.has(u.id!));
@@ -67,7 +63,7 @@ export function VerificationStatusCard({ lead, allApprovers }: VerificationStatu
                     Verification Status
                 </CardTitle>
                 <CardDescription>
-                    Tracking approvals from the Lead Approver group.
+                    Tracking approvals from mandatory and optional approvers.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -83,35 +79,37 @@ export function VerificationStatusCard({ lead, allApprovers }: VerificationStatu
                     <Progress value={approvalProgress} />
                 </div>
 
-                <div>
-                    <h4 className="font-semibold text-sm mb-2">Mandatory Approvers ({mandatoryApprovedCount}/{mandatory.length})</h4>
-                    <div className="flex flex-wrap gap-2">
-                        <TooltipProvider>
-                        {mandatory.map(approver => (
-                            <Tooltip key={approver.id}>
-                                <TooltipTrigger>
-                                    <Avatar className="h-9 w-9">
-                                        <AvatarImage src={`https://placehold.co/100x100.png?text=${approver.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}`} data-ai-hint="male portrait" />
-                                        <AvatarFallback>{approver.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</AvatarFallback>
-                                        {lead.verifiers?.some(v => v.verifierId === approver.id) ? (
-                                            <div className="absolute bottom-0 right-0 bg-green-500 rounded-full p-0.5 border-2 border-background">
-                                                <CheckCircle className="h-3 w-3 text-white" />
-                                            </div>
-                                        ) : (
-                                            <div className="absolute bottom-0 right-0 bg-gray-400 rounded-full p-0.5 border-2 border-background">
-                                                <Clock className="h-3 w-3 text-white" />
-                                            </div>
-                                        )}
-                                    </Avatar>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{approver.name}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        ))}
-                        </TooltipProvider>
+                {mandatory.length > 0 && (
+                    <div>
+                        <h4 className="font-semibold text-sm mb-2">Mandatory Approvers ({mandatoryApprovedCount}/{mandatory.length})</h4>
+                        <div className="flex flex-wrap gap-2">
+                            <TooltipProvider>
+                            {mandatory.map(approver => (
+                                <Tooltip key={approver.id}>
+                                    <TooltipTrigger>
+                                        <Avatar className="h-9 w-9">
+                                            <AvatarImage src={`https://placehold.co/100x100.png?text=${approver.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}`} data-ai-hint="male portrait" />
+                                            <AvatarFallback>{approver.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</AvatarFallback>
+                                            {lead.verifiers?.some(v => v.verifierId === approver.id) ? (
+                                                <div className="absolute bottom-0 right-0 bg-green-500 rounded-full p-0.5 border-2 border-background">
+                                                    <CheckCircle className="h-3 w-3 text-white" />
+                                                </div>
+                                            ) : (
+                                                <div className="absolute bottom-0 right-0 bg-gray-400 rounded-full p-0.5 border-2 border-background">
+                                                    <Clock className="h-3 w-3 text-white" />
+                                                </div>
+                                            )}
+                                        </Avatar>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{approver.name}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ))}
+                            </TooltipProvider>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {optional.length > 0 && (
                      <div>
