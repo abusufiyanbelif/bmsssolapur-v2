@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState, useEffect, useRef } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 
 const allLeadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
@@ -139,6 +140,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<Lead[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   
@@ -311,22 +313,59 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
                     control={form.control}
                     name="beneficiaryId"
                     render={({ field }) => (
-                        <FormItem>
+                    <FormItem className="flex flex-col">
                         <FormLabel>Select Beneficiary</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an existing beneficiary" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {potentialBeneficiaries.map(user => (
-                                <SelectItem key={user.id} value={user.id!}>
+                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? potentialBeneficiaries.find(
+                                    (user) => user.id === field.value
+                                  )?.name
+                                : "Select a beneficiary"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search beneficiary..." />
+                            <CommandList>
+                                <CommandEmpty>No beneficiaries found.</CommandEmpty>
+                                <CommandGroup>
+                                {potentialBeneficiaries.map((user) => (
+                                    <CommandItem
+                                    value={user.name}
+                                    key={user.id}
+                                    onSelect={() => {
+                                        form.setValue("beneficiaryId", user.id!);
+                                        setPopoverOpen(false);
+                                    }}
+                                    >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        user.id === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                    />
                                     {user.name} ({user.phone})
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                         <FormMessage />
                         </FormItem>
                     )}

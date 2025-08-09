@@ -23,9 +23,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { handleAddBoardMember } from "./actions";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown } from "lucide-react";
 import type { User } from "@/services/types";
 import { useRouter } from "next/navigation";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 
 const boardRoles = ['Founder', 'Co-Founder', 'Finance', 'Member of Organization'] as const;
@@ -45,6 +48,7 @@ export function AddMemberForm({ users }: AddMemberFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const adminUsers = users.filter(u => u.roles.includes("Admin") || u.roles.includes("Super Admin"));
 
@@ -78,26 +82,63 @@ export function AddMemberForm({ users }: AddMemberFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-lg">
-        <FormField
+         <FormField
           control={form.control}
           name="userId"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Select User</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user with Admin privileges" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {adminUsers.map(user => (
-                    <SelectItem key={user.id} value={user.id!}>
-                      {user.name} ({user.phone})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value
+                        ? adminUsers.find(
+                            (user) => user.id === field.value
+                          )?.name
+                        : "Select a user with Admin privileges"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search user..." />
+                    <CommandList>
+                        <CommandEmpty>No eligible users found.</CommandEmpty>
+                        <CommandGroup>
+                        {adminUsers.map((user) => (
+                            <CommandItem
+                            value={user.name}
+                            key={user.id}
+                            onSelect={() => {
+                                form.setValue("userId", user.id!);
+                                setPopoverOpen(false);
+                            }}
+                            >
+                            <Check
+                                className={cn(
+                                "mr-2 h-4 w-4",
+                                user.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                            />
+                            {user.name} ({user.phone})
+                            </CommandItem>
+                        ))}
+                        </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}

@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation, handleExtractTextFromImage } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, TextSearch } from "lucide-react";
+import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, TextSearch, ChevronsUpDown, Check } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -38,6 +38,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -92,6 +93,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -315,37 +317,69 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-          <FormField
+           <FormField
               control={form.control}
               name="donorId"
               render={({ field }) => (
-                  <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Donor</FormLabel>
-                  <Select
-                      onValueChange={async (value) => {
-                          field.onChange(value);
-                          const donor = await getUser(value);
-                          setSelectedDonor(donor);
-                      }}
-                      value={field.value}
-                  >
+                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
                       <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Select a donor" />
-                      </SelectTrigger>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? donorUsers.find(
+                                (user) => user.id === field.value
+                              )?.name
+                            : "Select a donor"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
                       </FormControl>
-                      <SelectContent>
-                      {donorUsers.map(user => (
-                          <SelectItem key={user.id} value={user.id!}>
-                              {user.name} ({user.phone})
-                          </SelectItem>
-                      ))}
-                      </SelectContent>
-                  </Select>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search donor..." />
+                        <CommandList>
+                            <CommandEmpty>No donors found.</CommandEmpty>
+                            <CommandGroup>
+                            {donorUsers.map((user) => (
+                                <CommandItem
+                                value={user.name}
+                                key={user.id}
+                                onSelect={async () => {
+                                    field.onChange(user.id!);
+                                    const donor = await getUser(user.id!);
+                                    setSelectedDonor(donor);
+                                    setPopoverOpen(false);
+                                }}
+                                >
+                                <Check
+                                    className={cn(
+                                    "mr-2 h-4 w-4",
+                                    user.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                />
+                                {user.name} ({user.phone})
+                                </CommandItem>
+                            ))}
+                            </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
-                  </FormItem>
+                </FormItem>
               )}
-              />
+            />
           <FormField
             control={form.control}
             name="isAnonymous"

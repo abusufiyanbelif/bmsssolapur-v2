@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,6 +29,8 @@ import { Label } from "@/components/ui/label";
 import type { User, UserRole } from "@/services/types";
 import { handleDeleteUser, handleToggleUserStatus } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -76,6 +78,7 @@ function BeneficiariesPageContent() {
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
     const [typeInput, setTypeInput] = useState<TypeFilter>(initialTypeFilter);
     const [anonymityInput, setAnonymityInput] = useState<AnonymityFilter>('all');
+    const [popoverOpen, setPopoverOpen] = useState(false);
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
@@ -508,12 +511,52 @@ function BeneficiariesPageContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-1">
                         <Label htmlFor="nameFilter">Beneficiary Name</Label>
-                        <Input 
-                            id="nameFilter" 
-                            placeholder="Filter by name..."
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value)}
-                        />
+                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-full justify-between font-normal"
+                                >
+                                {nameInput
+                                    ? beneficiaries.find((user) => user.name.toLowerCase() === nameInput.toLowerCase())?.name
+                                    : "Select a beneficiary..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput 
+                                        placeholder="Search beneficiary..."
+                                        value={nameInput}
+                                        onValueChange={setNameInput}
+                                    />
+                                    <CommandList>
+                                        <CommandEmpty>No beneficiaries found.</CommandEmpty>
+                                        <CommandGroup>
+                                        {beneficiaries.map((user) => (
+                                            <CommandItem
+                                            value={user.name}
+                                            key={user.id}
+                                            onSelect={(currentValue) => {
+                                                setNameInput(currentValue === nameInput ? "" : currentValue);
+                                                setPopoverOpen(false);
+                                            }}
+                                            >
+                                            <Check
+                                                className={cn(
+                                                "mr-2 h-4 w-4",
+                                                nameInput.toLowerCase() === user.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {user.name}
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="typeFilter">Beneficiary Type</Label>
