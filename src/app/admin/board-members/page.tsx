@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -80,7 +81,7 @@ const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User)
     );
 };
 
-export default function BoardMembersPage() {
+export default function TeamManagementPage() {
     const [boardMembers, setBoardMembers] = useState<Record<string, User[]>>({ founder: [], cofounder: [], finance: [], members: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

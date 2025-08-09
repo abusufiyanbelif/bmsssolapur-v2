@@ -286,7 +286,7 @@ export default function UserManagementPage() {
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                            {renderActions(user)}
                         </TableCell>
@@ -335,7 +335,7 @@ export default function UserManagementPage() {
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground pt-2">
                              <span>Joined On</span>
-                             <span>{format(user.createdAt.toDate(), "dd MMM yyyy")}</span>
+                             <span>{format(user.createdAt, "dd MMM yyyy")}</span>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
@@ -459,7 +459,7 @@ export default function UserManagementPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">All Users</h2>
             <Button asChild>
                 <Link href="/admin/user-management/add">
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                    <PlusCircle className="mr-2" />
                     Add User
                 </Link>
             </Button>
