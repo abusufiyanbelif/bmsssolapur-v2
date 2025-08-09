@@ -14,10 +14,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils"
 
 type NavSubItem = {
-    href: string;
+    href?: string;
     label: string;
     icon?: React.ElementType;
-}
+    subItems?: NavSubItem[]; // For nested collapsibles
+};
 
 type NavItem = {
   href?: string;
@@ -54,7 +55,13 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/organization", label: "Org Profile" },
+            { 
+                label: "Organization Profile", 
+                href: "/admin/organization",
+                subItems: [
+                    { href: "/admin/board-members", label: "Board Members" },
+                ]
+            },
             { href: "/admin/campaigns", label: "Campaigns" },
             { href: "/admin/leads", label: "All Leads" },
             { href: "/admin/donations", label: "All Donations" },
@@ -71,10 +78,15 @@ const allNavItems: NavItem[] = [
             { href: "/admin/user-management", label: "All Users" },
             { href: "/admin/donors", label: "All Donors" },
             { href: "/admin/beneficiaries", label: "All Beneficiaries" },
-            { href: "/admin/board-members", label: "Board Members" },
-            { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
-            { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
-            { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
+            { 
+                label: "Access Management", 
+                icon: KeySquare,
+                subItems: [
+                    { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
+                    { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
+                    { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
+                ]
+            },
         ]
     },
     
@@ -103,16 +115,75 @@ interface NavProps {
     onRoleSwitchRequired: (requiredRole: string) => void;
 }
 
+const NavLink = ({ item, isActive, onClick, paddingLeft }: { item: NavItem | NavSubItem, isActive: boolean, onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void, paddingLeft?: string }) => {
+    const Icon = item.icon;
+    return (
+        <Link
+            href={item.href || '#'}
+            onClick={onClick}
+            className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive && "bg-muted text-primary",
+                paddingLeft
+            )}
+        >
+            {Icon && <Icon className="h-4 w-4" />}
+            {item.label}
+        </Link>
+    );
+};
+
+const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubItem, pathname: string, level?: number }) => {
+    const Icon = item.icon;
+    const isAnySubItemActive = item.subItems?.some(sub => sub.href && pathname.startsWith(sub.href)) || 
+                               item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href))) ||
+                               (item.href && pathname.startsWith(item.href));
+
+    const paddingLeft = level > 0 ? `pl-${level * 4}` : '';
+    
+    // This component now handles both being a direct link AND a collapsible trigger
+    const TriggerContent = (
+        <div className={cn(
+            "flex items-center w-full gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+            isAnySubItemActive && "text-primary"
+        )}>
+            {Icon && <Icon className="h-4 w-4" />}
+            {item.label}
+            <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
+        </div>
+    );
+
+    return (
+        <Collapsible key={item.label} defaultOpen={isAnySubItemActive} className={paddingLeft}>
+            <CollapsibleTrigger asChild>
+                {item.href ? (
+                    <Link href={item.href}>{TriggerContent}</Link>
+                ) : (
+                    <div className="w-full cursor-pointer">{TriggerContent}</div>
+                )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
+                {item.subItems?.map(subItem => {
+                    if (subItem.subItems) {
+                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} />
+                    }
+                    const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
+                    return <NavLink key={subItem.href} item={subItem} isActive={isSubActive} />
+                })}
+            </CollapsibleContent>
+        </Collapsible>
+    )
+}
+
+
 export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     const pathname = usePathname();
     
-    // Filter nav items based on the user's ACTIVE role.
     const visibleNavItems = allNavItems.filter(item => {
-        if (item.label === 'Organization') {
-            // Show the Organization menu if user has ANY of the roles that can see its sub-items.
-            return userRoles.includes('Admin') || userRoles.includes('Super Admin') || userRoles.includes('Finance Admin');
+        if ('allowedRoles' in item) {
+            return item.allowedRoles.includes(activeRole);
         }
-        return item.allowedRoles.includes(activeRole);
+        return true;
     });
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
@@ -127,88 +198,24 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
             e.preventDefault(); // Stop navigation
             onRoleSwitchRequired(requiredRole); // Prompt to switch
         }
-        // If the user doesn't have any role that can access it, the link won't be rendered anyway.
     };
     
-    const filterSubItems = (item: NavItem) => {
-        const adminLinks = ["/admin/leads", "/admin/campaigns", "/admin/transfers"];
-        const financeLinks = ["/admin/donations"];
-        const superAdminLinks = ["/admin/organization"];
-
-        return item.subItems?.filter(sub => {
-             if (activeRole === 'Super Admin') return true;
-             if (activeRole === 'Admin' && (adminLinks.includes(sub.href) || financeLinks.includes(sub.href))) return true;
-             if (activeRole === 'Finance Admin' && financeLinks.includes(sub.href)) return true;
-             // Let Super Admin see their specific link even if their active role is Admin
-             if (userRoles.includes('Super Admin') && superAdminLinks.includes(sub.href)) return true;
-             return false;
-        }) || [];
-    }
-
     return (
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
-                if (item.subItems) {
-                    // For collapsible menus like Organization, we need a different check
-                    let subItemsToRender = item.subItems;
-                    if (item.label === 'Organization') {
-                        subItemsToRender = filterSubItems(item);
-                        if(subItemsToRender.length === 0) return null; // Don't render the menu if no sub-items are visible
-                    }
-
-                    const isAnySubItemActive = subItemsToRender.some(sub => sub.href && pathname.startsWith(sub.href));
-
-                    return (
-                         <Collapsible key={key} defaultOpen={isAnySubItemActive}>
-                            <CollapsibleTrigger className="w-full">
-                                 <div className={cn(
-                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                                    isAnySubItemActive && "text-primary"
-                                )}>
-                                    <item.icon className="h-4 w-4" />
-                                    {item.label}
-                                    <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
-                                </div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="pl-8 pt-2 space-y-1">
-                                {subItemsToRender.map(subItem => {
-                                    const isSubActive = subItem.href && pathname.startsWith(subItem.href);
-                                    return (
-                                        <Link
-                                            key={subItem.href}
-                                            href={subItem.href}
-                                            className={cn(
-                                                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                                                isSubActive && "bg-muted text-primary"
-                                            )}
-                                        >
-                                            {subItem.icon && <subItem.icon className="h-3.5 w-3.5" />}
-                                            {subItem.label}
-                                        </Link>
-                                    )
-                                })}
-                            </CollapsibleContent>
-                        </Collapsible>
-                    )
+                 if (item.subItems) {
+                    return <NavCollapsible key={key} item={item} pathname={pathname} />;
                 }
-
                 const isActive = (item.href === '/' && pathname === '/') || 
                                  (item.href && item.href !== '/' && pathname.startsWith(item.href));
-
                 return (
-                    <Link
-                        key={key}
-                        href={item.href || '#'}
-                        onClick={(e) => handleNavClick(e as any, item)}
-                        className={cn(
-                            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                            isActive && "bg-muted text-primary"
-                        )}
-                    >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                    </Link>
+                    <NavLink 
+                        key={key} 
+                        item={item} 
+                        isActive={isActive} 
+                        onClick={(e) => handleNavClick(e, item)}
+                    />
                 );
             })}
         </nav>
