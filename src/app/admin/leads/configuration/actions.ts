@@ -3,6 +3,8 @@
 
 import { updateAppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
+import { updateUser } from "@/services/user-service";
+import { arrayRemove, arrayUnion } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -33,5 +35,27 @@ export async function handleUpdateLeadConfiguration(
       success: false,
       error: error,
     };
+  }
+}
+
+export async function handleAddApprover(userId: string): Promise<FormState> {
+  try {
+    await updateUser(userId, { groups: arrayUnion("Lead Approver") as any });
+    revalidatePath("/admin/leads/configuration");
+    return { success: true };
+  } catch(e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return { success: false, error: error };
+  }
+}
+
+export async function handleRemoveApprover(userId: string): Promise<FormState> {
+  try {
+    await updateUser(userId, { groups: arrayRemove("Lead Approver") as any });
+    revalidatePath("/admin/leads/configuration");
+    return { success: true };
+  } catch(e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return { success: false, error: error };
   }
 }

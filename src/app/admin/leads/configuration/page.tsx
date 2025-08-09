@@ -1,16 +1,27 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings } from "lucide-react";
+import { Settings, Users, ShieldCheck, PlusCircle } from "lucide-react";
 import { getAppSettings } from "@/services/app-settings-service";
+import { getAllUsers, type User } from "@/services/user-service";
 import { LeadConfigForm } from "./lead-config-form";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
+import { ApproversList } from "./approvers-list";
 
 const allPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'];
 
 export default async function LeadConfigurationPage() {
-    const settings = await getAppSettings();
+    const [settings, allUsers] = await Promise.all([
+        getAppSettings(),
+        getAllUsers(),
+    ]);
+
+    const leadApprovers = allUsers.filter(u => u.groups?.includes('Lead Approver'));
     
     return (
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-6">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Lead Configuration</h2>
             <Card>
                 <CardHeader>
@@ -19,7 +30,7 @@ export default async function LeadConfigurationPage() {
                         Lead Settings
                     </CardTitle>
                     <CardDescription>
-                        Configure settings related to lead management, such as enabling or disabling specific purposes. Changes made here will affect the options available in the "Add Lead" form.
+                        Configure settings related to lead management, such as enabling or disabling specific purposes and managing who can approve leads.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -27,6 +38,29 @@ export default async function LeadConfigurationPage() {
                         allPurposes={allPurposes} 
                         disabledPurposes={settings.leadConfiguration?.disabledPurposes || []} 
                     />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader className="flex flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="flex items-center gap-2">
+                           <ShieldCheck />
+                           Lead Approvers ({leadApprovers.length})
+                        </CardTitle>
+                        <CardDescription>
+                            Users in this group can verify and approve new help requests.
+                        </CardDescription>
+                    </div>
+                    <Button asChild>
+                        <Link href="/admin/leads/configuration/add-approver">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Approver
+                        </Link>
+                    </Button>
+                </CardHeader>
+                 <CardContent>
+                    <ApproversList initialApprovers={leadApprovers} />
                 </CardContent>
             </Card>
         </div>
