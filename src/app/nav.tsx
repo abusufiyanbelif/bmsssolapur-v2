@@ -78,15 +78,18 @@ const allNavItems: NavItem[] = [
             { href: "/admin/user-management", label: "All Users" },
             { href: "/admin/donors", label: "All Donors" },
             { href: "/admin/beneficiaries", label: "All Beneficiaries" },
-            { 
-                label: "Access Management", 
-                icon: KeySquare,
-                subItems: [
-                    { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
-                    { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
-                    { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
-                ]
-            },
+        ]
+    },
+    
+    // Super Admin - Access Management (Collapsible)
+     { 
+        label: "Access Management", 
+        icon: KeySquare, 
+        allowedRoles: ["Super Admin"],
+        subItems: [
+            { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
+            { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
+            { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
         ]
     },
     
