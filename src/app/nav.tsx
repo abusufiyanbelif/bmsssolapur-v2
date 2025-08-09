@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link"
@@ -104,7 +103,7 @@ const allNavItems: NavItem[] = [
     },
     
     // Shared / Profile (Visible to all logged-in users)
-    { href: "/profile/settings", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
+    { href: "/profile/settings", label: "User Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
 ];
 
 interface NavProps {
