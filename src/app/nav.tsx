@@ -57,18 +57,18 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info },
             { href: "/admin/board-management", label: "Board Members", icon: Users },
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone },
-            { href: "/admin/organization/configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/organization/configuration", label: "Configuration", icon: Wrench },
         ]
     },
 
      // Admin - Lead Management (Collapsible)
     {
         label: "Lead Management",
-        icon: FileText,
+        icon: FileCheck,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/leads", label: "All Leads", icon: FileText },
-            { href: "/admin/leads/configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/leads/configuration", label: "Configuration", icon: BookText },
         ]
     },
     
@@ -79,7 +79,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/donations", label: "All Donations", icon: HandHeart },
-            { href: "/admin/donations/configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/donations/configuration", label: "Configuration", icon: Banknote },
         ]
     },
     
@@ -101,9 +101,9 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Super Admin"],
         subItems: [
             { href: "/admin/user-management", label: "All Users", icon: Users },
-            { href: "/admin/donors", label: "All Donors", icon: Users },
-            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users },
-            { href: "/admin/user-management/configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/donors", label: "All Donors", icon: HomeIcon },
+            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Baby },
+            { href: "/admin/user-management/configuration", label: "Configuration", icon: UserCog },
         ]
     },
      { 
@@ -114,7 +114,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
             { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
             { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
-            { href: "/admin/user-management/access-configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/user-management/access-configuration", label: "Configuration", icon: ShieldCheck },
         ]
     },
     
