@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff, ArrowUpDown } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff, ArrowUpDown, Check, ChevronsUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,6 +28,8 @@ import { handleDeleteUser, handleToggleUserStatus } from "./actions";
 import type { User, UserRole } from "@/services/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 
 const allRoles: (UserRole | 'all')[] = ["all", "Donor", "Beneficiary", "Admin", "Finance Admin", "Super Admin", "Referral"];
@@ -45,6 +47,7 @@ export default function UserManagementPage() {
     const { toast } = useToast();
     const isMobile = useIsMobile();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [popoverOpen, setPopoverOpen] = useState(false);
 
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -476,12 +479,52 @@ export default function UserManagementPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="nameFilter">Search by Name or ID</Label>
-                        <Input 
-                            id="nameFilter" 
-                            placeholder="Filter by name or ID..."
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value)}
-                        />
+                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-full justify-between font-normal"
+                                >
+                                {nameInput
+                                    ? users.find((user) => user.name.toLowerCase() === nameInput.toLowerCase())?.name
+                                    : "Select a user or type to search..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput 
+                                        placeholder="Search user..."
+                                        value={nameInput}
+                                        onValueChange={setNameInput}
+                                    />
+                                    <CommandList>
+                                        <CommandEmpty>No users found.</CommandEmpty>
+                                        <CommandGroup>
+                                        {users.map((user) => (
+                                            <CommandItem
+                                            value={user.name}
+                                            key={user.id}
+                                            onSelect={(currentValue) => {
+                                                setNameInput(currentValue === nameInput ? "" : currentValue);
+                                                setPopoverOpen(false);
+                                            }}
+                                            >
+                                            <Check
+                                                className={cn(
+                                                "mr-2 h-4 w-4",
+                                                nameInput.toLowerCase() === user.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {user.name}
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="roleFilter">Role</Label>
