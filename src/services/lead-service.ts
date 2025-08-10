@@ -197,9 +197,11 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
         });
         return leads;
     } catch (error) {
-        console.error("Error getting beneficiary leads: ", error);
+        console.error("Error fetching beneficiary leads:", error);
          if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'beneficiaryId' (ascending) and 'createdAt' (descending).");
+             const detailedError = `Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'beneficiaryId' (ascending) and 'createdAt' (descending). Full error: ${error.message}`;
+             console.error(detailedError);
+             throw new Error(detailedError);
         }
         throw new Error('Failed to get beneficiary leads.');
     }

@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview Donation service for interacting with Firestore.
  */
@@ -208,10 +206,12 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
         });
         return donations;
     } catch (error) {
-        console.error("Error getting user donations: ", error);
+        console.error("Error fetching user donations:", error);
         // This could be due to a missing index. Log a helpful message.
         if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'donorId' (ascending) and 'donationDate' (descending).");
+             const detailedError = `Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'donorId' (ascending) and 'donationDate' (descending). Full error: ${error.message}`;
+             console.error(detailedError);
+             throw new Error(detailedError);
         }
         throw new Error('Failed to get user donations.');
     }
