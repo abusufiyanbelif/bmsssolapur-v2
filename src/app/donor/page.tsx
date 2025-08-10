@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign, Baby, PersonStanding, HomeIcon, HeartHandshake } from "lucide-react";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -252,6 +252,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
   
   return (
     <div className="space-y-6">
+        <InspirationalQuotes quotes={quotes} loading={false} />
         <Card>
             <CardHeader>
                 <CardTitle>Organization Impact</CardTitle>
@@ -373,7 +374,6 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
         </div>
         <div className="lg:col-span-1 space-y-6">
              <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
-             <InspirationalQuotes quotes={quotes} loading={false} />
         </div>
       </div>
       

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -161,24 +160,27 @@ function PublicHomePage() {
   return (
     <div className="flex-1 space-y-8">
       {/* Hero Section */}
-      <Card className="text-center shadow-lg bg-primary/5">
-        <CardHeader>
-          <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Your small help can make a large impact.</CardTitle>
-          <CardDescription className="max-w-2xl mx-auto text-lg text-muted-foreground pt-2">
-            Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center gap-4">
-            <Button size="lg" onClick={handleDonateClick}>
-              Donate Now <HandHeart className="ml-2" />
-            </Button>
-            <Button size="lg" variant="secondary" asChild>
-                <Link href="/register">Register / Login</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="text-center shadow-lg bg-primary/5 lg:col-span-2">
+            <CardHeader>
+            <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Your small help can make a large impact.</CardTitle>
+            <CardDescription className="max-w-2xl mx-auto text-lg text-muted-foreground pt-2">
+                Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div className="flex justify-center gap-4">
+                <Button size="lg" onClick={handleDonateClick}>
+                Donate Now <HandHeart className="ml-2" />
+                </Button>
+                <Button size="lg" variant="secondary" asChild>
+                    <Link href="/register">Register / Login</Link>
+                </Button>
+            </div>
+            </CardContent>
+        </Card>
+        <InspirationalQuotes quotes={quotes} loading={loading} />
+      </div>
 
       {/* Impact Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -236,59 +238,52 @@ function PublicHomePage() {
         </Card>
        )}
 
-      {/* Open Cases and Quotes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>General Help Cases</CardTitle>
-                    <CardDescription>These are verified, individual cases that need your direct support right now.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {openLeads.length > 0 ? (
-                        <div className="space-y-4">
-                            {openLeads.slice(0, 3).map(lead => {
-                                const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
-                                const remainingAmount = lead.helpRequested - lead.helpGiven;
-                                return (
-                                <div key={lead.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                    <div className="flex-grow">
-                                        <p className="font-semibold">{lead.name}</p>
-                                        <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.category}</p>
-                                        <Progress value={progress} className="my-2" />
-                                        <p className="text-xs text-muted-foreground">
-                                            <span className="font-bold text-primary">₹{remainingAmount.toLocaleString()}</span> still needed of ₹{lead.helpRequested.toLocaleString()} goal.
-                                        </p>
-                                    </div>
-                                    <Button asChild size="sm">
-                                        <Link href={`/donate?leadId=${lead.id}`}>Donate</Link>
-                                    </Button>
-                                </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="text-center py-6">
-                            <p className="text-muted-foreground">All general cases are currently funded. Please check back soon!</p>
-                            <Button className="mt-4" onClick={handleDonateClick}>
-                                Donate to Organization
-                            </Button>
-                        </div>
-                    )}
-                </CardContent>
-                {openLeads.length > 0 && (
-                    <CardFooter>
-                        <Button asChild variant="secondary" className="w-full">
-                            <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
-                        </Button>
-                    </CardFooter>
-                )}
-            </Card>
-        </div>
-        <div className="lg:col-span-1">
-           <InspirationalQuotes quotes={quotes} loading={loading} />
-        </div>
-      </div>
+      {/* Open Cases */}
+      <Card>
+          <CardHeader>
+              <CardTitle>General Help Cases</CardTitle>
+              <CardDescription>These are verified, individual cases that need your direct support right now.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              {openLeads.length > 0 ? (
+                  <div className="space-y-4">
+                      {openLeads.slice(0, 3).map(lead => {
+                          const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
+                          const remainingAmount = lead.helpRequested - lead.helpGiven;
+                          return (
+                          <div key={lead.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                              <div className="flex-grow">
+                                  <p className="font-semibold">{lead.name}</p>
+                                  <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.category}</p>
+                                  <Progress value={progress} className="my-2" />
+                                  <p className="text-xs text-muted-foreground">
+                                      <span className="font-bold text-primary">₹{remainingAmount.toLocaleString()}</span> still needed of ₹{lead.helpRequested.toLocaleString()} goal.
+                                  </p>
+                              </div>
+                              <Button asChild size="sm">
+                                  <Link href={`/donate?leadId=${lead.id}`}>Donate</Link>
+                              </Button>
+                          </div>
+                          );
+                      })}
+                  </div>
+              ) : (
+                  <div className="text-center py-6">
+                      <p className="text-muted-foreground">All general cases are currently funded. Please check back soon!</p>
+                      <Button className="mt-4" onClick={handleDonateClick}>
+                          Donate to Organization
+                      </Button>
+                  </div>
+              )}
+          </CardContent>
+          {openLeads.length > 0 && (
+              <CardFooter>
+                  <Button asChild variant="secondary" className="w-full">
+                      <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
+                  </Button>
+              </CardFooter>
+          )}
+      </Card>
     </div>
   );
 }

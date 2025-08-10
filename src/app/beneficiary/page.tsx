@@ -313,6 +313,7 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
 
     return (
         <div className="space-y-6">
+            <InspirationalQuotes quotes={quotes} loading={false} />
             <Card>
                 <CardHeader>
                     <CardTitle>Organization Impact</CardTitle>
@@ -347,57 +348,50 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
                 </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="text-primary" />
-                                    My Case History
-                                </CardTitle>
-                                <CardDescription>
-                                Here is the status of all your help requests.
-                                </CardDescription>
-                            </div>
-                             <div className="flex flex-col sm:flex-row gap-2">
-                                <Button asChild variant="secondary">
-                                    <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {cases.length > 0 ? (
-                            <>
-                                {isMobile ? renderMobileCards() : renderDesktopTable()}
-                                {totalPages > 1 && renderPaginationControls()}
-                            </>
-                        ) : (
-                        <div className="text-center py-10">
-                            <p className="text-muted-foreground">You have not submitted any help requests.</p>
-                            <Button asChild className="mt-4">
-                                <Link href="/request-help">Request Help Now</Link>
-                            </Button>
-                        </div>
-                        )}
-                    </CardContent>
-                     {cases.length > 0 && (
-                         <CardFooter>
-                            <Button asChild variant="secondary" className="w-full">
-                                <Link href="/my-cases">
-                                    View Full Case History <ArrowRight className="ml-2" />
-                                </Link>
-                            </Button>
-                        </CardFooter>
-                    )}
-                    </Card>
+            <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="flex items-center gap-2">
+                            <FileText className="text-primary" />
+                            My Case History
+                        </CardTitle>
+                        <CardDescription>
+                        Here is the status of all your help requests.
+                        </CardDescription>
+                    </div>
+                     <div className="flex flex-col sm:flex-row gap-2">
+                        <Button asChild variant="secondary">
+                            <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
+                        </Button>
+                    </div>
                 </div>
-                <div className="lg:col-span-1">
-                    <InspirationalQuotes quotes={quotes} loading={false} />
+            </CardHeader>
+            <CardContent>
+                {cases.length > 0 ? (
+                    <>
+                        {isMobile ? renderMobileCards() : renderDesktopTable()}
+                        {totalPages > 1 && renderPaginationControls()}
+                    </>
+                ) : (
+                <div className="text-center py-10">
+                    <p className="text-muted-foreground">You have not submitted any help requests.</p>
+                    <Button asChild className="mt-4">
+                        <Link href="/request-help">Request Help Now</Link>
+                    </Button>
                 </div>
-            </div>
+                )}
+            </CardContent>
+             {cases.length > 0 && (
+                 <CardFooter>
+                    <Button asChild variant="secondary" className="w-full">
+                        <Link href="/my-cases">
+                            View Full Case History <ArrowRight className="ml-2" />
+                        </Link>
+                    </Button>
+                </CardFooter>
+            )}
+            </Card>
         </div>
     )
 }
