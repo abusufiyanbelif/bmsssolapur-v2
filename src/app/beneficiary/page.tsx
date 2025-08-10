@@ -28,7 +28,7 @@ import { getAllCampaigns } from "@/services/campaign-service";
 export default function BeneficiaryDashboardPage() {
     const [user, setUser] = useState<User | null>(null);
     const [cases, setCases] = useState<Lead[]>([]);
-    const [quotes, setQuotes] = useState<Quote[]>(([]);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     

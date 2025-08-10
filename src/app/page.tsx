@@ -197,47 +197,6 @@ function PublicHomePage() {
           ))}
       </div>
 
-       {/* Campaigns */}
-       {allCampaigns.length > 0 && (
-         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Megaphone className="text-primary"/>
-                    Active Campaigns
-                </CardTitle>
-                <CardDescription>
-                    These are our focused fundraising drives for specific, large-scale projects.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {allCampaigns.slice(0,3).map((campaign) => (
-                    <Card key={campaign.id} className="flex flex-col">
-                        <CardHeader>
-                            <div className="flex justify-between items-start gap-4">
-                                <CardTitle>{campaign.name}</CardTitle>
-                                 <Badge variant="outline" className={cn("capitalize flex-shrink-0", campaignStatusColors[campaign.status])}>
-                                    {campaign.status}
-                                </Badge>
-                            </div>
-                            <CardDescription>
-                                Goal: <span className="font-bold text-foreground">₹{campaign.goal.toLocaleString()}</span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                             <p className="text-sm text-muted-foreground line-clamp-2">{campaign.description || "No details provided."}</p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button className="w-full" asChild><Link href={`/donate?campaignId=${campaign.id}`}>Support this Campaign</Link></Button>
-                        </CardFooter>
-                    </Card>
-                ))}
-            </CardContent>
-             <CardFooter>
-                <Button variant="secondary" className="w-full" asChild><Link href="/campaigns">View All Campaigns <ArrowRight className="ml-2" /></Link></Button>
-            </CardFooter>
-        </Card>
-       )}
-
       {/* Open Cases */}
       <Card>
           <CardHeader>
@@ -284,6 +243,47 @@ function PublicHomePage() {
               </CardFooter>
           )}
       </Card>
+      
+       {/* Campaigns */}
+       {allCampaigns.length > 0 && (
+         <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Megaphone className="text-primary"/>
+                    Active Campaigns
+                </CardTitle>
+                <CardDescription>
+                    These are our focused fundraising drives for specific, large-scale projects.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {allCampaigns.slice(0,3).map((campaign) => (
+                    <Card key={campaign.id} className="flex flex-col">
+                        <CardHeader>
+                            <div className="flex justify-between items-start gap-4">
+                                <CardTitle>{campaign.name}</CardTitle>
+                                 <Badge variant="outline" className={cn("capitalize flex-shrink-0", campaignStatusColors[campaign.status])}>
+                                    {campaign.status}
+                                </Badge>
+                            </div>
+                            <CardDescription>
+                                Goal: <span className="font-bold text-foreground">₹{campaign.goal.toLocaleString()}</span>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                             <p className="text-sm text-muted-foreground line-clamp-2">{campaign.description || "No details provided."}</p>
+                        </CardContent>
+                        <CardFooter>
+                            <Button className="w-full" asChild><Link href={`/donate?campaignId=${campaign.id}`}>Support this Campaign</Link></Button>
+                        </CardFooter>
+                    </Card>
+                ))}
+            </CardContent>
+             <CardFooter>
+                <Button variant="secondary" className="w-full" asChild><Link href="/campaigns">View All Campaigns <ArrowRight className="ml-2" /></Link></Button>
+            </CardFooter>
+        </Card>
+       )}
     </div>
   );
 }

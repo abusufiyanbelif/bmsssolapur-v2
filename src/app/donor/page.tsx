@@ -449,7 +449,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                                     {donations.slice(0, 5).map((d, index) => (
                                         <TableRow key={d.id}>
                                             <TableCell>{index + 1}</TableCell>
-                                            <TableCell>{format(d.donationDate, "dd MMM yyyy")}</TableCell>
+                                            <TableCell>{format((d.donationDate as Date), 'dd MMM yyyy')}</TableCell>
                                             {!isMobile && <TableCell>{d.type}</TableCell>}
                                             {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
                                             <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
