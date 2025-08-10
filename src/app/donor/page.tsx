@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, HandCoins, HeartHandshake } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, HeartHandshake, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, History, PackageOpen, FileCheck } from "lucide-react";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -168,7 +168,6 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
     setAppliedFilters({ purpose: 'all', search: '' });
   };
   
-  // Global stats
     const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
     const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
     const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
@@ -178,32 +177,55 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization." },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries." },
-        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement." },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed." },
-        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests." },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported." },
+        { title: "Organization Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization." },
+        { title: "Organization Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries." },
+        { title: "Organization Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement." },
+        { title: "Organization Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed." },
+        { title: "Organization Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests." },
+        { title: "Organization Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported." },
     ];
     
     // Donor specific stats
-    const { myTotalDonated, myDonationCount } = useMemo(() => {
+    const { myTotalDonated, myDonationCount, leadsHelpedCount, beneficiariesHelpedCount: myBeneficiariesHelpedCount, campaignsSupportedCount } = useMemo(() => {
         let myTotalDonated = 0;
         let myDonationCount = 0;
+        const helpedLeadIds = new Set<string>();
+        const helpedCampaignIds = new Set<string>();
 
         donations.forEach(donation => {
-            // Only count donations that are verified or allocated towards a cause
             if(donation.status === 'Verified' || donation.status === 'Allocated'){
                 myTotalDonated += donation.amount;
+                if(donation.leadId) helpedLeadIds.add(donation.leadId);
+                if(donation.campaignId) helpedCampaignIds.add(donation.campaignId);
             }
             myDonationCount++;
         });
-        return { myTotalDonated, myDonationCount };
-    }, [donations]);
+
+        const helpedBeneficiaryIds = new Set<string>();
+        allLeads.forEach(lead => {
+            if (lead.id && helpedLeadIds.has(lead.id)) {
+                helpedBeneficiaryIds.add(lead.beneficiaryId);
+            }
+        });
+
+        return { 
+            myTotalDonated, 
+            myDonationCount,
+            leadsHelpedCount: helpedLeadIds.size,
+            beneficiariesHelpedCount: helpedBeneficiaryIds.size,
+            campaignsSupportedCount: helpedCampaignIds.size,
+        };
+    }, [donations, allLeads]);
 
     const donorMetrics = [
         { title: "My Total Contributions", value: `₹${myTotalDonated.toLocaleString()}`, icon: HandHeart, description: "Your total verified contributions." },
         { title: "Total Donations Made", value: myDonationCount.toString(), icon: History, description: "The total number of donations you have made." },
+    ];
+    
+    const impactMetrics = [
+        { title: "Leads Supported", value: leadsHelpedCount, icon: FileCheck, description: "The number of individual cases you've helped fund." },
+        { title: "Beneficiaries Helped", value: myBeneficiariesHelpedCount, icon: UsersIcon, description: "The number of unique people you've supported." },
+        { title: "Campaigns Supported", value: campaignsSupportedCount, icon: Megaphone, description: "The number of special campaigns you've contributed to." },
     ];
 
 
@@ -269,7 +291,6 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                         <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
                         <p className="text-2xl font-bold">{metric.value}</p>
                         <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
                     </div>
                 ))}
             </CardContent>
@@ -285,6 +306,23 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                     <div key={metric.title} className="p-4 border rounded-lg bg-primary/5">
                         <metric.icon className="h-6 w-6 text-primary mb-2" />
                         <p className="text-2xl font-bold text-primary">{metric.value}</p>
+                        <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+        
+         <Card>
+            <CardHeader>
+                <CardTitle>My Direct Impact</CardTitle>
+                <CardDescription>A summary of the direct impact your donations have made.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-3">
+                {impactMetrics.map((metric) => (
+                    <div key={metric.title} className="p-4 border rounded-lg">
+                        <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
+                        <p className="text-2xl font-bold">{metric.value}</p>
                         <p className="text-sm font-medium text-foreground">{metric.title}</p>
                         <p className="text-xs text-muted-foreground">{metric.description}</p>
                     </div>
@@ -482,7 +520,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                                     {donations.slice(0, 5).map((d, index) => (
                                         <TableRow key={d.id}>
                                             <TableCell>{index + 1}</TableCell>
-                                            <TableCell>{format(d.createdAt as Date, 'dd MMM yyyy')}</TableCell>
+                                            <TableCell>{format(d.donationDate, 'dd MMM yyyy')}</TableCell>
                                             {!isMobile && <TableCell>{d.type}</TableCell>}
                                             {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
                                             <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
