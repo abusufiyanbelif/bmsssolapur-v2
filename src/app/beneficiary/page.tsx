@@ -1,3 +1,4 @@
+
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -150,12 +151,12 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
-        { title: "Total Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
-        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
+        { title: "Organization Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
+        { title: "Organization Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
+        { title: "Organization Total Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
+        { title: "Organization Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
+        { title: "Organization Cases Pending", value: casesPending.toString(), icon: Hourglass },
+        { title: "Organization Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
     ];
     
     // Beneficiary specific stats

@@ -1,3 +1,4 @@
+
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, HandCoins } from "lucide-react";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -177,12 +178,12 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allC
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
-        { title: "Total Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
-        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
+        { title: "Organization Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
+        { title: "Organization Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
+        { title: "Organization Total Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
+        { title: "Organization Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
+        { title: "Organization Cases Pending", value: casesPending.toString(), icon: Hourglass },
+        { title: "Organization Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
     ];
     
     // Donor specific stats
