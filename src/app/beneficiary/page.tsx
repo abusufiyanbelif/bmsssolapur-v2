@@ -28,7 +28,7 @@ import { getAllCampaigns } from "@/services/campaign-service";
 export default function BeneficiaryDashboardPage() {
     const [user, setUser] = useState<User | null>(null);
     const [cases, setCases] = useState<Lead[]>([]);
-    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [quotes, setQuotes] = useState<Quote[]>(([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -403,7 +403,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <QuoteIcon className="text-primary" />
-                        Food for Thought
+                        Wisdom & Reflection
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -422,7 +422,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <QuoteIcon className="text-primary" />
-                    Food for Thought
+                    Wisdom & Reflection
                 </CardTitle>
                 <CardDescription>
                     A little inspiration for your journey.

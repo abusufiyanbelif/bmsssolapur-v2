@@ -1,3 +1,4 @@
+
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -485,7 +486,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <QuoteIcon className="text-primary" />
-                        Food for Thought
+                        Wisdom & Reflection
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -504,7 +505,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <QuoteIcon className="text-primary" />
-                    Food for Thought
+                    Wisdom & Reflection
                 </CardTitle>
                 <CardDescription>
                     A little inspiration for your journey.
