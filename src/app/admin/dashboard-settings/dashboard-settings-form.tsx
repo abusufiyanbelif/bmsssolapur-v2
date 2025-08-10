@@ -40,7 +40,7 @@ interface DashboardSettingsFormProps {
     settings?: DashboardSettings;
 }
 
-const allAdminRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin"];
+const allAppRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin", "Donor", "Beneficiary", "Referral"];
 
 const cardDefinitions: { id: keyof DashboardSettings, label: string, description: string }[] = [
     { id: 'mainMetrics', label: 'Main Metrics', description: 'Overall stats like Total Raised, Distributed, etc.' },
@@ -118,8 +118,8 @@ export function DashboardSettingsForm({ settings }: DashboardSettingsFormProps) 
                          {card.description}
                         </FormDescription>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {allAdminRoles.map((role) => (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {allAppRoles.map((role) => (
                           <FormField
                             key={role}
                             control={form.control}

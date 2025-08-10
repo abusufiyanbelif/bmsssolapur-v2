@@ -22,6 +22,8 @@ const SETTINGS_COLLECTION = 'settings';
 const MAIN_SETTINGS_DOC_ID = 'main'; // Use a singleton document for global settings
 
 const defaultAdminRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin'];
+const allUserRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin', 'Donor', 'Beneficiary', 'Referral'];
+
 
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {
@@ -60,13 +62,13 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         disabledPurposes: [],
     },
     dashboard: {
-        mainMetrics: { visibleTo: defaultAdminRoles },
+        mainMetrics: { visibleTo: allUserRoles },
         monthlyContributors: { visibleTo: defaultAdminRoles },
         monthlyPledge: { visibleTo: defaultAdminRoles },
         pendingLeads: { visibleTo: defaultAdminRoles },
         pendingDonations: { visibleTo: defaultAdminRoles },
-        beneficiaryBreakdown: { visibleTo: defaultAdminRoles },
-        campaignBreakdown: { visibleTo: defaultAdminRoles },
+        beneficiaryBreakdown: { visibleTo: allUserRoles },
+        campaignBreakdown: { visibleTo: allUserRoles },
         donationsChart: { visibleTo: defaultAdminRoles },
         topDonors: { visibleTo: defaultAdminRoles },
         recentCampaigns: { visibleTo: defaultAdminRoles },
