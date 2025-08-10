@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, Banknote, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone, UserRole } from "lucide-react";
+import { DollarSign, Users, Banknote, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone, UserRole as UserRoleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
@@ -206,7 +206,10 @@ export default async function DashboardPage() {
                     </Card>
                 </Link>
             ))}
-                {isCardVisible('monthlyContributors', settings, currentUserRole) && (
+            </div>
+        )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+             {isCardVisible('monthlyContributors', settings, currentUserRole) && (
                 <Link href="/admin/donors">
                     <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -234,8 +237,7 @@ export default async function DashboardPage() {
                     </Card>
                 </Link>
                 )}
-            </div>
-        )}
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
            {isCardVisible('pendingLeads', settings, currentUserRole) && (
            <Card>

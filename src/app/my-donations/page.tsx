@@ -137,7 +137,7 @@ export default function MyDonationsPage() {
           getUser(userId)
         ]);
         
-        userDonations.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        userDonations.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
         setDonations(userDonations);
         setUser(fetchedUser);
         setError(null);
@@ -203,7 +203,7 @@ export default function MyDonationsPage() {
             {paginatedDonations.map((donation, index) => (
                 <TableRow key={donation.id}>
                     <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                    <TableCell>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                    <TableCell>{format(donation.createdAt as Date, "dd MMM yyyy")}</TableCell>
                     <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
                     <TableCell>{donation.type}</TableCell>
                     <TableCell>{donation.purpose || 'N/A'}</TableCell>
@@ -229,7 +229,7 @@ export default function MyDonationsPage() {
                         <div className="flex justify-between items-start">
                              <div>
                                 <CardTitle className="text-lg">#{(currentPage - 1) * itemsPerPage + index + 1}: ₹{donation.amount.toFixed(2)}</CardTitle>
-                                <CardDescription>{format(donation.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
+                                <CardDescription>{format(donation.createdAt as Date, "dd MMM yyyy")}</CardDescription>
                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
                                 {donation.status}

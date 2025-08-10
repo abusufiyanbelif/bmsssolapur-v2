@@ -127,4 +127,146 @@ export interface LeadDonationAllocation {
     amount: number;
     allocatedByUserId: string;
     allocatedByUserName: string;
-al
+    allocatedAt: Timestamp;
+}
+
+export interface FundTransfer {
+    transferredByUserId: string;
+    transferredByUserName: string;
+    amount: number;
+    transferredAt: Timestamp | Date;
+    proofUrl: string;
+    notes?: string;
+    transactionId?: string;
+    utrNumber?: string;
+    senderName?: string;
+    senderAccountNumber?: string;
+    recipientName?: string;
+    recipientPhone?: string;
+    recipientUpiId?: string;
+    recipientAccountNumber?: string;
+    paymentApp?: string;
+    paymentMethod?: string;
+    status?: string;
+}
+
+export interface Lead {
+    id?: string;
+    name: string; // Beneficiary name for easy access
+    beneficiaryId: string;
+    campaignId?: string;
+    campaignName?: string;
+    purpose: LeadPurpose;
+    otherPurposeDetail?: string;
+    donationType: DonationType;
+    acceptableDonationTypes?: DonationType[];
+    category?: string;
+    otherCategoryDetail?: string;
+    priority?: LeadPriority;
+    helpRequested: number;
+    helpGiven: number;
+    status: LeadStatus;
+    verifiedStatus: LeadVerificationStatus;
+    verifiers: Verifier[];
+    donations: LeadDonationAllocation[];
+    fundTransfers?: FundTransfer[];
+    caseDetails?: string;
+    verificationDocumentUrl?: string;
+    adminAddedBy: {
+        id: string;
+        name: string;
+    }
+    dateCreated: Timestamp;
+    dueDate?: Timestamp;
+    closedAt?: Timestamp;
+    isLoan: boolean;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+}
+
+export interface Organization {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    registrationNumber: string;
+    panNumber?: string;
+    contactEmail: string;
+    contactPhone: string;
+    website?: string;
+    upiId?: string;
+    qrCodeUrl?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface Quote {
+    id: string;
+    text: string;
+    source: string;
+    category: "Quran" | "Hadith" | "Scholar";
+}
+
+export interface AppSettings {
+    id: string;
+    loginMethods: {
+        password: { enabled: boolean };
+        otp: { enabled: boolean };
+        google: { enabled: boolean };
+    };
+    services: {
+        twilio: { enabled: boolean };
+        nodemailer: { enabled: boolean };
+        whatsapp: { enabled: boolean };
+    };
+    features: {
+        directPaymentToBeneficiary: { enabled: boolean };
+    };
+    paymentMethods?: {
+        bankTransfer: { enabled: boolean };
+        cash: { enabled: boolean };
+        upi: { enabled: boolean };
+        other: { enabled: boolean };
+    };
+    paymentGateway?: {
+        razorpay: {
+            enabled: boolean;
+            keyId?: string;
+            keySecret?: string;
+        };
+        phonepe: {
+            enabled: boolean;
+            merchantId?: string;
+            saltKey?: string;
+            saltIndex?: number;
+        };
+    };
+    leadConfiguration?: {
+        disabledPurposes: string[];
+    };
+    dashboard?: {
+        mainMetrics: { visibleTo: UserRole[] };
+        monthlyContributors: { visibleTo: UserRole[] };
+        monthlyPledge: { visibleTo: UserRole[] };
+        pendingLeads: { visibleTo: UserRole[] };
+        pendingDonations: { visibleTo: UserRole[] };
+        beneficiaryBreakdown: { visibleTo: UserRole[] };
+        campaignBreakdown: { visibleTo: UserRole[] };
+        donationsChart: { visibleTo: UserRole[] };
+        topDonors: { visibleTo: UserRole[] };
+        recentCampaigns: { visibleTo: UserRole[] };
+        donationTypeBreakdown: { visibleTo: UserRole[] };
+    };
+    updatedAt?: FieldValue;
+}
+
+export interface ActivityLog {
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail?: string;
+    role: UserRole;
+    activity: string;
+    details: Record<string, any>;
+    timestamp: Timestamp | Date;
+}
