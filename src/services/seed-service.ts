@@ -252,7 +252,8 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             status: 'Allocated',
             isAnonymous: false,
             transactionId: `HISTORICAL-${Date.now()}-${Math.random()}`,
-            paymentScreenshotUrl: '',
+            paymentScreenshotUrls: [],
+            donationDate: Timestamp.fromDate(new Date("2021-11-01")),
             createdAt: Timestamp.fromDate(new Date("2021-11-01")),
             verifiedAt: Timestamp.fromDate(new Date("2021-11-01")),
             notes: 'Historical donation seeded automatically.'
@@ -362,7 +363,7 @@ const seedCampaignsAndLinkedLeads = async (): Promise<{ campaignResults: SeedIte
             id: medicalDonationRef.id,
             donorId: randomDonor.id!, donorName: randomDonor.name, amount: 60000,
             type: 'Zakat', purpose: 'Medical', status: 'Allocated', isAnonymous: false,
-            createdAt: Timestamp.now(), verifiedAt: Timestamp.now()
+            createdAt: Timestamp.now(), verifiedAt: Timestamp.now(), donationDate: Timestamp.now(),
         });
         donationResults.push({ name: `Donation for ${medicalBeneficiary.name}`, status: 'Created' });
         
@@ -394,7 +395,7 @@ const seedCampaignsAndLinkedLeads = async (): Promise<{ campaignResults: SeedIte
                 id: familyDonationRef.id,
                 donorId: randomDonor.id!, donorName: randomDonor.name, amount: 4000,
                 type: 'Zakat', purpose: 'Relief Fund', status: 'Allocated', isAnonymous: false,
-                createdAt: Timestamp.now(), verifiedAt: Timestamp.now()
+                createdAt: Timestamp.now(), verifiedAt: Timestamp.now(), donationDate: Timestamp.now()
             });
             donationResults.push({ name: `Donation for ${familyBeneficiary.name}`, status: 'Created' });
             
