@@ -5,7 +5,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, PiggyBank, Hourglass, Users, TrendingUp, Megaphone } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users, TrendingUp, Megaphone } from "lucide-react";
 import { getOpenGeneralLeads, EnrichedLead, getActiveCampaigns } from "@/app/campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -127,7 +127,7 @@ function PublicHomePage() {
   const mainMetrics = [
     { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
     { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
-    { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
+    { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote },
     { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
     { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
     { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users },

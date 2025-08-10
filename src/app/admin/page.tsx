@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone, UserRole } from "lucide-react";
+import { DollarSign, Users, Banknote, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone, UserRole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
@@ -127,7 +127,7 @@ export default async function DashboardPage() {
      {
       title: "Funds in Hand",
       value: `₹${pendingToDisburse.toLocaleString()}`,
-      icon: PiggyBank,
+      icon: Banknote,
       description: "Verified funds ready to be disbursed.",
       href: "/admin/donations",
     },
