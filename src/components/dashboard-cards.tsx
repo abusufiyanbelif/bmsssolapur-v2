@@ -111,7 +111,7 @@ export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns: Campaign
 }
 
 const donationTypeIcons: Record<DonationType, React.ElementType> = {
-    'Zakat': HandHeart,
+    'Zakat': HeartHandshake,
     'Sadaqah': Gift,
     'Fitr': Wheat,
     'Lillah': Building,
