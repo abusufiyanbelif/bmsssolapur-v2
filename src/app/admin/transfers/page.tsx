@@ -126,7 +126,10 @@ function AllTransfersPageContent() {
             // Handle date/timestamp objects
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (aValue > bValue) {
+            } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+                comparison = aValue - bValue;
+            }
+             else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
                 comparison = -1;
