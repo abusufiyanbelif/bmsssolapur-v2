@@ -178,12 +178,12 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allC
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
-        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
-        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
+        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization." },
+        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries." },
+        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank, description: "Verified funds ready for disbursement." },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed." },
+        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests." },
+        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported." },
     ];
     
     // Donor specific stats
@@ -202,8 +202,8 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allC
     }, [donations]);
 
     const donorMetrics = [
-        { title: "My Total Contributions", value: `₹${myTotalDonated.toLocaleString()}`, icon: HandHeart },
-        { title: "Total Donations Made", value: myDonationCount.toString(), icon: History },
+        { title: "My Total Contributions", value: `₹${myTotalDonated.toLocaleString()}`, icon: HandHeart, description: "Your total verified contributions." },
+        { title: "Total Donations Made", value: myDonationCount.toString(), icon: History, description: "The total number of donations you have made." },
     ];
 
 
@@ -258,33 +258,39 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allC
   
   return (
     <div className="space-y-6">
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {mainMetrics.map((metric) => (
-              <Card key={metric.title} className="h-full">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                  <metric.icon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                  <div className="text-2xl font-bold">{metric.value}</div>
-                  </CardContent>
-              </Card>
-          ))}
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Organization Impact</CardTitle>
+                <CardDescription>A real-time overview of our collective efforts.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {mainMetrics.map((metric) => (
+                    <div key={metric.title} className="p-4 border rounded-lg">
+                        <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
+                        <p className="text-2xl font-bold">{metric.value}</p>
+                        <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
         
-        <div className="grid gap-4 md:grid-cols-2">
-            {donorMetrics.map((metric) => (
-                <Card key={metric.title} className="bg-primary/5">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                    <metric.icon className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold text-primary">{metric.value}</div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>My Contributions</CardTitle>
+                <CardDescription>Your personal giving summary.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+                {donorMetrics.map((metric) => (
+                    <div key={metric.title} className="p-4 border rounded-lg bg-primary/5">
+                        <metric.icon className="h-6 w-6 text-primary mb-2" />
+                        <p className="text-2xl font-bold text-primary">{metric.value}</p>
+                        <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
 
       {/* Open Cases and Quotes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

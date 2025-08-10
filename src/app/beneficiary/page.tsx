@@ -151,12 +151,12 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
-        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
-        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
+        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization." },
+        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries." },
+        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank, description: "Verified funds ready for disbursement." },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed." },
+        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests." },
+        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported." },
     ];
     
     // Beneficiary specific stats
@@ -180,10 +180,10 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
     }, [cases]);
 
     const beneficiaryMetrics = [
-        { title: "Total Aid Received", value: `₹${totalAidReceived.toLocaleString()}`, icon: HandHeart },
-        { title: "Total Requested", value: `₹${totalRequested.toLocaleString()}`, icon: FilePlus2 },
-        { title: "Active Cases", value: activeCases.toString(), icon: Hourglass },
-        { title: "Closed Cases", value: myCasesClosed.toString(), icon: CheckCircle },
+        { title: "My Total Aid Received", value: `₹${totalAidReceived.toLocaleString()}`, icon: HandHeart, description: "The total funds you have received across all your cases." },
+        { title: "My Total Requested", value: `₹${totalRequested.toLocaleString()}`, icon: FilePlus2, description: "The total amount you have requested across all your cases." },
+        { title: "My Active Cases", value: activeCases.toString(), icon: Hourglass, description: "Your cases that are currently open or partially funded." },
+        { title: "My Closed Cases", value: myCasesClosed.toString(), icon: CheckCircle, description: "Your cases that have been successfully completed." },
     ];
 
     const paginatedCases = useMemo(() => {
@@ -262,7 +262,7 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
                         <CardContent className="space-y-4">
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="font-semibold">Goal</span>
+                                    <span className="font-semibold">Funding Goal</span>
                                     <span className="font-semibold">₹{caseItem.helpRequested.toLocaleString()}</span>
                                 </div>
                                 <Progress value={progress} />
@@ -313,34 +313,39 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mainMetrics.map((metric) => (
-                    <Card key={metric.title} className="h-full">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                        <metric.icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                        <div className="text-2xl font-bold">{metric.value}</div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Organization Impact</CardTitle>
+                    <CardDescription>A real-time overview of our collective efforts.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {mainMetrics.map((metric) => (
+                        <div key={metric.title} className="p-4 border rounded-lg">
+                            <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
+                            <p className="text-2xl font-bold">{metric.value}</p>
+                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                            <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {beneficiaryMetrics.map((metric) => (
-                     <Card key={metric.title} className="bg-primary/5">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                        <metric.icon className="h-4 w-4 text-primary" />
-                        </CardHeader>
-                        <CardContent>
-                        <div className="text-2xl font-bold text-primary">{metric.value}</div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-
+            <Card>
+                <CardHeader>
+                    <CardTitle>My Personal Summary</CardTitle>
+                    <CardDescription>Your personal history and status with our organization.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {beneficiaryMetrics.map((metric) => (
+                        <div key={metric.title} className="p-4 border rounded-lg bg-primary/5">
+                            <metric.icon className="h-6 w-6 text-primary mb-2" />
+                            <p className="text-2xl font-bold text-primary">{metric.value}</p>
+                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                            <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
@@ -393,49 +398,6 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
                     <InspirationalQuotes quotes={quotes} loading={false} />
                 </div>
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <CheckCircle className="text-primary"/>
-                        Active &amp; Recent Campaigns
-                    </CardTitle>
-                    <CardDescription>
-                        An overview of our fundraising campaigns.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {allCampaigns.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Campaign</TableHead>
-                                    <TableHead>Dates</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {allCampaigns.slice(0, 5).map((campaign) => (
-                                    <TableRow key={campaign.id}>
-                                        <TableCell>
-                                            <div className="font-medium">{campaign.name}</div>
-                                            <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className={cn(campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                        <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
-                    )}
-                </CardContent>
-            </Card>
         </div>
     )
 }
