@@ -177,12 +177,12 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Organization Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization." },
-        { title: "Organization Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries." },
-        { title: "Organization Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement." },
-        { title: "Organization Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed." },
-        { title: "Organization Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests." },
-        { title: "Organization Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported." },
+        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization." },
+        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries." },
+        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement." },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed." },
+        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests." },
+        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported." },
     ];
     
     // Donor specific stats
@@ -395,9 +395,6 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                     <Button asChild variant="secondary" className="w-full">
                         <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
                     </Button>
-                     <Button asChild variant="default" className="w-full">
-                        <Link href="/campaigns">View Fundraising Campaigns <Megaphone className="ml-2" /></Link>
-                    </Button>
                 </CardFooter>
             </Card>
         </div>
@@ -493,6 +490,9 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                     <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
                 )}
             </CardContent>
+             <CardFooter>
+                <Button variant="secondary" className="w-full" asChild><Link href="/campaigns">View All Campaigns <ArrowRight className="ml-2" /></Link></Button>
+            </CardFooter>
         </Card>
 
       {/* Recent Donations and Breakdown */}
