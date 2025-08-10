@@ -182,8 +182,7 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
     try {
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION), 
-            where("beneficiaryId", "==", beneficiaryId),
-            orderBy("createdAt", "desc")
+            where("beneficiaryId", "==", beneficiaryId)
         );
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
@@ -195,13 +194,15 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
                 createdAt: (data.createdAt as Timestamp).toDate()
             } as Lead);
         });
+        // Sort in memory instead of in the query
+        leads.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
         return leads;
     } catch (error) {
         console.error("Error fetching beneficiary leads:", error);
-         if (error instanceof Error && error.message.includes('index')) {
-             const detailedError = `Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'beneficiaryId' (ascending) and 'createdAt' (descending). Full error: ${error.message}`;
-             console.error(detailedError);
-             throw new Error(detailedError);
+         if (error instanceof Error && error.message.includes('requires an index')) {
+            const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'beneficiaryId' in the 'leads' collection. Full error: ${error.message}`;
+            console.error(detailedError);
+            throw new Error(detailedError);
         }
         throw new Error('Failed to get beneficiary leads.');
     }
