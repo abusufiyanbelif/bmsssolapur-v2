@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -31,6 +30,7 @@ export default function HomePage() {
         redirectTo = '/admin';
       } else {
          // Fallback for any other roles, or if activeRole is 'Guest'
+         // This logic is for safety but the specific checks above should handle most cases.
          const user = await getUser(storedUserId);
          if (user) {
             const primaryRole = user.roles[0];

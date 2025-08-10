@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -122,7 +121,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
         
-        window.location.reload();
+        window.location.href = '/home'; // Always redirect to the home router page
     };
     
     const handleLogout = () => {
