@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, PiggyBank, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, HandCoins, Hourglass } from "lucide-react";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -118,8 +118,13 @@ export default function BeneficiaryDashboardPage() {
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
+    "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Complete": "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
+    "On Hold": "bg-orange-500/20 text-orange-700 border-orange-500/30",
+    "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
 
 const campaignStatusColors: Record<string, string> = {
