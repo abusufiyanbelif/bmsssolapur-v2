@@ -1,5 +1,3 @@
-
-
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -374,7 +372,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
             </Card>
         </div>
         <div className="lg:col-span-1 space-y-6">
-             <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} />
+             <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
              <InspirationalQuotes quotes={quotes} loading={false} />
         </div>
       </div>
@@ -450,7 +448,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                                     {donations.slice(0, 5).map((d, index) => (
                                         <TableRow key={d.id}>
                                             <TableCell>{index + 1}</TableCell>
-                                            <TableCell>{format(d.donationDate, 'dd MMM yyyy')}</TableCell>
+                                            <TableCell>{format(d.donationDate, "dd MMM yyyy")}</TableCell>
                                             {!isMobile && <TableCell>{d.type}</TableCell>}
                                             {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
                                             <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>

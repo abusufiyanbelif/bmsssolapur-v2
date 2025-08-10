@@ -8,7 +8,7 @@ import { User, Lead, Campaign, Donation, DonationType } from "@/services/types";
 import { HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield } from "lucide-react";
 
 
-export const BeneficiaryBreakdownCard = ({ allUsers, allLeads }: { allUsers: User[], allLeads: Lead[] }) => {
+export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true }: { allUsers: User[], allLeads: Lead[], isAdmin?: boolean }) => {
     const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
     const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
   
@@ -16,6 +16,21 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads }: { allUsers: Use
     const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
     const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
     const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
+    
+    const Wrapper = ({ children, type }: { children: React.ReactNode, type: string }) => {
+        if (!isAdmin) {
+            return <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 h-full">{children}</div>;
+        }
+        
+        const queryParam = type === 'Widow' ? `isWidow=true` : `type=${type}`;
+        return (
+            <Link href={`/admin/beneficiaries?${queryParam}`}>
+                <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
+                    {children}
+                </div>
+            </Link>
+        )
+    };
   
     return (
         <Card className="lg:col-span-2">
@@ -29,34 +44,26 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads }: { allUsers: Use
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                 <Link href="/admin/beneficiaries?type=Family">
-                    <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                        <HomeIcon className="h-8 w-8 text-primary" />
-                        <p className="font-bold text-2xl">{familiesHelpedCount}</p>
-                        <p className="text-sm text-muted-foreground">Families</p>
-                    </div>
-                </Link>
-                <Link href="/admin/beneficiaries?type=Adult">
-                    <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                        <PersonStanding className="h-8 w-8 text-primary" />
-                        <p className="font-bold text-2xl">{adultsHelpedCount}</p>
-                        <p className="text-sm text-muted-foreground">Adults</p>
-                    </div>
-                </Link>
-                <Link href="/admin/beneficiaries?type=Kid">
-                    <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                        <Baby className="h-8 w-8 text-primary" />
-                        <p className="font-bold text-2xl">{kidsHelpedCount}</p>
-                        <p className="text-sm text-muted-foreground">Kids</p>
-                    </div>
-                </Link>
-                <Link href="/admin/beneficiaries?isWidow=true">
-                    <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                        <HeartHandshake className="h-8 w-8 text-primary" />
-                        <p className="font-bold text-2xl">{widowsHelpedCount}</p>
-                        <p className="text-sm text-muted-foreground">Widows</p>
-                    </div>
-                </Link>
+                 <Wrapper type="Family">
+                    <HomeIcon className="h-8 w-8 text-primary" />
+                    <p className="font-bold text-2xl">{familiesHelpedCount}</p>
+                    <p className="text-sm text-muted-foreground">Families</p>
+                </Wrapper>
+                <Wrapper type="Adult">
+                    <PersonStanding className="h-8 w-8 text-primary" />
+                    <p className="font-bold text-2xl">{adultsHelpedCount}</p>
+                    <p className="text-sm text-muted-foreground">Adults</p>
+                </Wrapper>
+                <Wrapper type="Kid">
+                    <Baby className="h-8 w-8 text-primary" />
+                    <p className="font-bold text-2xl">{kidsHelpedCount}</p>
+                    <p className="text-sm text-muted-foreground">Kids</p>
+                </Wrapper>
+                <Wrapper type="Widow">
+                    <HeartHandshake className="h-8 w-8 text-primary" />
+                    <p className="font-bold text-2xl">{widowsHelpedCount}</p>
+                    <p className="text-sm text-muted-foreground">Widows</p>
+                </Wrapper>
             </CardContent>
         </Card>
     );
