@@ -220,6 +220,25 @@ export interface ActivityLog {
     timestamp: Timestamp | FieldValue;
 }
 
+export type DashboardCardKey = 
+    | 'mainMetrics' 
+    | 'monthlyContributors' 
+    | 'monthlyPledge' 
+    | 'pendingLeads' 
+    | 'pendingDonations'
+    | 'beneficiaryBreakdown' 
+    | 'campaignBreakdown'
+    | 'donationsChart'
+    | 'topDonors'
+    | 'recentCampaigns'
+    | 'donationTypeBreakdown';
+
+export type DashboardSettings = {
+    [key in DashboardCardKey]?: {
+        visibleTo: UserRole[];
+    }
+}
+
 export interface AppSettings {
     id: string;
     loginMethods: {
@@ -257,6 +276,7 @@ export interface AppSettings {
     leadConfiguration?: {
       disabledPurposes: string[];
     },
+    dashboard?: DashboardSettings,
     updatedAt?: Timestamp;
 }
 

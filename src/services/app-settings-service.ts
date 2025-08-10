@@ -13,13 +13,15 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { AppSettings } from './types';
+import type { AppSettings, UserRole } from './types';
 
 // Re-export type for backward compatibility
 export type { AppSettings };
 
 const SETTINGS_COLLECTION = 'settings';
 const MAIN_SETTINGS_DOC_ID = 'main'; // Use a singleton document for global settings
+
+const defaultAdminRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin'];
 
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {
@@ -56,6 +58,19 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     leadConfiguration: {
         disabledPurposes: [],
+    },
+    dashboard: {
+        mainMetrics: { visibleTo: defaultAdminRoles },
+        monthlyContributors: { visibleTo: defaultAdminRoles },
+        monthlyPledge: { visibleTo: defaultAdminRoles },
+        pendingLeads: { visibleTo: defaultAdminRoles },
+        pendingDonations: { visibleTo: defaultAdminRoles },
+        beneficiaryBreakdown: { visibleTo: defaultAdminRoles },
+        campaignBreakdown: { visibleTo: defaultAdminRoles },
+        donationsChart: { visibleTo: defaultAdminRoles },
+        topDonors: { visibleTo: defaultAdminRoles },
+        recentCampaigns: { visibleTo: defaultAdminRoles },
+        donationTypeBreakdown: { visibleTo: defaultAdminRoles },
     }
 };
 
@@ -90,7 +105,8 @@ export const getAppSettings = async (): Promise<AppSettings> => {
             razorpay: { ...defaultSettings.paymentGateway.razorpay, ...data.paymentGateway?.razorpay },
             phonepe: { ...defaultSettings.paymentGateway.phonepe, ...data.paymentGateway?.phonepe },
         },
-        leadConfiguration: { ...defaultSettings.leadConfiguration, ...data.leadConfiguration }
+        leadConfiguration: { ...defaultSettings.leadConfiguration, ...data.leadConfiguration },
+        dashboard: { ...defaultSettings.dashboard, ...data.dashboard },
       };
       return { id: settingsDoc.id, ...mergedSettings } as AppSettings;
     } else {

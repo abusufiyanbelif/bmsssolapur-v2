@@ -1,11 +1,11 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone } from "lucide-react";
+import { DollarSign, Users, PiggyBank, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone, UserRole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
-import { getAllUsers } from "@/services/user-service";
+import { getAllUsers, getUser } from "@/services/user-service";
 import Link from "next/link";
 import { format, formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,15 +15,37 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { AppSettings, getAppSettings } from "@/services/app-settings-service";
+
+
+async function getDashboardData() {
+    const [allDonations, allLeads, allUsers, allCampaigns, settings] = await Promise.all([
+        getAllDonations(),
+        getAllLeads(),
+        getAllUsers(),
+        getAllCampaigns(),
+        getAppSettings(),
+    ]);
+    return { allDonations, allLeads, allUsers, allCampaigns, settings };
+}
+
+// A simple helper function to check card visibility based on settings
+const isCardVisible = (cardKey: keyof AppSettings['dashboard'], settings: AppSettings, activeRole?: UserRole) => {
+    if (!settings.dashboard?.[cardKey]) {
+        return true; // Default to visible if not configured
+    }
+    return settings.dashboard[cardKey]?.visibleTo.includes(activeRole || 'Admin');
+};
+
 
 export default async function DashboardPage() {
+  // In a real app, we would get the current user's role from the session.
+  // For this server component, we'll assume a role for demonstration,
+  // but the visibility check logic is what matters.
+  // This would be replaced with actual user session logic.
+  const currentUserRole: UserRole = "Super Admin"; 
 
-  const [allDonations, allLeads, allUsers, allCampaigns] = await Promise.all([
-    getAllDonations(),
-    getAllLeads(),
-    getAllUsers(),
-    getAllCampaigns(),
-  ]);
+  const { allDonations, allLeads, allUsers, allCampaigns, settings } = await getDashboardData();
 
   const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
   const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
@@ -168,47 +190,54 @@ export default async function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Dashboard</h2>
       </div>
       <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {mainMetrics.map((metric) => (
-              <Link href={metric.href} key={metric.title}>
-                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                    <metric.icon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{metric.value}</div>
-                    <p className="text-xs text-muted-foreground">{metric.description}</p>
-                    </CardContent>
-                </Card>
-              </Link>
-          ))}
-            <Link href="/admin/donors">
-                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Monthly Contributors</CardTitle>
-                    <Repeat className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{contributedThisMonthCount} / {monthlyContributorsCount}</div>
-                        <p className="text-xs text-muted-foreground">Contributed this month vs. total pledged.</p>
-                    </CardContent>
-                </Card>
-            </Link>
-             <Link href="/admin/donors">
-                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Monthly Pledge</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{totalMonthlyPledge.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Total amount pledged per month.</p>
-                    </CardContent>
-                </Card>
-            </Link>
-        </div>
+        {isCardVisible('mainMetrics', settings, currentUserRole) && (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {mainMetrics.map((metric) => (
+                <Link href={metric.href} key={metric.title}>
+                    <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <metric.icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                        <div className="text-2xl font-bold">{metric.value}</div>
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+            ))}
+                {isCardVisible('monthlyContributors', settings, currentUserRole) && (
+                <Link href="/admin/donors">
+                    <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Monthly Contributors</CardTitle>
+                        <Repeat className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{contributedThisMonthCount} / {monthlyContributorsCount}</div>
+                            <p className="text-xs text-muted-foreground">Contributed this month vs. total pledged.</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                )}
+                {isCardVisible('monthlyPledge', settings, currentUserRole) && (
+                <Link href="/admin/donors">
+                    <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Monthly Pledge</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">₹{totalMonthlyPledge.toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground">Total amount pledged per month.</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                )}
+            </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+           {isCardVisible('pendingLeads', settings, currentUserRole) && (
            <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline text-destructive">
@@ -250,6 +279,8 @@ export default async function DashboardPage() {
                 )}
             </CardContent>
           </Card>
+           )}
+            {isCardVisible('pendingDonations', settings, currentUserRole) && (
             <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline text-destructive">
@@ -291,8 +322,10 @@ export default async function DashboardPage() {
                 )}
             </CardContent>
           </Card>
+           )}
         </div>
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {isCardVisible('beneficiaryBreakdown', settings, currentUserRole) && (
             <Card className="lg:col-span-2">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline">
@@ -334,6 +367,8 @@ export default async function DashboardPage() {
                     </Link>
                 </CardContent>
             </Card>
+            )}
+            {isCardVisible('campaignBreakdown', settings, currentUserRole) && (
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline">
@@ -365,9 +400,11 @@ export default async function DashboardPage() {
                     </Link>
                 </CardContent>
             </Card>
+            )}
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-           <DonationsChart donations={allDonations} />
+           {isCardVisible('donationsChart', settings, currentUserRole) && <DonationsChart donations={allDonations} />}
+          {isCardVisible('topDonors', settings, currentUserRole) && (
           <Card className="col-span-4 md:col-span-3">
             <CardHeader>
               <CardTitle className="font-headline">Top Donors</CardTitle>
@@ -401,8 +438,10 @@ export default async function DashboardPage() {
                 )}
             </CardContent>
           </Card>
+           )}
         </div>
 
+        {isCardVisible('recentCampaigns', settings, currentUserRole) && (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -458,7 +497,9 @@ export default async function DashboardPage() {
                 )}
             </CardContent>
         </Card>
+        )}
         
+        {isCardVisible('donationTypeBreakdown', settings, currentUserRole) && (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline">
@@ -487,6 +528,7 @@ export default async function DashboardPage() {
                 })}
             </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );
