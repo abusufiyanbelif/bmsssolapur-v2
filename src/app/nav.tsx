@@ -52,14 +52,13 @@ const allNavItems: NavItem[] = [
     
     // Admin - Organization (Collapsible)
     {
-        label: "Organization Management",
+        label: "Organization",
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/configuration", label: "Configuration", icon: Wrench, allowedRoles: ["Super Admin"] },
         ]
     },
 
@@ -76,7 +75,7 @@ const allNavItems: NavItem[] = [
     
      // Admin - Donations Management (Collapsible)
     {
-        label: "Donations Management",
+        label: "Donations",
         icon: HandHeart,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
@@ -87,7 +86,7 @@ const allNavItems: NavItem[] = [
     
      // Admin - Beneficiaries Transfer Management (Collapsible)
     {
-        label: "Beneficiaries Transfer",
+        label: "Transfers",
         icon: ArrowRightLeft,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [

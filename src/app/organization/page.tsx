@@ -10,42 +10,40 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/services/types";
 import Link from "next/link";
 import { QrCodeDialog } from "./qr-code-dialog";
+import { getAllUsers } from "@/services/user-service";
 
-// Static data for Board Members
-const boardMembers = {
-  founder: [
-    { name: "Moosa Shaikh", phone: "8421708907" },
-  ],
-  cofounder: [
-    { name: "Abu Rehan Bedrekar", phone: "7276224160" },
-  ],
-  finance: [
-    { name: "Maaz Shaikh", phone: "9372145889" },
-  ],
-  members: [
-    { name: "Abusufiyan Belif", phone: "7887646583" },
-    { name: "Nayyar Ahmed Karajgi", phone: "9028976036" },
-    { name: "Arif Baig", phone: "9225747045" },
-    { name: "Mazhar Shaikh", phone: "8087669914" },
-    { name: "Mujahid Chabukswar", phone: "8087420544" },
-    { name: "Muddasir", phone: "7385557820" },
-  ]
+const groupMapping: Record<string, string> = {
+    'Founder': 'founder',
+    'Co-Founder': 'cofounder',
+    'Finance': 'finance',
+    'Member of Organization': 'members',
 };
-
-const keyContactPhones = ["7276224160", "9372145889", "8421708907"];
-const keyContacts = [
-    ...boardMembers.founder, 
-    ...boardMembers.cofounder, 
-    ...boardMembers.finance
-].filter(m => keyContactPhones.includes(m.phone));
 
 
 export default async function OrganizationPage() {
     let organization;
+    let boardMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [] };
     let error = null;
 
     try {
-        organization = await getCurrentOrganization();
+        const [org, allUsers] = await Promise.all([
+            getCurrentOrganization(),
+            getAllUsers(),
+        ]);
+        organization = org;
+        
+        allUsers.forEach(user => {
+            user.groups?.forEach(group => {
+                const category = groupMapping[group];
+                if (category) {
+                    if (!boardMembers[category]) {
+                        boardMembers[category] = [];
+                    }
+                    boardMembers[category].push(user);
+                }
+            });
+        });
+
     } catch(e) {
         error = e instanceof Error ? e.message : "An unknown error occurred while fetching organization details.";
         console.error(e);
@@ -90,7 +88,7 @@ export default async function OrganizationPage() {
         { icon: ShieldCheck, label: "PAN Number", value: organization.panNumber || "Not Available" },
     ];
     
-    const MemberCard = ({ member }: { member: { name: string, phone: string } }) => {
+    const MemberCard = ({ member }: { member: User }) => {
         const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         return (
             <div className="flex items-center gap-4 p-4 border rounded-lg">
@@ -131,12 +129,8 @@ export default async function OrganizationPage() {
                              <div className="flex items-start gap-4">
                                 <Phone className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                 <div>
-                                    <p className="font-semibold">Key Contacts</p>
-                                    {keyContacts.length > 0 ? keyContacts.map(contact => (
-                                        <p key={contact.phone} className="text-muted-foreground">
-                                            {contact.name}: {contact.phone}
-                                        </p>
-                                    )) : <p className="text-muted-foreground">No key contacts assigned.</p>}
+                                    <p className="font-semibold">Contact Phone</p>
+                                    <p className="text-muted-foreground">{organization.contactPhone}</p>
                                 </div>
                             </div>
                         </div>
@@ -165,7 +159,7 @@ export default async function OrganizationPage() {
                  <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                         <Users className="h-6 w-6 text-accent" />
-                        Our Board Members
+                        Our Team
                     </CardTitle>
                     <CardDescription>
                         The dedicated individuals leading our organization and its mission.
@@ -175,32 +169,32 @@ export default async function OrganizationPage() {
                     {boardMembers.founder.length > 0 && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Founder</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {boardMembers.founder.map(member => <MemberCard key={member.phone} member={member} />)}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {boardMembers.founder.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
                         </div>
                     )}
                      {boardMembers.cofounder.length > 0 && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Co-Founder</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {boardMembers.cofounder.map(member => <MemberCard key={member.phone} member={member} />)}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {boardMembers.cofounder.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
                         </div>
                      )}
                       {boardMembers.finance.length > 0 && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Banknote className="h-5 w-5" /> Finance</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {boardMembers.finance.map(member => <MemberCard key={member.phone} member={member} />)}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {boardMembers.finance.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
                         </div>
                     )}
                     {boardMembers.members.length > 0 && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Members</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {boardMembers.members.map(member => <MemberCard key={member.phone} member={member} />)}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {boardMembers.members.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
                         </div>
                     )}

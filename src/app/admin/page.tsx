@@ -339,28 +339,28 @@ export default async function DashboardPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                     <Link href="/admin/leads?beneficiaryType=Family">
+                     <Link href="/admin/beneficiaries?type=Family">
                         <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
                             <HomeIcon className="h-8 w-8 text-primary" />
                             <p className="font-bold text-2xl">{familiesHelpedCount}</p>
                             <p className="text-sm text-muted-foreground">Families</p>
                         </div>
                     </Link>
-                    <Link href="/admin/leads?beneficiaryType=Adult">
+                    <Link href="/admin/beneficiaries?type=Adult">
                         <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
                             <PersonStanding className="h-8 w-8 text-primary" />
                             <p className="font-bold text-2xl">{adultsHelpedCount}</p>
                             <p className="text-sm text-muted-foreground">Adults</p>
                         </div>
                     </Link>
-                    <Link href="/admin/leads?beneficiaryType=Kid">
+                    <Link href="/admin/beneficiaries?type=Kid">
                         <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
                             <Baby className="h-8 w-8 text-primary" />
                             <p className="font-bold text-2xl">{kidsHelpedCount}</p>
                             <p className="text-sm text-muted-foreground">Kids</p>
                         </div>
                     </Link>
-                    <Link href="/admin/leads?beneficiaryType=Widow">
+                    <Link href="/admin/beneficiaries?isWidow=true">
                         <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
                             <HeartHandshake className="h-8 w-8 text-primary" />
                             <p className="font-bold text-2xl">{widowsHelpedCount}</p>

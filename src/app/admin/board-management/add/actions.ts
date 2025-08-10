@@ -21,6 +21,7 @@ export async function handleAddBoardMember(userId: string, role: string): Promis
     await updateUser(userId, { groups: arrayUnion(role) as any });
     
     revalidatePath("/admin/board-management");
+    revalidatePath("/organization");
 
     return { success: true };
   } catch (e) {
