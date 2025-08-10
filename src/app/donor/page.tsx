@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, HeartHandshake, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, History, PackageOpen, FileCheck } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign } from "lucide-react";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,8 @@ import { Switch } from "@/components/ui/switch";
 import { updateUser } from "@/services/user-service";
 import { useToast } from "@/hooks/use-toast";
 import { getAllCampaigns } from "@/services/campaign-service";
+import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
+
 
 interface DonorDashboardPageProps {
   user: (User & { isLoggedIn: boolean; }) | null;
@@ -172,7 +174,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
     const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
     const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
     const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
-    const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+    const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
     const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
     const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
@@ -242,35 +244,6 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
   
   const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen", "Other"];
   
-  const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
-  
-  const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
-  const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
-  const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
-  const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
-  
-  const donationTypeBreakdown = donations
-    .filter(d => d.status === 'Verified' || d.status === 'Allocated')
-    .reduce((acc, donation) => {
-      const type = donation.type;
-      if (!acc[type]) {
-        acc[type] = { total: 0, count: 0 };
-      }
-      acc[type].total += donation.amount;
-      acc[type].count += 1;
-      return acc;
-    }, {} as Record<DonationType, { total: number, count: number }>);
-
-  const donationTypeIcons: Record<DonationType, React.ElementType> = {
-    'Zakat': HandCoins,
-    'Sadaqah': Gift,
-    'Fitr': Wheat,
-    'Lillah': Building,
-    'Kaffarah': Shield,
-    'Split': DollarSign,
-    'Any': DollarSign,
-  }
-
   const campaignStatusColors: Record<string, string> = {
     "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
@@ -292,6 +265,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                         <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
                         <p className="text-2xl font-bold">{metric.value}</p>
                         <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
                     </div>
                 ))}
             </CardContent>
@@ -400,52 +374,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
             </Card>
         </div>
         <div className="lg:col-span-1 space-y-6">
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline">
-                        <UsersIcon />
-                        Beneficiaries Breakdown
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <HomeIcon className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{familiesHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Families Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                    <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <PersonStanding className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{adultsHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Adults Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                    <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <Baby className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{kidsHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Kids Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                    <Link href="/public-leads">
-                        <div className="p-3 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors">
-                            <HeartHandshake className="h-6 w-6 text-primary" />
-                            <div>
-                                <p className="font-bold text-lg">{widowsHelpedCount}</p>
-                                <p className="text-xs text-muted-foreground">Widows Helped</p>
-                            </div>
-                        </div>
-                    </Link>
-                </CardContent>
-            </Card>
+             <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} />
              <InspirationalQuotes quotes={quotes} loading={false} />
         </div>
       </div>
@@ -544,33 +473,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                 </Card>
             </div>
             <div className="lg:col-span-1">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 font-headline">
-                            <DollarSign />
-                            My Donation Breakdown
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {Object.entries(donationTypeBreakdown).map(([type, data]) => {
-                            const Icon = donationTypeIcons[type as DonationType] || DollarSign;
-                            return (
-                                <div key={type} className="p-3 border rounded-lg flex items-center gap-4">
-                                    <Icon className="h-6 w-6 text-primary" />
-                                    <div>
-                                        <p className="font-semibold">{type}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            ₹{data.total.toLocaleString()} ({data.count} {data.count > 1 ? 'donations' : 'donation'})
-                                        </p>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                         {Object.keys(donationTypeBreakdown).length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">No verified donations to display.</p>
-                         )}
-                    </CardContent>
-                </Card>
+                 <DonationTypeCard donations={donations} />
             </div>
        </div>
     </div>

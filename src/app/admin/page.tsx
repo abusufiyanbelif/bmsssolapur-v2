@@ -1,11 +1,11 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, Banknote, Send, TrendingUp, TrendingDown, Hourglass, CheckCircle, HandCoins, AlertTriangle, ArrowRight, Award, UserCheck, HeartHandshake, Baby, PersonStanding, HomeIcon, Wheat, Gift, Building, Shield, Repeat, Megaphone, UserRole as UserRoleIcon } from "lucide-react";
+import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
-import { getAllUsers, getUser } from "@/services/user-service";
+import { getAllUsers, getUser, User } from "@/services/user-service";
 import Link from "next/link";
 import { format, formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { AppSettings, getAppSettings } from "@/services/app-settings-service";
+import type { UserRole } from "@/services/types";
+import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
 
 
 async function getDashboardData() {
@@ -34,7 +36,10 @@ const isCardVisible = (cardKey: keyof AppSettings['dashboard'], settings: AppSet
     if (!settings.dashboard?.[cardKey]) {
         return true; // Default to visible if not configured
     }
-    return settings.dashboard[cardKey]?.visibleTo.includes(activeRole || 'Admin');
+    const visibleTo = settings.dashboard[cardKey]?.visibleTo || [];
+    // Super Admins should see everything by default, regardless of settings
+    if (activeRole === 'Super Admin') return true;
+    return visibleTo.includes(activeRole || 'Admin');
 };
 
 
@@ -51,14 +56,10 @@ export default async function DashboardPage() {
   const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
   const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
   
-  const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
+  const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
   const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
   
   const beneficiariesHelpedCount = helpedBeneficiaries.length;
-  const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
-  const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
-  const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
-  const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
   
   const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
   const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
@@ -105,53 +106,14 @@ export default async function DashboardPage() {
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
 
-    const completedCampaignsCount = allCampaigns.filter(c => c.status === 'Completed').length;
-    const activeCampaignsCount = allCampaigns.filter(c => c.status === 'Active').length;
-    const upcomingCampaignsCount = allCampaigns.filter(c => c.status === 'Upcoming').length;
 
   const mainMetrics = [
-    {
-      title: "Total Verified Funds",
-      value: `₹${totalRaised.toLocaleString()}`,
-      icon: TrendingUp,
-      description: "Total verified donations received.",
-      href: "/admin/donations?status=Verified",
-    },
-    {
-      title: "Total Distributed",
-      value: `₹${totalDistributed.toLocaleString()}`,
-      icon: HandCoins,
-      description: "Total funds given to leads.",
-      href: "/admin/leads",
-    },
-     {
-      title: "Funds in Hand",
-      value: `₹${pendingToDisburse.toLocaleString()}`,
-      icon: Banknote,
-      description: "Verified funds ready to be disbursed.",
-      href: "/admin/donations",
-    },
-     {
-      title: "Cases Closed",
-      value: casesClosed.toString(),
-      icon: CheckCircle,
-      description: "Total leads successfully completed.",
-      href: "/admin/leads?status=Closed",
-    },
-     {
-      title: "Cases Pending",
-      value: casesPending.toString(),
-      icon: Hourglass,
-      description: "Leads currently open for funding.",
-      href: "/admin/leads?status=Pending",
-    },
-     {
-      title: "Beneficiaries Helped",
-      value: beneficiariesHelpedCount.toString(),
-      icon: Users,
-      description: "Total unique beneficiaries supported.",
-      href: "/admin/beneficiaries",
-    },
+    { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received.", href: "/admin/donations?status=Verified" },
+    { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to leads.", href: "/admin/leads" },
+    { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready to be disbursed.", href: "/admin/donations" },
+    { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?status=Closed" },
+    { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
+    { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
   ];
   
   const donationTypeBreakdown = allDonations
@@ -166,15 +128,6 @@ export default async function DashboardPage() {
       return acc;
     }, {} as Record<DonationType, { total: number, count: number }>);
 
-  const donationTypeIcons: Record<DonationType, React.ElementType> = {
-    'Zakat': HandCoins,
-    'Sadaqah': Gift,
-    'Fitr': Wheat,
-    'Lillah': Building,
-    'Kaffarah': Shield,
-    'Split': DollarSign,
-    'Any': DollarSign,
-  }
 
   const campaignStatusColors: Record<string, string> = {
     "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -327,82 +280,8 @@ export default async function DashboardPage() {
            )}
         </div>
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {isCardVisible('beneficiaryBreakdown', settings, currentUserRole) && (
-            <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline">
-                        <Users />
-                        Beneficiaries Breakdown
-                    </CardTitle>
-                    <CardDescription>
-                        A breakdown of the different types of beneficiaries supported.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                     <Link href="/admin/beneficiaries?type=Family">
-                        <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                            <HomeIcon className="h-8 w-8 text-primary" />
-                            <p className="font-bold text-2xl">{familiesHelpedCount}</p>
-                            <p className="text-sm text-muted-foreground">Families</p>
-                        </div>
-                    </Link>
-                    <Link href="/admin/beneficiaries?type=Adult">
-                        <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                            <PersonStanding className="h-8 w-8 text-primary" />
-                            <p className="font-bold text-2xl">{adultsHelpedCount}</p>
-                            <p className="text-sm text-muted-foreground">Adults</p>
-                        </div>
-                    </Link>
-                    <Link href="/admin/beneficiaries?type=Kid">
-                        <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                            <Baby className="h-8 w-8 text-primary" />
-                            <p className="font-bold text-2xl">{kidsHelpedCount}</p>
-                            <p className="text-sm text-muted-foreground">Kids</p>
-                        </div>
-                    </Link>
-                    <Link href="/admin/beneficiaries?isWidow=true">
-                        <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                            <HeartHandshake className="h-8 w-8 text-primary" />
-                            <p className="font-bold text-2xl">{widowsHelpedCount}</p>
-                            <p className="text-sm text-muted-foreground">Widows</p>
-                        </div>
-                    </Link>
-                </CardContent>
-            </Card>
-            )}
-            {isCardVisible('campaignBreakdown', settings, currentUserRole) && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline">
-                        <Megaphone />
-                        Campaigns Breakdown
-                    </CardTitle>
-                    <CardDescription>
-                        Status of all fundraising campaigns.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Link href="/admin/campaigns?status=Completed">
-                        <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
-                            <span className="font-medium">Completed</span>
-                            <Badge variant="secondary">{completedCampaignsCount}</Badge>
-                        </div>
-                    </Link>
-                    <Link href="/admin/campaigns?status=Active">
-                        <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
-                            <span className="font-medium">Active</span>
-                            <Badge variant="secondary">{activeCampaignsCount}</Badge>
-                        </div>
-                    </Link>
-                    <Link href="/admin/campaigns?status=Upcoming">
-                        <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
-                            <span className="font-medium">Upcoming</span>
-                            <Badge variant="secondary">{upcomingCampaignsCount}</Badge>
-                        </div>
-                    </Link>
-                </CardContent>
-            </Card>
-            )}
+            {isCardVisible('beneficiaryBreakdown', settings, currentUserRole) && <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} />}
+            {isCardVisible('campaignBreakdown', settings, currentUserRole) && <CampaignBreakdownCard allCampaigns={allCampaigns} />}
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
            {isCardVisible('donationsChart', settings, currentUserRole) && <DonationsChart donations={allDonations} />}
@@ -501,36 +380,7 @@ export default async function DashboardPage() {
         </Card>
         )}
         
-        {isCardVisible('donationTypeBreakdown', settings, currentUserRole) && (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline">
-                    <DollarSign />
-                    Donation Type Breakdown
-                </CardTitle>
-                <CardDescription>
-                    A breakdown of verified funds received by category.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                 {Object.entries(donationTypeBreakdown).map(([type, data]) => {
-                    const Icon = donationTypeIcons[type as DonationType] || DollarSign;
-                    return (
-                        <Link href={`/admin/donations?type=${type}`} key={type}>
-                            <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors">
-                                <Icon className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
-                                <div>
-                                    <p className="font-semibold text-lg">{type}</p>
-                                    <p className="text-2xl font-bold text-foreground">₹{data.total.toLocaleString()}</p>
-                                    <p className="text-xs text-muted-foreground">{data.count} donations</p>
-                                </div>
-                            </div>
-                        </Link>
-                    )
-                })}
-            </CardContent>
-        </Card>
-        )}
+        {isCardVisible('donationTypeBreakdown', settings, currentUserRole) && <DonationTypeCard donations={allDonations} />}
       </div>
     </div>
   );

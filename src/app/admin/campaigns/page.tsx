@@ -1,7 +1,8 @@
 // src/app/admin/campaigns/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAllCampaigns, type Campaign, type CampaignStatus, deleteCampaign } from "@/services/campaign-service";
@@ -36,7 +37,10 @@ interface CampaignWithStats extends Campaign {
     fundingProgress: number;
 }
 
-export default function CampaignsPage() {
+function CampaignsPageContent() {
+    const searchParams = useSearchParams();
+    const statusFromUrl = searchParams.get('status') as CampaignStatus | null;
+
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
@@ -124,6 +128,12 @@ export default function CampaignsPage() {
         </DropdownMenu>
     );
 
+    const filteredCampaigns = useMemo(() => {
+        if (!statusFromUrl) return campaignsWithStats;
+        return campaignsWithStats.filter(c => c.status === statusFromUrl);
+    }, [campaignsWithStats, statusFromUrl]);
+
+
     const renderContent = () => {
         if (loading) {
             return (
@@ -160,7 +170,7 @@ export default function CampaignsPage() {
         
         return (
              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {campaignsWithStats.map((campaign) => (
+                {filteredCampaigns.map((campaign) => (
                     <Card key={campaign.id} className="flex flex-col">
                         <CardHeader>
                             <div className="flex justify-between items-start gap-4">
@@ -240,4 +250,12 @@ export default function CampaignsPage() {
         </Card>
     </div>
   );
+}
+
+export default function CampaignsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <CampaignsPageContent />
+        </Suspense>
+    )
 }

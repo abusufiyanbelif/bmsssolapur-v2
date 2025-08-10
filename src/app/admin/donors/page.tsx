@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import {
   Table,
   TableBody,
@@ -31,6 +31,7 @@ import { handleDeleteUser, handleToggleUserStatus } from "../user-management/act
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useSearchParams } from "next/navigation";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -42,8 +43,7 @@ const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-
-export default function DonorsPage() {
+function DonorsPageContent() {
     const [donors, setDonors] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -560,4 +560,13 @@ export default function DonorsPage() {
         </Card>
     </div>
   )
+}
+
+
+export default function DonorsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <DonorsPageContent />
+        </Suspense>
+    )
 }
