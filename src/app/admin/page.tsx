@@ -111,42 +111,42 @@ export default async function DashboardPage() {
 
   const mainMetrics = [
     {
-      title: "Organization Total Verified Funds",
+      title: "Total Verified Funds",
       value: `₹${totalRaised.toLocaleString()}`,
       icon: TrendingUp,
       description: "Total verified donations received.",
       href: "/admin/donations?status=Verified",
     },
     {
-      title: "Organization Total Distributed",
+      title: "Total Distributed",
       value: `₹${totalDistributed.toLocaleString()}`,
       icon: HandCoins,
       description: "Total funds given to leads.",
       href: "/admin/leads",
     },
      {
-      title: "Organization Total Funds in Hand",
+      title: "Funds in Hand",
       value: `₹${pendingToDisburse.toLocaleString()}`,
       icon: PiggyBank,
       description: "Verified funds ready to be disbursed.",
       href: "/admin/donations",
     },
      {
-      title: "Organization Cases Closed",
+      title: "Cases Closed",
       value: casesClosed.toString(),
       icon: CheckCircle,
       description: "Total leads successfully completed.",
       href: "/admin/leads?status=Closed",
     },
      {
-      title: "Organization Cases Pending",
+      title: "Cases Pending",
       value: casesPending.toString(),
       icon: Hourglass,
       description: "Leads currently open for funding.",
       href: "/admin/leads?status=Pending",
     },
      {
-      title: "Organization Beneficiaries Helped",
+      title: "Beneficiaries Helped",
       value: beneficiariesHelpedCount.toString(),
       icon: Users,
       description: "Total unique beneficiaries supported.",

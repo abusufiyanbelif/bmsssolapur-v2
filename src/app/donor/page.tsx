@@ -178,12 +178,12 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allC
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Organization Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
-        { title: "Organization Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
-        { title: "Organization Total Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
-        { title: "Organization Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
-        { title: "Organization Cases Pending", value: casesPending.toString(), icon: Hourglass },
-        { title: "Organization Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
+        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
+        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
+        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: PiggyBank },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
+        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
+        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon },
     ];
     
     // Donor specific stats
