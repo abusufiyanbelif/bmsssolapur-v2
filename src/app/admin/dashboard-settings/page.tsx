@@ -28,7 +28,7 @@ export default async function DashboardSettingsPage() {
                 <CardHeader>
                     <CardTitle>Dashboard Card Visibility</CardTitle>
                     <CardDescription>
-                        Configure which cards are visible on the main admin dashboard for each user role.
+                        Configure which cards are visible on the main admin dashboard for each user role. Use the filter to check visibility for a specific role.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
