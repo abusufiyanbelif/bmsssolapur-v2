@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link"
@@ -33,8 +32,8 @@ type NavItem = {
 const allNavItems: NavItem[] = [
     // Guest
     { href: "/", label: "Home", icon: Home, allowedRoles: ["Guest"] },
-    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Guest"] },
     { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Guest"] },
+    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Guest"] },
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (common entry point)
@@ -42,8 +41,8 @@ const allNavItems: NavItem[] = [
     
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
-    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
     { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Donor"] },
+    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
 
     // Beneficiary
