@@ -1,3 +1,4 @@
+
 // In a real app, this would be a server component fetching data for the logged-in user.
 // For now, we'll keep it as a client component and simulate the data fetching.
 "use client";
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, HandCoins, HeartHandshake } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, HandCoins } from "lucide-react";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getLeadsByBeneficiaryId, getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
@@ -481,7 +482,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                                     {donations.slice(0, 5).map((d, index) => (
                                         <TableRow key={d.id}>
                                             <TableCell>{index + 1}</TableCell>
-                                            <TableCell>{format(d.createdAt.toDate(), 'dd MMM yyyy')}</TableCell>
+                                            <TableCell>{format(d.createdAt, 'dd MMM yyyy')}</TableCell>
                                             {!isMobile && <TableCell>{d.type}</TableCell>}
                                             {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
                                             <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
