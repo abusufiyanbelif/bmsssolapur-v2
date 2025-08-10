@@ -61,8 +61,8 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
         description: campaign.description,
         goal: campaign.goal,
         dates: {
-            from: campaign.startDate.toDate(),
-            to: campaign.endDate.toDate(),
+            from: campaign.startDate,
+            to: campaign.endDate,
         },
         status: campaign.status,
     },
@@ -76,8 +76,8 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
         description: campaign.description,
         goal: campaign.goal,
         dates: {
-            from: campaign.startDate.toDate(),
-            to: campaign.endDate.toDate(),
+            from: campaign.startDate,
+            to: campaign.endDate,
         },
         status: campaign.status,
     });
