@@ -50,6 +50,7 @@ const cardDefinitions: { id: keyof DashboardSettings, label: string, description
     { id: 'monthlyPledge', label: 'Total Monthly Pledge', description: 'Card showing the total amount pledged monthly.' },
     { id: 'pendingLeads', label: 'Pending Lead Verifications', description: 'Action Required card for leads needing verification.' },
     { id: 'pendingDonations', label: 'Pending Donation Verifications', description: 'Action Required card for donations needing verification.' },
+    { id: 'leadsReadyToPublish', label: 'Leads Ready to Publish', description: 'Action Required card for verified leads that need to be published.' },
     { id: 'beneficiaryBreakdown', label: 'Beneficiaries Breakdown', description: 'Shows counts of different beneficiary types helped.' },
     { id: 'campaignBreakdown', label: 'Campaigns Breakdown', description: 'Shows counts of active, completed, and upcoming campaigns.' },
     { id: 'donationsChart', label: 'Donations Overview Chart', description: 'The main bar chart showing monthly donation totals.' },

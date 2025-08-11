@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat } from "lucide-react";
+import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
@@ -90,6 +90,10 @@ export default async function DashboardPage() {
     .filter(donation => donation.status === 'Pending verification')
     .sort((a, b) => (b.createdAt as any) - (a.createdAt as any));
     
+  const readyToPublishLeads = allLeads
+    .filter(lead => lead.status === 'Ready For Help')
+    .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
+    
   const donationsByDonor = allDonations
     .filter(d => (d.status === 'Verified' || d.status === 'Allocated') && !d.isAnonymous)
     .reduce((acc, donation) => {
@@ -108,8 +112,8 @@ export default async function DashboardPage() {
 
 
   const mainMetrics = [
-    { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received.", href: "/admin/donations?status=Verified" },
-    { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to leads.", href: "/admin/leads" },
+    { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
+    { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
     { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready to be disbursed.", href: "/admin/donations" },
     { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?status=Closed" },
     { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
@@ -273,6 +277,46 @@ export default async function DashboardPage() {
                         <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
                         <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
                         <p className="mt-1 text-sm text-muted-foreground">There are no pending donations that require verification.</p>
+                    </div>
+                )}
+            </CardContent>
+          </Card>
+           )}
+             {isCardVisible('leadsReadyToPublish', settings, currentUserRole) && (
+           <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-headline text-blue-600">
+                    <UploadCloud />
+                    Action Required: Leads Ready for Publishing
+                </CardTitle>
+                <CardDescription>
+                    These leads are verified and ready to be made public on the campaigns page.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {readyToPublishLeads.length > 0 ? (
+                    <div className="space-y-4">
+                        {readyToPublishLeads.slice(0, 3).map(lead => (
+                            <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
+                                <div>
+                                    <p className="font-semibold">{lead.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Requested <span className="font-medium text-foreground">₹{lead.helpRequested.toLocaleString()}</span> for {lead.purpose}
+                                    </p>
+                                </div>
+                                <Button asChild size="sm">
+                                    <Link href={`/admin/leads/${lead.id}/edit`}>
+                                        Publish <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10">
+                        <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+                        <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">There are no leads waiting to be published.</p>
                     </div>
                 )}
             </CardContent>

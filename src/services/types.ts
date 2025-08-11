@@ -250,6 +250,7 @@ export interface AppSettings {
         monthlyPledge: { visibleTo: UserRole[] };
         pendingLeads: { visibleTo: UserRole[] };
         pendingDonations: { visibleTo: UserRole[] };
+        leadsReadyToPublish: { visibleTo: UserRole[] };
         beneficiaryBreakdown: { visibleTo: UserRole[] };
         campaignBreakdown: { visibleTo: UserRole[] };
         donationsChart: { visibleTo: UserRole[] };

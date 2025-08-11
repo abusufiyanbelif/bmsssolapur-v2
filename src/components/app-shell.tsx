@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
     const [isSessionReady, setIsSessionReady] = useState(false);
     const [pendingLeads, setPendingLeads] = useState<LeadType[]>([]);
+    const [readyToPublishLeads, setReadyToPublishLeads] = useState<LeadType[]>([]);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -78,6 +80,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
                         const allLeads = await getAllLeads();
                         setPendingLeads(allLeads.filter(l => l.verifiedStatus === 'Pending'));
+                        setReadyToPublishLeads(allLeads.filter(l => l.status === 'Ready For Help'));
                     }
 
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
@@ -172,7 +175,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const activeRole = user.activeRole;
-    const notificationCount = pendingLeads.length; // Can be expanded for other roles
+    const notificationCount = pendingLeads.length + readyToPublishLeads.length;
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
@@ -248,7 +251,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     <DropdownMenuSeparator />
                                     {notificationCount > 0 ? (
                                         <>
-                                            {pendingLeads.slice(0, 5).map(lead => (
+                                            {pendingLeads.slice(0, 3).map(lead => (
                                                 <DropdownMenuItem key={lead.id} asChild>
                                                      <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start">
                                                         <p className="font-semibold text-destructive">Verify: {lead.name}</p>
@@ -258,11 +261,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                                      </Link>
                                                 </DropdownMenuItem>
                                             ))}
-                                             {notificationCount > 5 && (
+                                            {readyToPublishLeads.slice(0, 2).map(lead => (
+                                                 <DropdownMenuItem key={lead.id} asChild>
+                                                     <Link href={`/admin/leads/${lead.id}/edit`} className="flex flex-col items-start">
+                                                        <p className="font-semibold text-blue-600">Publish: {lead.name}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Verified {formatDistanceToNow(lead.dateCreated, { addSuffix: true })}
+                                                        </p>
+                                                     </Link>
+                                                </DropdownMenuItem>
+                                            ))}
+                                             {(pendingLeads.length > 3 || readyToPublishLeads.length > 2) && (
                                                 <>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem asChild>
-                                                    <Link href="/admin/leads?verification=Pending">View All Pending Leads</Link>
+                                                    <Link href="/admin/leads?verification=Pending">View All Pending Items</Link>
                                                 </DropdownMenuItem>
                                                 </>
                                             )}

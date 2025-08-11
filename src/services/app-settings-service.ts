@@ -67,6 +67,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         monthlyPledge: { visibleTo: defaultAdminRoles },
         pendingLeads: { visibleTo: defaultAdminRoles },
         pendingDonations: { visibleTo: defaultAdminRoles },
+        leadsReadyToPublish: { visibleTo: defaultAdminRoles },
         beneficiaryBreakdown: { visibleTo: allUserRoles },
         campaignBreakdown: { visibleTo: allUserRoles },
         donationsChart: { visibleTo: defaultAdminRoles },
