@@ -13,12 +13,14 @@ import {
   getDocs,
   Timestamp,
   where,
-  orderBy
+  orderBy,
+  getCountFromServer
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
 import type { Donation, DonationStatus, DonationType, DonationPurpose, User } from './types';
 import { getUser } from './user-service';
+import { format } from 'date-fns';
 
 // Re-export types for backward compatibility if other services import from here
 export type { Donation, DonationStatus, DonationType, DonationPurpose };
@@ -35,7 +37,20 @@ export const createDonation = async (
 ) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    const donationRef = doc(collection(db, DONATIONS_COLLECTION));
+    const donorUser = await getUser(donation.donorId);
+    if (!donorUser || !donorUser.userKey) {
+        throw new Error("Cannot create donation. The selected donor does not have a UserKey.");
+    }
+    
+    const donationsCollection = collection(db, DONATIONS_COLLECTION);
+    const countSnapshot = await getCountFromServer(donationsCollection);
+    const donationNumber = countSnapshot.data().count + 1;
+    
+    const dateString = format(new Date(), 'ddMMyyyy');
+    const customDonationId = `${donationNumber}_${donorUser.userKey}_${dateString}`;
+    
+    const donationRef = doc(db, DONATIONS_COLLECTION, customDonationId);
+    
     const newDonation: Donation = {
         ...donation,
         id: donationRef.id,

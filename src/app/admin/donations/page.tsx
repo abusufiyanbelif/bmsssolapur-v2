@@ -37,7 +37,7 @@ const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification"
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
 const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
 
-type SortableColumn = 'donorName' | 'amount' | 'donationDate';
+type SortableColumn = 'donorName' | 'amount' | 'donationDate' | 'id';
 type SortDirection = 'asc' | 'desc';
 
 
@@ -130,7 +130,9 @@ function DonationsPageContent() {
             const statusMatch = appliedFilters.status === 'all' || donation.status === appliedFilters.status;
             const typeMatch = appliedFilters.type === 'all' || donation.type === appliedFilters.type;
             const purposeMatch = appliedFilters.purpose === 'all' || donation.purpose === appliedFilters.purpose;
-            const nameMatch = appliedFilters.name === '' || donation.donorName.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const nameMatch = appliedFilters.name === '' || 
+                              donation.donorName.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
+                              donation.id?.toLowerCase().includes(appliedFilters.name.toLowerCase());
             return statusMatch && typeMatch && nameMatch && purposeMatch;
         });
 
@@ -197,6 +199,11 @@ function DonationsPageContent() {
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('id')}>
+                            Donation ID {renderSortIcon('id')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
                          <Button variant="ghost" onClick={() => handleSort('donationDate')}>
                            Date {renderSortIcon('donationDate')}
                         </Button>
@@ -221,6 +228,9 @@ function DonationsPageContent() {
                 {paginatedDonations.map((donation, index) => (
                     <TableRow key={donation.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                            <div className="font-mono text-xs">{donation.id}</div>
+                        </TableCell>
                         <TableCell>{format(new Date(donation.donationDate), "dd MMM yyyy")}</TableCell>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
@@ -276,6 +286,10 @@ function DonationsPageContent() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Donation ID</span>
+                            <span className="font-mono text-xs">{donation.id}</span>
+                        </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Date</span>
                             <span>{format(new Date(donation.donationDate), "dd MMM yyyy")}</span>
@@ -474,10 +488,10 @@ function DonationsPageContent() {
             <CardContent>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-2">
-                        <Label htmlFor="donorName">Donor Name</Label>
+                        <Label htmlFor="donorName">Search by Donor Name or Donation ID</Label>
                         <Input 
                             id="donorName" 
-                            placeholder="Filter by donor name..."
+                            placeholder="Filter by donor or donation ID..."
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
                         />

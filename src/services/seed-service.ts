@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -11,6 +10,7 @@ import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, 
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
+import { createDonation } from './donation-service';
 
 const USERS_COLLECTION = 'users';
 
@@ -247,9 +247,8 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         }
 
         const randomDonor = donorUsers[Math.floor(Math.random() * donorUsers.length)];
-        const donationRef = doc(collection(db, 'donations'));
-        const donation: Donation = {
-            id: donationRef.id,
+        
+        const donationData: Omit<Donation, 'id' | 'createdAt'> = {
             donorId: randomDonor.id!,
             donorName: randomDonor.name,
             amount: leadData.helpGiven,
@@ -260,12 +259,13 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             transactionId: `HISTORICAL-${Date.now()}-${Math.random()}`,
             paymentScreenshotUrls: [],
             donationDate: Timestamp.fromDate(new Date("2021-11-01")),
-            createdAt: Timestamp.fromDate(new Date("2021-11-01")),
             verifiedAt: Timestamp.fromDate(new Date("2021-11-01")),
             notes: 'Historical donation seeded automatically.',
             source: 'Seeded'
         };
-        batch.set(donationRef, donation);
+
+        const newDonation = await createDonation(donationData, historicalAdmin.id!, historicalAdmin.name, historicalAdmin.email);
+        
         donationResults.push({ name: `Donation from ${randomDonor.name} for ${leadData.helpGiven}`, status: 'Created' });
         
         const leadRef = doc(db, 'leads', leadId);
@@ -276,7 +276,7 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             notes: "Verified as part of historical data import."
         };
         const leadDonationAllocation: LeadDonationAllocation = {
-            donationId: donation.id!,
+            donationId: newDonation.id!,
             amount: leadData.helpGiven,
             allocatedByUserId: historicalAdmin.id!,
             allocatedByUserName: historicalAdmin.name,
@@ -378,14 +378,14 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
         };
 
         if (leadInfo.isFunded) {
-            const donationRef = doc(collection(db, 'donations'));
-            batch.set(donationRef, {
-                id: donationRef.id, donorId: randomDonor.id!, donorName: randomDonor.name, amount: leadInfo.amount,
+            const newDonation = await createDonation({
+                donorId: randomDonor.id!, donorName: randomDonor.name, amount: leadInfo.amount,
                 type: leadInfo.donationType, purpose: leadInfo.purpose, status: 'Allocated', isAnonymous: false,
-                createdAt: Timestamp.now(), verifiedAt: Timestamp.now(), donationDate: Timestamp.now(),
+                donationDate: Timestamp.now(), verifiedAt: Timestamp.now(),
                 campaignId: campaignRef.id, leadId: leadRef.id, source: 'Seeded'
-            });
-            newLead.donations = [{ donationId: donationRef.id, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
+            }, verifierAdmin.id!, verifierAdmin.name, verifierAdmin.email);
+
+            newLead.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
             donationResults.push({ name: `Donation for ${beneficiary.name}`, status: 'Created' });
         }
         
