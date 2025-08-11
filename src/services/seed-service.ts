@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -179,6 +180,9 @@ const seedOrganization = async (): Promise<string> => {
     return 'Organization seeded successfully.';
 };
 
+function getRandomDate(start: Date, end: Date): Date {
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+}
 
 const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>, userData: Omit<User, 'id' | 'createdAt'>[], leadsData: any[]) => {
     const campaignResults: SeedItemResult[] = [];
@@ -242,10 +246,14 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
         };
 
         if (leadInfo.isFunded) {
+            const randomDonationDate = getRandomDate(new Date('2021-01-01'), new Date('2025-12-31'));
+            const verifiedDate = new Date(randomDonationDate.getTime() + 86400000); // 1 day later
+            
             const newDonation = await createDonation({
                 donorId: randomDonor.id!, donorName: randomDonor.name, amount: leadInfo.amount,
                 type: leadInfo.donationType, purpose: leadInfo.purpose, status: 'Allocated', isAnonymous: false,
-                donationDate: Timestamp.now(), verifiedAt: Timestamp.now(),
+                donationDate: Timestamp.fromDate(randomDonationDate), 
+                verifiedAt: Timestamp.fromDate(verifiedDate),
                 campaignId: campaignRef.id, leadId: leadRef.id, source: 'Seeded'
             }, verifierAdmin.id!, verifierAdmin.name, verifierAdmin.email);
 
@@ -280,6 +288,9 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
         return { name: "Test Donation 4k", status: "Skipped (already exists)" };
     }
 
+    const randomDonationDate = getRandomDate(new Date('2021-01-01'), new Date());
+    const verifiedDate = new Date(randomDonationDate.getTime() + 86400000); // 1 day later
+
     await createDonation({
         donorId: donor.id!,
         donorName: donor.name,
@@ -288,8 +299,8 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
         purpose: 'To Organization Use',
         status: 'Verified',
         isAnonymous: false,
-        donationDate: Timestamp.now(),
-        verifiedAt: Timestamp.now(),
+        donationDate: Timestamp.fromDate(randomDonationDate),
+        verifiedAt: Timestamp.fromDate(verifiedDate),
         source: 'Seeded-Test',
         transactionId: `TEST-DONATION-4K-${Date.now()}`
     }, adminUser.id!, adminUser.name, adminUser.email);
