@@ -48,7 +48,7 @@ const getChangedFields = (original: User, updates: Partial<User>) => {
 
 export async function handleUpdateUser(
   userId: string,
-  rawFormData: any, // Changed from FormData to any/object
+  rawFormData: any,
   adminUserId: string,
 ): Promise<FormState> {
   
@@ -110,7 +110,7 @@ export async function handleUpdateUser(
     };
     
     const changes = getChangedFields(originalUser, updates);
-
+    
     await updateUser(userId, updates);
     
     if (Object.keys(changes).length > 0) {
