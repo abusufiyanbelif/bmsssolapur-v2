@@ -94,13 +94,24 @@ export async function handleUpdateUser(
     if(!originalUser) return { success: false, error: "User to be updated not found." };
     if(!adminUser) return { success: false, error: "Admin performing the action not found." };
 
+    let finalRoles = rawFormData.roles;
+
+    // If the admin is NOT a Super Admin, we need to be careful about roles.
+    if (!adminUser.roles.includes('Super Admin')) {
+        const higherRoles = ['Admin', 'Super Admin', 'Finance Admin'];
+        const existingHigherRoles = originalUser.roles.filter(role => higherRoles.includes(role));
+        const submittedNormalRoles = rawFormData.roles.filter(role => !higherRoles.includes(role));
+        // Merge the user's existing higher roles with the normal roles submitted by the non-super-admin.
+        finalRoles = [...new Set([...existingHigherRoles, ...submittedNormalRoles])];
+    }
+
     const updates: Partial<User> = {
         name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
         firstName: rawFormData.firstName,
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
         phone: rawFormData.phone,
-        roles: rawFormData.roles,
+        roles: finalRoles,
         isActive: rawFormData.isActive,
         isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
         isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
