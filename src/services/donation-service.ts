@@ -1,4 +1,3 @@
-
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -299,7 +298,8 @@ export const allocateDonationToLeads = async (
   
   batch.update(donationRef, {
       status: newStatus,
-      allocations: arrayUnion(...newLeadAllocations)
+      allocations: arrayUnion(...newLeadAllocations),
+      updatedAt: serverTimestamp(),
   });
 
   // 4. Log this bulk allocation activity

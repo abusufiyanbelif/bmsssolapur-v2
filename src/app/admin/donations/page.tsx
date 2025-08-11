@@ -19,7 +19,7 @@ import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -66,6 +66,7 @@ function DonationsPageContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedDonations, setSelectedDonations] = useState<string[]>([]);
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
     
     // Input states
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
@@ -233,6 +234,17 @@ function DonationsPageContent() {
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
 
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+
+    const leadsById = useMemo(() => {
+        return allLeads.reduce((acc, lead) => {
+            acc[lead.id] = lead;
+            return acc;
+        }, {} as Record<string, Lead>);
+    }, [allLeads]);
+
 
     const renderDesktopTable = () => (
         <Table>
@@ -251,6 +263,7 @@ function DonationsPageContent() {
                             aria-label="Select all"
                         />
                     </TableHead>
+                    <TableHead className="w-12"></TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('id')}>
                             Donation ID {renderSortIcon('id')}
@@ -286,7 +299,11 @@ function DonationsPageContent() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedDonations.map((donation, index) => (
+                {paginatedDonations.map((donation, index) => {
+                    const isExpanded = expandedRows.includes(donation.id!);
+                    const hasAllocations = donation.allocations && donation.allocations.length > 0;
+                    return (
+                    <>
                     <TableRow key={donation.id} data-state={selectedDonations.includes(donation.id!) ? 'selected' : ''}>
                         <TableCell padding="checkbox">
                             <Checkbox
@@ -298,6 +315,13 @@ function DonationsPageContent() {
                                 }}
                                 aria-label="Select row"
                             />
+                        </TableCell>
+                        <TableCell>
+                            {hasAllocations && (
+                                <Button variant="ghost" size="icon" onClick={() => toggleRow(donation.id!)} className="h-8 w-8">
+                                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </Button>
+                            )}
                         </TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{donation.id}</div>
@@ -343,22 +367,53 @@ function DonationsPageContent() {
                             </DropdownMenu>
                         </TableCell>
                          <TableCell className="space-y-1">
-                            {donation.leadId ? (
-                                <Link href={`/admin/leads/${donation.leadId}`} className="text-xs font-medium hover:underline text-primary">Lead: {donation.leadId}</Link>
+                            {donation.allocations && donation.allocations.length > 0 ? (
+                                <Badge variant="outline" className="text-xs">{donation.allocations.length} Allocation(s)</Badge>
                             ) : (
-                                <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
-                            )}
-                            {donation.campaignId ? (
-                                <Link href={`/admin/campaigns/${donation.campaignId}/edit`} className="text-xs font-medium hover:underline text-purple-600 block">Campaign: {allCampaigns.find(c => c.id === donation.campaignId)?.name || donation.campaignId}</Link>
-                            ) : (
-                                <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
+                                <>
+                                    <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
+                                    <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
+                                </>
                             )}
                         </TableCell>
                         <TableCell className="text-right">
                             {renderActions(donation)}
                         </TableCell>
                     </TableRow>
-                ))}
+                     {isExpanded && hasAllocations && (
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                            <TableCell colSpan={10} className="p-0">
+                                <div className="p-4">
+                                    <h4 className="font-semibold text-sm mb-2">Allocation Details</h4>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Lead ID</TableHead>
+                                                <TableHead>Beneficiary</TableHead>
+                                                <TableHead>Amount Allocated</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {donation.allocations?.map(alloc => {
+                                                const lead = leadsById[alloc.leadId];
+                                                return (
+                                                <TableRow key={alloc.leadId}>
+                                                    <TableCell className="font-mono text-xs">
+                                                        <Link href={`/admin/leads/${alloc.leadId}`} className="hover:underline">{alloc.leadId}</Link>
+                                                    </TableCell>
+                                                    <TableCell>{lead?.name || 'N/A'}</TableCell>
+                                                    <TableCell>₹{alloc.amount.toLocaleString()}</TableCell>
+                                                </TableRow>
+                                                )
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                     )}
+                     </>
+                )})}
             </TableBody>
         </Table>
     );
@@ -416,16 +471,14 @@ function DonationsPageContent() {
                          <div className="space-y-2">
                             <span className="text-muted-foreground">Linked To</span>
                              <div className="flex flex-col items-start gap-2">
-                                {donation.leadId ? (
-                                    <Link href={`/admin/leads/${donation.leadId}`} className="text-xs font-medium hover:underline text-primary">Lead: {donation.leadId}</Link>
+                                {donation.allocations && donation.allocations.length > 0 ? (
+                                    <Badge variant="outline">{donation.allocations.length} Allocation(s)</Badge>
                                 ) : (
+                                <>
                                     <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
-                                )}
-                                {donation.campaignId ? (
-                                    <Link href={`/admin/campaigns/${donation.campaignId}/edit`} className="text-xs font-medium hover:underline text-purple-600">Campaign: {allCampaigns.find(c => c.id === donation.campaignId)?.name || donation.campaignId}</Link>
-                                ) : (
                                     <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
-                                )}
+                                </>
+                            )}
                             </div>
                         </div>
                     </CardContent>
