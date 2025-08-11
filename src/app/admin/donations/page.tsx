@@ -42,7 +42,7 @@ const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification"
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
 const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
 
-type SortableColumn = 'donorName' | 'amount' | 'donationDate' | 'id';
+type SortableColumn = 'donorName' | 'amount' | 'donationDate' | 'id' | 'type' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 
@@ -270,8 +270,16 @@ function DonationsPageContent() {
                             Amount {renderSortIcon('amount')}
                         </Button>
                     </TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>
+                         <Button variant="ghost" onClick={() => handleSort('type')}>
+                           Type {renderSortIcon('type')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('status')}>
+                           Status {renderSortIcon('status')}
+                        </Button>
+                    </TableHead>
                     <TableHead>Linked To</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
