@@ -389,10 +389,7 @@ function DonationsPageContent() {
                             {donation.allocations && donation.allocations.length > 0 ? (
                                 <Badge variant="outline" className="text-xs">{donation.allocations.length} Allocation(s)</Badge>
                             ) : (
-                                <>
-                                    <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
-                                    <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
-                                </>
+                               <Badge variant="secondary" className="text-xs font-normal">Unallocated</Badge>
                             )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -505,11 +502,8 @@ function DonationsPageContent() {
                                     {donation.allocations && donation.allocations.length > 0 ? (
                                         <Badge variant="outline">{donation.allocations.length} Allocation(s)</Badge>
                                     ) : (
-                                    <>
-                                        <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
-                                        <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
-                                    </>
-                                )}
+                                        <span className="text-xs text-muted-foreground italic">Unallocated</span>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>
@@ -523,6 +517,7 @@ function DonationsPageContent() {
     );
     
     const renderActions = (donation: Donation) => {
+        const canAllocate = donation.status === 'Verified' || donation.status === 'Partially Allocated';
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -532,9 +527,22 @@ function DonationsPageContent() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                    {canAllocate && (
+                        <>
+                            <DropdownMenuLabel>Allocate Funds</DropdownMenuLabel>
+                            <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}><Link2 className="mr-2 h-4 w-4" /> To Lead(s)</DropdownMenuItem>
+                            </AllocateToLeadDialog>
+                             <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}><Link2 className="mr-2 h-4 w-4" /> To Campaign</DropdownMenuItem>
+                            </AllocateToCampaignDialog>
+                            <DropdownMenuSeparator />
+                        </>
+                    )}
+
                     <DropdownMenuItem asChild>
                         <Link href={`/admin/donations/${donation.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
+                            <Edit className="mr-2 h-4 w-4" /> Edit Donation
                         </Link>
                     </DropdownMenuItem>
                     
@@ -553,7 +561,7 @@ function DonationsPageContent() {
                         onSuccess={onDonationDeleted}
                     >
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete Donation
                         </DropdownMenuItem>
                     </DeleteConfirmationDialog>
                 </DropdownMenuContent>
