@@ -139,6 +139,24 @@ function DonationsPageContent() {
             setSortDirection('asc');
         }
     }
+    
+    const handleDonationIdClick = (donationId: string) => {
+        // Reset other filters in the UI
+        setStatusInput('all');
+        setTypeInput('all');
+        setPurposeInput('all');
+        // Set the name/ID filter
+        setNameInput(donationId);
+        // Apply the filters immediately
+        setAppliedFilters({
+            status: 'all',
+            type: 'all',
+            purpose: 'all',
+            name: donationId
+        });
+        setCurrentPage(1);
+    };
+
 
     const filteredDonations = useMemo(() => {
         let filtered = donations.filter(donation => {
@@ -333,7 +351,9 @@ function DonationsPageContent() {
                             )}
                         </TableCell>
                         <TableCell>
-                            <div className="font-mono text-xs">{donation.id}</div>
+                            <Button variant="link" className="font-mono text-xs p-0 h-auto" onClick={() => handleDonationIdClick(donation.id!)}>
+                                {donation.id}
+                            </Button>
                             <div className="text-xs text-muted-foreground">{donation.source || 'Manual Entry'}</div>
                         </TableCell>
                         <TableCell>{format(new Date(donation.donationDate), "dd MMM yyyy")}</TableCell>
@@ -491,7 +511,9 @@ function DonationsPageContent() {
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Donation ID</span>
-                                <span className="font-mono text-xs">{donation.id}</span>
+                                 <Button variant="link" className="font-mono text-xs p-0 h-auto" onClick={() => handleDonationIdClick(donation.id!)}>
+                                    {donation.id}
+                                </Button>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Date</span>
