@@ -38,7 +38,7 @@ import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
 import { AllocateToCampaignDialog } from './allocate-to-campaign-dialog';
 
 
-const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
+const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Partially Allocated", "Allocated", "Failed/Incomplete"];
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
 const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
 
@@ -49,8 +49,9 @@ type SortDirection = 'asc' | 'desc';
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Verified": "bg-green-500/20 text-green-700 border-green-500/30",
-    "Failed/Incomplete": "bg-red-500/20 text-red-700 border-red-500/30",
+    "Partially Allocated": "bg-orange-500/20 text-orange-700 border-orange-500/30",
     "Allocated": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Failed/Incomplete": "bg-red-500/20 text-red-700 border-red-500/30",
 };
 
 function DonationsPageContent() {

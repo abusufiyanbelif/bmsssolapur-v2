@@ -17,12 +17,14 @@ import {
   where,
   orderBy,
   getCountFromServer,
-  writeBatch
+  writeBatch,
+  increment,
+  arrayUnion
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
-import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation } from './types';
-import { getUser, updateLead } from './user-service';
+import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation, Lead } from './types';
+import { getUser } from './user-service';
 import { format } from 'date-fns';
 
 // Re-export types for backward compatibility if other services import from here
@@ -30,6 +32,7 @@ export type { Donation, DonationStatus, DonationType, DonationPurpose };
 export { getUser };
 
 const DONATIONS_COLLECTION = 'donations';
+const LEADS_COLLECTION = 'leads';
 
 // Function to create a donation
 export const createDonation = async (
@@ -259,13 +262,16 @@ export const allocateDonationToLeads = async (
 
   const batch = writeBatch(db);
   const now = Timestamp.now();
-  let totalAllocated = 0;
-
+  
+  const currentTotalAllocated = (donation.allocations || []).reduce((sum, alloc) => sum + alloc.amount, 0);
+  const newAllocationTotal = allocations.reduce((sum, alloc) => sum + alloc.amount, 0);
+  const finalTotalAllocated = currentTotalAllocated + newAllocationTotal;
+  
   // 1. Process allocations for each lead
   for (const alloc of allocations) {
     if (alloc.amount <= 0) continue;
     
-    const leadRef = doc(db, 'leads', alloc.leadId);
+    const leadRef = doc(db, LEADS_COLLECTION, alloc.leadId);
     const newAllocationRecord: LeadDonationAllocation = {
       donationId: donation.id!,
       amount: alloc.amount,
@@ -274,26 +280,29 @@ export const allocateDonationToLeads = async (
       allocatedByUserName: adminUser.name,
     };
     
-    // Use the imported updateLead function which handles audit trails for leads.
-    await updateLead(alloc.leadId, {
-        donations: [newAllocationRecord], // Assuming updateLead can handle arrayUnion logic
-        helpGiven: alloc.amount // Assuming updateLead can handle increment logic
+    // Update the lead document
+    batch.update(leadRef, {
+      donations: arrayUnion(newAllocationRecord),
+      helpGiven: increment(alloc.amount)
     });
-
-    totalAllocated += alloc.amount;
   }
   
-  // 2. Update the main donation document
+  // 2. Determine the new status for the donation
+  let newStatus: DonationStatus = 'Partially Allocated';
+  if (finalTotalAllocated >= donation.amount) {
+      newStatus = 'Allocated';
+  }
+
+  // 3. Update the main donation document
   const donationRef = doc(db, DONATIONS_COLLECTION, donation.id!);
-  const currentAllocations = donation.allocations || [];
   const newLeadAllocations = allocations.map(a => ({ leadId: a.leadId, amount: a.amount, allocatedAt: now }));
   
   batch.update(donationRef, {
-      status: 'Allocated',
-      allocations: [...currentAllocations, ...newLeadAllocations]
+      status: newStatus,
+      allocations: arrayUnion(...newLeadAllocations)
   });
 
-  // 3. Log this bulk allocation activity
+  // 4. Log this bulk allocation activity
   await logActivity({
     userId: adminUser.id!,
     userName: adminUser.name,
@@ -302,7 +311,8 @@ export const allocateDonationToLeads = async (
     activity: `Donation Allocated`,
     details: { 
         donationId: donation.id!, 
-        amount: totalAllocated,
+        amount: newAllocationTotal,
+        newStatus: newStatus,
         allocations: allocations.map(a => ({ leadId: a.leadId, amount: a.amount }))
     }
   });
