@@ -1,9 +1,9 @@
+
 // src/app/admin/donations/actions.ts
 "use server";
 
-import { deleteDonation, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService, getDonation } from "@/services/donation-service";
+import { deleteDonation, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService, getDonation, allocateDonationToLeads } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
-import { allocateDonationToLead } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 import { writeBatch, doc, Timestamp } from "firebase/firestore";
@@ -55,7 +55,11 @@ export async function handleUpdateDonationStatus(donationId: string, status: Don
     }
 }
 
-export async function handleAllocateDonation(donationId: string, linkTo: 'lead' | 'campaign', linkId: string, adminUserId: string) {
+export async function handleAllocateDonation(
+    donationId: string, 
+    allocations: { leadId: string; amount: number }[],
+    adminUserId: string
+) {
     try {
         const [donation, adminUser] = await Promise.all([
             getDonation(donationId),
@@ -65,34 +69,17 @@ export async function handleAllocateDonation(donationId: string, linkTo: 'lead' 
         if (!donation) return { success: false, error: "Donation not found." };
         if (!adminUser) return { success: false, error: "Admin user not found." };
         
-        if (linkTo === 'lead') {
-            // Add the allocation to the lead
-            await allocateDonationToLead(linkId, {
-                donationId: donationId,
-                amount: donation.amount,
-                allocatedAt: Timestamp.now(),
-                allocatedByUserId: adminUser.id!,
-                allocatedByUserName: adminUser.name,
-            });
-
-            // Update the donation's status and link
-            await updateDonation(donationId, { leadId: linkId, status: 'Allocated' }, adminUser);
-
-             await logActivity({
-                userId: adminUser.id!,
-                userName: adminUser.name,
-                userEmail: adminUser.email,
-                role: "Admin",
-                activity: `Donation Allocated`,
-                details: { donationId: donationId, amount: donation.amount, linkedLeadId: linkId }
-            });
-
-        } else if (linkTo === 'campaign') {
-            await updateDonation(donationId, { campaignId: linkId, status: 'Allocated' }, adminUser);
+        const totalAllocated = allocations.reduce((sum, alloc) => sum + alloc.amount, 0);
+        if (totalAllocated > donation.amount) {
+            return { success: false, error: "Total allocation cannot exceed the donation amount." };
         }
 
+        await allocateDonationToLeads(donation, allocations, adminUser);
+
         revalidatePath("/admin/donations");
-        revalidatePath(`/admin/leads/${linkId}`);
+        allocations.forEach(alloc => {
+            revalidatePath(`/admin/leads/${alloc.leadId}`);
+        });
         return { success: true };
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";

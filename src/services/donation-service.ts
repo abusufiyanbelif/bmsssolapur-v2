@@ -1,3 +1,4 @@
+
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -15,12 +16,13 @@ import {
   Timestamp,
   where,
   orderBy,
-  getCountFromServer
+  getCountFromServer,
+  writeBatch
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
-import type { Donation, DonationStatus, DonationType, DonationPurpose, User } from './types';
-import { getUser } from './user-service';
+import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation } from './types';
+import { getUser, updateLead } from './user-service';
 import { format } from 'date-fns';
 
 // Re-export types for backward compatibility if other services import from here
@@ -246,4 +248,65 @@ export const handleUpdateDonationStatus = async (donationId: string, newStatus: 
     }
     
     await updateDonation(donationId, updates, adminUser);
+};
+
+export const allocateDonationToLeads = async (
+  donation: Donation,
+  allocations: { leadId: string; amount: number }[],
+  adminUser: User
+) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
+
+  const batch = writeBatch(db);
+  const now = Timestamp.now();
+  let totalAllocated = 0;
+
+  // 1. Process allocations for each lead
+  for (const alloc of allocations) {
+    if (alloc.amount <= 0) continue;
+    
+    const leadRef = doc(db, 'leads', alloc.leadId);
+    const newAllocationRecord: LeadDonationAllocation = {
+      donationId: donation.id!,
+      amount: alloc.amount,
+      allocatedAt: now,
+      allocatedByUserId: adminUser.id!,
+      allocatedByUserName: adminUser.name,
+    };
+    
+    // Use the imported updateLead function which handles audit trails for leads.
+    await updateLead(alloc.leadId, {
+        donations: [newAllocationRecord], // Assuming updateLead can handle arrayUnion logic
+        helpGiven: alloc.amount // Assuming updateLead can handle increment logic
+    });
+
+    totalAllocated += alloc.amount;
+  }
+  
+  // 2. Update the main donation document
+  const donationRef = doc(db, DONATIONS_COLLECTION, donation.id!);
+  const currentAllocations = donation.allocations || [];
+  const newLeadAllocations = allocations.map(a => ({ leadId: a.leadId, amount: a.amount, allocatedAt: now }));
+  
+  batch.update(donationRef, {
+      status: 'Allocated',
+      allocations: [...currentAllocations, ...newLeadAllocations]
+  });
+
+  // 3. Log this bulk allocation activity
+  await logActivity({
+    userId: adminUser.id!,
+    userName: adminUser.name,
+    userEmail: adminUser.email,
+    role: "Admin",
+    activity: `Donation Allocated`,
+    details: { 
+        donationId: donation.id!, 
+        amount: totalAllocated,
+        allocations: allocations.map(a => ({ leadId: a.leadId, amount: a.amount }))
+    }
+  });
+
+  // Commit all writes at once
+  await batch.commit();
 };

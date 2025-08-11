@@ -26,6 +26,7 @@ const USERS_COLLECTION = 'users';
 
 // Re-export types for backward compatibility if other services import from here
 export type { User, UserRole };
+export { updateLead } from './lead-service';
 
 
 // Function to get a user by their custom userId field

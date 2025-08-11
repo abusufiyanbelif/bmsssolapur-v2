@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -131,10 +132,17 @@ export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(db, LEADS_COLLECTION, id);
-    await updateDoc(leadRef, {
-      ...updates,
-      updatedAt: serverTimestamp(),
-    });
+    
+    // Handle special array union and increment updates
+    const finalUpdates: any = { ...updates, updatedAt: serverTimestamp() };
+    if (updates.donations) {
+        finalUpdates.donations = arrayUnion(...updates.donations);
+    }
+    if (updates.helpGiven) {
+        finalUpdates.helpGiven = increment(updates.helpGiven);
+    }
+
+    await updateDoc(leadRef, finalUpdates);
   } catch (error) {
     console.error("Error updating lead: ", error);
     throw new Error('Failed to update lead.');
@@ -188,21 +196,6 @@ export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVe
     });
     
     return updateLead(id, updates);
-};
-
-export const allocateDonationToLead = async (leadId: string, donationAllocation: LeadDonationAllocation) => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
-  try {
-    const leadRef = doc(db, LEADS_COLLECTION, leadId);
-    await updateDoc(leadRef, {
-      donations: arrayUnion(donationAllocation),
-      helpGiven: increment(donationAllocation.amount),
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    console.error("Error allocating donation to lead: ", error);
-    throw new Error('Failed to allocate donation.');
-  }
 };
 
 
