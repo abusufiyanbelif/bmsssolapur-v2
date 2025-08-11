@@ -84,11 +84,15 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
 
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(db, USERS_COLLECTION, user.userId);
     
-    // Auto-generate userKey
-    const usersCollection = collection(db, USERS_COLLECTION);
-    const countSnapshot = await getCountFromServer(usersCollection);
-    const userNumber = countSnapshot.data().count + 1;
-    const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
+    // Use provided userKey or auto-generate one
+    let userKey = user.userKey;
+    if (!userKey) {
+        const usersCollection = collection(db, USERS_COLLECTION);
+        const countSnapshot = await getCountFromServer(usersCollection);
+        const userNumber = countSnapshot.data().count + 1;
+        userKey = `USR${userNumber.toString().padStart(2, '0')}`;
+    }
+
 
     // Always generate an anonymous ID for every user upon creation
     const anonymousBeneficiaryId = user.anonymousBeneficiaryId || `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
