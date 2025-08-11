@@ -17,8 +17,6 @@ import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Donation, User } from "@/services/types";
 import { DonationReceipt } from "./donation-receipt";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 interface DonationReceiptDialogProps {
   donation: Donation;
@@ -36,6 +34,10 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
     setIsGenerating(true);
 
     try {
+      // Dynamically import libraries only on the client-side
+      const { default: html2canvas } = await import('html2canvas');
+      const { default: jsPDF } = await import('jspdf');
+
       const canvas = await html2canvas(receiptRef.current, { scale: 2 });
       const imgData = canvas.toDataURL('image/png');
       
@@ -73,8 +75,8 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={!canDownload}>
-          <Download className="mr-2 h-4 w-4" />
+        <Button variant="outline" size="sm" disabled={!canDownload} className="w-full justify-start text-xs">
+          <Download className="mr-2 h-3 w-3" />
           Receipt
         </Button>
       </DialogTrigger>
