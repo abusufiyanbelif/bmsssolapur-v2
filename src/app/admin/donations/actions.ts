@@ -1,13 +1,15 @@
 // src/app/admin/donations/actions.ts
 "use server";
 
-import { deleteDonation, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService } from "@/services/donation-service";
+import { deleteDonation, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService, getDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
+import { allocateDonationToLead } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
-import { writeBatch, doc } from "firebase/firestore";
+import { writeBatch, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { DonationStatus } from "@/services/types";
+import { logActivity } from "@/services/activity-log-service";
 
 export async function handleDeleteDonation(donationId: string) {
     try {
@@ -53,17 +55,44 @@ export async function handleUpdateDonationStatus(donationId: string, status: Don
     }
 }
 
-export async function handleAllocateDonation(donationId: string, linkTo: 'lead' | 'campaign', linkId: string) {
+export async function handleAllocateDonation(donationId: string, linkTo: 'lead' | 'campaign', linkId: string, adminUserId: string) {
     try {
-        const updates: { leadId?: string, campaignId?: string } = {};
+        const [donation, adminUser] = await Promise.all([
+            getDonation(donationId),
+            getUser(adminUserId)
+        ]);
+
+        if (!donation) return { success: false, error: "Donation not found." };
+        if (!adminUser) return { success: false, error: "Admin user not found." };
+        
         if (linkTo === 'lead') {
-            updates.leadId = linkId;
+            // Add the allocation to the lead
+            await allocateDonationToLead(linkId, {
+                donationId: donationId,
+                amount: donation.amount,
+                allocatedAt: Timestamp.now(),
+                allocatedByUserId: adminUser.id!,
+                allocatedByUserName: adminUser.name,
+            });
+
+            // Update the donation's status and link
+            await updateDonation(donationId, { leadId: linkId, status: 'Allocated' }, adminUser);
+
+             await logActivity({
+                userId: adminUser.id!,
+                userName: adminUser.name,
+                userEmail: adminUser.email,
+                role: "Admin",
+                activity: `Donation Allocated`,
+                details: { donationId: donationId, amount: donation.amount, linkedLeadId: linkId }
+            });
+
         } else if (linkTo === 'campaign') {
-            updates.campaignId = linkId;
+            await updateDonation(donationId, { campaignId: linkId, status: 'Allocated' }, adminUser);
         }
 
-        await updateDonation(donationId, updates);
         revalidatePath("/admin/donations");
+        revalidatePath(`/admin/leads/${linkId}`);
         return { success: true };
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";

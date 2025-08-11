@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,15 @@ export function AllocateToCampaignDialog({ donation, allCampaigns, onAllocation 
     const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
     
+    useEffect(() => {
+        if(open) {
+             const storedUserId = localStorage.getItem('userId');
+             setAdminUserId(storedUserId);
+        }
+    }, [open]);
+
     const activeCampaigns = allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming');
     
     const handleAllocate = async () => {
@@ -39,8 +47,13 @@ export function AllocateToCampaignDialog({ donation, allCampaigns, onAllocation 
             toast({ variant: 'destructive', title: "No campaign selected." });
             return;
         }
+         if (!adminUserId) {
+            toast({ variant: 'destructive', title: "Error", description: "Could not identify administrator. Please log in again."});
+            return;
+        }
+
         setIsSubmitting(true);
-        const result = await handleAllocateDonation(donation.id!, 'campaign', selectedCampaignId);
+        const result = await handleAllocateDonation(donation.id!, 'campaign', selectedCampaignId, adminUserId);
         if (result.success) {
             onAllocation();
             setOpen(false);

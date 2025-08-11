@@ -16,6 +16,9 @@ import {
   where,
   orderBy,
   getCountFromServer,
+  increment,
+  arrayUnion,
+  limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType } from './types';
@@ -185,6 +188,21 @@ export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVe
     });
     
     return updateLead(id, updates);
+};
+
+export const allocateDonationToLead = async (leadId: string, donationAllocation: LeadDonationAllocation) => {
+  if (!isConfigValid) throw new Error('Firebase is not configured.');
+  try {
+    const leadRef = doc(db, LEADS_COLLECTION, leadId);
+    await updateDoc(leadRef, {
+      donations: arrayUnion(donationAllocation),
+      helpGiven: increment(donationAllocation.amount),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error("Error allocating donation to lead: ", error);
+    throw new Error('Failed to allocate donation.');
+  }
 };
 
 

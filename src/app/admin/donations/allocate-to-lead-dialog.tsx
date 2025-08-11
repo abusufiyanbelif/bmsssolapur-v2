@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,14 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
     const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
+    
+    useEffect(() => {
+        if(open) {
+             const storedUserId = localStorage.getItem('userId');
+             setAdminUserId(storedUserId);
+        }
+    }, [open]);
     
     // Filter for leads that are still open for funding
     const openLeads = allLeads.filter(lead => lead.status !== 'Closed' && lead.status !== 'Cancelled');
@@ -42,8 +50,13 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
             toast({ variant: 'destructive', title: "No lead selected." });
             return;
         }
+        if (!adminUserId) {
+            toast({ variant: 'destructive', title: "Error", description: "Could not identify administrator. Please log in again."});
+            return;
+        }
+
         setIsSubmitting(true);
-        const result = await handleAllocateDonation(donation.id!, 'lead', selectedLeadId);
+        const result = await handleAllocateDonation(donation.id!, 'lead', selectedLeadId, adminUserId);
         if (result.success) {
             onAllocation();
             setOpen(false);
