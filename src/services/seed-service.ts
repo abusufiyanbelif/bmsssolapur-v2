@@ -36,6 +36,9 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
 
     // Hardcoded Beneficiary user
     { name: "Beneficiary User", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    
+    // New test beneficiary
+    { name: "Test Ready Beneficiary", userId: "test.ready.beneficiary", firstName: "TestReady", lastName: "Beneficiary", email: "test.ready@example.com", phone: "9876543210", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Adult' }
 ];
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -207,7 +210,7 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
     
     const q = query(collection(db, 'leads'), where("campaignId", "==", null));
     const existingLeads = await getDocs(q);
-    if (!existingLeads.empty) {
+    if (existingLeads.docs.length > 2) { // Allow for a couple of test leads
         console.log("General leads exist. Skipping general lead and donation seeding.");
         return {
             donationResults: [{ name: 'Historical Donations', status: 'Skipped (already exists)' }],
@@ -421,6 +424,63 @@ const seedCampaignsAndLinkedLeads = async (): Promise<{ campaignResults: SeedIte
 };
 
 
+const seedTestLeads = async (): Promise<SeedItemResult[]> => {
+    if (!isConfigValid) throw new Error("Firebase is not configured.");
+
+    const leadResults: SeedItemResult[] = [];
+    const testBeneficiary = await getUserByPhone("9876543210");
+    const verifierAdmin = await getUserByPhone("7887646583");
+
+    if (!testBeneficiary || !verifierAdmin) {
+        console.error("Test beneficiary (9876543210) or Verifier admin (7887646583) not found. Skipping test lead seed.");
+        return [{ name: 'Test Ready Lead', status: 'Failed' }];
+    }
+
+    const leadQuery = query(collection(db, 'leads'), where("beneficiaryId", "==", testBeneficiary.id), where("purpose", "==", "Medical"));
+    const existingLeads = await getDocs(leadQuery);
+
+    if (!existingLeads.empty) {
+        return [{ name: 'Test Ready Lead', status: 'Skipped (already exists)' }];
+    }
+
+    const batch = writeBatch(db);
+    const leadRef = doc(collection(db, 'leads'));
+    const verifier: Verifier = {
+        verifierId: verifierAdmin.id!,
+        verifierName: verifierAdmin.name,
+        verifiedAt: Timestamp.now(),
+        notes: "Verified as part of test data seeding."
+    };
+
+    const newLead: Lead = {
+        id: leadRef.id,
+        name: testBeneficiary.name,
+        beneficiaryId: testBeneficiary.id!,
+        helpRequested: 15000,
+        helpGiven: 0,
+        status: 'Ready For Help',
+        isLoan: false,
+        caseDetails: 'This is a test case for a verified medical emergency that is ready for funding.',
+        verifiedStatus: 'Verified',
+        verifiers: [verifier],
+        donations: [],
+        adminAddedBy: { id: verifierAdmin.id!, name: verifierAdmin.name },
+        dateCreated: Timestamp.now(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        category: 'Hospital Bill',
+        purpose: 'Medical',
+        donationType: 'Sadaqah',
+    };
+    
+    batch.set(leadRef, newLead);
+    leadResults.push({ name: `Lead for ${newLead.name}`, status: 'Created' });
+
+    await batch.commit();
+    return leadResults;
+}
+
+
 export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Attempting to seed database...');
     if (!isConfigValid) {
@@ -488,7 +548,15 @@ export const seedDatabase = async (): Promise<SeedResult> => {
     } catch (e: any) {
         return { ...results, error: `Seeding failed during [Campaign Data Seeding]: ${e.message}` };
     }
+    
+    try {
+        const testLeadResults = await seedTestLeads();
+        results.leadResults.push(...testLeadResults);
+    } catch (e: any) {
+        return { ...results, error: `Seeding failed during [Test Lead Seeding]: ${e.message}` };
+    }
 
     console.log('Database seeding process completed successfully.');
     return results;
 };
+
