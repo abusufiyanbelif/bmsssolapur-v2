@@ -124,12 +124,12 @@ function PublicHomePage() {
   }, [allDonations, allLeads]);
 
   const mainMetrics = [
-    { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp },
-    { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins },
-    { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote },
-    { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle },
-    { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass },
-    { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users },
+    { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/public-leads" },
+    { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/public-leads" },
+    { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, href: "/public-leads" },
+    { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, href: "/public-leads" },
+    { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, href: "/public-leads" },
+    { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, href: "/public-leads" },
   ];
 
   const campaignStatusColors: Record<string, string> = {
@@ -185,15 +185,17 @@ function PublicHomePage() {
       {/* Impact Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {mainMetrics.map((metric) => (
-              <Card key={metric.title} className="h-full">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                  <metric.icon className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                  <div className="text-2xl font-bold">{metric.value}</div>
-                  </CardContent>
-              </Card>
+              <Link href={metric.href} key={metric.title}>
+                <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <metric.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                    <div className="text-2xl font-bold">{metric.value}</div>
+                    </CardContent>
+                </Card>
+              </Link>
           ))}
       </div>
 

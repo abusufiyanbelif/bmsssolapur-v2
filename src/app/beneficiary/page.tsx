@@ -151,12 +151,12 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
 
     const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization." },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries." },
-        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement." },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed." },
-        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests." },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported." },
+        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization.", href: "/public-leads" },
+        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries.", href: "/public-leads" },
+        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement.", href: "/public-leads" },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed.", href: "/public-leads" },
+        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Total open help requests.", href: "/public-leads" },
+        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported.", href: "/public-leads" },
     ];
     
     // Beneficiary specific stats
@@ -321,12 +321,14 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {mainMetrics.map((metric) => (
-                        <div key={metric.title} className="p-4 border rounded-lg">
-                            <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
-                            <p className="text-2xl font-bold">{metric.value}</p>
-                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                            <p className="text-xs text-muted-foreground">{metric.description}</p>
-                        </div>
+                        <Link href={metric.href} key={metric.title}>
+                            <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
+                                <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
+                                <p className="text-2xl font-bold">{metric.value}</p>
+                                <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                                <p className="text-xs text-muted-foreground">{metric.description}</p>
+                            </div>
+                        </Link>
                     ))}
                 </CardContent>
             </Card>
@@ -426,9 +428,6 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                     <QuoteIcon className="text-primary" />
                     Wisdom & Reflection
                 </CardTitle>
-                <CardDescription>
-                    A little inspiration for your journey.
-                </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
