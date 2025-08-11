@@ -29,7 +29,7 @@ export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
         const q = query(
             leadsCollection, 
             where("verifiedStatus", "==", "Verified"),
-            where("status", "in", ["Pending", "Partial"])
+            where("status", "in", ["Pending", "Partial", "Publish", "Ready For Help"])
         );
         
         const querySnapshot = await getDocs(q);
@@ -81,4 +81,5 @@ export async function getActiveCampaigns(): Promise<Campaign[]> {
         return [];
     }
 }
+
 
