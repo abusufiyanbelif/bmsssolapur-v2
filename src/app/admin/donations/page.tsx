@@ -17,18 +17,18 @@ import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose, type PaymentMethod } from "@/services/donation-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteDonation, handleBulkDeleteDonations } from "./actions";
+import { handleDeleteDonation, handleBulkDeleteDonations, handleUpdateDonationStatus } from "./actions";
 import { UploadProofDialog } from "./upload-proof-dialog";
 import { CreateFromUploadDialog } from "./create-from-upload-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -198,6 +198,24 @@ function DonationsPageContent() {
         fetchData();
     }
 
+    const handleQuickStatusChange = async (donationId: string, newStatus: DonationStatus) => {
+        const result = await handleUpdateDonationStatus(donationId, newStatus);
+        if (result.success) {
+            toast({
+                title: "Status Updated",
+                description: `Donation status changed to "${newStatus}".`,
+                variant: 'success'
+            });
+            fetchData();
+        } else {
+            toast({
+                title: "Error",
+                description: result.error || "Failed to update status.",
+                variant: 'destructive'
+            });
+        }
+    }
+
     const renderSortIcon = (column: SortableColumn) => {
         if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
@@ -282,9 +300,29 @@ function DonationsPageContent() {
                         <TableCell>{donation.paymentMethod || 'N/A'}</TableCell>
                         <TableCell>{donation.type}</TableCell>
                         <TableCell>
-                            <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
-                                {donation.status}
-                            </Badge>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="capitalize">
+                                        <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[donation.status])}>
+                                            {donation.status}
+                                        </Badge>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {statusOptions.filter(s => s !== 'all').map(status => (
+                                         <DropdownMenuItem
+                                            key={status}
+                                            onSelect={() => handleQuickStatusChange(donation.id!, status)}
+                                            disabled={donation.status === status}
+                                        >
+                                            {donation.status === status && <CheckCircle className="mr-2 h-4 w-4" />}
+                                            {status}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </TableCell>
                         <TableCell className="text-right">
                             {renderActions(donation)}

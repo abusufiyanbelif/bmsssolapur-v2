@@ -1,3 +1,4 @@
+// src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
  */
@@ -231,3 +232,18 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
         throw new Error('Failed to get user donations.');
     }
 }
+
+// Quick status update function
+export const handleUpdateDonationStatus = async (donationId: string, newStatus: DonationStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
+    const originalDonation = await getDonation(donationId);
+    if (!originalDonation) {
+        throw new Error("Donation not found");
+    }
+
+    const updates: Partial<Donation> = { status: newStatus };
+    if (newStatus === 'Verified' && originalDonation.status !== 'Verified') {
+        updates.verifiedAt = Timestamp.now();
+    }
+    
+    await updateDonation(donationId, updates, adminUser);
+};

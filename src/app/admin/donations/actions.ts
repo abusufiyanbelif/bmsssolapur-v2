@@ -1,13 +1,13 @@
-
-
+// src/app/admin/donations/actions.ts
 "use server";
 
-import { deleteDonation, updateDonation, createDonation } from "@/services/donation-service";
+import { deleteDonation, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 import { writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
+import { DonationStatus } from "@/services/types";
 
 export async function handleDeleteDonation(donationId: string) {
     try {
@@ -31,6 +31,23 @@ export async function handleBulkDeleteDonations(donationIds: string[]) {
         revalidatePath("/admin/donations");
         return { success: true };
     } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        return { success: false, error };
+    }
+}
+
+export async function handleUpdateDonationStatus(donationId: string, status: DonationStatus) {
+    try {
+        // In a real app, you would get the admin user from the session.
+        // For now, we'll assume a default admin for logging purposes.
+        const adminUser = await getUser('admin.user');
+        if (!adminUser) {
+            return { success: false, error: "Could not find default admin user for logging." };
+        }
+        await updateStatusService(donationId, status, adminUser);
+        revalidatePath("/admin/donations");
+        return { success: true };
+    } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         return { success: false, error };
     }
