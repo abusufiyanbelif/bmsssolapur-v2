@@ -333,6 +333,7 @@ function LeadsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('id')}>
                             Lead ID {renderSortIcon('id')}
@@ -361,6 +362,7 @@ function LeadsPageContent() {
                     const priorityConf = priorityConfig[lead.priority || 'Medium'];
                     return (
                         <TableRow key={lead.id}>
+                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                              <TableCell>
                                 <div className="font-mono text-xs">{lead.id}</div>
                                 <div className="text-xs text-muted-foreground">{format(lead.dateCreated, "dd MMM yyyy")}</div>
@@ -408,7 +410,7 @@ function LeadsPageContent() {
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
+                                    <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {lead.name}</CardTitle>
                                     <CardDescription>Created: {format(lead.dateCreated, "dd MMM yyyy")}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
