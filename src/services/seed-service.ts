@@ -6,7 +6,7 @@ import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit } from 'firebase/firestore';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
@@ -70,9 +70,9 @@ const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
         email: `ration${i+1}@example.com`,
         phone: `55555555${i.toString().padStart(2, '0')}`,
         password: "admin",
-        roles: ["Beneficiary"],
+        roles: ["Beneficiary"] as UserRole[],
         isActive: true,
-        gender: 'Other',
+        gender: 'Other' as 'Other',
         beneficiaryType: 'Family' as 'Family',
         source: 'Seeded'
     }))
@@ -104,25 +104,6 @@ const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
 };
 
 
-const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'donationType' | 'source'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
-    { beneficiaryName: 'Mustahik Person', beneficiaryPhone: '1000000001', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Hazrate Nomaniya Masjid', beneficiaryPhone: '1000000002', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Hazrate Nomaniya Masjid Bill', beneficiaryPhone: '1000000003', helpRequested: 720, helpGiven: 720, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Ration Distribution', beneficiaryPhone: '1000000004', helpRequested: 2795, helpGiven: 2795, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration provided to a needy person.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Ration for 4 Houses', beneficiaryPhone: '1000000005', helpRequested: 5000, helpGiven: 5000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Ration kits provided to 4 households, including elderly widows and sick families.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Ration Aid', beneficiaryPhone: '1000000006', helpRequested: 2000, helpGiven: 2000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Grain provided to a person in need.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Madrasa Riaz Ul Jannah', beneficiaryPhone: '1000000007', helpRequested: 1800, helpGiven: 1800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Rent and deposit for a new Madrasa at Sugar factory site new gharkul.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Anonymous Help', beneficiaryPhone: '1000000008', helpRequested: 1700, helpGiven: 1700, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Cash help provided to a person in need.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Lalsab Bagali Operation', beneficiaryPhone: '1000000009', helpRequested: 29500, helpGiven: 29500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a patient\'s operation. 25000 cash given plus 4500 collected.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Lalsab Bagali Bill', beneficiaryPhone: '1000000010', helpRequested: 26800, helpGiven: 26800, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Hospital bill payment for a patient in need.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Mustahiq Family', beneficiaryPhone: '1000000011', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Money for household ration for a deserving family.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Child Hospital Bill', beneficiaryPhone: '1000000012', helpRequested: 3000, helpGiven: 3000, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Help for a sick 2-year-old child admitted to the government hospital.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Madrasa Admission', beneficiaryPhone: '1000000013', helpRequested: 600, helpGiven: 600, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Admission fee for a 9-year-old boy from a new Muslim family in a school cum madrasa.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Aid for Needy', beneficiaryPhone: '1000000014', helpRequested: 6000, helpGiven: 6000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Follow-up help provided to a previously supported case.', verificationDocumentUrl: '' },
-    { beneficiaryName: 'Monthly Aid', beneficiaryPhone: '1000000015', helpRequested: 4000, helpGiven: 4000, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Monthly financial assistance to a deserving person.', verificationDocumentUrl: '' },
-];
-
-
 export type SeedItemResult = { name: string; status: 'Created' | 'Updated' | 'Skipped (already exists)' | 'Failed' };
 export type SeedResult = {
     userResults: SeedItemResult[];
@@ -152,7 +133,13 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             continue;
         }
         
-        const existingUser = await getUserByUserId(userData.userId);
+        let existingUser: User | null = await getUserByUserId(userData.userId);
+        if (!existingUser && userData.email) {
+            existingUser = await getUserByEmail(userData.email);
+        }
+        if (!existingUser) {
+            existingUser = await getUserByPhone(userData.phone);
+        }
         
         if (existingUser) {
             await updateUser(existingUser.id!, userData);
@@ -190,129 +177,6 @@ const seedOrganization = async (): Promise<string> => {
     console.log('Seeding organization...');
     await createOrganization(organizationToSeed);
     return 'Organization seeded successfully.';
-};
-
-
-const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResult[], leadResults: SeedItemResult[] }> => {
-    if (!isConfigValid) {
-        throw new Error("Firebase is not configured.");
-    }
-
-    console.log('Seeding historical donations and leads...');
-    let donationResults: SeedItemResult[] = [];
-    let leadResults: SeedItemResult[] = [];
-
-    const allUsers = await getAllUsers();
-    let donorUsers = allUsers.filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
-
-    if (donorUsers.length === 0) {
-        console.warn("No real donor users found. Donations will be assigned to Super Admins if possible.");
-        donorUsers = allUsers.filter(u => u.roles.includes('Super Admin'));
-        if (donorUsers.length === 0) throw new Error("Cannot seed donations. No users with 'Donor' or 'Super Admin' role found.");
-    }
-    
-    const historicalAdmin = await getUserByPhone("8421708907"); 
-    if (!historicalAdmin) {
-        throw new Error("Cannot seed historical data. The user 'Moosa Shaikh' (phone: 8421708907) must exist to act as the verifier for past leads.");
-    }
-    
-    const batch = writeBatch(db);
-
-    for (const leadData of historicalLeadsToSeed) {
-        let beneficiaryUser = await getUserByPhone(leadData.beneficiaryPhone);
-        
-        if (!beneficiaryUser) {
-            const [firstName, ...lastNameParts] = leadData.beneficiaryName.split(' ');
-            beneficiaryUser = await createUser({
-                name: leadData.beneficiaryName,
-                firstName: firstName || 'Historical',
-                lastName: lastNameParts.join(' ') || 'User',
-                userId: leadData.beneficiaryName.toLowerCase().replace(/\s+/g, '.'),
-                phone: leadData.beneficiaryPhone,
-                roles: ['Beneficiary'],
-                password: 'admin',
-                isActive: true,
-                createdAt: Timestamp.fromDate(new Date("2021-11-01")),
-                updatedAt: Timestamp.fromDate(new Date("2021-11-01")),
-                source: 'Seeded'
-            });
-        }
-        
-        // Use a consistent ID scheme to prevent duplicates
-        const leadId = `HISTORICAL_${beneficiaryUser.userKey}_${leadData.helpRequested}`;
-        const existingLead = await getLead(leadId);
-        if (existingLead) {
-            leadResults.push({ name: `Lead for ${beneficiaryUser.name}`, status: 'Skipped (already exists)' });
-            continue; // Skip if this specific lead exists
-        }
-
-        const randomDonor = donorUsers[Math.floor(Math.random() * donorUsers.length)];
-        
-        const donationData: Omit<Donation, 'id' | 'createdAt'> = {
-            donorId: randomDonor.id!,
-            donorName: randomDonor.name,
-            amount: leadData.helpGiven,
-            type: leadData.category as any,
-            purpose: 'Loan and Relief Fund',
-            status: 'Allocated',
-            isAnonymous: false,
-            transactionId: `HISTORICAL-${Date.now()}-${Math.random()}`,
-            paymentScreenshotUrls: [],
-            donationDate: Timestamp.fromDate(new Date("2021-11-01")),
-            verifiedAt: Timestamp.fromDate(new Date("2021-11-01")),
-            notes: 'Historical donation seeded automatically.',
-            source: 'Seeded'
-        };
-
-        const newDonation = await createDonation(donationData, historicalAdmin.id!, historicalAdmin.name, historicalAdmin.email);
-        
-        donationResults.push({ name: `Donation from ${randomDonor.name} for ${leadData.helpGiven}`, status: 'Created' });
-        
-        const leadRef = doc(db, 'leads', leadId);
-        const verifier: Verifier = {
-            verifierId: historicalAdmin.id!,
-            verifierName: historicalAdmin.name,
-            verifiedAt: Timestamp.fromDate(new Date("2021-12-01")),
-            notes: "Verified as part of historical data import."
-        };
-        const leadDonationAllocation: LeadDonationAllocation = {
-            donationId: newDonation.id!,
-            amount: leadData.helpGiven,
-            allocatedByUserId: historicalAdmin.id!,
-            allocatedByUserName: historicalAdmin.name,
-            allocatedAt: Timestamp.fromDate(new Date("2021-12-01")),
-        };
-
-        const newLead: Lead = {
-            id: leadRef.id,
-            name: beneficiaryUser.name,
-            beneficiaryId: beneficiaryUser.id!,
-            helpRequested: leadData.helpRequested,
-            helpGiven: leadData.helpGiven,
-            status: leadData.status as Lead['status'],
-            isLoan: leadData.isLoan,
-            caseDetails: leadData.caseDetails,
-            verificationDocumentUrl: leadData.verificationDocumentUrl,
-            verifiedStatus: leadData.verifiedStatus as Lead['verifiedStatus'],
-            verifiers: [verifier],
-            donations: [leadDonationAllocation],
-            adminAddedBy: { id: historicalAdmin.id!, name: historicalAdmin.name },
-            dateCreated: Timestamp.fromDate(new Date("2021-12-01")),
-            createdAt: Timestamp.fromDate(new Date("2021-12-01")),
-            updatedAt: Timestamp.fromDate(new Date("2021-12-01")),
-            category: leadData.category,
-            purpose: 'Relief Fund',
-            donationType: 'Lillah',
-            source: 'Seeded'
-        };
-        
-        batch.set(leadRef, newLead);
-        leadResults.push({ name: `Lead for ${newLead.name}`, status: 'Created' });
-    }
-    
-    await batch.commit();
-    console.log('Historical donation and lead seeding process finished.');
-    return { donationResults, leadResults };
 };
 
 
@@ -414,9 +278,13 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         results.orgStatus = await seedOrganization();
         results.quotesStatus = await seedInitialQuotes();
         
-        const historicalData = await seedDonationsAndLeads();
-        results.donationResults.push(...historicalData.donationResults);
-        results.leadResults.push(...historicalData.leadResults);
+        // Check if historical leads exist before trying to create them.
+        const historicalCheckQuery = query(collection(db, 'leads'), where('source', '==', 'Seeded'), where('campaignId', '==', undefined), limit(1));
+        const historicalSnapshot = await getDocs(historicalCheckQuery);
+        if (historicalSnapshot.empty) {
+             console.log("No historical leads found. Seeding is disabled to prevent duplicates.");
+        }
+
 
         // Seed Ramadan Campaign
         const ramadanLeads = [
