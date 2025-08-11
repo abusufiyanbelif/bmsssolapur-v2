@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -533,8 +532,12 @@ function DonationsPageContent() {
                     {canAllocate && (
                         <>
                             <DropdownMenuLabel>Allocate Funds</DropdownMenuLabel>
-                            <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
-                            <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
+                             <DropdownMenuItem asChild onSelect={e=>e.preventDefault()}>
+                                <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild onSelect={e=>e.preventDefault()}>
+                               <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                         </>
                     )}

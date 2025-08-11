@@ -1,4 +1,4 @@
-
+// src/app/admin/donations/allocate-to-lead-dialog.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -13,9 +13,9 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Link2, Check, AlertTriangle, PlusCircle, MinusCircle } from "lucide-react";
+import { Loader2, Link2, Check, AlertTriangle, PlusCircle, MinusCircle, Search, FilterX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Donation, Lead } from "@/services/types";
+import type { Donation, Lead, LeadStatus } from "@/services/types";
 import { handleAllocateDonation } from "./actions";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 interface AllocateToLeadDialogProps {
     donation: Donation;
@@ -38,6 +40,9 @@ interface SelectedLead {
     amountToAllocate: number;
 }
 
+const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "On Hold"];
+
+
 export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: AllocateToLeadDialogProps) {
     const [open, setOpen] = useState(false);
     const [selectedLeads, setSelectedLeads] = useState<SelectedLead[]>([]);
@@ -45,6 +50,7 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
     const { toast } = useToast();
     const [adminUserId, setAdminUserId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all');
     
     useEffect(() => {
         if(open) {
@@ -53,6 +59,7 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
              // Reset state when dialog opens
              setSelectedLeads([]);
              setSearchTerm('');
+             setStatusFilter('all');
         }
     }, [open]);
     
@@ -65,13 +72,15 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
     }, [allLeads]);
     
     const filteredLeads = useMemo(() => {
-        if (!searchTerm) return openLeads;
-        return openLeads.filter(lead => 
-            lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            lead.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            lead.purpose.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [openLeads, searchTerm]);
+        return openLeads.filter(lead => {
+            const searchMatch = searchTerm === '' || 
+                                lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                lead.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                lead.purpose.toLowerCase().includes(searchTerm.toLowerCase());
+            const statusMatch = statusFilter === 'all' || lead.status === statusFilter;
+            return searchMatch && statusMatch;
+        });
+    }, [openLeads, searchTerm, statusFilter]);
     
     const totalAllocated = selectedLeads.reduce((sum, lead) => sum + lead.amountToAllocate, 0);
     const remainingToAllocate = donation.amount - totalAllocated;
@@ -156,29 +165,48 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Left Column: Lead Selection */}
                     <div className="space-y-4">
-                        <Input 
-                            placeholder="Search by name, ID, or purpose..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                             <Input 
+                                placeholder="Search by name, ID..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as LeadStatus | 'all')}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filter by status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {statusOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
                          <ScrollArea className="h-96 border rounded-lg">
                             <div className="p-2 space-y-1">
                                 {filteredLeads.length > 0 ? filteredLeads.map((lead) => {
                                     const isSelected = selectedLeads.some(l => l.id === lead.id);
+                                    const pendingAmount = lead.helpRequested - lead.helpGiven;
                                     return (
                                         <div 
                                             key={lead.id}
-                                            className={cn("p-2 rounded-md cursor-pointer flex items-center gap-4", isSelected ? "bg-primary/10" : "hover:bg-muted/50")}
+                                            className={cn("p-3 rounded-md cursor-pointer flex items-center gap-4", isSelected ? "bg-primary/10 ring-2 ring-primary" : "hover:bg-muted/50 border")}
                                             onClick={() => handleSelectLead(lead)}
                                         >
-                                            <div className="flex-grow">
-                                                <p className="font-semibold">{lead.name}</p>
+                                            <div className="flex-grow space-y-1">
+                                                <div className="flex justify-between items-start">
+                                                    <p className="font-semibold">{lead.name}</p>
+                                                    <Badge variant="secondary">{lead.status}</Badge>
+                                                </div>
                                                 <p className="text-xs text-muted-foreground font-mono">{lead.id}</p>
+                                                <p className="text-xs text-muted-foreground">{lead.purpose} - {lead.category}</p>
+                                                <div className="flex justify-between text-xs font-medium">
+                                                    <span>Raised: ₹{lead.helpGiven.toLocaleString()} / ₹{lead.helpRequested.toLocaleString()}</span>
+                                                    <span className="text-destructive">Pending: ₹{pendingAmount.toLocaleString()}</span>
+                                                </div>
                                             </div>
-                                            {isSelected && <Check className="h-5 w-5 text-primary" />}
+                                            {isSelected && <Check className="h-5 w-5 text-primary flex-shrink-0" />}
                                         </div>
                                     )
-                                }) : <p className="text-center text-sm text-muted-foreground p-4">No open leads found.</p>}
+                                }) : <p className="text-center text-sm text-muted-foreground p-4">No open leads found matching criteria.</p>}
                             </div>
                          </ScrollArea>
                     </div>
