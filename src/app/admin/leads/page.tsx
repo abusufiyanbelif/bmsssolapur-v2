@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -45,7 +46,7 @@ const beneficiaryTypeOptions: { value: BeneficiaryTypeFilter, label: string, ico
 ];
 
 
-type SortableColumn = 'id' | 'name' | 'helpRequested' | 'helpGiven' | 'dateCreated' | 'closedAt';
+type SortableColumn = 'id' | 'name' | 'helpRequested' | 'helpGiven' | 'dateCreated' | 'closedAt' | 'verifiedAt' | 'lastAllocatedAt';
 type SortDirection = 'asc' | 'desc';
 
 const statusColors: Record<LeadStatus, string> = {
@@ -86,6 +87,11 @@ const priorityConfig: Record<LeadPriority, { color: string; icon?: React.Element
     "Low": { color: "border-gray-500 bg-gray-500/10 text-gray-700" },
 };
 
+interface EnrichedLead extends Lead {
+    verifiedAt?: Date;
+    lastAllocatedAt?: Date;
+}
+
 
 function LeadsPageContent() {
     const searchParams = useSearchParams();
@@ -93,7 +99,7 @@ function LeadsPageContent() {
     const verificationFromUrl = searchParams.get('verification');
     const typeFromUrl = searchParams.get('beneficiaryType');
 
-    const [leads, setLeads] = useState<Lead[]>([]);
+    const [leads, setLeads] = useState<EnrichedLead[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -129,7 +135,12 @@ function LeadsPageContent() {
                 getAllLeads(),
                 getAllUsers()
             ]);
-            setLeads(fetchedLeads);
+            const enrichedLeads = fetchedLeads.map(lead => ({
+                ...lead,
+                verifiedAt: lead.verifiers && lead.verifiers.length > 0 ? new Date(lead.verifiers[0].verifiedAt as any) : undefined,
+                lastAllocatedAt: lead.donations && lead.donations.length > 0 ? new Date(lead.donations.sort((a,b) => (b.allocatedAt as any) - (a.allocatedAt as any))[0].allocatedAt as any) : undefined,
+            }));
+            setLeads(enrichedLeads);
             setUsers(fetchedUsers);
             setError(null);
         } catch (e) {
@@ -202,6 +213,10 @@ function LeadsPageContent() {
             // Handle date/timestamp objects
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
+            } else if (aValue === undefined && bValue !== undefined) {
+                comparison = -1; // undefined values go first
+            } else if (aValue !== undefined && bValue === undefined) {
+                comparison = 1;
             } else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
@@ -332,62 +347,65 @@ function LeadsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Sr. No.</TableHead>
                     <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort('id')}>
-                            Lead ID {renderSortIcon('id')}
-                        </Button>
-                    </TableHead>
-                    <TableHead>
-                         <Button variant="ghost" onClick={() => handleSort('name')}>
+                        <Button variant="ghost" onClick={() => handleSort('name')}>
                             Beneficiary {renderSortIcon('name')}
                         </Button>
                     </TableHead>
+                    <TableHead>Case Status</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('helpRequested')}>
                            Amount Req. {renderSortIcon('helpRequested')}
                         </Button>
                     </TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Case Status</TableHead>
-                    <TableHead>Verification</TableHead>
+                     <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('dateCreated')}>
+                            Created {renderSortIcon('dateCreated')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('verifiedAt')}>
+                            Verified {renderSortIcon('verifiedAt')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('lastAllocatedAt')}>
+                            Last Allocated {renderSortIcon('lastAllocatedAt')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('closedAt')}>
+                            Closed {renderSortIcon('closedAt')}
+                        </Button>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedLeads.map((lead, index) => {
+                {paginatedLeads.map((lead) => {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                     const StatusIcon = statusIcons[lead.status];
-                    const priorityConf = priorityConfig[lead.priority || 'Medium'];
                     return (
                         <TableRow key={lead.id}>
-                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                             <TableCell>
-                                <div className="font-mono text-xs">{lead.id}</div>
-                                <div className="text-xs text-muted-foreground">{format(lead.dateCreated, "dd MMM yyyy")}</div>
-                            </TableCell>
                             <TableCell>
                                 <div className="font-medium">{lead.name}</div>
-                            </TableCell>
-                            <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", priorityConf.color)}>
-                                    {priorityConf.icon && <priorityConf.icon className="mr-1 h-3 w-3" />}
-                                    {lead.priority || 'Medium'}
-                                </Badge>
+                                 <div className="font-mono text-xs text-muted-foreground">{lead.id}</div>
                             </TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     <StatusIcon className="mr-1 h-3 w-3" />
                                     {lead.status}
                                 </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
+                                 <Badge variant="outline" className={cn("capitalize mt-1", verifConfig.color)}>
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
                                     {lead.verifiedStatus}
                                 </Badge>
                             </TableCell>
+                            <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
+                            <TableCell>{format(lead.dateCreated, "dd MMM yyyy")}</TableCell>
+                            <TableCell>{lead.verifiedAt ? format(lead.verifiedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
+                            <TableCell>{lead.lastAllocatedAt ? format(lead.lastAllocatedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
+                            <TableCell>{lead.closedAt ? format(lead.closedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
                             <TableCell className="text-right">
                                 {renderActions(lead)}
                             </TableCell>
@@ -400,17 +418,16 @@ function LeadsPageContent() {
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {paginatedLeads.map((lead, index) => {
+            {paginatedLeads.map((lead) => {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                  const StatusIcon = statusIcons[lead.status];
-                 const priorityConf = priorityConfig[lead.priority || 'Medium'];
                  return (
                     <Card key={lead.id}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {lead.name}</CardTitle>
-                                    <CardDescription>Created: {format(lead.dateCreated, "dd MMM yyyy")}</CardDescription>
+                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
+                                    <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
@@ -419,23 +436,24 @@ function LeadsPageContent() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
-                           <div className="flex justify-between">
-                                <span className="text-muted-foreground">Amount Requested</span>
-                                <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span>
-                            </div>
-                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Priority</span>
-                                <Badge variant="outline" className={cn("capitalize", priorityConf.color)}>
-                                    {priorityConf.icon && <priorityConf.icon className="mr-1 h-3 w-3" />}
-                                    {lead.priority || 'Medium'}
-                                </Badge>
-                            </div>
                              <div className="flex justify-between">
                                 <span className="text-muted-foreground">Case Status</span>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
                                     <StatusIcon className="mr-1 h-3 w-3" />
                                     {lead.status}
                                 </Badge>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Created On</span>
+                                <span>{format(lead.dateCreated, "dd MMM yyyy")}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Verified On</span>
+                                <span>{lead.verifiedAt ? format(lead.verifiedAt, "dd MMM yyyy") : 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Closed On</span>
+                                <span>{lead.closedAt ? format(lead.closedAt, "dd MMM yyyy") : 'N/A'}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Lead ID</span>
