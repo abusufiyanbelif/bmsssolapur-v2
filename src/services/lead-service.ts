@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType } from './types';
+import { logActivity } from './activity-log-service';
 
 // Re-export types for backward compatibility
 export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
@@ -130,16 +131,40 @@ export const deleteLead = async (id: string) => {
 }
 
 // Quick status update functions
-export const updateLeadStatus = async (id: string, newStatus: LeadStatus) => {
+export const updateLeadStatus = async (id: string, newStatus: LeadStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
+    const lead = await getLead(id);
+    if (!lead) throw new Error("Lead not found for status update.");
+    
+    await logActivity({
+        userId: adminUser.id!,
+        userName: adminUser.name,
+        userEmail: adminUser.email,
+        role: "Admin",
+        activity: `Lead Status Changed`,
+        details: { leadId: id, leadName: lead.name, from: lead.status, to: newStatus }
+    });
+
     return updateLead(id, { status: newStatus });
 };
 
-export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVerificationStatus) => {
-    // If verifying, also set status to Ready For Help
+export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVerificationStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
+    const lead = await getLead(id);
+    if (!lead) throw new Error("Lead not found for verification status update.");
+    
     const updates: Partial<Lead> = { verifiedStatus: newStatus };
     if (newStatus === 'Verified') {
         updates.status = 'Ready For Help';
     }
+    
+    await logActivity({
+        userId: adminUser.id!,
+        userName: adminUser.name,
+        userEmail: adminUser.email,
+        role: "Admin",
+        activity: `Lead Verification Changed`,
+        details: { leadId: id, leadName: lead.name, from: lead.verifiedStatus, to: newStatus }
+    });
+    
     return updateLead(id, updates);
 };
 

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
-import { getAllUsers, type User } from "@/services/user-service";
+import { getAllUsers, getUser, type User } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -240,11 +240,25 @@ function LeadsPageContent() {
     };
     
     const handleQuickStatusChange = async (leadId: string, type: 'case' | 'verification', newStatus: LeadStatus | LeadVerificationStatus) => {
+        const adminId = localStorage.getItem('userId');
+        if (!adminId) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not identify administrator.' });
+            return;
+        }
+        
         try {
+            const adminUser = await getUser(adminId);
+            if (!adminUser) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Admin user not found.' });
+                return;
+            }
+
+            const adminDetails = { id: adminUser.id!, name: adminUser.name, email: adminUser.email };
+
             if (type === 'case') {
-                await updateLeadStatus(leadId, newStatus as LeadStatus);
+                await updateLeadStatus(leadId, newStatus as LeadStatus, adminDetails);
             } else {
-                await updateLeadVerificationStatus(leadId, newStatus as LeadVerificationStatus);
+                await updateLeadVerificationStatus(leadId, newStatus as LeadVerificationStatus, adminDetails);
             }
             toast({
                 title: "Status Updated",

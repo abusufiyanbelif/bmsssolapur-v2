@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { History, FileUp, Banknote, ShieldCheck, UserPlus, Paperclip } from "lucide-react";
+import { History, FileUp, Banknote, ShieldCheck, UserPlus, Paperclip, FileCheck, Edit, UploadCloud } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { ActivityLog, Lead } from "@/services/types";
 import { useState } from "react";
@@ -30,6 +30,9 @@ export function AuditTrail({ lead, activityLogs }: AuditTrailProps) {
             }
             if (log.activity === 'Lead Updated') {
                 return { type: 'updated', timestamp: log.timestamp, user: log.userName, logData: log };
+            }
+            if (log.activity === 'Lead Status Changed' || log.activity === 'Lead Verification Changed') {
+                 return { type: 'statusChange', timestamp: log.timestamp, user: log.userName, details: log.details };
             }
             return null;
         }).filter(Boolean)
@@ -59,9 +62,23 @@ export function AuditTrail({ lead, activityLogs }: AuditTrailProps) {
                  title = <>Document <span className="font-semibold">{item.fileName}</span> uploaded by <span className="font-semibold">{item.user}</span></>;
                  break;
             case 'updated':
-                icon = <FileUp className="h-5 w-5 text-orange-600" />;
+                icon = <Edit className="h-5 w-5 text-orange-600" />;
                 title = <>Lead details updated by <span className="font-semibold">{item.user}</span></>;
                 isClickable = true;
+                break;
+             case 'statusChange':
+                const from = item.details.from;
+                const to = item.details.to;
+                if (to === 'Publish') {
+                    icon = <UploadCloud className="h-5 w-5 text-blue-600" />;
+                    title = <>Lead Published by <span className="font-semibold">{item.user}</span></>;
+                } else if (to === 'Verified') {
+                    icon = <FileCheck className="h-5 w-5 text-green-600" />;
+                    title = <>Lead Verified by <span className="font-semibold">{item.user}</span></>;
+                } else {
+                    icon = <FileUp className="h-5 w-5 text-gray-600" />;
+                    title = <>Status changed from "{from}" to "{to}" by <span className="font-semibold">{item.user}</span></>;
+                }
                 break;
             default:
                 return null;
