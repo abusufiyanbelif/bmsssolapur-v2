@@ -2,9 +2,9 @@
 
 "use server";
 
-import { getUser, updateUser } from "@/services/user-service";
+import { getUser, updateUser, User } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { User, UserRole } from "@/services/types";
+import type { UserRole } from "@/services/types";
 import { logActivity } from "@/services/activity-log-service";
 
 interface FormState {
@@ -48,39 +48,9 @@ const getChangedFields = (original: User, updates: Partial<User>) => {
 
 export async function handleUpdateUser(
   userId: string,
-  formData: FormData,
+  rawFormData: any, // Changed from FormData to any/object
   adminUserId: string,
 ): Promise<FormState> {
-  const rawFormData = {
-    firstName: formData.get("firstName") as string,
-    middleName: formData.get("middleName") as string,
-    lastName: formData.get("lastName") as string,
-    email: formData.get("email") as string,
-    phone: formData.get("phone") as string,
-    roles: formData.getAll("roles") as UserRole[],
-    isActive: formData.get("isActive") === 'on',
-    isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
-    isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
-    gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
-    beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
-    
-    addressLine1: formData.get("addressLine1") as string | undefined,
-    city: formData.get("city") as string | undefined,
-    state: formData.get("state") as string | undefined,
-    country: formData.get("country") as string | undefined,
-    pincode: formData.get("pincode") as string | undefined,
-
-    occupation: formData.get("occupation") as string | undefined,
-    familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string, 10) : undefined,
-    isWidow: formData.get("isWidow") === 'on',
-    
-    panNumber: formData.get("panNumber") as string | undefined,
-    aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
-    bankAccountName: formData.get("bankAccountName") as string | undefined,
-    bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
-    bankIfscCode: formData.get("bankIfscCode") as string | undefined,
-    upiPhone: formData.get("upiPhone") as string | undefined,
-  };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
       return { success: false, error: "Missing required fields." };
@@ -100,7 +70,7 @@ export async function handleUpdateUser(
     if (!adminUser.roles.includes('Super Admin')) {
         const higherRoles = ['Admin', 'Super Admin', 'Finance Admin'];
         const existingHigherRoles = originalUser.roles.filter(role => higherRoles.includes(role));
-        const submittedNormalRoles = rawFormData.roles.filter(role => !higherRoles.includes(role));
+        const submittedNormalRoles = rawFormData.roles.filter((role: UserRole) => !higherRoles.includes(role));
         // Merge the user's existing higher roles with the normal roles submitted by the non-super-admin.
         finalRoles = [...new Set([...existingHigherRoles, ...submittedNormalRoles])];
     }
@@ -136,6 +106,7 @@ export async function handleUpdateUser(
         bankAccountNumber: rawFormData.bankAccountNumber || '',
         bankIfscCode: rawFormData.bankIfscCode || '',
         upiPhone: rawFormData.upiPhone || '',
+        upiIds: (rawFormData.upiIds || []).map((item: { value: string }) => item.value).filter(Boolean),
     };
     
     const changes = getChangedFields(originalUser, updates);

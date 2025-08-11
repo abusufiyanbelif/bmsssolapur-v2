@@ -173,7 +173,10 @@ const formSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  bankAccountName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
+  upiPhone: z.string().optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -220,7 +223,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
       isWidow: user.isWidow || false,
       panNumber: user.panNumber || '',
       aadhaarNumber: user.aadhaarNumber || '',
+      bankAccountName: user.bankAccountName || '',
       bankAccountNumber: user.bankAccountNumber || '',
+      bankIfscCode: user.bankIfscCode || '',
+      upiPhone: user.upiPhone || '',
       upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
     },
   });
@@ -255,7 +261,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
           isWidow: user.isWidow || false,
           panNumber: user.panNumber || '',
           aadhaarNumber: user.aadhaarNumber || '',
+          bankAccountName: user.bankAccountName || '',
           bankAccountNumber: user.bankAccountNumber || '',
+          bankIfscCode: user.bankIfscCode || '',
+          upiPhone: user.upiPhone || '',
           upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
       });
       setIsEditing(false);
@@ -269,35 +278,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
     }
     setIsSubmitting(true);
     
-    const formData = new FormData();
-    if(values.firstName) formData.append("firstName", values.firstName);
-    if(values.middleName) formData.append("middleName", values.middleName);
-    if(values.lastName) formData.append("lastName", values.lastName);
-    formData.append("email", user.email || '');
-    formData.append("phone", values.phone);
-    values.roles.forEach(role => formData.append("roles", role));
-    if(values.isActive) formData.append("isActive", "on");
-    if(values.isAnonymousAsBeneficiary) formData.append("isAnonymousAsBeneficiary", "on");
-    if(values.isAnonymousAsDonor) formData.append("isAnonymousAsDonor", "on");
-    formData.append("gender", values.gender);
-    if(values.beneficiaryType) formData.append("beneficiaryType", values.beneficiaryType);
-    if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
-    if(values.city) formData.append("city", values.city);
-    if(values.state) formData.append("state", values.state);
-    if(values.country) formData.append("country", values.country);
-    if(values.pincode) formData.append("pincode", values.pincode);
-    if(values.occupation) formData.append("occupation", values.occupation);
-    if(values.familyMembers) formData.append("familyMembers", String(values.familyMembers));
-    if(values.isWidow) formData.append("isWidow", "on");
-    if(values.panNumber) formData.append("panNumber", values.panNumber);
-    if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
-    if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
-
-    values.upiIds?.forEach(upi => {
-        if(upi.value) formData.append("upiIds", upi.value);
-    });
-
-    const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
+    const result = await handleUpdateUser(user.id!, values, currentAdmin.id);
 
     setIsSubmitting(false);
 
