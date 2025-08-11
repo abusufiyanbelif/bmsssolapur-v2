@@ -16,8 +16,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose, type PaymentMethod } from "@/services/donation-service";
 import { getAllUsers, type User } from "@/services/user-service";
+import { getAllLeads, type Lead } from "@/services/lead-service";
+import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -32,6 +34,8 @@ import { handleDeleteDonation, handleBulkDeleteDonations, handleUpdateDonationSt
 import { UploadProofDialog } from "./upload-proof-dialog";
 import { CreateFromUploadDialog } from "./create-from-upload-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
+import { AllocateToCampaignDialog } from './allocate-to-campaign-dialog';
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
@@ -56,6 +60,8 @@ function DonationsPageContent() {
 
     const [donations, setDonations] = useState<Donation[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [allLeads, setAllLeads] = useState<Lead[]>([]);
+    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedDonations, setSelectedDonations] = useState<string[]>([]);
@@ -88,12 +94,16 @@ function DonationsPageContent() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [fetchedDonations, fetchedUsers] = await Promise.all([
+            const [fetchedDonations, fetchedUsers, fetchedLeads, fetchedCampaigns] = await Promise.all([
                 getAllDonations(),
-                getAllUsers()
+                getAllUsers(),
+                getAllLeads(),
+                getAllCampaigns(),
             ]);
             setDonations(fetchedDonations);
             setAllUsers(fetchedUsers);
+            setAllLeads(fetchedLeads);
+            setAllCampaigns(fetchedCampaigns);
             setError(null);
         } catch (e) {
             setError("Failed to fetch donations. Please try again later.");
@@ -194,9 +204,10 @@ function DonationsPageContent() {
         fetchData();
     }
     
-    const onUploadSuccess = () => {
+    const onAllocationSuccess = () => {
+        toast({ variant: 'success', title: "Donation Allocated", description: "The donation has been successfully linked." });
         fetchData();
-    }
+    };
 
     const handleQuickStatusChange = async (donationId: string, newStatus: DonationStatus) => {
         const result = await handleUpdateDonationStatus(donationId, newStatus);
@@ -239,7 +250,6 @@ function DonationsPageContent() {
                             aria-label="Select all"
                         />
                     </TableHead>
-                    <TableHead>Sr. No.</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('id')}>
                             Donation ID {renderSortIcon('id')}
@@ -260,9 +270,9 @@ function DonationsPageContent() {
                             Amount {renderSortIcon('amount')}
                         </Button>
                     </TableHead>
-                    <TableHead>Payment Method</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Linked To</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -280,9 +290,9 @@ function DonationsPageContent() {
                                 aria-label="Select row"
                             />
                         </TableCell>
-                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{donation.id}</div>
+                            <div className="text-xs text-muted-foreground">{donation.source || 'Manual Entry'}</div>
                         </TableCell>
                         <TableCell>{format(new Date(donation.donationDate), "dd MMM yyyy")}</TableCell>
                         <TableCell className="font-medium">
@@ -297,7 +307,6 @@ function DonationsPageContent() {
                             </div>
                         </TableCell>
                         <TableCell>₹{donation.amount.toFixed(2)}</TableCell>
-                        <TableCell>{donation.paymentMethod || 'N/A'}</TableCell>
                         <TableCell>{donation.type}</TableCell>
                         <TableCell>
                              <DropdownMenu>
@@ -323,6 +332,18 @@ function DonationsPageContent() {
                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                        </TableCell>
+                         <TableCell className="space-y-1">
+                            {donation.leadId ? (
+                                <Link href={`/admin/leads/${donation.leadId}`} className="text-xs font-medium hover:underline text-primary">Lead: {donation.leadId}</Link>
+                            ) : (
+                                <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
+                            )}
+                            {donation.campaignId ? (
+                                <Link href={`/admin/campaigns/${donation.campaignId}/edit`} className="text-xs font-medium hover:underline text-purple-600 block">Campaign: {allCampaigns.find(c => c.id === donation.campaignId)?.name || donation.campaignId}</Link>
+                            ) : (
+                                <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
+                            )}
                         </TableCell>
                         <TableCell className="text-right">
                             {renderActions(donation)}
@@ -351,7 +372,7 @@ function DonationsPageContent() {
                                     aria-label="Select card"
                                 />
                                 <div>
-                                    <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: ₹{donation.amount.toFixed(2)}</CardTitle>
+                                    <CardTitle className="text-lg">₹{donation.amount.toFixed(2)}</CardTitle>
                                     <CardDescription>
                                         <div className="flex items-center gap-2">
                                             <span>{donation.donorName}</span>
@@ -383,9 +404,20 @@ function DonationsPageContent() {
                             <span className="text-muted-foreground">Category</span>
                             <span>{donation.type}</span>
                         </div>
-                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Payment Method</span>
-                            <span>{donation.paymentMethod || 'N/A'}</span>
+                         <div className="space-y-2">
+                            <span className="text-muted-foreground">Linked To</span>
+                             <div className="flex flex-col items-start gap-2">
+                                {donation.leadId ? (
+                                    <Link href={`/admin/leads/${donation.leadId}`} className="text-xs font-medium hover:underline text-primary">Lead: {donation.leadId}</Link>
+                                ) : (
+                                    <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
+                                )}
+                                {donation.campaignId ? (
+                                    <Link href={`/admin/campaigns/${donation.campaignId}/edit`} className="text-xs font-medium hover:underline text-purple-600">Campaign: {allCampaigns.find(c => c.id === donation.campaignId)?.name || donation.campaignId}</Link>
+                                ) : (
+                                    <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
+                                )}
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
@@ -412,7 +444,7 @@ function DonationsPageContent() {
                         </Link>
                     </DropdownMenuItem>
                     
-                    <UploadProofDialog donation={donation} onUploadSuccess={onUploadSuccess}>
+                    <UploadProofDialog donation={donation} onUploadSuccess={fetchData}>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                             <Upload className="mr-2 h-4 w-4" /> Upload Proof
                         </DropdownMenuItem>

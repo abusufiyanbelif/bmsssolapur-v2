@@ -53,6 +53,24 @@ export async function handleUpdateDonationStatus(donationId: string, status: Don
     }
 }
 
+export async function handleAllocateDonation(donationId: string, linkTo: 'lead' | 'campaign', linkId: string) {
+    try {
+        const updates: { leadId?: string, campaignId?: string } = {};
+        if (linkTo === 'lead') {
+            updates.leadId = linkId;
+        } else if (linkTo === 'campaign') {
+            updates.campaignId = linkId;
+        }
+
+        await updateDonation(donationId, updates);
+        revalidatePath("/admin/donations");
+        return { success: true };
+    } catch(e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        return { success: false, error };
+    }
+}
+
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
 // and get a URL. For this prototype, we'll just acknowledge the file was received.

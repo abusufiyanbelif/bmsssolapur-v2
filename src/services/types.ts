@@ -74,6 +74,7 @@ export interface User {
   monthlyPledgeAmount?: number;
   createdAt: Timestamp | Date;
   updatedAt?: Timestamp | Date;
+  source?: 'Seeded' | 'Manual Entry';
 }
 
 // Donation-related types
@@ -110,6 +111,7 @@ export interface Donation {
   verifiedAt?: Timestamp;
   allocations?: Allocation[];
   notes?: string;
+  source?: 'Seeded' | 'Manual Entry';
 }
 
 // Lead-related types
@@ -187,6 +189,7 @@ export interface Lead {
     isLoan: boolean;
     createdAt: Timestamp;
     updatedAt: Timestamp;
+    source?: 'Seeded' | 'Manual Entry';
 }
 
 export interface Organization {
