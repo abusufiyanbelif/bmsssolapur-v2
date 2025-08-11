@@ -8,7 +8,7 @@ import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FilePlus2, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart } from "lucide-react";
+import { FilePlus2, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart, ArrowUpDown } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,11 +18,17 @@ import type { Lead, LeadStatus } from "@/services/types";
 
 const statusColors: Record<LeadStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
+    "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Complete": "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
     "On Hold": "bg-orange-500/20 text-orange-700 border-orange-500/30",
     "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
+
+type SortableColumn = 'createdAt' | 'helpRequested' | 'status';
+type SortDirection = 'asc' | 'desc';
 
 
 export default function MyCasesPage() {
@@ -31,6 +37,10 @@ export default function MyCasesPage() {
     const [error, setError] = useState<string |null>(null);
     const isMobile = useIsMobile();
     const [userId, setUserId] = useState<string | null>(null);
+
+    // Sorting state
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('createdAt');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -53,8 +63,6 @@ export default function MyCasesPage() {
             try {
                 setLoading(true);
                 const userCases = await getLeadsByBeneficiaryId(userId);
-                // Sort by most recent first
-                userCases.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                 setCases(userCases);
             } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
@@ -67,10 +75,37 @@ export default function MyCasesPage() {
         fetchCases();
     }, [userId]);
     
+    const handleSort = (column: SortableColumn) => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    }
+
+    const sortedCases = useMemo(() => {
+        return [...cases].sort((a, b) => {
+            const aValue = a[sortColumn];
+            const bValue = b[sortColumn];
+            
+            let comparison = 0;
+            if (typeof aValue === 'number' && typeof bValue === 'number') {
+                comparison = aValue - bValue;
+            } else if (aValue instanceof Date && bValue instanceof Date) {
+                comparison = aValue.getTime() - bValue.getTime();
+            } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                comparison = aValue.localeCompare(bValue);
+            }
+
+            return sortDirection === 'asc' ? comparison : -comparison;
+        });
+    }, [cases, sortColumn, sortDirection]);
+
     const paginatedCases = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
-        return cases.slice(startIndex, startIndex + itemsPerPage);
-    }, [cases, currentPage, itemsPerPage]);
+        return sortedCases.slice(startIndex, startIndex + itemsPerPage);
+    }, [sortedCases, currentPage, itemsPerPage]);
 
     const totalPages = Math.ceil(cases.length / itemsPerPage);
 
@@ -78,17 +113,33 @@ export default function MyCasesPage() {
         setCurrentPage(1);
     }, [itemsPerPage]);
     
+    const renderSortIcon = (column: SortableColumn) => {
+        if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+        return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+    };
 
     const renderDesktopTable = () => (
          <Table>
             <TableHeader>
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
-                    <TableHead>Date Submitted</TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                            Date Submitted {renderSortIcon('createdAt')}
+                        </Button>
+                    </TableHead>
                     <TableHead>Purpose</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => handleSort('status')}>
+                           Status {renderSortIcon('status')}
+                        </Button>
+                    </TableHead>
                     <TableHead className="w-[30%]">Funding Progress</TableHead>
-                    <TableHead className="text-right">Amount Requested</TableHead>
+                    <TableHead className="text-right">
+                         <Button variant="ghost" onClick={() => handleSort('helpRequested')}>
+                            Amount Req. {renderSortIcon('helpRequested')}
+                        </Button>
+                    </TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -251,9 +302,9 @@ export default function MyCasesPage() {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Help Requests</h2>
              <Button asChild>
-                <Link href="/campaigns">
-                    <HandHeart className="mr-2 h-4 w-4" />
-                    Donate Now
+                <Link href="/request-help">
+                    <FilePlus2 className="mr-2 h-4 w-4" />
+                    Request Help
                 </Link>
             </Button>
         </div>
