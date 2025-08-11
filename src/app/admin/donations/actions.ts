@@ -6,6 +6,8 @@ import { deleteDonation, updateDonation, createDonation } from "@/services/donat
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import { writeBatch, doc } from "firebase/firestore";
+import { db } from "@/services/firebase";
 
 export async function handleDeleteDonation(donationId: string) {
     try {
@@ -17,6 +19,23 @@ export async function handleDeleteDonation(donationId: string) {
         return { success: false, error };
     }
 }
+
+export async function handleBulkDeleteDonations(donationIds: string[]) {
+    try {
+        const batch = writeBatch(db);
+        donationIds.forEach(id => {
+            const docRef = doc(db, "donations", id);
+            batch.delete(docRef);
+        });
+        await batch.commit();
+        revalidatePath("/admin/donations");
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        return { success: false, error };
+    }
+}
+
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
 // and get a URL. For this prototype, we'll just acknowledge the file was received.

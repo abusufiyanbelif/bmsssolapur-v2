@@ -28,9 +28,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteDonation } from "./actions";
+import { handleDeleteDonation, handleBulkDeleteDonations } from "./actions";
 import { UploadProofDialog } from "./upload-proof-dialog";
 import { CreateFromUploadDialog } from "./create-from-upload-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Failed/Incomplete", "Allocated"];
@@ -57,6 +58,7 @@ function DonationsPageContent() {
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedDonations, setSelectedDonations] = useState<string[]>([]);
     
     // Input states
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
@@ -183,6 +185,15 @@ function DonationsPageContent() {
         fetchData();
     }
     
+    const onBulkDonationDeleted = () => {
+        toast({
+            title: "Donations Deleted",
+            description: `${selectedDonations.length} donation(s) have been successfully removed.`,
+        });
+        setSelectedDonations([]);
+        fetchData();
+    }
+    
     const onUploadSuccess = () => {
         fetchData();
     }
@@ -197,6 +208,19 @@ function DonationsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead padding="checkbox">
+                        <Checkbox
+                            checked={selectedDonations.length > 0 && selectedDonations.length === paginatedDonations.length}
+                            onCheckedChange={(checked) => {
+                                if (checked) {
+                                    setSelectedDonations(paginatedDonations.map(d => d.id!));
+                                } else {
+                                    setSelectedDonations([]);
+                                }
+                            }}
+                            aria-label="Select all"
+                        />
+                    </TableHead>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('id')}>
@@ -226,7 +250,18 @@ function DonationsPageContent() {
             </TableHeader>
             <TableBody>
                 {paginatedDonations.map((donation, index) => (
-                    <TableRow key={donation.id}>
+                    <TableRow key={donation.id} data-state={selectedDonations.includes(donation.id!) ? 'selected' : ''}>
+                        <TableCell padding="checkbox">
+                            <Checkbox
+                                checked={selectedDonations.includes(donation.id!)}
+                                onCheckedChange={(checked) => {
+                                    setSelectedDonations(prev => 
+                                        checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!)
+                                    );
+                                }}
+                                aria-label="Select row"
+                            />
+                        </TableCell>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{donation.id}</div>
@@ -263,23 +298,35 @@ function DonationsPageContent() {
     const renderMobileCards = () => (
         <div className="space-y-4">
             {paginatedDonations.map((donation, index) => (
-                <Card key={donation.id}>
+                <Card key={donation.id} className={cn(selectedDonations.includes(donation.id!) && "ring-2 ring-primary")}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                             <div>
-                                <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: ₹{donation.amount.toFixed(2)}</CardTitle>
-                                <CardDescription>
-                                    <div className="flex items-center gap-2">
-                                        <span>{donation.donorName}</span>
-                                        {donation.isAnonymous && (
-                                            <Badge variant="secondary" title="This donation is marked as anonymous for public display">
-                                                <EyeOff className="mr-1 h-3 w-3" />
-                                                Anonymous
-                                            </Badge>
-                                        )}
-                                    </div>
-                                </CardDescription>
-                            </div>
+                             <div className="flex items-center gap-4">
+                                <Checkbox
+                                    className="mt-1"
+                                    checked={selectedDonations.includes(donation.id!)}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedDonations(prev => 
+                                            checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!)
+                                        );
+                                    }}
+                                    aria-label="Select card"
+                                />
+                                <div>
+                                    <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: ₹{donation.amount.toFixed(2)}</CardTitle>
+                                    <CardDescription>
+                                        <div className="flex items-center gap-2">
+                                            <span>{donation.donorName}</span>
+                                            {donation.isAnonymous && (
+                                                <Badge variant="secondary" title="This donation is marked as anonymous for public display">
+                                                    <EyeOff className="mr-1 h-3 w-3" />
+                                                    Anonymous
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </CardDescription>
+                                </div>
+                             </div>
                              <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
                                 {donation.status}
                              </Badge>
@@ -353,7 +400,11 @@ function DonationsPageContent() {
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
-                Showing {paginatedDonations.length} of {filteredDonations.length} donations.
+                {selectedDonations.length > 0 ? (
+                    `${selectedDonations.length} of ${filteredDonations.length} row(s) selected.`
+                ) : (
+                    `Showing ${paginatedDonations.length} of ${filteredDonations.length} donations.`
+                )}
             </div>
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2">
@@ -451,6 +502,24 @@ function DonationsPageContent() {
 
         return (
             <>
+                {selectedDonations.length > 0 && (
+                    <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm font-medium">
+                            {selectedDonations.length} item(s) selected.
+                        </p>
+                         <DeleteConfirmationDialog
+                            itemType={`${selectedDonations.length} donation(s)`}
+                            itemName="the selected items"
+                            onDelete={() => handleBulkDeleteDonations(selectedDonations)}
+                            onSuccess={onBulkDonationDeleted}
+                        >
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected
+                            </Button>
+                        </DeleteConfirmationDialog>
+                    </div>
+                )}
                 {isMobile ? renderMobileCards() : renderDesktopTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
