@@ -442,7 +442,7 @@ function DonationsPageContent() {
                                                 return (
                                                 <TableRow key={alloc.leadId + i}>
                                                      <TableCell>
-                                                        <Link href={`/admin/leads/${alloc.leadId}`} className="font-mono text-xs hover:underline text-primary">
+                                                        <Link href={`/admin/donations/${donation.id}/allocations/${i}`} className="font-mono text-xs hover:underline text-primary">
                                                             {allocationId}
                                                         </Link>
                                                     </TableCell>
@@ -455,7 +455,7 @@ function DonationsPageContent() {
                                                         <p>{alloc.allocatedByUserName}</p>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <p className="text-xs">{format(alloc.allocatedAt, "dd MMM, p")}</p>
+                                                        <p className="text-xs">{format(alloc.allocatedAt as Date, "dd MMM, p")}</p>
                                                     </TableCell>
                                                 </TableRow>
                                                 )
