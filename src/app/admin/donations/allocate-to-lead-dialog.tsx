@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Donation, Lead } from "@/services/types";
 import { handleAllocateDonation } from "./actions";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface AllocateToLeadDialogProps {
     donation: Donation;
@@ -59,7 +60,7 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                     Allocate to Lead
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Allocate Donation to Lead</DialogTitle>
                     <DialogDescription>
@@ -67,25 +68,36 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                     </DialogDescription>
                 </DialogHeader>
                  <Command>
-                    <CommandInput placeholder="Search for a lead by name or ID..." />
+                    <CommandInput placeholder="Search by name, ID, status, or purpose..." />
                     <CommandList>
                         <CommandEmpty>No open leads found.</CommandEmpty>
                         <CommandGroup>
-                        {openLeads.map((lead) => (
+                        {openLeads.map((lead) => {
+                            const pendingAmount = lead.helpRequested - lead.helpGiven;
+                            return (
                             <CommandItem
                                 key={lead.id}
-                                value={`${lead.id} ${lead.name} ${lead.purpose} ${lead.category}`}
+                                value={`${lead.id} ${lead.name} ${lead.purpose} ${lead.category} ${lead.status}`}
                                 onSelect={() => setSelectedLeadId(lead.id)}
-                                className="flex justify-between items-center"
+                                className="flex justify-between items-start cursor-pointer"
                             >
-                                <div className="space-y-1">
-                                    <p>{lead.name}</p>
+                                <div className="space-y-1 w-full">
+                                    <div className="flex justify-between items-center">
+                                        <p className="font-semibold">{lead.name}</p>
+                                         <Badge variant={lead.status === 'Ready For Help' || lead.status === 'Publish' ? 'default' : 'secondary'}>{lead.status}</Badge>
+                                    </div>
                                     <p className="font-mono text-xs text-muted-foreground">{lead.id}</p>
-                                    <p className="text-xs text-muted-foreground">{lead.purpose} - ₹{lead.helpRequested.toLocaleString()}</p>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm pt-2">
+                                        <div className="text-muted-foreground">Purpose:</div>
+                                        <div>{lead.purpose}</div>
+                                        <div className="text-muted-foreground">Pending Amount:</div>
+                                        <div className="font-semibold">₹{pendingAmount.toLocaleString()}</div>
+                                    </div>
                                 </div>
-                                {selectedLeadId === lead.id && <Check className="h-4 w-4 text-primary" />}
+
+                                {selectedLeadId === lead.id && <Check className="ml-4 h-5 w-5 text-primary flex-shrink-0" />}
                             </CommandItem>
-                        ))}
+                        )})}
                         </CommandGroup>
                     </CommandList>
                 </Command>
