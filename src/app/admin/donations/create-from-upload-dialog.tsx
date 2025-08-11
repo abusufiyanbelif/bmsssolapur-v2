@@ -22,6 +22,7 @@ import { handleScanDonationProof } from "./actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getUserByPhone, getUserByUpiId, getUserByUserId, getUserByBankAccountNumber } from "@/services/user-service";
+import type { User } from "@/services/types";
 
 interface CreateFromUploadDialogProps {
   children: React.ReactNode;
@@ -88,11 +89,25 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if(result.details.donorName) queryParams.set('donorName', result.details.donorName);
       if(result.details.senderAccountNumber) queryParams.set('bankAccountNumber', result.details.senderAccountNumber);
       
-      // Check if a user exists with any of the identifiers
-      let user = null;
+      // --- Enhanced User Matching Logic ---
+      let user: User | null = null;
+      
+      // 1. Primary search with direct extracted fields
       if (result.details.donorUpiId) user = await getUserByUpiId(result.details.donorUpiId);
       if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
       if (!user && result.details.senderAccountNumber) user = await getUserByBankAccountNumber(result.details.senderAccountNumber);
+      
+      // 2. Secondary search: Cross-reference phone number if primary search fails
+      if (!user && result.details.donorPhone) {
+          console.log("Primary user search failed. Trying cross-reference with phone number...");
+          // Check if the phone number is being used as a UPI ID
+          user = await getUserByUpiId(result.details.donorPhone);
+          // If still not found, check if it's being used as a bank account number
+          if (!user) {
+              user = await getUserByBankAccountNumber(result.details.donorPhone);
+          }
+      }
+      // --- End of Enhanced Logic ---
 
       const destination = user ? '/admin/donations/add' : '/admin/user-management/add';
       if(user) {
