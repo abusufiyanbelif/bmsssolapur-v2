@@ -14,11 +14,13 @@ import {
   Timestamp,
   serverTimestamp,
   where,
-  orderBy
+  orderBy,
+  getCountFromServer,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType } from './types';
 import { logActivity } from './activity-log-service';
+import { getUser } from './user-service';
 
 // Re-export types for backward compatibility
 export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
@@ -29,8 +31,27 @@ const LEADS_COLLECTION = 'leads';
 export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'campaignName' | 'otherCategoryDetail'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    const leadRef = doc(collection(db, LEADS_COLLECTION));
-    
+    // --- Custom Lead ID Generation ---
+    const beneficiary = await getUser(leadData.beneficiaryId!);
+    if (!beneficiary) throw new Error("Beneficiary not found for lead creation.");
+
+    let referrer: User | null = null;
+    if (leadData.referredByUserId) {
+      referrer = await getUser(leadData.referredByUserId);
+    }
+
+    const leadsCollection = collection(db, LEADS_COLLECTION);
+    const countSnapshot = await getCountFromServer(leadsCollection);
+    const leadNumber = countSnapshot.data().count + 1;
+
+    let customLeadId = `${beneficiary.phone}_${leadNumber}`;
+    if (referrer) {
+      customLeadId = `${beneficiary.phone}_${referrer.phone}_${leadNumber}`;
+    }
+
+    const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
+    // --- End Custom Lead ID Generation ---
+
     const newLead: Lead = {
       id: leadRef.id,
       name: leadData.name!,
