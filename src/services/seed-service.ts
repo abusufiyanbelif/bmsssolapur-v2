@@ -261,6 +261,42 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     return { campaignResults, leadResults, donationResults };
 }
 
+const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
+    const donor = await getUserByUserId("donor.user");
+    if (!donor) {
+        console.log("Test donor 'donor.user' not found, skipping test donation seed.");
+        return { name: "Test Donation 4k", status: "Skipped (already exists)" };
+    }
+
+    const donationsCollection = collection(db, 'donations');
+    const q = query(donationsCollection, 
+        where("donorId", "==", donor.id!), 
+        where("amount", "==", 4000),
+        where("status", "==", "Verified"),
+        where("source", "==", "Seeded-Test")
+    );
+    const existing = await getDocs(q);
+    if (!existing.empty) {
+        return { name: "Test Donation 4k", status: "Skipped (already exists)" };
+    }
+
+    await createDonation({
+        donorId: donor.id!,
+        donorName: donor.name,
+        amount: 4000,
+        type: 'Sadaqah',
+        purpose: 'To Organization Use',
+        status: 'Verified',
+        isAnonymous: false,
+        donationDate: Timestamp.now(),
+        verifiedAt: Timestamp.now(),
+        source: 'Seeded-Test',
+        transactionId: `TEST-DONATION-4K-${Date.now()}`
+    }, adminUser.id!, adminUser.name, adminUser.email);
+    
+    return { name: "Test Donation 4k", status: 'Created' };
+}
+
 export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Attempting to seed database...');
     if (!isConfigValid) {
@@ -275,6 +311,11 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         console.log("Seeding core admin users...");
         results.userResults.push(...await seedUsers(adminUsersToSeed));
         
+        const superAdmin = await getUserByPhone("9999999999");
+        if (!superAdmin) throw new Error("Super admin user not found after seeding.");
+
+        results.donationResults.push(await seedTestDonation(superAdmin));
+
         results.orgStatus = await seedOrganization();
         results.quotesStatus = await seedInitialQuotes();
         
