@@ -22,7 +22,7 @@ import {
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
-import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation, Lead } from './types';
+import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation, Lead, Allocation } from './types';
 import { getUser } from './user-service';
 import { format } from 'date-fns';
 
@@ -294,7 +294,13 @@ export const allocateDonationToLeads = async (
 
   // 3. Update the main donation document
   const donationRef = doc(db, DONATIONS_COLLECTION, donation.id!);
-  const newLeadAllocations = allocations.map(a => ({ leadId: a.leadId, amount: a.amount, allocatedAt: now }));
+  const newLeadAllocations: Allocation[] = allocations.map(a => ({
+    leadId: a.leadId,
+    amount: a.amount,
+    allocatedAt: now,
+    allocatedByUserId: adminUser.id!,
+    allocatedByUserName: adminUser.name,
+  }));
   
   batch.update(donationRef, {
       status: newStatus,

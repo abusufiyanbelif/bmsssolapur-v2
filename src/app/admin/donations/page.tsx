@@ -406,20 +406,24 @@ function DonationsPageContent() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Lead ID</TableHead>
-                                                <TableHead>Beneficiary</TableHead>
+                                                <TableHead>Allocated By</TableHead>
+                                                <TableHead>Allocated To</TableHead>
                                                 <TableHead className="text-right">Amount Allocated</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {donation.allocations?.map(alloc => {
+                                            {donation.allocations?.map((alloc, i) => {
                                                 const lead = leadsById[alloc.leadId];
                                                 return (
-                                                <TableRow key={alloc.leadId}>
-                                                    <TableCell className="font-mono text-xs">
-                                                        <Link href={`/admin/leads/${alloc.leadId}`} className="hover:underline">{alloc.leadId}</Link>
+                                                <TableRow key={alloc.leadId + i}>
+                                                     <TableCell>
+                                                        <p>{alloc.allocatedByUserName}</p>
+                                                        <p className="text-xs text-muted-foreground">{format(alloc.allocatedAt.toDate(), "dd MMM, p")}</p>
                                                     </TableCell>
-                                                    <TableCell>{lead?.name || 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        <p>{lead?.name || 'N/A'}</p>
+                                                        <Link href={`/admin/leads/${alloc.leadId}`} className="font-mono text-xs hover:underline">{alloc.leadId}</Link>
+                                                    </TableCell>
                                                     <TableCell className="text-right">₹{alloc.amount.toLocaleString()}</TableCell>
                                                 </TableRow>
                                                 )

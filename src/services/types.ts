@@ -87,6 +87,8 @@ export interface Allocation {
   leadId: string;
   amount: number;
   allocatedAt: Timestamp;
+  allocatedByUserId: string;
+  allocatedByUserName: string;
 }
 
 export interface Donation {
