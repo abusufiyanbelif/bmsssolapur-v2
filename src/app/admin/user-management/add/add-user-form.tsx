@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser, findExistingUsers } from "./actions";
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle, AlertTriangle, UserCheck, Eye } from "lucide-react";
+import { Loader2, CheckCircle, Trash2, PlusCircle, AlertTriangle, UserCheck, Eye, UserPlus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
