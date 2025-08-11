@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/actions.ts
 "use server";
 
@@ -38,13 +37,11 @@ export async function handleBulkDeleteDonations(donationIds: string[]) {
     }
 }
 
-export async function handleUpdateDonationStatus(donationId: string, status: DonationStatus) {
+export async function handleUpdateDonationStatus(donationId: string, status: DonationStatus, adminUserId: string) {
     try {
-        // In a real app, you would get the admin user from the session.
-        // For now, we'll assume a default admin for logging purposes.
-        const adminUser = await getUser('admin.user');
+        const adminUser = await getUser(adminUserId);
         if (!adminUser) {
-            return { success: false, error: "Could not find default admin user for logging." };
+            return { success: false, error: "Could not find administrator user for logging." };
         }
         await updateStatusService(donationId, status, adminUser);
         revalidatePath("/admin/donations");

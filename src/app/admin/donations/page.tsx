@@ -212,7 +212,13 @@ function DonationsPageContent() {
     };
 
     const handleQuickStatusChange = async (donationId: string, newStatus: DonationStatus) => {
-        const result = await handleUpdateDonationStatus(donationId, newStatus);
+        const adminUserId = localStorage.getItem('userId');
+        if (!adminUserId) {
+            toast({ variant: 'destructive', title: "Error", description: "Could not identify administrator. Please log in again." });
+            return;
+        }
+
+        const result = await handleUpdateDonationStatus(donationId, newStatus, adminUserId);
         if (result.success) {
             toast({
                 title: "Status Updated",
