@@ -67,19 +67,20 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                     </DialogDescription>
                 </DialogHeader>
                  <Command>
-                    <CommandInput placeholder="Search for a lead..." />
+                    <CommandInput placeholder="Search for a lead by name or ID..." />
                     <CommandList>
                         <CommandEmpty>No open leads found.</CommandEmpty>
                         <CommandGroup>
                         {openLeads.map((lead) => (
                             <CommandItem
                                 key={lead.id}
-                                value={`${lead.name} ${lead.purpose} ${lead.category}`}
+                                value={`${lead.id} ${lead.name} ${lead.purpose} ${lead.category}`}
                                 onSelect={() => setSelectedLeadId(lead.id)}
                                 className="flex justify-between items-center"
                             >
-                                <div>
+                                <div className="space-y-1">
                                     <p>{lead.name}</p>
+                                    <p className="font-mono text-xs text-muted-foreground">{lead.id}</p>
                                     <p className="text-xs text-muted-foreground">{lead.purpose} - ₹{lead.helpRequested.toLocaleString()}</p>
                                 </div>
                                 {selectedLeadId === lead.id && <Check className="h-4 w-4 text-primary" />}
