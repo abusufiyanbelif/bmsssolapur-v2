@@ -1,3 +1,4 @@
+
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -125,7 +126,7 @@ export const updateDonation = async (
         
         if (adminUser) {
             const originalDonation = await getDonation(id);
-            await updateDoc(donationRef, updates);
+            await updateDoc(donationRef, { ...updates, updatedAt: serverTimestamp() });
 
             if(originalDonation) {
                 if(updates.status && originalDonation.status !== updates.status) {
@@ -158,7 +159,7 @@ export const updateDonation = async (
         } else {
             // If no admin user is provided, just perform the update without logging.
             // Useful for simple, non-audited actions like adding a proof URL.
-             await updateDoc(donationRef, updates);
+             await updateDoc(donationRef, { ...updates, updatedAt: serverTimestamp() });
         }
 
     } catch (error) {
