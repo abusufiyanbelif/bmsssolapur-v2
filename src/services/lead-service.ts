@@ -21,6 +21,8 @@ import { db, isConfigValid } from './firebase';
 import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType } from './types';
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
+import { format } from 'date-fns';
+
 
 // Re-export types for backward compatibility
 export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
@@ -34,20 +36,14 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     // --- Custom Lead ID Generation ---
     const beneficiary = await getUser(leadData.beneficiaryId!);
     if (!beneficiary) throw new Error("Beneficiary not found for lead creation.");
-
-    let referrer: User | null = null;
-    if (leadData.referredByUserId) {
-      referrer = await getUser(leadData.referredByUserId);
-    }
+    if (!beneficiary.userKey) throw new Error("Beneficiary does not have a UserKey. Cannot create lead.");
 
     const leadsCollection = collection(db, LEADS_COLLECTION);
     const countSnapshot = await getCountFromServer(leadsCollection);
     const leadNumber = countSnapshot.data().count + 1;
 
-    let customLeadId = `${beneficiary.phone}_${leadNumber}`;
-    if (referrer) {
-      customLeadId = `${beneficiary.phone}_${referrer.phone}_${leadNumber}`;
-    }
+    const dateString = format(new Date(), 'ddMMyyyy');
+    const customLeadId = `${beneficiary.userKey}_${leadNumber}_${dateString}`;
 
     const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
     // --- End Custom Lead ID Generation ---

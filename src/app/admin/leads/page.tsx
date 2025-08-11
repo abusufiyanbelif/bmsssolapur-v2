@@ -45,7 +45,7 @@ const beneficiaryTypeOptions: { value: BeneficiaryTypeFilter, label: string, ico
 ];
 
 
-type SortableColumn = 'name' | 'helpRequested' | 'helpGiven' | 'dateCreated' | 'closedAt';
+type SortableColumn = 'id' | 'name' | 'helpRequested' | 'helpGiven' | 'dateCreated' | 'closedAt';
 type SortDirection = 'asc' | 'desc';
 
 const statusColors: Record<LeadStatus, string> = {
@@ -333,10 +333,9 @@ function LeadsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Sr. No.</TableHead>
                     <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort('dateCreated')}>
-                            Date Created {renderSortIcon('dateCreated')}
+                        <Button variant="ghost" onClick={() => handleSort('id')}>
+                            Lead ID {renderSortIcon('id')}
                         </Button>
                     </TableHead>
                     <TableHead>
@@ -362,13 +361,12 @@ function LeadsPageContent() {
                     const priorityConf = priorityConfig[lead.priority || 'Medium'];
                     return (
                         <TableRow key={lead.id}>
-                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                            <TableCell>{format(lead.dateCreated, "dd MMM yyyy")}</TableCell>
+                             <TableCell>
+                                <div className="font-mono text-xs">{lead.id}</div>
+                                <div className="text-xs text-muted-foreground">{format(lead.dateCreated, "dd MMM yyyy")}</div>
+                            </TableCell>
                             <TableCell>
                                 <div className="font-medium">{lead.name}</div>
-                                <div className="text-xs text-muted-foreground font-mono" title={lead.id}>
-                                    ID: {lead.id?.substring(0,10)}...
-                                </div>
                             </TableCell>
                             <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
                             <TableCell>
@@ -410,7 +408,7 @@ function LeadsPageContent() {
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">#{ (currentPage - 1) * itemsPerPage + index + 1 }: {lead.name}</CardTitle>
+                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
                                     <CardDescription>Created: {format(lead.dateCreated, "dd MMM yyyy")}</CardDescription>
                                 </div>
                                  <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
