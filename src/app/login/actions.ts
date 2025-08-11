@@ -59,6 +59,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         let redirectTo = '/home'; // Default fallback
         if (primaryRole === 'Donor') redirectTo = '/donor';
         if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
+        if (primaryRole === 'Referral') redirectTo = '/referral';
         if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
 
         return { success: true, userId: user.id, redirectTo };
@@ -132,6 +133,7 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         let redirectTo = '/home'; // Default fallback
         if (primaryRole === 'Donor') redirectTo = '/donor';
         if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
+        if (primaryRole === 'Referral') redirectTo = '/referral';
         if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
 
         return { success: true, userId: user.id!, redirectTo };
