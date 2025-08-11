@@ -312,7 +312,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     <TableBody>
                                         {validAllocatedDonations.map(donation => (
                                             <TableRow key={donation.id}>
-                                                <TableCell>{format(donation.allocatedAt.toDate(), 'dd MMM yyyy, p')}</TableCell>
+                                                <TableCell>{format(donation.allocatedAt, 'dd MMM yyyy, p')}</TableCell>
                                                 <TableCell>{donation.allocatedByUserName || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <p>{donation.donorName}</p>
