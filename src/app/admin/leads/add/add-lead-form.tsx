@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState, useEffect, useRef } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -74,7 +74,8 @@ const formSchema = z.object({
   newBeneficiaryLastName: z.string().optional(),
   newBeneficiaryPhone: z.string().optional(),
   newBeneficiaryEmail: z.string().email().optional(),
-
+  
+  hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
@@ -144,6 +145,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
+  const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
@@ -164,6 +166,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
       campaignId: 'none',
       acceptableDonationTypes: [],
       priority: 'Medium',
+      hasReferral: false,
     },
   });
 
@@ -171,6 +174,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
   const selectedPurpose = form.watch("purpose");
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
+  const hasReferral = form.watch("hasReferral");
 
   useEffect(() => {
     if (selectedPurpose === 'Loan') {
@@ -203,8 +207,10 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
     if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
-    if(values.referredByUserId) formData.append("referredByUserId", values.referredByUserId);
-    if(values.referredByUserName) formData.append("referredByUserName", values.referredByUserName);
+    if(values.hasReferral && values.referredByUserId) {
+        formData.append("referredByUserId", values.referredByUserId);
+        formData.append("referredByUserName", values.referredByUserName || '');
+    }
     formData.append("purpose", values.purpose);
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
@@ -253,11 +259,13 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
         priority: 'Medium',
         campaignId: 'none',
         campaignName: '',
+        hasReferral: false,
         referredByUserId: '',
         referredByUserName: '',
         dueDate: undefined,
         verificationDocument: undefined,
       });
+      setSelectedReferralDetails(null);
       if (fileInputRef.current) {
           fileInputRef.current.value = "";
       }
@@ -437,69 +445,118 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
                 </div>
             )}
             
-             <FormField
+            <FormField
                 control={form.control}
-                name="referredByUserId"
+                name="hasReferral"
                 render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Referred By (Optional)</FormLabel>
-                    <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
-                    <PopoverTrigger asChild>
-                        <FormControl>
-                        <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground"
-                            )}
-                        >
-                            {field.value
-                            ? potentialReferrals.find(
-                                (user) => user.id === field.value
-                                )?.name
-                            : "Select a referral"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                        </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                        <CommandInput placeholder="Search referral..." />
-                        <CommandList>
-                            <CommandEmpty>No referrals found.</CommandEmpty>
-                            <CommandGroup>
-                            {potentialReferrals.map((user) => (
-                                <CommandItem
-                                value={user.name}
-                                key={user.id}
-                                onSelect={() => {
-                                    form.setValue("referredByUserId", user.id!);
-                                    form.setValue("referredByUserName", user.name);
-                                    setReferralPopoverOpen(false);
-                                }}
-                                >
-                                <Check
-                                    className={cn(
-                                    "mr-2 h-4 w-4",
-                                    user.id === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                />
-                                {user.name} ({user.phone})
-                                </CommandItem>
-                            ))}
-                            </CommandGroup>
-                        </CommandList>
-                        </Command>
-                    </PopoverContent>
-                    </Popover>
-                    <FormMessage />
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                    <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                            field.onChange(checked)
+                            if (!checked) {
+                                form.setValue("referredByUserId", undefined)
+                                form.setValue("referredByUserName", undefined)
+                                setSelectedReferralDetails(null)
+                            }
+                        }}
+                    />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                    <FormLabel>
+                        This lead was referred by someone
+                    </FormLabel>
+                    </div>
                 </FormItem>
                 )}
             />
 
+            {hasReferral && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <FormField
+                        control={form.control}
+                        name="referredByUserId"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Select Referral</FormLabel>
+                            <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                    "w-full justify-between bg-background",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                >
+                                    {field.value
+                                    ? potentialReferrals.find(
+                                        (user) => user.id === field.value
+                                        )?.name
+                                    : "Select a referral"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                <CommandInput placeholder="Search referral..." />
+                                <CommandList>
+                                    <CommandEmpty>No referrals found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {potentialReferrals.map((user) => (
+                                        <CommandItem
+                                        value={user.name}
+                                        key={user.id}
+                                        onSelect={() => {
+                                            form.setValue("referredByUserId", user.id!);
+                                            form.setValue("referredByUserName", user.name);
+                                            setSelectedReferralDetails(user);
+                                            setReferralPopoverOpen(false);
+                                        }}
+                                        >
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            user.id === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                        />
+                                        {user.name} ({user.phone})
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                                </Command>
+                            </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    {selectedReferralDetails && (
+                        <div className="space-y-3 pt-2">
+                             <div className="space-y-1">
+                                <Label>Referral's Bank Account</Label>
+                                <Input value={selectedReferralDetails.bankAccountNumber || 'Not Available'} readOnly disabled />
+                             </div>
+                              <div className="space-y-1">
+                                <Label>Referral's UPI IDs</Label>
+                                {selectedReferralDetails.upiIds && selectedReferralDetails.upiIds.length > 0 ? (
+                                    selectedReferralDetails.upiIds.map((upi, i) => (
+                                        <Input key={i} value={upi} readOnly disabled />
+                                    ))
+                                ) : (
+                                    <Input value="Not Available" readOnly disabled />
+                                )}
+                             </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <FormField
             control={form.control}
