@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { handleUploadDonationProof } from "./actions";
 import type { Donation } from "@/services/types";
@@ -30,13 +30,32 @@ export function UploadProofDialog({ children, donation, onUploadSuccess }: Uploa
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      const storedUserId = localStorage.getItem('userId');
+      setAdminUserId(storedUserId);
+    }
+  }, [open]);
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!adminUserId) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Could not identify administrator. Please log out and back in.",
+        });
+        return;
+    }
+
     setIsUploading(true);
 
     const formData = new FormData(event.currentTarget);
+    formData.append("adminUserId", adminUserId);
     const result = await handleUploadDonationProof(donation.id!, formData);
 
     setIsUploading(false);

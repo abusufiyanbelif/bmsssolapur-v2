@@ -10,9 +10,11 @@ import { db } from "@/services/firebase";
 import { DonationStatus } from "@/services/types";
 import { logActivity } from "@/services/activity-log-service";
 
-export async function handleDeleteDonation(donationId: string) {
+export async function handleDeleteDonation(donationId: string, adminUserId: string) {
     try {
-        await deleteDonation(donationId);
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found." };
+        await deleteDonation(donationId, adminUser);
         revalidatePath("/admin/donations");
         return { success: true };
     } catch (e) {
@@ -21,14 +23,31 @@ export async function handleDeleteDonation(donationId: string) {
     }
 }
 
-export async function handleBulkDeleteDonations(donationIds: string[]) {
+export async function handleBulkDeleteDonations(donationIds: string[], adminUserId: string) {
     try {
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found." };
+
         const batch = writeBatch(db);
-        donationIds.forEach(id => {
-            const docRef = doc(db, "donations", id);
-            batch.delete(docRef);
-        });
-        await batch.commit();
+        const logPromises: Promise<void>[] = [];
+
+        for (const id of donationIds) {
+            const donationDocRef = doc(db, "donations", id);
+            batch.delete(donationDocRef);
+            
+            // As we don't know the donation details after deletion, we log with the ID
+            logPromises.push(logActivity({
+                userId: adminUser.id!,
+                userName: adminUser.name,
+                userEmail: adminUser.email,
+                role: 'Admin',
+                activity: 'Donation Deleted',
+                details: { donationId: id, details: `Part of bulk delete operation.` },
+            }));
+        }
+        
+        await Promise.all([batch.commit(), ...logPromises]);
+        
         revalidatePath("/admin/donations");
         return { success: true };
     } catch (e) {
@@ -96,6 +115,11 @@ async function handleFileUpload(file: File): Promise<string> {
 
 export async function handleUploadDonationProof(donationId: string, formData: FormData) {
     try {
+        const adminUserId = formData.get("adminUserId") as string | undefined;
+        if (!adminUserId) return { success: false, error: "Admin user not found." };
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found." };
+
         const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
         if (!screenshotFile || screenshotFile.size === 0) {
             return { success: false, error: "No file was uploaded." };
@@ -103,7 +127,7 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
 
         const paymentScreenshotUrl = await handleFileUpload(screenshotFile);
 
-        await updateDonation(donationId, { paymentScreenshotUrls: [paymentScreenshotUrl] });
+        await updateDonation(donationId, { paymentScreenshotUrls: [paymentScreenshotUrl] }, adminUser, 'Proof Uploaded');
         
         revalidatePath("/admin/donations");
         

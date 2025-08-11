@@ -118,7 +118,8 @@ export const getDonation = async (id: string): Promise<Donation | null> => {
 export const updateDonation = async (
     id: string, 
     updates: Partial<Donation>, 
-    adminUser?: Pick<User, 'id' | 'name' | 'email'>
+    adminUser?: Pick<User, 'id' | 'name' | 'email'>,
+    customActivity?: string
 ) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
@@ -129,7 +130,23 @@ export const updateDonation = async (
             await updateDoc(donationRef, { ...updates, updatedAt: serverTimestamp() });
 
             if(originalDonation) {
-                if(updates.status && originalDonation.status !== updates.status) {
+                // Handle custom activity logging first
+                if (customActivity) {
+                     await logActivity({
+                        userId: adminUser.id!,
+                        userName: adminUser.name,
+                        userEmail: adminUser.email,
+                        role: 'Admin',
+                        activity: customActivity,
+                        details: { 
+                            donationId: id,
+                            donorName: originalDonation.donorName,
+                            amount: originalDonation.amount,
+                        }
+                     });
+                }
+                // Then handle standard status or update logging
+                else if(updates.status && originalDonation.status !== updates.status) {
                     await logActivity({
                         userId: adminUser.id!,
                         userName: adminUser.name,
@@ -158,7 +175,6 @@ export const updateDonation = async (
             }
         } else {
             // If no admin user is provided, just perform the update without logging.
-            // Useful for simple, non-audited actions like adding a proof URL.
              await updateDoc(donationRef, { ...updates, updatedAt: serverTimestamp() });
         }
 
@@ -169,10 +185,26 @@ export const updateDonation = async (
 };
 
 // Function to delete a donation
-export const deleteDonation = async (id: string) => {
+export const deleteDonation = async (id: string, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
+        const donationToDelete = await getDonation(id);
+        if (!donationToDelete) throw new Error("Donation to delete not found.");
+
         await deleteDoc(doc(db, DONATIONS_COLLECTION, id));
+
+         await logActivity({
+            userId: adminUser.id!,
+            userName: adminUser.name,
+            userEmail: adminUser.email,
+            role: 'Admin',
+            activity: 'Donation Deleted',
+            details: { 
+                donationId: id, 
+                donorName: donationToDelete.donorName, 
+                amount: donationToDelete.amount,
+            },
+        });
     } catch (error) {
         console.error("Error deleting donation: ", error);
         throw new Error('Failed to delete donation.');

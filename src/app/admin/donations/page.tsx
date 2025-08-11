@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -44,7 +43,7 @@ const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification"
 const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
 const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
 
-type SortableColumn = 'donorName' | 'amount' | 'donationDate' | 'id' | 'type' | 'status';
+type SortableColumn = 'id' | 'donorName' | 'amount' | 'donationDate' | 'type' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 
@@ -69,6 +68,7 @@ function DonationsPageContent() {
     const [error, setError] = useState<string | null>(null);
     const [selectedDonations, setSelectedDonations] = useState<string[]>([]);
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
     
     // Input states
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
@@ -120,6 +120,8 @@ function DonationsPageContent() {
 
     useEffect(() => {
         fetchData();
+        const storedAdminId = localStorage.getItem('userId');
+        setAdminUserId(storedAdminId);
     }, []);
 
     const handleSearch = () => {
@@ -600,7 +602,7 @@ function DonationsPageContent() {
                     <DeleteConfirmationDialog
                         itemType="donation"
                         itemName={`from ${donation.donorName} for ₹${donation.amount}`}
-                        onDelete={() => handleDeleteDonation(donation.id!)}
+                        onDelete={() => handleDeleteDonation(donation.id!, adminUserId!)}
                         onSuccess={onDonationDeleted}
                     >
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
@@ -725,7 +727,7 @@ function DonationsPageContent() {
                          <DeleteConfirmationDialog
                             itemType={`${selectedDonations.length} donation(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteDonations(selectedDonations)}
+                            onDelete={() => handleBulkDeleteDonations(selectedDonations, adminUserId!)}
                             onSuccess={onBulkDonationDeleted}
                         >
                             <Button variant="destructive">

@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { History, ListChecks } from "lucide-react";
+import { History, ListChecks, Trash2, Upload } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { ActivityLog } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
@@ -21,33 +21,50 @@ const ActivityItem = ({ log }: ActivityItemProps) => {
   }
 
   const renderDetails = () => {
+    let icon = <ListChecks className="h-4 w-4 text-primary" />;
+    let message = 'An action was performed.';
+
     switch (log.activity) {
       case 'Donation Created':
-        return `Donation of ₹${log.details.amount?.toLocaleString()} created by ${log.userName}.`;
+        message = `Donation of ₹${log.details.amount?.toLocaleString()} created by ${log.userName}.`;
+        break;
       case 'Status Changed':
-        return `Status changed from "${log.details.from}" to "${log.details.to}" by ${log.userName}.`;
+        message = `Status changed from "${log.details.from}" to "${log.details.to}" by ${log.userName}.`;
+        break;
       case 'Donation Updated':
-        return `Details updated by ${log.userName}.`;
+        message = `Details updated by ${log.userName}.`;
+        break;
       case 'Donation Allocated':
-        return `₹${log.details.amount?.toLocaleString()} allocated to ${log.details.allocations?.length} lead(s) by ${log.userName}.`;
+        message = `₹${log.details.amount?.toLocaleString()} allocated to ${log.details.allocations?.length} lead(s) by ${log.userName}.`;
+        break;
+      case 'Donation Deleted':
+        icon = <Trash2 className="h-4 w-4 text-destructive" />;
+        message = `Donation record deleted by ${log.userName}.`;
+        break;
+      case 'Proof Uploaded':
+        icon = <Upload className="h-4 w-4 text-blue-600" />;
+        message = `Payment proof uploaded by ${log.userName}.`;
+        break;
       default:
-        return 'An action was performed.';
+        message = 'An action was performed.';
     }
+    
+    return (
+      <div className="flex items-start gap-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 mt-1">
+          {icon}
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-sm">{message}</p>
+          <p className="text-xs text-muted-foreground" title={fullDate}>
+            As <span className="font-semibold">{log.role}</span> &middot; {timeAgo}
+          </p>
+        </div>
+      </div>
+    );
   };
 
-  return (
-    <div className="flex items-start gap-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 mt-1">
-        <ListChecks className="h-4 w-4 text-primary" />
-      </div>
-      <div className="flex-1">
-        <p className="font-semibold text-sm">{renderDetails()}</p>
-        <p className="text-xs text-muted-foreground" title={fullDate}>
-          As <span className="font-semibold">{log.role}</span> &middot; {timeAgo}
-        </p>
-      </div>
-    </div>
-  );
+  return renderDetails();
 };
 
 
