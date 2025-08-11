@@ -19,6 +19,7 @@ import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -167,25 +168,6 @@ export default function MyDonationsPage() {
         setCurrentPage(1);
     }, [itemsPerPage]);
   
-  const handleDownloadReceipt = () => {
-    toast({
-        title: "In Progress",
-        description: "PDF receipt generation is planned for a future update.",
-    });
-  }
-  
-  const renderReceiptButton = (donation: Donation) => (
-      <Button 
-          variant="outline" 
-          size="sm"
-          onClick={handleDownloadReceipt}
-          disabled={donation.status !== 'Verified' && donation.status !== 'Allocated'}
-      >
-          <Download className="mr-2 h-4 w-4" />
-          Receipt
-      </Button>
-  );
-
   const renderDesktopTable = () => (
      <Table>
         <TableHeader>
@@ -213,7 +195,7 @@ export default function MyDonationsPage() {
                         </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                        {renderReceiptButton(donation)}
+                        <DonationReceiptDialog donation={donation} user={user!} />
                     </TableCell>
                 </TableRow>
             ))}
@@ -247,7 +229,7 @@ export default function MyDonationsPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                       {renderReceiptButton(donation)}
+                       <DonationReceiptDialog donation={donation} user={user!} />
                     </CardFooter>
                 </Card>
           ))}

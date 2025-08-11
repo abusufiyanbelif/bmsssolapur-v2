@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -19,7 +20,7 @@ import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -36,6 +37,7 @@ import { CreateFromUploadDialog } from "./create-from-upload-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
 import { AllocateToCampaignDialog } from './allocate-to-campaign-dialog';
+import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Partially Allocated", "Allocated", "Failed/Incomplete"];
@@ -406,7 +408,7 @@ function DonationsPageContent() {
                                             <TableRow>
                                                 <TableHead>Lead ID</TableHead>
                                                 <TableHead>Beneficiary</TableHead>
-                                                <TableHead>Amount Allocated</TableHead>
+                                                <TableHead className="text-right">Amount Allocated</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -418,7 +420,7 @@ function DonationsPageContent() {
                                                         <Link href={`/admin/leads/${alloc.leadId}`} className="hover:underline">{alloc.leadId}</Link>
                                                     </TableCell>
                                                     <TableCell>{lead?.name || 'N/A'}</TableCell>
-                                                    <TableCell>₹{alloc.amount.toLocaleString()}</TableCell>
+                                                    <TableCell className="text-right">₹{alloc.amount.toLocaleString()}</TableCell>
                                                 </TableRow>
                                                 )
                                             })}
@@ -518,6 +520,7 @@ function DonationsPageContent() {
     
     const renderActions = (donation: Donation) => {
         const canAllocate = donation.status === 'Verified' || donation.status === 'Partially Allocated';
+        const donorUser = allUsers.find(u => u.id === donation.donorId);
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -530,12 +533,8 @@ function DonationsPageContent() {
                     {canAllocate && (
                         <>
                             <DropdownMenuLabel>Allocate Funds</DropdownMenuLabel>
-                            <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess}>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}><Link2 className="mr-2 h-4 w-4" /> To Lead(s)</DropdownMenuItem>
-                            </AllocateToLeadDialog>
-                             <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess}>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}><Link2 className="mr-2 h-4 w-4" /> To Campaign</DropdownMenuItem>
-                            </AllocateToCampaignDialog>
+                            <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
+                            <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
                             <DropdownMenuSeparator />
                         </>
                     )}
@@ -551,6 +550,10 @@ function DonationsPageContent() {
                             <Upload className="mr-2 h-4 w-4" /> Upload Proof
                         </DropdownMenuItem>
                     </UploadProofDialog>
+
+                    {donorUser && (
+                         <DonationReceiptDialog donation={donation} user={donorUser} />
+                    )}
                     
                     <DropdownMenuSeparator />
 
