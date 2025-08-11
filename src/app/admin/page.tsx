@@ -1,7 +1,7 @@
 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat, UploadCloud } from "lucide-react";
+import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat, UploadCloud, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllDonations, DonationType, Donation } from "@/services/donation-service";
 import { getAllLeads, Lead } from "@/services/lead-service";
@@ -63,6 +63,8 @@ export default async function DashboardPage() {
   
   const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
   const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
+  const casesPublished = allLeads.filter(l => l.status === 'Publish').length;
+
 
   // Monthly contribution logic
   const now = new Date();
@@ -117,6 +119,7 @@ export default async function DashboardPage() {
     { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready to be disbursed.", href: "/admin/donations" },
     { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?status=Closed" },
     { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
+    { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public.", href: "/admin/leads?status=Publish" },
     { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
   ];
   

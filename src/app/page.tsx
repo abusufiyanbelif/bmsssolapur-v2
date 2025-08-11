@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users, TrendingUp, Megaphone } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users, TrendingUp, Megaphone, Eye } from "lucide-react";
 import { getOpenGeneralLeads, EnrichedLead, getActiveCampaigns } from "@/app/campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -111,6 +111,7 @@ function PublicHomePage() {
     pendingToDisburse,
     beneficiariesHelpedCount,
     casesClosed,
+    casesPublished
   } = useMemo(() => {
     const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
     const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
@@ -118,7 +119,8 @@ function PublicHomePage() {
     const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
     const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
     const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
-    return { totalRaised, totalDistributed, pendingToDisburse, beneficiariesHelpedCount, casesClosed };
+    const casesPublished = allLeads.filter(l => l.status === 'Publish').length;
+    return { totalRaised, totalDistributed, pendingToDisburse, beneficiariesHelpedCount, casesClosed, casesPublished };
   }, [allDonations, allLeads]);
 
   const mainMetrics = [
@@ -126,6 +128,7 @@ function PublicHomePage() {
     { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/public-leads" },
     { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, href: "/public-leads" },
     { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, href: "/public-leads" },
+    { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
     { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, href: "/public-leads" },
   ];
 
