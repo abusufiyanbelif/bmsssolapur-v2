@@ -20,6 +20,7 @@ import type { Donation, Lead } from "@/services/types";
 import { handleAllocateDonation } from "./actions";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface AllocateToLeadDialogProps {
     donation: Donation;
@@ -74,6 +75,8 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                         <CommandGroup>
                         {openLeads.map((lead) => {
                             const pendingAmount = lead.helpRequested - lead.helpGiven;
+                            const raisedAmount = lead.helpGiven;
+                            const progress = lead.helpRequested > 0 ? (raisedAmount / lead.helpRequested) * 100 : 0;
                             return (
                             <CommandItem
                                 key={lead.id}
@@ -81,17 +84,23 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                                 onSelect={() => setSelectedLeadId(lead.id)}
                                 className="flex justify-between items-start cursor-pointer"
                             >
-                                <div className="space-y-1 w-full">
+                                <div className="space-y-2 w-full">
                                     <div className="flex justify-between items-center">
-                                        <p className="font-semibold">{lead.name}</p>
+                                        <div>
+                                            <p className="font-semibold">{lead.name}</p>
+                                            <p className="font-mono text-xs text-muted-foreground">{lead.id}</p>
+                                        </div>
                                          <Badge variant={lead.status === 'Ready For Help' || lead.status === 'Publish' ? 'default' : 'secondary'}>{lead.status}</Badge>
                                     </div>
-                                    <p className="font-mono text-xs text-muted-foreground">{lead.id}</p>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm pt-2">
-                                        <div className="text-muted-foreground">Purpose:</div>
-                                        <div>{lead.purpose}</div>
-                                        <div className="text-muted-foreground">Pending Amount:</div>
-                                        <div className="font-semibold">₹{pendingAmount.toLocaleString()}</div>
+                                    <div className="space-y-2 text-sm pt-2">
+                                        <div className="text-muted-foreground">Purpose: <span className="font-medium text-foreground">{lead.purpose}</span></div>
+                                        <div>
+                                             <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                                                <span>Raised: <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span> / ₹{lead.helpRequested.toLocaleString()}</span>
+                                                <span className="font-semibold">Pending: ₹{pendingAmount.toLocaleString()}</span>
+                                            </div>
+                                            <Progress value={progress} />
+                                        </div>
                                     </div>
                                 </div>
 
