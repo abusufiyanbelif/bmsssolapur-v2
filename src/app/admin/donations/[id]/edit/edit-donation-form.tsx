@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,7 +77,7 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: donation.amount,
-      donationDate: (donation.donationDate as any).toDate(),
+      donationDate: typeof (donation.donationDate as any)?.toDate === 'function' ? (donation.donationDate as any).toDate() : donation.donationDate,
       type: donation.type as Exclude<DonationType, 'Split'>,
       purpose: donation.purpose,
       status: donation.status,
@@ -96,7 +95,7 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
   const handleCancel = () => {
     reset({
         amount: donation.amount,
-        donationDate: (donation.donationDate as any).toDate(),
+        donationDate: typeof (donation.donationDate as any)?.toDate === 'function' ? (donation.donationDate as any).toDate() : donation.donationDate,
         type: donation.type as Exclude<DonationType, 'Split'>,
         purpose: donation.purpose,
         status: donation.status,
@@ -434,3 +433,5 @@ export function EditDonationForm({ donation, onUpdate }: EditDonationFormProps) 
     </Card>
   );
 }
+
+    
