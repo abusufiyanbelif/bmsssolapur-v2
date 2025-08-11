@@ -12,7 +12,7 @@ import { AlertCircle, ArrowLeft, Loader2, FileText, User as UserIcon, HandHeart,
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuditTrail } from '../../audit-trail';
-import { format } from 'date-fns';
+import { format } from "date-fns";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -105,7 +105,7 @@ export default function AllocationDetailPage() {
 
     return (
         <div className="flex-1 space-y-6">
-            <Link href={`/admin/donations/${donationId}/edit`} className="flex items-center text-sm text-muted-foreground hover:text-primary">
+            <Link href={`/admin/donations/${donationId}`} className="flex items-center text-sm text-muted-foreground hover:text-primary">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Parent Donation
             </Link>
@@ -139,7 +139,7 @@ export default function AllocationDetailPage() {
                      <div className="space-y-3">
                          <div className="flex justify-between">
                             <span className="text-muted-foreground">Parent Donation ID</span>
-                             <Link href={`/admin/donations/${donation.id}/edit`} className="font-mono text-xs hover:underline text-primary">
+                             <Link href={`/admin/donations/${donation.id}`} className="font-mono text-xs hover:underline text-primary">
                                 {donation.id}
                             </Link>
                         </div>
