@@ -18,14 +18,25 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddUser } from "./actions";
-import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle } from "lucide-react";
+import { handleAddUser, findExistingUsers } from "./actions";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
+import { Loader2, CheckCircle, Trash2, PlusCircle, AlertTriangle, UserCheck, Eye } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { useSearchParams } from 'next/navigation';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import Link from 'next/link';
+import { useDebounce } from "@/hooks/use-debounce";
+
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -82,6 +93,10 @@ function AddUserFormContent() {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
+  
+  const [potentialDuplicates, setPotentialDuplicates] = useState<User[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
@@ -111,6 +126,42 @@ function AddUserFormContent() {
     name: "upiIds"
   });
   
+  const { watch } = form;
+  
+  const watchedFields = watch();
+  const debouncedWatchedFields = useDebounce(watchedFields, 500);
+
+  const checkForDuplicates = useCallback(async (values: AddUserFormValues) => {
+    const { firstName, lastName, userId, phone, email } = values;
+    if (!firstName && !lastName && !userId && !phone && !email) {
+      setPotentialDuplicates([]);
+      setShowDuplicateDialog(false);
+      return;
+    }
+    
+    setIsCheckingDuplicates(true);
+    const result = await findExistingUsers({
+      userId: userId,
+      phone: phone,
+      email: email,
+      fullName: `${firstName} ${lastName}`.trim(),
+    });
+    
+    if (result.matches.length > 0) {
+        setPotentialDuplicates(result.matches);
+        setShowDuplicateDialog(true);
+    } else {
+        setPotentialDuplicates([]);
+        setShowDuplicateDialog(false);
+    }
+    setIsCheckingDuplicates(false);
+  }, []);
+
+  useEffect(() => {
+      checkForDuplicates(debouncedWatchedFields);
+  }, [debouncedWatchedFields, checkForDuplicates]);
+
+
   useEffect(() => {
     const donorName = searchParams.get('donorName');
     const donorPhone = searchParams.get('donorPhone');
@@ -191,6 +242,8 @@ function AddUserFormContent() {
         icon: <CheckCircle />,
       });
       form.reset();
+      setShowDuplicateDialog(false);
+      setPotentialDuplicates([]);
     } else {
       toast({
         variant: "destructive",
@@ -203,6 +256,7 @@ function AddUserFormContent() {
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
 
   return (
+    <>
     <Form {...form}>
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
         
@@ -732,12 +786,54 @@ function AddUserFormContent() {
             </Button>
          </div>
         
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create User
+        <Button type="submit" disabled={isSubmitting || isCheckingDuplicates}>
+          {isSubmitting || isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+          {isCheckingDuplicates ? 'Checking for duplicates...' : 'Create User'}
         </Button>
       </form>
     </Form>
+
+     <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-6 w-6 text-amber-500" />
+                Potential Duplicate User Found
+            </DialogTitle>
+            <DialogDescription>
+              A user with similar details already exists in the system. Please review the matches before creating a new user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-60 overflow-y-auto space-y-2 p-2 rounded-md bg-muted">
+            {potentialDuplicates.map(user => (
+              <div key={user.id} className="p-3 border bg-background rounded-lg flex justify-between items-center">
+                <div>
+                  <p className="font-semibold">{user.name}</p>
+                  <p className="text-sm text-muted-foreground">{user.phone} / {user.email}</p>
+                  <div className="flex gap-1 mt-1">
+                     {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
+                  </div>
+                </div>
+                 <Button asChild variant="outline" size="sm">
+                    <Link href={`/admin/user-management/${user.id}/edit`}>
+                        <Eye className="mr-2 h-4 w-4" /> View
+                    </Link>
+                </Button>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+             <Button variant="secondary" onClick={() => setShowDuplicateDialog(false)}>
+                Go Back & Edit
+            </Button>
+            <Button onClick={() => form.handleSubmit(onSubmit)()} disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                Create New User Anyway
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

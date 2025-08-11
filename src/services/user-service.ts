@@ -222,6 +222,49 @@ export const getUserByName = async (name: string): Promise<User | null> => {
   }
 }
 
+// Function to get a user by userKey
+export const getUserByUserKey = async (userKey: string): Promise<User | null> => {
+    if (!isConfigValid) return null;
+    try {
+        const q = query(collection(db, USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const doc = snapshot.docs[0];
+            const data = doc.data();
+            return {
+                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp).toDate(),
+                updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+            } as User;
+        }
+        return null;
+    } catch (e) {
+        console.error("Error getting user by userKey: ", e);
+        return null;
+    }
+};
+
+// Function to get a user by full name
+export const getUserByFullName = async (name: string): Promise<User | null> => {
+    if (!isConfigValid) return null;
+    try {
+        const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const doc = snapshot.docs[0];
+             const data = doc.data();
+            return {
+                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp).toDate(),
+                updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+            } as User;
+        }
+        return null;
+    } catch (e) {
+        console.error("Error getting user by name: ", e);
+        return null;
+    }
+};
+
+
 // Function to get a user by phone number
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
   if (!isConfigValid) {

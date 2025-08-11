@@ -2,10 +2,10 @@
 
 "use server";
 
-import { createUser } from "@/services/user-service";
+import { createUser, getUserByEmail, getUserByPhone, getUserByUserId, getUserByUserKey, getUserByFullName, User } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase/firestore";
-import type { User, UserRole } from "@/services/types";
+import type { UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -113,4 +113,35 @@ export async function handleAddUser(
       error: error,
     };
   }
+}
+
+interface DuplicateCheckPayload {
+    userId?: string;
+    userKey?: string;
+    phone?: string;
+    email?: string;
+    fullName?: string;
+}
+
+export async function findExistingUsers(payload: DuplicateCheckPayload): Promise<{ matches: User[], error?: string }> {
+    try {
+        const potentialMatches = new Map<string, User>();
+
+        const checkAndAdd = (user: User | null) => {
+            if (user && user.id) {
+                potentialMatches.set(user.id, user);
+            }
+        };
+
+        if (payload.userId) checkAndAdd(await getUserByUserId(payload.userId));
+        if (payload.userKey) checkAndAdd(await getUserByUserKey(payload.userKey));
+        if (payload.phone) checkAndAdd(await getUserByPhone(payload.phone));
+        if (payload.email) checkAndAdd(await getUserByEmail(payload.email));
+        if (payload.fullName) checkAndAdd(await getUserByFullName(payload.fullName));
+        
+        return { matches: Array.from(potentialMatches.values()) };
+    } catch(e) {
+        const error = e instanceof Error ? e.message : "An unknown database error occurred.";
+        return { matches: [], error };
+    }
 }
