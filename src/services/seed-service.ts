@@ -83,6 +83,22 @@ const ramadanCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     endDate: Timestamp.fromDate(new Date("2025-03-30")),
 };
 
+// WINTER CAMPAIGN DATA
+const winterCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
+    { name: "Winter Beneficiary A", userId: "winter.beneficiary.a", firstName: "Winter", lastName: "Beneficiary A", email: "winter.a@example.com", phone: "8888888801", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family' },
+    { name: "Winter Beneficiary B", userId: "winter.beneficiary.b", firstName: "Winter", lastName: "Beneficiary B", email: "winter.b@example.com", phone: "8888888802", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family' },
+];
+
+const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
+    name: "Winter Relief 2024",
+    description: "A campaign to provide blankets and warm clothing to families during the cold winter months.",
+    goal: 50000,
+    status: 'Active',
+    startDate: Timestamp.fromDate(new Date("2024-11-01")),
+    endDate: Timestamp.fromDate(new Date("2024-12-31")),
+};
+
+
 const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'donationType'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
     { beneficiaryName: 'Mustahik Person', beneficiaryPhone: '1000000001', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Hazrate Nomaniya Masjid', beneficiaryPhone: '1000000002', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
@@ -424,6 +440,63 @@ const seedCampaignsAndLinkedLeads = async (): Promise<{ campaignResults: SeedIte
 };
 
 
+const seedWinterCampaign = async (): Promise<{ campaignResults: SeedItemResult[], leadResults: SeedItemResult[] }> => {
+    if (!isConfigValid) throw new Error("Firebase is not configured.");
+
+    const campaignResults: SeedItemResult[] = [];
+    const leadResults: SeedItemResult[] = [];
+
+    const existingCampaignQuery = query(collection(db, 'campaigns'), where("name", "==", winterCampaign.name));
+    const existingCampaignSnapshot = await getDocs(existingCampaignQuery);
+    if (!existingCampaignSnapshot.empty) {
+        campaignResults.push({ name: winterCampaign.name, status: 'Skipped (already exists)' });
+        return { campaignResults, leadResults };
+    }
+
+    const batch = writeBatch(db);
+
+    // 1. Create Campaign
+    const campaignRef = doc(collection(db, 'campaigns'));
+    batch.set(campaignRef, { ...winterCampaign, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    campaignResults.push({ name: winterCampaign.name, status: 'Created' });
+
+    const verifierAdmin = await getUserByPhone("7887646583");
+    if (!verifierAdmin) {
+        throw new Error("Verifier admin (7887646583) not found for winter campaign seeding.");
+    }
+    const verifier: Verifier = {
+        verifierId: verifierAdmin.id!,
+        verifierName: verifierAdmin.name,
+        verifiedAt: Timestamp.now(),
+        notes: "Verified as part of test data seeding."
+    };
+
+    // 2. Create Beneficiaries and Leads
+    for (const userData of winterCampaignUsers) {
+        let beneficiary = await getUserByPhone(userData.phone);
+        if (beneficiary) {
+            const leadRef = doc(collection(db, 'leads'));
+            const leadHelpAmount = userData.name === 'Winter Beneficiary A' ? 2500 : 3500;
+            
+            batch.set(leadRef, {
+                id: leadRef.id, name: beneficiary.name, beneficiaryId: beneficiary.id!,
+                campaignId: campaignRef.id, campaignName: winterCampaign.name,
+                purpose: 'Relief Fund', category: 'Winter Kit', donationType: 'Sadaqah',
+                helpRequested: leadHelpAmount, helpGiven: 0, status: 'Ready For Help', isLoan: false,
+                caseDetails: `Help for winter clothing and blankets for ${beneficiary.name}.`,
+                verifiedStatus: 'Verified', verifiers: [verifier],
+                dateCreated: Timestamp.now(), adminAddedBy: { id: verifierAdmin.id, name: verifierAdmin.name },
+                createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
+            });
+            leadResults.push({ name: `Winter Lead for ${beneficiary.name}`, status: 'Created' });
+        }
+    }
+
+    await batch.commit();
+    return { campaignResults, leadResults };
+};
+
+
 const seedTestLeads = async (): Promise<SeedItemResult[]> => {
     if (!isConfigValid) throw new Error("Firebase is not configured.");
 
@@ -521,6 +594,13 @@ export const seedDatabase = async (): Promise<SeedResult> => {
     }
 
     try {
+        console.log("Seeding Winter campaign users...");
+        results.userResults.push(...await seedUsers(winterCampaignUsers));
+    } catch (e: any) {
+        return { ...results, error: `Seeding failed during [Winter Campaign User Seeding]: ${e.message}` };
+    }
+
+    try {
         results.orgStatus = await seedOrganization();
     } catch (e: any) {
         return { ...results, orgStatus: 'Failed', error: `Seeding failed during [Organization Seeding]: ${e.message}` };
@@ -546,7 +626,15 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         results.leadResults.push(...campaignLeadResults);
         results.donationResults.push(...campaignDonationResults);
     } catch (e: any) {
-        return { ...results, error: `Seeding failed during [Campaign Data Seeding]: ${e.message}` };
+        return { ...results, error: `Seeding failed during [Ramadan Campaign Seeding]: ${e.message}` };
+    }
+    
+    try {
+        const { campaignResults, leadResults: winterLeadResults } = await seedWinterCampaign();
+        results.campaignResults.push(...campaignResults);
+        results.leadResults.push(...winterLeadResults);
+    } catch (e: any) {
+        return { ...results, error: `Seeding failed during [Winter Campaign Seeding]: ${e.message}` };
     }
     
     try {
@@ -559,4 +647,3 @@ export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Database seeding process completed successfully.');
     return results;
 };
-
