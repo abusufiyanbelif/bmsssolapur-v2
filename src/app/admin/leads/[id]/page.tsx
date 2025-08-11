@@ -6,7 +6,7 @@ import { getDonation, Donation } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp, Eye, Package } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp, Eye, Package, UserSquare } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -169,6 +169,16 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     </div>
                                 )}
                             </div>
+                            
+                             {lead.referredByUserName && (
+                                <div>
+                                    <Label className="flex items-center gap-2">
+                                        <UserSquare />
+                                        Referred By
+                                    </Label>
+                                    <p className="text-sm font-semibold mt-1">{lead.referredByUserName}</p>
+                                </div>
+                            )}
                             
                             <div>
                                 <Label>Case Details</Label>

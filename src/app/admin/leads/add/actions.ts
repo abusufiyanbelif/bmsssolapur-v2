@@ -50,6 +50,8 @@ export async function handleAddLead(
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
       campaignId: formData.get("campaignId") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
+      referredByUserId: formData.get("referredByUserId") as string | undefined,
+      referredByUserName: formData.get("referredByUserName") as string | undefined,
       purpose: formData.get("purpose") as LeadPurpose,
       otherPurposeDetail: formData.get("otherPurposeDetail") as string | undefined,
       category: formData.get("category") as string,
@@ -134,6 +136,8 @@ export async function handleAddLead(
         beneficiaryId: beneficiaryUser.id!,
         campaignId: rawFormData.campaignId === 'none' ? undefined : rawFormData.campaignId,
         campaignName: rawFormData.campaignName || undefined,
+        referredByUserId: rawFormData.referredByUserId || undefined,
+        referredByUserName: rawFormData.referredByUserName || undefined,
         purpose: rawFormData.purpose,
         otherPurposeDetail: rawFormData.purpose === 'Other' ? rawFormData.otherPurposeDetail : undefined,
         donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose

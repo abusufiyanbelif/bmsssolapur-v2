@@ -1,4 +1,5 @@
 
+
 import { getLead } from "@/services/lead-service";
 import { notFound } from "next/navigation";
 import { EditLeadForm } from "./edit-lead-form";
@@ -8,11 +9,13 @@ import { ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getAllCampaigns } from "@/services/campaign-service";
+import { getAllUsers } from "@/services/user-service";
 
 export default async function EditLeadPage({ params }: { params: { id: string } }) {
-    const [lead, campaigns] = await Promise.all([
+    const [lead, campaigns, users] = await Promise.all([
         getLead(params.id),
-        getAllCampaigns()
+        getAllCampaigns(),
+        getAllUsers(),
     ]);
 
     if (!lead) {
@@ -34,7 +37,7 @@ export default async function EditLeadPage({ params }: { params: { id: string } 
                 </AlertDescription>
             </Alert>
             
-            <EditLeadForm lead={lead} campaigns={campaigns} />
+            <EditLeadForm lead={lead} campaigns={campaigns} users={users} />
         </div>
     );
 }

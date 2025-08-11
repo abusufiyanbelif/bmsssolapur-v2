@@ -176,6 +176,8 @@ export interface Lead {
         id: string;
         name: string;
     }
+    referredByUserId?: string;
+    referredByUserName?: string;
     dateCreated: Timestamp;
     dueDate?: Timestamp;
     closedAt?: Timestamp;
