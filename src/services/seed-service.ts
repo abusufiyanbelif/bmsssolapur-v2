@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -10,37 +9,39 @@ import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer } from 'firebase/firestore';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign } from './types';
+import { createLead, getLead } from './lead-service';
+import { createCampaign, getCampaign } from './campaign-service';
 
 const USERS_COLLECTION = 'users';
 
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
-    { userKey: "USR01", name: "admin", userId: "admin.user", firstName: "Admin", lastName: "User", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], groups: ["Founder"], isActive: true, gender: 'Other' },
-    { userKey: "USR02", name: "Abusufiyan Belif", userId: "abusufiyan.belif", firstName: "Abusufiyan", middleName: "", lastName: "Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", password: "admin", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Member of Organization", "Lead Approver"], isActive: true, gender: 'Male', address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012' },
+    { userKey: "USR01", name: "admin", userId: "admin.user", firstName: "Admin", lastName: "User", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], groups: ["Founder"], isActive: true, gender: 'Other', source: 'Seeded' },
+    { userKey: "USR02", name: "Abusufiyan Belif", userId: "abusufiyan.belif", firstName: "Abusufiyan", middleName: "", lastName: "Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", password: "admin", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Member of Organization", "Lead Approver"], isActive: true, gender: 'Male', address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012', source: 'Seeded' },
     
     // Admins (Founders and Members)
-    { userKey: "USR03", name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-    { userKey: "USR04", name: "Maaz Shaikh", userId: "maaz.shaikh", firstName: "Maaz", middleName: "", lastName: "Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", password: "admin", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-    { userKey: "USR05", name: "AbuRehan Bedrekar", userId: "aburehan.bedrekar", firstName: "AbuRehan", middleName: "", lastName: "Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-    { userKey: "USR06", name: "NayyarAhmed Karajgi", userId: "nayyarahmed.karajgi", firstName: "NayyarAhmed", middleName: "", lastName: "Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-    { userKey: "USR07", name: "Arif Baig", userId: "arif.baig", firstName: "Arif", middleName: "", lastName: "Baig", email: "arif.baig@example.com", phone: "9225747045", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-    { userKey: "USR08", name: "Mazhar Shaikh", userId: "mazhar.shaikh", firstName: "Mazhar", middleName: "", lastName: "Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-    { userKey: "USR09", name: "Mujahid Chabukswar", userId: "mujahid.chabukswar", firstName: "Mujahid", middleName: "", lastName: "Chabukswar", email: "mujahid.chabukswar@example.com", phone: "8087420544", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
-    { userKey: "USR10", name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { userKey: "USR03", name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR04", name: "Maaz Shaikh", userId: "maaz.shaikh", firstName: "Maaz", middleName: "", lastName: "Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", password: "admin", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR05", name: "AbuRehan Bedrekar", userId: "aburehan.bedrekar", firstName: "AbuRehan", middleName: "", lastName: "Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR06", name: "NayyarAhmed Karajgi", userId: "nayyarahmed.karajgi", firstName: "NayyarAhmed", middleName: "", lastName: "Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR07", name: "Arif Baig", userId: "arif.baig", firstName: "Arif", middleName: "", lastName: "Baig", email: "arif.baig@example.com", phone: "9225747045", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR08", name: "Mazhar Shaikh", userId: "mazhar.shaikh", firstName: "Mazhar", middleName: "", lastName: "Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR09", name: "Mujahid Chabukswar", userId: "mujahid.chabukswar", firstName: "Mujahid", middleName: "", lastName: "Chabukswar", email: "mujahid.chabukswar@example.com", phone: "8087420544", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR10", name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
     
     // Generic Donors & Beneficiaries
-    { userKey: "USR11", name: "Anonymous Donor", userId: "anonymous.donor", firstName: "Anonymous", middleName: "", lastName: "Donor", email: "anonymous@example.com", phone: "0000000000", password: "admin", roles: ["Donor"], isAnonymousAsDonor: true, privileges: [], groups: [], isActive: true, gender: 'Other' },
-    { userKey: "USR12", name: "Anonymous Beneficiary", userId: "anonymous.beneficiary", firstName: "Anonymous", lastName: "Beneficiary", email: "anonymous.beneficiary@example.com", phone: "0000000001", password: "admin", roles: ["Beneficiary"], isAnonymousAsBeneficiary: true, isActive: true, gender: 'Other' },
-    { userKey: "USR13", name: "AnonymousBoth User", userId: "anonymous.user.both", firstName: "AnonymousBoth", lastName: "User", email: "anonymous.both@example.com", phone: "3333333333", password: "admin", roles: ["Beneficiary", "Donor"], isAnonymousAsBeneficiary: true, isAnonymousAsDonor: true, isActive: true, gender: 'Other' },
+    { userKey: "USR11", name: "Anonymous Donor", userId: "anonymous.donor", firstName: "Anonymous", middleName: "", lastName: "Donor", email: "anonymous@example.com", phone: "0000000000", password: "admin", roles: ["Donor"], isAnonymousAsDonor: true, privileges: [], groups: [], isActive: true, gender: 'Other', source: 'Seeded' },
+    { userKey: "USR12", name: "Anonymous Beneficiary", userId: "anonymous.beneficiary", firstName: "Anonymous", lastName: "Beneficiary", email: "anonymous.beneficiary@example.com", phone: "0000000001", password: "admin", roles: ["Beneficiary"], isAnonymousAsBeneficiary: true, isActive: true, gender: 'Other', source: 'Seeded' },
+    { userKey: "USR13", name: "AnonymousBoth User", userId: "anonymous.user.both", firstName: "AnonymousBoth", lastName: "User", email: "anonymous.both@example.com", phone: "3333333333", password: "admin", roles: ["Beneficiary", "Donor"], isAnonymousAsBeneficiary: true, isAnonymousAsDonor: true, isActive: true, gender: 'Other', source: 'Seeded' },
     
     // Hardcoded Donor user
-    { userKey: "USR14", name: "Donor User", userId: "donor.user", firstName: "Donor", middleName: "", lastName: "User", email: "donor@example.com", phone: "1111111111", password: "admin", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { userKey: "USR14", name: "Donor User", userId: "donor.user", firstName: "Donor", middleName: "", lastName: "User", email: "donor@example.com", phone: "1111111111", password: "admin", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
 
     // Hardcoded Beneficiary user
-    { userKey: "USR15", name: "Beneficiary User", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' } },
+    { userKey: "USR15", name: "Beneficiary User", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
     
     // New test beneficiary
-    { userKey: "USR16", name: "Test Ready Beneficiary", userId: "test.ready.beneficiary", firstName: "TestReady", lastName: "Beneficiary", email: "test.ready@example.com", phone: "9876543210", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Adult' }
+    { userKey: "USR16", name: "Test Ready Beneficiary", userId: "test.ready.beneficiary", firstName: "TestReady", lastName: "Beneficiary", email: "test.ready@example.com", phone: "9876543210", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Adult', source: 'Seeded' }
 ];
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -59,7 +60,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 
 // RAMADAN CAMPAIGN DATA
 const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR17", name: "Salim Operation", userId: "salim.operation", firstName: "Salim", lastName: "Operation", email: "salim.op@example.com", phone: "4444444401", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult' },
+    { userKey: "USR17", name: "Salim Operation", userId: "salim.operation", firstName: "Salim", lastName: "Operation", email: "salim.op@example.com", phone: "4444444401", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
     ...Array.from({ length: 10 }, (_, i) => ({
         userKey: `USR${18 + i}`,
         name: `Ration Family ${i + 1}`,
@@ -72,7 +73,8 @@ const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
         roles: ["Beneficiary"],
         isActive: true,
         gender: 'Other',
-        beneficiaryType: 'Family' as 'Family'
+        beneficiaryType: 'Family' as 'Family',
+        source: 'Seeded'
     }))
 ];
 
@@ -88,8 +90,8 @@ const ramadanCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
 
 // WINTER CAMPAIGN DATA
 const winterCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR28", name: "Winter Beneficiary A", userId: "winter.beneficiary.a", firstName: "Winter", lastName: "Beneficiary A", email: "winter.a@example.com", phone: "8888888801", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family' },
-    { userKey: "USR29", name: "Winter Beneficiary B", userId: "winter.beneficiary.b", firstName: "Winter", lastName: "Beneficiary B", email: "winter.b@example.com", phone: "8888888802", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family' },
+    { userKey: "USR28", name: "Winter Beneficiary A", userId: "winter.beneficiary.a", firstName: "Winter", lastName: "Beneficiary A", email: "winter.a@example.com", phone: "8888888801", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { userKey: "USR29", name: "Winter Beneficiary B", userId: "winter.beneficiary.b", firstName: "Winter", lastName: "Beneficiary B", email: "winter.b@example.com", phone: "8888888802", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
 ];
 
 const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -102,7 +104,7 @@ const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
 };
 
 
-const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'donationType'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
+const historicalLeadsToSeed: (Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'beneficiaryId' | 'adminAddedBy' | 'dateCreated' | 'name' | 'verifiers' | 'donations' | 'purpose' | 'donationType' | 'source'> & { beneficiaryName: string; beneficiaryPhone: string; })[] = [
     { beneficiaryName: 'Mustahik Person', beneficiaryPhone: '1000000001', helpRequested: 2004, helpGiven: 2004, category: 'Lillah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Alhamdulilaah ...Ek Mustahik Allah k bande ko 2004rs ka ration diya gya.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Hazrate Nomaniya Masjid', beneficiaryPhone: '1000000002', helpRequested: 4500, helpGiven: 4500, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Sound system for Masjid at New Vidi Gharkul Kumbhari Block A.', verificationDocumentUrl: '' },
     { beneficiaryName: 'Hazrate Nomaniya Masjid Bill', beneficiaryPhone: '1000000003', helpRequested: 720, helpGiven: 720, category: 'Sadaqah', isLoan: false, status: 'Closed', verifiedStatus: 'Verified', caseDetails: 'Masjid light bill payment.', verificationDocumentUrl: '' },
@@ -139,38 +141,23 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
     const results: SeedItemResult[] = [];
 
     for (const userData of users) {
-        // Hardcode Super Admin to be active to prevent lockouts.
         if (userData.roles.includes('Super Admin')) {
             userData.isActive = true;
         }
 
-        const id = userData.userId; // Use the hardcoded ID
+        const id = userData.userId;
         if (!id) {
             results.push({ name: userData.name, status: 'Failed' });
             console.error(`User ${userData.name} is missing a userId in the seed data.`);
             continue;
         }
         
-        // Find user by any unique identifier to decide if they exist
-        let existingUser: User | null = null;
-        if (userData.userId) {
-            existingUser = await getUserByUserId(userData.userId);
-        }
-        if (!existingUser && userData.email) {
-            existingUser = await getUserByEmail(userData.email);
-        }
-        if (!existingUser) {
-            existingUser = await getUserByPhone(userData.phone);
-        }
+        const existingUser = await getUserByUserId(userData.userId);
         
         if (existingUser) {
-             // User exists, update them with the seed data.
-             // This ensures that any changes to the seed data are reflected.
             await updateUser(existingUser.id!, userData);
             results.push({ name: userData.name, status: 'Updated' });
-
         } else {
-            // User does not exist, create them
             await createUser({
                 ...userData,
                 createdAt: Timestamp.now(),
@@ -187,12 +174,17 @@ const seedOrganization = async (): Promise<string> => {
     if (!isConfigValid) {
         throw new Error("Firebase is not configured. Cannot seed organization.");
     }
-    const orgsCollection = collection(db, 'organizations');
-    const snapshot = await getDocs(orgsCollection);
+    const orgQuery = query(collection(db, 'organizations'), limit(1));
+    const snapshot = await getDocs(orgQuery);
+
     if (!snapshot.empty) {
-        const msg = 'Organization already exists. Skipped seeding.';
-        console.log(msg);
-        return msg;
+        const orgDoc = snapshot.docs[0];
+        // Ensure the ID from the document is used for the update
+        await updateDoc(doc(db, 'organizations', orgDoc.id), {
+            ...organizationToSeed,
+            updatedAt: serverTimestamp()
+        });
+        return 'Organization details updated successfully.';
     }
     
     console.log('Seeding organization...');
@@ -215,11 +207,8 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
 
     if (donorUsers.length === 0) {
         console.warn("No real donor users found. Donations will be assigned to Super Admins if possible.");
-        const superAdmins = allUsers.filter(u => u.roles.includes('Super Admin'));
-        if (superAdmins.length === 0) {
-            throw new Error("Cannot seed donations. No users with 'Donor' or 'Super Admin' role found.");
-        }
-        donorUsers = superAdmins; // Fallback to super admins as donors
+        donorUsers = allUsers.filter(u => u.roles.includes('Super Admin'));
+        if (donorUsers.length === 0) throw new Error("Cannot seed donations. No users with 'Donor' or 'Super Admin' role found.");
     }
     
     const historicalAdmin = await getUserByPhone("8421708907"); 
@@ -227,31 +216,17 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
         throw new Error("Cannot seed historical data. The user 'Moosa Shaikh' (phone: 8421708907) must exist to act as the verifier for past leads.");
     }
     
-    const q = query(collection(db, 'leads'), where("campaignId", "==", null));
-    const existingLeads = await getDocs(q);
-    if (existingLeads.docs.length > 2) { // Allow for a couple of test leads
-        console.log("General leads exist. Skipping general lead and donation seeding.");
-        return {
-            donationResults: [{ name: 'Historical Donations', status: 'Skipped (already exists)' }],
-            leadResults: [{ name: 'Historical Leads', status: 'Skipped (already exists)' }],
-        };
-    }
-
     const batch = writeBatch(db);
-    const leadsCollection = collection(db, 'leads');
-    const donationsCollection = collection(db, 'donations');
 
     for (const leadData of historicalLeadsToSeed) {
         let beneficiaryUser = await getUserByPhone(leadData.beneficiaryPhone);
         
         if (!beneficiaryUser) {
-            console.log(`Beneficiary ${leadData.beneficiaryName} with phone ${leadData.beneficiaryPhone} not found, creating...`);
             const [firstName, ...lastNameParts] = leadData.beneficiaryName.split(' ');
-            const lastName = lastNameParts.join(' ');
             beneficiaryUser = await createUser({
                 name: leadData.beneficiaryName,
                 firstName: firstName || 'Historical',
-                lastName: lastName || 'User',
+                lastName: lastNameParts.join(' ') || 'User',
                 userId: leadData.beneficiaryName.toLowerCase().replace(/\s+/g, '.'),
                 phone: leadData.beneficiaryPhone,
                 roles: ['Beneficiary'],
@@ -259,11 +234,20 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
                 isActive: true,
                 createdAt: Timestamp.fromDate(new Date("2021-11-01")),
                 updatedAt: Timestamp.fromDate(new Date("2021-11-01")),
+                source: 'Seeded'
             });
         }
         
+        // Use a consistent ID scheme to prevent duplicates
+        const leadId = `HISTORICAL_${beneficiaryUser.userKey}_${leadData.helpRequested}`;
+        const existingLead = await getLead(leadId);
+        if (existingLead) {
+            leadResults.push({ name: `Lead for ${beneficiaryUser.name}`, status: 'Skipped (already exists)' });
+            continue; // Skip if this specific lead exists
+        }
+
         const randomDonor = donorUsers[Math.floor(Math.random() * donorUsers.length)];
-        const donationRef = doc(donationsCollection);
+        const donationRef = doc(collection(db, 'donations'));
         const donation: Donation = {
             id: donationRef.id,
             donorId: randomDonor.id!,
@@ -278,12 +262,13 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             donationDate: Timestamp.fromDate(new Date("2021-11-01")),
             createdAt: Timestamp.fromDate(new Date("2021-11-01")),
             verifiedAt: Timestamp.fromDate(new Date("2021-11-01")),
-            notes: 'Historical donation seeded automatically.'
+            notes: 'Historical donation seeded automatically.',
+            source: 'Seeded'
         };
         batch.set(donationRef, donation);
         donationResults.push({ name: `Donation from ${randomDonor.name} for ${leadData.helpGiven}`, status: 'Created' });
         
-        const leadRef = doc(leadsCollection);
+        const leadRef = doc(db, 'leads', leadId);
         const verifier: Verifier = {
             verifierId: historicalAdmin.id!,
             verifierName: historicalAdmin.name,
@@ -318,335 +303,145 @@ const seedDonationsAndLeads = async (): Promise<{ donationResults: SeedItemResul
             category: leadData.category,
             purpose: 'Relief Fund',
             donationType: 'Lillah',
+            source: 'Seeded'
         };
         
         batch.set(leadRef, newLead);
         leadResults.push({ name: `Lead for ${newLead.name}`, status: 'Created' });
-
-        const updatedDonationAllocation = {
-            leadId: newLead.id!,
-            amount: leadData.helpGiven,
-            allocatedAt: Timestamp.fromDate(new Date("2021-12-01")),
-        };
-        batch.update(donationRef, { allocations: [updatedDonationAllocation] });
     }
     
     await batch.commit();
-    console.log('Donation and Lead seeding process finished.');
+    console.log('Historical donation and lead seeding process finished.');
     return { donationResults, leadResults };
 };
 
 
-const seedCampaignsAndLinkedLeads = async (): Promise<{ campaignResults: SeedItemResult[], leadResults: SeedItemResult[], donationResults: SeedItemResult[] }> => {
-    if (!isConfigValid) throw new Error("Firebase is not configured.");
-
+const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>, userData: Omit<User, 'id' | 'createdAt'>[], leadsData: any[]) => {
     const campaignResults: SeedItemResult[] = [];
     const leadResults: SeedItemResult[] = [];
     const donationResults: SeedItemResult[] = [];
 
-    const existingCampaignQuery = query(collection(db, 'campaigns'), where("name", "==", ramadanCampaign.name));
-    const existingCampaignSnapshot = await getDocs(existingCampaignQuery);
-    if (!existingCampaignSnapshot.empty) {
-        campaignResults.push({ name: ramadanCampaign.name, status: 'Skipped (already exists)' });
+    // Seed users first
+    await seedUsers(userData);
+
+    // Check if campaign exists
+    const campaignRef = doc(db, 'campaigns', campaignData.name.replace(/\s+/g, '-').toLowerCase());
+    const campaignDoc = await getDoc(campaignRef);
+
+    if (campaignDoc.exists()) {
+        campaignResults.push({ name: campaignData.name, status: 'Skipped (already exists)' });
         return { campaignResults, leadResults, donationResults };
     }
 
     const batch = writeBatch(db);
-    
-    // 1. Create Campaign
-    const campaignRef = doc(collection(db, 'campaigns'));
-    batch.set(campaignRef, { ...ramadanCampaign, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
-    campaignResults.push({ name: ramadanCampaign.name, status: 'Created' });
+    batch.set(campaignRef, { ...campaignData, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now(), source: 'Seeded' });
+    campaignResults.push({ name: campaignData.name, status: 'Created' });
 
     const verifierAdmin = await getUserByPhone("7887646583");
-    if (!verifierAdmin) {
-        throw new Error("Verifier admin (7887646583) not found for Ramadan campaign seeding.");
-    }
+    if (!verifierAdmin) throw new Error("Verifier admin (7887646583) not found.");
+
     const verifier: Verifier = {
         verifierId: verifierAdmin.id!,
         verifierName: verifierAdmin.name,
         verifiedAt: Timestamp.now(),
-        notes: "Verified as part of historical campaign data import."
+        notes: "Verified as part of campaign data import."
     };
-    
-    let allDonors = await getAllUsers();
-    allDonors = allDonors.filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
+
+    const allDonors = (await getAllUsers()).filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
     if (allDonors.length === 0) throw new Error("No donor users found for campaign seeding.");
 
-    // 2. Create Beneficiaries, Leads, and Donations for the campaign
-    // Individual Lead for Operation
-    const medicalBeneficiary = await getUserByPhone(ramadanCampaignUsers[0].phone);
-    if (medicalBeneficiary) {
-        const medicalLeadRef = doc(collection(db, 'leads'));
-        const medicalDonationRef = doc(collection(db, 'donations'));
+    for (const leadInfo of leadsData) {
+        const beneficiary = await getUserByPhone(leadInfo.phone);
+        if (!beneficiary) continue;
+
+        const leadId = `${campaignRef.id}_${beneficiary.userKey}`;
+        const existingLead = await getLead(leadId);
+        if (existingLead) {
+            leadResults.push({ name: `Lead for ${beneficiary.name}`, status: 'Skipped (already exists)' });
+            continue;
+        }
+        
+        const leadRef = doc(db, 'leads', leadId);
         const randomDonor = allDonors[Math.floor(Math.random() * allDonors.length)];
         
-        batch.set(medicalDonationRef, {
-            id: medicalDonationRef.id,
-            donorId: randomDonor.id!, donorName: randomDonor.name, amount: 60000,
-            type: 'Zakat', purpose: 'Medical', status: 'Allocated', isAnonymous: false,
-            createdAt: Timestamp.now(), verifiedAt: Timestamp.now(), donationDate: Timestamp.now(),
-        });
-        donationResults.push({ name: `Donation for ${medicalBeneficiary.name}`, status: 'Created' });
-        
-        batch.set(medicalLeadRef, {
-            id: medicalLeadRef.id, name: medicalBeneficiary.name, beneficiaryId: medicalBeneficiary.id!,
-            campaignId: campaignRef.id, campaignName: ramadanCampaign.name,
-            purpose: 'Medical', category: 'Surgical Procedure', donationType: 'Zakat',
-            helpRequested: 60000, helpGiven: 60000, status: 'Closed', isLoan: true,
-            caseDetails: 'Assistance for a major operation, as part of Ramadan drive.',
+        const newLead: Partial<Lead> = {
+            id: leadRef.id, name: beneficiary.name, beneficiaryId: beneficiary.id!,
+            campaignId: campaignRef.id, campaignName: campaignData.name,
+            purpose: leadInfo.purpose, category: leadInfo.category, donationType: leadInfo.donationType,
+            helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
+            status: leadInfo.isFunded ? 'Closed' : 'Ready For Help',
+            isLoan: leadInfo.isLoan || false,
+            caseDetails: leadInfo.details,
             verifiedStatus: 'Verified', verifiers: [verifier],
-            donations: [{ donationId: medicalDonationRef.id, amount: 60000, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }],
             dateCreated: Timestamp.now(), adminAddedBy: { id: verifierAdmin.id, name: verifierAdmin.name },
-            createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
-        });
-        leadResults.push({ name: `Medical Lead for ${medicalBeneficiary.name}`, status: 'Created' });
+            source: 'Seeded'
+        };
 
-        batch.update(medicalDonationRef, { allocations: [{ leadId: medicalLeadRef.id, amount: 60000, allocatedAt: Timestamp.now() }] });
-    }
-
-    // 10 Family Ration Leads
-    for (let i = 1; i < ramadanCampaignUsers.length; i++) {
-        const familyBeneficiary = await getUserByPhone(ramadanCampaignUsers[i].phone);
-        if (familyBeneficiary) {
-            const familyLeadRef = doc(collection(db, 'leads'));
-            const familyDonationRef = doc(collection(db, 'donations'));
-            const randomDonor = allDonors[Math.floor(Math.random() * allDonors.length)];
-
-            batch.set(familyDonationRef, {
-                id: familyDonationRef.id,
-                donorId: randomDonor.id!, donorName: randomDonor.name, amount: 4000,
-                type: 'Zakat', purpose: 'Relief Fund', status: 'Allocated', isAnonymous: false,
-                createdAt: Timestamp.now(), verifiedAt: Timestamp.now(), donationDate: Timestamp.now()
+        if (leadInfo.isFunded) {
+            const donationRef = doc(collection(db, 'donations'));
+            batch.set(donationRef, {
+                id: donationRef.id, donorId: randomDonor.id!, donorName: randomDonor.name, amount: leadInfo.amount,
+                type: leadInfo.donationType, purpose: leadInfo.purpose, status: 'Allocated', isAnonymous: false,
+                createdAt: Timestamp.now(), verifiedAt: Timestamp.now(), donationDate: Timestamp.now(),
+                campaignId: campaignRef.id, leadId: leadRef.id, source: 'Seeded'
             });
-            donationResults.push({ name: `Donation for ${familyBeneficiary.name}`, status: 'Created' });
-            
-            batch.set(familyLeadRef, {
-                id: familyLeadRef.id, name: familyBeneficiary.name, beneficiaryId: familyBeneficiary.id!,
-                campaignId: campaignRef.id, campaignName: ramadanCampaign.name,
-                purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat',
-                helpRequested: 4000, helpGiven: 4000, status: 'Closed', isLoan: false,
-                caseDetails: 'Ramadan ration kit for a family in need.',
-                verifiedStatus: 'Verified', verifiers: [verifier],
-                donations: [{ donationId: familyDonationRef.id, amount: 4000, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }],
-                dateCreated: Timestamp.now(), adminAddedBy: { id: verifierAdmin.id, name: verifierAdmin.name },
-                createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
-            });
-            leadResults.push({ name: `Ration Lead for ${familyBeneficiary.name}`, status: 'Created' });
-
-            batch.update(familyDonationRef, { allocations: [{ leadId: familyLeadRef.id, amount: 4000, allocatedAt: Timestamp.now() }] });
+            newLead.donations = [{ donationId: donationRef.id, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
+            donationResults.push({ name: `Donation for ${beneficiary.name}`, status: 'Created' });
         }
+        
+        batch.set(leadRef, newLead);
+        leadResults.push({ name: `Lead for ${beneficiary.name}`, status: 'Created' });
     }
 
     await batch.commit();
     return { campaignResults, leadResults, donationResults };
-};
-
-
-const seedWinterCampaign = async (): Promise<{ campaignResults: SeedItemResult[], leadResults: SeedItemResult[] }> => {
-    if (!isConfigValid) throw new Error("Firebase is not configured.");
-
-    const campaignResults: SeedItemResult[] = [];
-    const leadResults: SeedItemResult[] = [];
-
-    const existingCampaignQuery = query(collection(db, 'campaigns'), where("name", "==", winterCampaign.name));
-    const existingCampaignSnapshot = await getDocs(existingCampaignQuery);
-    if (!existingCampaignSnapshot.empty) {
-        campaignResults.push({ name: winterCampaign.name, status: 'Skipped (already exists)' });
-        return { campaignResults, leadResults };
-    }
-
-    const batch = writeBatch(db);
-
-    // 1. Create Campaign
-    const campaignRef = doc(collection(db, 'campaigns'));
-    batch.set(campaignRef, { ...winterCampaign, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
-    campaignResults.push({ name: winterCampaign.name, status: 'Created' });
-
-    const verifierAdmin = await getUserByPhone("7887646583");
-    if (!verifierAdmin) {
-        throw new Error("Verifier admin (7887646583) not found for winter campaign seeding.");
-    }
-    const verifier: Verifier = {
-        verifierId: verifierAdmin.id!,
-        verifierName: verifierAdmin.name,
-        verifiedAt: Timestamp.now(),
-        notes: "Verified as part of test data seeding."
-    };
-
-    // 2. Create Beneficiaries and Leads
-    for (const userData of winterCampaignUsers) {
-        let beneficiary = await getUserByPhone(userData.phone);
-        if (beneficiary) {
-            const leadRef = doc(collection(db, 'leads'));
-            const leadHelpAmount = userData.name === 'Winter Beneficiary A' ? 2500 : 3500;
-            
-            batch.set(leadRef, {
-                id: leadRef.id, name: beneficiary.name, beneficiaryId: beneficiary.id!,
-                campaignId: campaignRef.id, campaignName: winterCampaign.name,
-                purpose: 'Relief Fund', category: 'Winter Kit', donationType: 'Sadaqah',
-                helpRequested: leadHelpAmount, helpGiven: 0, status: 'Ready For Help', isLoan: false,
-                caseDetails: `Help for winter clothing and blankets for ${beneficiary.name}.`,
-                verifiedStatus: 'Verified', verifiers: [verifier],
-                dateCreated: Timestamp.now(), adminAddedBy: { id: verifierAdmin.id, name: verifierAdmin.name },
-                createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
-            });
-            leadResults.push({ name: `Winter Lead for ${beneficiary.name}`, status: 'Created' });
-        }
-    }
-
-    await batch.commit();
-    return { campaignResults, leadResults };
-};
-
-
-const seedTestLeads = async (): Promise<SeedItemResult[]> => {
-    if (!isConfigValid) throw new Error("Firebase is not configured.");
-
-    const leadResults: SeedItemResult[] = [];
-    const testBeneficiary = await getUserByPhone("9876543210");
-    const verifierAdmin = await getUserByPhone("7887646583");
-
-    if (!testBeneficiary || !verifierAdmin) {
-        console.error("Test beneficiary (9876543210) or Verifier admin (7887646583) not found. Skipping test lead seed.");
-        return [{ name: 'Test Ready Lead', status: 'Failed' }];
-    }
-
-    const leadQuery = query(collection(db, 'leads'), where("beneficiaryId", "==", testBeneficiary.id), where("purpose", "==", "Medical"));
-    const existingLeads = await getDocs(leadQuery);
-
-    if (!existingLeads.empty) {
-        return [{ name: 'Test Ready Lead', status: 'Skipped (already exists)' }];
-    }
-
-    const batch = writeBatch(db);
-    const leadRef = doc(collection(db, 'leads'));
-    const verifier: Verifier = {
-        verifierId: verifierAdmin.id!,
-        verifierName: verifierAdmin.name,
-        verifiedAt: Timestamp.now(),
-        notes: "Verified as part of test data seeding."
-    };
-
-    const newLead: Lead = {
-        id: leadRef.id,
-        name: testBeneficiary.name,
-        beneficiaryId: testBeneficiary.id!,
-        helpRequested: 15000,
-        helpGiven: 0,
-        status: 'Ready For Help',
-        isLoan: false,
-        caseDetails: 'This is a test case for a verified medical emergency that is ready for funding.',
-        verifiedStatus: 'Verified',
-        verifiers: [verifier],
-        donations: [],
-        adminAddedBy: { id: verifierAdmin.id!, name: verifierAdmin.name },
-        dateCreated: Timestamp.now(),
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        category: 'Hospital Bill',
-        purpose: 'Medical',
-        donationType: 'Sadaqah',
-    };
-    
-    batch.set(leadRef, newLead);
-    leadResults.push({ name: `Lead for ${newLead.name}`, status: 'Created' });
-
-    await batch.commit();
-    return leadResults;
 }
-
 
 export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Attempting to seed database...');
     if (!isConfigValid) {
         const errorMsg = "Firebase is not configured. Aborting seed.";
         console.error(errorMsg);
-        return {
-            userResults: [],
-            donationResults: [],
-            leadResults: [],
-            campaignResults: [],
-            orgStatus: 'Failed',
-            quotesStatus: 'Failed',
-            error: errorMsg,
-        };
+        return { userResults: [], donationResults: [], leadResults: [], campaignResults: [], orgStatus: 'Failed', quotesStatus: 'Failed', error: errorMsg };
     }
 
-    const results: SeedResult = {
-        userResults: [],
-        donationResults: [],
-        leadResults: [],
-        campaignResults: [],
-        orgStatus: 'Pending...',
-        quotesStatus: 'Pending...',
-    };
+    const results: SeedResult = { userResults: [], donationResults: [], leadResults: [], campaignResults: [], orgStatus: 'Pending...', quotesStatus: 'Pending...' };
 
     try {
         console.log("Seeding core admin users...");
         results.userResults.push(...await seedUsers(adminUsersToSeed));
-    } catch (e: any) {
-        return { ...results, error: `Seeding failed during [Admin User Seeding]: ${e.message}` };
-    }
-
-    try {
-        console.log("Seeding Ramadan campaign users...");
-        results.userResults.push(...await seedUsers(ramadanCampaignUsers));
-    } catch (e: any) {
-        return { ...results, error: `Seeding failed during [Campaign User Seeding]: ${e.message}` };
-    }
-
-    try {
-        console.log("Seeding Winter campaign users...");
-        results.userResults.push(...await seedUsers(winterCampaignUsers));
-    } catch (e: any) {
-        return { ...results, error: `Seeding failed during [Winter Campaign User Seeding]: ${e.message}` };
-    }
-
-    try {
+        
         results.orgStatus = await seedOrganization();
-    } catch (e: any) {
-        return { ...results, orgStatus: 'Failed', error: `Seeding failed during [Organization Seeding]: ${e.message}` };
-    }
-
-    try {
         results.quotesStatus = await seedInitialQuotes();
+        
+        const historicalData = await seedDonationsAndLeads();
+        results.donationResults.push(...historicalData.donationResults);
+        results.leadResults.push(...historicalData.leadResults);
+
+        // Seed Ramadan Campaign
+        const ramadanLeads = [
+            { phone: ramadanCampaignUsers[0].phone, amount: 60000, isFunded: true, isLoan: true, purpose: 'Medical', category: 'Surgical Procedure', donationType: 'Zakat', details: 'Assistance for a major operation, as part of Ramadan drive.' },
+            ...ramadanCampaignUsers.slice(1).map(u => ({ phone: u.phone, amount: 4000, isFunded: true, isLoan: false, purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat', details: 'Ramadan ration kit for a family in need.' }))
+        ];
+        const ramadanResult = await seedCampaignAndData(ramadanCampaign, ramadanCampaignUsers, ramadanLeads);
+        results.campaignResults.push(...ramadanResult.campaignResults);
+        results.leadResults.push(...ramadanResult.leadResults);
+        results.donationResults.push(...ramadanResult.donationResults);
+
+        // Seed Winter Campaign
+        const winterLeads = [
+            { phone: winterCampaignUsers[0].phone, amount: 2500, isFunded: false, purpose: 'Relief Fund', category: 'Winter Kit', donationType: 'Sadaqah', details: 'Help for winter clothing and blankets for Winter Beneficiary A.' },
+            { phone: winterCampaignUsers[1].phone, amount: 3500, isFunded: false, purpose: 'Relief Fund', category: 'Winter Kit', donationType: 'Sadaqah', details: 'Help for winter clothing and blankets for Winter Beneficiary B.' }
+        ];
+        const winterResult = await seedCampaignAndData(winterCampaign, winterCampaignUsers, winterLeads);
+        results.campaignResults.push(...winterResult.campaignResults);
+        results.leadResults.push(...winterResult.leadResults);
+
     } catch (e: any) {
-        return { ...results, quotesStatus: 'Failed', error: `Seeding failed during [Quotes Seeding]: ${e.message}` };
-    }
-    
-    try {
-        const { donationResults, leadResults } = await seedDonationsAndLeads();
-        results.donationResults.push(...donationResults);
-        results.leadResults.push(...leadResults);
-    } catch (e: any) {
-         return { ...results, error: `Seeding failed during [Historical Data Seeding]: ${e.message}` };
-    }
-    
-    try {
-        const { campaignResults, leadResults: campaignLeadResults, donationResults: campaignDonationResults } = await seedCampaignsAndLinkedLeads();
-        results.campaignResults.push(...campaignResults);
-        results.leadResults.push(...campaignLeadResults);
-        results.donationResults.push(...campaignDonationResults);
-    } catch (e: any) {
-        return { ...results, error: `Seeding failed during [Ramadan Campaign Seeding]: ${e.message}` };
-    }
-    
-    try {
-        const { campaignResults, leadResults: winterLeadResults } = await seedWinterCampaign();
-        results.campaignResults.push(...campaignResults);
-        results.leadResults.push(...winterLeadResults);
-    } catch (e: any) {
-        return { ...results, error: `Seeding failed during [Winter Campaign Seeding]: ${e.message}` };
-    }
-    
-    try {
-        const testLeadResults = await seedTestLeads();
-        results.leadResults.push(...testLeadResults);
-    } catch (e: any) {
-        return { ...results, error: `Seeding failed during [Test Lead Seeding]: ${e.message}` };
+        console.error("Seeding failed:", e);
+        results.error = e.message;
     }
 
-    console.log('Database seeding process completed successfully.');
+    console.log('Database seeding process completed.');
     return results;
 };
