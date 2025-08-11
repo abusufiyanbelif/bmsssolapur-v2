@@ -18,7 +18,8 @@ import {
   getCountFromServer,
   writeBatch,
   increment,
-  arrayUnion
+  arrayUnion,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
@@ -92,12 +93,17 @@ export const getDonation = async (id: string): Promise<Donation | null> => {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
     if (donationDoc.exists()) {
       const data = donationDoc.data();
+      const allocations = (data.allocations || []).map((alloc: Allocation) => ({
+        ...alloc,
+        allocatedAt: (alloc.allocatedAt as Timestamp).toDate(),
+      }));
       return { 
         id: donationDoc.id, 
         ...data,
         createdAt: (data.createdAt as Timestamp).toDate(),
         donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
         verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+        allocations: allocations,
       } as Donation;
     }
     return null;
@@ -185,12 +191,17 @@ export const getAllDonations = async (): Promise<Donation[]> => {
         const donations: Donation[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
+            const allocations = (data.allocations || []).map((alloc: Allocation) => ({
+                ...alloc,
+                allocatedAt: (alloc.allocatedAt as Timestamp).toDate(),
+            }));
             donations.push({ 
               id: doc.id, 
               ...data,
               createdAt: (data.createdAt as Timestamp).toDate(),
               donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
               verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+              allocations: allocations,
             } as Donation);
         });
         return donations;

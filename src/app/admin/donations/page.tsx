@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -418,7 +417,7 @@ function DonationsPageContent() {
                                                 <TableRow key={alloc.leadId + i}>
                                                      <TableCell>
                                                         <p>{alloc.allocatedByUserName}</p>
-                                                        <p className="text-xs text-muted-foreground">{format(alloc.allocatedAt.toDate(), "dd MMM, p")}</p>
+                                                        <p className="text-xs text-muted-foreground">{format(alloc.allocatedAt, "dd MMM, p")}</p>
                                                     </TableCell>
                                                     <TableCell>
                                                         <p>{lead?.name || 'N/A'}</p>

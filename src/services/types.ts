@@ -86,7 +86,7 @@ export type PaymentMethod = 'Online (UPI/Card)' | 'Bank Transfer' | 'Cash' | 'Ot
 export interface Allocation {
   leadId: string;
   amount: number;
-  allocatedAt: Timestamp;
+  allocatedAt: Timestamp | Date;
   allocatedByUserId: string;
   allocatedByUserName: string;
 }
@@ -109,8 +109,8 @@ export interface Donation {
   donorPhone?: string;
   donorBankAccount?: string;
   paymentMethod?: PaymentMethod;
-  createdAt: Timestamp;
-  verifiedAt?: Timestamp;
+  createdAt: Timestamp | Date;
+  verifiedAt?: Timestamp | Date;
   allocations?: Allocation[];
   notes?: string;
   source?: 'Seeded' | 'Manual Entry';
@@ -125,7 +125,7 @@ export type LeadPriority = 'Urgent' | 'High' | 'Medium' | 'Low';
 export interface Verifier {
     verifierId: string;
     verifierName: string;
-    verifiedAt: Timestamp;
+    verifiedAt: Timestamp | Date;
     notes?: string;
 }
 
@@ -134,7 +134,7 @@ export interface LeadDonationAllocation {
     amount: number;
     allocatedByUserId: string;
     allocatedByUserName: string;
-    allocatedAt: Timestamp;
+    allocatedAt: Timestamp | Date;
 }
 
 export interface FundTransfer {
@@ -185,12 +185,12 @@ export interface Lead {
     }
     referredByUserId?: string;
     referredByUserName?: string;
-    dateCreated: Timestamp;
-    dueDate?: Timestamp;
-    closedAt?: Timestamp;
+    dateCreated: Timestamp | Date;
+    dueDate?: Timestamp | Date;
+    closedAt?: Timestamp | Date;
     isLoan: boolean;
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+    createdAt: Timestamp | Date;
+    updatedAt: Timestamp | Date;
     source?: 'Seeded' | 'Manual Entry';
 }
 
