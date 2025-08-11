@@ -270,14 +270,14 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
 
 const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
     const donor = await getUserByUserId("donor.user");
-    if (!donor) {
+    if (!donor || !donor.id) {
         console.log("Test donor 'donor.user' not found, skipping test donation seed.");
         return { name: "Test Donation 4k", status: "Skipped (already exists)" };
     }
 
     const donationsCollection = collection(db, 'donations');
     const q = query(donationsCollection, 
-        where("donorId", "==", donor.id!), 
+        where("donorId", "==", donor.id), 
         where("amount", "==", 4000),
         where("status", "==", "Verified"),
         where("source", "==", "Seeded-Test")
@@ -291,7 +291,7 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
     const verifiedDate = new Date(randomDonationDate.getTime() + 86400000); // 1 day later
 
     await createDonation({
-        donorId: donor.id!,
+        donorId: donor.id,
         donorName: donor.name,
         amount: 4000,
         type: 'Sadaqah',
