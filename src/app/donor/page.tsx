@@ -278,12 +278,14 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
                 {donorMetrics.map((metric) => (
-                    <div key={metric.title} className="p-4 border rounded-lg bg-primary/5">
-                        <metric.icon className="h-6 w-6 text-primary mb-2" />
-                        <p className="text-2xl font-bold text-primary">{metric.value}</p>
-                        <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
-                    </div>
+                     <Link href="/my-donations" key={metric.title}>
+                        <div className="p-4 border rounded-lg bg-primary/5 h-full hover:bg-primary/10 transition-colors">
+                            <metric.icon className="h-6 w-6 text-primary mb-2" />
+                            <p className="text-2xl font-bold text-primary">{metric.value}</p>
+                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                            <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        </div>
+                    </Link>
                 ))}
             </CardContent>
         </Card>
@@ -295,12 +297,14 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
                 {impactMetrics.map((metric) => (
-                    <div key={metric.title} className="p-4 border rounded-lg">
-                        <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
-                        <p className="text-2xl font-bold">{metric.value}</p>
-                        <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
-                    </div>
+                    <Link href="/my-donations" key={metric.title}>
+                        <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
+                            <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
+                            <p className="text-2xl font-bold">{metric.value}</p>
+                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                            <p className="text-xs text-muted-foreground">{metric.description}</p>
+                        </div>
+                    </Link>
                 ))}
             </CardContent>
         </Card>
@@ -310,7 +314,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Open General Cases</CardTitle>
+                    <CardTitle>General Help Cases</CardTitle>
                     <CardDescription>Browse verified general cases that need your support.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -356,7 +360,7 @@ function DonorDashboard({ donations, openLeads, quotes, allLeads, allUsers, allD
                                         </p>
                                     </div>
                                     <Button asChild size="sm">
-                                        <Link href="/public-leads">Donate</Link>
+                                        <Link href={`/donate?leadId=${lead.id}`}>Donate</Link>
                                     </Button>
                                 </div>
                                 );
