@@ -11,6 +11,8 @@ import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer } from 'firebase/firestore';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign } from './types';
 
+const USERS_COLLECTION = 'users';
+
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
     { name: "admin", userId: "admin.user", firstName: "Admin", lastName: "User", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], groups: ["Founder"], isActive: true, gender: 'Other' },
