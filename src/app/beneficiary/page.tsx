@@ -338,12 +338,14 @@ function BeneficiaryDashboard({ cases, quotes, allLeads, allDonations, allUsers,
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {beneficiaryMetrics.map((metric) => (
-                        <div key={metric.title} className="p-4 border rounded-lg bg-primary/5">
-                            <metric.icon className="h-6 w-6 text-primary mb-2" />
-                            <p className="text-2xl font-bold text-primary">{metric.value}</p>
-                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                            <p className="text-xs text-muted-foreground">{metric.description}</p>
-                        </div>
+                         <Link href="/my-cases" key={metric.title}>
+                            <div className="p-4 border rounded-lg bg-primary/5 h-full hover:bg-primary/10 transition-colors">
+                                <metric.icon className="h-6 w-6 text-primary mb-2" />
+                                <p className="text-2xl font-bold text-primary">{metric.value}</p>
+                                <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                                <p className="text-xs text-muted-foreground">{metric.description}</p>
+                            </div>
+                        </Link>
                     ))}
                 </CardContent>
             </Card>
