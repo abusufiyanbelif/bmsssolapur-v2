@@ -238,6 +238,7 @@ export default function UserManagementPage() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
+                    <TableHead>User Key</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
                            Name {renderSortIcon('name')}
@@ -259,6 +260,7 @@ export default function UserManagementPage() {
                 {paginatedUsers.map((user, index) => (
                     <TableRow key={user.id}>
                         <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                        <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
                         <TableCell className="font-medium">
                             <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
                                 {user.name}
@@ -318,6 +320,10 @@ export default function UserManagementPage() {
                         <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">User Key</span>
+                            <span className="font-semibold">{user.userKey || 'N/A'}</span>
+                        </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">User ID</span>
                              <div className="text-right">

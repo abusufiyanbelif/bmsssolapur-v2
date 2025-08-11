@@ -30,6 +30,7 @@ export type Privilege =
 
 export interface User {
   id?: string;
+  userKey?: string; // e.g., USR01, USR02
   userId?: string; // Custom, user-defined ID
   name: string;
   firstName: string;

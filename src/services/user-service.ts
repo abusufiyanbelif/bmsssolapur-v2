@@ -17,6 +17,7 @@ import {
   where,
   limit,
   serverTimestamp,
+  getCountFromServer,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { User, UserRole } from './types';
@@ -83,12 +84,19 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
 
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(db, USERS_COLLECTION, user.userId);
     
+    // Auto-generate userKey
+    const usersCollection = collection(db, USERS_COLLECTION);
+    const countSnapshot = await getCountFromServer(usersCollection);
+    const userNumber = countSnapshot.data().count + 1;
+    const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
+
     // Always generate an anonymous ID for every user upon creation
     const anonymousBeneficiaryId = user.anonymousBeneficiaryId || `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
     const anonymousDonorId = user.anonymousDonorId || `Donor-${userRef.id.substring(0, 6).toUpperCase()}`;
 
     // Ensure createdAt is a Firestore Timestamp
     const finalUserData: User = { 
+        userKey: userKey,
         name: user.name || `${user.firstName || ''} ${user.middleName || ''} ${user.lastName || ''}`.replace(/\s+/g, ' ').trim(),
         userId: user.userId,
         firstName: user.firstName,

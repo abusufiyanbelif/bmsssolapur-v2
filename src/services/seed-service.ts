@@ -8,7 +8,7 @@ import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer } from 'firebase/firestore';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign } from './types';
 
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
@@ -553,6 +553,34 @@ const seedTestLeads = async (): Promise<SeedItemResult[]> => {
     return leadResults;
 }
 
+const assignUserKeys = async (): Promise<SeedItemResult[]> => {
+    console.log("Assigning user keys to existing users...");
+    if (!isConfigValid) {
+        throw new Error("Firebase is not configured. Cannot assign user keys.");
+    }
+    const results: SeedItemResult[] = [];
+    const usersCollection = collection(db, USERS_COLLECTION);
+    const q = query(usersCollection, orderBy("createdAt", "asc"));
+    const snapshot = await getDocs(q);
+
+    const batch = writeBatch(db);
+    let counter = 1;
+    for (const userDoc of snapshot.docs) {
+        const user = userDoc.data() as User;
+        if (!user.userKey) {
+            const userKey = `USR${counter.toString().padStart(2, '0')}`;
+            const userRef = doc(db, USERS_COLLECTION, userDoc.id);
+            batch.update(userRef, { userKey: userKey });
+            results.push({ name: user.name, status: 'Updated' });
+            counter++;
+        } else {
+             results.push({ name: user.name, status: 'Skipped (already exists)' });
+        }
+    }
+    await batch.commit();
+    console.log(`${results.filter(r => r.status === 'Updated').length} users updated with a new userKey.`);
+    return results;
+}
 
 export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Attempting to seed database...');
@@ -642,6 +670,18 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         results.leadResults.push(...testLeadResults);
     } catch (e: any) {
         return { ...results, error: `Seeding failed during [Test Lead Seeding]: ${e.message}` };
+    }
+
+    try {
+        // This is the new step to assign keys to all users created above.
+        const keyAssignmentResults = await assignUserKeys();
+        results.userResults = results.userResults.map(res => {
+            const keyRes = keyAssignmentResults.find(k => k.name === res.name);
+            return keyRes ? keyRes : res;
+        })
+
+    } catch (e: any) {
+        return { ...results, error: `Seeding failed during [User Key Assignment]: ${e.message}` };
     }
 
     console.log('Database seeding process completed successfully.');
