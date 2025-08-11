@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -351,9 +352,9 @@ function DonationsPageContent() {
                             )}
                         </TableCell>
                         <TableCell>
-                            <Button variant="link" className="font-mono text-xs p-0 h-auto" onClick={() => handleDonationIdClick(donation.id!)}>
+                            <Link href={`/admin/donations/${donation.id}/edit`} className="font-mono text-xs hover:underline text-primary">
                                 {donation.id}
-                            </Button>
+                            </Link>
                             <div className="text-xs text-muted-foreground">{donation.source || 'Manual Entry'}</div>
                         </TableCell>
                         <TableCell>{format(new Date(donation.donationDate), "dd MMM yyyy")}</TableCell>
@@ -521,9 +522,9 @@ function DonationsPageContent() {
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Donation ID</span>
-                                 <Button variant="link" className="font-mono text-xs p-0 h-auto" onClick={() => handleDonationIdClick(donation.id!)}>
+                                 <Link href={`/admin/donations/${donation.id}/edit`} className="font-mono text-xs hover:underline text-primary">
                                     {donation.id}
-                                </Button>
+                                </Link>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Date</span>
