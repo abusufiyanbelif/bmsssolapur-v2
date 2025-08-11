@@ -111,7 +111,6 @@ function PublicHomePage() {
     pendingToDisburse,
     beneficiariesHelpedCount,
     casesClosed,
-    casesPending,
   } = useMemo(() => {
     const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
     const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
@@ -119,8 +118,7 @@ function PublicHomePage() {
     const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
     const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
     const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
-    const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
-    return { totalRaised, totalDistributed, pendingToDisburse, beneficiariesHelpedCount, casesClosed, casesPending };
+    return { totalRaised, totalDistributed, pendingToDisburse, beneficiariesHelpedCount, casesClosed };
   }, [allDonations, allLeads]);
 
   const mainMetrics = [
@@ -128,7 +126,6 @@ function PublicHomePage() {
     { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/public-leads" },
     { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, href: "/public-leads" },
     { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, href: "/public-leads" },
-    { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, href: "/public-leads" },
     { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, href: "/public-leads" },
   ];
 
