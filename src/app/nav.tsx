@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link"
@@ -49,6 +50,9 @@ const allNavItems: NavItem[] = [
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
     { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
     
+    // Referral
+    { href: "/referral/my-beneficiaries", label: "My Referrals", icon: Users, allowedRoles: ["Referral"] },
+
     // Admin - Organization (Collapsible)
     {
         label: "Organization",

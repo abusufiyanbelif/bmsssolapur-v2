@@ -67,6 +67,8 @@ export interface User {
   roles: UserRole[]; 
   privileges?: Privilege[]; 
   groups?: string[];
+  referredByUserId?: string; // ID of the user who referred this person
+  referredByUserName?: string; // Name of the user who referred this person
   enableMonthlyDonationReminder?: boolean;
   monthlyPledgeEnabled?: boolean;
   monthlyPledgeAmount?: number;

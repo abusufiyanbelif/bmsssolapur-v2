@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -26,6 +27,8 @@ export default function HomePage() {
         redirectTo = '/donor';
       } else if (activeRole === 'Beneficiary') {
         redirectTo = '/beneficiary';
+      } else if (activeRole === 'Referral') {
+        redirectTo = '/referral';
       } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
         redirectTo = '/admin';
       } else {
@@ -36,6 +39,7 @@ export default function HomePage() {
             const primaryRole = user.roles[0];
             if (primaryRole === 'Donor') redirectTo = '/donor';
             else if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
+            else if (primaryRole === 'Referral') redirectTo = '/referral';
             else if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
             else redirectTo = '/'; // Public home
          }

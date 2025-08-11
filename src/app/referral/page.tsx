@@ -1,0 +1,178 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowRight, HandHeart, Users, Loader2, AlertCircle, FileText } from "lucide-react";
+import { getLeadsByBeneficiaryId } from "@/services/lead-service";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import type { User, Lead } from "@/services/types";
+import { getReferredBeneficiaries, getUser } from "@/services/user-service";
+
+export default function ReferralDashboardPage() {
+    const [user, setUser] = useState<User | null>(null);
+    const [referredBeneficiaries, setReferredBeneficiaries] = useState<User[]>([]);
+    const [referredLeads, setReferredLeads] = useState<Lead[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            setLoading(true);
+            const storedUserId = localStorage.getItem('userId');
+            if (!storedUserId) {
+                setError("No user session found. Please log in.");
+                setLoading(false);
+                return;
+            }
+            
+            try {
+                const [fetchedUser, fetchedBeneficiaries] = await Promise.all([
+                    getUser(storedUserId),
+                    getReferredBeneficiaries(storedUserId)
+                ]);
+
+                if (!fetchedUser || !fetchedUser.roles.includes('Referral')) {
+                    setError("You do not have permission to view this page.");
+                    setLoading(false);
+                    return;
+                }
+                
+                setUser(fetchedUser);
+                setReferredBeneficiaries(fetchedBeneficiaries);
+                
+                // Fetch leads for all referred beneficiaries
+                if (fetchedBeneficiaries.length > 0) {
+                    const leadPromises = fetchedBeneficiaries.map(b => getLeadsByBeneficiaryId(b.id!));
+                    const leadsByBeneficiary = await Promise.all(leadPromises);
+                    setReferredLeads(leadsByBeneficiary.flat());
+                }
+
+            } catch (e) {
+                setError("Failed to load dashboard data.");
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchInitialData();
+    }, []);
+
+    const totalAidRequested = referredLeads.reduce((sum, lead) => sum + lead.helpRequested, 0);
+    const totalAidReceived = referredLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+    const openCases = referredLeads.filter(l => l.status !== 'Closed' && l.status !== 'Cancelled').length;
+
+
+    if (loading) {
+        return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+    }
+
+    if (error) {
+        return (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
+    
+    if (!user) {
+        return null;
+    }
+
+    return (
+        <div className="flex-1 space-y-6">
+            <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
+                    Referral Dashboard
+                </h2>
+                <p className="text-muted-foreground">
+                    Welcome, {user.name}. Manage the beneficiaries you have referred.
+                </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Beneficiaries Referred</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{referredBeneficiaries.length}</div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Aid Requested</CardTitle>
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">₹{totalAidRequested.toLocaleString()}</div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Aid Received</CardTitle>
+                        <HandHeart className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">₹{totalAidReceived.toLocaleString()}</div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Open Cases</CardTitle>
+                        <Loader2 className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{openCases}</div>
+                    </CardContent>
+                </Card>
+            </div>
+            
+            <Card>
+                 <CardHeader>
+                    <CardTitle>My Referred Beneficiaries</CardTitle>
+                    <CardDescription>A quick view of your most recently added beneficiaries.</CardDescription>
+                </CardHeader>
+                 <CardContent>
+                    {referredBeneficiaries.length > 0 ? (
+                        <div className="space-y-4">
+                            {referredBeneficiaries.slice(0, 5).map(beneficiary => (
+                                <div key={beneficiary.id} className="p-4 border rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <p className="font-semibold">{beneficiary.name}</p>
+                                        <p className="text-sm text-muted-foreground">{beneficiary.phone}</p>
+                                        <p className="text-xs text-muted-foreground">Added on {format(beneficiary.createdAt as Date, 'dd MMM yyyy')}</p>
+                                    </div>
+                                    <Badge variant={beneficiary.isActive ? 'default' : 'destructive'} className={beneficiary.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                                        {beneficiary.isActive ? 'Active' : 'Inactive'}
+                                    </Badge>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                         <div className="text-center py-10">
+                            <p className="text-muted-foreground">You have not referred any beneficiaries yet.</p>
+                             <Button asChild className="mt-4">
+                                <Link href="/referral/my-beneficiaries">Add Your First Beneficiary</Link>
+                            </Button>
+                        </div>
+                    )}
+                 </CardContent>
+                 <CardFooter>
+                     <Button asChild className="w-full" variant="secondary">
+                        <Link href="/referral/my-beneficiaries">View All My Referrals <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                    </Button>
+                 </CardFooter>
+            </Card>
+
+        </div>
+    );
+}

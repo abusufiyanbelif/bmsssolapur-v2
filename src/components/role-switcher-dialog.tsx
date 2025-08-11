@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { User, Shield, HandHeart, UserCog, LucideIcon, CheckCircle, AlertTriangle } from 'lucide-react';
+import { User, Shield, HandHeart, UserCog, LucideIcon, CheckCircle, AlertTriangle, Users as UsersIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
@@ -38,6 +39,10 @@ const roleMap: Record<string, { icon: LucideIcon; description: string }> = {
     "Beneficiary": {
         icon: User,
         description: "Manage your cases and view their status."
+    },
+    "Referral": {
+        icon: UsersIcon,
+        description: "Add and manage your referred beneficiaries."
     }
 };
 

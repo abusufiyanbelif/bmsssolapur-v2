@@ -137,6 +137,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         roles: user.roles || [],
         privileges: user.privileges || [],
         groups: user.groups || [],
+        referredByUserId: user.referredByUserId,
+        referredByUserName: user.referredByUserName,
         enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
         monthlyPledgeEnabled: user.monthlyPledgeEnabled || false,
         monthlyPledgeAmount: user.monthlyPledgeAmount || 0,
@@ -390,5 +392,34 @@ export const getAllUsers = async (): Promise<User[]> => {
     } catch (error) {
         console.error("Error getting all users: ", error);
         throw new Error('Failed to get all users.');
+    }
+}
+
+
+export const getReferredBeneficiaries = async (referrerId: string): Promise<User[]> => {
+    if (!isConfigValid) {
+        console.warn("Firebase not configured. Skipping user fetch.");
+        return [];
+    }
+    try {
+        const q = query(
+            collection(db, USERS_COLLECTION), 
+            where("referredByUserId", "==", referrerId)
+        );
+        const querySnapshot = await getDocs(q);
+        const users: User[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            users.push({ 
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+            } as User);
+        });
+        return users;
+    } catch (error) {
+        console.error('Error getting referred beneficiaries: ', error);
+        throw new Error('Failed to get referred beneficiaries.');
     }
 }
