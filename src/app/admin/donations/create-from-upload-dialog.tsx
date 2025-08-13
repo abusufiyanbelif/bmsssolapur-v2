@@ -203,12 +203,13 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
                 </div>
             )}
         </div>
-        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
+        <DialogFooter>
+          <div className="flex w-full justify-between items-center">
             <Button type="button" variant="secondary" onClick={handleManualEntry}>
                 <Edit className="mr-2 h-4 w-4" />
                 Enter Manually
             </Button>
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <div className="flex gap-2">
                 <DialogClose asChild>
                     <Button type="button" variant="outline">
                         <X className="mr-2 h-4 w-4" />
@@ -220,6 +221,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
                     Scan and Continue
                 </Button>
             </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
