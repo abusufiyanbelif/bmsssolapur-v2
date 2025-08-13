@@ -68,11 +68,12 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
         });
         return activities;
     } catch (error) {
-        console.error("Error fetching user activity:", error);
-        // This could be due to a missing index. Log a helpful message.
+        // Gracefully handle missing index error
         if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'userId' (ascending) and 'timestamp' (descending).");
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'userId' (ascending) and 'timestamp' (descending). The app will continue to function but this feature will be disabled until the index is created.");
+             return [];
         }
+        console.error("Error fetching user activity:", error);
         return [];
     }
 }
@@ -107,10 +108,11 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
         });
         return activities;
     } catch (error) {
-        console.error("Error fetching target user activity:", error);
         if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.targetUserId' (ascending) and 'timestamp' (descending).");
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.targetUserId' (ascending) and 'timestamp' (descending). The app will continue to function but this feature will be disabled until the index is created.");
+             return [];
         }
+        console.error("Error fetching target user activity:", error);
         return [];
     }
 }
@@ -144,10 +146,11 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
         });
         return activities;
     } catch (error) {
-        console.error("Error fetching donation activity:", error);
         if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.donationId' (ascending) and 'timestamp' (descending).");
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.donationId' (ascending) and 'timestamp' (descending). The app will continue to function but this feature will be disabled until the index is created.");
+             return [];
         }
+        console.error("Error fetching donation activity:", error);
         return [];
     }
 }
