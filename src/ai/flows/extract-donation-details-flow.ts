@@ -41,20 +41,24 @@ const extractDonationDetailsFlow = ai.defineFlow(
     }
     
     // Step 2: Use the extracted text to get structured details.
-    const output = await extractDetailsFromText({ rawText: rawTextOutput.rawText });
+    const structuredOutput = await extractDetailsFromText({ rawText: rawTextOutput.rawText });
 
-    if (!output) {
+    if (!structuredOutput) {
       throw new Error("The AI model did not return any structured output from the text.");
     }
     
     // Check for essential fields and provide a specific error if they are missing.
-    if (!output.amount || (!output.transactionId && !output.utrNumber)) {
+    if (!structuredOutput.amount && !structuredOutput.transactionId && !structuredOutput.utrNumber) {
         let missingFields = [];
-        if (!output.amount) missingFields.push("Amount");
-        if (!output.transactionId && !output.utrNumber) missingFields.push("Transaction ID or UTR");
+        if (!structuredOutput.amount) missingFields.push("Amount");
+        if (!structuredOutput.transactionId && !structuredOutput.utrNumber) missingFields.push("Transaction ID or UTR");
         throw new Error(`Scan failed: Could not extract required fields (${missingFields.join(', ')}). Please try a clearer image or enter details manually.`);
     }
 
-    return output;
+    // Combine the structured data with the raw text for the final output
+    return {
+        ...structuredOutput,
+        rawText: rawTextOutput.rawText,
+    };
   }
 );

@@ -88,6 +88,7 @@ export const ExtractDonationDetailsInputSchema = z.object({
 export type ExtractDonationDetailsInput = z.infer<typeof ExtractDonationDetailsInputSchema>;
 
 export const ExtractDonationDetailsOutputSchema = z.object({
+  rawText: z.string().optional().describe("The full, raw text extracted from the image."),
   amount: z.number().optional().describe('The primary transaction amount. It must be a number.'),
   transactionId: z.string().optional().describe("The primary Transaction ID, Order ID, or Reference Number. If a 'UPI Reference No' is present, prefer that. Otherwise, use the main transaction ID."),
   utrNumber: z.string().optional().describe("The UTR number if it is explicitly visible. It's often a long number."),

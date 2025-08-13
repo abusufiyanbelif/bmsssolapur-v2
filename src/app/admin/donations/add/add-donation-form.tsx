@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddDonation, handleExtractTextFromImage } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
 import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
@@ -39,7 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleScanDonationProof } from "../actions";
+import { scanProof } from "@/ai/text-extraction-actions";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -246,29 +245,16 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         setIsScanning(true);
         setRawText(null);
         
-        const scanFormData = new FormData();
-        scanFormData.append("paymentScreenshot", filePreview.file);
-        
-        const textFormData = new FormData();
-        textFormData.append("image", filePreview.file);
+        const scanResult = await scanProof(filePreview.file);
 
-        // Run both operations in parallel
-        const [scanResult, textResult] = await Promise.all([
-            handleScanDonationProof(scanFormData),
-            handleExtractTextFromImage(textFormData)
-        ]);
-        
-        if (textResult.success && textResult.text) {
-             setRawText(textResult.text);
-        } else {
-            toast({ variant: 'destructive', title: 'Text Extraction Failed', description: textResult.error || 'Could not read text from this image.' });
-        }
-        
         if (scanResult.success && scanResult.details) {
             for (const [key, value] of Object.entries(scanResult.details)) {
                 if (value !== undefined && value !== null) {
                     setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
                 }
+            }
+             if (scanResult.details.rawText) {
+                setRawText(scanResult.details.rawText);
             }
              toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
         } else {
@@ -762,7 +748,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 disabled={isScanning || localFiles.length === 0 || !localFiles[0].file.type.startsWith('image/')}
                 >
                     {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
-                    Get Transaction Details
+                    Get Transaction Details from Image
                 </Button>
 
                 {rawText && (

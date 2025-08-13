@@ -9,7 +9,14 @@ import { getUser } from "@/services/user-service";
 import { FundTransfer } from "@/services/types";
 import { arrayUnion, increment } from "firebase/firestore";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
-import { scanProof, extractDetailsFromText, getRawTextFromImage } from "@/ai/text-extraction-actions";
+
+// In a real app, you would upload the file to a storage service like Firebase Storage
+// and get a URL. This function is a placeholder.
+async function handleFileUpload(file: File): Promise<string> {
+    console.log(`Received verification document: ${file.name}, size: ${file.size} bytes`);
+    // Placeholder for file upload logic
+    return `https://placehold.co/600x400.png?text=verification-doc-placeholder`;
+}
 
 export async function handleDeleteLead(leadId: string) {
     try {
@@ -20,14 +27,6 @@ export async function handleDeleteLead(leadId: string) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         return { success: false, error };
     }
-}
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. This function is a placeholder.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received verification document: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/600x400.png?text=verification-doc-placeholder`;
 }
 
 export async function handleUploadVerificationDocument(leadId: string, formData: FormData) {
@@ -153,6 +152,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
 
 export async function handleScanTransferProof(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
     try {
+        const { scanProof } = await import('@/ai/text-extraction-actions');
         const proofFile = formData.get("proof") as File | undefined;
         if (!proofFile || proofFile.size === 0) {
             return { success: false, error: "No file was uploaded to scan." };
@@ -161,34 +161,6 @@ export async function handleScanTransferProof(formData: FormData): Promise<{succ
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         console.error("Error scanning transfer proof:", error);
-        return { success: false, error: error };
-    }
-}
-
-
-export async function handleGetRawText(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
-     try {
-        const proofFile = formData.get("proof") as File | undefined;
-        if (!proofFile || proofFile.size === 0) {
-            return { success: false, error: "No file was uploaded to scan." };
-        }
-        return await getRawTextFromImage(proofFile);
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error("Error getting raw text:", error);
-        return { success: false, error: error };
-    }
-}
-
-export async function handleExtractDetailsFromText(rawText: string): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
-    try {
-        if (!rawText) {
-            return { success: false, error: "No text provided for extraction." };
-        }
-        return await extractDetailsFromText(rawText);
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error("Error extracting details from text:", error);
         return { success: false, error: error };
     }
 }
