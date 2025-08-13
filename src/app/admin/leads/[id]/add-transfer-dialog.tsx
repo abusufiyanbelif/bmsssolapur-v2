@@ -89,11 +89,11 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     
     const result = await handleScanTransferProof(formData);
     
-    if (result.success && result.details) {
+    if (result && result.success && result.details) {
         setScannedDetails(result.details);
         toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
     } else {
-        toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || 'Could not extract details from the image.' });
+        toast({ variant: 'destructive', title: 'Scan Failed', description: result?.error || 'Could not extract details from the image.' });
     }
     setIsScanning(false);
   };
@@ -323,3 +323,5 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     </Dialog>
   );
 }
+
+    
