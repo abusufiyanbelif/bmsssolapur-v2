@@ -268,15 +268,10 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Label htmlFor="proof">Proof of Transfer</Label>
                     <div className="flex gap-2">
                         <Input id="proof" type="file" required accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-                        <Button type="button" variant="outline" size="icon" onClick={handleScan} disabled={!file || isScanning}>
-                            {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
-                        </Button>
-                        <Button type="button" variant="outline" size="icon" onClick={handleExtractText} disabled={!file || isExtractingText}>
-                            {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
-                        </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">A screenshot or PDF receipt of the transaction is required.</p>
+                    <FormDescription>A screenshot or PDF receipt is required.</FormDescription>
                 </div>
+
                  {previewUrl ? (
                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
                         <div className="relative w-full h-80">
@@ -289,6 +284,16 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                         <p className="text-sm text-muted-foreground">Upload an image to see a preview</p>
                     </div>
                 )}
+                 <div className="flex gap-2">
+                    <Button type="button" variant="outline" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
+                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
+                        Get Text
+                    </Button>
+                    <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
+                        {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
+                        Scan &amp; Fill Fields
+                    </Button>
+                </div>
                 {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center py-4"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning image...</div>}
                 {scannedDetails && (
                     <Alert>

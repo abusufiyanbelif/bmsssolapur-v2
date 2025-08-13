@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation, handleExtractTextFromImage } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, TextSearch, ChevronsUpDown, Check, X } from "lucide-react";
+import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, TextSearch, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -39,6 +39,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { handleScanDonationProof } from "../actions";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -82,6 +83,7 @@ interface FilePreview {
     previewUrl: string;
     extractedText?: string;
     isExtracting?: boolean;
+    isScanning?: boolean;
 }
 
 function AddDonationFormContent({ users }: AddDonationFormProps) {
@@ -116,7 +118,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     },
   });
   
-  const { watch, setValue, reset } = form;
+  const { watch, setValue, reset, getValues } = form;
   const includeTip = watch("includeTip");
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
@@ -248,6 +250,32 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from this image.' });
     }
   };
+  
+    const handleScanAndFill = async (index: number) => {
+        const filePreview = localFiles[index];
+        if (!filePreview || filePreview.isScanning) return;
+
+        setLocalFiles(prev => prev.map((fp, i) => (i === index ? { ...fp, isScanning: true } : fp)));
+        
+        const formData = new FormData();
+        formData.append("paymentScreenshot", filePreview.file);
+
+        const result = await handleScanDonationProof(formData);
+
+        if (result.success && result.details) {
+            // Use Object.entries to iterate and set values
+            for (const [key, value] of Object.entries(result.details)) {
+                if (value !== undefined && value !== null) {
+                    setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
+                }
+            }
+             toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
+        } else {
+             toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || 'Could not extract details from this image.' });
+        }
+
+        setLocalFiles(prev => prev.map((fp, i) => (i === index ? { ...fp, isScanning: false } : fp)));
+    };
 
 
   async function onSubmit(values: AddDonationFormValues) {
@@ -697,8 +725,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                     <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
                                 </div>
                             )}
-                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/50 backdrop-blur-sm p-1 rounded-full">
                                 {fp.file.type.startsWith('image/') && (
+                                <>
                                 <Button
                                     type="button"
                                     variant="secondary"
@@ -709,6 +738,17 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                 >
                                     {fp.isExtracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSearch className="h-4 w-4" />}
                                 </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="icon"
+                                    className="h-7 w-7 rounded-full"
+                                    onClick={() => handleScanAndFill(index)}
+                                    disabled={fp.isScanning}
+                                >
+                                    {fp.isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
+                                </Button>
+                                </>
                                 )}
                                 <Button
                                     type="button"
