@@ -353,6 +353,7 @@ function LeadsPageContent() {
                         </Button>
                     </TableHead>
                     <TableHead>Case Status</TableHead>
+                    <TableHead>Verification</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('helpRequested')}>
                            Amount Req. {renderSortIcon('helpRequested')}
@@ -396,7 +397,9 @@ function LeadsPageContent() {
                                     <StatusIcon className="mr-1 h-3 w-3" />
                                     {lead.status}
                                 </Badge>
-                                 <Badge variant="outline" className={cn("capitalize mt-1", verifConfig.color)}>
+                            </TableCell>
+                            <TableCell>
+                                 <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
                                     <verifConfig.icon className="mr-1 h-3 w-3" />
                                     {lead.verifiedStatus}
                                 </Badge>
@@ -429,20 +432,19 @@ function LeadsPageContent() {
                                     <CardTitle className="text-lg">{lead.name}</CardTitle>
                                     <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
                                 </div>
-                                 <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
-                                    <verifConfig.icon className="mr-1 h-3 w-3" />
-                                    {lead.verifiedStatus}
-                                 </Badge>
+                                <div className="flex flex-col items-end gap-2">
+                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                        <StatusIcon className="mr-1 h-3 w-3" />
+                                        {lead.status}
+                                    </Badge>
+                                    <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
+                                        <verifConfig.icon className="mr-1 h-3 w-3" />
+                                        {lead.verifiedStatus}
+                                    </Badge>
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
-                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Case Status</span>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
-                                    <StatusIcon className="mr-1 h-3 w-3" />
-                                    {lead.status}
-                                </Badge>
-                            </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Created On</span>
                                 <span>{format(lead.dateCreated, "dd MMM yyyy")}</span>
@@ -670,3 +672,5 @@ export default function LeadsPage() {
         </Suspense>
     )
 }
+
+    
