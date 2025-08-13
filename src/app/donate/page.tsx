@@ -1,5 +1,3 @@
-
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -32,8 +30,7 @@ import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit }
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { handleCreatePendingDonation } from './actions';
-import { handleRecordPastDonation } from './upload-proof-action';
+import { handleCreatePendingDonation, handleScanAndPrefill } from './actions';
 import type { User, Lead } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
@@ -252,11 +249,9 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
 function UploadProofSection({ user }: { user: User | null }) {
     const { toast } = useToast();
     const router = useRouter();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const notesRef = useRef<HTMLTextAreaElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0] || null;
@@ -268,35 +263,42 @@ function UploadProofSection({ user }: { user: User | null }) {
         }
     }
     
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleScan = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         if (!file) {
             toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to upload.' });
             return;
         }
-        setIsSubmitting(true);
-        const formData = new FormData();
-        formData.append("proof", file);
-        if (notesRef.current?.value) {
-            formData.append("notes", notesRef.current.value);
-        }
+        setIsScanning(true);
         
-        const result = await handleRecordPastDonation(formData, user?.id);
+        const formData = new FormData();
+        formData.append('proof', file);
+        
+        const result = await handleScanAndPrefill(formData);
 
-        if (result.success) {
-            toast({ variant: 'success', title: "Upload Successful", description: "Your proof has been submitted for verification. Thank you!" });
-            setFile(null);
-            setPreviewUrl(null);
-            if (notesRef.current) notesRef.current.value = "";
-            if (fileInputRef.current) fileInputRef.current.value = "";
+        if (result.success && result.details) {
+            const queryParams = new URLSearchParams();
+            Object.entries(result.details).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    queryParams.set(key, String(value));
+                }
+            });
+            
+            if (result.dataUrl) {
+                // Use session storage to pass the large data URL
+                sessionStorage.setItem('scannedProofDataUrl', result.dataUrl);
+            }
+            
+            router.push(`/donate/confirm?${queryParams.toString()}`);
+
         } else {
-             toast({ variant: 'destructive', title: "Upload Failed", description: result.error || "An unknown error occurred." });
+             toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "An unknown error occurred." });
         }
-        setIsSubmitting(false);
+        setIsScanning(false);
     };
 
     return (
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="space-y-6">
             <div className="space-y-2">
                 <Label htmlFor="paymentScreenshot">Payment Screenshot</Label>
                 <Input 
@@ -306,7 +308,6 @@ function UploadProofSection({ user }: { user: User | null }) {
                     required 
                     accept="image/*"
                     onChange={handleFileChange}
-                    ref={fileInputRef}
                 />
                  <FormDescription>
                     Upload a screenshot of a payment you have already made. The system will scan it to verify your donation.
@@ -319,20 +320,12 @@ function UploadProofSection({ user }: { user: User | null }) {
                     </div>
                 </div>
             )}
-             <div className="space-y-2">
-                <Label htmlFor="upload_notes">Notes (Optional)</Label>
-                <Textarea 
-                    id="upload_notes"
-                    name="notes"
-                    placeholder="Provide any additional details, like the transaction ID or a message." 
-                    ref={notesRef}
-                />
-            </div>
-            <Button type="submit" disabled={isSubmitting || !file} className="w-full">
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                Upload and Submit for Verification
+            
+            <Button onClick={handleScan} disabled={isScanning || !file} className="w-full">
+                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                Scan and Confirm Donation
             </Button>
-        </form>
+        </div>
     );
 }
 
