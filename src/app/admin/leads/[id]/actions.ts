@@ -9,6 +9,7 @@ import { getUser } from "@/services/user-service";
 import { FundTransfer } from "@/services/types";
 import { arrayUnion, increment } from "firebase/firestore";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
+import { scanProof, extractDetailsFromText, getRawTextFromImage } from "@/ai/text-extraction-actions";
 
 export async function handleDeleteLead(leadId: string) {
     try {
@@ -152,22 +153,11 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
 
 export async function handleScanTransferProof(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
     try {
-        const { extractDonationDetails } = await import('@/ai/flows/extract-donation-details-flow');
         const proofFile = formData.get("proof") as File | undefined;
-        
         if (!proofFile || proofFile.size === 0) {
             return { success: false, error: "No file was uploaded to scan." };
         }
-        
-        const arrayBuffer = await proofFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = proofFile.type;
-        const dataUri = `data:${mimeType};base64,${base64}`;
-
-        const extractedDetails = await extractDonationDetails({ photoDataUri: dataUri });
-        
-        return { success: true, details: extractedDetails };
-
+        return await scanProof(proofFile);
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         console.error("Error scanning transfer proof:", error);
@@ -177,41 +167,25 @@ export async function handleScanTransferProof(formData: FormData): Promise<{succ
 
 
 export async function handleGetRawText(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
-    try {
-        const { extractRawText } = await import('@/ai/flows/extract-raw-text-flow');
+     try {
         const proofFile = formData.get("proof") as File | undefined;
-        
         if (!proofFile || proofFile.size === 0) {
             return { success: false, error: "No file was uploaded to scan." };
         }
-        
-        const arrayBuffer = await proofFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = proofFile.type;
-        const dataUri = `data:${mimeType};base64,${base64}`;
-
-        const { rawText } = await extractRawText({ photoDataUri: dataUri });
-        
-        return { success: true, text: rawText };
-
+        return await getRawTextFromImage(proofFile);
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         console.error("Error getting raw text:", error);
-        return { success: false, error };
+        return { success: false, error: error };
     }
 }
 
 export async function handleExtractDetailsFromText(rawText: string): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
     try {
-        const { extractDetailsFromText } = await import('@/ai/flows/extract-details-from-text-flow');
         if (!rawText) {
             return { success: false, error: "No text provided for extraction." };
         }
-
-        const extractedDetails = await extractDetailsFromText({ rawText });
-        
-        return { success: true, details: extractedDetails };
-
+        return await extractDetailsFromText(rawText);
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         console.error("Error extracting details from text:", error);
