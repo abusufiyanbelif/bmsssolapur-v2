@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { UserActivityFeed } from "./user-activity-feed";
+import { DeleteUserButton } from "./delete-user-button";
 
 
 const setPasswordSchema = z.object({
@@ -89,7 +89,7 @@ function SetPasswordSection({ userId }: { userId: string }) {
     return (
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" type="button">
+                <Button variant="secondary" type="button">
                     <RefreshCw className="mr-2 h-4 w-4" /> Set New Password
                 </Button>
             </AlertDialogTrigger>
@@ -311,17 +311,32 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         <CardTitle>Edit User</CardTitle>
                         <CardDescription>Update the details for {user.name}.</CardDescription>
                     </div>
-                    {!isEditing && (
-                        <Button onClick={() => setIsEditing(true)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                        </Button>
-                    )}
+                    <div className="flex gap-2">
+                        {!isEditing ? (
+                            <Button onClick={() => setIsEditing(true)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Profile
+                            </Button>
+                        ) : (
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                                    <X className="mr-2 h-4 w-4" />
+                                    Cancel
+                                </Button>
+                                <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    Save Changes
+                                </Button>
+                            </div>
+                        )}
+                        <DeleteUserButton userId={user.id!} userName={user.name} />
+                         <SetPasswordSection userId={user.id!} />
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+                <form className="space-y-8 max-w-2xl">
                     <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
                      <FormField
                         control={form.control}
@@ -833,27 +848,11 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     )}
                     />
                     
-                    {isEditing && (
-                        <div className="flex gap-4">
-                             <Button type="submit" disabled={isSubmitting || !isDirty}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Save Changes
-                            </Button>
-                             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                                <X className="mr-2 h-4 w-4" />
-                                Cancel
-                            </Button>
-                        </div>
-                    )}
                 </form>
                 </Form>
             </CardContent>
         </Card>
         
-        <div className="mt-6">
-            <SetPasswordSection userId={user.id!} />
-        </div>
-
         {currentAdmin?.roles.includes("Super Admin") && (
             <div className="mt-6">
                 <UserActivityFeed userId={user.id!} />
