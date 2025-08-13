@@ -20,13 +20,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser, checkAvailability } from "./actions";
 import { useState, useEffect, Suspense, useCallback } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { useSearchParams } from 'next/navigation';
 import { useDebounce } from "@/hooks/use-debounce";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
@@ -42,6 +43,14 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
     "Donor",
     "Beneficiary",
     "Referral",
+];
+
+const states = [
+    { name: "Andhra Pradesh", cities: ["Visakhapatnam", "Vijayawada", "Guntur"] },
+    { name: "Karnataka", cities: ["Bengaluru", "Mysuru", "Hubli"] },
+    { name: "Maharashtra", cities: ["Mumbai", "Pune", "Nagpur", "Solapur"] },
+    { name: "Tamil Nadu", cities: ["Chennai", "Coimbatore", "Madurai"] },
+    { name: "Telangana", cities: ["Hyderabad", "Warangal", "Nizamabad"] },
 ];
 
 const formSchema = z.object({
@@ -162,8 +171,8 @@ function AddUserFormContent() {
       phone: "",
       userId: "",
       roles: ["Donor"],
-      city: 'Solapur',
       state: 'Maharashtra',
+      city: 'Solapur',
       country: 'India',
       upiIds: [{ value: "" }],
     },
@@ -174,7 +183,8 @@ function AddUserFormContent() {
     name: "upiIds"
   });
   
-  const { watch, trigger, setValue } = form;
+  const { watch, trigger, setValue, reset } = form;
+  const selectedState = watch("state");
 
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
     if (!value) {
@@ -196,16 +206,16 @@ function AddUserFormContent() {
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
   // Effects for debounced checks
-  useEffect(() => { handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedEmail) handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
 
   useEffect(() => {
     debouncedUpiIds?.forEach((upi, index) => {
-        handleAvailabilityCheck('upiId', upi.value, (state) => setUpiIdStates(prev => ({...prev, [index]: state})));
+        if(upi.value) handleAvailabilityCheck('upiId', upi.value, (state) => setUpiIdStates(prev => ({...prev, [index]: state})));
     });
   }, [debouncedUpiIds, handleAvailabilityCheck]);
 
@@ -302,10 +312,22 @@ function AddUserFormContent() {
     }
   }
 
+  const handleCancel = () => {
+    reset();
+    setUserIdState(initialAvailabilityState);
+    setEmailState(initialAvailabilityState);
+    setPhoneState(initialAvailabilityState);
+    setPanState(initialAvailabilityState);
+    setAadhaarState(initialAvailabilityState);
+    setBankAccountState(initialAvailabilityState);
+    setUpiIdStates({});
+  };
+
+
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
   
-  const isAnyFieldChecking = userIdState.isChecking || emailState.isChecking || phoneState.isChecking || panState.isChecking || aadhaarState.isChecking || bankAccountState.isChecking;
-  const isAnyFieldInvalid = userIdState.isAvailable === false || emailState.isAvailable === false || phoneState.isAvailable === false || panState.isAvailable === false || aadhaarState.isAvailable === false || bankAccountState.isAvailable === false;
+  const isAnyFieldChecking = userIdState.isChecking || emailState.isChecking || phoneState.isChecking || panState.isChecking || aadhaarState.isChecking || bankAccountState.isChecking || Object.values(upiIdStates).some(s => s.isChecking);
+  const isAnyFieldInvalid = userIdState.isAvailable === false || emailState.isAvailable === false || phoneState.isAvailable === false || panState.isAvailable === false || aadhaarState.isAvailable === false || bankAccountState.isAvailable === false || Object.values(upiIdStates).some(s => s.isAvailable === false);
 
 
   return (
@@ -454,19 +476,48 @@ function AddUserFormContent() {
             )}
             />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>State</FormLabel>
+                    <Select onValueChange={(value) => { field.onChange(value); setValue('city', undefined); }} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a state" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {states.map(state => <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
              <FormField
                 control={form.control}
                 name="city"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>City</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Solapur" {...field} disabled />
-                    </FormControl>
+                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={!selectedState}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a city" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {states.find(s => s.name === selectedState)?.cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                     </FormItem>
                 )}
-                />
+            />
+        </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
                 name="pincode"
@@ -475,21 +526,6 @@ function AddUserFormContent() {
                     <FormLabel>Pincode</FormLabel>
                     <FormControl>
                         <Input placeholder="e.g., 413001" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Maharashtra" {...field} disabled />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -846,14 +882,20 @@ function AddUserFormContent() {
             </Button>
          </div>
         
-        <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
-            {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-                <UserPlus className="mr-2 h-4 w-4" />
-            )}
-            {isSubmitting ? 'Creating User...' : 'Create User'}
-        </Button>
+        <div className="flex items-center gap-4">
+            <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
+                {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <UserPlus className="mr-2 h-4 w-4" />
+                )}
+                {isSubmitting ? 'Creating User...' : 'Create User'}
+            </Button>
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+            </Button>
+        </div>
 
       </form>
     </Form>
