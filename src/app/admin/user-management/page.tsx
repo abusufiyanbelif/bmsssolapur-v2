@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -15,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff, ArrowUpDown, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff, ArrowUpDown, Check, ChevronsUpDown, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -194,6 +195,12 @@ export default function UserManagementPage() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                     <DropdownMenuItem asChild>
+                        <Link href={`/admin/user-management/${user.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit User
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     {user.isActive ? (
                         <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, false);
