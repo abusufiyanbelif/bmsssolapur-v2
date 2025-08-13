@@ -133,7 +133,9 @@ function AddUserFormContent() {
 
   const checkForDuplicates = useCallback(async (values: AddUserFormValues) => {
     const { firstName, lastName, userId, phone, email } = values;
-    if (!firstName && !lastName && !userId && !phone && !email) {
+    
+    // Only run check if one of the key identifiers is present
+    if (!userId && !phone && !email) {
       setPotentialDuplicates([]);
       setShowDuplicateDialog(false);
       return;
@@ -787,9 +789,16 @@ function AddUserFormContent() {
          </div>
         
         <Button type="submit" disabled={isSubmitting || isCheckingDuplicates}>
-          {isSubmitting || isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-          {isCheckingDuplicates ? 'Checking for duplicates...' : 'Create User'}
+            {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : isCheckingDuplicates ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+                <UserPlus className="mr-2 h-4 w-4" />
+            )}
+            {isSubmitting ? 'Creating User...' : isCheckingDuplicates ? 'Checking...' : 'Create User'}
         </Button>
+
       </form>
     </Form>
 
