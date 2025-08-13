@@ -338,70 +338,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-           <FormField
-              control={form.control}
-              name="donorId"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Donor</FormLabel>
-                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? donorUsers.find(
-                                (user) => user.id === field.value
-                              )?.name
-                            : "Select a donor"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search donor..." />
-                        <CommandList>
-                            <CommandEmpty>No donors found.</CommandEmpty>
-                            <CommandGroup>
-                            {donorUsers.map((user) => (
-                                <CommandItem
-                                value={user.name}
-                                key={user.id}
-                                onSelect={async () => {
-                                    field.onChange(user.id!);
-                                    const donor = await getUser(user.id!);
-                                    setSelectedDonor(donor);
-                                    setPopoverOpen(false);
-                                }}
-                                >
-                                <Check
-                                    className={cn(
-                                    "mr-2 h-4 w-4",
-                                    user.id === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                />
-                                {user.name} ({user.phone})
-                                </CommandItem>
-                            ))}
-                            </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          
           <div className="space-y-4">
             {manualScreenshotPreview && (
                 <div className="mb-8 p-4 border rounded-lg bg-muted/50">
@@ -477,17 +413,81 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                         {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
                         Get Transaction Details from Image
                     </Button>
-
-                    {rawText && (
-                        <div className="space-y-2">
-                            <FormLabel>Extracted Text</FormLabel>
-                            <Textarea readOnly value={rawText} rows={8} className="text-xs font-mono bg-background" />
-                            <FormDescription>This is the raw text extracted by the AI. You can use it to verify the auto-filled fields.</FormDescription>
-                        </div>
-                    )}
                 </div>
             )}
           </div>
+        
+          {rawText && (
+                <div className="space-y-2">
+                    <FormLabel>Extracted Text</FormLabel>
+                    <Textarea readOnly value={rawText} rows={8} className="text-xs font-mono bg-background" />
+                    <FormDescription>This is the raw text extracted by the AI. You can use it to verify the auto-filled fields.</FormDescription>
+                </div>
+            )}
+
+           <FormField
+              control={form.control}
+              name="donorId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Donor</FormLabel>
+                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? donorUsers.find(
+                                (user) => user.id === field.value
+                              )?.name
+                            : "Select a donor"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search donor..." />
+                        <CommandList>
+                            <CommandEmpty>No donors found.</CommandEmpty>
+                            <CommandGroup>
+                            {donorUsers.map((user) => (
+                                <CommandItem
+                                value={user.name}
+                                key={user.id}
+                                onSelect={async () => {
+                                    field.onChange(user.id!);
+                                    const donor = await getUser(user.id!);
+                                    setSelectedDonor(donor);
+                                    setPopoverOpen(false);
+                                }}
+                                >
+                                <Check
+                                    className={cn(
+                                    "mr-2 h-4 w-4",
+                                    user.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                />
+                                {user.name} ({user.phone})
+                                </CommandItem>
+                            ))}
+                            </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
