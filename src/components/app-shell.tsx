@@ -54,7 +54,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     useEffect(() => {
         const checkUser = async () => {
-            setIsSessionReady(false); // Start session check
             const storedUserId = localStorage.getItem('userId');
             const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
@@ -86,19 +85,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                         localStorage.removeItem('showRoleSwitcher'); 
-                        // Session is not ready until role is confirmed
-                    } else {
-                        setIsSessionReady(true);
                     }
                 } else {
                     handleLogout();
                 }
             } else {
                 setUser(guestUser);
-                setIsSessionReady(true);
             }
+             // Mark session as ready regardless of user status
+            setIsSessionReady(true);
         };
         checkUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); 
 
 
@@ -141,7 +139,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     const handleOpenChange = (open: boolean) => {
-        // Prevent closing the dialog if a role selection is mandatory
+        // Prevent closing the dialog if a specific role is required or selection is mandatory
         if (!open && isMandatory) {
             return; 
         }
@@ -170,7 +168,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
     )
 
-    if (!user) {
+    if (!user || !isSessionReady) {
         return <LoadingState />
     }
 
@@ -179,7 +177,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-8 w-auto" />
+            <Logo className="h-10 w-10" />
              <div className="flex flex-col leading-tight">
                 <span className="font-bold font-headline text-primary">Baitul Mal</span>
                 <span className="font-bold font-headline text-accent">Samajik Sanstha</span>
@@ -348,7 +346,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                    {!isSessionReady ? <LoadingState /> : childrenWithProps}
+                    {childrenWithProps}
                 </main>
                 <Footer />
             </div>
