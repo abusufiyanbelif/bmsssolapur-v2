@@ -22,7 +22,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType } from './types';
+import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType, FundTransfer } from './types';
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
 import { format } from 'date-fns';
@@ -219,7 +219,10 @@ export const getAllLeads = async (): Promise<Lead[]> => {
               createdAt: (data.createdAt as Timestamp).toDate(),
               updatedAt: (data.updatedAt as Timestamp).toDate(),
               closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
-              dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined, // Handle potential timestamp
+              dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
+              verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
+              donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
+              fundTransfers: (data.fundTransfers || []).map((t: FundTransfer) => ({...t, transferredAt: (t.transferredAt as Timestamp).toDate() })),
             } as Lead);
         });
         return leads;
