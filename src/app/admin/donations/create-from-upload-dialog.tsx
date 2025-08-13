@@ -176,7 +176,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         setOpen(isOpen);
     }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create Donation from Screenshot</DialogTitle>
           <DialogDescription>
