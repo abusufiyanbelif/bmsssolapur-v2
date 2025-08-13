@@ -206,6 +206,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         }
         if (selectedDonor.phone) setValue('donorPhone', selectedDonor.phone);
         if (selectedDonor.bankAccountNumber) setValue('donorBankAccount', selectedDonor.bankAccountNumber);
+    } else {
+        setValue('donorUpiId', '');
+        setValue('donorPhone', '');
+        setValue('donorBankAccount', '');
     }
   }, [selectedDonor, setValue]);
   
@@ -650,9 +654,24 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Donor UPI ID</FormLabel>
-                        <FormControl>
-                        <Input placeholder="e.g., username@okhdfc" {...field} />
-                        </FormControl>
+                            {(selectedDonor?.upiIds && selectedDonor.upiIds.length > 0) ? (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a UPI ID" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {selectedDonor.upiIds.map((id) => (
+                                        <SelectItem key={id} value={id}>{id}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <FormControl>
+                                    <Input placeholder="e.g., username@okhdfc" {...field} />
+                                </FormControl>
+                            )}
                         <FormMessage />
                     </FormItem>
                     )}
