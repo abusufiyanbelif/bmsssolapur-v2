@@ -40,7 +40,7 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
                             </div>
                         </div>
                          <div className="text-right">
-                            <h2 className="text-2xl font-bold text-gray-700">Donation Receipt</h2>
+                            <h2 className="text-2xl font-bold text-gray-700">Receipt</h2>
                             <p className="text-sm text-gray-500 font-mono mt-1">Receipt No: {donation.id}</p>
                          </div>
                     </header>
@@ -48,14 +48,14 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
                     <main className="mt-8">
                          <div className="grid grid-cols-2 gap-8 mb-8">
                             <div>
-                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Billed To</h3>
+                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">BILLED TO</h3>
                                 <p className="font-bold text-lg">{user.name}</p>
                                 <p className="text-gray-600">{user.address?.addressLine1 || 'N/A'}</p>
                                 <p className="text-gray-600">{user.email}</p>
                                 <p className="text-gray-600">{user.phone}</p>
                             </div>
                              <div className="text-right">
-                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Details</h3>
+                                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">DETAILS</h3>
                                 <p><span className="font-semibold">Donation Date:</span> {format(new Date(donation.donationDate), 'dd MMM, yyyy')}</p>
                                 <p><span className="font-semibold">Transaction ID:</span> {donation.transactionId || "N/A"}</p>
                              </div>
@@ -64,8 +64,8 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-gray-100">
-                                    <th className="p-3 text-sm font-semibold uppercase">Description</th>
-                                    <th className="p-3 text-sm font-semibold uppercase text-right">Amount</th>
+                                    <th className="p-3 text-sm font-semibold uppercase">DESCRIPTION</th>
+                                    <th className="p-3 text-sm font-semibold uppercase text-right">AMOUNT</th>
                                 </tr>
                             </thead>
                             <tbody>
