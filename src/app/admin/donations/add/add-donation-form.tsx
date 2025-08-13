@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddDonation, handleExtractTextFromImage } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, TextSearch, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, TextSearch, ChevronsUpDown, Check, X } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -116,11 +116,38 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     },
   });
   
-  const { watch, setValue } = form;
+  const { watch, setValue, reset } = form;
   const includeTip = watch("includeTip");
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
   const isAnonymous = watch("isAnonymous");
+  
+  const handleCancel = () => {
+    reset({
+        donorId: '',
+        isAnonymous: false,
+        amount: 0,
+        donationDate: new Date(),
+        includeTip: false,
+        tipAmount: 0,
+        notes: "",
+        transactionId: "",
+        purpose: undefined,
+        type: undefined,
+        paymentMethod: undefined,
+        donorUpiId: '',
+        donorPhone: '',
+        donorBankAccount: '',
+        paymentScreenshots: [],
+        paymentScreenshotDataUrl: undefined,
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      setSelectedDonor(null);
+      setManualScreenshotPreview(null);
+      setLocalFiles([]);
+  }
   
   useEffect(() => {
     const prefillData = async () => {
@@ -267,30 +294,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         title: "Donation Added",
         description: `Successfully added donation from ${result.donation.donorName}.`,
       });
-      form.reset({
-        donorId: '',
-        isAnonymous: false,
-        amount: 0,
-        donationDate: new Date(),
-        includeTip: false,
-        tipAmount: 0,
-        notes: "",
-        transactionId: "",
-        purpose: undefined,
-        type: undefined,
-        paymentMethod: undefined,
-        donorUpiId: '',
-        donorPhone: '',
-        donorBankAccount: '',
-        paymentScreenshots: [],
-        paymentScreenshotDataUrl: undefined,
-      });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      setSelectedDonor(null);
-      setManualScreenshotPreview(null);
-      setLocalFiles([]);
+      handleCancel();
     } else {
       toast({
         variant: "destructive",
@@ -725,11 +729,16 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             </div>
           )}
 
-
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Add Donation
-          </Button>
+          <div className="flex gap-4">
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Add Donation
+            </Button>
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+            </Button>
+          </div>
         </form>
       </Form>
     </>

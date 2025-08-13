@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { handleAddBoardMember } from "./actions";
 import { useState } from "react";
-import { Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown, X } from "lucide-react";
 import type { User } from "@/services/types";
 import { useRouter } from "next/navigation";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -166,10 +167,16 @@ export function AddMemberForm({ users }: AddMemberFormProps) {
           )}
         />
         
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Add to Group
-        </Button>
+        <div className="flex gap-4">
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Add to Group
+            </Button>
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+            </Button>
+        </div>
       </form>
     </Form>
   );

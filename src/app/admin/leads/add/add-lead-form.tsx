@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead } from "./actions";
 import { useState, useEffect, useRef } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -169,6 +169,38 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
       hasReferral: false,
     },
   });
+  
+  const handleCancel = () => {
+    form.reset({
+        beneficiaryType: 'existing',
+        isLoan: false,
+        helpRequested: 0,
+        acceptableDonationTypes: [],
+        newBeneficiaryFirstName: '',
+        newBeneficiaryMiddleName: '',
+        newBeneficiaryLastName: '',
+        newBeneficiaryPhone: '',
+        newBeneficiaryEmail: '',
+        beneficiaryId: '',
+        caseDetails: '',
+        category: '',
+        otherCategoryDetail: '',
+        otherPurposeDetail: '',
+        purpose: undefined,
+        priority: 'Medium',
+        campaignId: 'none',
+        campaignName: '',
+        hasReferral: false,
+        referredByUserId: '',
+        referredByUserName: '',
+        dueDate: undefined,
+        verificationDocument: undefined,
+      });
+      setSelectedReferralDetails(null);
+      if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+      }
+  };
 
   const { formState: { isValid } } = form;
   const selectedPurpose = form.watch("purpose");
@@ -240,35 +272,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
         title: "Lead Created",
         description: `Successfully created lead for ${result.lead.name}.`,
       });
-      form.reset({
-        beneficiaryType: 'existing',
-        isLoan: false,
-        helpRequested: 0,
-        acceptableDonationTypes: [],
-        newBeneficiaryFirstName: '',
-        newBeneficiaryMiddleName: '',
-        newBeneficiaryLastName: '',
-        newBeneficiaryPhone: '',
-        newBeneficiaryEmail: '',
-        beneficiaryId: '',
-        caseDetails: '',
-        category: '',
-        otherCategoryDetail: '',
-        otherPurposeDetail: '',
-        purpose: undefined,
-        priority: 'Medium',
-        campaignId: 'none',
-        campaignName: '',
-        hasReferral: false,
-        referredByUserId: '',
-        referredByUserName: '',
-        dueDate: undefined,
-        verificationDocument: undefined,
-      });
-      setSelectedReferralDetails(null);
-      if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-      }
+      handleCancel();
     } else {
       toast({
         variant: "destructive",
@@ -912,10 +916,16 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
                 )}
                 />
     
+            <div className="flex gap-4">
                 <Button type="submit" disabled={isSubmitting || !isValid}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create Lead
                 </Button>
+                 <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                </Button>
+            </div>
             </form>
             </Form>
             <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>

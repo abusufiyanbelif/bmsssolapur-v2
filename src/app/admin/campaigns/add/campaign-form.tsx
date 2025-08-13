@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,16 @@ export function CampaignForm() {
         status: "Upcoming",
     },
   });
+  
+  const handleCancel = () => {
+    form.reset({
+        name: "",
+        description: "",
+        goal: 0,
+        status: "Upcoming",
+        dates: undefined,
+    });
+  }
 
   async function onSubmit(values: CampaignFormValues) {
     setIsSubmitting(true);
@@ -205,11 +216,16 @@ export function CampaignForm() {
                 </FormItem>
             )}
         />
-
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create Campaign
-        </Button>
+        <div className="flex gap-4">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Campaign
+            </Button>
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+            </Button>
+        </div>
       </form>
     </Form>
   );
