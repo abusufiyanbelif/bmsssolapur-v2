@@ -3,8 +3,9 @@
 // src/app/donate/upload-proof-action.ts
 "use server";
 
-import { createDonation, getUser } from "@/services/donation-service";
-import type { Donation, User } from "@/services/types";
+import { createDonation } from "@/services/donation-service";
+import { getUser } from "@/services/user-service";
+import type { Donation } from "@/services/types";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 import { isConfigValid } from "@/services/firebase";
 
@@ -51,8 +52,8 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
         const details = await extractDonationDetails({ photoDataUri: dataUri });
 
         // --- VALIDATION STEP ---
-        if (details.donorName) {
-            const extractedName = details.donorName;
+        if (details.senderName) {
+            const extractedName = details.senderName;
             const loggedInUserName = loggedInUser.name;
             
             // A simple check if one name string contains the other, ignoring case and spaces.
@@ -62,7 +63,7 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
             if (!isNameMatch) {
                 return { 
                     success: false, 
-                    error: `The name on the screenshot ("${extractedName}") does not appear to match your account name ("${loggedInUserName}"). Please upload the correct screenshot.`
+                    error: `The name on the screenshot ("${extractedName}") does not appear to match your account name ("${loggedInUserName}"). Please upload the correct screenshot or contact support.`
                 };
             }
         }
@@ -83,7 +84,7 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
             isAnonymous: loggedInUser.isAnonymousAsDonor, // Respect user's profile setting
             notes: `Scanned from user upload. Extracted notes: "${details.notes || 'N/A'}". User notes: "${notes || 'N/A'}"`,
             transactionId: details.transactionId,
-            paymentScreenshotUrl: paymentScreenshotUrl,
+            paymentScreenshotUrls: [paymentScreenshotUrl],
             donationDate: details.date ? new Date(details.date) : new Date(),
             paymentApp: details.paymentApp,
             donorUpiId: details.donorUpiId,

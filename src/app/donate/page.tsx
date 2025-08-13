@@ -309,7 +309,7 @@ function UploadProofSection({ user }: { user: User | null }) {
                     ref={fileInputRef}
                 />
                  <FormDescription>
-                    Upload a screenshot of a payment you have already made.
+                    Upload a screenshot of a payment you have already made. The system will scan it to verify your donation.
                 </FormDescription>
             </div>
              {previewUrl && (
