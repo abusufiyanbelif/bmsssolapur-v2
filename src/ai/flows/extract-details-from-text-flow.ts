@@ -40,15 +40,15 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - utrNumber: The UTR number, if it is explicitly labeled as such.
             - date: The date of the transaction. Format as YYYY-MM-DD.
             - time: The time of the transaction, e.g., "11:48 am".
-            - paymentApp: The app used (e.g., GPay, PhonePe, Paytm, or a specific bank app like ICICI App). Infer from UI hints like 'G Pay' logo text or explicit text like "पे" for PhonePe.
+            - paymentApp: The app used (e.g., GPay, PhonePe, Paytm). Infer from UI hints like 'G Pay' logo text, explicit text like "पे" for PhonePe, or the structure of the details provided.
             - paymentMethod: The method used, like "UPI" or "Bank Transfer".
             - senderName: The full name of the person who sent the money. Look for a "From:" section and extract the name. Clean up any extra text like bank names in parentheses (e.g., "(ICICI Bank)").
-            - senderUpiId: The sender's UPI ID. Look for a UPI ID (containing '@') directly following the sender's name and the words "Google Pay".
+            - senderUpiId: The sender's UPI ID. This is often found on the line immediately following the sender's name and contains an '@' symbol.
             - senderAccountNumber: The sender's bank account number, even if partial (e.g., "...1234").
-            - recipientName: The full name of the person who received the money. Look for a "To:" section and extract the name (e.g., "To SALMAN SANAULLAH SH").
+            - recipientName: The full name of the person who received the money. Look for a "To:" section and extract the name.
             - recipientPhone: The recipient's phone number if it is shown near their name.
             - recipientAccountNumber: The recipient's bank account number, even if partial.
-            - recipientUpiId: The recipient's UPI ID. This is often found directly under or on the next line after the recipient's name and contains an '@' symbol (e.g., "dr.salmanshaik@okaxis").
+            - recipientUpiId: The recipient's UPI ID. This is often found directly under or on the next line after the recipient's name and contains an '@' symbol (e.g., "pathantoufiq44@oksbi").
             - status: The transaction status (e.g., Successful, Completed).
             - notes: Any user-added comments, remarks, or descriptions.
 
