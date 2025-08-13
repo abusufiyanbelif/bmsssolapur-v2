@@ -43,6 +43,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - paymentApp: The app used (e.g., GPay, PhonePe, Paytm). Infer from UI hints like 'G Pay' logo text.
             - paymentMethod: The method used, like "UPI" or "Bank Transfer".
             - senderName: The full name of the person who sent the money. Look for a "From:" section and extract the name. Clean up any extra text like "(ICICI Bank)".
+            - senderUpiId: The sender's UPI ID. Look for a UPI ID (containing '@') directly following the sender's name or on the next line.
             - senderAccountNumber: The sender's bank account number, even if partial (e.g., "...1234").
             - recipientName: The full name of the person who received the money. Look for a "To:" section and extract the name (e.g., "To SALMAN SANAULLAH SH").
             - recipientAccountNumber: The recipient's bank account number, even if partial.

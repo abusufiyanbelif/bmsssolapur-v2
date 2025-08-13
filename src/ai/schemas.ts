@@ -96,6 +96,7 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   paymentApp: z.string().optional().describe('The method or app of payment (e.g., GPay, PhonePe, Paytm). Infer this from the UI, especially logos like "पे" for PhonePe or "Paytm Bank".'),
   paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer. Often found near the transaction ID.'),
   senderName: z.string().optional().describe("The full name of the person who sent the money, often found under a 'FROM' or 'Debited From' heading."),
+  senderUpiId: z.string().optional().describe("The sender's UPI ID if visible (e.g., 'username@okaxis'). This is often found directly under or on the next line after the sender's name and contains an '@' symbol."),
   senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial. Look for labels like 'A/c No.', 'From account ...1234', or a phone number explicitly linked to the account like '...linked to 1234567890'. Do NOT extract a standalone phone number here."),
   recipientName: z.string().optional().describe("The full name of the person who received the money, often found under a 'TO' heading."),
   donorPhone: z.string().optional().describe("The sender's phone number, especially if it is specified as the linked account (e.g., '...linked to 1234567890')."),

@@ -148,6 +148,7 @@ export interface FundTransfer {
     utrNumber?: string;
     senderName?: string;
     senderAccountNumber?: string;
+    senderUpiId?: string;
     recipientName?: string;
     recipientPhone?: string;
     recipientUpiId?: string;
