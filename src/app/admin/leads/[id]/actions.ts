@@ -8,10 +8,7 @@ import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
 import { FundTransfer } from "@/services/types";
 import { arrayUnion, increment } from "firebase/firestore";
-import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
-import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
-import { extractDetailsFromText } from "@/ai/flows/extract-details-from-text-flow";
 
 export async function handleDeleteLead(leadId: string) {
     try {
@@ -155,6 +152,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
 
 export async function handleScanTransferProof(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
     try {
+        const { extractDonationDetails } = await import('@/ai/flows/extract-donation-details-flow');
         const proofFile = formData.get("proof") as File | undefined;
         
         if (!proofFile || proofFile.size === 0) {
@@ -180,6 +178,7 @@ export async function handleScanTransferProof(formData: FormData): Promise<{succ
 
 export async function handleGetRawText(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
     try {
+        const { extractRawText } = await import('@/ai/flows/extract-raw-text-flow');
         const proofFile = formData.get("proof") as File | undefined;
         
         if (!proofFile || proofFile.size === 0) {
@@ -204,6 +203,7 @@ export async function handleGetRawText(formData: FormData): Promise<{success: bo
 
 export async function handleExtractDetailsFromText(rawText: string): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
     try {
+        const { extractDetailsFromText } = await import('@/ai/flows/extract-details-from-text-flow');
         if (!rawText) {
             return { success: false, error: "No text provided for extraction." };
         }
