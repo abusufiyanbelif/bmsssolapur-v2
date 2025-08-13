@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -19,7 +18,7 @@ import { Button } from '@/components/ui/button';
 
 export default function AllocationDetailPage() {
     const params = useParams();
-    const donationId = Array.isArray(params.donationId) ? params.donationId[0] : params.donationId;
+    const donationId = Array.isArray(params.id) ? params.id[0] : params.id;
     const allocationIndex = parseInt(Array.isArray(params.index) ? params.index[0] : params.index, 10);
 
     const [donation, setDonation] = useState<Donation | null>(null);
