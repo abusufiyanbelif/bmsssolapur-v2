@@ -2,10 +2,10 @@
 
 "use server";
 
-import { createUser, getUserByEmail, getUserByPhone, getUserByUserId, getUserByUserKey, getUserByFullName, User } from "@/services/user-service";
+import { createUser, getUserByEmail, getUserByPhone, getUserByUserId } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase/firestore";
-import type { UserRole } from "@/services/types";
+import type { User, UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -115,33 +115,29 @@ export async function handleAddUser(
   }
 }
 
-interface DuplicateCheckPayload {
-    userId?: string;
-    userKey?: string;
-    phone?: string;
-    email?: string;
-    fullName?: string;
+interface UserIdAvailability {
+    isAvailable: boolean;
+    suggestions: string[];
 }
 
-export async function findExistingUsers(payload: DuplicateCheckPayload): Promise<{ matches: User[], error?: string }> {
+export async function checkUserIdAvailability(userId: string): Promise<UserIdAvailability> {
     try {
-        const potentialMatches = new Map<string, User>();
-
-        const checkAndAdd = (user: User | null) => {
-            if (user && user.id) {
-                potentialMatches.set(user.id, user);
+        const existingUser = await getUserByUserId(userId);
+        if (existingUser) {
+            // If user exists, generate suggestions
+            const suggestions = [];
+            for (let i = 1; i <= 3; i++) {
+                const suggestionId = `${userId}${i}`;
+                const isSuggestionTaken = await getUserByUserId(suggestionId);
+                if (!isSuggestionTaken) {
+                    suggestions.push(suggestionId);
+                }
             }
-        };
-
-        if (payload.userId) checkAndAdd(await getUserByUserId(payload.userId));
-        if (payload.userKey) checkAndAdd(await getUserByUserKey(payload.userKey));
-        if (payload.phone) checkAndAdd(await getUserByPhone(payload.phone));
-        if (payload.email) checkAndAdd(await getUserByEmail(payload.email));
-        if (payload.fullName) checkAndAdd(await getUserByFullName(payload.fullName));
-        
-        return { matches: Array.from(potentialMatches.values()) };
+            return { isAvailable: false, suggestions };
+        }
+        return { isAvailable: true, suggestions: [] };
     } catch(e) {
-        const error = e instanceof Error ? e.message : "An unknown database error occurred.";
-        return { matches: [], error };
+        console.error("Error checking user ID availability:", e);
+        return { isAvailable: false, suggestions: [] };
     }
 }
