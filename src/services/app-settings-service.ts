@@ -13,7 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { AppSettings, UserRole } from './types';
+import type { AppSettings, UserRole, LeadStatus } from './types';
 
 // Re-export type for backward compatibility
 export type { AppSettings };
@@ -23,7 +23,7 @@ const MAIN_SETTINGS_DOC_ID = 'main'; // Use a singleton document for global sett
 
 const defaultAdminRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin'];
 const allUserRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin', 'Donor', 'Beneficiary', 'Referral'];
-
+const allLeadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {
@@ -60,6 +60,10 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     leadConfiguration: {
         disabledPurposes: [],
+        workflow: allLeadStatuses.reduce((acc, status) => {
+            acc[status] = allLeadStatuses.filter(s => s !== status); // Default: allow transition to any other status
+            return acc;
+        }, {} as Record<LeadStatus, LeadStatus[]>),
     },
     dashboard: {
         mainMetrics: { visibleTo: allUserRoles },
@@ -108,7 +112,12 @@ export const getAppSettings = async (): Promise<AppSettings> => {
             razorpay: { ...defaultSettings.paymentGateway.razorpay, ...data.paymentGateway?.razorpay },
             phonepe: { ...defaultSettings.paymentGateway.phonepe, ...data.paymentGateway?.phonepe },
         },
-        leadConfiguration: { ...defaultSettings.leadConfiguration, ...data.leadConfiguration },
+        leadConfiguration: { 
+            ...defaultSettings.leadConfiguration, 
+            ...data.leadConfiguration,
+            // Ensure workflow is populated if it's missing from DB
+            workflow: data.leadConfiguration?.workflow || defaultSettings.leadConfiguration.workflow,
+        },
         dashboard: { ...defaultSettings.dashboard, ...data.dashboard },
       };
       return { id: settingsDoc.id, ...mergedSettings } as AppSettings;

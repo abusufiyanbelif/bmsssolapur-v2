@@ -253,6 +253,7 @@ export interface AppSettings {
     };
     leadConfiguration?: {
         disabledPurposes: string[];
+        workflow?: Record<LeadStatus, LeadStatus[]>;
     };
     dashboard?: {
         mainMetrics: { visibleTo: UserRole[] };
