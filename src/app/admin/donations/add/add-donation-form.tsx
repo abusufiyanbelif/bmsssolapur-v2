@@ -38,7 +38,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { scanProof } from "@/ai/text-extraction-actions";
+import { handleAddDonation } from "./actions";
+import { extractDonationDetails } from '@/ai/flows/extract-donation-details-flow';
+
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
@@ -240,25 +242,38 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   
     const handleScanAndFill = async (index: number) => {
         const filePreview = localFiles[index];
-        if (!filePreview) return;
+        if (!filePreview || !filePreview.file.type.startsWith('image/')) {
+            toast({ variant: 'destructive', title: 'Scan Failed', description: 'Please select an image file to scan.' });
+            return;
+        }
 
         setIsScanning(true);
         setRawText(null);
         
-        const scanResult = await scanProof(filePreview.file);
+        try {
+            const arrayBuffer = await filePreview.file.arrayBuffer();
+            const base64 = Buffer.from(arrayBuffer).toString('base64');
+            const mimeType = filePreview.file.type;
+            const dataUri = `data:${mimeType};base64,${base64}`;
 
-        if (scanResult.success && scanResult.details) {
-            for (const [key, value] of Object.entries(scanResult.details)) {
+            const scanResult = await extractDonationDetails({ photoDataUri: dataUri });
+
+            for (const [key, value] of Object.entries(scanResult)) {
                 if (value !== undefined && value !== null) {
-                    setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
+                    if (key === 'date' && typeof value === 'string') {
+                        setValue('donationDate', new Date(value), { shouldValidate: true, shouldDirty: true });
+                    } else {
+                        setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
+                    }
                 }
             }
-             if (scanResult.details.rawText) {
-                setRawText(scanResult.details.rawText);
+            if (scanResult.rawText) {
+                setRawText(scanResult.rawText);
             }
              toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
-        } else {
-             toast({ variant: 'destructive', title: 'Scan Failed', description: scanResult.error || 'Could not extract structured details from this image.' });
+        } catch(e) {
+             const error = e instanceof Error ? e.message : "An unknown error occurred during scanning.";
+             toast({ variant: 'destructive', title: 'Scan Failed', description: error });
         }
         
         setIsScanning(false);
@@ -386,36 +401,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 </FormItem>
               )}
             />
-          <FormField
-            control={form.control}
-            name="isAnonymous"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    Mark this Donation as Anonymous
-                  </FormLabel>
-                  <FormDescription>
-                    If checked, the donor's name will be hidden from public view for this specific donation. This is automatically checked if the user's profile is set to anonymous.
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-          
-          {isAnonymous && selectedDonor && (
-              <div className="space-y-2">
-                  <FormLabel>Anonymous Donor ID</FormLabel>
-                  <Input value={selectedDonor.anonymousDonorId || "Will be generated on save"} disabled />
-                  <FormDescription>This ID will be used for public display to protect the donor's privacy.</FormDescription>
-              </div>
-          )}
           
           <div className="space-y-4">
             {manualScreenshotPreview && (
@@ -458,36 +443,36 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
 
             {localFiles.length > 0 && (
                 <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {localFiles.map((fp, index) => (
-                        <div key={index} className="p-2 border rounded-md bg-muted/50 space-y-2 group relative">
-                            {fp.file.type.startsWith('image/') ? (
-                                <Image src={fp.previewUrl} alt={`Preview ${index + 1}`} width={200} height={200} className="w-full h-auto object-contain rounded-md aspect-square" data-ai-hint="payment screenshot" />
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
-                                    <FileText className="h-8 w-8 text-primary" />
-                                    <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
-                                </div>
-                            )}
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => removeFile(index)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-
-                <Button
-                    type="button"
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => handleScanAndFill(0)}
-                    disabled={isScanning || localFiles.length === 0 || !localFiles[0].file.type.startsWith('image/')}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {localFiles.map((fp, index) => (
+                            <div key={index} className="p-2 border rounded-md bg-muted/50 space-y-2 group relative">
+                                {fp.file.type.startsWith('image/') ? (
+                                    <Image src={fp.previewUrl} alt={`Preview ${index + 1}`} width={200} height={200} className="w-full h-auto object-contain rounded-md aspect-square" data-ai-hint="payment screenshot" />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
+                                        <FileText className="h-8 w-8 text-primary" />
+                                        <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
+                                    </div>
+                                )}
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => removeFile(index)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <Button
+                        type="button"
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => handleScanAndFill(0)}
+                        disabled={isScanning || localFiles.length === 0}
                     >
                         {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
                         Get Transaction Details from Image
@@ -763,6 +748,37 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                   </FormItem>
               )}
           />
+
+           <FormField
+            control={form.control}
+            name="isAnonymous"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Mark this Donation as Anonymous
+                  </FormLabel>
+                  <FormDescription>
+                    If checked, the donor's name will be hidden from public view for this specific donation. This is automatically checked if the user's profile is set to anonymous.
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+          
+          {isAnonymous && selectedDonor && (
+              <div className="space-y-2">
+                  <FormLabel>Anonymous Donor ID</FormLabel>
+                  <Input value={selectedDonor.anonymousDonorId || "Will be generated on save"} disabled />
+                  <FormDescription>This ID will be used for public display to protect the donor's privacy.</FormDescription>
+              </div>
+          )}
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting}>
