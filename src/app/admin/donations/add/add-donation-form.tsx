@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddDonation } from "./actions";
+import { handleAddDonation, handleExtractTextFromImage } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
 import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
@@ -81,19 +81,21 @@ interface AddDonationFormProps {
 interface FilePreview {
     file: File;
     previewUrl: string;
-    isScanning?: boolean;
 }
 
 function AddDonationFormContent({ users }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [rawText, setRawText] = useState<string | null>(null);
+
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -147,6 +149,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       setSelectedDonor(null);
       setManualScreenshotPreview(null);
       setLocalFiles([]);
+      setRawText(null);
   }
   
   useEffect(() => {
@@ -223,6 +226,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         const allFiles = [...localFiles, ...newFilePreviews];
         setLocalFiles(allFiles);
         setValue('paymentScreenshots', allFiles.map(f => f.file));
+        setRawText(null); // Reset raw text when new files are added
     }
   };
 
@@ -230,32 +234,48 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     const updatedFiles = localFiles.filter((_, i) => i !== index);
     setLocalFiles(updatedFiles);
     setValue('paymentScreenshots', updatedFiles.map(f => f.file));
+    if (updatedFiles.length === 0) {
+        setRawText(null); // Clear raw text if all files are removed
+    }
   }
   
     const handleScanAndFill = async (index: number) => {
         const filePreview = localFiles[index];
-        if (!filePreview || filePreview.isScanning) return;
+        if (!filePreview) return;
 
-        setLocalFiles(prev => prev.map((fp, i) => (i === index ? { ...fp, isScanning: true } : fp)));
+        setIsScanning(true);
+        setRawText(null);
         
-        const formData = new FormData();
-        formData.append("paymentScreenshot", filePreview.file);
+        const scanFormData = new FormData();
+        scanFormData.append("paymentScreenshot", filePreview.file);
+        
+        const textFormData = new FormData();
+        textFormData.append("image", filePreview.file);
 
-        const result = await handleScanDonationProof(formData);
-
-        if (result.success && result.details) {
-            // Use Object.entries to iterate and set values
-            for (const [key, value] of Object.entries(result.details)) {
+        // Run both operations in parallel
+        const [scanResult, textResult] = await Promise.all([
+            handleScanDonationProof(scanFormData),
+            handleExtractTextFromImage(textFormData)
+        ]);
+        
+        if (textResult.success && textResult.text) {
+             setRawText(textResult.text);
+        } else {
+            toast({ variant: 'destructive', title: 'Text Extraction Failed', description: textResult.error || 'Could not read text from this image.' });
+        }
+        
+        if (scanResult.success && scanResult.details) {
+            for (const [key, value] of Object.entries(scanResult.details)) {
                 if (value !== undefined && value !== null) {
                     setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
                 }
             }
              toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
         } else {
-             toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || 'Could not extract details from this image.' });
+             toast({ variant: 'destructive', title: 'Scan Failed', description: scanResult.error || 'Could not extract structured details from this image.' });
         }
-
-        setLocalFiles(prev => prev.map((fp, i) => (i === index ? { ...fp, isScanning: false } : fp)));
+        
+        setIsScanning(false);
     };
 
 
@@ -739,11 +759,19 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 className="w-full"
                 variant="outline"
                 onClick={() => handleScanAndFill(0)}
-                disabled={localFiles[0]?.isScanning || !localFiles[0]?.file.type.startsWith('image/')}
+                disabled={isScanning || localFiles.length === 0 || !localFiles[0].file.type.startsWith('image/')}
                 >
-                    {localFiles[0]?.isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
+                    {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
                     Get Transaction Details
                 </Button>
+
+                {rawText && (
+                    <div className="space-y-2">
+                        <FormLabel>Extracted Text</FormLabel>
+                        <Textarea readOnly value={rawText} rows={8} className="text-xs font-mono bg-background" />
+                        <FormDescription>This is the raw text extracted by the AI. You can use it to verify the auto-filled fields.</FormDescription>
+                    </div>
+                )}
             </div>
           )}
 
