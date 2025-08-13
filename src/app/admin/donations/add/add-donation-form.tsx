@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddDonation, handleExtractTextFromImage } from "./actions";
+import { handleAddDonation } from "./actions";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, TextSearch, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
+import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -81,8 +81,6 @@ interface AddDonationFormProps {
 interface FilePreview {
     file: File;
     previewUrl: string;
-    extractedText?: string;
-    isExtracting?: boolean;
     isScanning?: boolean;
 }
 
@@ -118,7 +116,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     },
   });
   
-  const { watch, setValue, reset, getValues } = form;
+  const { watch, setValue, reset } = form;
   const includeTip = watch("includeTip");
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
@@ -233,27 +231,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     setLocalFiles(updatedFiles);
     setValue('paymentScreenshots', updatedFiles.map(f => f.file));
   }
-
-  const handleGetText = async (index: number) => {
-    const filePreview = localFiles[index];
-    if (!filePreview || filePreview.isExtracting) return;
-
-    // Set loading state for this specific file
-    setLocalFiles(prev => prev.map((fp, i) => i === index ? { ...fp, isExtracting: true } : fp));
-
-    const formData = new FormData();
-    formData.append("image", filePreview.file);
-
-    const result = await handleExtractTextFromImage(formData);
-
-    if (result.success && result.text) {
-        setLocalFiles(prev => prev.map((fp, i) => i === index ? { ...fp, extractedText: result.text, isExtracting: false } : fp));
-        toast({ variant: 'success', title: 'Text Extracted', description: 'Text from the image has been extracted below.' });
-    } else {
-        setLocalFiles(prev => prev.map((fp, i) => i === index ? { ...fp, isExtracting: false } : fp));
-        toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from this image.' });
-    }
-  };
   
     const handleScanAndFill = async (index: number) => {
         const filePreview = localFiles[index];
@@ -731,60 +708,42 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               />
           )}
 
-          {localFiles.length > 0 && (
+           {localFiles.length > 0 && (
             <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {localFiles.map((fp, index) => (
-                    <div key={index} className="p-2 border rounded-md bg-muted/50 space-y-2">
-                        <div className="relative group aspect-square">
-                            {fp.file.type.startsWith('image/') ? (
-                                <Image src={fp.previewUrl} alt={`Preview ${index + 1}`} fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
-                                    <FileText className="h-8 w-8 text-primary" />
-                                    <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
-                                </div>
-                            )}
-                             <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/50 backdrop-blur-sm p-1 rounded-full">
-                                {fp.file.type.startsWith('image/') && (
-                                <>
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full"
-                                    onClick={() => handleGetText(index)}
-                                    disabled={fp.isExtracting}
-                                >
-                                    {fp.isExtracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSearch className="h-4 w-4" />}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full"
-                                    onClick={() => handleScanAndFill(index)}
-                                    disabled={fp.isScanning}
-                                >
-                                    {fp.isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
-                                </Button>
-                                </>
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full"
-                                    onClick={() => removeFile(index)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                    <div key={index} className="p-2 border rounded-md bg-muted/50 space-y-2 group relative">
+                         {fp.file.type.startsWith('image/') ? (
+                            <Image src={fp.previewUrl} alt={`Preview ${index + 1}`} width={200} height={200} className="w-full h-auto object-contain rounded-md aspect-square" data-ai-hint="payment screenshot" />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
+                                <FileText className="h-8 w-8 text-primary" />
+                                <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
                             </div>
-                        </div>
-                        {fp.extractedText && (
-                            <Textarea readOnly value={fp.extractedText} rows={5} className="text-xs font-mono" />
                         )}
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeFile(index)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                     </div>
                 ))}
+              </div>
+
+               <Button
+                type="button"
+                className="w-full"
+                variant="outline"
+                onClick={() => handleScanAndFill(0)}
+                disabled={localFiles[0]?.isScanning || !localFiles[0]?.file.type.startsWith('image/')}
+                >
+                    {localFiles[0]?.isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
+                    Get Transaction Details
+                </Button>
             </div>
           )}
 
