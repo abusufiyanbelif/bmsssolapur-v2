@@ -250,6 +250,10 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Label htmlFor="recipientUpiId">Recipient UPI ID</Label>
                     <Input id="recipientUpiId" {...register("recipientUpiId")} type="text" placeholder="e.g., username@upi" />
                 </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="recipientPhone">Recipient Phone</Label>
+                    <Input id="recipientPhone" {...register("recipientPhone")} type="text" placeholder="e.g., 9876543210" />
+                </div>
 
                 <h3 className="font-semibold text-lg border-b pb-2 pt-4">Additional Info</h3>
                 <div className="space-y-2">
