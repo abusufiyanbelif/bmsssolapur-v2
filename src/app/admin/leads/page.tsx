@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, getUser, type User } from "@/services/user-service";
 import { format } from "date-fns";
@@ -27,7 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import type { LeadPriority } from "@/services/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -135,12 +135,7 @@ function LeadsPageContent() {
                 getAllLeads(),
                 getAllUsers()
             ]);
-            const enrichedLeads = fetchedLeads.map(lead => ({
-                ...lead,
-                verifiedAt: lead.verifiers && lead.verifiers.length > 0 ? new Date(lead.verifiers[0].verifiedAt as any) : undefined,
-                lastAllocatedAt: lead.donations && lead.donations.length > 0 ? new Date(lead.donations.sort((a,b) => (b.allocatedAt as any) - (a.allocatedAt as any))[0].allocatedAt as any) : undefined,
-            }));
-            setLeads(enrichedLeads);
+            setLeads(fetchedLeads);
             setUsers(fetchedUsers);
             setError(null);
         } catch (e) {
@@ -393,16 +388,46 @@ function LeadsPageContent() {
                                  <div className="font-mono text-xs text-muted-foreground">{lead.id}</div>
                             </TableCell>
                             <TableCell>
-                                 <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
-                                    <StatusIcon className="mr-1 h-3 w-3" />
-                                    {lead.status}
-                                </Badge>
+                                 <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="capitalize h-auto p-1">
+                                            <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[lead.status])}>
+                                                <StatusIcon className="mr-1 h-3 w-3" />
+                                                {lead.status}
+                                            </Badge>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Change Case Status</DropdownMenuLabel>
+                                        {statusOptions.filter(s => s !== 'all').map(s => (
+                                            <DropdownMenuItem key={s} onSelect={() => handleQuickStatusChange(lead.id!, 'case', s)} disabled={lead.status === s}>
+                                                {lead.status === s && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+                                                {s}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                 </DropdownMenu>
                             </TableCell>
                             <TableCell>
-                                 <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
-                                    <verifConfig.icon className="mr-1 h-3 w-3" />
-                                    {lead.verifiedStatus}
-                                </Badge>
+                                 <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="capitalize h-auto p-1">
+                                            <Badge variant="outline" className={cn("capitalize pointer-events-none", verifConfig.color)}>
+                                                <verifConfig.icon className="mr-1 h-3 w-3" />
+                                                {lead.verifiedStatus}
+                                            </Badge>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Change Verification</DropdownMenuLabel>
+                                        {verificationOptions.filter(v => v !== 'all').map(v => (
+                                            <DropdownMenuItem key={v} onSelect={() => handleQuickStatusChange(lead.id!, 'verification', v)} disabled={lead.verifiedStatus === v}>
+                                                 {lead.verifiedStatus === v && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+                                                {v}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                 </DropdownMenu>
                             </TableCell>
                             <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
                             <TableCell>{format(lead.dateCreated, "dd MMM yyyy")}</TableCell>

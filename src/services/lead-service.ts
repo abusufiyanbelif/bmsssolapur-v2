@@ -212,7 +212,7 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            leads.push({ 
+            const enrichedData = { 
               id: doc.id,
               ...data,
               dateCreated: (data.dateCreated as Timestamp).toDate(),
@@ -223,7 +223,18 @@ export const getAllLeads = async (): Promise<Lead[]> => {
               verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
               donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
               fundTransfers: (data.fundTransfers || []).map((t: FundTransfer) => ({...t, transferredAt: (t.transferredAt as Timestamp).toDate() })),
-            } as Lead);
+            } as Lead;
+            
+            // Add derived fields for sorting
+            const enrichedLead: any = { ...enrichedData };
+            if (enrichedData.verifiers && enrichedData.verifiers.length > 0) {
+                 enrichedLead.verifiedAt = enrichedData.verifiers.sort((a,b) => (b.verifiedAt as any) - (a.verifiedAt as any))[0].verifiedAt;
+            }
+            if (enrichedData.donations && enrichedData.donations.length > 0) {
+                enrichedLead.lastAllocatedAt = enrichedData.donations.sort((a,b) => (b.allocatedAt as any) - (a.allocatedAt as any))[0].allocatedAt;
+            }
+
+            leads.push(enrichedLead);
         });
         return leads;
     } catch (error) {
