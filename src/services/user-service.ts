@@ -383,6 +383,41 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
   }
 }
 
+// Function to get a user by PAN Number
+export const getUserByPan = async (pan: string): Promise<User | null> => {
+  if (!isConfigValid || !pan) return null;
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where("panNumber", "==", pan.toUpperCase()), limit(1));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as User;
+    }
+    return null;
+  } catch (e) {
+    console.error("Error getting user by PAN:", e);
+    return null;
+  }
+};
+
+// Function to get a user by Aadhaar Number
+export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> => {
+  if (!isConfigValid || !aadhaar) return null;
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where("aadhaarNumber", "==", aadhaar), limit(1));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as User;
+    }
+    return null;
+  } catch (e) {
+    console.error("Error getting user by Aadhaar:", e);
+    return null;
+  }
+};
+
+
 // Function to update a user
 export const updateUser = async (id: string, updates: Partial<User>) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');

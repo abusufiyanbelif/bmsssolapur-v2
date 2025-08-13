@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddUser, checkUserIdAvailability } from "./actions";
+import { handleAddUser, checkAvailability } from "./actions";
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -79,17 +79,71 @@ const formSchema = z.object({
 
 type AddUserFormValues = z.infer<typeof formSchema>;
 
+type AvailabilityState = {
+    isChecking: boolean;
+    isAvailable: boolean | null;
+    suggestions?: string[];
+    existingUserName?: string;
+};
+
+const initialAvailabilityState: AvailabilityState = {
+    isChecking: false,
+    isAvailable: null,
+};
+
+function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: AvailabilityState, fieldName: string, onSuggestionClick?: (suggestion: string) => void }) {
+    if (state.isChecking) {
+        return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>;
+    }
+    if (state.isAvailable === true) {
+        return <p className="text-sm text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-4 w-4" /> Available</p>;
+    }
+    if (state.isAvailable === false) {
+        return (
+            <div className="mt-2">
+                <p className="text-sm text-destructive flex items-center">
+                    <XCircle className="mr-2 h-4 w-4" /> 
+                    This {fieldName} is already in use
+                    {state.existingUserName && ` by ${state.existingUserName}`}.
+                </p>
+                {state.suggestions && state.suggestions.length > 0 && onSuggestionClick && (
+                    <div className="flex gap-2 items-center mt-1">
+                        <p className="text-xs text-muted-foreground">Suggestions:</p>
+                        {state.suggestions.map(suggestion => (
+                            <Button 
+                                key={suggestion}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-6 px-2"
+                                onClick={() => onSuggestionClick(suggestion)}
+                            >
+                                {suggestion}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+    return null;
+}
+
+
 function AddUserFormContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
 
-  // For User ID validation
-  const [isCheckingId, setIsCheckingId] = useState(false);
-  const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
-  const [idSuggestions, setIdSuggestions] = useState<string[]>([]);
-  
+  // Availability states
+  const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [emailState, setEmailState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [phoneState, setPhoneState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [panState, setPanState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [aadhaarState, setAadhaarState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
 
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
@@ -120,28 +174,40 @@ function AddUserFormContent() {
     name: "upiIds"
   });
   
-  const { watch, trigger } = form;
+  const { watch, trigger, setValue } = form;
 
-  const userIdValue = watch('userId');
-  const debouncedUserId = useDebounce(userIdValue, 500);
-  
-  const handleIdCheck = useCallback(async (id: string) => {
-    if (!id || id.length < 3) {
-      setIsIdAvailable(null);
-      return;
+  const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
+    if (!value) {
+        setState(initialAvailabilityState);
+        return;
     }
-    setIsCheckingId(true);
-    const result = await checkUserIdAvailability(id);
-    setIsIdAvailable(result.isAvailable);
-    setIdSuggestions(result.suggestions);
-    setIsCheckingId(false);
+    setState({ isChecking: true, isAvailable: null });
+    const result = await checkAvailability(field, value);
+    setState({ isChecking: false, ...result });
   }, []);
 
+  // Debounced values
+  const debouncedUserId = useDebounce(watch('userId'), 500);
+  const debouncedEmail = useDebounce(watch('email'), 500);
+  const debouncedPhone = useDebounce(watch('phone'), 500);
+  const debouncedPan = useDebounce(watch('panNumber'), 500);
+  const debouncedAadhaar = useDebounce(watch('aadhaarNumber'), 500);
+  const debouncedBankAccount = useDebounce(watch('bankAccountNumber'), 500);
+  const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
+
+  // Effects for debounced checks
+  useEffect(() => { handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+
   useEffect(() => {
-    if (debouncedUserId) {
-        handleIdCheck(debouncedUserId);
-    }
-  }, [debouncedUserId, handleIdCheck]);
+    debouncedUpiIds?.forEach((upi, index) => {
+        handleAvailabilityCheck('upiId', upi.value, (state) => setUpiIdStates(prev => ({...prev, [index]: state})));
+    });
+  }, [debouncedUpiIds, handleAvailabilityCheck]);
 
 
   useEffect(() => {
@@ -179,49 +245,34 @@ function AddUserFormContent() {
 
 
   async function onSubmit(values: AddUserFormValues) {
-    // Final check for availability before submitting
-    await handleIdCheck(values.userId);
-    if (!isIdAvailable) {
-        toast({
-            variant: "destructive",
-            title: "User ID Taken",
-            description: "Please choose an available User ID before submitting.",
-        });
-        return;
-    }
-
     setIsSubmitting(true);
     
+    // Final pre-submission check
+    const checks = [
+        checkAvailability('userId', values.userId),
+        checkAvailability('email', values.email || ''),
+        checkAvailability('phone', values.phone),
+    ];
+    const results = await Promise.all(checks);
+    const isInvalid = results.some(r => !r.isAvailable);
+
+    if (isInvalid) {
+        toast({ variant: "destructive", title: "Duplicate Information", description: "Please correct the highlighted fields before submitting." });
+        setIsSubmitting(false);
+        return;
+    }
+    
     const formData = new FormData();
-    if(values.userId) formData.append("userId", values.userId);
-    if(values.firstName) formData.append("firstName", values.firstName);
-    if(values.middleName) formData.append("middleName", values.middleName);
-    if(values.lastName) formData.append("lastName", values.lastName);
-    if(values.email) formData.append("email", values.email);
-    formData.append("phone", values.phone);
-    values.roles.forEach(role => formData.append("roles", role));
-    if(values.createProfile) formData.append("createProfile", "on");
-    if(values.isAnonymousAsBeneficiary) formData.append("isAnonymousAsBeneficiary", "on");
-    if(values.isAnonymousAsDonor) formData.append("isAnonymousAsDonor", "on");
-    formData.append("gender", values.gender);
-    if(values.beneficiaryType) formData.append("beneficiaryType", values.beneficiaryType);
-    if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
-    if(values.city) formData.append("city", values.city);
-    if(values.state) formData.append("state", values.state);
-    if(values.country) formData.append("country", values.country);
-    if(values.pincode) formData.append("pincode", values.pincode);
-    if(values.occupation) formData.append("occupation", values.occupation);
-    if(values.familyMembers) formData.append("familyMembers", String(values.familyMembers));
-    if(values.isWidow) formData.append("isWidow", "on");
-    if(values.panNumber) formData.append("panNumber", values.panNumber);
-    if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
-    if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
-    if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
-    if(values.bankIfscCode) formData.append("bankIfscCode", values.bankIfscCode);
-    if(values.upiPhone) formData.append("upiPhone", values.upiPhone);
-    values.upiIds?.forEach(upi => {
-        if(upi.value) formData.append("upiIds", upi.value);
+    Object.entries(values).forEach(([key, value]) => {
+      if (value) {
+        if (key === 'upiIds' && Array.isArray(value)) {
+          value.forEach(item => item.value && formData.append(key, item.value));
+        } else if (typeof value !== 'object') {
+          formData.append(key, String(value));
+        }
+      }
     });
+
 
     const result = await handleAddUser(formData);
 
@@ -235,8 +286,13 @@ function AddUserFormContent() {
         icon: <CheckCircle />,
       });
       form.reset();
-      setIsIdAvailable(null);
-      setIdSuggestions([]);
+      setUserIdState(initialAvailabilityState);
+      setEmailState(initialAvailabilityState);
+      setPhoneState(initialAvailabilityState);
+      setPanState(initialAvailabilityState);
+      setAadhaarState(initialAvailabilityState);
+      setBankAccountState(initialAvailabilityState);
+      setUpiIdStates({});
     } else {
       toast({
         variant: "destructive",
@@ -248,42 +304,9 @@ function AddUserFormContent() {
 
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
   
-  const renderUserIdFeedback = () => {
-    if (isCheckingId) {
-        return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking availability...</p>;
-    }
-    if (isIdAvailable === true) {
-        return <p className="text-sm text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-4 w-4" /> Available!</p>;
-    }
-    if (isIdAvailable === false) {
-        return (
-            <div className="mt-2">
-                <p className="text-sm text-destructive flex items-center"><XCircle className="mr-2 h-4 w-4" /> User ID not available.</p>
-                {idSuggestions.length > 0 && (
-                    <div className="flex gap-2 items-center mt-1">
-                        <p className="text-xs text-muted-foreground">Suggestions:</p>
-                        {idSuggestions.map(suggestion => (
-                            <Button 
-                                key={suggestion}
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="text-xs h-6 px-2"
-                                onClick={() => {
-                                    form.setValue('userId', suggestion, { shouldValidate: true });
-                                    trigger('userId'); // Manually trigger validation
-                                }}
-                            >
-                                {suggestion}
-                            </Button>
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    }
-    return null;
-  }
+  const isAnyFieldChecking = userIdState.isChecking || emailState.isChecking || phoneState.isChecking || panState.isChecking || aadhaarState.isChecking || bankAccountState.isChecking;
+  const isAnyFieldInvalid = userIdState.isAvailable === false || emailState.isAvailable === false || phoneState.isAvailable === false || panState.isAvailable === false || aadhaarState.isAvailable === false || bankAccountState.isAvailable === false;
+
 
   return (
     <>
@@ -342,7 +365,7 @@ function AddUserFormContent() {
               <FormControl>
                 <Input type="text" placeholder="Create a custom user ID" {...field} />
               </FormControl>
-              {renderUserIdFeedback()}
+              <AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} />
               <FormMessage />
             </FormItem>
           )}
@@ -358,6 +381,7 @@ function AddUserFormContent() {
               <FormControl>
                 <Input type="email" placeholder="you@example.com" {...field} />
               </FormControl>
+               <AvailabilityFeedback state={emailState} fieldName="email" />
               <FormMessage />
             </FormItem>
           )}
@@ -371,6 +395,7 @@ function AddUserFormContent() {
               <FormControl>
                 <Input type="tel" placeholder="10-digit number" maxLength={10} {...field} />
               </FormControl>
+              <AvailabilityFeedback state={phoneState} fieldName="phone number" />
               <FormMessage />
             </FormItem>
           )}
@@ -707,6 +732,7 @@ function AddUserFormContent() {
                 <FormControl>
                     <Input placeholder="Enter PAN number" {...field} />
                 </FormControl>
+                 <AvailabilityFeedback state={panState} fieldName="PAN Number" />
                 <FormMessage />
                 </FormItem>
             )}
@@ -720,6 +746,7 @@ function AddUserFormContent() {
                 <FormControl>
                     <Input placeholder="Enter Aadhaar number" {...field} />
                 </FormControl>
+                <AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar Number" />
                 <FormMessage />
                 </FormItem>
             )}
@@ -748,6 +775,7 @@ function AddUserFormContent() {
                     <FormControl>
                         <Input placeholder="Enter bank account number" {...field} />
                     </FormControl>
+                    <AvailabilityFeedback state={bankAccountState} fieldName="Bank Account" />
                     <FormMessage />
                     </FormItem>
                 )}
@@ -801,6 +829,7 @@ function AddUserFormContent() {
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
+                   <AvailabilityFeedback state={upiIdStates[index] || initialAvailabilityState} fieldName="UPI ID" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -817,7 +846,7 @@ function AddUserFormContent() {
             </Button>
          </div>
         
-        <Button type="submit" disabled={isSubmitting || isCheckingId || isIdAvailable === false}>
+        <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
             {isSubmitting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
