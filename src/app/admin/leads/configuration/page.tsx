@@ -2,7 +2,7 @@
 'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Users, ShieldCheck, PlusCircle, UserCheck, User, Loader2, AlertCircle } from "lucide-react";
+import { Settings, Users, ShieldCheck, PlusCircle, UserCheck, User, Loader2, AlertCircle, Workflow } from "lucide-react";
 import { getAppSettings } from "@/services/app-settings-service";
 import { getAllUsers, type User as UserType } from "@/services/user-service";
 import { LeadConfigForm } from "./lead-config-form";
@@ -80,6 +80,24 @@ export default function LeadConfigurationPage() {
                         allPurposes={allPurposes} 
                         disabledPurposes={settings.leadConfiguration?.disabledPurposes || []} 
                     />
+                </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                     <CardTitle className="flex items-center gap-2">
+                        <Workflow />
+                       Lead Status Workflow
+                    </CardTitle>
+                     <CardDescription>
+                        Define the allowed transitions between different lead statuses to create a custom workflow.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="p-8 text-center border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">A simplified lead workflow editor will be available here soon.</p>
+                         <Button variant="secondary" disabled className="mt-4">Coming Soon</Button>
+                    </div>
                 </CardContent>
             </Card>
 
