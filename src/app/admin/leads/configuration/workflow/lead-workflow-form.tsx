@@ -24,6 +24,18 @@ import { Badge } from "@/components/ui/badge";
 
 const allLeadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 
+const statusDescriptions: Record<LeadStatus, string> = {
+    "Pending": "A new lead has been submitted and is awaiting initial review and verification.",
+    "Ready For Help": "The lead has been verified and is ready to be published or receive funding.",
+    "Publish": "The lead is visible to the public on the campaigns page for donations.",
+    "Partial": "The lead has received some funding but has not yet met its total goal.",
+    "Complete": "The lead has been fully funded, but funds are not yet transferred or the case is not formally closed.",
+    "Closed": "The case is fully funded, all actions are complete, and the beneficiary has received the aid.",
+    "On Hold": "The lead is temporarily paused, pending further information or other external factors.",
+    "Cancelled": "The lead has been cancelled and is no longer active."
+};
+
+
 // Create a dynamic schema based on the lead statuses
 const formSchema = z.object(
   allLeadStatuses.reduce((acc, status) => {
@@ -84,9 +96,12 @@ export function LeadWorkflowForm({ settings, onUpdate }: LeadWorkflowFormProps) 
              {allLeadStatuses.map((currentStatus) => (
                 <AccordionItem key={currentStatus} value={currentStatus}>
                     <AccordionTrigger>
-                        <div className="flex items-center gap-4">
-                             <span className="font-semibold text-base">From:</span>
-                             <Badge variant="outline">{currentStatus}</Badge>
+                        <div className="flex-1 text-left">
+                            <div className="flex items-center gap-4">
+                                <span className="font-semibold text-base">From:</span>
+                                <Badge variant="outline">{currentStatus}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-2 pr-4">{statusDescriptions[currentStatus]}</p>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
