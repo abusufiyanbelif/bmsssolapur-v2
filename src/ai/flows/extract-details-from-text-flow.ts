@@ -51,7 +51,9 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The sender's UPI ID is on the line immediately following the sender's name and contains an '@' symbol.
             - The recipient's name is on the first line of the "To:" block.
             - The recipient's UPI ID is on the line immediately following the recipient's name and contains an '@' symbol.
-            
+            - The "UPI transaction ID" should be prioritized for the transactionId field. The "Google transaction ID" is secondary.
+            - The recipient's bank and partial account number might be at the top of the detail card (e.g., "HDFC Bank 5655"). Associate this with the recipient.
+
             **General Fields to Extract:**
             - amount: The primary transaction amount. Must be a number.
             - transactionId: The main Transaction ID or Reference Number. Use the "UPI transaction ID" if present on a GPay receipt.
