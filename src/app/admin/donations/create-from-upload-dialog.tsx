@@ -176,7 +176,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         setOpen(isOpen);
     }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create Donation from Screenshot</DialogTitle>
           <DialogDescription>
@@ -204,11 +204,11 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
             )}
         </div>
         <DialogFooter>
-          <div className="flex w-full justify-between items-center">
-            <Button type="button" variant="secondary" onClick={handleManualEntry}>
+          <div className="flex w-full items-center justify-between gap-4">
+              <Button type="button" variant="secondary" onClick={handleManualEntry}>
                 <Edit className="mr-2 h-4 w-4" />
                 Enter Manually
-            </Button>
+              </Button>
             <div className="flex gap-2">
                 <DialogClose asChild>
                     <Button type="button" variant="outline">
