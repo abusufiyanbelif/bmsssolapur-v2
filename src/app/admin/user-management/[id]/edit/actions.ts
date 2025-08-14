@@ -31,8 +31,8 @@ const getChangedFields = (original: User, updates: Partial<User>) => {
 
         // Handle array of strings like 'roles' or 'upiIds'
         if (Array.isArray(original[typedKey]) && Array.isArray(updates[typedKey])) {
-            const fromStr = (original[typedKey] as any[]).join(', ') || '[]';
-            const toStr = (updates[typedKey] as any[]).join(', ') || '[]';
+            const fromStr = (original[typedKey] as any[]).sort().join(', ') || '[]';
+            const toStr = (updates[typedKey] as any[]).sort().join(', ') || '[]';
             if (fromStr !== toStr) {
                 changes[typedKey] = { from: fromStr, to: toStr };
             }
@@ -71,7 +71,7 @@ type UserUpdatePayload = {
     bankAccountNumber?: string;
     bankIfscCode?: string;
     upiPhone?: string;
-    upiIds?: { value: string }[];
+    upiIds?: string[];
 };
 
 
@@ -136,14 +136,14 @@ export async function handleUpdateUser(
         bankAccountNumber: rawFormData.bankAccountNumber || '',
         bankIfscCode: rawFormData.bankIfscCode || '',
         upiPhone: rawFormData.upiPhone || '',
-        upiIds: rawFormData.upiIds?.map(item => item.value).filter(Boolean) || [],
+        upiIds: rawFormData.upiIds?.filter(Boolean) || [],
     };
     
     const changes = getChangedFields(originalUser, updates);
     
-    await updateUser(userId, updates);
-    
     if (Object.keys(changes).length > 0) {
+        await updateUser(userId, updates);
+        
         await logActivity({
             userId: adminUserId,
             userName: adminUser.name,
@@ -157,6 +157,7 @@ export async function handleUpdateUser(
             }
         });
     }
+
 
     revalidatePath("/admin/user-management");
     revalidatePath(`/admin/user-management/${userId}/edit`);
@@ -202,4 +203,3 @@ export async function handleSetPassword(formData: FormData): Promise<FormState> 
     };
   }
 }
-
