@@ -4,6 +4,7 @@ import './globals.css';
 import { AppShell } from '@/components/app-shell';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter, Space_Grotesk } from 'next/font/google';
+import { cn } from '@/lib/utils';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -28,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} h-full`}>
-      <body className="font-body antialiased h-full bg-background">
+    <html lang="en" className="h-full">
+      <body className={cn("font-body antialiased h-full bg-background", inter.variable, spaceGrotesk.variable)}>
         <AppShell>
           {children}
         </AppShell>
