@@ -54,9 +54,16 @@ const formSchema = z.object({
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
   transactionId: z.string().optional(),
+  paymentApp: z.string().optional(),
   donorUpiId: z.string().optional(),
   donorPhone: z.string().optional(),
   donorBankAccount: z.string().optional(),
+  phonePeSenderName: z.string().optional(),
+  phonePeRecipientName: z.string().optional(),
+  googlePaySenderName: z.string().optional(),
+  googlePayRecipientName: z.string().optional(),
+  paytmSenderName: z.string().optional(),
+  paytmRecipientName: z.string().optional(),
   paymentMethod: z.enum(paymentMethods).optional(),
   paymentScreenshots: z.array(z.instanceof(File)).optional(),
   paymentScreenshotDataUrl: z.string().optional(),
@@ -185,9 +192,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         let finalDonorId = donorIdParam;
         if (currentUser && !isAdminView) {
             finalDonorId = currentUser.id!;
-        }
-
-        if(finalDonorId) {
+            setValue('donorId', currentUser.id!);
+            setSelectedDonor(currentUser);
+        } else if(finalDonorId) {
             const foundUser = await getUser(finalDonorId);
             if (foundUser && foundUser.roles.includes('Donor')) {
                 setValue('donorId', foundUser.id!);
@@ -297,27 +304,27 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     
     const formData = new FormData();
     formData.append("adminUserId", adminUserId);
-    formData.append("donorId", values.donorId!);
-    formData.append("isAnonymous", String(values.isAnonymous));
-    formData.append("amount", String(values.amount));
-    formData.append("donationDate", values.donationDate.toISOString());
-    formData.append("type", values.type);
-    if(values.purpose) formData.append("purpose", values.purpose);
-    if(values.donorUpiId) formData.append("donorUpiId", values.donorUpiId);
-    if(values.donorPhone) formData.append("donorPhone", values.donorPhone);
-    if(values.donorBankAccount) formData.append("donorBankAccount", values.donorBankAccount);
-    if(values.paymentMethod) formData.append("paymentMethod", values.paymentMethod);
-    if(values.transactionId) formData.append("transactionId", values.transactionId);
-    if(values.tipAmount) formData.append("tipAmount", String(values.tipAmount));
-    
-    values.paymentScreenshots?.forEach(file => {
-        formData.append("paymentScreenshots", file);
+    Object.keys(values).forEach(key => {
+        const valueKey = key as keyof AddDonationFormValues;
+        const value = values[valueKey];
+        if (value !== undefined && value !== null) {
+            if (value instanceof Date) {
+                formData.append(key, value.toISOString());
+            } else if (value instanceof File) {
+                formData.append("paymentScreenshots", value);
+            }
+             else if (Array.isArray(value)) {
+                // We handle paymentScreenshots separately. This is for other arrays if any.
+            }
+            else {
+                formData.append(key, String(value));
+            }
+        }
     });
-    
+
     if (values.paymentScreenshotDataUrl) {
         formData.append("paymentScreenshotDataUrl", values.paymentScreenshotDataUrl);
     }
-    if(values.notes) formData.append("notes", values.notes);
     
     const result = await handleAddDonation(formData);
 
@@ -679,6 +686,29 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     )}
                 />
             </div>
+            
+            <h4 className="font-semibold text-lg border-b pb-2">Sender & Recipient Details</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField control={form.control} name="phonePeSenderName" render={({ field }) => (
+                    <FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="phonePeRecipientName" render={({ field }) => (
+                    <FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (
+                    <FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (
+                    <FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField control={form.control} name="paytmSenderName" render={({ field }) => (
+                    <FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="paytmRecipientName" render={({ field }) => (
+                    <FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            </div>
+
             <h4 className="font-semibold text-sm">Donor Contact Details (for reference)</h4>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField

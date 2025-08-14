@@ -104,9 +104,16 @@ export interface Donation {
   paymentScreenshotUrls?: string[];
   transactionId?: string;
   donationDate: Timestamp | Date;
+  paymentApp?: string;
   donorUpiId?: string;
   donorPhone?: string;
   donorBankAccount?: string;
+  phonePeSenderName?: string;
+  phonePeRecipientName?: string;
+  googlePaySenderName?: string;
+  googlePayRecipientName?: string;
+  paytmSenderName?: string;
+  paytmRecipientName?: string;
   paymentMethod?: PaymentMethod;
   createdAt: Timestamp | Date;
   verifiedAt?: Timestamp | Date;
@@ -146,10 +153,16 @@ export interface FundTransfer {
     notes?: string;
     transactionId?: string;
     utrNumber?: string;
-    senderName?: string;
+    senderName?: string; // General sender name
+    phonePeSenderName?: string;
+    googlePaySenderName?: string;
+    paytmSenderName?: string;
     senderAccountNumber?: string;
     senderUpiId?: string;
-    recipientName?: string;
+    recipientName?: string; // General recipient name
+    phonePeRecipientName?: string;
+    googlePayRecipientName?: string;
+    paytmRecipientName?: string;
     recipientPhone?: string;
     recipientUpiId?: string;
     recipientAccountNumber?: string;
