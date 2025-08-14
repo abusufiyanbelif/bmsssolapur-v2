@@ -4,7 +4,7 @@
 /**
  * @fileOverview A Genkit flow for extracting donation details from raw text.
  * 
- * - extractDetailsFromText - A function that performs data extraction from a block of text.
+ * - extractDetailsFromText - a function that performs data extraction from a block of text.
  */
 
 import { ai } from '@/ai/genkit';
