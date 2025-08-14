@@ -1,5 +1,4 @@
-
-
+// src/app/admin/donors/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -27,11 +26,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User, UserRole } from "@/services/types";
-import { handleDeleteUser, handleToggleUserStatus } from "../user-management/actions";
+import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useSearchParams } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -51,6 +51,7 @@ function DonorsPageContent() {
     const isMobile = useIsMobile();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
+    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
 
     // Input states
@@ -109,6 +110,15 @@ function DonorsPageContent() {
             title: "User Deleted",
             description: "The user has been successfully removed.",
         });
+        fetchUsers();
+    }
+    
+    const onBulkUsersDeleted = () => {
+        toast({
+            title: "Users Deleted",
+            description: `${selectedUsers.length} user(s) have been successfully removed.`,
+        });
+        setSelectedUsers([]);
         fetchUsers();
     }
     
@@ -240,7 +250,19 @@ function DonorsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Sr. No.</TableHead>
+                    <TableHead padding="checkbox">
+                        <Checkbox
+                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedDonors.length}
+                            onCheckedChange={(checked) => {
+                                if (checked) {
+                                    setSelectedUsers(paginatedDonors.map(d => d.id!));
+                                } else {
+                                    setSelectedUsers([]);
+                                }
+                            }}
+                            aria-label="Select all"
+                        />
+                    </TableHead>
                     <TableHead>User Key</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
@@ -263,8 +285,18 @@ function DonorsPageContent() {
             </TableHeader>
             <TableBody>
                 {paginatedDonors.map((user, index) => (
-                    <TableRow key={user.id}>
-                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                    <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
+                        <TableCell padding="checkbox">
+                            <Checkbox
+                                checked={selectedUsers.includes(user.id!)}
+                                onCheckedChange={(checked) => {
+                                    setSelectedUsers(prev => 
+                                        checked ? [...prev, user.id!] : prev.filter(id => id !== user.id!)
+                                    );
+                                }}
+                                aria-label="Select row"
+                            />
+                        </TableCell>
                         <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
                         <TableCell className="font-medium">
                             <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
@@ -307,16 +339,27 @@ function DonorsPageContent() {
     const renderMobileCards = () => (
         <div className="space-y-4">
             {paginatedDonors.map((user, index) => (
-                <Card key={user.id}>
+                <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                             <CardTitle className="text-lg flex items-center gap-2">
-                                #{ (currentPage - 1) * itemsPerPage + index + 1 }: 
-                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
-                                    {user.name}
-                                </Link>
-                                 {user.isAnonymousAsDonor && <EyeOff className="h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
-                            </CardTitle>
+                             <div className="flex items-center gap-4">
+                                <Checkbox
+                                    className="mt-1"
+                                    checked={selectedUsers.includes(user.id!)}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedUsers(prev => 
+                                            checked ? [...prev, user.id!] : prev.filter(id => id !== user.id!)
+                                        );
+                                    }}
+                                    aria-label="Select card"
+                                />
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                                        {user.name}
+                                    </Link>
+                                    {user.isAnonymousAsDonor && <EyeOff className="h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
+                                </CardTitle>
+                            </div>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
@@ -359,7 +402,11 @@ function DonorsPageContent() {
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
-                Showing {paginatedDonors.length} of {filteredDonors.length} donors.
+                 {selectedUsers.length > 0 ? (
+                    `${selectedUsers.length} of ${filteredDonors.length} row(s) selected.`
+                ) : (
+                    `Showing ${paginatedDonors.length} of ${filteredDonors.length} donors.`
+                )}
             </div>
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2">
@@ -458,6 +505,24 @@ function DonorsPageContent() {
 
         return (
             <>
+                 {selectedUsers.length > 0 && (
+                    <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm font-medium">
+                            {selectedUsers.length} item(s) selected.
+                        </p>
+                         <DeleteConfirmationDialog
+                            itemType={`${selectedUsers.length} user(s)`}
+                            itemName="the selected items"
+                            onDelete={() => handleBulkDeleteUsers(selectedUsers)}
+                            onSuccess={onBulkUsersDeleted}
+                        >
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected
+                            </Button>
+                        </DeleteConfirmationDialog>
+                    </div>
+                )}
                 {isMobile ? renderMobileCards() : renderDesktopTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>

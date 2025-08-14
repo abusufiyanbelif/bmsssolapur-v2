@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -25,12 +24,13 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteUser, handleToggleUserStatus } from "./actions";
+import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "./actions";
 import type { User, UserRole } from "@/services/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const allRoles: (UserRole | 'all')[] = ["all", "Donor", "Beneficiary", "Admin", "Finance Admin", "Super Admin", "Referral"];
@@ -49,6 +49,7 @@ export default function UserManagementPage() {
     const isMobile = useIsMobile();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
+    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -97,6 +98,15 @@ export default function UserManagementPage() {
             title: "User Deleted",
             description: "The user has been successfully removed.",
         });
+        fetchUsers();
+    }
+    
+    const onBulkUsersDeleted = () => {
+        toast({
+            title: "Users Deleted",
+            description: `${selectedUsers.length} user(s) have been successfully removed.`,
+        });
+        setSelectedUsers([]);
         fetchUsers();
     }
     
@@ -244,7 +254,19 @@ export default function UserManagementPage() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Sr. No.</TableHead>
+                    <TableHead padding="checkbox">
+                        <Checkbox
+                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.length}
+                            onCheckedChange={(checked) => {
+                                if (checked) {
+                                    setSelectedUsers(paginatedUsers.map(u => u.id!));
+                                } else {
+                                    setSelectedUsers([]);
+                                }
+                            }}
+                            aria-label="Select all"
+                        />
+                    </TableHead>
                     <TableHead>User Key</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
@@ -265,8 +287,18 @@ export default function UserManagementPage() {
             </TableHeader>
             <TableBody>
                 {paginatedUsers.map((user, index) => (
-                    <TableRow key={user.id}>
-                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                    <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
+                         <TableCell padding="checkbox">
+                            <Checkbox
+                                checked={selectedUsers.includes(user.id!)}
+                                onCheckedChange={(checked) => {
+                                    setSelectedUsers(prev => 
+                                        checked ? [...prev, user.id!] : prev.filter(id => id !== user.id!)
+                                    );
+                                }}
+                                aria-label="Select row"
+                            />
+                        </TableCell>
                         <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
                         <TableCell className="font-medium">
                             <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
@@ -311,15 +343,26 @@ export default function UserManagementPage() {
     const renderMobileCards = () => (
         <div className="space-y-4">
             {paginatedUsers.map((user, index) => (
-                <Card key={user.id}>
+                <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                #{ (currentPage - 1) * itemsPerPage + index + 1 }: 
-                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
-                                    {user.name}
-                                </Link>
-                            </CardTitle>
+                             <div className="flex items-center gap-4">
+                                <Checkbox
+                                    className="mt-1"
+                                    checked={selectedUsers.includes(user.id!)}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedUsers(prev => 
+                                            checked ? [...prev, user.id!] : prev.filter(id => id !== user.id!)
+                                        );
+                                    }}
+                                    aria-label="Select card"
+                                />
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                                        {user.name}
+                                    </Link>
+                                </CardTitle>
+                            </div>
                             <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
@@ -365,7 +408,11 @@ export default function UserManagementPage() {
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
-                Showing {paginatedUsers.length} of {filteredUsers.length} users.
+                 {selectedUsers.length > 0 ? (
+                    `${selectedUsers.length} of ${filteredUsers.length} row(s) selected.`
+                ) : (
+                    `Showing ${paginatedUsers.length} of ${filteredUsers.length} users.`
+                )}
             </div>
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2">
@@ -463,6 +510,24 @@ export default function UserManagementPage() {
 
         return (
             <>
+                 {selectedUsers.length > 0 && (
+                    <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm font-medium">
+                            {selectedUsers.length} item(s) selected.
+                        </p>
+                         <DeleteConfirmationDialog
+                            itemType={`${selectedUsers.length} user(s)`}
+                            itemName="the selected items"
+                            onDelete={() => handleBulkDeleteUsers(selectedUsers)}
+                            onSuccess={onBulkUsersDeleted}
+                        >
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected
+                            </Button>
+                        </DeleteConfirmationDialog>
+                    </div>
+                )}
                 {isMobile ? renderMobileCards() : renderDesktopTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
