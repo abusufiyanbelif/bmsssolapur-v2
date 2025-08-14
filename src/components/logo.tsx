@@ -10,11 +10,12 @@ export function Logo({ className }: LogoProps) {
   return (
     <div className={cn("relative", className)}>
       <Image
-        src="/logo.png"
+        src="https://placehold.co/100x100.png"
         alt="Baitul Mal Samajik Sanstha (Solapur) Logo"
         fill
         priority
         className="object-contain"
+        data-ai-hint="logo islamic"
       />
     </div>
   );
