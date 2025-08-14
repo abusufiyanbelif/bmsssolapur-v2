@@ -221,19 +221,19 @@ function AddUserFormContent() {
 
 
   useEffect(() => {
-    const donorName = searchParams.get('donorName');
+    const senderName = searchParams.get('senderName') || searchParams.get('googlePaySenderName') || searchParams.get('phonePeSenderName') || searchParams.get('paytmSenderName');
     const donorPhone = searchParams.get('donorPhone');
-    const donorUpiId = searchParams.get('donorUpiId');
-    const bankAccountNumber = searchParams.get('bankAccountNumber');
+    const senderUpiId = searchParams.get('senderUpiId');
+    const bankAccountNumber = searchParams.get('senderAccountNumber');
 
-    if (donorName) {
-        const nameParts = donorName.split(' ');
+    if (senderName) {
+        const nameParts = senderName.split(' ');
         form.setValue('firstName', nameParts[0] || '');
         form.setValue('lastName', nameParts.slice(1).join(' ') || '');
     }
     if(donorPhone) form.setValue('phone', donorPhone);
     if(bankAccountNumber) form.setValue('bankAccountNumber', bankAccountNumber);
-    if(donorUpiId) form.setValue('upiIds', [{value: donorUpiId}]);
+    if(senderUpiId) form.setValue('upiIds', [{value: senderUpiId}]);
     
   }, [searchParams, form]);
 
@@ -336,7 +336,7 @@ function AddUserFormContent() {
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
         
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
                 name="firstName"
@@ -345,19 +345,6 @@ function AddUserFormContent() {
                     <FormLabel>First Name</FormLabel>
                     <FormControl>
                         <Input type="text" placeholder="Enter your first name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="middleName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Middle Name (Optional)</FormLabel>
-                    <FormControl>
-                        <Input type="text" placeholder="Enter your middle name" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -377,7 +364,6 @@ function AddUserFormContent() {
                 )}
             />
         </div>
-
          <FormField
           control={form.control}
           name="userId"
