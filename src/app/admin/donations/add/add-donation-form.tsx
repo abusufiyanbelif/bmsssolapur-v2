@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -38,7 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation } from "./actions";
+import { handleAddDonation, handleExtractTextFromImage } from "./actions";
 import { scanProof } from '@/ai/text-extraction-actions';
 
 
@@ -97,6 +97,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [rawText, setRawText] = useState<string | null>(null);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
@@ -166,6 +168,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       setSelectedDonor(null);
       setManualScreenshotPreview(null);
       setLocalFiles([]);
+      setRawText(null);
   }
   
   useEffect(() => {
@@ -178,6 +181,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         const donorUpiIdParam = searchParams.get('donorUpiId');
         const donorPhoneParam = searchParams.get('donorPhone');
         const donorBankAccountParam = searchParams.get('bankAccountNumber');
+        const rawTextParam = searchParams.get('rawText');
 
         if (amountParam) setValue('amount', parseFloat(amountParam));
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
@@ -186,6 +190,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         if (donorUpiIdParam) setValue('donorUpiId', donorUpiIdParam);
         if (donorPhoneParam) setValue('donorPhone', donorPhoneParam);
         if (donorBankAccountParam) setValue('donorBankAccount', donorBankAccountParam);
+        if (rawTextParam) setRawText(decodeURIComponent(rawTextParam));
         
         // If an admin is viewing, allow the donorId from URL.
         // If a donor is viewing, override with their own ID.
@@ -237,10 +242,29 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   
   const totalAmount = (amount || 0) + (tipAmount || 0);
 
+   const handleExtractText = async () => {
+    if (localFiles.length === 0) {
+      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file first.' });
+      return;
+    }
+    const file = localFiles[0].file;
+    setIsExtractingText(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    const result = await handleExtractTextFromImage(formData);
+    if(result.success && result.text) {
+        setRawText(result.text);
+    } else {
+         toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
+    }
+    setIsExtractingText(false);
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
         const file = files[0];
+        setRawText(null);
         const filePreview = {
             file,
             previewUrl: URL.createObjectURL(file)
@@ -265,6 +289,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                         setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
                     }
                 }
+            }
+            if (scanResult.details.rawText) {
+                setRawText(scanResult.details.rawText);
             }
             toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
 
@@ -415,6 +442,22 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     <p className="text-muted-foreground">Scanning image...</p>
                 </div>
             )}
+            
+            <div className="flex gap-2">
+                 <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={localFiles.length === 0 || isExtractingText}>
+                    {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
+                    Get Raw Text
+                </Button>
+            </div>
+            
+            {rawText && (
+                <div className="space-y-2">
+                    <FormLabel htmlFor="rawTextOutput">Extracted Text</FormLabel>
+                    <Textarea id="rawTextOutput" readOnly value={rawText} rows={10} className="text-xs font-mono" />
+                    <FormDescription>Review the extracted text. You can copy-paste from here to correct any fields above.</FormDescription>
+                </div>
+            )}
+
           </div>
         
            {isAdminView ? (
