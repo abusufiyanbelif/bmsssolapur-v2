@@ -349,7 +349,7 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
     if (error instanceof Error && error.message.includes('index')) {
         console.error("Firestore index missing. Please create a composite index in Firestore on the 'users' collection for 'upiIds' (array-contains).");
     }
-    throw new Error('Failed to get user by UPI ID.');
+    return null; // Return null on index error so app doesn't crash
   }
 }
 
