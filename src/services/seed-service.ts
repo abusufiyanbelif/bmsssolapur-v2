@@ -83,7 +83,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 };
 
 
-// RAMADAN CAMPAIGN DATA
+// RAMADAN 2025 CAMPAIGN DATA
 const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR17", name: "Salim Operation", userId: "salim.operation", firstName: "Salim", lastName: "Operation", email: "salim.op@example.com", phone: "4444444401", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
     ...Array.from({ length: 10 }, (_, i) => ({
@@ -104,7 +104,7 @@ const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
 ];
 
 
-const ramadanCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
+const ramadan2025Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "Ramadan 2025 Zakat Drive",
     description: "A campaign to collect Zakat during Ramadan 2025 to help with critical operations and provide ration kits to families in need.",
     goal: 150000,
@@ -126,6 +126,21 @@ const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     status: 'Active',
     startDate: Timestamp.fromDate(new Date("2024-11-01")),
     endDate: Timestamp.fromDate(new Date("2024-12-31")),
+};
+
+// RAMADAN 2026 CAMPAIGN DATA
+const ramadan2026CampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
+    { userKey: "USR30", name: "Future Ration Family 1", userId: "future.ration.1", firstName: "Future", lastName: "Family 1", email: "future1@example.com", phone: "6666666601", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { userKey: "USR31", name: "Future Ration Family 2", userId: "future.ration.2", firstName: "Future", lastName: "Family 2", email: "future2@example.com", phone: "6666666602", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+];
+
+const ramadan2026Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
+    name: "Ramadan 2026 Zakat Drive",
+    description: "Our upcoming campaign to collect Zakat during Ramadan 2026 for ration kits.",
+    goal: 200000,
+    status: 'Upcoming',
+    startDate: Timestamp.fromDate(new Date("2026-02-18")),
+    endDate: Timestamp.fromDate(new Date("2026-03-20")),
 };
 
 
@@ -362,12 +377,12 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         }
 
 
-        // Seed Ramadan Campaign
+        // Seed Ramadan 2025 Campaign
         const ramadanLeads = [
             { phone: ramadanCampaignUsers[0].phone, amount: 60000, isFunded: true, isLoan: true, purpose: 'Medical', category: 'Surgical Procedure', donationType: 'Zakat', details: 'Assistance for a major operation, as part of Ramadan drive.' },
             ...ramadanCampaignUsers.slice(1).map(u => ({ phone: u.phone, amount: 4000, isFunded: true, isLoan: false, purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat', details: 'Ramadan ration kit for a family in need.' }))
         ];
-        const ramadanResult = await seedCampaignAndData(ramadanCampaign, ramadanCampaignUsers, ramadanLeads);
+        const ramadanResult = await seedCampaignAndData(ramadan2025Campaign, ramadanCampaignUsers, ramadanLeads);
         results.campaignResults.push(...ramadanResult.campaignResults);
         results.leadResults.push(...ramadanResult.leadResults);
         results.donationResults.push(...ramadanResult.donationResults);
@@ -380,6 +395,15 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         const winterResult = await seedCampaignAndData(winterCampaign, winterCampaignUsers, winterLeads);
         results.campaignResults.push(...winterResult.campaignResults);
         results.leadResults.push(...winterResult.leadResults);
+        
+        // Seed Ramadan 2026 Campaign
+        const ramadan2026Leads = [
+            { phone: ramadan2026CampaignUsers[0].phone, amount: 5000, isFunded: false, purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat', details: 'Future ration kit for family 1.' },
+            { phone: ramadan2026CampaignUsers[1].phone, amount: 5000, isFunded: false, purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat', details: 'Future ration kit for family 2.' }
+        ];
+        const ramadan2026Result = await seedCampaignAndData(ramadan2026Campaign, ramadan2026CampaignUsers, ramadan2026Leads);
+        results.campaignResults.push(...ramadan2026Result.campaignResults);
+        results.leadResults.push(...ramadan2026Result.leadResults);
 
     } catch (e: any) {
         console.error("Seeding failed:", e);
@@ -389,3 +413,4 @@ export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Database seeding process completed.');
     return results;
 };
+
