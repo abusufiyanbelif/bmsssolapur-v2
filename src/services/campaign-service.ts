@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Campaign service for interacting with Firestore.
  */
@@ -28,10 +29,10 @@ const CAMPAIGNS_COLLECTION = 'campaigns';
  * @param campaignData - The data for the new campaign.
  * @returns The newly created campaign object.
  */
-export const createCampaign = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<Campaign> => {
+export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 'updatedAt'>): Promise<Campaign> => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    const campaignId = campaignData.name.toLowerCase().replace(/\s+/g, '-');
+    const campaignId = campaignData.id || campaignData.name.toLowerCase().replace(/\s+/g, '-');
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
     
     const newCampaign: Campaign = {

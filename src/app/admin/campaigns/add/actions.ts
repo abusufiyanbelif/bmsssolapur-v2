@@ -1,10 +1,13 @@
 
+
 "use server";
 
 import { createCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
-import { CampaignStatus, DonationType } from "@/services/types";
-import { Timestamp } from "firebase/firestore";
+import { CampaignStatus, DonationType, Lead, Donation } from "@/services/types";
+import { Timestamp, writeBatch } from "firebase/firestore";
+import { db } from "@/services/firebase";
+import { doc } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -19,11 +22,17 @@ interface CampaignFormData {
     endDate: Date;
     status: CampaignStatus;
     acceptableDonationTypes: DonationType[];
+    linkedLeadIds?: string[];
+    linkedDonationIds?: string[];
 }
 
 export async function handleCreateCampaign(formData: CampaignFormData): Promise<FormState> {
   try {
-    await createCampaign({
+    const campaignId = formData.name.toLowerCase().replace(/\s+/g, '-');
+    
+    // Create the campaign first
+    const newCampaign = await createCampaign({
+        id: campaignId,
         name: formData.name,
         description: formData.description,
         goal: formData.goal,
@@ -33,7 +42,32 @@ export async function handleCreateCampaign(formData: CampaignFormData): Promise<
         acceptableDonationTypes: formData.acceptableDonationTypes,
     });
     
+    // If there are linked items, update them in a batch
+    if (formData.linkedLeadIds?.length || formData.linkedDonationIds?.length) {
+        const batch = writeBatch(db);
+        const updatePayload = {
+            campaignId: newCampaign.id,
+            campaignName: newCampaign.name,
+        };
+
+        // Update leads
+        formData.linkedLeadIds?.forEach(leadId => {
+            const leadRef = doc(db, 'leads', leadId);
+            batch.update(leadRef, updatePayload);
+        });
+
+        // Update donations
+        formData.linkedDonationIds?.forEach(donationId => {
+            const donationRef = doc(db, 'donations', donationId);
+            batch.update(donationRef, updatePayload);
+        });
+
+        await batch.commit();
+    }
+    
     revalidatePath("/admin/campaigns");
+    revalidatePath("/admin/leads");
+    revalidatePath("/admin/donations");
 
     return { success: true };
   } catch (e) {

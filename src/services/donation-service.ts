@@ -1,3 +1,4 @@
+
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -303,12 +304,12 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
         });
         return donations;
     } catch (error) {
-        console.error("Error fetching campaign donations:", error);
+        console.error("Error fetching campaign donations: ", error);
         if (error instanceof Error && error.message.includes('index')) {
              console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'campaignId' (ascending) and 'donationDate' (descending).");
-             return []; // Return empty array to prevent crash
+             return [];
         }
-        return []; // Return empty array on other errors
+        return [];
     }
 };
 

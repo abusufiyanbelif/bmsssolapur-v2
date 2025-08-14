@@ -19,16 +19,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Loader2, X } from "lucide-react";
+import { CalendarIcon, Loader2, X, Check, ChevronsUpDown, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { handleCreateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
-import { CampaignStatus, DonationType } from "@/services/campaign-service";
+import { CampaignStatus, DonationType, Lead, Donation } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 
 const campaignStatuses: CampaignStatus[] = ['Upcoming', 'Active', 'Completed', 'Cancelled'];
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
@@ -46,14 +48,23 @@ const formSchema = z.object({
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
+  linkedLeadIds: z.array(z.string()).optional(),
+  linkedDonationIds: z.array(z.string()).optional(),
 });
 
 type CampaignFormValues = z.infer<typeof formSchema>;
 
-export function CampaignForm() {
+interface CampaignFormProps {
+    leads: Lead[];
+    donations: Donation[];
+}
+
+export function CampaignForm({ leads, donations }: CampaignFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const [donationPopoverOpen, setDonationPopoverOpen] = useState(false);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(formSchema),
@@ -63,8 +74,15 @@ export function CampaignForm() {
         goal: 0,
         status: "Upcoming",
         acceptableDonationTypes: [],
+        linkedLeadIds: [],
+        linkedDonationIds: [],
     },
   });
+  
+  const { watch, setValue } = form;
+  const linkedLeadIds = watch('linkedLeadIds') || [];
+  const linkedDonationIds = watch('linkedDonationIds') || [];
+
   
   const handleCancel = () => {
     form.reset({
@@ -74,20 +92,14 @@ export function CampaignForm() {
         status: "Upcoming",
         dates: undefined,
         acceptableDonationTypes: [],
+        linkedLeadIds: [],
+        linkedDonationIds: [],
     });
   }
 
   async function onSubmit(values: CampaignFormValues) {
     setIsSubmitting(true);
-    const result = await handleCreateCampaign({
-      name: values.name,
-      description: values.description,
-      goal: values.goal,
-      startDate: values.dates.from,
-      endDate: values.dates.to,
-      status: values.status,
-      acceptableDonationTypes: values.acceptableDonationTypes as DonationType[],
-    });
+    const result = await handleCreateCampaign(values);
     setIsSubmitting(false);
 
     if (result.success) {
@@ -253,7 +265,7 @@ export function CampaignForm() {
                                 checked={field.value?.includes(type)}
                                 onCheckedChange={(checked) => {
                                     return checked
-                                    ? field.onChange([...field.value, type])
+                                    ? field.onChange([...(field.value || []), type])
                                     : field.onChange(
                                         field.value?.filter(
                                             (value) => value !== type
@@ -275,6 +287,142 @@ export function CampaignForm() {
                 </FormItem>
             )}
         />
+
+        <FormField
+            control={form.control}
+            name="linkedLeadIds"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Link Existing Leads (Optional)</FormLabel>
+                <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn("w-full justify-between", linkedLeadIds.length === 0 && "text-muted-foreground")}
+                        >
+                        {linkedLeadIds.length > 0 ? `${linkedLeadIds.length} lead(s) selected` : "Select leads..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search lead..." />
+                        <CommandList>
+                        <CommandEmpty>No unassigned leads found.</CommandEmpty>
+                        <CommandGroup>
+                            {leads.map((lead) => (
+                            <CommandItem
+                                value={`${lead.name} ${lead.id}`}
+                                key={lead.id}
+                                onSelect={() => {
+                                    const isSelected = linkedLeadIds.includes(lead.id!);
+                                    if (isSelected) {
+                                        setValue('linkedLeadIds', linkedLeadIds.filter(id => id !== lead.id!));
+                                    } else {
+                                        setValue('linkedLeadIds', [...linkedLeadIds, lead.id!]);
+                                    }
+                                }}
+                            >
+                                <Check className={cn("mr-2 h-4 w-4", linkedLeadIds.includes(lead.id!) ? "opacity-100" : "opacity-0")} />
+                                <span>{lead.name} (Req: ₹{lead.helpRequested})</span>
+                            </CommandItem>
+                            ))}
+                        </CommandGroup>
+                        </CommandList>
+                    </Command>
+                    </PopoverContent>
+                </Popover>
+                 {linkedLeadIds.length > 0 && (
+                    <div className="pt-2 flex flex-wrap gap-2">
+                        {linkedLeadIds.map(id => {
+                            const lead = leads.find(l => l.id === id);
+                            return (
+                                <Badge key={id} variant="secondary">
+                                    {lead?.name}
+                                    <button onClick={() => setValue('linkedLeadIds', linkedLeadIds.filter(lid => lid !== id))} className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20">
+                                        <XCircle className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            );
+                        })}
+                    </div>
+                 )}
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+        
+        <FormField
+            control={form.control}
+            name="linkedDonationIds"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Link Existing Donations (Optional)</FormLabel>
+                <Popover open={donationPopoverOpen} onOpenChange={setDonationPopoverOpen}>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn("w-full justify-between", linkedDonationIds.length === 0 && "text-muted-foreground")}
+                        >
+                        {linkedDonationIds.length > 0 ? `${linkedDonationIds.length} donation(s) selected` : "Select donations..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search donation..." />
+                        <CommandList>
+                        <CommandEmpty>No unassigned, verified donations found.</CommandEmpty>
+                        <CommandGroup>
+                            {donations.map((donation) => (
+                            <CommandItem
+                                value={`${donation.donorName} ${donation.id}`}
+                                key={donation.id}
+                                onSelect={() => {
+                                    const isSelected = linkedDonationIds.includes(donation.id!);
+                                    if (isSelected) {
+                                        setValue('linkedDonationIds', linkedDonationIds.filter(id => id !== donation.id!));
+                                    } else {
+                                        setValue('linkedDonationIds', [...linkedDonationIds, donation.id!]);
+                                    }
+                                }}
+                            >
+                                <Check className={cn("mr-2 h-4 w-4", linkedDonationIds.includes(donation.id!) ? "opacity-100" : "opacity-0")} />
+                                <span>{donation.donorName} (₹{donation.amount})</span>
+                            </CommandItem>
+                            ))}
+                        </CommandGroup>
+                        </CommandList>
+                    </Command>
+                    </PopoverContent>
+                </Popover>
+                 {linkedDonationIds.length > 0 && (
+                    <div className="pt-2 flex flex-wrap gap-2">
+                        {linkedDonationIds.map(id => {
+                            const donation = donations.find(d => d.id === id);
+                            return (
+                                <Badge key={id} variant="secondary">
+                                    {donation?.donorName} (₹{donation?.amount})
+                                    <button onClick={() => setValue('linkedDonationIds', linkedDonationIds.filter(lid => lid !== id))} className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20">
+                                        <XCircle className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            );
+                        })}
+                    </div>
+                 )}
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+
+
         <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

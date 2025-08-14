@@ -102,6 +102,7 @@ export interface Donation {
   isAnonymous?: boolean;
   leadId?: string;
   campaignId?: string;
+  campaignName?: string;
   paymentScreenshotUrls?: string[];
   transactionId?: string;
   donationDate: Timestamp | Date;
