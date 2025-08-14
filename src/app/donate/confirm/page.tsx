@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, CheckCircle, HandHeart, CalendarIcon, Info } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { Loader2, CheckCircle, HandHeart, CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { User } from '@/services/types';
+import type { User, DonationType, DonationPurpose } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -48,6 +48,7 @@ const formSchema = z.object({
   purpose: z.enum(donationPurposes).optional(),
   transactionId: z.string().optional(),
   notes: z.string().optional(),
+  rawText: z.string().optional(),
   paymentScreenshotDataUrl: z.string().min(1, "Screenshot data is missing."),
 });
 
@@ -97,6 +98,9 @@ function ConfirmDonationPageContent() {
         const notesParam = searchParams.get('notes');
         if (notesParam) setValue('notes', notesParam);
         
+        const rawTextParam = searchParams.get('rawText');
+        if (rawTextParam) setValue('rawText', rawTextParam);
+        
         // Pre-fill from logged-in user
         if(fetchedUser) setValue('donorName', fetchedUser.name);
 
@@ -105,7 +109,6 @@ function ConfirmDonationPageContent() {
         if (screenshotData) {
             setScreenshotPreview(screenshotData);
             setValue('paymentScreenshotDataUrl', screenshotData);
-            // Don't remove from session storage yet, in case user refreshes
         } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Screenshot data not found. Please try scanning again.'});
             router.push('/donate');
@@ -286,6 +289,20 @@ function ConfirmDonationPageContent() {
                                     <FormControl>
                                         <Textarea placeholder="Add any extra details from the receipt here." {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="rawText"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Raw Extracted Text</FormLabel>
+                                    <FormControl>
+                                        <Textarea className="font-mono text-xs h-32" readOnly {...field} />
+                                    </FormControl>
+                                    <FormDescription>This is the full text extracted from the image for your reference.</FormDescription>
                                     <FormMessage />
                                     </FormItem>
                                 )}

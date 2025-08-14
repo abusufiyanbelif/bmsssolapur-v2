@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -114,6 +112,7 @@ export interface Donation {
   verifiedAt?: Timestamp | Date;
   allocations?: Allocation[];
   notes?: string;
+  rawText?: string;
   source?: 'Seeded' | 'Manual Entry';
 }
 

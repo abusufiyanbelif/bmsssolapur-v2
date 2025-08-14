@@ -2,7 +2,7 @@
 "use server";
 
 import { createDonation, updateDonation } from "@/services/donation-service";
-import type { Donation, DonationPurpose } from "@/services/types";
+import type { Donation, DonationPurpose, DonationType } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { getRawTextFromImage } from "@/ai/text-extraction-actions";
 import { scanProof } from "@/ai/text-extraction-actions";
@@ -87,7 +87,7 @@ export async function handleScanAndPrefill(formData: FormData): Promise<{success
             throw new Error(scanResult.error || "Failed to extract details from screenshot.");
         }
         
-        const res = await fetch(scanResult.details.photoDataUri);
+        const res = await fetch(scanResult.details.photoDataUri!);
         const blob = await res.blob();
         const dataUrl = `data:${blob.type};base64,${Buffer.from(await blob.arrayBuffer()).toString('base64')}`;
 
@@ -127,6 +127,7 @@ export async function handleConfirmDonation(formData: FormData, userId: string):
         paymentMethod: 'Online (UPI/Card)',
         notes: formData.get("notes") as string | undefined,
         paymentScreenshotUrls: [paymentScreenshotUrl],
+        rawText: formData.get("rawText") as string | undefined,
     };
 
     const newDonation = await createDonation(

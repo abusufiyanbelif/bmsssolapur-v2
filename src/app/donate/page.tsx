@@ -31,7 +31,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation, handleScanAndPrefill } from './actions';
-import type { User, Lead } from '@/services/types';
+import type { User, Lead, DonationPurpose } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -348,23 +348,26 @@ function DonatePageContent() {
     const checkAuthAndLoadData = async () => {
       setIsLoading(true);
       const storedUserId = localStorage.getItem('userId');
-      if (!storedUserId) {
-        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
-        router.replace('/login');
-        return;
-      }
       
       try {
-        const fetchedUser = await getUser(storedUserId);
-        
-        // If user is an Admin, redirect them to the admin dashboard instead of showing this page.
-        const isAdmin = fetchedUser?.roles.includes('Admin') || fetchedUser?.roles.includes('Super Admin');
-        if (isAdmin) {
-            router.replace('/admin');
-            return;
+        if (storedUserId) {
+            const fetchedUser = await getUser(storedUserId);
+            
+            const isAdmin = fetchedUser?.roles.includes('Admin') || fetchedUser?.roles.includes('Super Admin');
+            if (isAdmin) {
+                router.replace('/admin');
+                return;
+            }
+            setUser(fetchedUser);
+        } else {
+            // Allow guests to see the form, but they might need to log in to proceed.
+            // If there's a target (leadId/campaignId), we should prompt login.
+            if(leadId || campaignId) {
+                sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+                router.replace('/login');
+                return;
+            }
         }
-
-        setUser(fetchedUser);
 
         if (leadId) {
           const lead = await getLead(leadId);
