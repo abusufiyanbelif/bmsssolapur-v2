@@ -97,13 +97,13 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       let user: User | null = null;
       
       // 1. Primary search with direct extracted fields
-      if (result.details.donorUpiId) user = await getUserByUpiId(result.details.donorUpiId);
+      if (result.details.senderUpiId) user = await getUserByUpiId(result.details.senderUpiId);
       if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
       if (!user && result.details.senderAccountNumber) user = await getUserByBankAccountNumber(result.details.senderAccountNumber);
       
       // 2. Secondary search: Cross-reference phone number and UPI ID
-      if (!user && result.details.donorUpiId) {
-          user = await getUserByPhone(result.details.donorUpiId);
+      if (!user && result.details.senderUpiId) {
+          user = await getUserByPhone(result.details.senderUpiId);
       }
       if (!user && result.details.donorPhone) {
           user = await getUserByUpiId(result.details.donorPhone);
