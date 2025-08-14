@@ -8,8 +8,8 @@ import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp } from 'firebase/firestore';
-import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign } from './types';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
 import { createDonation } from './donation-service';
@@ -31,7 +31,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
         password: "admin", 
         roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], 
         privileges: ["all"], 
-        groups: ["Member of Organization", "Lead Approver"], 
+        groups: ["Member of Organization", "Mandatory Lead Approver"], 
         isActive: true, 
         gender: 'Male', 
         address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, 
@@ -55,7 +55,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR10", name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
     
     // Generic Donors & Beneficiaries
-    { userKey: "USR11", name: "Anonymous Donor", userId: "anonymous.donor", firstName: "Anonymous", middleName: "", lastName: "Donor", email: "anonymous@example.com", phone: "0000000000", password: "admin", roles: ["Donor"], isAnonymousAsDonor: true, privileges: [], groups: [], isActive: true, gender: 'Other', source: 'Seeded' },
+    { userKey: "USR11", name: "Anonymous Donor", userId: "anonymous.donor", firstName: "Anonymous", lastName: "Donor", email: "anonymous@example.com", phone: "0000000000", password: "admin", roles: ["Donor"], isAnonymousAsDonor: true, privileges: [], groups: [], isActive: true, gender: 'Other', source: 'Seeded' },
     { userKey: "USR12", name: "Anonymous Beneficiary", userId: "anonymous.beneficiary", firstName: "Anonymous", lastName: "Beneficiary", email: "anonymous.beneficiary@example.com", phone: "0000000001", password: "admin", roles: ["Beneficiary"], isAnonymousAsBeneficiary: true, isActive: true, gender: 'Other', source: 'Seeded' },
     { userKey: "USR13", name: "AnonymousBoth User", userId: "anonymous.user.both", firstName: "AnonymousBoth", lastName: "User", email: "anonymous.both@example.com", phone: "3333333333", password: "admin", roles: ["Beneficiary", "Donor"], isAnonymousAsBeneficiary: true, isAnonymousAsDonor: true, isActive: true, gender: 'Other', source: 'Seeded' },
     
@@ -279,14 +279,25 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     campaignResults.push({ name: campaignData.name, status: 'Created' });
 
     const verifierAdmin = await getUserByPhone("7887646583");
-    if (!verifierAdmin) throw new Error("Verifier admin (7887646583) not found.");
+    const moosaShaikh = await getUserByPhone("8421708907");
+    if (!verifierAdmin || !moosaShaikh) throw new Error("Required admin users for seeding not found.");
 
-    const verifier: Verifier = {
+    const historicalVerifier: Verifier = {
+        verifierId: moosaShaikh.id!,
+        verifierName: moosaShaikh.name,
+        verifiedAt: Timestamp.now(),
+        notes: "Verified as part of historical data import."
+    };
+    
+     const currentVerifier: Verifier = {
         verifierId: verifierAdmin.id!,
         verifierName: verifierAdmin.name,
         verifiedAt: Timestamp.now(),
         notes: "Verified as part of campaign data import."
     };
+
+    const verifierToUse = campaignData.status === 'Completed' ? historicalVerifier : currentVerifier;
+
 
     const allDonors = (await getAllUsers()).filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
     if (allDonors.length === 0) throw new Error("No donor users found for campaign seeding.");
@@ -313,7 +324,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
             status: leadInfo.isFunded ? 'Closed' : 'Ready For Help',
             isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details,
-            verifiedStatus: 'Verified', verifiers: [verifier],
+            verifiedStatus: 'Verified', verifiers: [verifierToUse],
             dateCreated: Timestamp.now(), adminAddedBy: { id: verifierAdmin.id, name: verifierAdmin.name },
             source: 'Seeded'
         };
@@ -329,8 +340,19 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
                 verifiedAt: Timestamp.fromDate(verifiedDate),
                 campaignId: campaignRef.id, leadId: leadRef.id, source: 'Seeded'
             }, verifierAdmin.id!, verifierAdmin.name, verifierAdmin.email);
+            
+            const newTransfer: FundTransfer = {
+                transferredByUserId: verifierAdmin.id!,
+                transferredByUserName: verifierAdmin.name,
+                amount: leadInfo.amount,
+                transferredAt: Timestamp.now(),
+                proofUrl: 'https://placehold.co/600x400.png?text=seeded-transfer-proof',
+                notes: 'Dummy transfer for seeded closed lead.',
+                transactionId: `SEED_TXN_${leadRef.id}`
+            };
 
             newLead.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
+            newLead.fundTransfers = [newTransfer];
             donationResults.push({ name: `Donation for ${beneficiary.name}`, status: 'Created' });
         }
         
@@ -347,11 +369,14 @@ const seedGeneralLeads = async (adminUser: User): Promise<SeedResult> => {
     const leadResults: SeedItemResult[] = [];
     const donationResults: SeedItemResult[] = [];
     
+    const moosaShaikh = await getUserByPhone("8421708907");
+    if (!moosaShaikh) throw new Error("Moosa Shaikh not found for general lead seeding.");
+    
     const verifier: Verifier = {
-        verifierId: adminUser.id!,
-        verifierName: adminUser.name,
+        verifierId: moosaShaikh.id!,
+        verifierName: moosaShaikh.name,
         verifiedAt: Timestamp.now(),
-        notes: "Verified as part of general data import."
+        notes: "Verified as part of historical data import."
     };
 
     const allDonors = (await getAllUsers()).filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
@@ -376,7 +401,7 @@ const seedGeneralLeads = async (adminUser: User): Promise<SeedResult> => {
             isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details,
             verifiedStatus: 'Verified', verifiers: [verifier],
-            dateCreated: Timestamp.now(), adminAddedBy: { id: adminUser.id, name: adminUser.name },
+            dateCreated: Timestamp.now(), adminAddedBy: { id: adminUser.id!, name: adminUser.name },
             source: 'Seeded'
         };
 
@@ -393,7 +418,18 @@ const seedGeneralLeads = async (adminUser: User): Promise<SeedResult> => {
                 leadId: newLeadData.id!, source: 'Seeded'
             }, adminUser.id!, adminUser.name, adminUser.email);
             
+            const newTransfer: FundTransfer = {
+                transferredByUserId: adminUser.id!,
+                transferredByUserName: adminUser.name,
+                amount: leadInfo.amount,
+                transferredAt: Timestamp.now(),
+                proofUrl: 'https://placehold.co/600x400.png?text=seeded-transfer-proof',
+                notes: 'Dummy transfer for seeded closed lead.',
+                transactionId: `SEED_TXN_${newLeadData.id}`
+            };
+            
             newLeadData.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: adminUser.id, allocatedByUserName: adminUser.name }];
+            newLeadData.fundTransfers = [newTransfer];
             donationResults.push({ name: `General Donation for ${beneficiary.name}`, status: 'Created' });
         }
         
