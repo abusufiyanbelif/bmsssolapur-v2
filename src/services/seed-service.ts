@@ -219,6 +219,11 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             await updateUser(existingUser.id!, userData);
             results.push({ name: userData.name, status: 'Updated' });
         } else {
+            if (!userData.userId) {
+                console.warn(`Skipping user "${userData.name}" due to missing userId.`);
+                results.push({ name: userData.name, status: 'Failed' });
+                continue;
+            }
             await createUser({
                 ...userData,
                 createdAt: Timestamp.now(),
@@ -266,14 +271,15 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     await seedUsers(userData);
 
     // Check if campaign exists
-    const campaignRef = doc(db, 'campaigns', campaignData.name.replace(/\s+/g, '-').toLowerCase());
-    const campaignDoc = await getDoc(campaignRef);
+    const campaignId = campaignData.name.toLowerCase().replace(/\s+/g, '-');
+    const existingCampaign = await getCampaign(campaignId);
 
-    if (campaignDoc.exists()) {
+    if (existingCampaign) {
         campaignResults.push({ name: campaignData.name, status: 'Skipped (already exists)' });
         return { campaignResults, leadResults, donationResults };
     }
 
+    const campaignRef = doc(db, 'campaigns', campaignId);
     const batch = writeBatch(db);
     batch.set(campaignRef, { ...campaignData, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now(), source: 'Seeded' });
     campaignResults.push({ name: campaignData.name, status: 'Created' });

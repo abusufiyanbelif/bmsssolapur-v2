@@ -31,7 +31,9 @@ const CAMPAIGNS_COLLECTION = 'campaigns';
 export const createCampaign = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<Campaign> => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    const campaignRef = doc(collection(db, CAMPAIGNS_COLLECTION));
+    const campaignId = campaignData.name.toLowerCase().replace(/\s+/g, '-');
+    const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
+    
     const newCampaign: Campaign = {
       ...campaignData,
       id: campaignRef.id,
