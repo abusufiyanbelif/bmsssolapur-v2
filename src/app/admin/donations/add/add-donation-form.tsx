@@ -170,7 +170,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       setManualScreenshotPreview(null);
       setLocalFiles([]);
       setRawText(null);
-      router.push('/admin/donations');
+      // Context-aware redirect
+      router.push(isAdminView ? '/admin/donations' : '/donate');
   }
   
   useEffect(() => {
