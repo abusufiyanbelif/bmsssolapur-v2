@@ -228,12 +228,16 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         // Automatically trigger scan
         setIsScanning(true);
         try {
-             const arrayBuffer = await file.arrayBuffer();
+            const arrayBuffer = await file.arrayBuffer();
             const base64 = Buffer.from(arrayBuffer).toString('base64');
             const mimeType = file.type;
             const dataUri = `data:${mimeType};base64,${base64}`;
 
             const scanResult = await extractDonationDetails({ photoDataUri: dataUri });
+            
+            if (!scanResult) {
+                throw new Error("AI scan did not return any data. The image might be unreadable.");
+            }
 
             for (const [key, value] of Object.entries(scanResult)) {
                 if (value !== undefined && value !== null) {
@@ -244,7 +248,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     }
                 }
             }
-             toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
+            toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
 
         } catch(err) {
              const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
