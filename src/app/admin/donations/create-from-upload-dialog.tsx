@@ -96,7 +96,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       // Pass all potential identifiers to the next page
       if(result.details.donorUpiId) queryParams.set('donorUpiId', result.details.donorUpiId);
       if(result.details.donorPhone) queryParams.set('donorPhone', result.details.donorPhone);
-      if(result.details.donorName) queryParams.set('donorName', result.details.donorName);
+      if(result.details.senderName) queryParams.set('donorName', result.details.senderName);
       if(result.details.senderAccountNumber) queryParams.set('bankAccountNumber', result.details.senderAccountNumber);
       
       // --- Enhanced User Matching Logic ---
@@ -107,15 +107,12 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       if (!user && result.details.donorPhone) user = await getUserByPhone(result.details.donorPhone);
       if (!user && result.details.senderAccountNumber) user = await getUserByBankAccountNumber(result.details.senderAccountNumber);
       
-      // 2. Secondary search: Cross-reference phone number if primary search fails
+      // 2. Secondary search: Cross-reference phone number and UPI ID
+      if (!user && result.details.donorUpiId) {
+          user = await getUserByPhone(result.details.donorUpiId);
+      }
       if (!user && result.details.donorPhone) {
-          console.log("Primary user search failed. Trying cross-reference with phone number...");
-          // Check if the phone number is being used as a UPI ID
           user = await getUserByUpiId(result.details.donorPhone);
-          // If still not found, check if it's being used as a bank account number
-          if (!user) {
-              user = await getUserByBankAccountNumber(result.details.donorPhone);
-          }
       }
       // --- End of Enhanced Logic ---
 
