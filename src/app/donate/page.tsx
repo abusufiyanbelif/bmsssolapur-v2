@@ -1,3 +1,4 @@
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -281,7 +282,10 @@ function UploadProofSection({ user }: { user: User | null }) {
         }
         setIsScanning(true);
         
-        const result = await scanProof(file);
+        const formData = new FormData();
+        formData.append("proofFile", file);
+
+        const result = await scanProof(formData);
 
         if (result.success && result.details) {
             const queryParams = new URLSearchParams();

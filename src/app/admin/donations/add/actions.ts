@@ -54,7 +54,7 @@ export async function handleAddDonation(
         return { success: false, error: "Selected donor user not found." };
     }
 
-    const screenshotFiles = formData.getAll("paymentScreenshots") as File[];
+    const screenshotFile = formData.get("paymentScreenshots") as File | null;
     const screenshotDataUrl = formData.get("paymentScreenshotDataUrl") as string | undefined;
 
     let paymentScreenshotUrls: string[] = [];
@@ -62,9 +62,9 @@ export async function handleAddDonation(
         const file = await dataUrlToFile(screenshotDataUrl, 'manual-screenshot.png');
         const url = await handleFileUpload(file);
         paymentScreenshotUrls.push(url);
-    } else if (screenshotFiles && screenshotFiles.length > 0) {
+    } else if (screenshotFile && screenshotFile.size > 0) {
         paymentScreenshotUrls = await Promise.all(
-            screenshotFiles.map(file => handleFileUpload(file))
+            [screenshotFile].map(file => handleFileUpload(file))
         );
     }
     

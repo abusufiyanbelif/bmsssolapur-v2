@@ -79,8 +79,11 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
     }
     
     setIsScanning(true);
+    
+    const formData = new FormData();
+    formData.append("proofFile", file);
 
-    const result = await scanProof(file);
+    const result = await scanProof(formData);
 
     if (result.success && result.details) {
       const queryParams = new URLSearchParams();

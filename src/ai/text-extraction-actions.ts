@@ -12,8 +12,13 @@ import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
-export async function scanProof(proofFile: File): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
+export async function scanProof(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
     let lastError: string = "An unknown error occurred";
+    const proofFile = formData.get("proofFile") as File | null;
+
+    if (!proofFile) {
+        return { success: false, error: "No file was provided for scanning." };
+    }
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {

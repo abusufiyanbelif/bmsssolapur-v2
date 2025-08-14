@@ -68,7 +68,7 @@ const formSchema = z.object({
   recipientUpiId: z.string().optional(),
   recipientAccountNumber: z.string().optional(),
   paymentMethod: z.enum(paymentMethods).optional(),
-  paymentScreenshots: z.array(z.instanceof(File)).optional(),
+  paymentScreenshots: z.any().optional(),
   paymentScreenshotDataUrl: z.string().optional(),
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
@@ -279,7 +279,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         // Automatically trigger scan
         setIsScanning(true);
         try {
-            const scanResult = await scanProof(file);
+            const formData = new FormData();
+            formData.append('proofFile', file);
+            const scanResult = await scanProof(formData);
             
             if (!scanResult || !scanResult.success || !scanResult.details) {
                 throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
@@ -336,13 +338,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         if (value !== undefined && value !== null) {
             if (value instanceof Date) {
                 formData.append(key, value.toISOString());
-            } else if (value instanceof File) {
-                formData.append("paymentScreenshots", value);
-            }
-             else if (Array.isArray(value)) {
-                // We handle paymentScreenshots separately. This is for other arrays if any.
-            }
-            else {
+            } else if (Array.isArray(value)) {
+                if (key === 'paymentScreenshots' && value[0] instanceof File) {
+                    formData.append("paymentScreenshots", value[0]);
+                }
+            } else {
                 formData.append(key, String(value));
             }
         }
