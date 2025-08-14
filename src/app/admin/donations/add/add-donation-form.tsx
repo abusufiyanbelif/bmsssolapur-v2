@@ -26,8 +26,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
-import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon } from "lucide-react";
+import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
 import { useSearchParams } from "next/navigation";
@@ -77,6 +77,7 @@ type AddDonationFormValues = z.infer<typeof formSchema>;
 
 interface AddDonationFormProps {
   users: User[];
+  currentUser?: User | null; // For identifying if an admin is using the form vs. a donor
 }
 
 interface FilePreview {
@@ -90,6 +91,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
@@ -97,11 +99,20 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem('userId');
-    setAdminUserId(storedUserId);
+    const initializeUser = async () => {
+      const storedUserId = localStorage.getItem('userId');
+      setAdminUserId(storedUserId); // This is the user performing the action
+      if (storedUserId) {
+        const user = await getUser(storedUserId);
+        setCurrentUser(user);
+      }
+    };
+    initializeUser();
   }, []);
   
   const donorUsers = users.filter(u => u.roles.includes('Donor'));
+  const isAdminView = currentUser?.roles.some(role => ['Admin', 'Super Admin', 'Finance Admin'].includes(role)) ?? false;
+
 
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(formSchema),
@@ -169,14 +180,19 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         if (donorPhoneParam) setValue('donorPhone', donorPhoneParam);
         if (donorBankAccountParam) setValue('donorBankAccount', donorBankAccountParam);
         
-        let foundUser: User | null = null;
-        if(donorIdParam) {
-            foundUser = await getUser(donorIdParam);
+        // If an admin is viewing, allow the donorId from URL.
+        // If a donor is viewing, override with their own ID.
+        let finalDonorId = donorIdParam;
+        if (currentUser && !isAdminView) {
+            finalDonorId = currentUser.id!;
         }
-            
-        if (foundUser && foundUser.roles.includes('Donor')) {
-            setValue('donorId', foundUser.id!);
-            setSelectedDonor(foundUser);
+
+        if(finalDonorId) {
+            const foundUser = await getUser(finalDonorId);
+            if (foundUser && foundUser.roles.includes('Donor')) {
+                setValue('donorId', foundUser.id!);
+                setSelectedDonor(foundUser);
+            }
         }
         
         const screenshotData = sessionStorage.getItem('manualDonationScreenshot');
@@ -195,7 +211,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     }
     prefillData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, setValue, toast]);
+  }, [searchParams, setValue, toast, currentUser, isAdminView]);
 
   useEffect(() => {
     if (selectedDonor) {
@@ -273,7 +289,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Could not identify the logged in administrator. Please log out and back in.",
+            description: "Could not identify the logged in user. Please log out and back in.",
         });
         return;
     }
@@ -399,69 +415,82 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             )}
           </div>
         
-           <FormField
-              control={form.control}
-              name="donorId"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Donor</FormLabel>
-                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? donorUsers.find(
-                                (user) => user.id === field.value
-                              )?.name
-                            : "Select a donor"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search donor..." />
-                        <CommandList>
-                            <CommandEmpty>No donors found.</CommandEmpty>
-                            <CommandGroup>
-                            {donorUsers.map((user) => (
-                                <CommandItem
-                                value={user.name}
-                                key={user.id}
-                                onSelect={async () => {
-                                    field.onChange(user.id!);
-                                    const donor = await getUser(user.id!);
-                                    setSelectedDonor(donor);
-                                    setPopoverOpen(false);
-                                }}
-                                >
-                                <Check
-                                    className={cn(
-                                    "mr-2 h-4 w-4",
-                                    user.id === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                />
-                                {user.name} ({user.phone})
-                                </CommandItem>
-                            ))}
-                            </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+           {isAdminView ? (
+               <FormField
+                  control={form.control}
+                  name="donorId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Donor</FormLabel>
+                       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? donorUsers.find(
+                                    (user) => user.id === field.value
+                                  )?.name
+                                : "Select a donor"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search donor..." />
+                            <CommandList>
+                                <CommandEmpty>No donors found.</CommandEmpty>
+                                <CommandGroup>
+                                {donorUsers.map((user) => (
+                                    <CommandItem
+                                    value={user.name}
+                                    key={user.id}
+                                    onSelect={async () => {
+                                        field.onChange(user.id!);
+                                        const donor = await getUser(user.id!);
+                                        setSelectedDonor(donor);
+                                        setPopoverOpen(false);
+                                    }}
+                                    >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        user.id === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                    />
+                                    {user.name} ({user.phone})
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+           ) : (
+             currentUser && (
+                <div className="space-y-2">
+                    <FormLabel>Donor</FormLabel>
+                    <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                        <UserIcon className="h-5 w-5 text-muted-foreground" />
+                        <span className="font-medium">{currentUser.name}</span>
+                    </div>
+                     <FormDescription>You are submitting this donation for your own profile.</FormDescription>
+                </div>
+             )
+           )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField

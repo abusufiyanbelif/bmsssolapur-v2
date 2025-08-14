@@ -328,7 +328,7 @@ function UploadProofSection({ user }: { user: User | null }) {
             
             <Button onClick={handleScan} disabled={isScanning || !file} className="w-full">
                 {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                Scan and Review Donation
+                Scan and Confirm Donation
             </Button>
         </div>
     );
@@ -358,19 +358,14 @@ function DonatePageContent() {
         if (storedUserId) {
             const fetchedUser = await getUser(storedUserId);
             
-            const isAdmin = fetchedUser?.roles.includes('Admin') || fetchedUser?.roles.includes('Super Admin');
+            const isAdmin = fetchedUser?.roles.some(role => ['Admin', 'Super Admin', 'Finance Admin'].includes(role));
             if (isAdmin) {
-                router.replace('/admin');
-                return;
-            }
-            setUser(fetchedUser);
-        } else {
-            // Allow guests to see the form, but they might need to log in to proceed.
-            // If there's a target (leadId/campaignId), we should prompt login.
-            if(leadId || campaignId) {
-                sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
-                router.replace('/login');
-                return;
+                // If an admin lands here, just show the form but they cant submit for others.
+                // Or redirect them if this page is strictly for donors.
+                // For now, we'll let them see it but key actions may be disabled if needed.
+                setUser(fetchedUser);
+            } else {
+                 setUser(fetchedUser);
             }
         }
 
