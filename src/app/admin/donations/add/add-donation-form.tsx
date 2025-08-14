@@ -64,6 +64,9 @@ const formSchema = z.object({
   googlePayRecipientName: z.string().optional(),
   paytmSenderName: z.string().optional(),
   paytmRecipientName: z.string().optional(),
+  recipientPhone: z.string().optional(),
+  recipientUpiId: z.string().optional(),
+  recipientAccountNumber: z.string().optional(),
   paymentMethod: z.enum(paymentMethods).optional(),
   paymentScreenshots: z.array(z.instanceof(File)).optional(),
   paymentScreenshotDataUrl: z.string().optional(),
@@ -807,6 +810,19 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     </FormItem>
                 )}
             />
+            
+            <h4 className="font-semibold text-sm">Recipient Contact Details (for reference)</h4>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField control={form.control} name="recipientPhone" render={({ field }) => (
+                    <FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input placeholder="10-digit phone number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
+                    <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            </div>
+             <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
+                <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
           
           <FormField
               control={form.control}

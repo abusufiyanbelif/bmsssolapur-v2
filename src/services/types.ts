@@ -115,6 +115,9 @@ export interface Donation {
   googlePayRecipientName?: string;
   paytmSenderName?: string;
   paytmRecipientName?: string;
+  recipientPhone?: string;
+  recipientUpiId?: string;
+  recipientAccountNumber?: string;
   paymentMethod?: PaymentMethod;
   createdAt: Timestamp | Date;
   verifiedAt?: Timestamp | Date;
