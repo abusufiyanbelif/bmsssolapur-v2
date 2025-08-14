@@ -205,7 +205,7 @@ export interface Campaign {
     startDate: Timestamp | Date;
     endDate: Timestamp | Date;
     status: 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
-    acceptableDonationTypes?: DonationType[];
+    acceptableDonationTypes: DonationType[];
     createdAt: Timestamp | Date;
     updatedAt: Timestamp | Date;
     source?: 'Seeded' | 'Manual Entry';
