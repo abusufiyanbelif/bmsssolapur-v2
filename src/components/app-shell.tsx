@@ -8,7 +8,6 @@ import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
-import { Logo } from "./logo";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -177,7 +176,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-10 w-10" />
              <div className="flex flex-col leading-tight">
                 <span className="font-bold font-headline text-primary">Baitul Mal</span>
                 <span className="font-bold font-headline text-accent">Samajik Sanstha</span>

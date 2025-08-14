@@ -4,7 +4,6 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Donation, User } from '@/services/types';
-import { Logo } from './logo';
 
 interface DonationReceiptProps {
     donation: Donation;
@@ -27,12 +26,10 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
                 <div 
                     className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-5" 
                 >
-                     <Logo className="w-full h-full" />
                 </div>
                 <div className="relative z-10">
                     <header className="flex justify-between items-start pb-4 border-b-2 border-gray-800">
                         <div className="flex items-center gap-4">
-                            <Logo className="h-20 w-20" />
                             <div>
                                 <h1 className="text-3xl font-bold text-gray-800">{organizationDetails.name}</h1>
                                 <p className="text-sm text-gray-600">{organizationDetails.address}</p>
