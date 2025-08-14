@@ -306,7 +306,7 @@ function UploadProofSection({ user }: { user: User | null }) {
                  toast({ variant: 'destructive', title: 'Error preparing screenshot' });
             }
             
-            router.push(`/admin/donations/add?${queryParams.toString()}`);
+            router.push(`/donate/confirm?${queryParams.toString()}`);
 
         } else {
              toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "An unknown error occurred." });
