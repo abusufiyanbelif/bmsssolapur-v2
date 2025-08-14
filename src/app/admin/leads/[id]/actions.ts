@@ -7,8 +7,9 @@ import { revalidatePath } from "next/cache";
 import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
 import { FundTransfer } from "@/services/types";
-import { arrayUnion, increment } from "firebase/firestore";
+import { arrayUnion, increment, writeBatch, doc } from "firebase/firestore";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
+import { db } from "@/services/firebase";
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
 // and get a URL. This function is a placeholder.
@@ -21,6 +22,22 @@ async function handleFileUpload(file: File): Promise<string> {
 export async function handleDeleteLead(leadId: string) {
     try {
         await deleteLead(leadId);
+        revalidatePath("/admin/leads");
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        return { success: false, error };
+    }
+}
+
+export async function handleBulkDeleteLeads(leadIds: string[]) {
+    try {
+        const batch = writeBatch(db);
+        for (const id of leadIds) {
+            const leadDocRef = doc(db, "leads", id);
+            batch.delete(leadDocRef);
+        }
+        await batch.commit();
         revalidatePath("/admin/leads");
         return { success: true };
     } catch (e) {

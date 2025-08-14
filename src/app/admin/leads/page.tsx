@@ -18,7 +18,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, getUser, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -31,6 +31,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { LeadPriority } from "@/services/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { handleBulkDeleteLeads } from "./[id]/actions";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
@@ -105,7 +108,9 @@ function LeadsPageContent() {
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
-    
+    const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
     // Input states
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
@@ -148,6 +153,8 @@ function LeadsPageContent() {
 
     useEffect(() => {
         fetchData();
+        const storedAdminId = localStorage.getItem('userId');
+        setAdminUserId(storedAdminId);
     }, []);
 
     const usersById = useMemo(() => {
@@ -242,6 +249,15 @@ function LeadsPageContent() {
     useEffect(() => {
         setCurrentPage(1);
     }, [itemsPerPage]);
+    
+    const onBulkLeadDeleted = () => {
+        toast({
+            title: "Leads Deleted",
+            description: `${selectedLeads.length} lead(s) have been successfully removed.`,
+        });
+        setSelectedLeads([]);
+        fetchData();
+    }
 
     const renderSortIcon = (column: SortableColumn) => {
         if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
@@ -342,6 +358,19 @@ function LeadsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead padding="checkbox">
+                        <Checkbox
+                            checked={selectedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
+                            onCheckedChange={(checked) => {
+                                if (checked) {
+                                    setSelectedLeads(paginatedLeads.map(d => d.id!));
+                                } else {
+                                    setSelectedLeads([]);
+                                }
+                            }}
+                            aria-label="Select all"
+                        />
+                    </TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
                             Beneficiary {renderSortIcon('name')}
@@ -382,7 +411,18 @@ function LeadsPageContent() {
                     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                     const StatusIcon = statusIcons[lead.status];
                     return (
-                        <TableRow key={lead.id}>
+                        <TableRow key={lead.id} data-state={selectedLeads.includes(lead.id!) ? 'selected' : ''}>
+                             <TableCell padding="checkbox">
+                                <Checkbox
+                                    checked={selectedLeads.includes(lead.id!)}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedLeads(prev => 
+                                            checked ? [...prev, lead.id!] : prev.filter(id => id !== lead.id!)
+                                        );
+                                    }}
+                                    aria-label="Select row"
+                                />
+                            </TableCell>
                             <TableCell>
                                 <div className="font-medium">{lead.name}</div>
                                  <div className="font-mono text-xs text-muted-foreground">{lead.id}</div>
@@ -499,7 +539,11 @@ function LeadsPageContent() {
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
-                Showing {paginatedLeads.length} of {filteredLeads.length} leads.
+                {selectedLeads.length > 0 ? (
+                    `${selectedLeads.length} of ${filteredLeads.length} row(s) selected.`
+                ) : (
+                    `Showing ${paginatedLeads.length} of ${filteredLeads.length} leads.`
+                )}
             </div>
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2">
@@ -597,6 +641,24 @@ function LeadsPageContent() {
 
         return (
             <>
+                 {selectedLeads.length > 0 && (
+                    <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm font-medium">
+                            {selectedLeads.length} item(s) selected.
+                        </p>
+                         <DeleteConfirmationDialog
+                            itemType={`${selectedLeads.length} lead(s)`}
+                            itemName="the selected items"
+                            onDelete={() => handleBulkDeleteLeads(selectedLeads)}
+                            onSuccess={onBulkLeadDeleted}
+                        >
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected
+                            </Button>
+                        </DeleteConfirmationDialog>
+                    </div>
+                )}
                 {isMobile ? renderMobileCards() : renderDesktopTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
@@ -697,5 +759,3 @@ export default function LeadsPage() {
         </Suspense>
     )
 }
-
-    
