@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, Image as ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -95,8 +95,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [rawText, setRawText] = useState<string | null>(null);
-
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -150,7 +148,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       setSelectedDonor(null);
       setManualScreenshotPreview(null);
       setLocalFiles([]);
-      setRawText(null);
   }
   
   useEffect(() => {
@@ -217,43 +214,23 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   
   const totalAmount = (amount || 0) + (tipAmount || 0);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-        const newFilePreviews = Array.from(files).map(file => ({
+    if (files && files.length > 0) {
+        const file = files[0];
+        const filePreview = {
             file,
             previewUrl: URL.createObjectURL(file)
-        }));
-        const allFiles = [...localFiles, ...newFilePreviews];
-        setLocalFiles(allFiles);
-        setValue('paymentScreenshots', allFiles.map(f => f.file));
-        setRawText(null); // Reset raw text when new files are added
-    }
-  };
-
-  const removeFile = (index: number) => {
-    const updatedFiles = localFiles.filter((_, i) => i !== index);
-    setLocalFiles(updatedFiles);
-    setValue('paymentScreenshots', updatedFiles.map(f => f.file));
-    if (updatedFiles.length === 0) {
-        setRawText(null); // Clear raw text if all files are removed
-    }
-  }
-  
-    const handleScanAndFill = async (index: number) => {
-        const filePreview = localFiles[index];
-        if (!filePreview || !filePreview.file.type.startsWith('image/')) {
-            toast({ variant: 'destructive', title: 'Scan Failed', description: 'Please select an image file to scan.' });
-            return;
-        }
-
-        setIsScanning(true);
-        setRawText(null);
+        };
+        setLocalFiles([filePreview]);
+        setValue('paymentScreenshots', [file]);
         
+        // Automatically trigger scan
+        setIsScanning(true);
         try {
-            const arrayBuffer = await filePreview.file.arrayBuffer();
+             const arrayBuffer = await file.arrayBuffer();
             const base64 = Buffer.from(arrayBuffer).toString('base64');
-            const mimeType = filePreview.file.type;
+            const mimeType = file.type;
             const dataUri = `data:${mimeType};base64,${base64}`;
 
             const scanResult = await extractDonationDetails({ photoDataUri: dataUri });
@@ -262,23 +239,30 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 if (value !== undefined && value !== null) {
                     if (key === 'date' && typeof value === 'string') {
                         setValue('donationDate', new Date(value), { shouldValidate: true, shouldDirty: true });
-                    } else {
+                    } else if (key !== 'rawText') { // Don't try to set rawText on the form
                         setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
                     }
                 }
             }
-            if (scanResult.rawText) {
-                setRawText(scanResult.rawText);
-            }
              toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
-        } catch(e) {
-             const error = e instanceof Error ? e.message : "An unknown error occurred during scanning.";
-             toast({ variant: 'destructive', title: 'Scan Failed', description: error });
-        }
-        
-        setIsScanning(false);
-    };
 
+        } catch(err) {
+             const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
+             toast({ variant: 'destructive', title: 'Scan Failed', description: error });
+        } finally {
+            setIsScanning(false);
+        }
+    }
+  };
+
+  const removeFile = (index: number) => {
+    const updatedFiles = localFiles.filter((_, i) => i !== index);
+    setLocalFiles(updatedFiles);
+    setValue('paymentScreenshots', updatedFiles.map(f => f.file));
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  }
 
   async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
@@ -358,18 +342,17 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 name="paymentScreenshots"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Payment Screenshots</FormLabel>
+                        <FormLabel>Payment Screenshot</FormLabel>
                         <FormControl>
                             <Input 
                                 type="file" 
                                 accept="image/*,application/pdf"
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
-                                multiple
                             />
                         </FormControl>
                         <FormDescription>
-                            Upload one or more screenshots of the payment for verification.
+                            Upload a screenshot of the payment. The system will automatically scan it.
                         </FormDescription>
                         <FormMessage />
                     </FormItem>
@@ -402,29 +385,16 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                             </div>
                         ))}
                     </div>
-                    
-                    <Button
-                        type="button"
-                        className="w-full"
-                        variant="outline"
-                        onClick={() => handleScanAndFill(0)}
-                        disabled={isScanning || localFiles.length === 0}
-                    >
-                        {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
-                        Get Transaction Details from Image
-                    </Button>
+                </div>
+            )}
+             {isScanning && (
+                <div className="flex items-center justify-center p-4 border rounded-md bg-muted/50">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <p className="text-muted-foreground">Scanning image...</p>
                 </div>
             )}
           </div>
         
-          {rawText && (
-                <div className="space-y-2">
-                    <FormLabel>Extracted Text</FormLabel>
-                    <Textarea readOnly value={rawText} rows={8} className="text-xs font-mono bg-background" />
-                    <FormDescription>This is the raw text extracted by the AI. You can use it to verify the auto-filled fields.</FormDescription>
-                </div>
-            )}
-
            <FormField
               control={form.control}
               name="donorId"

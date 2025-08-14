@@ -325,24 +325,26 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 
 // Function to get a user by UPI ID
 export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
-  if (!isConfigValid) {
-    console.warn("Firebase not configured. Skipping user fetch by UPI ID.");
-    return null;
-  }
+  if (!isConfigValid || !upiId) return null;
   try {
-    if (!upiId) return null;
-    // Firestore's 'array-contains' is not reliable for this case, especially with potential formatting differences.
-    // A more robust way is to fetch all users and check their arrays.
-    // This is less performant on very large datasets but more reliable for this use case.
-    const allUsers = await getAllUsers();
-    const foundUser = allUsers.find(user => 
-        user.upiIds?.some(id => id.toLowerCase() === upiId.toLowerCase())
-    );
-    
-    return foundUser || null;
-
+    const q = query(collection(db, USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      const data = userDoc.data();
+       return {
+        id: userDoc.id,
+        ...data,
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
+    }
+    return null;
   } catch (error) {
     console.error('Error getting user by UPI ID: ', error);
+     if (error instanceof Error && error.message.includes('index')) {
+        console.error("Firestore index missing. Please create an array-contains index in Firestore on the 'users' collection for 'upiIds'.");
+    }
     return null; // Return null on any error to avoid crashing the app flow
   }
 }

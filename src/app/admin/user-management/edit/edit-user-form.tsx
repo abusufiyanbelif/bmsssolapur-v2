@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateUser, handleSetPassword } from "../edit/actions";
+import { handleUpdateUser, handleSetPassword } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +26,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { User, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +37,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { UserActivityFeed } from "./user-activity-feed";
+import { DeleteUserButton } from "./delete-user-button";
 
 
 const setPasswordSchema = z.object({
@@ -89,7 +90,7 @@ function SetPasswordSection({ userId }: { userId: string }) {
     return (
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" type="button">
+                <Button variant="secondary" type="button">
                     <RefreshCw className="mr-2 h-4 w-4" /> Set New Password
                 </Button>
             </AlertDialogTrigger>
@@ -272,40 +273,13 @@ export function EditUserForm({ user }: EditUserFormProps) {
 
 
   async function onSubmit(values: EditUserFormValues) {
+    if(!currentAdmin?.id) {
+        toast({ variant: "destructive", title: "Error", description: "Admin user not found. Cannot perform update." });
+        return;
+    }
     setIsSubmitting(true);
     
-    const formData = new FormData();
-    if(values.firstName) formData.append("firstName", values.firstName);
-    if(values.middleName) formData.append("middleName", values.middleName);
-    if(values.lastName) formData.append("lastName", values.lastName);
-    formData.append("email", user.email || '');
-    formData.append("phone", values.phone);
-    values.roles.forEach(role => formData.append("roles", role));
-    if(values.isActive) formData.append("isActive", "on");
-    if(values.isAnonymousAsBeneficiary) formData.append("isAnonymousAsBeneficiary", "on");
-    if(values.isAnonymousAsDonor) formData.append("isAnonymousAsDonor", "on");
-    formData.append("gender", values.gender);
-    if(values.beneficiaryType) formData.append("beneficiaryType", values.beneficiaryType);
-    if(values.addressLine1) formData.append("addressLine1", values.addressLine1);
-    if(values.city) formData.append("city", values.city);
-    if(values.state) formData.append("state", values.state);
-    if(values.country) formData.append("country", values.country);
-    if(values.pincode) formData.append("pincode", values.pincode);
-    if(values.occupation) formData.append("occupation", values.occupation);
-    if(values.familyMembers) formData.append("familyMembers", String(values.familyMembers));
-    if(values.isWidow) formData.append("isWidow", "on");
-    if(values.panNumber) formData.append("panNumber", values.panNumber);
-    if(values.aadhaarNumber) formData.append("aadhaarNumber", values.aadhaarNumber);
-    if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
-    if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
-    if(values.bankIfscCode) formData.append("bankIfscCode", values.bankIfscCode);
-    if(values.upiPhone) formData.append("upiPhone", values.upiPhone);
-
-    values.upiIds?.forEach(upi => {
-        if(upi.value) formData.append("upiIds", upi.value);
-    });
-
-    const result = await handleUpdateUser(user.id!, formData);
+    const result = await handleUpdateUser(user.id!, values, currentAdmin.id);
 
     setIsSubmitting(false);
 
@@ -338,17 +312,32 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         <CardTitle>Edit User</CardTitle>
                         <CardDescription>Update the details for {user.name}.</CardDescription>
                     </div>
-                    {!isEditing && (
-                        <Button onClick={() => setIsEditing(true)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                        </Button>
-                    )}
+                    <div className="flex gap-2">
+                        {!isEditing ? (
+                            <Button onClick={() => setIsEditing(true)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Profile
+                            </Button>
+                        ) : (
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                                    <X className="mr-2 h-4 w-4" />
+                                    Cancel
+                                </Button>
+                                <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    Save Changes
+                                </Button>
+                            </div>
+                        )}
+                        <DeleteUserButton userId={user.id!} userName={user.name} />
+                         <SetPasswordSection userId={user.id!} />
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+                <form className="space-y-8 max-w-2xl">
                     <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
                      <FormField
                         control={form.control}
@@ -756,61 +745,49 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     )}
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
-                     <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
-                            control={form.control}
-                            name="bankAccountName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Full Name as per Bank Account</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={!isEditing} placeholder="Enter full name on bank account" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                        control={form.control}
+                        name="panNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>PAN Number (Optional)</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter PAN number" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                         />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <FormField
-                            control={form.control}
-                            name="bankAccountNumber"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Bank Account Number</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={!isEditing} placeholder="Enter account number" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                            <FormField
-                            control={form.control}
-                            name="bankIfscCode"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>IFSC Code</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={!isEditing} placeholder="Enter IFSC code" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                        </div>
-                         <FormField
-                            control={form.control}
-                            name="upiPhone"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UPI Phone Number</FormLabel>
-                                    <FormControl>
-                                        <Input type="tel" maxLength={10} {...field} disabled={!isEditing} placeholder="10-digit UPI linked phone" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                        <FormField
+                        control={form.control}
+                        name="aadhaarNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Aadhaar Number (Optional)</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter Aadhaar number" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                         />
+                    </div>
+                     <FormField
+                        control={form.control}
+                        name="bankAccountNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Bank Account Number (Optional)</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter bank account number" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    
+                    <div className="space-y-4">
                         <FormLabel>UPI IDs</FormLabel>
                         <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
                         {fields.map((field, index) => (
@@ -847,34 +824,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             </Button>
                         )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField
-                        control={form.control}
-                        name="panNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>PAN Number (Optional)</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter PAN number" {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="aadhaarNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Aadhaar Number (Optional)</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter Aadhaar number" {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    </div>
 
                     <FormField
                     control={form.control}
@@ -900,26 +849,16 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     )}
                     />
                     
-                    {isEditing && (
-                        <div className="flex gap-4">
-                             <Button type="submit" disabled={isSubmitting || !isDirty}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Save Changes
-                            </Button>
-                             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                                <X className="mr-2 h-4 w-4" />
-                                Cancel
-                            </Button>
-                        </div>
-                    )}
                 </form>
                 </Form>
             </CardContent>
         </Card>
         
-        <div className="mt-6">
-            <SetPasswordSection userId={user.id!} />
-        </div>
+        {currentAdmin?.roles.includes("Super Admin") && (
+            <div className="mt-6">
+                <UserActivityFeed userId={user.id!} />
+            </div>
+        )}
     </>
   );
 }
