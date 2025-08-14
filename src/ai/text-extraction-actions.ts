@@ -34,7 +34,7 @@ export async function scanProof(proofFile: File): Promise<{success: boolean, det
 
             // If it's a 503 error, wait and retry. Otherwise, fail immediately.
             if (lastError.includes('503 Service Unavailable') && attempt < MAX_RETRIES) {
-                console.log(`Service unavailable, retrying in ${RETRY_DELAY_MS / 1000}s...`);
+                console.log(`Service unavailable, retrying in ${RETRY_DELAY_MS * attempt / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * attempt)); // Exponential backoff
             } else {
                 // For non-503 errors or if it's the last retry, break the loop and return the error.
