@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -18,7 +19,30 @@ const USERS_COLLECTION = 'users';
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
     { userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], groups: ["Founder"], isActive: true, gender: 'Other', source: 'Seeded' },
-    { userKey: "USR02", name: "Abusufiyan Belif", userId: "abusufiyan.belif", firstName: "Abusufiyan", middleName: "", lastName: "Belif", email: "abusufiyan.belif@gmail.com", phone: "7887646583", password: "admin", roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], privileges: ["all"], groups: ["Member of Organization", "Lead Approver"], isActive: true, gender: 'Male', address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, panNumber: 'ABCDE1234F', aadhaarNumber: '123456789012', source: 'Seeded' },
+    { 
+        userKey: "USR02", 
+        name: "Abusufiyan Belif", 
+        userId: "abusufiyan.belif", 
+        firstName: "Abusufiyan", 
+        middleName: "", 
+        lastName: "Belif", 
+        email: "abusufiyan.belif@gmail.com", 
+        phone: "7887646583", 
+        password: "admin", 
+        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], 
+        privileges: ["all"], 
+        groups: ["Member of Organization", "Lead Approver"], 
+        isActive: true, 
+        gender: 'Male', 
+        address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, 
+        panNumber: 'ABCDE1234F', 
+        aadhaarNumber: '123456789012',
+        bankAccountName: 'Abusufiyan Belif',
+        bankAccountNumber: '1234567890123456',
+        bankIfscCode: 'ICIC0001234',
+        upiIds: ['abusufiyan.belief5@okicici'],
+        source: 'Seeded' 
+    },
     
     // Admins (Founders and Members)
     { userKey: "USR03", name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
@@ -322,7 +346,7 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         console.log("Seeding core admin users...");
         results.userResults.push(...await seedUsers(adminUsersToSeed));
         
-        const superAdmin = await getUserByPhone("9999999999");
+        const superAdmin = await getUserByUserId("admin");
         if (!superAdmin) throw new Error("Super admin user not found after seeding.");
 
         results.donationResults.push(await seedTestDonation(superAdmin));
