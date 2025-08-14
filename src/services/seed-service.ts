@@ -66,7 +66,25 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR15", name: "Beneficiary User", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
     
     // New test beneficiary
-    { userKey: "USR16", name: "Test Ready Beneficiary", userId: "test.ready.beneficiary", firstName: "TestReady", lastName: "Beneficiary", email: "test.ready@example.com", phone: "9876543210", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Adult', source: 'Seeded' }
+    { userKey: "USR16", name: "Test Ready Beneficiary", userId: "test.ready.beneficiary", firstName: "TestReady", lastName: "Beneficiary", email: "test.ready@example.com", phone: "9876543210", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Adult', source: 'Seeded' },
+    
+    // Dummy Referral User
+    { 
+        userKey: "USR32",
+        name: "Referral User", 
+        userId: "referral.user", 
+        firstName: "Referral", 
+        lastName: "User", 
+        email: "referral@example.com", 
+        phone: "7777777777", 
+        password: "admin", 
+        roles: ["Referral"], 
+        privileges: [], 
+        groups: [], 
+        isActive: true, 
+        gender: 'Other', 
+        source: 'Seeded' 
+    }
 ];
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
