@@ -101,6 +101,24 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 };
 
 
+// --- HISTORICAL/GENERAL LEADS ---
+const generalBeneficiaryUsers: Omit<User, 'id' | 'createdAt'>[] = [
+    { userKey: "USR101", name: "Aisha Begum", userId: "aisha.begum", firstName: "Aisha", lastName: "Begum", email: "aisha.b@example.com", phone: "9876543211", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Widow', isWidow: true, source: 'Seeded' },
+    { userKey: "USR102", name: "Ibrahim Khan", userId: "ibrahim.khan", firstName: "Ibrahim", lastName: "Khan", email: "ibrahim.k@example.com", phone: "9876543212", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
+    { userKey: "USR103", name: "Fatima Syed", userId: "fatima.syed", firstName: "Fatima", lastName: "Syed", email: "fatima.s@example.com", phone: "9876543213", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Kid', source: 'Seeded' },
+    { userKey: "USR104", name: "Yusuf Ahmed", userId: "yusuf.ahmed", firstName: "Yusuf", lastName: "Ahmed", email: "yusuf.a@example.com", phone: "9876543214", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Old Age', source: 'Seeded' },
+    { userKey: "USR105", name: "Zainab Family", userId: "zainab.family", firstName: "Zainab", lastName: "Family", email: "zainab.f@example.com", phone: "9876543215", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Family', source: 'Seeded' },
+];
+
+const generalLeadsData = [
+    { phone: "9876543211", amount: 15000, isFunded: true, purpose: 'Medical', category: 'Hospital Bill', donationType: 'Sadaqah', details: 'Assistance for emergency medical bill for a widow.' },
+    { phone: "9876543212", amount: 20000, isFunded: true, purpose: 'Loan', category: 'Business Loan', donationType: 'Lillah', isLoan: true, details: 'Small loan to start a fruit cart business.' },
+    { phone: "9876543213", amount: 8000, isFunded: true, purpose: 'Education', category: 'School Fees', donationType: 'Sadaqah', details: 'Support for annual school fees for a young student.' },
+    { phone: "9876543214", amount: 3000, isFunded: true, purpose: 'Relief Fund', category: 'Medication', donationType: 'Lillah', details: 'Monthly medication support for an elderly individual.' },
+    { phone: "9876543215", amount: 5000, isFunded: false, purpose: 'Relief Fund', category: 'Utility Bill Payment', donationType: 'Sadaqah', details: 'Help to pay pending electricity bills to avoid disconnection.' },
+];
+
+
 // RAMADAN 2025 CAMPAIGN DATA
 const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR17", name: "Salim Operation", userId: "salim.operation", firstName: "Salim", lastName: "Operation", email: "salim.op@example.com", phone: "4444444401", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
@@ -324,6 +342,68 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     return { campaignResults, leadResults, donationResults };
 }
 
+const seedGeneralLeads = async (adminUser: User): Promise<SeedResult> => {
+    const userResults = await seedUsers(generalBeneficiaryUsers);
+    const leadResults: SeedItemResult[] = [];
+    const donationResults: SeedItemResult[] = [];
+    
+    const verifier: Verifier = {
+        verifierId: adminUser.id!,
+        verifierName: adminUser.name,
+        verifiedAt: Timestamp.now(),
+        notes: "Verified as part of general data import."
+    };
+
+    const allDonors = (await getAllUsers()).filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
+    if (allDonors.length === 0) throw new Error("No donor users found for general lead seeding.");
+    
+    for (const leadInfo of generalLeadsData) {
+        const beneficiary = await getUserByPhone(leadInfo.phone);
+        if (!beneficiary) continue;
+
+        const leadId = `GEN_${beneficiary.userKey}_${Date.now()}`;
+        const existingLead = await getLead(leadId);
+        if (existingLead) {
+            leadResults.push({ name: `General Lead for ${beneficiary.name}`, status: 'Skipped (already exists)' });
+            continue;
+        }
+
+        const newLeadData: Partial<Lead> = {
+            id: leadId, name: beneficiary.name, beneficiaryId: beneficiary.id!,
+            purpose: leadInfo.purpose as any, category: leadInfo.category, donationType: leadInfo.donationType as any,
+            helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
+            status: leadInfo.isFunded ? 'Closed' : 'Ready For Help',
+            isLoan: leadInfo.isLoan || false,
+            caseDetails: leadInfo.details,
+            verifiedStatus: 'Verified', verifiers: [verifier],
+            dateCreated: Timestamp.now(), adminAddedBy: { id: adminUser.id, name: adminUser.name },
+            source: 'Seeded'
+        };
+
+        if (leadInfo.isFunded) {
+             const randomDonor = allDonors[Math.floor(Math.random() * allDonors.length)];
+             const randomDonationDate = getRandomDate(new Date('2021-01-01'), new Date('2025-12-31'));
+             const verifiedDate = new Date(randomDonationDate.getTime() + 86400000); // 1 day later
+            
+             const newDonation = await createDonation({
+                donorId: randomDonor.id!, donorName: randomDonor.name, amount: leadInfo.amount,
+                type: leadInfo.donationType as any, purpose: leadInfo.purpose as any, status: 'Allocated', isAnonymous: false,
+                donationDate: Timestamp.fromDate(randomDonationDate), 
+                verifiedAt: Timestamp.fromDate(verifiedDate),
+                leadId: newLeadData.id!, source: 'Seeded'
+            }, adminUser.id!, adminUser.name, adminUser.email);
+            
+            newLeadData.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: adminUser.id, allocatedByUserName: adminUser.name }];
+            donationResults.push({ name: `General Donation for ${beneficiary.name}`, status: 'Created' });
+        }
+        
+        await createLead(newLeadData, {id: adminUser.id!, name: adminUser.name});
+        leadResults.push({ name: `General Lead for ${beneficiary.name}`, status: 'Created' });
+    }
+
+    return { userResults, leadResults, donationResults, campaignResults: [], orgStatus: '', quotesStatus: '' };
+};
+
 const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
     const donor = await getUserByUserId("donor.user");
     if (!donor || !donor.id) {
@@ -386,10 +466,17 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         results.quotesStatus = await seedInitialQuotes();
         
         // Check if historical leads exist before trying to create them.
-        const historicalCheckQuery = query(collection(db, 'leads'), where('source', '==', 'Seeded'), where('campaignId', '==', undefined), limit(1));
+        const historicalCheckQuery = query(collection(db, 'leads'), where('source', '==', 'Seeded'), limit(1));
         const historicalSnapshot = await getDocs(historicalCheckQuery);
+        
         if (historicalSnapshot.empty) {
-             console.log("No historical leads found. Seeding is disabled to prevent duplicates.");
+            console.log("Seeding general historical leads...");
+            const generalResult = await seedGeneralLeads(superAdmin);
+            results.userResults.push(...generalResult.userResults);
+            results.leadResults.push(...generalResult.leadResults);
+            results.donationResults.push(...generalResult.donationResults);
+        } else {
+             console.log("Historical leads found. Seeding is disabled to prevent duplicates.");
         }
 
 
