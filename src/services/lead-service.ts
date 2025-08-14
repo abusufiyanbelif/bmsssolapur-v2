@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -58,6 +59,8 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
       beneficiaryId: leadData.beneficiaryId!,
       campaignId: leadData.campaignId || undefined,
       campaignName: leadData.campaignName || undefined,
+      headline: leadData.headline,
+      story: leadData.story,
       purpose: leadData.purpose!,
       otherPurposeDetail: leadData.otherPurposeDetail || undefined,
       donationType: leadData.donationType!,

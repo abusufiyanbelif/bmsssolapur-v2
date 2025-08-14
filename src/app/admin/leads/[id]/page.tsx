@@ -122,6 +122,18 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             </CardDescription>
                         </CardHeader>
                          <CardContent className="space-y-4">
+                            {lead.headline && (
+                                <blockquote className="mt-2 border-l-2 pl-6 italic">
+                                    "{lead.headline}"
+                                </blockquote>
+                            )}
+                             {lead.story && (
+                                <div>
+                                    <Label>Story</Label>
+                                    <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{lead.story}</p>
+                                </div>
+                            )}
+
                             <div className="flex flex-wrap gap-4 text-sm">
                                 <div className="flex items-center">
                                     <span className="text-muted-foreground mr-2">Case Status:</span> 
@@ -181,7 +193,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             )}
                             
                             <div>
-                                <Label>Case Details</Label>
+                                <Label>Internal Case Summary</Label>
                                 <p className="text-sm text-muted-foreground mt-1">{lead.caseDetails || "No details provided."}</p>
                             </div>
                              {lead.acceptableDonationTypes && lead.acceptableDonationTypes.length > 0 && (

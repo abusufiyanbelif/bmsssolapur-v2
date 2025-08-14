@@ -164,6 +164,8 @@ export interface Lead {
     beneficiaryId: string;
     campaignId?: string;
     campaignName?: string;
+    headline?: string;
+    story?: string;
     purpose: LeadPurpose;
     otherPurposeDetail?: string;
     donationType: DonationType;

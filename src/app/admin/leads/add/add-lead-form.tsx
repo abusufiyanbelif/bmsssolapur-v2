@@ -80,6 +80,8 @@ const formSchema = z.object({
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
   referredByUserName: z.string().optional(),
+  headline: z.string().min(10, "Headline must be at least 10 characters.").max(100, "Headline cannot exceed 100 characters."),
+  story: z.string().optional(),
   purpose: z.enum(allLeadPurposes),
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
@@ -182,6 +184,8 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
         newBeneficiaryPhone: '',
         newBeneficiaryEmail: '',
         beneficiaryId: '',
+        headline: '',
+        story: '',
         caseDetails: '',
         category: '',
         otherCategoryDetail: '',
@@ -243,6 +247,8 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
         formData.append("referredByUserId", values.referredByUserId);
         formData.append("referredByUserName", values.referredByUserName || '');
     }
+    if(values.headline) formData.append("headline", values.headline);
+    if(values.story) formData.append("story", values.story);
     formData.append("purpose", values.purpose);
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
@@ -596,6 +602,40 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
             )}
             />
             
+            <FormField
+                control={form.control}
+                name="headline"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Headline Summary</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Urgent help needed for final year student's fees" {...field} />
+                    </FormControl>
+                     <FormDescription>A short, compelling summary of the case for public display.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+             <FormField
+                control={form.control}
+                name="story"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Story</FormLabel>
+                    <FormControl>
+                        <Textarea
+                            placeholder="Tell the full story of the beneficiary and their situation. This will be shown on the public case page."
+                            className="resize-y min-h-[150px]"
+                            {...field}
+                        />
+                    </FormControl>
+                    <FormDescription>A detailed narrative for public display.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
@@ -854,7 +894,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
                 name="caseDetails"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Case Details</FormLabel>
+                    <FormLabel>Internal Case Summary</FormLabel>
                     <FormControl>
                         <Textarea
                             placeholder="Provide a brief summary of the case, the reason for the need, and any other relevant information."
@@ -862,6 +902,7 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
                             {...field}
                         />
                     </FormControl>
+                     <FormDescription>Internal notes for administrators. Not visible to the public.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -927,39 +968,38 @@ export function AddLeadForm({ users, campaigns, disabledPurposes }: AddLeadFormP
                 </Button>
             </div>
             </form>
-            </Form>
-            <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                            <AlertTriangle className="h-6 w-6 text-amber-500" />
-                            Duplicate Lead Warning
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This beneficiary already has {duplicateWarning?.length} open lead(s). Are you sure you want to create another one?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="max-h-60 overflow-y-auto space-y-2 p-2 rounded-md bg-muted">
-                        {duplicateWarning?.map(lead => (
-                            <div key={lead.id} className="text-sm p-2 border bg-background rounded-md">
-                                <p><strong>Purpose:</strong> {lead.purpose}</p>
-                                <p><strong>Amount Requested:</strong> ₹{lead.helpRequested.toLocaleString()}</p>
-                                <p><strong>Status:</strong> {lead.status}</p>
-                            </div>
-                        ))}
-                    </div>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => {
-                            setDuplicateWarning(null);
-                            onSubmit(form.getValues(), true);
-                        }}>
-                            Yes, Create Anyway
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
-      );
-    }
-    
+        </Form>
+        <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-6 w-6 text-amber-500" />
+                        Duplicate Lead Warning
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This beneficiary already has {duplicateWarning?.length} open lead(s). Are you sure you want to create another one?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="max-h-60 overflow-y-auto space-y-2 p-2 rounded-md bg-muted">
+                    {duplicateWarning?.map(lead => (
+                        <div key={lead.id} className="text-sm p-2 border bg-background rounded-md">
+                            <p><strong>Purpose:</strong> {lead.purpose}</p>
+                            <p><strong>Amount Requested:</strong> ₹{lead.helpRequested.toLocaleString()}</p>
+                            <p><strong>Status:</strong> {lead.status}</p>
+                        </div>
+                    ))}
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => {
+                        setDuplicateWarning(null);
+                        onSubmit(form.getValues(), true);
+                    }}>
+                        Yes, Create Anyway
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
+  );
+}

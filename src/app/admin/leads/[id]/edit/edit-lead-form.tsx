@@ -65,6 +65,8 @@ const formSchema = z.object({
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
   referredByUserName: z.string().optional(),
+  headline: z.string().min(10, "Headline must be at least 10 characters.").max(100, "Headline cannot exceed 100 characters.").optional().or(z.literal('')),
+  story: z.string().optional(),
   purpose: z.enum(leadPurposes),
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
@@ -137,6 +139,8 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       campaignName: lead.campaignName || '',
       referredByUserId: lead.referredByUserId || '',
       referredByUserName: lead.referredByUserName || '',
+      headline: lead.headline || '',
+      story: lead.story || '',
       purpose: lead.purpose,
       otherPurposeDetail: lead.otherPurposeDetail || '',
       category: lead.category || '',
@@ -163,6 +167,8 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         campaignName: lead.campaignName || '',
         referredByUserId: lead.referredByUserId || '',
         referredByUserName: lead.referredByUserName || '',
+        headline: lead.headline || '',
+        story: lead.story || '',
         purpose: lead.purpose,
         otherPurposeDetail: lead.otherPurposeDetail || '',
         category: lead.category || '',
@@ -214,6 +220,8 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         formData.append("referredByUserId", "");
         formData.append("referredByUserName", "");
     }
+    if(values.headline) formData.append("headline", values.headline);
+    if(values.story) formData.append("story", values.story);
     formData.append("purpose", values.purpose);
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
     formData.append("category", values.category);
@@ -417,6 +425,41 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                    control={form.control}
+                    name="headline"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Headline Summary</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Urgent help needed for final year student's fees" {...field} disabled={!isEditing} />
+                        </FormControl>
+                        <FormDescription>A short, compelling summary of the case for public display.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+
+                <FormField
+                    control={form.control}
+                    name="story"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Story</FormLabel>
+                        <FormControl>
+                            <Textarea
+                                placeholder="Tell the full story of the beneficiary and their situation. This will be shown on the public case page."
+                                className="resize-y min-h-[150px]"
+                                {...field}
+                                disabled={!isEditing}
+                            />
+                        </FormControl>
+                        <FormDescription>A detailed narrative for public display.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <FormField
@@ -651,10 +694,11 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                 name="caseDetails"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Case Details</FormLabel>
+                    <FormLabel>Internal Case Summary</FormLabel>
                     <FormControl>
                         <Textarea placeholder="Provide a brief summary of the case..." {...field} disabled={!isEditing} />
                     </FormControl>
+                     <FormDescription>Internal notes for administrators. Not visible to the public.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}

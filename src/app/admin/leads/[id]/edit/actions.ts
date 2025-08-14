@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
@@ -83,6 +84,8 @@ export async function handleUpdateLead(
     const updates: Partial<Lead> = {
         campaignId: campaignId,
         campaignName: campaignName,
+        headline: rawFormData.headline as string | undefined,
+        story: rawFormData.story as string | undefined,
         purpose: purpose,
         otherPurposeDetail: rawFormData.otherPurposeDetail as string | undefined,
         donationType: purposeCategoryMap[purpose], // Infer category from purpose
