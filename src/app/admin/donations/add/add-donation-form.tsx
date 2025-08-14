@@ -30,7 +30,7 @@ import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDow
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -95,6 +95,7 @@ interface FilePreview {
 function AddDonationFormContent({ users }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);
@@ -169,6 +170,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       setManualScreenshotPreview(null);
       setLocalFiles([]);
       setRawText(null);
+      router.push('/admin/donations');
   }
   
   useEffect(() => {
