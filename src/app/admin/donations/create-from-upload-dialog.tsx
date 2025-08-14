@@ -12,12 +12,22 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Upload, ScanEye, Edit, X } from "lucide-react";
+import { Loader2, Upload, ScanEye, Edit, X, UserPlus, AlertTriangle } from "lucide-react";
 import { handleScanDonationProof } from "./actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -46,6 +56,8 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
+  const [newUserParams, setNewUserParams] = useState<URLSearchParams | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -72,8 +84,6 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
     formData.append("paymentScreenshot", file);
     
     const result = await handleScanDonationProof(formData);
-    
-    setIsScanning(false);
 
     if (result.success && result.details) {
       const queryParams = new URLSearchParams();
@@ -109,26 +119,20 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       }
       // --- End of Enhanced Logic ---
 
-      const destination = user ? '/admin/donations/add' : '/admin/user-management/add';
       if(user) {
           queryParams.set('donorId', user.id!);
           toast({ title: "Donor Found!", description: `Found existing user: ${user.name}. Redirecting to donation form.` });
+           try {
+                const dataUrl = await fileToDataUrl(file);
+                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+                handleDialogClose();
+                router.push(`/admin/donations/add?${queryParams.toString()}`);
+            } catch (e) {
+                toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
+            }
       } else {
-          toast({
-            variant: "success",
-            title: "Scan Successful",
-            description: "No existing donor found. Redirecting to create a new user profile...",
-          });
-      }
-
-      // Store screenshot in session to be picked up by the add form
-      try {
-        const dataUrl = await fileToDataUrl(file);
-        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
-        handleDialogClose();
-        router.push(`${destination}?${queryParams.toString()}`);
-      } catch (e) {
-         toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
+          setNewUserParams(queryParams);
+          setShowCreateUserDialog(true);
       }
     } else {
       toast({
@@ -136,6 +140,19 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         title: "Scan Failed",
         description: result.error || "Could not extract details from the image.",
       });
+    }
+     setIsScanning(false);
+  };
+  
+  const proceedToCreateUser = async () => {
+    if (!newUserParams || !file) return;
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+      handleDialogClose();
+      router.push(`/admin/user-management/add?${newUserParams.toString()}`);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
     }
   };
   
@@ -165,10 +182,13 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
   const handleDialogClose = () => {
     setFile(null);
     setPreviewUrl(null);
+    setNewUserParams(null);
+    setShowCreateUserDialog(false);
     setOpen(false);
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(isOpen) => {
         if (!isOpen) {
             handleDialogClose(); // Reset state when dialog is closed
@@ -225,5 +245,27 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showCreateUserDialog} onOpenChange={setShowCreateUserDialog}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="text-amber-500" />
+                    No Matching Donor Found
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                    The system could not find an existing donor matching the details from the screenshot. Would you like to create a new user profile?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+             <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowCreateUserDialog(false)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={proceedToCreateUser}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Create New User
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
