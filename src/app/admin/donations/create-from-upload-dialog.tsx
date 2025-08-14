@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { Loader2, Upload, ScanEye, Edit, X, UserPlus, AlertTriangle } from "lucide-react";
-import { handleScanDonationProof } from "./actions";
+import { scanProof } from '@/ai/text-extraction-actions';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
@@ -80,10 +80,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
     
     setIsScanning(true);
 
-    const formData = new FormData();
-    formData.append("paymentScreenshot", file);
-    
-    const result = await handleScanDonationProof(formData);
+    const result = await scanProof(file);
 
     if (result.success && result.details) {
       const queryParams = new URLSearchParams();

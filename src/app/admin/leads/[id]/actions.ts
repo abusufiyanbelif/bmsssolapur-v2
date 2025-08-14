@@ -8,7 +8,6 @@ import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
 import { FundTransfer } from "@/services/types";
 import { arrayUnion, increment, writeBatch, doc } from "firebase/firestore";
-import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 import { db } from "@/services/firebase";
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
@@ -183,21 +182,5 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
         return { success: false, error };
-    }
-}
-
-
-export async function handleScanTransferProof(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
-    try {
-        const { scanProof } = await import('@/ai/text-extraction-actions');
-        const proofFile = formData.get("proof") as File | undefined;
-        if (!proofFile || proofFile.size === 0) {
-            return { success: false, error: "No file was uploaded to scan." };
-        }
-        return await scanProof(proofFile);
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error("Error scanning transfer proof:", error);
-        return { success: false, error: error };
     }
 }

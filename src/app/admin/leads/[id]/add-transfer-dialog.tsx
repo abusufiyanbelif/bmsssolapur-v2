@@ -20,13 +20,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect } from "lucide-react";
-import { handleFundTransfer, handleScanTransferProof } from "./actions";
+import { handleFundTransfer } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 import Image from "next/image";
 import { FormDescription } from "@/components/ui/form";
-import { handleExtractTextFromImage } from '@/app/admin/donations/add/actions';
+import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
 
 
 interface AddTransferDialogProps {
@@ -88,10 +88,8 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     setIsScanning(true);
     setScannedDetails(null);
     setRawText(null);
-    const formData = new FormData();
-    formData.append("proof", file);
     
-    const result = await handleScanTransferProof(formData);
+    const result = await scanProof(file);
     
     if (result && result.success && result.details) {
         setScannedDetails(result.details);
@@ -108,9 +106,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
       return;
     }
     setIsExtractingText(true);
-    const formData = new FormData();
-    formData.append("image", file);
-    const result = await handleExtractTextFromImage(formData);
+    const result = await getRawTextFromImage(file);
     if(result.success && result.text) {
         setRawText(result.text);
     } else {

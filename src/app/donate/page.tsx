@@ -31,7 +31,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
-import { handleScanDonationProof } from '@/app/admin/donations/actions';
+import { scanProof } from '@/ai/text-extraction-actions';
 import type { User, Lead, DonationPurpose } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
@@ -281,10 +281,7 @@ function UploadProofSection({ user }: { user: User | null }) {
         }
         setIsScanning(true);
         
-        const formData = new FormData();
-        formData.append('paymentScreenshot', file);
-        
-        const result = await handleScanDonationProof(formData);
+        const result = await scanProof(file);
 
         if (result.success && result.details) {
             const queryParams = new URLSearchParams();

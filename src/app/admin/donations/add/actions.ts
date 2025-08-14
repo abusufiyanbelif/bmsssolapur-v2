@@ -7,7 +7,6 @@ import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
-import { getRawTextFromImage } from "@/ai/text-extraction-actions";
 
 interface FormState {
     success: boolean;
@@ -139,22 +138,4 @@ export async function handleAddDonation(
       error: error,
     };
   }
-}
-
-
-export async function handleExtractTextFromImage(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
-    try {
-        const imageFile = formData.get("image") as File | undefined;
-        
-        if (!imageFile || imageFile.size === 0) {
-            return { success: false, error: "No image file was provided." };
-        }
-        
-        return await getRawTextFromImage(imageFile);
-
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error("Error extracting text from image:", error);
-        return { success: false, error: error };
-    }
 }

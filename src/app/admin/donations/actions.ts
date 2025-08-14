@@ -4,7 +4,6 @@
 import { deleteDonation as deleteDonationService, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService, getDonation, allocateDonationToLeads } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 import { writeBatch, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { DonationStatus } from "@/services/types";
@@ -135,32 +134,6 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
-    }
-}
-
-
-export async function handleScanDonationProof(formData: FormData) {
-    try {
-        const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
-        
-        if (!screenshotFile || screenshotFile.size === 0) {
-            return { success: false, error: "No file was uploaded." };
-        }
-        
-        const { scanProof } = await import('@/ai/text-extraction-actions');
-        
-        const scanResult = await scanProof(screenshotFile);
-
-        if (!scanResult.success) {
-            return { success: false, error: scanResult.error };
-        }
-        
-        return { success: true, details: scanResult.details };
-
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred during the scan process.";
-        console.error("Error in handleScanDonationProof:", error);
         return { success: false, error };
     }
 }

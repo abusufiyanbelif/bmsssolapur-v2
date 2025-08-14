@@ -38,8 +38,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, handleExtractTextFromImage } from "./actions";
-import { scanProof } from '@/ai/text-extraction-actions';
+import { handleAddDonation } from "./actions";
+import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
@@ -255,9 +255,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     }
     const file = localFiles[0].file;
     setIsExtractingText(true);
-    const formData = new FormData();
-    formData.append("image", file);
-    const result = await handleExtractTextFromImage(formData);
+    const result = await getRawTextFromImage(file);
     if(result.success && result.text) {
         setRawText(result.text);
     } else {
