@@ -72,33 +72,3 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
     };
   }
 }
-
-export async function handleScanAndPrefill(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string, dataUrl?: string}> {
-    try {
-        const screenshotFile = formData.get("proof") as File | undefined;
-        
-        if (!screenshotFile || screenshotFile.size === 0) {
-            return { success: false, error: "No file was uploaded." };
-        }
-        
-        const scanResult = await scanProof(screenshotFile);
-
-        if (!scanResult.success || !scanResult.details) {
-            throw new Error(scanResult.error || "Failed to extract details from screenshot.");
-        }
-        
-        // Convert File to Base64 Data URL to pass to the next page
-        const arrayBuffer = await screenshotFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = screenshotFile.type;
-        const dataUrl = `data:${mimeType};base64,${base64}`;
-
-        // Return details to pre-fill the form
-        return { success: true, details: scanResult.details, dataUrl };
-
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error("Error scanning proof:", error);
-        return { success: false, error: error };
-    }
-}

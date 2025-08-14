@@ -30,7 +30,8 @@ import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit }
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { handleCreatePendingDonation, handleScanAndPrefill } from './actions';
+import { handleCreatePendingDonation } from './actions';
+import { handleScanDonationProof } from '@/app/admin/donations/actions';
 import type { User, Lead, DonationPurpose } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
@@ -245,6 +246,15 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
      );
 }
 
+// Helper to convert file to Base64 Data URL
+const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
 
 function UploadProofSection({ user }: { user: User | null }) {
     const { toast } = useToast();
@@ -272,9 +282,9 @@ function UploadProofSection({ user }: { user: User | null }) {
         setIsScanning(true);
         
         const formData = new FormData();
-        formData.append('proof', file);
+        formData.append('paymentScreenshot', file);
         
-        const result = await handleScanAndPrefill(formData);
+        const result = await handleScanDonationProof(formData);
 
         if (result.success && result.details) {
             const queryParams = new URLSearchParams();
@@ -289,9 +299,11 @@ function UploadProofSection({ user }: { user: User | null }) {
                 queryParams.set('donorId', user.id);
             }
             
-            if (result.dataUrl) {
-                // Use session storage to pass the large data URL
-                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl: result.dataUrl }));
+            try {
+                const dataUrl = await fileToDataUrl(file);
+                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+            } catch (e) {
+                 toast({ variant: 'destructive', title: 'Error preparing screenshot' });
             }
             
             router.push(`/admin/donations/add?${queryParams.toString()}`);
@@ -357,16 +369,7 @@ function DonatePageContent() {
       try {
         if (storedUserId) {
             const fetchedUser = await getUser(storedUserId);
-            
-            const isAdmin = fetchedUser?.roles.some(role => ['Admin', 'Super Admin', 'Finance Admin'].includes(role));
-            if (isAdmin) {
-                // If an admin lands here, just show the form but they cant submit for others.
-                // Or redirect them if this page is strictly for donors.
-                // For now, we'll let them see it but key actions may be disabled if needed.
-                setUser(fetchedUser);
-            } else {
-                 setUser(fetchedUser);
-            }
+            setUser(fetchedUser);
         }
 
         if (leadId) {
