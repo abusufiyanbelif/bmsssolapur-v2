@@ -173,9 +173,6 @@ function PublicHomePage() {
                 <Button size="lg" onClick={handleDonateClick}>
                 Donate Now <HandHeart className="ml-2" />
                 </Button>
-                <Button size="lg" variant="secondary" asChild>
-                    <Link href="/register">Register / Login</Link>
-                </Button>
             </div>
             </CardContent>
         </Card>
