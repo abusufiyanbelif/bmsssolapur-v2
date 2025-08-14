@@ -148,7 +148,6 @@ export async function handleScanDonationProof(formData: FormData) {
             return { success: false, error: "No file was uploaded." };
         }
         
-        // This is a direct call to the text-extraction-actions helper.
         const { scanProof } = await import('@/ai/text-extraction-actions');
         
         const scanResult = await scanProof(screenshotFile);
