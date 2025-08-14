@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -278,7 +279,18 @@ export function EditUserForm({ user }: EditUserFormProps) {
     }
     setIsSubmitting(true);
     
-    const result = await handleUpdateUser(user.id!, values, currentAdmin.id);
+    const formData = new FormData();
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === 'upiIds' && Array.isArray(value)) {
+        value.forEach(item => {
+          if (item.value) formData.append(key, item.value)
+        });
+      } else if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
+      }
+    });
+
+    const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
 
     setIsSubmitting(false);
 

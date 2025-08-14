@@ -60,7 +60,7 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       password,
       userId: userId || undefined,
       roles: ["Donor"], // Default role for new registrations
-      isActive: true,
+      isActive: true, // New users are active by default
       createdAt: Timestamp.now(),
       gender: 'Other',
       bankAccountName: formData.get("bankAccountName") as string || undefined,

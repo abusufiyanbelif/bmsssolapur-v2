@@ -36,6 +36,10 @@ const profileFormSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  bankAccountName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
+  upiPhone: z.string().optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -91,6 +95,10 @@ export default function ProfileSettingsPage() {
                     isWidow: fetchedUser.isWidow || false,
                     panNumber: fetchedUser.panNumber || '',
                     aadhaarNumber: fetchedUser.aadhaarNumber || '',
+                    bankAccountName: fetchedUser.bankAccountName || '',
+                    bankAccountNumber: fetchedUser.bankAccountNumber || '',
+                    bankIfscCode: fetchedUser.bankIfscCode || '',
+                    upiPhone: fetchedUser.upiPhone || '',
                     upiIds: fetchedUser.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
                 });
             } else {
@@ -393,6 +401,60 @@ export default function ProfileSettingsPage() {
                                 )}
                             />
                         </div>
+                        <FormField
+                            control={form.control}
+                            name="bankAccountName"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Full Name as per Bank Account</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter full name" {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="bankAccountNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Bank Account Number</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter account number" {...field} disabled={!isEditing} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="bankIfscCode"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>IFSC Code</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter IFSC code" {...field} disabled={!isEditing} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <FormField
+                            control={form.control}
+                            name="upiPhone"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>UPI Phone Number</FormLabel>
+                                <FormControl>
+                                    <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                          <div className="space-y-4">
                             <FormLabel>UPI IDs</FormLabel>
                             {fields.map((field, index) => (

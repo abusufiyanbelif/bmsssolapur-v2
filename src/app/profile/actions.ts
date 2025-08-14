@@ -10,7 +10,7 @@ interface FormState {
     error?: string;
 }
 
-type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber' | 'beneficiaryType' | 'enableMonthlyDonationReminder' | 'upiIds'> & {
+type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber' | 'beneficiaryType' | 'enableMonthlyDonationReminder' | 'upiIds' | 'bankAccountName' | 'bankAccountNumber' | 'bankIfscCode' | 'upiPhone'> & {
     address: {
         addressLine1: string;
         city: string;
