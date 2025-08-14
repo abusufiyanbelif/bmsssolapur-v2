@@ -46,38 +46,41 @@ const getChangedFields = (original: User, updates: Partial<User>) => {
     return changes;
 }
 
+type UserUpdatePayload = {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    phone: string;
+    roles: UserRole[];
+    isActive: boolean;
+    isAnonymousAsBeneficiary: boolean;
+    isAnonymousAsDonor: boolean;
+    gender: 'Male' | 'Female' | 'Other';
+    beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family';
+    addressLine1?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    pincode?: string;
+    occupation?: string;
+    familyMembers?: number;
+    isWidow: boolean;
+    panNumber?: string;
+    aadhaarNumber?: string;
+    bankAccountName?: string;
+    bankAccountNumber?: string;
+    bankIfscCode?: string;
+    upiPhone?: string;
+    upiIds?: { value: string }[];
+};
+
+
 export async function handleUpdateUser(
   userId: string,
-  formData: FormData,
+  values: UserUpdatePayload,
   adminUserId: string,
 ): Promise<FormState> {
-  const rawFormData = {
-    firstName: formData.get("firstName") as string,
-    middleName: formData.get("middleName") as string,
-    lastName: formData.get("lastName") as string,
-    phone: formData.get("phone") as string,
-    roles: formData.getAll("roles") as UserRole[],
-    isActive: formData.get("isActive") === 'on',
-    isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
-    isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
-    gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
-    beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
-    addressLine1: formData.get("addressLine1") as string | undefined,
-    city: formData.get("city") as string | undefined,
-    state: formData.get("state") as string | undefined,
-    country: formData.get("country") as string | undefined,
-    pincode: formData.get("pincode") as string | undefined,
-    occupation: formData.get("occupation") as string | undefined,
-    familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string) : undefined,
-    isWidow: formData.get("isWidow") === 'on',
-    panNumber: formData.get("panNumber") as string | undefined,
-    aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
-    bankAccountName: formData.get("bankAccountName") as string | undefined,
-    bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
-    bankIfscCode: formData.get("bankIfscCode") as string | undefined,
-    upiPhone: formData.get("upiPhone") as string | undefined,
-    upiIds: formData.getAll("upiIds") as string[],
-  };
+  const rawFormData = values;
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
       return { success: false, error: "Missing required fields." };
@@ -133,7 +136,7 @@ export async function handleUpdateUser(
         bankAccountNumber: rawFormData.bankAccountNumber || '',
         bankIfscCode: rawFormData.bankIfscCode || '',
         upiPhone: rawFormData.upiPhone || '',
-        upiIds: rawFormData.upiIds.filter(Boolean),
+        upiIds: rawFormData.upiIds?.map(item => item.value).filter(Boolean) || [],
     };
     
     const changes = getChangedFields(originalUser, updates);
@@ -199,3 +202,4 @@ export async function handleSetPassword(formData: FormData): Promise<FormState> 
     };
   }
 }
+
