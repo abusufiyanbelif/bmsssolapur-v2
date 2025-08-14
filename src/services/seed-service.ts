@@ -122,7 +122,7 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
     const results: SeedItemResult[] = [];
 
     for (const userData of users) {
-        if (userData.roles.includes('Super Admin')) {
+        if (userData.roles.includes('Super Admin') || userData.userId === 'admin.user') {
             userData.isActive = true;
         }
 

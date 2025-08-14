@@ -256,10 +256,11 @@ export default function UserManagementPage() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.length}
+                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
+                                const unProtectedUsers = paginatedUsers.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
-                                    setSelectedUsers(paginatedUsers.map(u => u.id!));
+                                    setSelectedUsers(unProtectedUsers);
                                 } else {
                                     setSelectedUsers([]);
                                 }
@@ -286,7 +287,9 @@ export default function UserManagementPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedUsers.map((user, index) => (
+                {paginatedUsers.map((user, index) => {
+                     const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                     return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
                          <TableCell padding="checkbox">
                             <Checkbox
@@ -297,6 +300,7 @@ export default function UserManagementPage() {
                                     );
                                 }}
                                 aria-label="Select row"
+                                disabled={isProtectedUser}
                             />
                         </TableCell>
                         <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
@@ -335,14 +339,17 @@ export default function UserManagementPage() {
                            {renderActions(user)}
                         </TableCell>
                     </TableRow>
-                ))}
+                     )
+                })}
             </TableBody>
         </Table>
     );
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {paginatedUsers.map((user, index) => (
+            {paginatedUsers.map((user, index) => {
+                 const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                 return (
                 <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -356,6 +363,7 @@ export default function UserManagementPage() {
                                         );
                                     }}
                                     aria-label="Select card"
+                                    disabled={isProtectedUser}
                                 />
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
@@ -401,7 +409,8 @@ export default function UserManagementPage() {
                         {renderActions(user)}
                     </CardFooter>
                 </Card>
-            ))}
+                 )
+            })}
         </div>
     );
     

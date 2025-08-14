@@ -252,10 +252,11 @@ function DonorsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedDonors.length}
+                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedDonors.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
+                                const unProtectedUsers = paginatedDonors.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
-                                    setSelectedUsers(paginatedDonors.map(d => d.id!));
+                                    setSelectedUsers(unProtectedUsers);
                                 } else {
                                     setSelectedUsers([]);
                                 }
@@ -284,7 +285,9 @@ function DonorsPageContent() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedDonors.map((user, index) => (
+                {paginatedDonors.map((user, index) => {
+                    const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                    return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
                         <TableCell padding="checkbox">
                             <Checkbox
@@ -295,6 +298,7 @@ function DonorsPageContent() {
                                     );
                                 }}
                                 aria-label="Select row"
+                                disabled={isProtectedUser}
                             />
                         </TableCell>
                         <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
@@ -331,14 +335,16 @@ function DonorsPageContent() {
                            {renderActions(user)}
                         </TableCell>
                     </TableRow>
-                ))}
+                )})}
             </TableBody>
         </Table>
     );
 
     const renderMobileCards = () => (
         <div className="space-y-4">
-            {paginatedDonors.map((user, index) => (
+            {paginatedDonors.map((user, index) => {
+                 const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                 return (
                 <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -352,6 +358,7 @@ function DonorsPageContent() {
                                         );
                                     }}
                                     aria-label="Select card"
+                                    disabled={isProtectedUser}
                                 />
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
@@ -395,7 +402,8 @@ function DonorsPageContent() {
                        {renderActions(user)}
                     </CardFooter>
                 </Card>
-            ))}
+                 )
+            })}
         </div>
     );
     
