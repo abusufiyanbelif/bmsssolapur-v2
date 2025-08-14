@@ -281,6 +281,37 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
     }
 }
 
+// Function to get donations by campaignId
+export const getDonationsByCampaignId = async (campaignId: string): Promise<Donation[]> => {
+    if (!isConfigValid) return [];
+    try {
+        const donationsQuery = query(
+            collection(db, DONATIONS_COLLECTION), 
+            where("campaignId", "==", campaignId),
+            orderBy("donationDate", "desc")
+        );
+        const querySnapshot = await getDocs(donationsQuery);
+        const donations: Donation[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            donations.push({
+              id: doc.id,
+              ...data,
+              createdAt: (data.createdAt as Timestamp).toDate(),
+              donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
+              verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+            } as Donation);
+        });
+        return donations;
+    } catch (error) {
+        console.error("Error fetching campaign donations:", error);
+        if (error instanceof Error && error.message.includes('requires an index')) {
+            console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'campaignId' (ascending) and 'donationDate' (descending).");
+        }
+        throw new Error('Failed to get campaign donations.');
+    }
+};
+
 // Quick status update function
 export const handleUpdateDonationStatus = async (donationId: string, newStatus: DonationStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
     const originalDonation = await getDonation(donationId);

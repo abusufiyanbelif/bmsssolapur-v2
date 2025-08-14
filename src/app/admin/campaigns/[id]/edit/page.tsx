@@ -1,26 +1,48 @@
 
+
 import { getCampaign } from "@/services/campaign-service";
 import { notFound } from "next/navigation";
 import { CampaignForm } from "./campaign-form";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getLeadsByCampaignId } from "@/services/lead-service";
+import { getDonationsByCampaignId } from "@/services/donation-service";
+import { getCampaignActivity } from "@/services/activity-log-service";
+import { LinkedLeadsCard } from "./linked-leads-card";
+import { LinkedDonationsCard } from "./linked-donations-card";
+import { CampaignAuditTrail } from "./campaign-audit-trail";
+import { Separator } from "@/components/ui/separator";
 
 export default async function EditCampaignPage({ params }: { params: { id: string } }) {
-    const campaign = await getCampaign(params.id);
+    const [campaign, linkedLeads, linkedDonations, activityLogs] = await Promise.all([
+        getCampaign(params.id),
+        getLeadsByCampaignId(params.id),
+        getDonationsByCampaignId(params.id),
+        getCampaignActivity(params.id),
+    ]);
 
     if (!campaign) {
         notFound();
     }
     
     return (
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-6">
              <Link href="/admin/campaigns" className="flex items-center text-sm text-muted-foreground hover:text-primary">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to All Campaigns
             </Link>
             
-            <CampaignForm campaign={campaign} />
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                    <CampaignForm campaign={campaign} />
+                    <LinkedLeadsCard leads={linkedLeads} />
+                    <LinkedDonationsCard donations={linkedDonations} />
+                </div>
+                 <div className="lg:col-span-1">
+                    <CampaignAuditTrail activityLogs={activityLogs} />
+                 </div>
+            </div>
         </div>
     );
 }

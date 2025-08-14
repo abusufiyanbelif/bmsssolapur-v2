@@ -154,3 +154,40 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
         return [];
     }
 }
+
+/**
+ * Fetches all activity logs for a specific campaign.
+ * @param campaignId The ID of the campaign.
+ * @returns An array of activity log objects.
+ */
+export const getCampaignActivity = async (campaignId: string): Promise<ActivityLog[]> => {
+    if (!isConfigValid) {
+        console.log("Firebase not configured. Skipping activity fetch.");
+        return [];
+    }
+    try {
+        const q = query(
+            collection(db, ACTIVITY_LOG_COLLECTION),
+            where("details.linkedCampaignId", "==", campaignId),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const activities: ActivityLog[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            activities.push({
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate(),
+            } as ActivityLog);
+        });
+        return activities;
+    } catch (error) {
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.linkedCampaignId' (ascending) and 'timestamp' (descending). The app will continue to function but this feature will be disabled until the index is created.");
+             return [];
+        }
+        console.error("Error fetching campaign activity:", error);
+        return [];
+    }
+}

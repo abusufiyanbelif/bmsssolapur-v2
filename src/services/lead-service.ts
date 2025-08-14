@@ -281,6 +281,36 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
     }
 }
 
+// Function to get leads by campaignId
+export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> => {
+    if (!isConfigValid) return [];
+    try {
+        const leadsQuery = query(
+            collection(db, LEADS_COLLECTION), 
+            where("campaignId", "==", campaignId),
+            orderBy("dateCreated", "desc")
+        );
+        const querySnapshot = await getDocs(leadsQuery);
+        const leads: Lead[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data() as Omit<Lead, 'id'>;
+            leads.push({ 
+                id: doc.id, 
+                ...data,
+                dateCreated: (data.dateCreated as Timestamp).toDate(),
+                createdAt: (data.createdAt as Timestamp).toDate()
+            } as Lead);
+        });
+        return leads;
+    } catch (error) {
+        console.error("Error fetching campaign leads:", error);
+        if (error instanceof Error && error.message.includes('requires an index')) {
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'campaignId' (ascending) and 'dateCreated' (descending).");
+        }
+        throw new Error('Failed to get campaign leads.');
+    }
+};
+
 // Function to get open leads for a specific beneficiary
 export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Lead[]> => {
     if (!isConfigValid) return [];
