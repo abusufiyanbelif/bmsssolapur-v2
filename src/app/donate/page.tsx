@@ -284,12 +284,17 @@ function UploadProofSection({ user }: { user: User | null }) {
                 }
             });
             
-            if (result.dataUrl) {
-                // Use session storage to pass the large data URL
-                sessionStorage.setItem('scannedProofDataUrl', result.dataUrl);
+             // The user is already logged in, so we know their ID
+            if (user?.id) {
+                queryParams.set('donorId', user.id);
             }
             
-            router.push(`/donate/confirm?${queryParams.toString()}`);
+            if (result.dataUrl) {
+                // Use session storage to pass the large data URL
+                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl: result.dataUrl }));
+            }
+            
+            router.push(`/admin/donations/add?${queryParams.toString()}`);
 
         } else {
              toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "An unknown error occurred." });
@@ -310,7 +315,7 @@ function UploadProofSection({ user }: { user: User | null }) {
                     onChange={handleFileChange}
                 />
                  <FormDescription>
-                    Upload a screenshot of a payment you have already made. The system will scan it to verify your donation.
+                    Upload a screenshot of a payment you have already made. The system will scan it and take you to a form to confirm the details.
                 </FormDescription>
             </div>
              {previewUrl && (
@@ -323,7 +328,7 @@ function UploadProofSection({ user }: { user: User | null }) {
             
             <Button onClick={handleScan} disabled={isScanning || !file} className="w-full">
                 {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                Scan and Confirm Donation
+                Scan and Review Donation
             </Button>
         </div>
     );

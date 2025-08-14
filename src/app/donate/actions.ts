@@ -87,9 +87,11 @@ export async function handleScanAndPrefill(formData: FormData): Promise<{success
             throw new Error(scanResult.error || "Failed to extract details from screenshot.");
         }
         
-        const res = await fetch(scanResult.details.photoDataUri!);
-        const blob = await res.blob();
-        const dataUrl = `data:${blob.type};base64,${Buffer.from(await blob.arrayBuffer()).toString('base64')}`;
+        // Convert File to Base64 Data URL to pass to the next page
+        const arrayBuffer = await screenshotFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = screenshotFile.type;
+        const dataUrl = `data:${mimeType};base64,${base64}`;
 
         // Return details to pre-fill the form
         return { success: true, details: scanResult.details, dataUrl };
@@ -99,48 +101,4 @@ export async function handleScanAndPrefill(formData: FormData): Promise<{success
         console.error("Error scanning proof:", error);
         return { success: false, error: error };
     }
-}
-
-
-export async function handleConfirmDonation(formData: FormData, userId: string): Promise<FormState> {
-  try {
-    const screenshotDataUrl = formData.get("paymentScreenshotDataUrl") as string | undefined;
-    if (!screenshotDataUrl) {
-        return { success: false, error: 'Screenshot data is missing.' };
-    }
-
-    const res = await fetch(screenshotDataUrl);
-    const blob = await res.blob();
-    const file = new File([blob], 'scanned-proof.png', { type: blob.type });
-
-    const paymentScreenshotUrl = await handleFileUpload(file);
-
-    const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
-        donorId: userId,
-        donorName: formData.get("donorName") as string,
-        amount: parseFloat(formData.get("amount") as string),
-        type: formData.get("type") as DonationType,
-        purpose: formData.get("purpose") as DonationPurpose | undefined,
-        status: "Pending verification",
-        transactionId: formData.get("transactionId") as string | undefined,
-        donationDate: new Date(formData.get("donationDate") as string),
-        paymentMethod: 'Online (UPI/Card)',
-        notes: formData.get("notes") as string | undefined,
-        paymentScreenshotUrls: [paymentScreenshotUrl],
-        rawText: formData.get("rawText") as string | undefined,
-    };
-
-    const newDonation = await createDonation(
-      newDonationData,
-      userId,
-      formData.get("donorName") as string,
-      undefined // User email is not available here
-    );
-
-    return { success: true };
-  } catch (e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
-    console.error("Error confirming donation:", error);
-    return { success: false, error };
-  }
 }
