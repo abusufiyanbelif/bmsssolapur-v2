@@ -148,18 +148,20 @@ export async function handleScanDonationProof(formData: FormData) {
             return { success: false, error: "No file was uploaded." };
         }
         
-        const arrayBuffer = await screenshotFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = screenshotFile.type;
-        const dataUri = `data:${mimeType};base64,${base64}`;
-
-        const extractedDetails = await extractDonationDetails({ photoDataUri: dataUri });
+        // This is a direct call to the text-extraction-actions helper.
+        const { scanProof } = await import('@/ai/text-extraction-actions');
         
-        return { success: true, details: extractedDetails };
+        const scanResult = await scanProof(screenshotFile);
+
+        if (!scanResult.success) {
+            return { success: false, error: scanResult.error };
+        }
+        
+        return { success: true, details: scanResult.details };
 
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error("Error scanning donation proof:", error);
+        const error = e instanceof Error ? e.message : "An unknown error occurred during the scan process.";
+        console.error("Error in handleScanDonationProof:", error);
         return { success: false, error };
     }
 }
