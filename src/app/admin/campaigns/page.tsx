@@ -108,7 +108,7 @@ function CampaignsPageContent() {
                     <MoreHorizontal className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem asChild>
                     <Link href={`/admin/campaigns/${campaign.id}/edit`}>
                         <Edit className="mr-2 h-4 w-4" /> Edit
@@ -171,8 +171,8 @@ function CampaignsPageContent() {
         return (
              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredCampaigns.map((campaign) => (
-                    <Link key={campaign.id} href={`/admin/campaigns/${campaign.id}/edit`} className="block hover:shadow-lg transition-shadow rounded-lg">
-                        <Card className="flex flex-col h-full">
+                    <Card key={campaign.id} className="flex flex-col h-full hover:shadow-lg transition-shadow rounded-lg">
+                        <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex flex-col h-full">
                             <CardHeader>
                                 <div className="flex justify-between items-start gap-4">
                                     <div>
@@ -212,14 +212,16 @@ function CampaignsPageContent() {
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between items-center bg-muted/50 p-4">
+                            <CardFooter className="flex justify-between items-center bg-muted/50 p-4 mt-auto">
                                 <div className="text-xs text-muted-foreground">
                                     <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
                                 </div>
-                                {renderActions(campaign)}
+                                <div onClick={(e) => e.preventDefault()}>
+                                    {renderActions(campaign)}
+                                </div>
                             </CardFooter>
-                        </Card>
-                    </Link>
+                        </Link>
+                    </Card>
                 ))}
             </div>
         );
