@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -190,11 +191,7 @@ export default function UserManagementPage() {
     }, [itemsPerPage]);
 
     const renderActions = (user: User) => {
-        // The primary system admin cannot be deactivated or deleted.
-        const isSystemAdmin = user.userId === 'admin.user';
-        // A user cannot deactivate or delete their own account.
-        const isCurrentUser = user.id === currentUserId;
-        const isProtectedUser = isSystemAdmin || isCurrentUser;
+        const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
 
         return (
             <DropdownMenu>
@@ -256,9 +253,9 @@ export default function UserManagementPage() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).length}
+                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
-                                const unProtectedUsers = paginatedUsers.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).map(u => u.id!);
+                                const unProtectedUsers = paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
                                     setSelectedUsers(unProtectedUsers);
                                 } else {
@@ -288,7 +285,7 @@ export default function UserManagementPage() {
             </TableHeader>
             <TableBody>
                 {paginatedUsers.map((user, index) => {
-                     const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                     const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
                      return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
                          <TableCell padding="checkbox">
@@ -348,7 +345,7 @@ export default function UserManagementPage() {
     const renderMobileCards = () => (
         <div className="space-y-4">
             {paginatedUsers.map((user, index) => {
-                 const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                 const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
                  return (
                 <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
                     <CardHeader>

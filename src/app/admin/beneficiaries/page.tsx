@@ -1,3 +1,4 @@
+
 // src/app/admin/beneficiaries/page.tsx
 "use client";
 
@@ -215,9 +216,7 @@ function BeneficiariesPageContent() {
     }, [itemsPerPage]);
     
      const renderActions = (user: User) => {
-        const isSystemAdmin = user.userId === 'admin.user';
-        const isCurrentUser = user.id === currentUserId;
-        const isProtectedUser = isSystemAdmin || isCurrentUser;
+        const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
 
         return (
             <DropdownMenu>
@@ -278,9 +277,9 @@ function BeneficiariesPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedBeneficiaries.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).length}
+                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
-                                const unProtectedUsers = paginatedBeneficiaries.filter(u => u.userId !== 'admin.user' && u.id !== currentUserId).map(u => u.id!);
+                                const unProtectedUsers = paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
                                     setSelectedUsers(unProtectedUsers);
                                 } else {
@@ -313,7 +312,7 @@ function BeneficiariesPageContent() {
             </TableHeader>
             <TableBody>
                 {paginatedBeneficiaries.map((user, index) => {
-                     const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                     const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
                      return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
                          <TableCell padding="checkbox">
@@ -377,7 +376,7 @@ function BeneficiariesPageContent() {
     const renderMobileCards = () => (
         <div className="space-y-4">
             {paginatedBeneficiaries.map((user, index) => {
-                 const isProtectedUser = user.userId === 'admin.user' || user.id === currentUserId;
+                 const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
                  return (
                 <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
                     <CardHeader>
