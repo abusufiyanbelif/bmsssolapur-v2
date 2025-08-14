@@ -330,26 +330,19 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
   }
   try {
     if (!upiId) return null;
-    const q = query(collection(db, USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0];
-      const data = userDoc.data();
-       return {
-        id: userDoc.id,
-        ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
-      } as User;
-    }
-    return null;
+    // Firestore's 'array-contains' is not reliable for this case, especially with potential formatting differences.
+    // A more robust way is to fetch all users and check their arrays.
+    // This is less performant on very large datasets but more reliable for this use case.
+    const allUsers = await getAllUsers();
+    const foundUser = allUsers.find(user => 
+        user.upiIds?.some(id => id.toLowerCase() === upiId.toLowerCase())
+    );
+    
+    return foundUser || null;
+
   } catch (error) {
     console.error('Error getting user by UPI ID: ', error);
-    // This could be due to a missing index. Log a helpful message.
-    if (error instanceof Error && error.message.includes('index')) {
-        console.error("Firestore index missing. Please create a composite index in Firestore on the 'users' collection for 'upiIds' (array-contains).");
-    }
-    return null; // Return null on index error so app doesn't crash
+    return null; // Return null on any error to avoid crashing the app flow
   }
 }
 
