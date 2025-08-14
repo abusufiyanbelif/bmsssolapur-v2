@@ -63,6 +63,11 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       isActive: true,
       createdAt: Timestamp.now(),
       gender: 'Other',
+      bankAccountName: formData.get("bankAccountName") as string || undefined,
+      bankAccountNumber: formData.get("bankAccountNumber") as string || undefined,
+      bankIfscCode: formData.get("bankIfscCode") as string || undefined,
+      upiPhone: formData.get("upiPhone") as string || undefined,
+      upiIds: (formData.getAll("upiIds") as string[]).filter(id => id.trim() !== ''),
     };
 
     const createdUser = await createUser(newUser);

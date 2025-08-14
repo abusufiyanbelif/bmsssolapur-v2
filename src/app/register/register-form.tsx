@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { handleRegister } from "./actions";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle, UserPlus } from "lucide-react";
+import { Loader2, CheckCircle, UserPlus, PlusCircle, Trash2 } from "lucide-react";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
@@ -21,6 +21,11 @@ const formSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   userId: z.string().min(3, "User ID must be at least 3 characters."),
+  bankAccountName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
+  upiPhone: z.string().optional(),
+  upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
 type RegisterFormValues = z.infer<typeof formSchema>;
@@ -39,9 +44,15 @@ export function RegisterForm() {
       phone: "",
       password: "",
       userId: "",
+      upiIds: [{ value: "" }],
     },
   });
   
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "upiIds"
+  });
+
   const firstName = form.watch("firstName");
   const lastName = form.watch("lastName");
   
@@ -64,6 +75,13 @@ export function RegisterForm() {
     if(values.userId) formData.append("userId", values.userId);
     formData.append("phone", values.phone);
     formData.append("password", values.password);
+    if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
+    if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
+    if(values.bankIfscCode) formData.append("bankIfscCode", values.bankIfscCode);
+    if(values.upiPhone) formData.append("upiPhone", values.upiPhone);
+    values.upiIds?.forEach(upi => {
+        if(upi.value) formData.append("upiIds", upi.value);
+    });
 
     const result = await handleRegister(formData);
 
@@ -89,6 +107,7 @@ export function RegisterForm() {
   return (
     <Form {...form}>
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
+        <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
             control={form.control}
@@ -169,6 +188,98 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
+
+        <h3 className="text-lg font-semibold border-b pb-2 pt-4">Payment Details (Optional)</h3>
+         <FormField
+            control={form.control}
+            name="bankAccountName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Full Name as per Bank Account</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter full name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+                control={form.control}
+                name="bankAccountNumber"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Bank Account Number</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter account number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="bankIfscCode"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>IFSC Code</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter IFSC code" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <FormField
+                control={form.control}
+                name="upiPhone"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>UPI Phone Number</FormLabel>
+                    <FormControl>
+                        <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+         <div className="space-y-4">
+            <FormLabel>UPI IDs</FormLabel>
+            {fields.map((field, index) => (
+            <FormField
+              control={form.control}
+              key={field.id}
+              name={`upiIds.${index}.value`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., username@okhdfc" />
+                    </FormControl>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ value: "" })}
+            >
+                <PlusCircle className="mr-2" />
+                Add another UPI ID
+            </Button>
+         </div>
+
+
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
