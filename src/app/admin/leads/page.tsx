@@ -383,6 +383,7 @@ function LeadsPageContent() {
                            Amount Req. {renderSortIcon('helpRequested')}
                         </Button>
                     </TableHead>
+                    <TableHead>Summary</TableHead>
                      <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('dateCreated')}>
                             Created {renderSortIcon('dateCreated')}
@@ -470,6 +471,7 @@ function LeadsPageContent() {
                                  </DropdownMenu>
                             </TableCell>
                             <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground truncate max-w-xs">{lead.headline || 'N/A'}</TableCell>
                             <TableCell>{format(lead.dateCreated, "dd MMM yyyy")}</TableCell>
                             <TableCell>{lead.verifiedAt ? format(lead.verifiedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
                             <TableCell>{lead.lastAllocatedAt ? format(lead.lastAllocatedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
@@ -759,3 +761,5 @@ export default function LeadsPage() {
         </Suspense>
     )
 }
+
+    
