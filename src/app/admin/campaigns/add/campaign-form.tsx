@@ -26,10 +26,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { handleCreateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
-import { CampaignStatus } from "@/services/campaign-service";
+import { CampaignStatus, DonationType } from "@/services/campaign-service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const campaignStatuses: CampaignStatus[] = ['Upcoming', 'Active', 'Completed', 'Cancelled'];
+const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
+
 
 const formSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters."),
@@ -40,6 +43,9 @@ const formSchema = z.object({
     to: z.date({ required_error: "An end date is required."}),
   }),
   status: z.enum(campaignStatuses),
+  acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: "You have to select at least one donation type.",
+  }),
 });
 
 type CampaignFormValues = z.infer<typeof formSchema>;
@@ -56,6 +62,7 @@ export function CampaignForm() {
         description: "",
         goal: 0,
         status: "Upcoming",
+        acceptableDonationTypes: [],
     },
   });
   
@@ -66,6 +73,7 @@ export function CampaignForm() {
         goal: 0,
         status: "Upcoming",
         dates: undefined,
+        acceptableDonationTypes: [],
     });
   }
 
@@ -78,6 +86,7 @@ export function CampaignForm() {
       startDate: values.dates.from,
       endDate: values.dates.to,
       status: values.status,
+      acceptableDonationTypes: values.acceptableDonationTypes as DonationType[],
     });
     setIsSubmitting(false);
 
@@ -213,6 +222,56 @@ export function CampaignForm() {
                     </Popover>
                     <FormDescription>The start and end date for this campaign.</FormDescription>
                     <FormMessage />
+                </FormItem>
+            )}
+        />
+         <FormField
+            control={form.control}
+            name="acceptableDonationTypes"
+            render={() => (
+                <FormItem className="space-y-3 p-4 border rounded-lg">
+                <div className="mb-4">
+                    <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                    <FormDescription>
+                        Select which types of donations can be allocated to this campaign.
+                    </FormDescription>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {donationTypes.map((type) => (
+                    <FormField
+                        key={type}
+                        control={form.control}
+                        name="acceptableDonationTypes"
+                        render={({ field }) => {
+                        return (
+                            <FormItem
+                            key={type}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value?.includes(type)}
+                                onCheckedChange={(checked) => {
+                                    return checked
+                                    ? field.onChange([...field.value, type])
+                                    : field.onChange(
+                                        field.value?.filter(
+                                            (value) => value !== type
+                                        )
+                                        )
+                                }}
+                                />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                                {type}
+                            </FormLabel>
+                            </FormItem>
+                        )
+                        }}
+                    />
+                    ))}
+                </div>
+                <FormMessage />
                 </FormItem>
             )}
         />

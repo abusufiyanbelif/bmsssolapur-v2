@@ -197,6 +197,20 @@ export interface Lead {
     source?: 'Seeded' | 'Manual Entry';
 }
 
+export interface Campaign {
+    id: string;
+    name: string;
+    description: string;
+    goal: number;
+    startDate: Timestamp | Date;
+    endDate: Timestamp | Date;
+    status: 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
+    acceptableDonationTypes?: DonationType[];
+    createdAt: Timestamp | Date;
+    updatedAt: Timestamp | Date;
+    source?: 'Seeded' | 'Manual Entry';
+}
+
 export interface Organization {
     id: string;
     name: string;

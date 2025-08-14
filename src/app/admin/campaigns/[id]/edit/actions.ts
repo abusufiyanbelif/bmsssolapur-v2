@@ -3,7 +3,7 @@
 
 import { updateCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
-import { CampaignStatus } from "@/services/types";
+import { CampaignStatus, DonationType } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 
 interface FormState {
@@ -18,6 +18,7 @@ interface CampaignFormData {
     startDate: Date;
     endDate: Date;
     status: CampaignStatus;
+    acceptableDonationTypes: DonationType[];
 }
 
 export async function handleUpdateCampaign(campaignId: string, formData: CampaignFormData): Promise<FormState> {
@@ -29,6 +30,7 @@ export async function handleUpdateCampaign(campaignId: string, formData: Campaig
         startDate: Timestamp.fromDate(formData.startDate),
         endDate: Timestamp.fromDate(formData.endDate),
         status: formData.status,
+        acceptableDonationTypes: formData.acceptableDonationTypes,
     });
     
     revalidatePath("/admin/campaigns");
