@@ -45,7 +45,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
             return {
               id: userDoc.id,
               ...data,
-              createdAt: (data.createdAt as Timestamp).toDate(),
+              createdAt: (data.createdAt as Timestamp)?.toDate(),
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
         }
@@ -186,7 +186,7 @@ export const getUser = async (id: string): Promise<User | null> => {
       return { 
         id: userDoc.id, 
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
     }
@@ -212,7 +212,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
       return {
         id: userDoc.id,
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
     }
@@ -233,7 +233,7 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
             const doc = snapshot.docs[0];
             const data = doc.data();
             return {
-                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp).toDate(),
+                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
         }
@@ -254,7 +254,7 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
             const doc = snapshot.docs[0];
              const data = doc.data();
             return {
-                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp).toDate(),
+                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
         }
@@ -281,7 +281,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
        return {
         id: userDoc.id,
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
     }
@@ -312,7 +312,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
       return {
         id: userDoc.id,
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
     }
@@ -363,7 +363,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
        return {
         id: userDoc.id,
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
     }
@@ -457,7 +457,7 @@ export const getAllUsers = async (): Promise<User[]> => {
             users.push({ 
                 id: doc.id,
                 ...data,
-                createdAt: (data.createdAt as Timestamp).toDate(),
+                createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User);
         });
@@ -486,7 +486,7 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
             users.push({ 
                 id: doc.id,
                 ...data,
-                createdAt: (data.createdAt as Timestamp).toDate(),
+                createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User);
         });

@@ -114,11 +114,11 @@ export const getLead = async (id: string): Promise<Lead | null> => {
       return { 
         id: leadDoc.id, 
         ...data,
-        dateCreated: (data.dateCreated as Timestamp).toDate(),
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
+        dateCreated: data.dateCreated ? (data.dateCreated as Timestamp).toDate() : new Date(),
+        createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
         closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
-        dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : undefined,
+        dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
         verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
         donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
         fundTransfers: (data.fundTransfers || []).map((t: any) => ({...t, transferredAt: (t.transferredAt as Timestamp).toDate() })),
@@ -218,9 +218,9 @@ export const getAllLeads = async (): Promise<Lead[]> => {
             const enrichedData = { 
               id: doc.id,
               ...data,
-              dateCreated: (data.dateCreated as Timestamp).toDate(),
-              createdAt: (data.createdAt as Timestamp).toDate(),
-              updatedAt: (data.updatedAt as Timestamp).toDate(),
+              dateCreated: data.dateCreated ? (data.dateCreated as Timestamp).toDate() : new Date(),
+              createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
+              updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
               closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
               dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
               verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
@@ -264,7 +264,7 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
             leads.push({ 
                 id: doc.id, 
                 ...data,
-                createdAt: (data.createdAt as Timestamp).toDate()
+                createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
             } as Lead);
         });
         // Sort in memory instead of in the query
@@ -297,8 +297,8 @@ export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> 
             leads.push({ 
                 id: doc.id, 
                 ...data,
-                dateCreated: (data.dateCreated as Timestamp).toDate(),
-                createdAt: (data.createdAt as Timestamp).toDate()
+                dateCreated: data.dateCreated ? (data.dateCreated as Timestamp).toDate() : new Date(),
+                createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
             } as Lead);
         });
         return leads;
