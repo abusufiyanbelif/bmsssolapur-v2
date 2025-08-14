@@ -304,10 +304,10 @@ export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> 
         return leads;
     } catch (error) {
         console.error("Error fetching campaign leads:", error);
-        if (error instanceof Error && error.message.includes('requires an index')) {
+        if (error instanceof Error && error.message.includes('index')) {
              console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'campaignId' (ascending) and 'dateCreated' (descending).");
         }
-        throw new Error('Failed to get campaign leads.');
+        return [];
     }
 };
 
@@ -334,3 +334,5 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         throw new Error('Failed to get open beneficiary leads.');
     }
 }
+
+    
