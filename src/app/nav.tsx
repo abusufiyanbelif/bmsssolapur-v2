@@ -114,7 +114,7 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/user-management", label: "All Users", icon: Users },
             { href: "/admin/donors", label: "All Donors", icon: HandHeart },
-            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: UsersIcon },
+            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users },
             { href: "/admin/referrals", label: "All Referrals", icon: UserSearch },
             { href: "/admin/user-management/configuration", label: "Configuration", icon: UserCog },
         ]
