@@ -184,18 +184,16 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             userData.isActive = true;
         }
 
-        const id = userData.userId;
-        if (!id) {
-            results.push({ name: userData.name, status: 'Failed' });
-            console.error(`User ${userData.name} is missing a userId in the seed data.`);
-            continue;
-        }
+        let existingUser: User | null = null;
         
-        let existingUser: User | null = await getUserByUserId(userData.userId);
+        // Prioritize checking by a unique, non-optional field if available
+        if (userData.userId) {
+            existingUser = await getUserByUserId(userData.userId);
+        }
         if (!existingUser && userData.email) {
             existingUser = await getUserByEmail(userData.email);
         }
-        if (!existingUser) {
+        if (!existingUser && userData.phone) {
             existingUser = await getUserByPhone(userData.phone);
         }
         
@@ -433,3 +431,6 @@ export const seedDatabase = async (): Promise<SeedResult> => {
 };
 
 
+
+
+    

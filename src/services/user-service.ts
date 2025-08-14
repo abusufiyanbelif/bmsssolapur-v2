@@ -36,6 +36,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
         return null;
     }
     try {
+        if (!userId) return null;
         const q = query(collection(db, USERS_COLLECTION), where("userId", "==", userId), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
@@ -495,3 +496,5 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
         throw new Error('Failed to get referred beneficiaries.');
     }
 }
+
+    
