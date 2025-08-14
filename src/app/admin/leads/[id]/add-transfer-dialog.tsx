@@ -26,6 +26,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 import Image from "next/image";
 import { FormDescription } from "@/components/ui/form";
+import { handleExtractTextFromImage } from '@/app/admin/donations/add/actions';
 
 
 interface AddTransferDialogProps {
@@ -101,6 +102,23 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     setIsScanning(false);
   };
   
+   const handleExtractText = async () => {
+    if (!file) {
+      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file first.' });
+      return;
+    }
+    setIsExtractingText(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    const result = await handleExtractTextFromImage(formData);
+    if(result.success && result.text) {
+        setRawText(result.text);
+    } else {
+         toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
+    }
+    setIsExtractingText(false);
+  };
+
    const onFormSubmit = async (data: any) => {
     if (!adminUserId) {
       toast({ variant: "destructive", title: "Authentication Error", description: "Could not identify the logged-in administrator. Please log out and back in." });
@@ -281,6 +299,10 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
                         {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
                         Scan &amp; Fill Fields
+                    </Button>
+                     <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
+                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
+                        Get Raw Text
                     </Button>
                 </div>
                 {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center py-4"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning image...</div>}

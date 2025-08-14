@@ -35,15 +35,13 @@ const extractDetailsFromTextFlow = ai.defineFlow(
         prompt: [
             { text: `You are an expert financial assistant specializing in parsing text from payment receipts. Analyze the provided block of raw text, which was extracted via OCR from a payment screenshot. Your task is to carefully extract the following details. Be precise. If a field is not present in the text, omit it entirely from the output. The text might have OCR errors, so be robust in your parsing.
 
-            First, try to identify the payment app used (PhonePe, GPay, Paytm, etc.). Then apply the specific rules for that app and populate the app-specific fields.
+            **Primary Goal: Find UPI IDs. A UPI ID is any string containing an '@' symbol (e.g., username@okaxis).**
 
             **PhonePe Rules:**
             - The app is likely PhonePe if you see "पे" at the top or "PhonePe" text.
-            - The sender's name is under the "Paid from" or "Debited from" section. Use this for 'phonePeSenderName'.
+            - The sender's name is under the "Paid from" or "Debited from" section. Use this for 'phonePeSenderName'. **The sender UPI is almost never shown on PhonePe receipts.** Do not guess it.
             - The recipient's name is under the "To" or "Paid to" section. Use this for 'phonePeRecipientName'.
-            - The recipient's UPI ID is often on the line directly below their name.
-            - The UTR number is labeled "UTR:" and is found under the "Debited from" section. Use this for the 'utrNumber' field.
-            - The main Transaction ID is labeled "Transaction ID".
+            - The recipient's UPI ID is often on the line directly below their name, or next to it. Look for the '@' symbol. The line "Sent to" also indicates the recipient's UPI ID.
 
             **Google Pay (GPay) Rules:**
             - Look for "From:" and "To:" labels to identify sender and recipient blocks.
@@ -68,11 +66,11 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - time: The time of the transaction (e.g., "11:48 am").
             - paymentMethod: The method used, like "UPI" or "Bank Transfer".
             - senderName: The generic sender name. If possible, prefer the app-specific name.
-            - senderUpiId: The sender's UPI ID.
+            - senderUpiId: The sender's UPI ID (contains '@').
             - senderAccountNumber: The sender's bank account number, even if partial.
             - recipientName: The generic recipient name. If possible, prefer the app-specific name.
             - recipientPhone: The recipient's phone number if it is shown near their name.
-            - recipientUpiId: The recipient's UPI ID.
+            - recipientUpiId: The recipient's UPI ID (contains '@').
             - recipientAccountNumber: The recipient's bank account number, even if partial.
             - status: The transaction status (e.g., Successful, Completed).
             - notes: Any user-added comments, remarks, or descriptions.
