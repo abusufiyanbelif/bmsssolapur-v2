@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getUser, User } from '@/services/user-service';
-import { Loader2, AlertCircle, Edit, X, Save } from 'lucide-react';
+import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { handleUpdateProfile } from '../actions';
@@ -35,6 +36,7 @@ const profileFormSchema = z.object({
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
+  upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -52,7 +54,8 @@ export default function ProfileSettingsPage() {
         resolver: zodResolver(profileFormSchema),
     });
 
-    const { formState: { isDirty } } = form;
+    const { formState: { isDirty }, control, reset } = form;
+    const { fields, append, remove } = useFieldArray({ control, name: "upiIds" });
 
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
@@ -70,27 +73,28 @@ export default function ProfileSettingsPage() {
             setLoading(true);
             const fetchedUser = await getUser(userId);
             if (fetchedUser) {
-            setUser(fetchedUser);
-            form.reset({
-                firstName: fetchedUser.firstName,
-                middleName: fetchedUser.middleName,
-                lastName: fetchedUser.lastName,
-                phone: fetchedUser.phone,
-                addressLine1: fetchedUser.address?.addressLine1 || '',
-                city: fetchedUser.address?.city || '',
-                state: fetchedUser.address?.state || '',
-                country: fetchedUser.address?.country || '',
-                pincode: fetchedUser.address?.pincode || '',
-                gender: fetchedUser.gender || 'Other',
-                beneficiaryType: fetchedUser.beneficiaryType,
-                occupation: fetchedUser.occupation || '',
-                familyMembers: fetchedUser.familyMembers || 0,
-                isWidow: fetchedUser.isWidow || false,
-                panNumber: fetchedUser.panNumber || '',
-                aadhaarNumber: fetchedUser.aadhaarNumber || '',
-            });
+                setUser(fetchedUser);
+                reset({
+                    firstName: fetchedUser.firstName,
+                    middleName: fetchedUser.middleName || '',
+                    lastName: fetchedUser.lastName,
+                    phone: fetchedUser.phone,
+                    addressLine1: fetchedUser.address?.addressLine1 || '',
+                    city: fetchedUser.address?.city || '',
+                    state: fetchedUser.address?.state || '',
+                    country: fetchedUser.address?.country || '',
+                    pincode: fetchedUser.address?.pincode || '',
+                    gender: fetchedUser.gender || 'Other',
+                    beneficiaryType: fetchedUser.beneficiaryType,
+                    occupation: fetchedUser.occupation || '',
+                    familyMembers: fetchedUser.familyMembers || 0,
+                    isWidow: fetchedUser.isWidow || false,
+                    panNumber: fetchedUser.panNumber || '',
+                    aadhaarNumber: fetchedUser.aadhaarNumber || '',
+                    upiIds: fetchedUser.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
+                });
             } else {
-            setError("User not found.");
+                setError("User not found.");
             }
         } catch (e) {
             setError("Failed to load user profile.");
@@ -103,16 +107,19 @@ export default function ProfileSettingsPage() {
         if (userId) {
             fetchUser();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId]);
 
 
     async function onSubmit(values: ProfileFormValues) {
         if (!user?.id) return;
         setIsSubmitting(true);
-        const result = await handleUpdateProfile(user.id, {
-            ...values, // Send all form values
-            enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false, // Preserve existing value
-        });
+        const updatePayload = {
+            ...values,
+            upiIds: values.upiIds?.map(item => item.value).filter(Boolean),
+            enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
+        };
+        const result = await handleUpdateProfile(user.id, updatePayload as any);
         
         if (result.success) {
             toast({ variant: "success", title: "Profile Updated", description: "Your changes have been saved." });
@@ -357,7 +364,7 @@ export default function ProfileSettingsPage() {
                             </>
                         )}
 
-                        <h3 className="text-lg font-semibold border-b pb-2">Verification Details</h3>
+                        <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
@@ -385,6 +392,42 @@ export default function ProfileSettingsPage() {
                                     </FormItem>
                                 )}
                             />
+                        </div>
+                         <div className="space-y-4">
+                            <FormLabel>UPI IDs</FormLabel>
+                            {fields.map((field, index) => (
+                                <FormField
+                                control={form.control}
+                                key={field.id}
+                                name={`upiIds.${index}.value`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <div className="flex items-center gap-2">
+                                        <FormControl>
+                                        <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
+                                        </FormControl>
+                                        {isEditing && (
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                        )}
+                                    </div>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                            ))}
+                            {isEditing && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => append({ value: "" })}
+                                >
+                                    <PlusCircle className="mr-2" />
+                                    Add UPI ID
+                                </Button>
+                            )}
                         </div>
                         
                         {isEditing && (
