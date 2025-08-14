@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddDonation } from "./actions";
-import { extractDonationDetails } from '@/ai/flows/extract-donation-details-flow';
+import { scanProof } from '@/ai/text-extraction-actions';
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
@@ -251,18 +251,13 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         // Automatically trigger scan
         setIsScanning(true);
         try {
-            const arrayBuffer = await file.arrayBuffer();
-            const base64 = Buffer.from(arrayBuffer).toString('base64');
-            const mimeType = file.type;
-            const dataUri = `data:${mimeType};base64,${base64}`;
-
-            const scanResult = await extractDonationDetails({ photoDataUri: dataUri });
+            const scanResult = await scanProof(file);
             
-            if (!scanResult) {
-                throw new Error("AI scan did not return any data. The image might be unreadable.");
+            if (!scanResult || !scanResult.success || !scanResult.details) {
+                throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
             }
 
-            for (const [key, value] of Object.entries(scanResult)) {
+            for (const [key, value] of Object.entries(scanResult.details)) {
                 if (value !== undefined && value !== null) {
                     if (key === 'date' && typeof value === 'string') {
                         setValue('donationDate', new Date(value), { shouldValidate: true, shouldDirty: true });

@@ -87,17 +87,11 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
 
     if (result.success && result.details) {
       const queryParams = new URLSearchParams();
-      if(result.details.amount) queryParams.set('amount', result.details.amount.toString());
-      if(result.details.transactionId) queryParams.set('transactionId', result.details.transactionId);
-      if(result.details.notes) queryParams.set('notes', result.details.notes);
-      if(result.details.date) queryParams.set('date', result.details.date);
-      if(result.details.paymentApp) queryParams.set('paymentApp', result.details.paymentApp);
-      
-      // Pass all potential identifiers to the next page
-      if(result.details.donorUpiId) queryParams.set('donorUpiId', result.details.donorUpiId);
-      if(result.details.donorPhone) queryParams.set('donorPhone', result.details.donorPhone);
-      if(result.details.senderName) queryParams.set('donorName', result.details.senderName);
-      if(result.details.senderAccountNumber) queryParams.set('bankAccountNumber', result.details.senderAccountNumber);
+      Object.entries(result.details).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.set(key, String(value));
+        }
+      });
       
       // --- Enhanced User Matching Logic ---
       let user: User | null = null;

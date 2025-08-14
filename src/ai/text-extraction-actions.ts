@@ -47,3 +47,18 @@ export async function scanProof(proofFile: File): Promise<{success: boolean, det
     console.error("All retry attempts failed for scanning transfer proof.");
     return { success: false, error: `After ${MAX_RETRIES} attempts, the service is still unavailable. Please try again later. Last error: ${lastError}` };
 }
+
+export async function getRawTextFromImage(imageFile: File): Promise<{success: boolean, text?: string, error?: string}> {
+    try {
+        const { extractRawText } = await import('@/ai/flows/extract-raw-text-flow');
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = imageFile.type;
+        const dataUri = `data:${mimeType};base64,${base64}`;
+        const result = await extractRawText({ photoDataUri: dataUri });
+        return { success: true, text: result.rawText };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "Failed to extract text from image.";
+        return { success: false, error: error };
+    }
+}
