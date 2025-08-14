@@ -171,53 +171,55 @@ function CampaignsPageContent() {
         return (
              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredCampaigns.map((campaign) => (
-                    <Card key={campaign.id} className="flex flex-col">
-                        <CardHeader>
-                            <div className="flex justify-between items-start gap-4">
+                    <Link key={campaign.id} href={`/admin/campaigns/${campaign.id}/edit`} className="block hover:shadow-lg transition-shadow rounded-lg">
+                        <Card className="flex flex-col h-full">
+                            <CardHeader>
+                                <div className="flex justify-between items-start gap-4">
+                                    <div>
+                                        <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                                        <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
+                                    </div>
+                                    <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
+                                        {campaign.status}
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4 flex-grow">
                                 <div>
-                                    <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                                    <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
+                                    <div className="text-xs text-muted-foreground flex justify-between mb-1">
+                                        <span>
+                                            Raised: <span className="font-semibold text-foreground">₹{campaign.raisedAmount.toLocaleString()}</span>
+                                        </span>
+                                        <span>
+                                            Goal: ₹{campaign.goal.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <Progress value={campaign.fundingProgress} />
                                 </div>
-                                 <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
-                                    {campaign.status}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4 flex-grow">
-                             <div>
-                                <div className="text-xs text-muted-foreground flex justify-between mb-1">
-                                    <span>
-                                        Raised: <span className="font-semibold text-foreground">₹{campaign.raisedAmount.toLocaleString()}</span>
-                                    </span>
-                                    <span>
-                                        Goal: ₹{campaign.goal.toLocaleString()}
-                                    </span>
-                                </div>
-                                <Progress value={campaign.fundingProgress} />
-                            </div>
 
-                             <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
-                                <div>
-                                    <p className="font-bold text-lg">{campaign.leadCount}</p>
-                                    <p className="text-xs text-muted-foreground">Linked Leads</p>
+                                <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
+                                    <div>
+                                        <p className="font-bold text-lg">{campaign.leadCount}</p>
+                                        <p className="text-xs text-muted-foreground">Linked Leads</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-lg">{campaign.beneficiaryCount}</p>
+                                        <p className="text-xs text-muted-foreground">Beneficiaries</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-lg text-green-600">{campaign.statusCounts.Closed || 0}</p>
+                                        <p className="text-xs text-muted-foreground">Cases Closed</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-bold text-lg">{campaign.beneficiaryCount}</p>
-                                    <p className="text-xs text-muted-foreground">Beneficiaries</p>
+                            </CardContent>
+                            <CardFooter className="flex justify-between items-center bg-muted/50 p-4">
+                                <div className="text-xs text-muted-foreground">
+                                    <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
                                 </div>
-                                <div>
-                                    <p className="font-bold text-lg text-green-600">{campaign.statusCounts.Closed || 0}</p>
-                                    <p className="text-xs text-muted-foreground">Cases Closed</p>
-                                </div>
-                             </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-between items-center bg-muted/50 p-4">
-                             <div className="text-xs text-muted-foreground">
-                                <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
-                             </div>
-                             {renderActions(campaign)}
-                        </CardFooter>
-                    </Card>
+                                {renderActions(campaign)}
+                            </CardFooter>
+                        </Card>
+                    </Link>
                 ))}
             </div>
         );
