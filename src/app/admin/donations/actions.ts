@@ -1,7 +1,7 @@
 // src/app/admin/donations/actions.ts
 "use server";
 
-import { deleteDonation, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService, getDonation, allocateDonationToLeads } from "@/services/donation-service";
+import { deleteDonation as deleteDonationService, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService, getDonation, allocateDonationToLeads } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
@@ -14,7 +14,7 @@ export async function handleDeleteDonation(donationId: string, adminUserId: stri
     try {
         const adminUser = await getUser(adminUserId);
         if (!adminUser) return { success: false, error: "Admin user not found." };
-        await deleteDonation(donationId, adminUser);
+        await deleteDonationService(donationId, adminUser);
         revalidatePath("/admin/donations");
         return { success: true };
     } catch (e) {

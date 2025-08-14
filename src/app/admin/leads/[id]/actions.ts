@@ -2,7 +2,7 @@
 
 "use server";
 
-import { deleteLead, getLead, updateLead } from "@/services/lead-service";
+import { deleteLead as deleteLeadService, getLead, updateLead } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
@@ -19,9 +19,11 @@ async function handleFileUpload(file: File): Promise<string> {
     return `https://placehold.co/600x400.png?text=verification-doc-placeholder`;
 }
 
-export async function handleDeleteLead(leadId: string) {
+export async function handleDeleteLead(leadId: string, adminUserId: string) {
     try {
-        await deleteLead(leadId);
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
+        await deleteLeadService(leadId, adminUser);
         revalidatePath("/admin/leads");
         return { success: true };
     } catch (e) {
@@ -30,14 +32,26 @@ export async function handleDeleteLead(leadId: string) {
     }
 }
 
-export async function handleBulkDeleteLeads(leadIds: string[]) {
+export async function handleBulkDeleteLeads(leadIds: string[], adminUserId: string) {
     try {
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
         const batch = writeBatch(db);
+        const logPromises: Promise<void>[] = [];
+
         for (const id of leadIds) {
             const leadDocRef = doc(db, "leads", id);
             batch.delete(leadDocRef);
+             logPromises.push(logActivity({
+                userId: adminUser.id!,
+                userName: adminUser.name,
+                userEmail: adminUser.email,
+                role: 'Admin',
+                activity: 'Lead Deleted',
+                details: { leadId: id, details: `Part of bulk delete operation.` },
+            }));
         }
-        await batch.commit();
+        await Promise.all([batch.commit(), ...logPromises]);
         revalidatePath("/admin/leads");
         return { success: true };
     } catch (e) {

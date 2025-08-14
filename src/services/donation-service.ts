@@ -1,4 +1,3 @@
-
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -275,8 +274,9 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
          if (error instanceof Error && error.message.includes('requires an index')) {
             const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'donorId' in the 'donations' collection. Full error: ${error.message}`;
             console.error(detailedError);
+            return []; // Return empty array to prevent crash
         }
-        return [];
+        return []; // Return empty array on other errors
     }
 }
 
@@ -306,8 +306,9 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
         console.error("Error fetching campaign donations:", error);
         if (error instanceof Error && error.message.includes('index')) {
              console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'campaignId' (ascending) and 'donationDate' (descending).");
+             return []; // Return empty array to prevent crash
         }
-        return [];
+        return []; // Return empty array on other errors
     }
 };
 

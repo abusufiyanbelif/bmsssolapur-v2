@@ -154,10 +154,26 @@ export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 
 };
 
 // Function to delete a lead
-export const deleteLead = async (id: string) => {
+export const deleteLead = async (id: string, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
     if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
+        const leadToDelete = await getLead(id);
+        if (!leadToDelete) throw new Error("Lead to delete not found.");
+
         await deleteDoc(doc(db, LEADS_COLLECTION, id));
+        
+         await logActivity({
+            userId: adminUser.id!,
+            userName: adminUser.name,
+            userEmail: adminUser.email,
+            role: 'Admin',
+            activity: 'Lead Deleted',
+            details: { 
+                leadId: id, 
+                leadName: leadToDelete.name,
+                amount: leadToDelete.helpRequested,
+            },
+        });
     } catch (error) {
         console.error("Error deleting lead: ", error);
         throw new Error('Failed to delete lead.');
@@ -334,5 +350,3 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         throw new Error('Failed to get open beneficiary leads.');
     }
 }
-
-    

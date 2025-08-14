@@ -7,6 +7,7 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 import { handleDeleteLead } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 interface DeleteLeadButtonProps {
     leadId: string;
@@ -16,6 +17,12 @@ interface DeleteLeadButtonProps {
 export function DeleteLeadButton({ leadId, leadName }: DeleteLeadButtonProps) {
     const { toast } = useToast();
     const router = useRouter();
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const storedAdminId = localStorage.getItem('userId');
+        setAdminUserId(storedAdminId);
+    }, []);
 
     const onSuccess = () => {
         toast({
@@ -29,7 +36,12 @@ export function DeleteLeadButton({ leadId, leadName }: DeleteLeadButtonProps) {
         <DeleteConfirmationDialog
             itemType="lead"
             itemName={leadName}
-            onDelete={() => handleDeleteLead(leadId)}
+            onDelete={async () => {
+                if (!adminUserId) {
+                    return { success: false, error: "Could not identify administrator." };
+                }
+                return await handleDeleteLead(leadId, adminUserId)
+            }}
             onSuccess={onSuccess}
         >
             <Button variant="destructive">

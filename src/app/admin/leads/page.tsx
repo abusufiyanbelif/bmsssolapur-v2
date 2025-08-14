@@ -643,7 +643,7 @@ function LeadsPageContent() {
 
         return (
             <>
-                 {selectedLeads.length > 0 && (
+                 {selectedLeads.length > 0 && adminUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedLeads.length} item(s) selected.
@@ -651,7 +651,7 @@ function LeadsPageContent() {
                          <DeleteConfirmationDialog
                             itemType={`${selectedLeads.length} lead(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteLeads(selectedLeads)}
+                            onDelete={() => handleBulkDeleteLeads(selectedLeads, adminUserId)}
                             onSuccess={onBulkLeadDeleted}
                         >
                             <Button variant="destructive">
@@ -761,5 +761,3 @@ export default function LeadsPage() {
         </Suspense>
     )
 }
-
-    

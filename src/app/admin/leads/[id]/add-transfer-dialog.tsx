@@ -19,11 +19,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect } from "lucide-react";
-import { handleFundTransfer, handleScanTransferProof, handleGetRawText, handleExtractDetailsFromText } from "./actions";
+import { handleFundTransfer, handleScanTransferProof } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 import Image from "next/image";
+import { FormDescription } from "@/components/ui/form";
+
 
 interface AddTransferDialogProps {
   leadId: string;
@@ -98,43 +100,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     setIsScanning(false);
   };
   
-   const handleExtractText = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file to extract text from.' });
-      return;
-    }
-    
-    setIsExtractingText(true);
-    setRawText(null);
-    setScannedDetails(null); // Clear previous structured scan
-    const formData = new FormData();
-    formData.append("proof", file);
-    
-    const textResult = await handleGetRawText(formData);
-    
-    if (textResult.success && textResult.text) {
-        setRawText(textResult.text);
-        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available. Now attempting to fill empty fields.' });
-
-        // Now, try to parse the raw text to fill in any gaps
-        const parseResult = await handleExtractDetailsFromText(textResult.text);
-        if (parseResult.success && parseResult.details) {
-            // Iterate and set only the fields that are currently empty
-            for (const [key, value] of Object.entries(parseResult.details)) {
-                if (value !== undefined && value !== null && !getValues(key)) {
-                    setValue(key as any, value);
-                }
-            }
-            toast({ variant: 'default', title: 'Form Fields Updated', description: 'Empty fields have been populated from the extracted text.' });
-        }
-
-    } else {
-        toast({ variant: 'destructive', title: 'Text Extraction Failed', description: textResult.error || 'Could not extract text from the image.' });
-    }
-    setIsExtractingText(false);
-  };
-  
-  const onFormSubmit = async (data: any) => {
+   const onFormSubmit = async (data: any) => {
     if (!adminUserId) {
       toast({ variant: "destructive", title: "Authentication Error", description: "Could not identify the logged-in administrator. Please log out and back in." });
       return;
@@ -285,10 +251,6 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     </div>
                 )}
                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
-                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
-                        Get Text
-                    </Button>
                     <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
                         {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
                         Scan &amp; Fill Fields
@@ -328,5 +290,3 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     </Dialog>
   );
 }
-
-    
