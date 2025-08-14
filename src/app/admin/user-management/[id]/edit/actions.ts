@@ -131,6 +131,8 @@ export async function handleUpdateUser(
     revalidatePath("/admin/user-management");
     revalidatePath(`/admin/user-management/${userId}/edit`);
     revalidatePath("/admin/beneficiaries");
+    revalidatePath("/admin/donors");
+    revalidatePath("/admin/referrals");
 
 
     return {

@@ -99,6 +99,8 @@ export async function handleAddUser(
     
     revalidatePath("/admin/user-management");
     revalidatePath("/admin/beneficiaries");
+    revalidatePath("/admin/donors");
+    revalidatePath("/admin/referrals");
 
 
     return {

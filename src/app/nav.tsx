@@ -8,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -113,8 +113,9 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Super Admin"],
         subItems: [
             { href: "/admin/user-management", label: "All Users", icon: Users },
-            { href: "/admin/donors", label: "All Donors", icon: Home },
-            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users },
+            { href: "/admin/donors", label: "All Donors", icon: HandHeart },
+            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: UsersIcon },
+            { href: "/admin/referrals", label: "All Referrals", icon: UserSearch },
             { href: "/admin/user-management/configuration", label: "Configuration", icon: UserCog },
         ]
     },
