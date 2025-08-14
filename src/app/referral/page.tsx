@@ -5,18 +5,63 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, Users, Loader2, AlertCircle, FileText } from "lucide-react";
+import { ArrowRight, HandHeart, Users, Loader2, AlertCircle, FileText, Quote as QuoteIcon } from "lucide-react";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import type { User, Lead } from "@/services/types";
+import type { User, Lead, Quote } from "@/services/types";
 import { getReferredBeneficiaries, getUser } from "@/services/user-service";
+import { getRandomQuotes } from "@/services/quotes-service";
+
+function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+    if (loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <QuoteIcon className="text-primary" />
+                        Wisdom & Reflection
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (quotes.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <QuoteIcon className="text-primary" />
+                    Wisdom & Reflection
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {quotes.map((quote, index) => (
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                            <p>"{quote.text}"</p>
+                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                        </blockquote>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function ReferralDashboardPage() {
     const [user, setUser] = useState<User | null>(null);
     const [referredBeneficiaries, setReferredBeneficiaries] = useState<User[]>([]);
     const [referredLeads, setReferredLeads] = useState<Lead[]>([]);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -31,9 +76,10 @@ export default function ReferralDashboardPage() {
             }
             
             try {
-                const [fetchedUser, fetchedBeneficiaries] = await Promise.all([
+                const [fetchedUser, fetchedBeneficiaries, randomQuotes] = await Promise.all([
                     getUser(storedUserId),
-                    getReferredBeneficiaries(storedUserId)
+                    getReferredBeneficiaries(storedUserId),
+                    getRandomQuotes(3)
                 ]);
 
                 if (!fetchedUser || !fetchedUser.roles.includes('Referral')) {
@@ -44,6 +90,7 @@ export default function ReferralDashboardPage() {
                 
                 setUser(fetchedUser);
                 setReferredBeneficiaries(fetchedBeneficiaries);
+                setQuotes(randomQuotes);
                 
                 // Fetch leads for all referred beneficiaries
                 if (fetchedBeneficiaries.length > 0) {
@@ -96,6 +143,8 @@ export default function ReferralDashboardPage() {
                     Welcome, {user.name}. Manage the beneficiaries you have referred.
                 </p>
             </div>
+            
+            <InspirationalQuotes quotes={quotes} loading={loading} />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>

@@ -160,24 +160,23 @@ function PublicHomePage() {
   return (
     <div className="flex-1 space-y-8">
       {/* Hero Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="text-center shadow-lg bg-primary/5 lg:col-span-2">
-            <CardHeader>
-            <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Your small help can make a large impact.</CardTitle>
-            <CardDescription className="max-w-2xl mx-auto text-lg text-muted-foreground pt-2">
-                Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
-            </CardDescription>
-            </CardHeader>
-            <CardContent>
-            <div className="flex justify-center gap-4">
-                <Button size="lg" onClick={handleDonateClick}>
-                Donate Now <HandHeart className="ml-2" />
-                </Button>
-            </div>
-            </CardContent>
-        </Card>
-        <InspirationalQuotes quotes={quotes} loading={loading} />
-      </div>
+      <Card className="text-center shadow-lg bg-primary/5">
+        <CardHeader>
+        <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Your small help can make a large impact.</CardTitle>
+        <CardDescription className="max-w-2xl mx-auto text-lg text-muted-foreground pt-2">
+            Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
+        </CardDescription>
+        </CardHeader>
+        <CardContent>
+        <div className="flex justify-center gap-4">
+            <Button size="lg" onClick={handleDonateClick}>
+            Donate Now <HandHeart className="ml-2" />
+            </Button>
+        </div>
+        </CardContent>
+      </Card>
+      
+      <InspirationalQuotes quotes={quotes} loading={loading} />
 
       {/* Impact Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
