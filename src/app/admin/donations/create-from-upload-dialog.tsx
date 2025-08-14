@@ -31,7 +31,7 @@ import { Loader2, Upload, ScanEye, Edit, X, UserPlus, AlertTriangle } from "luci
 import { handleScanDonationProof } from "./actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getUserByPhone, getUserByUpiId, getUserByUserId, getUserByBankAccountNumber } from "@/services/user-service";
+import { getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import type { User } from "@/services/types";
 
 interface CreateFromUploadDialogProps {
