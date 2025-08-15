@@ -108,25 +108,22 @@ function PublicHomePage() {
   const {
     totalRaised,
     totalDistributed,
-    pendingToDisburse,
     beneficiariesHelpedCount,
     casesClosed,
     casesPublished
   } = useMemo(() => {
     const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
     const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
-    const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
     const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
     const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
     const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
     const casesPublished = allLeads.filter(l => l.status === 'Publish').length;
-    return { totalRaised, totalDistributed, pendingToDisburse, beneficiariesHelpedCount, casesClosed, casesPublished };
+    return { totalRaised, totalDistributed, beneficiariesHelpedCount, casesClosed, casesPublished };
   }, [allDonations, allLeads]);
 
   const mainMetrics = [
     { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/public-leads" },
     { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/public-leads" },
-    { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, href: "/public-leads" },
     { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, href: "/public-leads" },
     { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
     { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, href: "/public-leads" },
@@ -287,3 +284,5 @@ function PublicHomePage() {
 }
 
 export default PublicHomePage;
+
+    
