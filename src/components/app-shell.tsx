@@ -230,6 +230,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                            )}
                         </SheetContent>
                     </Sheet>
+                    <div className="hidden md:block">
+                        <HeaderTitle />
+                    </div>
                      <div className="w-full flex-1 flex justify-end items-center gap-4">
                         {user.isLoggedIn ? (
                             <>
