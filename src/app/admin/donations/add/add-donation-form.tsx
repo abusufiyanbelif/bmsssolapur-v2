@@ -308,29 +308,31 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
             }
 
-            for (const [key, value] of Object.entries(scanResult.details)) {
-                if (value !== undefined && value !== null) {
+            const details = scanResult.details;
+            // Set all fields from the scan result
+            for (const [key, value] of Object.entries(details)) {
+                if (value !== undefined && value !== null && key !== 'rawText') {
                     if (key === 'date' && typeof value === 'string') {
-                        setValue('donationDate', new Date(value), { shouldValidate: true, shouldDirty: true });
-                    } else if (key === 'senderUpiId') { // Explicitly map senderUpiId to donorUpiId
-                        setValue('donorUpiId', String(value), { shouldValidate: true, shouldDirty: true });
-                    } else if (key === 'paymentApp' && String(value).toLowerCase().includes('g pay')) {
-                        setValue('paymentApp', 'Google Pay', { shouldValidate: true, shouldDirty: true });
-                    } else if (key === 'paymentMethod' && String(value).toLowerCase() === 'upi') {
-                        setValue('paymentMethod', 'Online (UPI/Card)', { shouldValidate: true, shouldDirty: true });
-                    } else if (key !== 'rawText') { // Don't try to set rawText on the form
-                        setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
+                        setValue('donationDate', new Date(value));
+                    } else if (key === 'senderUpiId') {
+                        setValue('donorUpiId', String(value));
+                    } else {
+                        setValue(key as any, value);
                     }
                 }
             }
-            
-            const detectedApp = scanResult.details.paymentApp;
-            if (detectedApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(detectedApp)) {
-                setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+
+            // Explicitly map payment app and method
+            if (details.paymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(details.paymentApp)) {
+                setValue('paymentApp', details.paymentApp as any);
+                setValue('paymentMethod', 'Online (UPI/Card)');
+            } else if (details.paymentMethod === 'UPI') {
+                 setValue('paymentMethod', 'Online (UPI/Card)');
             }
 
-            if (scanResult.details.rawText) {
-                setRawText(scanResult.details.rawText);
+
+            if (details.rawText) {
+                setRawText(details.rawText);
             }
             toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
         }
