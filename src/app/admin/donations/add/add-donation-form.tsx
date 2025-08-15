@@ -29,7 +29,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getUser } from "@/services/user-service";
+import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -311,32 +311,49 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         const details = scanResult.details;
         
         // --- Start of Corrected Logic ---
-
+        
         // 1. Handle special mapping for payment app and method first.
         let finalPaymentApp = details.paymentApp;
         if (details.paymentApp === "G Pay") finalPaymentApp = "Google Pay";
         
         if (finalPaymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(finalPaymentApp)) {
-            setValue('paymentApp', finalPaymentApp as any);
-            setValue('paymentMethod', 'Online (UPI/Card)');
+            setValue('paymentApp', finalPaymentApp as any, { shouldDirty: true });
+            setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
         } else if (details.paymentMethod === 'UPI') {
-            setValue('paymentMethod', 'Online (UPI/Card)');
-        } else if (details.paymentMethod) {
-            setValue('paymentMethod', details.paymentMethod as any);
+            setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
         }
 
-        // 2. Iterate and set all other fields, skipping the ones we just handled.
+        // 2. Iterate and set all other fields, skipping the ones we already handled.
         for (const [key, value] of Object.entries(details)) {
           if (value === undefined || value === null || key === 'rawText' || key === 'paymentApp' || key === 'paymentMethod') {
-            continue; // Skip null values and fields we already handled
+            continue;
           }
           if (key === 'date' && typeof value === 'string') {
-            setValue('donationDate', new Date(value));
+            setValue('donationDate', new Date(value), { shouldDirty: true });
           } else if (key === 'senderUpiId') {
-            setValue('donorUpiId', String(value));
+            setValue('donorUpiId', String(value), { shouldDirty: true });
           } else {
-            setValue(key as any, value);
+            setValue(key as any, value, { shouldDirty: true });
           }
+        }
+
+        toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
+
+        // 3. Find user after filling fields
+        let foundUser: User | null = null;
+        if (details.senderUpiId) foundUser = await getUserByUpiId(details.senderUpiId);
+        if (!foundUser && details.donorPhone) foundUser = await getUserByPhone(details.donorPhone);
+        if (!foundUser && details.senderAccountNumber) foundUser = await getUserByBankAccountNumber(details.senderAccountNumber);
+
+        if (foundUser) {
+            setSelectedDonor(foundUser);
+            setValue('donorId', foundUser.id!, { shouldDirty: true });
+            toast({
+                variant: 'success',
+                title: 'Donor Found!',
+                description: `Automatically selected existing donor: ${foundUser.name}`,
+                icon: <UserIcon />,
+            });
         }
         
         // --- End of Corrected Logic ---
@@ -344,7 +361,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         if (details.rawText) {
           setRawText(details.rawText);
         }
-        toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
       }
 
     } catch(err) {
@@ -357,7 +373,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       scanAbortController.current = null;
     }
   };
-
 
   const stopScan = () => {
     if (scanAbortController.current) {
