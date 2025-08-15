@@ -3,7 +3,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getActiveCampaigns } from "./actions";
+import { getAllCampaigns } from "./actions";
 import { CampaignList } from "./campaign-list";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import type { Campaign } from "@/services/types";
 
 export default function CampaignsPage() {
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [campaigns, setCampaigns] = useState<(Campaign & { raisedAmount: number; fundingProgress: number; })[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +20,7 @@ export default function CampaignsPage() {
             try {
                 setLoading(true);
                 setError(null);
-                const fetchedCampaigns = await getActiveCampaigns();
+                const fetchedCampaigns = await getAllCampaigns();
                 setCampaigns(fetchedCampaigns);
             } catch (e) {
                 setError("Failed to load campaign data. Please try again later.");
@@ -38,7 +38,7 @@ export default function CampaignsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Our Special Campaigns</CardTitle>
+                    <CardTitle>Our Campaigns</CardTitle>
                     <CardDescription>
                         Browse through our focused fundraising campaigns. Your donation can help us achieve these specific goals.
                     </CardDescription>

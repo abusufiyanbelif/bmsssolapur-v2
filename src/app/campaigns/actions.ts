@@ -7,6 +7,7 @@ import { query, collection, where, getDocs, orderBy, limit } from "firebase/fire
 import { db, isConfigValid } from "@/services/firebase";
 import { getUser } from "@/services/user-service";
 import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-service";
+import { getAllLeads } from "@/services/lead-service";
 
 export interface EnrichedLead extends Lead {
     beneficiary?: User;
@@ -64,22 +65,39 @@ export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
 
 
 /**
- * Fetches all active and upcoming campaigns.
- * @returns An array of Campaign objects.
+ * Fetches all campaigns regardless of status and enriches them with stats.
+ * @returns An array of Campaign objects with `raisedAmount` and `fundingProgress`.
  */
-export async function getActiveCampaigns(): Promise<Campaign[]> {
+export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> {
     if (!isConfigValid) {
-        console.warn("Firebase is not configured. Skipping fetching active campaigns.");
+        console.warn("Firebase not configured. Skipping fetching active campaigns.");
         return [];
     }
     try {
-        const allCampaigns = await getAllCampaignsService();
-        // Filter for campaigns that are not completed or cancelled.
-        return allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming');
+        const [allCampaigns, allLeads] = await Promise.all([
+            getAllCampaignsService(),
+            getAllLeads()
+        ]);
+        
+        // Calculate stats for each campaign
+        const enrichedCampaigns = allCampaigns.map(campaign => {
+            const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
+            const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+            const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+            
+            return {
+                ...campaign,
+                raisedAmount,
+                fundingProgress
+            };
+        });
+
+        return enrichedCampaigns;
     } catch (error) {
-        console.error("Error fetching active campaigns: ", error);
+        console.error("Error fetching all campaigns with stats: ", error);
         return [];
     }
 }
+
 
 
