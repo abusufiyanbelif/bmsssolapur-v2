@@ -67,7 +67,7 @@ const formSchema = z.object({
   isAnonymousAsBeneficiary: z.boolean().default(false),
   isAnonymousAsDonor: z.boolean().default(false),
   gender: z.enum(["Male", "Female", "Other"]),
-  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family"]).optional(),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -711,31 +711,11 @@ function AddUserFormContent() {
                         defaultValue={field.value}
                         className="flex flex-row space-x-4 pt-2"
                         >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="Adult" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Adult</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="Old Age" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Old Age</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="Kid" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Kid</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="Family" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Family</FormLabel>
-                        </FormItem>
-                        </RadioGroup>
+                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
+                        </FormGroup>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -864,7 +844,7 @@ function AddUserFormContent() {
                 onClick={() => append({ value: "" })}
             >
                 <PlusCircle className="mr-2" />
-                Add UPI ID
+                Add another UPI ID
             </Button>
          </div>
         

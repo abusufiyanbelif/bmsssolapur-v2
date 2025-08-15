@@ -62,7 +62,7 @@ export async function handleUpdateUser(
       isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
       isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
       gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
-      beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
+      beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow' | undefined,
       addressLine1: formData.get("addressLine1") as string | undefined,
       city: formData.get("city") as string | undefined,
       state: formData.get("state") as string | undefined,

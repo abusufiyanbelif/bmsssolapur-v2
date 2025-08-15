@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -47,7 +48,7 @@ export interface User {
     pincode?: string;
   };
   gender?: 'Male' | 'Female' | 'Other';
-  beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family';
+  beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow';
   isAnonymousAsBeneficiary?: boolean;
   isAnonymousAsDonor?: boolean;
   anonymousBeneficiaryId?: string;

@@ -163,7 +163,7 @@ const formSchema = z.object({
   isAnonymousAsDonor: z.boolean().default(false),
   isActive: z.boolean().default(true),
   gender: z.enum(["Male", "Female", "Other"]),
-  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family"]).optional(),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -281,11 +281,16 @@ export function EditUserForm({ user }: EditUserFormProps) {
     
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (key === 'upiIds' && Array.isArray(value)) {
+      if (key === 'roles' && Array.isArray(value)) {
+        value.forEach(role => formData.append('roles', role));
+      } else if (key === 'upiIds' && Array.isArray(value)) {
         value.forEach(item => {
-          if (item.value) formData.append(key, item.value)
+          if (item.value) formData.append('upiIds', item.value)
         });
-      } else if (value !== null && value !== undefined) {
+      } else if (key === 'isActive' || key === 'isAnonymousAsBeneficiary' || key === 'isAnonymousAsDonor' || key === 'isWidow') {
+        if (value) formData.append(key, 'on');
+      }
+      else if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     });
@@ -566,32 +571,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             )}
                             />
                     </div>
-                    {selectedGender === 'Female' && selectedRoles.includes('Beneficiary') && (
-                        <FormField
-                            control={form.control}
-                            name="isWidow"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    disabled={!isEditing}
-                                    />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel>
-                                    Is the Beneficiary a Widow?
-                                    </FormLabel>
-                                    <FormDescription>
-                                    Check this box if the user is a widow. This helps in prioritizing cases.
-                                    </FormDescription>
-                                </div>
-                                </FormItem>
-                            )}
-                        />
-                    )}
-
+                    
                     <h3 className="text-lg font-semibold border-b pb-2">Account Settings & Roles</h3>
                     <FormField
                     control={form.control}
@@ -646,29 +626,80 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     />
                     
                     {selectedRoles.includes("Beneficiary") && (
-                        <FormField
-                            control={form.control}
-                            name="isAnonymousAsBeneficiary"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    disabled={!isEditing}
+                        <>
+                            <FormField
+                                control={form.control}
+                                name="isAnonymousAsBeneficiary"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        disabled={!isEditing}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                        Mark as Anonymous Beneficiary
+                                        </FormLabel>
+                                        <FormDescription>
+                                        If checked, their name will be hidden from public view and their Anonymous ID will be used instead.
+                                        </FormDescription>
+                                    </div>
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="beneficiaryType"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                    <FormLabel>Beneficiary Type</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        className="flex flex-row space-x-4 pt-2"
+                                        disabled={!isEditing}
+                                        >
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
+                                            {selectedGender === 'Female' && <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Widow" /></FormControl><FormLabel className="font-normal">Widow</FormLabel></FormItem>}
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                {selectedGender === 'Female' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="isWidow"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={!isEditing}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>
+                                                Is the Beneficiary a Widow?
+                                                </FormLabel>
+                                                <FormDescription>
+                                                Check this box if the user is a widow. This helps in prioritizing cases.
+                                                </FormDescription>
+                                            </div>
+                                            </FormItem>
+                                        )}
                                     />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel>
-                                    Mark as Anonymous Beneficiary
-                                    </FormLabel>
-                                    <FormDescription>
-                                    If checked, their name will be hidden from public view and their Anonymous ID will be used instead.
-                                    </FormDescription>
-                                </div>
-                                </FormItem>
-                            )}
-                        />
+                                )}
+                        </>
                     )}
                     {selectedRoles.includes("Donor") && (
                          <FormField
@@ -708,51 +739,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <Input value={user.anonymousDonorId || "Will be generated on save"} disabled />
                             <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
                         </div>
-                    )}
-                     {selectedRoles.includes("Beneficiary") && (
-                        <FormField
-                            control={form.control}
-                            name="beneficiaryType"
-                            render={({ field }) => (
-                                <FormItem className="space-y-3">
-                                <FormLabel>Beneficiary Type</FormLabel>
-                                <FormControl>
-                                    <RadioGroup
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                    className="flex flex-row space-x-4 pt-2"
-                                    disabled={!isEditing}
-                                    >
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                        <RadioGroupItem value="Adult" />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">Adult</FormLabel>
-                                    </FormItem>
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                        <RadioGroupItem value="Old Age" />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">Old Age</FormLabel>
-                                    </FormItem>
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                        <RadioGroupItem value="Kid" />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">Kid</FormLabel>
-                                    </FormItem>
-                                     <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                        <RadioGroupItem value="Family" />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">Family</FormLabel>
-                                    </FormItem>
-                                    </RadioGroup>
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
                     )}
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
