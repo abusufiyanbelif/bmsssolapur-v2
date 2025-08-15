@@ -45,6 +45,7 @@ import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -54,7 +55,7 @@ const formSchema = z.object({
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
   transactionId: z.string().optional(),
-  paymentApp: z.string().optional(),
+  paymentApp: z.enum(paymentApps).optional(),
   donorUpiId: z.string().optional(),
   donorPhone: z.string().optional(),
   donorBankAccount: z.string().optional(),
@@ -161,6 +162,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         purpose: undefined,
         type: undefined,
         paymentMethod: undefined,
+        paymentApp: undefined,
         donorUpiId: '',
         donorPhone: '',
         donorBankAccount: '',
@@ -298,7 +300,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     try {
         const formData = new FormData();
         formData.append('proofFile', file);
-        const scanResult = await scanProof(formData); // Assume scanProof is updated to handle abort signals if possible
+        const scanResult = await scanProof(formData);
         
         if (!scanAbortController.current.signal.aborted) {
             if (!scanResult || !scanResult.success || !scanResult.details) {
@@ -309,6 +311,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 if (value !== undefined && value !== null) {
                     if (key === 'date' && typeof value === 'string') {
                         setValue('donationDate', new Date(value), { shouldValidate: true, shouldDirty: true });
+                    } else if (key === 'senderUpiId') { // Explicitly map senderUpiId to donorUpiId
+                        setValue('donorUpiId', String(value), { shouldValidate: true, shouldDirty: true });
                     } else if (key !== 'rawText') { // Don't try to set rawText on the form
                         setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
                     }
@@ -750,18 +754,40 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 />
                  <FormField
                     control={form.control}
-                    name="transactionId"
+                    name="paymentApp"
                     render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Transaction ID (Optional)</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Enter reference number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                        <FormItem>
+                            <FormLabel>Payment App</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select payment app" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {paymentApps.map(app => (
+                                <SelectItem key={app} value={app}>{app}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
                     )}
                 />
             </div>
+             <FormField
+                control={form.control}
+                name="transactionId"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Transaction ID (Optional)</FormLabel>
+                    <FormControl>
+                    <Input placeholder="Enter reference number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
             
             <h4 className="font-semibold text-lg border-b pb-2">Sender & Recipient Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
