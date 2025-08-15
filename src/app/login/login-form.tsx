@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -108,7 +109,7 @@ export function LoginForm() {
         } else {
             toast({
                 variant: "destructive",
-                title: "Login Failed",
+                title: "OTP Login Failed",
                 description: result.error || "An unknown error occurred.",
             });
         }

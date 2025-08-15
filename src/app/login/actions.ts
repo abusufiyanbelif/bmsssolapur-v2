@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
@@ -41,18 +42,17 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         }
         
         if (!user) {
-            return { success: false, error: "User not found with the provided details." };
+            return { success: false, error: "User not found. Please check your User ID, email, or phone number." };
+        }
+
+        // Check if the account is active. Super Admins can always log in.
+        if (!user.isActive && !user.roles.includes('Super Admin')) {
+            return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
 
         // Check the stored password.
         if (password !== user.password) {
-            return { success: false, error: "Invalid credentials." };
-        }
-
-
-        // All Super Admins should always be treated as active to prevent lockouts.
-        if (!user.isActive && !user.roles.includes('Super Admin')) {
-            return { success: false, error: "This user account is inactive. Please contact an administrator." };
+            return { success: false, error: "Incorrect password. Please try again." };
         }
         
         const primaryRole = user.roles[0];
@@ -85,8 +85,9 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
         // Basic validation: Check if user exists with the 10-digit number before sending OTP
         const user = await getUserByPhone(phoneNumber); 
         if (!user) {
-            return { success: false, error: "No user found with this phone number." };
+            return { success: false, error: "No user found with this phone number. Please register first or try a different number." };
         }
+        
         // All Super Admins should always be treated as active.
          if (!user.isActive && !user.roles.includes('Super Admin')) {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
@@ -115,18 +116,18 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
     }
 
     try {
+        // Find user by the plain 10-digit phone number first
+        const user = await getUserByPhone(phoneNumber); 
+        if (!user) {
+             return { success: false, error: "User with this phone number not found." };
+        }
+
         // Add country code only when verifying with the external service
         const fullPhoneNumber = `+91${phoneNumber}`;
         const verificationResult = await verifyOtp({ phoneNumber: fullPhoneNumber, code });
         
         if (!verificationResult.success) {
-            return { success: false, error: verificationResult.error || "Invalid OTP." };
-        }
-        
-        // Find user by the plain 10-digit phone number
-        const user = await getUserByPhone(phoneNumber); 
-        if (!user) {
-             return { success: false, error: "User with this phone number not found." };
+            return { success: false, error: verificationResult.error || "Invalid OTP code. Please try again." };
         }
         
         const primaryRole = user.roles[0];
