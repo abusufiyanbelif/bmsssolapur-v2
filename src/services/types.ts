@@ -116,6 +116,8 @@ export interface Donation {
   googlePayRecipientName?: string;
   paytmSenderName?: string;
   paytmRecipientName?: string;
+  recipientId?: string;
+  recipientRole?: 'Beneficiary' | 'Referral';
   recipientPhone?: string;
   recipientUpiId?: string;
   recipientAccountNumber?: string;

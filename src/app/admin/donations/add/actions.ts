@@ -5,7 +5,7 @@
 import { createDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Donation, DonationPurpose, DonationType, PaymentMethod } from "@/services/types";
+import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 
 interface FormState {
@@ -91,6 +91,8 @@ export async function handleAddDonation(
         googlePayRecipientName: formData.get("googlePayRecipientName") as string | undefined,
         paytmSenderName: formData.get("paytmSenderName") as string | undefined,
         paytmRecipientName: formData.get("paytmRecipientName") as string | undefined,
+        recipientId: formData.get("recipientId") as string | undefined,
+        recipientRole: formData.get("recipientRole") as 'Beneficiary' | 'Referral' | undefined,
         recipientPhone: formData.get("recipientPhone") as string | undefined,
         recipientUpiId: formData.get("recipientUpiId") as string | undefined,
         recipientAccountNumber: formData.get("recipientAccountNumber") as string | undefined,

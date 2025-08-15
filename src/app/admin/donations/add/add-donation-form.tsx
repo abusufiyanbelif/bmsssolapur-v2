@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
@@ -40,15 +40,19 @@ import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddDonation } from "./actions";
 import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
+const recipientRoles = ['Beneficiary', 'Referral'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
+  recipientId: z.string().optional(),
+  recipientRole: z.enum(recipientRoles).optional(),
   isAnonymous: z.boolean().default(false),
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
   donationDate: z.date(),
@@ -107,10 +111,12 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
+  const [selectedRecipient, setSelectedRecipient] = useState<User | null>(null);
   const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
+  const [recipientPopoverOpen, setRecipientPopoverOpen] = useState(false);
   const scanAbortController = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -149,6 +155,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const tipAmount = watch("tipAmount");
   const isAnonymous = watch("isAnonymous");
   const paymentApp = watch("paymentApp");
+  const recipientRole = watch("recipientRole");
+
+  const recipientUsers = users.filter(u => recipientRole && u.roles.includes(recipientRole));
 
   const clearForm = () => {
     reset({
@@ -169,11 +178,14 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         donorBankAccount: '',
         paymentScreenshots: [],
         paymentScreenshotDataUrl: undefined,
+        recipientId: '',
+        recipientRole: undefined,
     });
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
     setSelectedDonor(null);
+    setSelectedRecipient(null);
     setManualScreenshotPreview(null);
     setLocalFiles([]);
     setRawText(null);
@@ -310,28 +322,25 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
 
         const details = scanResult.details;
         
-        // --- Start of Corrected Logic ---
-        
-        // 1. Handle special mapping for payment app and method first.
         let finalPaymentApp = details.paymentApp;
-        if (details.paymentApp === "G Pay") finalPaymentApp = "Google Pay";
+        if (finalPaymentApp === "G Pay") finalPaymentApp = "Google Pay";
         
         if (finalPaymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(finalPaymentApp)) {
             setValue('paymentApp', finalPaymentApp as any, { shouldDirty: true });
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
         } else if (details.paymentMethod === 'UPI') {
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+        } else if (details.paymentMethod) {
+            setValue('paymentMethod', details.paymentMethod as any, { shouldDirty: true });
         }
-
-        // 2. Iterate and set all other fields, skipping the ones we already handled.
+        
+        // Iterate and set all other fields
         for (const [key, value] of Object.entries(details)) {
           if (value === undefined || value === null || key === 'rawText' || key === 'paymentApp' || key === 'paymentMethod') {
             continue;
           }
           if (key === 'date' && typeof value === 'string') {
             setValue('donationDate', new Date(value), { shouldDirty: true });
-          } else if (key === 'senderUpiId') {
-            setValue('donorUpiId', String(value), { shouldDirty: true });
           } else {
             setValue(key as any, value, { shouldDirty: true });
           }
@@ -339,24 +348,44 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
 
         toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
 
-        // 3. Find user after filling fields
-        let foundUser: User | null = null;
-        if (details.senderUpiId) foundUser = await getUserByUpiId(details.senderUpiId);
-        if (!foundUser && details.donorPhone) foundUser = await getUserByPhone(details.donorPhone);
-        if (!foundUser && details.senderAccountNumber) foundUser = await getUserByBankAccountNumber(details.senderAccountNumber);
+        // Find DONOR
+        let foundDonor: User | null = null;
+        if (details.senderUpiId) foundDonor = await getUserByUpiId(details.senderUpiId);
+        if (!foundDonor && details.donorPhone) foundDonor = await getUserByPhone(details.donorPhone);
+        if (!foundDonor && details.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(details.senderAccountNumber);
 
-        if (foundUser) {
-            setSelectedDonor(foundUser);
-            setValue('donorId', foundUser.id!, { shouldDirty: true });
+        if (foundDonor) {
+            setSelectedDonor(foundDonor);
+            setValue('donorId', foundDonor.id!, { shouldDirty: true });
             toast({
                 variant: 'success',
                 title: 'Donor Found!',
-                description: `Automatically selected existing donor: ${foundUser.name}`,
+                description: `Automatically selected existing donor: ${foundDonor.name}`,
                 icon: <UserIcon />,
             });
         }
         
-        // --- End of Corrected Logic ---
+        // Find RECIPIENT
+        let foundRecipient: User | null = null;
+        if (details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
+        if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
+        if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
+
+        if (foundRecipient) {
+             const suitableRole = foundRecipient.roles.includes('Beneficiary') ? 'Beneficiary' : foundRecipient.roles.includes('Referral') ? 'Referral' : undefined;
+             if (suitableRole) {
+                setValue('recipientRole', suitableRole);
+                setValue('recipientId', foundRecipient.id);
+                setSelectedRecipient(foundRecipient);
+                 toast({
+                    variant: 'success',
+                    title: 'Recipient Found!',
+                    description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
+                    icon: <UserIcon />,
+                });
+             }
+        }
+
 
         if (details.rawText) {
           setRawText(details.rawText);
@@ -548,7 +577,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Donor</FormLabel>
-                       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                       <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -582,7 +611,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                         field.onChange(user.id!);
                                         const donor = await getUser(user.id!);
                                         setSelectedDonor(donor);
-                                        setPopoverOpen(false);
+                                        setDonorPopoverOpen(false);
                                     }}
                                     >
                                     <Check
@@ -617,6 +646,90 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 </div>
              )
            )}
+
+            <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="font-semibold text-lg">Recipient (Optional)</h3>
+                <FormField
+                    control={form.control}
+                    name="recipientRole"
+                    render={({ field }) => (
+                    <FormItem className="space-y-3">
+                        <FormLabel>Recipient Type</FormLabel>
+                        <FormControl>
+                        <RadioGroup
+                            onValueChange={(value: any) => {
+                                field.onChange(value);
+                                setValue('recipientId', undefined);
+                                setSelectedRecipient(null);
+                            }}
+                            value={field.value}
+                            className="flex space-x-4"
+                        >
+                            <FormItem className="flex items-center space-x-2">
+                                <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
+                                <FormLabel className="font-normal">Beneficiary</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2">
+                                <FormControl><RadioGroupItem value="Referral" /></FormControl>
+                                <FormLabel className="font-normal">Referral</FormLabel>
+                            </FormItem>
+                        </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                {recipientRole && (
+                     <FormField
+                        control={form.control}
+                        name="recipientId"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Select {recipientRole}</FormLabel>
+                            <Popover open={recipientPopoverOpen} onOpenChange={setRecipientPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn("w-full justify-between",!field.value && "text-muted-foreground")}
+                                    >
+                                    {field.value ? recipientUsers.find((user) => user.id === field.value)?.name : `Select a ${recipientRole}`}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder={`Search ${recipientRole}...`} />
+                                    <CommandList>
+                                        <CommandEmpty>No {recipientRole}s found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {recipientUsers.map((user) => (
+                                                <CommandItem
+                                                    value={user.name}
+                                                    key={user.id}
+                                                    onSelect={async () => {
+                                                        field.onChange(user.id!);
+                                                        setSelectedRecipient(user);
+                                                        setRecipientPopoverOpen(false);
+                                                    }}
+                                                >
+                                                <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                {user.name} ({user.phone})
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                )}
+            </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
