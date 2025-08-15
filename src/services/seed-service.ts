@@ -216,7 +216,11 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
         }
         
         if (existingUser) {
-            await updateUser(existingUser.id!, userData);
+             // Merge roles and remove duplicates
+            const updatedRoles = [...new Set([...(existingUser.roles || []), ...userData.roles])];
+            const updatedGroups = [...new Set([...(existingUser.groups || []), ...(userData.groups || [])])];
+
+            await updateUser(existingUser.id!, {...userData, roles: updatedRoles, groups: updatedGroups});
             results.push({ name: userData.name, status: 'Updated' });
         } else {
             if (!userData.userId) {
@@ -558,8 +562,3 @@ export const seedDatabase = async (): Promise<SeedResult> => {
     console.log('Database seeding process completed.');
     return results;
 };
-
-
-
-
-    

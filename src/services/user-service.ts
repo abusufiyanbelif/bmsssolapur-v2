@@ -29,6 +29,11 @@ export type { User, UserRole };
 export { updateLead } from './lead-service';
 
 
+// Helper to remove duplicates from an array
+const getUniqueRoles = (roles: UserRole[] = []): UserRole[] => {
+    return [...new Set(roles)];
+}
+
 // Function to get a user by their custom userId field
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (!isConfigValid) {
@@ -45,6 +50,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
             return {
               id: userDoc.id,
               ...data,
+              roles: getUniqueRoles(data.roles),
               createdAt: (data.createdAt as Timestamp)?.toDate(),
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
@@ -136,7 +142,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         bankIfscCode: user.bankIfscCode || '',
         upiPhone: user.upiPhone || '',
         upiIds: user.upiIds || [],
-        roles: user.roles || [],
+        roles: getUniqueRoles(user.roles || []),
         privileges: user.privileges || [],
         groups: user.groups || [],
         referredByUserId: user.referredByUserId,
@@ -186,6 +192,7 @@ export const getUser = async (id: string): Promise<User | null> => {
       return { 
         id: userDoc.id, 
         ...data,
+        roles: getUniqueRoles(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -212,6 +219,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
       return {
         id: userDoc.id,
         ...data,
+        roles: getUniqueRoles(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -233,7 +241,7 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
             const doc = snapshot.docs[0];
             const data = doc.data();
             return {
-                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate(),
+                id: doc.id, ...data, roles: getUniqueRoles(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
         }
@@ -254,7 +262,7 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
             const doc = snapshot.docs[0];
              const data = doc.data();
             return {
-                id: doc.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate(),
+                id: doc.id, ...data, roles: getUniqueRoles(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
         }
@@ -281,6 +289,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
        return {
         id: userDoc.id,
         ...data,
+        roles: getUniqueRoles(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -312,6 +321,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
       return {
         id: userDoc.id,
         ...data,
+        roles: getUniqueRoles(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -335,6 +345,7 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
        return {
         id: userDoc.id,
         ...data,
+        roles: getUniqueRoles(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -365,6 +376,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
        return {
         id: userDoc.id,
         ...data,
+        roles: getUniqueRoles(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -420,7 +432,10 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
         
-        const finalUpdates = { ...updates };
+        const finalUpdates: Partial<User> = { ...updates };
+        if (updates.roles) {
+            finalUpdates.roles = getUniqueRoles(updates.roles);
+        }
 
         await updateDoc(userRef, {
             ...finalUpdates,
@@ -459,6 +474,7 @@ export const getAllUsers = async (): Promise<User[]> => {
             users.push({ 
                 id: doc.id,
                 ...data,
+                roles: getUniqueRoles(data.roles),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User);
@@ -488,6 +504,7 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
             users.push({ 
                 id: doc.id,
                 ...data,
+                roles: getUniqueRoles(data.roles),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User);
@@ -498,5 +515,3 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
         throw new Error('Failed to get referred beneficiaries.');
     }
 }
-
-    
