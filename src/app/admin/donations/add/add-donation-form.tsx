@@ -314,13 +314,18 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                         setValue('donationDate', new Date(value), { shouldValidate: true, shouldDirty: true });
                     } else if (key === 'senderUpiId') { // Explicitly map senderUpiId to donorUpiId
                         setValue('donorUpiId', String(value), { shouldValidate: true, shouldDirty: true });
+                    } else if (key === 'paymentApp' && String(value).toLowerCase().includes('g pay')) {
+                        setValue('paymentApp', 'Google Pay', { shouldValidate: true, shouldDirty: true });
+                    } else if (key === 'paymentMethod' && String(value).toLowerCase() === 'upi') {
+                        setValue('paymentMethod', 'Online (UPI/Card)', { shouldValidate: true, shouldDirty: true });
                     } else if (key !== 'rawText') { // Don't try to set rawText on the form
                         setValue(key as any, value, { shouldValidate: true, shouldDirty: true });
                     }
                 }
             }
-
-            if (scanResult.details.paymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(scanResult.details.paymentApp)) {
+            
+            const detectedApp = scanResult.details.paymentApp;
+            if (detectedApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(detectedApp)) {
                 setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
             }
 

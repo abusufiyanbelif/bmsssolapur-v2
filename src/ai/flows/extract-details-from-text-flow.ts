@@ -48,7 +48,6 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The sender's name might be split across multiple lines. Find the line starting with "From:". Combine the text on that line (after "From:") and the text on the immediately following line to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(State Bank of India)"). Use this for 'googlePaySenderName'.
             - The sender's UPI ID is on the line immediately following the full sender name block and contains an '@' symbol. Use this for 'senderUpiId'.
             - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName'.
-            - The recipient's UPI ID is on the line immediately following the recipient's name and contains an '@' symbol. Use this for 'recipientUpiId'.
             - The "UPI transaction ID" should be prioritized for the transactionId field. The "Google transaction ID" is secondary.
 
             **Paytm Rules:**
@@ -58,13 +57,13 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The "UPI Reference No." is the most important transaction identifier. Prioritize this for the 'transactionId' field.
 
             **General Fields to Extract:**
-            - paymentApp: The app used (e.g., GPay, PhonePe, Paytm).
+            - paymentApp: The app used (e.g., GPay, PhonePe, Paytm). If you see "G Pay", you MUST return "Google Pay". If you see "PhonePe", return "PhonePe". If you see "Paytm", return "Paytm".
             - amount: The primary transaction amount. Must be a number.
             - transactionId: The main Transaction ID, Reference Number, or UPI Reference No.
             - utrNumber: The UTR number, if explicitly labeled.
             - date: The date of the transaction (Format: YYYY-MM-DD).
             - time: The time of the transaction (e.g., "11:48 am").
-            - paymentMethod: The method used, like "UPI" or "Bank Transfer".
+            - paymentMethod: The method used, like "UPI" or "Bank Transfer". If you see "UPI", you MUST return "Online (UPI/Card)".
             - senderName: The generic sender name. If possible, prefer the app-specific name.
             - senderUpiId: The sender's UPI ID (contains '@').
             - senderAccountNumber: The sender's bank account number, even if partial.
