@@ -319,6 +319,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     }
                 }
             }
+
+            if (scanResult.details.paymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(scanResult.details.paymentApp)) {
+                setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+            }
+
             if (scanResult.details.rawText) {
                 setRawText(scanResult.details.rawText);
             }
