@@ -24,6 +24,7 @@ import type { User as UserType, Lead as LeadType } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { formatDistanceToNow } from "date-fns";
+import { Logo } from "./logo";
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -176,10 +177,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
+            <Logo className="h-10 w-auto" />
              <div className="flex flex-col leading-tight">
-                <span className="font-bold font-headline text-primary">Baitul Mal</span>
-                <span className="font-bold font-headline text-accent">Samajik Sanstha</span>
-                 <span className="font-bold font-headline text-primary">(Solapur)</span>
+                <span className="font-bold font-headline text-primary text-sm">Baitul Mal</span>
+                <span className="font-bold font-headline text-accent text-sm">Samajik Sanstha</span>
+                 <span className="font-bold font-headline text-primary text-xs">(Solapur)</span>
             </div>
         </a>
     );
@@ -362,5 +364,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
     )
 }
-
-    
