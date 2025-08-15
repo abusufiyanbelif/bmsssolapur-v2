@@ -84,6 +84,22 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
         isActive: true, 
         gender: 'Other', 
         source: 'Seeded' 
+    },
+    {
+        userKey: "USR33",
+        name: "Patel Sakib Jakir",
+        userId: "patel.sakib.jakir",
+        firstName: "Sakib",
+        middleName: "Jakir",
+        lastName: "Patel",
+        email: "patel.sakib@example.com",
+        phone: "9876543216", // Made up phone number
+        password: "admin",
+        roles: ["Beneficiary"],
+        isActive: true,
+        gender: 'Male',
+        upiIds: ['q501775349@ybl'],
+        source: 'Seeded'
     }
 ];
 
