@@ -370,8 +370,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               icon: <UserIcon />,
           });
           // Preserve the scanned UPI ID, do not overwrite from profile
-          if (!details.senderUpiId && foundDonor.upiIds && foundDonor.upiIds.length > 0) {
-            setValue('donorUpiId', foundDonor.upiIds[0]);
+          if (details.senderUpiId) {
+            setValue('donorUpiId', details.senderUpiId);
           }
       }
       
@@ -394,8 +394,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                   icon: <UserIcon />,
               });
               // Preserve the scanned recipient UPI ID
-               if (!details.recipientUpiId && foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
-                  setValue('recipientUpiId', foundRecipient.upiIds[0]);
+               if (details.recipientUpiId) {
+                  setValue('recipientUpiId', details.recipientUpiId);
               }
            }
       }
