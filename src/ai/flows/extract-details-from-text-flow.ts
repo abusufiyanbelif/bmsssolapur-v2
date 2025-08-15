@@ -45,10 +45,10 @@ const extractDetailsFromTextFlow = ai.defineFlow(
 
             **Google Pay (GPay) Rules:**
             - Look for "From:" and "To:" labels to identify sender and recipient blocks.
-            - The sender's name is on the first line of the "From:" block. Clean it up by removing any bank name in parentheses (e.g., "(ICICI Bank)"). Use this for 'googlePaySenderName'.
-            - The sender's UPI ID is on the line immediately following the sender's name and contains an '@' symbol.
+            - The sender's name is on the first line of the "From:" block. Clean it up by removing any bank name in parentheses (e.g., "(State Bank of India)"). Use this for 'googlePaySenderName'.
+            - The sender's UPI ID is on the line immediately following the sender's name and contains an '@' symbol. Use this for 'senderUpiId'.
             - The recipient's name is on the first line of the "To:" block. Use this for 'googlePayRecipientName'.
-            - The recipient's UPI ID is on the line immediately following the recipient's name and contains an '@' symbol.
+            - The recipient's UPI ID is on the line immediately following the recipient's name and contains an '@' symbol. Use this for 'recipientUpiId'.
             - The "UPI transaction ID" should be prioritized for the transactionId field. The "Google transaction ID" is secondary.
 
             **Paytm Rules:**
