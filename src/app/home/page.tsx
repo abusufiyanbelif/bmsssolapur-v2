@@ -31,20 +31,11 @@ export default function HomePage() {
         redirectTo = '/referral';
       } else if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
         redirectTo = '/admin';
-      } else {
-         // Fallback for any other roles, or if activeRole is 'Guest'
-         // This logic is for safety but the specific checks above should handle most cases.
-         const user = await getUser(storedUserId);
-         if (user) {
-            const primaryRole = user.roles[0];
-            if (primaryRole === 'Donor') redirectTo = '/donor';
-            else if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
-            else if (primaryRole === 'Referral') redirectTo = '/referral';
-            else if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
-            else redirectTo = '/'; // Public home
-         }
       }
       
+      // If redirectTo is still the fallback, it means the activeRole is invalid.
+      // In this case, we simply redirect to the homepage without trying to fetch data.
+      // This prevents the error state if something is wrong with local storage.
       router.replace(redirectTo);
     };
 
