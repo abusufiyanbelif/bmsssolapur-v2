@@ -254,7 +254,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   useEffect(() => {
     // This effect runs when a user is MANUALLY selected from the dropdown.
     // It should not clear fields that might have been set by the AI scan.
-    if (selectedDonor) {
+    if (selectedDonor && form.formState.isDirty && form.formState.touchedFields.donorId) {
         const currentFormValues = getValues();
         setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
         
@@ -266,14 +266,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             setValue('donorBankAccount', selectedDonor.bankAccountNumber);
         }
         if (!currentFormValues.donorUpiId && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
-             setValue('donorUpiId', selectedDonor.upiIds[0]);
-        }
-    } else {
-        // Only clear if the user is explicitly deselected, not on initial load
-        if (form.formState.isDirty && form.formState.touchedFields.donorId) {
-            setValue('donorUpiId', '');
-            setValue('donorPhone', '');
-            setValue('donorBankAccount', '');
+             setValue('upiIds', selectedDonor.upiIds.map(id => ({value: id})));
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -328,89 +321,88 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       formData.append('proofFile', file);
       const scanResult = await scanProof(formData);
       
-      if (!scanAbortController.current.signal.aborted) {
-        if (!scanResult || !scanResult.success || !scanResult.details) {
-          throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
+      if (scanAbortController.current.signal.aborted) return;
+      
+      if (!scanResult || !scanResult.success || !scanResult.details) {
+        throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
+      }
+      
+      const details = scanResult.details;
+      toast({ variant: 'success', title: 'Data Extracted', description: 'Form fields have been auto-filled. Now checking for users...' });
+
+      // Handle special mapping first to avoid being overwritten.
+      let finalPaymentApp = details.paymentApp;
+      if (finalPaymentApp === "G Pay") finalPaymentApp = "Google Pay";
+      
+      if (finalPaymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(finalPaymentApp)) {
+          setValue('paymentApp', finalPaymentApp as any, { shouldDirty: true });
+          setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+      } else if (details.paymentMethod === 'UPI' || details.paymentMethod === 'Online') {
+          setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+      }
+      
+      // Iterate and set all other fields, skipping the ones we just handled.
+      for (const [key, value] of Object.entries(details)) {
+        if (value === undefined || value === null || key === 'paymentApp' || key === 'paymentMethod') {
+          continue;
         }
-
-        const details = scanResult.details;
-
-        // Handle special mapping first to avoid being overwritten.
-        let finalPaymentApp = details.paymentApp;
-        if (finalPaymentApp === "G Pay") finalPaymentApp = "Google Pay";
-        
-        if (finalPaymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(finalPaymentApp)) {
-            setValue('paymentApp', finalPaymentApp as any, { shouldDirty: true });
-            setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-        } else if (details.paymentMethod === 'UPI') {
-            setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-        }
-        
-        // Iterate and set all other fields, skipping the ones we just handled.
-        for (const [key, value] of Object.entries(details)) {
-          if (value === undefined || value === null || key === 'paymentApp' || key === 'paymentMethod') {
-            continue;
-          }
-          if (key === 'date' && typeof value === 'string') {
-            setValue('donationDate', new Date(value), { shouldDirty: true });
-          } else {
-            setValue(key as any, value, { shouldDirty: true });
-          }
-        }
-
-        toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
-
-        // Find DONOR
-        let foundDonor: User | null = null;
-        if (details.senderUpiId) foundDonor = await getUserByUpiId(details.senderUpiId);
-        if (!foundDonor && details.donorPhone) foundDonor = await getUserByPhone(details.donorPhone);
-        if (!foundDonor && details.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(details.senderAccountNumber);
-
-        if (foundDonor) {
-            setSelectedDonor(foundDonor);
-            setValue('donorId', foundDonor.id!, { shouldDirty: true });
-            toast({
-                variant: 'success',
-                title: 'Donor Found!',
-                description: `Automatically selected existing donor: ${foundDonor.name}`,
-                icon: <UserIcon />,
-            });
-            // If we found them by UPI, no need to show their bank account from profile.
-            if (!details.senderUpiId && foundDonor.bankAccountNumber) {
-                 setValue('donorBankAccount', foundDonor.bankAccountNumber);
-            }
-        }
-        
-        // Find RECIPIENT
-        let foundRecipient: User | null = null;
-        if (details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
-        if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
-        if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
-
-        if (foundRecipient) {
-             const suitableRole = foundRecipient.roles.includes('Beneficiary') ? 'Beneficiary' : foundRecipient.roles.includes('Referral') ? 'Referral' : undefined;
-             if (suitableRole) {
-                setValue('recipientRole', suitableRole);
-                setValue('recipientId', foundRecipient.id);
-                setSelectedRecipient(foundRecipient);
-                 toast({
-                    variant: 'success',
-                    title: 'Recipient Found!',
-                    description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
-                    icon: <UserIcon />,
-                });
-                // If we found them by UPI, no need to show their bank account from profile.
-                if (!details.recipientUpiId && foundRecipient.bankAccountNumber) {
-                    setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
-                }
-             }
-        }
-
-
-        if (details.rawText) {
-          setRawText(details.rawText);
+        if (key === 'date' && typeof value === 'string') {
+          setValue('donationDate', new Date(value), { shouldDirty: true });
+        } else {
+          setValue(key as any, value, { shouldDirty: true });
         }
       }
+      
+      // Find DONOR
+      let foundDonor: User | null = null;
+      if (details.senderUpiId) foundDonor = await getUserByUpiId(details.senderUpiId);
+      if (!foundDonor && details.donorPhone) foundDonor = await getUserByPhone(details.donorPhone);
+      if (!foundDonor && details.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(details.senderAccountNumber);
+
+      if (foundDonor) {
+          setSelectedDonor(foundDonor);
+          setValue('donorId', foundDonor.id!, { shouldDirty: true });
+          toast({
+              variant: 'success',
+              title: 'Donor Found!',
+              description: `Automatically selected existing donor: ${foundDonor.name}`,
+              icon: <UserIcon />,
+          });
+          // If we found them by UPI, no need to show their bank account from profile.
+          if (!details.senderUpiId && foundDonor.bankAccountNumber) {
+               setValue('donorBankAccount', foundDonor.bankAccountNumber);
+          }
+      }
+      
+      // Find RECIPIENT
+      let foundRecipient: User | null = null;
+      if (details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
+      if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
+      if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
+
+      if (foundRecipient) {
+           const suitableRole = foundRecipient.roles.includes('Beneficiary') ? 'Beneficiary' : foundRecipient.roles.includes('Referral') ? 'Referral' : undefined;
+           if (suitableRole) {
+              setValue('recipientRole', suitableRole);
+              setValue('recipientId', foundRecipient.id);
+              setSelectedRecipient(foundRecipient);
+              toast({
+                  variant: 'success',
+                  title: 'Recipient Found!',
+                  description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
+                  icon: <UserIcon />,
+              });
+              // If we found them by UPI, no need to show their bank account from profile.
+              if (!details.recipientUpiId && foundRecipient.bankAccountNumber) {
+                  setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
+              }
+           }
+      }
+
+      if (details.rawText) {
+        setRawText(details.rawText);
+      }
+      
 
     } catch(err) {
        if ((err as Error).name !== 'AbortError') {
