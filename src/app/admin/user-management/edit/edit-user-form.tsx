@@ -279,7 +279,23 @@ export function EditUserForm({ user }: EditUserFormProps) {
     }
     setIsSubmitting(true);
     
-    const result = await handleUpdateUser(user.id!, values, currentAdmin.id);
+    const formData = new FormData();
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === 'roles' && Array.isArray(value)) {
+        value.forEach(role => formData.append('roles', role));
+      } else if (key === 'upiIds' && Array.isArray(value)) {
+        value.forEach(item => {
+          if (item.value) formData.append('upiIds', item.value)
+        });
+      } else if (key === 'isActive' || key === 'isAnonymousAsBeneficiary' || key === 'isAnonymousAsDonor' || key === 'isWidow') {
+        if (value) formData.append(key, 'on');
+      }
+      else if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
+      }
+    });
+
+    const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
 
     setIsSubmitting(false);
 
