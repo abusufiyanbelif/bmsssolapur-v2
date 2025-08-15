@@ -260,7 +260,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     }
     const file = localFiles[0].file;
     setIsExtractingText(true);
-    const result = await getRawTextFromImage(file);
+    const formData = new FormData();
+    formData.append('imageFile', file);
+    const result = await getRawTextFromImage(formData);
     if(result.success && result.text) {
         setRawText(result.text);
     } else {

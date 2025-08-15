@@ -56,8 +56,13 @@ export async function scanProof(formData: FormData): Promise<{success: boolean, 
     return { success: false, error: `After ${MAX_RETRIES} attempts, the service is still unavailable. Please try again later. Last error: ${lastError}` };
 }
 
-export async function getRawTextFromImage(imageFile: File): Promise<{success: boolean, text?: string, error?: string}> {
+export async function getRawTextFromImage(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
     try {
+        const imageFile = formData.get("imageFile") as File | null;
+        if (!imageFile) {
+            return { success: false, error: "No image file found in form data." };
+        }
+        
         const { extractRawText } = await import('@/ai/flows/extract-raw-text-flow');
         const arrayBuffer = await imageFile.arrayBuffer();
         const base64 = Buffer.from(arrayBuffer).toString('base64');
