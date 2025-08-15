@@ -116,7 +116,6 @@ export default async function DashboardPage() {
   const mainMetrics = [
     { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
     { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
-    { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready to be disbursed.", href: "/admin/donations" },
     { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?status=Closed" },
     { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
     { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public.", href: "/admin/leads?status=Publish" },
@@ -151,7 +150,7 @@ export default async function DashboardPage() {
       </div>
       <div className="space-y-4">
         {isCardVisible('mainMetrics', settings, currentUserRole) && (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {mainMetrics.map((metric) => (
                 <Link href={metric.href} key={metric.title}>
                     <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
@@ -161,11 +160,26 @@ export default async function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                         <div className="text-2xl font-bold">{metric.value}</div>
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
                         </CardContent>
                     </Card>
                 </Link>
             ))}
+            </div>
+        )}
+         {isCardVisible('fundsInHand', settings, currentUserRole) && (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Link href="/admin/donations">
+                    <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 bg-primary/10">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                        <div className="text-2xl font-bold">₹{pendingToDisburse.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">Verified funds ready to be disbursed.</p>
+                        </CardContent>
+                    </Card>
+                </Link>
             </div>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -291,6 +291,7 @@ export interface AppSettings {
     };
     dashboard?: {
         mainMetrics: { visibleTo: UserRole[] };
+        fundsInHand: { visibleTo: UserRole[] };
         monthlyContributors: { visibleTo: UserRole[] };
         monthlyPledge: { visibleTo: UserRole[] };
         pendingLeads: { visibleTo: UserRole[] };

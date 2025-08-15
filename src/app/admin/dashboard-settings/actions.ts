@@ -23,6 +23,9 @@ export async function handleUpdateDashboardSettings(
         const visibleTo = formData.getAll(`${cardKey}-roles`);
         if (newSettings[cardKey]) {
             newSettings[cardKey]!.visibleTo = visibleTo as any;
+        } else {
+             // Handle new keys that might not be in currentSettings yet
+            (newSettings as any)[cardKey] = { visibleTo: visibleTo as any };
         }
     }
     

@@ -45,7 +45,8 @@ interface DashboardSettingsFormProps {
 const allAppRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin", "Donor", "Beneficiary", "Referral"];
 
 const cardDefinitions: { id: keyof DashboardSettings, label: string, description: string }[] = [
-    { id: 'mainMetrics', label: 'Main Metrics', description: 'Overall stats like Total Raised, Distributed, etc.' },
+    { id: 'mainMetrics', label: 'Main Metrics', description: 'Overall stats like Total Raised, Distributed, etc. (Excludes Funds in Hand)' },
+    { id: 'fundsInHand', label: 'Funds in Hand Card', description: 'A separate, prominent card showing available funds.' },
     { id: 'monthlyContributors', label: 'Monthly Contributors', description: 'Card showing the status of monthly pledged donations.' },
     { id: 'monthlyPledge', label: 'Total Monthly Pledge', description: 'Card showing the total amount pledged monthly.' },
     { id: 'pendingLeads', label: 'Pending Lead Verifications', description: 'Action Required card for leads needing verification.' },

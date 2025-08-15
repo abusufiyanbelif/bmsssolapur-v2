@@ -67,6 +67,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     dashboard: {
         mainMetrics: { visibleTo: allUserRoles },
+        fundsInHand: { visibleTo: defaultAdminRoles },
         monthlyContributors: { visibleTo: defaultAdminRoles },
         monthlyPledge: { visibleTo: defaultAdminRoles },
         pendingLeads: { visibleTo: defaultAdminRoles },
