@@ -209,6 +209,8 @@ export interface Lead {
     dateCreated: Timestamp | Date;
     dueDate?: Timestamp | Date;
     closedAt?: Timestamp | Date;
+    verifiedAt?: Timestamp | Date; // Date of the latest verification
+    lastAllocatedAt?: Timestamp | Date; // Date of the latest donation allocation
     isLoan: boolean;
     createdAt: Timestamp | Date;
     updatedAt: Timestamp | Date;
