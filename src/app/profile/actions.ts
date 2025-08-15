@@ -25,7 +25,7 @@ type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' |
 
 export async function handleUpdateProfile(
   userId: string,
-  data: Partial<UpdateProfilePayload>
+  data: Partial<Omit<UpdateProfilePayload, 'createdAt' | 'updatedAt'>>
 ): Promise<FormState> {
   try {
     if (!userId) {
