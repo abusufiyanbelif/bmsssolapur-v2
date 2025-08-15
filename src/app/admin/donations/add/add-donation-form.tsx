@@ -148,6 +148,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
   const isAnonymous = watch("isAnonymous");
+  const paymentApp = watch("paymentApp");
 
   const clearForm = () => {
     reset({
@@ -790,26 +791,38 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             />
             
             <h4 className="font-semibold text-lg border-b pb-2">Sender & Recipient Details</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField control={form.control} name="phonePeSenderName" render={({ field }) => (
-                    <FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="phonePeRecipientName" render={({ field }) => (
-                    <FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                 <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (
-                    <FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (
-                    <FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                 <FormField control={form.control} name="paytmSenderName" render={({ field }) => (
-                    <FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="paytmRecipientName" render={({ field }) => (
-                    <FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-            </div>
+            
+            {paymentApp === 'Google Pay' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (
+                        <FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (
+                        <FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
+            )}
+            {paymentApp === 'PhonePe' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FormField control={form.control} name="phonePeSenderName" render={({ field }) => (
+                        <FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="phonePeRecipientName" render={({ field }) => (
+                        <FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
+            )}
+             {paymentApp === 'Paytm' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FormField control={form.control} name="paytmSenderName" render={({ field }) => (
+                        <FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="paytmRecipientName" render={({ field }) => (
+                        <FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
+            )}
+
 
             <h4 className="font-semibold text-sm">Donor Contact Details (for reference)</h4>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
