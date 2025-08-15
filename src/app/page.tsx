@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users, TrendingUp, Megaphone, Eye } from "lucide-react";
-import { getOpenGeneralLeads, EnrichedLead, getActiveCampaigns } from "@/app/campaigns/actions";
+import { getOpenGeneralLeads, EnrichedLead, getAllCampaigns } from "@/app/campaigns/actions";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
@@ -69,7 +69,7 @@ function PublicHomePage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [allDonations, setAllDonations] = useState<any[]>([]);
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
-  const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+  const [allCampaigns, setAllCampaigns] = useState<(Campaign & { raisedAmount: number, fundingProgress: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,7 +88,7 @@ function PublicHomePage() {
           getRandomQuotes(3),
           getAllDonations(),
           getAllLeads(),
-          getActiveCampaigns(),
+          getAllCampaigns(),
         ]);
         setOpenLeads(leads);
         setQuotes(randomQuotes);
@@ -128,6 +128,11 @@ function PublicHomePage() {
     { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
     { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, href: "/public-leads" },
   ];
+  
+  const activeAndUpcomingCampaigns = useMemo(() => {
+      return allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming');
+  }, [allCampaigns]);
+
 
   const campaignStatusColors: Record<string, string> = {
     "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -240,7 +245,7 @@ function PublicHomePage() {
       </Card>
       
        {/* Campaigns */}
-       {allCampaigns.length > 0 && (
+       {activeAndUpcomingCampaigns.length > 0 && (
          <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -252,7 +257,7 @@ function PublicHomePage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {allCampaigns.slice(0,3).map((campaign) => (
+                {activeAndUpcomingCampaigns.slice(0,3).map((campaign) => (
                     <Card key={campaign.id} className="flex flex-col">
                         <CardHeader>
                             <div className="flex justify-between items-start gap-4">
