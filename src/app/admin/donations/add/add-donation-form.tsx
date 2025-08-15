@@ -288,10 +288,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     }
   };
 
-   const handleScan = async () => {
+  const handleScan = async () => {
     if (localFiles.length === 0) {
-        toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
-        return;
+      toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
+      return;
     }
 
     setIsScanning(true);
@@ -299,54 +299,65 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     const file = localFiles[0].file;
     
     try {
-        const formData = new FormData();
-        formData.append('proofFile', file);
-        const scanResult = await scanProof(formData);
-        
-        if (!scanAbortController.current.signal.aborted) {
-            if (!scanResult || !scanResult.success || !scanResult.details) {
-                throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
-            }
-
-            const details = scanResult.details;
-            // Set all fields from the scan result
-            for (const [key, value] of Object.entries(details)) {
-                if (value !== undefined && value !== null && key !== 'rawText') {
-                    if (key === 'date' && typeof value === 'string') {
-                        setValue('donationDate', new Date(value));
-                    } else if (key === 'senderUpiId') {
-                        setValue('donorUpiId', String(value));
-                    } else {
-                        setValue(key as any, value);
-                    }
-                }
-            }
-
-            // Explicitly map payment app and method
-            if (details.paymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(details.paymentApp)) {
-                setValue('paymentApp', details.paymentApp as any);
-                setValue('paymentMethod', 'Online (UPI/Card)');
-            } else if (details.paymentMethod === 'UPI') {
-                 setValue('paymentMethod', 'Online (UPI/Card)');
-            }
-
-
-            if (details.rawText) {
-                setRawText(details.rawText);
-            }
-            toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
+      const formData = new FormData();
+      formData.append('proofFile', file);
+      const scanResult = await scanProof(formData);
+      
+      if (!scanAbortController.current.signal.aborted) {
+        if (!scanResult || !scanResult.success || !scanResult.details) {
+          throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
         }
 
+        const details = scanResult.details;
+        
+        // --- Start of Corrected Logic ---
+
+        // 1. Handle special mapping for payment app and method first.
+        let finalPaymentApp = details.paymentApp;
+        if (details.paymentApp === "G Pay") finalPaymentApp = "Google Pay";
+        
+        if (finalPaymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(finalPaymentApp)) {
+            setValue('paymentApp', finalPaymentApp as any);
+            setValue('paymentMethod', 'Online (UPI/Card)');
+        } else if (details.paymentMethod === 'UPI') {
+            setValue('paymentMethod', 'Online (UPI/Card)');
+        } else if (details.paymentMethod) {
+            setValue('paymentMethod', details.paymentMethod as any);
+        }
+
+        // 2. Iterate and set all other fields, skipping the ones we just handled.
+        for (const [key, value] of Object.entries(details)) {
+          if (value === undefined || value === null || key === 'rawText' || key === 'paymentApp' || key === 'paymentMethod') {
+            continue; // Skip null values and fields we already handled
+          }
+          if (key === 'date' && typeof value === 'string') {
+            setValue('donationDate', new Date(value));
+          } else if (key === 'senderUpiId') {
+            setValue('donorUpiId', String(value));
+          } else {
+            setValue(key as any, value);
+          }
+        }
+        
+        // --- End of Corrected Logic ---
+
+        if (details.rawText) {
+          setRawText(details.rawText);
+        }
+        toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
+      }
+
     } catch(err) {
-         if ((err as Error).name !== 'AbortError') {
-            const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
-            toast({ variant: 'destructive', title: 'Scan Failed', description: error });
-         }
+       if ((err as Error).name !== 'AbortError') {
+          const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
+          toast({ variant: 'destructive', title: 'Scan Failed', description: error });
+       }
     } finally {
-        setIsScanning(false);
-        scanAbortController.current = null;
+      setIsScanning(false);
+      scanAbortController.current = null;
     }
   };
+
 
   const stopScan = () => {
     if (scanAbortController.current) {
@@ -749,7 +760,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Payment Method</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select payment method" />
@@ -771,7 +782,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Payment App</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select payment app" />
