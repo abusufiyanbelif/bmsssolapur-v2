@@ -149,7 +149,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     },
   });
   
-  const { watch, setValue, reset } = form;
+  const { watch, setValue, reset, getValues } = form;
   const includeTip = watch("includeTip");
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
@@ -252,19 +252,32 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   }, [searchParams, setValue, toast, currentUser, isAdminView]);
 
   useEffect(() => {
+    // This effect runs when a user is MANUALLY selected from the dropdown.
+    // It should not clear fields that might have been set by the AI scan.
     if (selectedDonor) {
+        const currentFormValues = getValues();
         setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
-        if (selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
+        
+        // Only set these fields if they aren't already filled (e.g., by a scan)
+        if (!currentFormValues.donorPhone && selectedDonor.phone) {
+            setValue('donorPhone', selectedDonor.phone);
+        }
+        if (!currentFormValues.donorBankAccount && selectedDonor.bankAccountNumber) {
+            setValue('donorBankAccount', selectedDonor.bankAccountNumber);
+        }
+        if (!currentFormValues.donorUpiId && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
              setValue('donorUpiId', selectedDonor.upiIds[0]);
         }
-        if (selectedDonor.phone) setValue('donorPhone', selectedDonor.phone);
-        if (selectedDonor.bankAccountNumber) setValue('donorBankAccount', selectedDonor.bankAccountNumber);
     } else {
-        setValue('donorUpiId', '');
-        setValue('donorPhone', '');
-        setValue('donorBankAccount', '');
+        // Only clear if the user is explicitly deselected, not on initial load
+        if (form.formState.isDirty) { // A proxy to know if the user has interacted
+            setValue('donorUpiId', '');
+            setValue('donorPhone', '');
+            setValue('donorBankAccount', '');
+        }
     }
-  }, [selectedDonor, setValue]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDonor]);
   
   const totalAmount = (amount || 0) + (tipAmount || 0);
 
@@ -321,7 +334,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         }
 
         const details = scanResult.details;
-        
+
+        // Handle special mapping first to avoid being overwritten.
         let finalPaymentApp = details.paymentApp;
         if (finalPaymentApp === "G Pay") finalPaymentApp = "Google Pay";
         
@@ -330,13 +344,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
         } else if (details.paymentMethod === 'UPI') {
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-        } else if (details.paymentMethod) {
-            setValue('paymentMethod', details.paymentMethod as any, { shouldDirty: true });
         }
         
-        // Iterate and set all other fields
+        // Iterate and set all other fields, skipping the ones we just handled.
         for (const [key, value] of Object.entries(details)) {
-          if (value === undefined || value === null || key === 'rawText' || key === 'paymentApp' || key === 'paymentMethod') {
+          if (value === undefined || value === null || key === 'paymentApp' || key === 'paymentMethod') {
             continue;
           }
           if (key === 'date' && typeof value === 'string') {
