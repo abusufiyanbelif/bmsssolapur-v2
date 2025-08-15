@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser } from "@/services/user-service";
@@ -110,6 +110,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const scanAbortController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -146,8 +147,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
   const isAnonymous = watch("isAnonymous");
-  
-  const handleCancel = () => {
+
+  const clearForm = () => {
     reset({
         donorId: '',
         isAnonymous: false,
@@ -165,16 +166,20 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         donorBankAccount: '',
         paymentScreenshots: [],
         paymentScreenshotDataUrl: undefined,
-      });
-      if (fileInputRef.current) {
+    });
+    if (fileInputRef.current) {
         fileInputRef.current.value = "";
-      }
-      setSelectedDonor(null);
-      setManualScreenshotPreview(null);
-      setLocalFiles([]);
-      setRawText(null);
-      // Context-aware redirect
-      router.push(isAdminView ? '/admin/donations' : '/donate');
+    }
+    setSelectedDonor(null);
+    setManualScreenshotPreview(null);
+    setLocalFiles([]);
+    setRawText(null);
+  };
+  
+  const handleCancel = () => {
+    clearForm();
+    // Context-aware redirect
+    router.push(isAdminView ? '/admin/donations' : '/donate');
   }
   
   useEffect(() => {
@@ -264,7 +269,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     setIsExtractingText(false);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
         const file = files[0];
@@ -275,14 +280,25 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         };
         setLocalFiles([filePreview]);
         setValue('paymentScreenshots', [file]);
+    }
+  };
+
+   const handleScan = async () => {
+    if (localFiles.length === 0) {
+        toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
+        return;
+    }
+
+    setIsScanning(true);
+    scanAbortController.current = new AbortController();
+    const file = localFiles[0].file;
+    
+    try {
+        const formData = new FormData();
+        formData.append('proofFile', file);
+        const scanResult = await scanProof(formData); // Assume scanProof is updated to handle abort signals if possible
         
-        // Automatically trigger scan
-        setIsScanning(true);
-        try {
-            const formData = new FormData();
-            formData.append('proofFile', file);
-            const scanResult = await scanProof(formData);
-            
+        if (!scanAbortController.current.signal.aborted) {
             if (!scanResult || !scanResult.success || !scanResult.details) {
                 throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
             }
@@ -300,15 +316,26 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 setRawText(scanResult.details.rawText);
             }
             toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
-
-        } catch(err) {
-             const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
-             toast({ variant: 'destructive', title: 'Scan Failed', description: error });
-        } finally {
-            setIsScanning(false);
         }
+
+    } catch(err) {
+         if ((err as Error).name !== 'AbortError') {
+            const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
+            toast({ variant: 'destructive', title: 'Scan Failed', description: error });
+         }
+    } finally {
+        setIsScanning(false);
+        scanAbortController.current = null;
     }
   };
+
+  const stopScan = () => {
+    if (scanAbortController.current) {
+        scanAbortController.current.abort();
+        toast({ title: 'Scan Cancelled', description: 'The scanning process has been stopped.' });
+    }
+  };
+
 
   const removeFile = (index: number) => {
     const updatedFiles = localFiles.filter((_, i) => i !== index);
@@ -405,7 +432,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                             />
                         </FormControl>
                         <FormDescription>
-                            Upload a screenshot of the payment. The system will automatically scan it.
+                            Upload a screenshot of the payment to scan it with AI or enter details manually.
                         </FormDescription>
                         <FormMessage />
                     </FormItem>
@@ -440,14 +467,19 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     </div>
                 </div>
             )}
-             {isScanning && (
-                <div className="flex items-center justify-center p-4 border rounded-md bg-muted/50">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <p className="text-muted-foreground">Scanning image...</p>
-                </div>
-            )}
             
             <div className="flex gap-2">
+                {isScanning ? (
+                    <Button type="button" variant="destructive" className="w-full" onClick={stopScan}>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Stop Scan
+                    </Button>
+                ) : (
+                    <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={localFiles.length === 0}>
+                        <ScanEye className="mr-2 h-4 w-4" />
+                        Scan & Auto-Fill
+                    </Button>
+                )}
                  <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={localFiles.length === 0 || isExtractingText}>
                     {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
                     Get Raw Text
@@ -876,6 +908,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
                 <X className="mr-2 h-4 w-4" />
                 Cancel
+            </Button>
+             <Button type="button" variant="secondary" onClick={clearForm} disabled={isSubmitting}>
+                <XCircle className="mr-2 h-4 w-4" />
+                Clear Form
             </Button>
           </div>
         </form>

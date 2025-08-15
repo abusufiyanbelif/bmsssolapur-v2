@@ -41,7 +41,10 @@ export async function scanProof(formData: FormData): Promise<{success: boolean, 
             if (lastError.includes('503 Service Unavailable') && attempt < MAX_RETRIES) {
                 console.log(`Service unavailable, retrying in ${RETRY_DELAY_MS * attempt / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * attempt)); // Exponential backoff
-            } else {
+            } else if ((e as Error).name === 'AbortError') {
+                return { success: false, error: 'Scan was cancelled by the user.' };
+            }
+            else {
                 // For non-503 errors or if it's the last retry, break the loop and return the error.
                 break;
             }
