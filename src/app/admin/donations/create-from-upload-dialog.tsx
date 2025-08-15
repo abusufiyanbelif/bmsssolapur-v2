@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import {
@@ -27,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Upload, ScanEye, Edit, X, UserPlus, AlertTriangle } from "lucide-react";
+import { Loader2, Upload, ScanEye, Edit, X, UserPlus, AlertTriangle, SkipForward } from "lucide-react";
 import { scanProof } from '@/ai/text-extraction-actions';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -146,6 +145,19 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
       toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
     }
   };
+
+  const proceedToManualSelection = async () => {
+    if (!newUserParams || !file) return;
+    try {
+        const dataUrl = await fileToDataUrl(file);
+        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+        handleDialogClose();
+        // Redirect to the donation form without a donorId
+        router.push(`/admin/donations/add?${newUserParams.toString()}`);
+    } catch (e) {
+        toast({ variant: "destructive", title: "Error", description: "Could not prepare screenshot for the form." });
+    }
+  };
   
   const handleManualEntry = async () => {
     if (file) {
@@ -245,11 +257,15 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
                     No Matching Donor Found
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                    The system could not find an existing donor matching the details from the screenshot. Would you like to create a new user profile?
+                    The system could not find an existing donor. You can create a new user, or skip to the donation form and select an existing donor manually.
                 </AlertDialogDescription>
             </AlertDialogHeader>
              <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setShowCreateUserDialog(false)}>Cancel</AlertDialogCancel>
+                <Button variant="outline" onClick={proceedToManualSelection}>
+                    <SkipForward className="mr-2 h-4 w-4" />
+                    Skip &amp; Select Manually
+                </Button>
                 <AlertDialogAction onClick={proceedToCreateUser}>
                     <UserPlus className="mr-2 h-4 w-4" />
                     Create New User
