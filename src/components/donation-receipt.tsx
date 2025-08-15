@@ -25,6 +25,7 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
             <div ref={ref} className="p-8 bg-white text-black font-sans w-[800px] relative">
                 <div 
                     className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-5" 
+                    style={{ backgroundImage: "url('/logo.png')" }}
                 >
                 </div>
                 <div className="relative z-10">
