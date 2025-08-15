@@ -265,8 +265,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         if (!currentFormValues.donorBankAccount && selectedDonor.bankAccountNumber) {
             setValue('donorBankAccount', selectedDonor.bankAccountNumber);
         }
+         // Do not set UPI ID if it was set by scan. Only set it if the user manually selects a donor and the field is empty.
         if (!currentFormValues.donorUpiId && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
-             setValue('upiIds', selectedDonor.upiIds.map(id => ({value: id})));
+             setValue('donorUpiId', selectedDonor.upiIds[0]);
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -368,9 +369,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               description: `Automatically selected existing donor: ${foundDonor.name}`,
               icon: <UserIcon />,
           });
-          // If we found them by UPI, no need to show their bank account from profile.
-          if (!details.senderUpiId && foundDonor.bankAccountNumber) {
-               setValue('donorBankAccount', foundDonor.bankAccountNumber);
+          // Preserve the scanned UPI ID, do not overwrite from profile
+          if (!details.senderUpiId && foundDonor.upiIds && foundDonor.upiIds.length > 0) {
+            setValue('donorUpiId', foundDonor.upiIds[0]);
           }
       }
       
@@ -392,9 +393,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                   description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
                   icon: <UserIcon />,
               });
-              // If we found them by UPI, no need to show their bank account from profile.
-              if (!details.recipientUpiId && foundRecipient.bankAccountNumber) {
-                  setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
+              // Preserve the scanned recipient UPI ID
+               if (!details.recipientUpiId && foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
+                  setValue('recipientUpiId', foundRecipient.upiIds[0]);
               }
            }
       }
@@ -1009,7 +1010,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     <FormItem>
                         <FormLabel>Donor UPI ID</FormLabel>
                             {(selectedDonor?.upiIds && selectedDonor.upiIds.length > 0) ? (
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a UPI ID" />
