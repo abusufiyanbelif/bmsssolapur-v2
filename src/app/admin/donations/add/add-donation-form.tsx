@@ -270,7 +270,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         }
     } else {
         // Only clear if the user is explicitly deselected, not on initial load
-        if (form.formState.isDirty) { // A proxy to know if the user has interacted
+        if (form.formState.isDirty && form.formState.touchedFields.donorId) {
             setValue('donorUpiId', '');
             setValue('donorPhone', '');
             setValue('donorBankAccount', '');
@@ -375,6 +375,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 description: `Automatically selected existing donor: ${foundDonor.name}`,
                 icon: <UserIcon />,
             });
+            // If we found them by UPI, no need to show their bank account from profile.
+            if (!details.senderUpiId && foundDonor.bankAccountNumber) {
+                 setValue('donorBankAccount', foundDonor.bankAccountNumber);
+            }
         }
         
         // Find RECIPIENT
@@ -395,6 +399,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
                     icon: <UserIcon />,
                 });
+                // If we found them by UPI, no need to show their bank account from profile.
+                if (!details.recipientUpiId && foundRecipient.bankAccountNumber) {
+                    setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
+                }
              }
         }
 
