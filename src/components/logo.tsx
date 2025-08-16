@@ -10,7 +10,7 @@ export function Logo({ className }: LogoProps) {
   return (
     <div className={cn("relative", className)}>
       <Image
-        src="https://placehold.co/100x100/16a34a/ffffff.png?text=BMS"
+        src="https://placehold.co/100x100/4285F4/ffffff.png?text=BMS"
         alt="Baitul Mal Samajik Sanstha (Solapur) Logo"
         fill
         priority
