@@ -216,11 +216,8 @@ function LeadsPageContent() {
             if (aValue === undefined || aValue === null) return 1;
             if (bValue === undefined || bValue === null) return -1;
             
-            const aTime = aValue instanceof Date ? aValue.getTime() : 0;
-            const bTime = bValue instanceof Date ? bValue.getTime() : 0;
-            
-            if (aTime > 0 && bTime > 0) {
-                comparison = aTime - bTime;
+            if (aValue instanceof Date && bValue instanceof Date) {
+                comparison = aValue.getTime() - bValue.getTime();
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
             }
