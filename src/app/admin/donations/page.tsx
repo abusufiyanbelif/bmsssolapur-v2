@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -33,7 +32,6 @@ import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleDeleteDonation, handleBulkDeleteDonations, handleUpdateDonationStatus } from "./actions";
 import { UploadProofDialog } from "./upload-proof-dialog";
-import { CreateFromUploadDialog } from "./create-from-upload-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
 import { AllocateToCampaignDialog } from './allocate-to-campaign-dialog';
@@ -752,12 +750,6 @@ function DonationsPageContent() {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Donation Management</h2>
              <div className="flex gap-2">
-                <CreateFromUploadDialog>
-                    <Button variant="outline">
-                        <ScanEye className="mr-2 h-4 w-4" />
-                        Scan Screenshot
-                    </Button>
-                </CreateFromUploadDialog>
                 <Button asChild>
                     <Link href="/admin/donations/add">
                         <PlusCircle className="mr-2" />
