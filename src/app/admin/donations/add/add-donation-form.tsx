@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -1172,4 +1172,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
