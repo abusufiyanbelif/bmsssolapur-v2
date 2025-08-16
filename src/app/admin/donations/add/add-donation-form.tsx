@@ -132,7 +132,7 @@ const initialAvailabilityState: AvailabilityState = {
     isAvailable: null,
 };
 
-function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: AvailabilityState, fieldName: string, onSuggestionClick?: (suggestion: string) => void }) {
+function AvailabilityFeedback({ state, fieldName }: { state: AvailabilityState, fieldName: string }) {
     if (state.isChecking) {
         return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>;
     }
@@ -240,6 +240,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const paymentApp = watch("paymentApp");
   const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
   const selectedPurpose = watch("purpose");
+  
+  // Fields for scanned details
+  const googlePayId = watch('googlePayTransactionId');
+  const scannedRecipientName = watch('recipientName');
+  const scannedRecipientUpiId = watch('recipientUpiId');
+
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -292,6 +298,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     setRawText(null);
     setSelectedDonor(null);
     setSelectedRecipient(null);
+    setTransactionIdState(initialAvailabilityState);
     if(fileInputRef.current) fileInputRef.current.value = "";
     router.push('/admin/donations/add', { scroll: false });
   };
@@ -634,30 +641,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-            <h3 className="text-lg font-semibold border-b pb-2">Primary Details</h3>
-             <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select payment method" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {paymentMethods.map(method => (
-                            <SelectItem key={method} value={method}>{method}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-          
+           
             {showOnlineFields && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -795,6 +779,30 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     <FormDescription>Review the extracted text. You can copy-paste from here to correct any fields above.</FormDescription>
                 </div>
             )}
+            
+            <h3 className="text-lg font-semibold border-b pb-2">Primary Details</h3>
+             <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select payment method" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {paymentMethods.map(method => (
+                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         
            {isAdminView ? (
                <FormField
@@ -874,7 +882,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
            )}
 
             <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
@@ -1049,76 +1056,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     )}
                 />
             )}
-             
-            {showOnlineFields && (
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField
-                            control={form.control}
-                            name="paymentApp"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Payment App</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select payment app" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                        {paymentApps.map(app => (
-                                        <SelectItem key={app} value={app}>{app}</SelectItem>
-                                        ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {paymentApp === 'Google Pay' ? (
-                            <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UPI Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter UPI Transaction ID" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="UPI Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        ) : (
-                             <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UTR or Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter UTR or Transaction ID" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
-                    </div>
-                </div>
-             )}
 
-             <FormField control={form.control} name="senderName" render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Sender/Payer Name {showOnlineFields ? '(if different from Donor)' : ''}</FormLabel>
-                    <FormControl><Input placeholder="Full name of the person who paid" {...field} /></FormControl><FormMessage />
-                </FormItem>
-            )} />
-
-             <div className="space-y-4 rounded-lg border p-4">
+            <div className="space-y-4 rounded-lg border p-4">
                 <h3 className="font-semibold text-lg">Recipient (Optional)</h3>
                 <FormField
                     control={form.control}
@@ -1219,8 +1158,121 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </div>
                 )}
             </div>
+             
+            {showOnlineFields && (
+                <div className="space-y-4">
+                    <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
+                     <FormField
+                        control={form.control}
+                        name="senderName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Sender/Payer Name (if different from Donor)</FormLabel>
+                                <FormControl><Input placeholder="Full name of the person who paid" {...field} /></FormControl><FormMessage />
+                            </FormItem>
+                        )} />
 
-             <div className="space-y-4 rounded-lg border p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField
+                            control={form.control}
+                            name="paymentApp"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Payment App</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select payment app" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {paymentApps.map(app => (
+                                        <SelectItem key={app} value={app}>{app}</SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {paymentApp === 'Google Pay' ? (
+                            <FormField
+                                control={form.control}
+                                name="transactionId"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>UPI Transaction ID</FormLabel>
+                                    <FormControl>
+                                    <Input placeholder="Enter UPI Transaction ID" {...field} />
+                                    </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="UPI Transaction ID" />
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        ) : (
+                             <FormField
+                                control={form.control}
+                                name="transactionId"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>UTR or Transaction ID</FormLabel>
+                                    <FormControl>
+                                    <Input placeholder="Enter UTR or Transaction ID" {...field} />
+                                    </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        )}
+                    </div>
+                     {googlePayId && (
+                         <FormField
+                            control={form.control}
+                            name="googlePayTransactionId"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Google Transaction ID (from scan)</FormLabel>
+                                <FormControl>
+                                    <Input {...field} readOnly className="bg-muted/50" />
+                                </FormControl>
+                            </FormItem>
+                            )}
+                        />
+                     )}
+                      {scannedRecipientName && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <FormField
+                                control={form.control}
+                                name="recipientName"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Scanned Recipient Name</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} readOnly className="bg-muted/50" />
+                                    </FormControl>
+                                </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="recipientUpiId"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Scanned Recipient UPI</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} readOnly className="bg-muted/50" />
+                                    </FormControl>
+                                </FormItem>
+                                )}
+                            />
+                        </div>
+                      )}
+                </div>
+             )}
+
+            <div className="space-y-4 rounded-lg border p-4">
                 <h3 className="font-semibold text-lg">Linkage (Optional)</h3>
                  <FormField
                   control={form.control}
@@ -1395,3 +1447,5 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
+    
