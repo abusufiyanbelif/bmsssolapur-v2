@@ -38,7 +38,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, scanProof, getRawTextFromImage } from "./actions";
+import { handleAddDonation, checkTransactionId } from "./actions";
+import { scanProof, getRawTextFromImage } from "@/app/admin/donations/add/actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -51,7 +52,7 @@ const recipientRoles = ['Beneficiary', 'Referral', 'To Organization', 'Organizat
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
-  paymentMethod: z.enum(paymentMethods),
+  paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
   recipientId: z.string().optional(),
   recipientRole: z.enum(recipientRoles).optional(),
   leadId: z.string().optional(),
@@ -135,7 +136,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const [selectedRecipient, setSelectedRecipient] = useState<User | null>(null);
-  const [manualScreenshotPreview, setManualScreenshotPreview] = useState<string | null>(null);
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
@@ -163,18 +163,18 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const amount = watch("amount");
   const tipAmount = watch("tipAmount");
   const isAnonymous = watch("isAnonymous");
-  const paymentApp = watch("paymentApp");
   const recipientRole = watch("recipientRole");
-  const donorUpiId = watch("donorUpiId");
-  const donorBankAccount = watch("donorBankAccount");
-  const recipientUpiId = watch("recipientUpiId");
-  const recipientAccountNumber = watch("recipientAccountNumber");
   const transactionId = watch('transactionId');
   const debouncedTransactionId = useDebounce(transactionId, 500);
 
   const linkedLeadId = watch("leadId");
   const linkedCampaignId = watch("campaignId");
   const paymentMethod = watch("paymentMethod");
+  const paymentApp = watch("paymentApp");
+  const donorUpiId = watch("donorUpiId");
+  const donorBankAccount = watch("donorBankAccount");
+  const recipientUpiId = watch("recipientUpiId");
+  const recipientAccountNumber = watch("recipientAccountNumber");
   const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
 
   useEffect(() => {
@@ -226,7 +226,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     reset();
     setLocalFiles([]);
     setRawText(null);
-    setManualScreenshotPreview(null);
     setSelectedDonor(null);
     setSelectedRecipient(null);
     if(fileInputRef.current) fileInputRef.current.value = "";
@@ -278,7 +277,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
         if (screenshotData) {
             try {
                 const { dataUrl } = JSON.parse(screenshotData);
-                setManualScreenshotPreview(dataUrl);
+                // Set the local file state to show the preview
+                const file = await dataUrlToFile(dataUrl, 'scanned-screenshot.png');
+                setLocalFiles([{ file, previewUrl: dataUrl }]);
                 setValue('paymentScreenshotDataUrl', dataUrl);
             } catch (error) {
                 console.error("Error processing session screenshot", error);
@@ -336,16 +337,22 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-        const file = files[0];
-        setRawText(null);
-        const filePreview = {
-            file,
-            previewUrl: URL.createObjectURL(file)
-        };
-        setLocalFiles([filePreview]);
-        setValue('paymentScreenshots', [file]);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+        if (!showOnlineFields && paymentMethod === 'Other') { // Multi-file for "Other"
+            const newPreviews = files.map(file => ({
+                file,
+                previewUrl: URL.createObjectURL(file)
+            }));
+            setLocalFiles(prev => [...prev, ...newPreviews]);
+            setValue('paymentScreenshots', [...(getValues('paymentScreenshots') || []), ...files]);
+        } else { // Single file for online methods
+            const file = files[0];
+            setRawText(null);
+            setLocalFiles([{ file, previewUrl: URL.createObjectURL(file) }]);
+            setValue('paymentScreenshots', [file]);
+            setValue('paymentScreenshotDataUrl', ''); // Clear session storage data if a new file is uploaded
+        }
     }
   };
 
@@ -381,6 +388,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
             setValue('paymentApp', value as any, { shouldDirty: true });
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+          } else if (key === 'transactionId') {
+              if (!getValues('googlePayTransactionId') && !getValues('phonePeTransactionId') && !getValues('paytmUpiReferenceNo')) {
+                  setValue('transactionId', value, { shouldDirty: true });
+              }
           }
           else {
             setValue(key as any, value, { shouldDirty: true });
@@ -509,8 +520,13 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             if (value instanceof Date) {
                 formData.append(key, value.toISOString());
             } else if (Array.isArray(value)) {
-                if (key === 'paymentScreenshots' && value[0] instanceof File) {
-                    formData.append("paymentScreenshots", value[0]);
+                // For paymentScreenshots, handle array of files
+                if (key === 'paymentScreenshots') {
+                    value.forEach(file => {
+                        if (file instanceof File) {
+                            formData.append("paymentScreenshots", file);
+                        }
+                    });
                 }
             } else {
                 formData.append(key, String(value));
@@ -542,6 +558,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   }
 
   const isFormInvalid = transactionIdState.isAvailable === false;
+  
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type });
+  };
 
 
   return (
@@ -578,35 +600,27 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         <ImageIcon className="h-5 w-5"/>
                         Payment Proof & Scanning
                     </h3>
-                    {manualScreenshotPreview ? (
-                        <div className="flex justify-center">
-                            <div className="relative w-full h-80">
-                                    <Image src={manualScreenshotPreview} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
-                                </div>
-                        </div>
-                    ) : (
-                        <FormField
-                        control={form.control}
-                        name="paymentScreenshots"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Upload Screenshot</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        type="file" 
-                                        accept="image/*,application/pdf"
-                                        ref={fileInputRef}
-                                        onChange={handleFileChange}
-                                    />
-                                </FormControl>
-                                <FormDescription>
-                                    Upload a screenshot to scan with AI or enter details manually.
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                    <FormField
+                    control={form.control}
+                    name="paymentScreenshots"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Upload Screenshot</FormLabel>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                Upload a screenshot to scan with AI or enter details manually.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
                     )}
+                    />
 
                     {localFiles.length > 0 && (
                         <div className="space-y-4">
@@ -655,6 +669,60 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </div>
                 </div>
             )}
+            
+            {paymentMethod === 'Other' && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <FileText className="h-5 w-5"/>
+                        Upload Proof(s)
+                    </h3>
+                    <FormField
+                        control={form.control}
+                        name="paymentScreenshots"
+                        render={() => (
+                        <FormItem>
+                            <FormLabel>Attach Documents</FormLabel>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    multiple
+                                />
+                            </FormControl>
+                            <FormDescription>Upload one or more documents like paid bills or receipts.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    {localFiles.length > 0 && (
+                        <div className="space-y-4">
+                            <p className="text-sm font-medium">Uploaded Files:</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {localFiles.map((fp, index) => (
+                                    <div key={index} className="p-2 border rounded-md bg-background space-y-2 group relative">
+                                        <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
+                                            <FileText className="h-8 w-8 text-primary" />
+                                            <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="icon"
+                                            className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => removeFile(index)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
 
            {rawText && (
                 <div className="space-y-2">
@@ -1411,5 +1479,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-
