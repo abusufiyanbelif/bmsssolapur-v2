@@ -364,7 +364,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
           });
           // Populate fields from profile ONLY if they weren't found in the scan
           if (!details.donorPhone && foundDonor.phone) setValue('donorPhone', foundDonor.phone);
-          if (!details.senderUpiId && foundDonor.bankAccountNumber) setValue('donorBankAccount', foundDonor.bankAccountNumber);
+          if (!details.senderAccountNumber && foundDonor.bankAccountNumber) setValue('donorBankAccount', foundDonor.bankAccountNumber);
       }
       
       // Find RECIPIENT
@@ -387,7 +387,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               });
               // Populate fields from profile ONLY if they weren't found in the scan
               if (!details.recipientPhone && foundRecipient.phone) setValue('recipientPhone', foundRecipient.phone);
-              if (!details.recipientUpiId && foundRecipient.bankAccountNumber) setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
+              if (!details.recipientAccountNumber && foundRecipient.bankAccountNumber) setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
            }
       }
 
@@ -1133,3 +1133,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
 
 
     
+
