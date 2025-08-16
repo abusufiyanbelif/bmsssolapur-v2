@@ -104,7 +104,7 @@ export async function handleAddDonation(
         paytmSenderName: formData.get("paytmSenderName") as string | undefined,
         paytmRecipientName: formData.get("paytmRecipientName") as string | undefined,
         recipientId: formData.get("recipientId") as string | undefined,
-        recipientRole: formData.get("recipientRole") as 'Beneficiary' | 'Referral' | 'Organization' | undefined,
+        recipientRole: formData.get("recipientRole") as 'Beneficiary' | 'Referral' | 'Organization Member' | undefined,
         recipientPhone: formData.get("recipientPhone") as string | undefined,
         recipientUpiId: formData.get("recipientUpiId") as string | undefined,
         recipientAccountNumber: formData.get("recipientAccountNumber") as string | undefined,

@@ -47,7 +47,7 @@ const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as cons
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
-const recipientRoles = ['Beneficiary', 'Referral', 'Organization'] as const;
+const recipientRoles = ['Beneficiary', 'Referral', 'Organization Member'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -212,8 +212,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     if (scanAbortController.current) {
         scanAbortController.current.abort();
         toast({ title: 'Scan Cancelled', description: 'The scanning process has been stopped.' });
-        setIsScanning(false);
     }
+     setIsScanning(false);
   };
 
 
@@ -430,10 +430,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       }
       
       // Find RECIPIENT - including the new logic for organization member
-      if (details.recipientRole === 'Organization' && details.recipientId) {
+      if (details.recipientRole === 'Organization Member' && details.recipientId) {
           const foundAdmin = users.find(u => u.id === details.recipientId);
           if (foundAdmin) {
-              setValue('recipientRole', 'Organization');
+              setValue('recipientRole', 'Organization Member');
               setValue('recipientId', foundAdmin.id);
               setSelectedRecipient(foundAdmin);
               toast({
@@ -750,8 +750,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 <FormLabel className="font-normal">Referral</FormLabel>
                             </FormItem>
                             <FormItem className="flex items-center space-x-2">
-                                <FormControl><RadioGroupItem value="Organization" /></FormControl>
-                                <FormLabel className="font-normal">To Organization</FormLabel>
+                                <FormControl><RadioGroupItem value="Organization Member" /></FormControl>
+                                <FormLabel className="font-normal">Organization Member</FormLabel>
                             </FormItem>
                         </RadioGroup>
                         </FormControl>
@@ -786,8 +786,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                         <CommandEmpty>No {recipientRole}s found.</CommandEmpty>
                                         <CommandGroup>
                                             {users.filter(u => {
-                                                if(recipientRole === 'Organization') return u.roles.includes('Admin') || u.roles.includes('Super Admin');
-                                                if(recipientRole) return u.roles.includes(recipientRole);
+                                                if(recipientRole === 'Organization Member') return u.roles.includes('Admin') || u.roles.includes('Super Admin');
+                                                if(recipientRole) return u.roles.includes(recipientRole as UserRole);
                                                 return false;
                                             }).map((user) => (
                                                 <CommandItem

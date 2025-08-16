@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -15,7 +14,7 @@ export type UserRole =
   | 'Admin'
   | 'Finance Admin'
   | 'Super Admin'
-  | 'Organization';
+  | 'Organization Member';
 
 export type Privilege =
   | 'all'
@@ -122,7 +121,7 @@ export interface Donation {
   paytmSenderName?: string;
   paytmRecipientName?: string;
   recipientId?: string;
-  recipientRole?: 'Beneficiary' | 'Referral' | 'Organization';
+  recipientRole?: 'Beneficiary' | 'Referral' | 'Organization Member';
   recipientPhone?: string;
   recipientUpiId?: string;
   recipientAccountNumber?: string;

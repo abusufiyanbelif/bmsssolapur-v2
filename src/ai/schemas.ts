@@ -121,6 +121,8 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   recipientAccountNumber: z.string().optional().describe("The recipient's bank account number, even if partial (e.g., 'To account ...5678')."),
   status: z.string().optional().describe('The status of the transaction (e.g., Successful, Completed, Received).'),
   notes: z.string().optional().describe('Any user-added comments, remarks, or descriptions found in the payment details. Also labeled as "Message".'),
+  recipientId: z.string().optional().describe("The internal user ID of the recipient, if found in the system."),
+  recipientRole: z.enum(['Beneficiary', 'Referral', 'Organization Member']).optional().describe("The role of the recipient, if found in the system."),
 });
 
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;

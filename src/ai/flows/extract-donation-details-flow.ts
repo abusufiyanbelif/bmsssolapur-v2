@@ -70,7 +70,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
     if (recipientUser && recipientUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
         structuredOutput = {
             ...structuredOutput,
-            recipientRole: 'Organization',
+            recipientRole: 'Organization Member',
             recipientId: recipientUser.id,
             recipientName: recipientUser.name, // Overwrite with official name
         };
@@ -83,4 +83,3 @@ const extractDonationDetailsFlow = ai.defineFlow(
     };
   }
 );
-
