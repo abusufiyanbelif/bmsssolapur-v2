@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,8 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId } from "./actions";
-import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
+import { handleAddDonation, checkTransactionId, scanProof, getRawTextFromImage } from "./actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -1142,13 +1142,27 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </FormItem>
                         )}
                     />
+                 ) : paymentApp === 'PhonePe' || paymentApp === 'Paytm' ? (
+                     <FormField
+                        control={form.control}
+                        name="transactionId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Transaction ID</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Enter Transaction ID" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
                  ) : (
                     <FormField
                         control={form.control}
                         name="utrNumber"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>UTR Number</FormLabel>
+                            <FormLabel>UTR Number (Optional)</FormLabel>
                             <FormControl>
                             <Input placeholder="Enter UTR number" {...field} />
                             </FormControl>
