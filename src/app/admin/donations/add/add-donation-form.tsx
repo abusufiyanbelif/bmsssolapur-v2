@@ -257,20 +257,12 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
 
   useEffect(() => {
     // This effect runs when a user is MANUALLY selected from the dropdown.
-    // It should not clear fields that might have been set by the AI scan.
-    if (selectedDonor && form.formState.isDirty && form.formState.touchedFields.donorId) {
-        const currentFormValues = getValues();
+    if (selectedDonor && form.formState.touchedFields.donorId) {
         setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
-        
-        // Only set these fields if they aren't already filled (e.g., by a scan)
-        if (!currentFormValues.donorPhone && selectedDonor.phone) {
-            setValue('donorPhone', selectedDonor.phone);
-        }
-        if (!currentFormValues.donorBankAccount && selectedDonor.bankAccountNumber) {
-            setValue('donorBankAccount', selectedDonor.bankAccountNumber);
-        }
-         // Do not set UPI ID if it was set by scan. Only set it if the user manually selects a donor and the field is empty.
-        if (!currentFormValues.donorUpiId && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
+        setValue('donorPhone', selectedDonor.phone);
+        setValue('donorBankAccount', selectedDonor.bankAccountNumber);
+         // Only set UPI if it's not already set by a scan
+        if (!getValues('donorUpiId') && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
              setValue('donorUpiId', selectedDonor.upiIds[0]);
         }
     }
@@ -334,27 +326,19 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       
       const details = scanResult.details;
       toast({ variant: 'success', title: 'Data Extracted', description: 'Checking for users...' });
-
-      // Handle special mapping first to avoid being overwritten.
-      let finalPaymentApp = details.paymentApp;
-      if (finalPaymentApp === "G Pay") finalPaymentApp = "Google Pay";
       
-      if (finalPaymentApp && ['Google Pay', 'PhonePe', 'Paytm'].includes(finalPaymentApp)) {
-          setValue('paymentApp', finalPaymentApp as any, { shouldDirty: true });
-          setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-      } else if (details.paymentMethod === 'UPI' || details.paymentMethod === 'Online') {
-          setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-      }
-      
-      // Iterate and set all other fields, skipping the ones we just handled.
+      // Populate form with all extracted details first
       for (const [key, value] of Object.entries(details)) {
-        if (value === undefined || value === null || key === 'paymentApp' || key === 'paymentMethod') {
-          continue;
-        }
-        if (key === 'date' && typeof value === 'string') {
-          setValue('donationDate', new Date(value), { shouldDirty: true });
-        } else {
-          setValue(key as any, value, { shouldDirty: true });
+        if (value !== undefined && value !== null) {
+          if (key === 'date' && typeof value === 'string') {
+            setValue('donationDate', new Date(value), { shouldDirty: true });
+          } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
+            setValue('paymentApp', value as any, { shouldDirty: true });
+            setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+          }
+          else {
+            setValue(key as any, value, { shouldDirty: true });
+          }
         }
       }
       
@@ -373,16 +357,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               description: `Automatically selected existing donor: ${foundDonor.name}`,
               icon: <UserIcon />,
           });
-          // Preserve the scanned UPI ID, do not overwrite from profile
-          if (details.senderUpiId) {
-            setValue('donorUpiId', details.senderUpiId);
-          } else if(foundDonor.upiIds && foundDonor.upiIds.length > 0) {
-            setValue('donorUpiId', foundDonor.upiIds[0]);
-          }
-
-          if(!details.donorBankAccount && foundDonor.bankAccountNumber) {
-              setValue('donorBankAccount', foundDonor.bankAccountNumber);
-          }
+          // Populate fields from profile ONLY if they weren't found in the scan
+          if (!details.donorPhone && foundDonor.phone) setValue('donorPhone', foundDonor.phone);
+          if (!details.senderAccountNumber && foundDonor.bankAccountNumber) setValue('donorBankAccount', foundDonor.bankAccountNumber);
       }
       
       // Find RECIPIENT
@@ -403,16 +380,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                   description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
                   icon: <UserIcon />,
               });
-              // Preserve the scanned recipient UPI ID
-               if (details.recipientUpiId) {
-                  setValue('recipientUpiId', details.recipientUpiId);
-               } else if (foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
-                  setValue('recipientUpiId', foundRecipient.upiIds[0]);
-               }
-
-               if(!details.recipientAccountNumber && foundRecipient.bankAccountNumber) {
-                   setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
-               }
+              // Populate fields from profile ONLY if they weren't found in the scan
+              if (!details.recipientPhone && foundRecipient.phone) setValue('recipientPhone', foundRecipient.phone);
+              if (!details.recipientAccountNumber && foundRecipient.bankAccountNumber) setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
            }
       }
 
@@ -420,7 +390,6 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         setRawText(details.rawText);
       }
       
-
     } catch(err) {
        if ((err as Error).name !== 'AbortError') {
           const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
@@ -1019,36 +988,39 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="donorUpiId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Donor UPI ID</FormLabel>
-                            {(selectedDonor?.upiIds && selectedDonor.upiIds.length > 0) ? (
-                                <Select onValueChange={field.onChange} value={field.value}>
+                 {!donorBankAccount && (
+                    <FormField
+                        control={form.control}
+                        name="donorUpiId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Donor UPI ID</FormLabel>
+                                {(selectedDonor?.upiIds && selectedDonor.upiIds.length > 0) ? (
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a UPI ID" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {selectedDonor.upiIds.map((id) => (
+                                            <SelectItem key={id} value={id}>{id}</SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
                                     <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a UPI ID" />
-                                    </SelectTrigger>
+                                        <Input placeholder="e.g., username@okhdfc" {...field} />
                                     </FormControl>
-                                    <SelectContent>
-                                    {selectedDonor.upiIds.map((id) => (
-                                        <SelectItem key={id} value={id}>{id}</SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <FormControl>
-                                    <Input placeholder="e.g., username@okhdfc" {...field} />
-                                </FormControl>
-                            )}
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                                )}
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                 )}
             </div>
-             <FormField
+             {!donorUpiId && (
+                <FormField
                     control={form.control}
                     name="donorBankAccount"
                     render={({ field }) => (
@@ -1060,20 +1032,25 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                         <FormMessage />
                     </FormItem>
                 )}
-            />
+                />
+            )}
             
             <h4 className="font-semibold text-sm">Recipient Contact Details (for reference)</h4>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField control={form.control} name="recipientPhone" render={({ field }) => (
                     <FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input placeholder="10-digit phone number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
-                    <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                 {!recipientAccountNumber && (
+                    <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
+                        <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                )}
             </div>
-            <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
-                <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
+             {!recipientUpiId && (
+                <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
+                    <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+             )}
           
           <FormField
               control={form.control}
@@ -1148,3 +1125,6 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
+
+    
