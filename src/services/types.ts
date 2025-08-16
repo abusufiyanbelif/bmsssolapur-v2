@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -121,7 +122,7 @@ export interface Donation {
   paytmSenderName?: string;
   paytmRecipientName?: string;
   recipientId?: string;
-  recipientRole?: 'Beneficiary' | 'Referral' | 'Organization Member';
+  recipientRole?: 'Beneficiary' | 'Referral' | 'Organization Member' | 'To Organization';
   recipientPhone?: string;
   recipientUpiId?: string;
   recipientAccountNumber?: string;

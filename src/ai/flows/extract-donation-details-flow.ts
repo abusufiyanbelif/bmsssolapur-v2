@@ -66,7 +66,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
         recipientUser = await getUserByPhone(structuredOutput.recipientPhone);
     }
 
-    // If the found user is an admin, classify this as a donation "To Organization"
+    // If the found user is an admin, classify this as a donation "To Organization Member"
     if (recipientUser && recipientUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
         structuredOutput = {
             ...structuredOutput,

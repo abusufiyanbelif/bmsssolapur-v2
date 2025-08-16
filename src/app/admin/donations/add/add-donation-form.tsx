@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
@@ -47,7 +48,7 @@ const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as cons
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
-const recipientRoles = ['Beneficiary', 'Referral', 'Organization Member'] as const;
+const recipientRoles = ['Beneficiary', 'Referral', 'Organization Member', 'To Organization'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -168,6 +169,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const transactionId = watch('transactionId');
   const utrNumber = watch('utrNumber');
   const googlePayTransactionId = watch('googlePayTransactionId');
+  const phonePeTransactionId = watch('phonePeTransactionId');
+  const paytmUpiReferenceNo = watch('paytmUpiReferenceNo');
   const debouncedTransactionId = useDebounce(transactionId, 500);
 
   const linkedLeadId = watch("leadId");
@@ -739,7 +742,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 setSelectedRecipient(null);
                             }}
                             value={field.value}
-                            className="flex flex-wrap space-x-4"
+                            className="flex flex-wrap gap-x-4 gap-y-2"
                         >
                             <FormItem className="flex items-center space-x-2">
                                 <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
@@ -748,6 +751,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             <FormItem className="flex items-center space-x-2">
                                 <FormControl><RadioGroupItem value="Referral" /></FormControl>
                                 <FormLabel className="font-normal">Referral</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2">
+                                <FormControl><RadioGroupItem value="To Organization" /></FormControl>
+                                <FormLabel className="font-normal">To Organization</FormLabel>
                             </FormItem>
                             <FormItem className="flex items-center space-x-2">
                                 <FormControl><RadioGroupItem value="Organization Member" /></FormControl>
@@ -759,7 +766,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </FormItem>
                     )}
                 />
-                {recipientRole && (
+                {(recipientRole && recipientRole !== 'To Organization') && (
                      <FormField
                         control={form.control}
                         name="recipientId"
@@ -812,6 +819,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             </FormItem>
                         )}
                         />
+                )}
+                 {recipientRole === 'To Organization' && (
+                     <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                        <Building className="h-5 w-5 text-muted-foreground" />
+                        <span className="font-medium text-sm">This donation will be marked for general organizational use.</span>
+                    </div>
                 )}
             </div>
 
@@ -1158,6 +1171,36 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             <FormLabel>Google Pay Transaction ID</FormLabel>
                             <FormControl>
                             <Input placeholder="Google Pay ID" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                 )}
+                 {paymentApp === 'PhonePe' && phonePeTransactionId && (
+                    <FormField
+                        control={form.control}
+                        name="phonePeTransactionId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>PhonePe Transaction ID</FormLabel>
+                            <FormControl>
+                            <Input placeholder="PhonePe ID" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                 )}
+                 {paymentApp === 'Paytm' && paytmUpiReferenceNo && (
+                    <FormField
+                        control={form.control}
+                        name="paytmUpiReferenceNo"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Paytm UPI Reference No</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Paytm Ref No" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
