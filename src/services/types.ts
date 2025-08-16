@@ -81,7 +81,7 @@ export interface User {
 // Donation-related types
 export type DonationStatus = 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Partially Allocated' | 'Allocated';
 export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah' | 'Split' | 'Any';
-export type DonationPurpose = 'Education' | 'Deen' | 'Hospital' | 'Loan and Relief Fund' | 'To Organization Use' | 'Loan Repayment';
+export type DonationPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Loan' | 'To Organization Use' | 'Loan Repayment' | 'Other';
 export type PaymentMethod = 'Online (UPI/Card)' | 'Bank Transfer' | 'Cash' | 'Other';
 
 export interface Allocation {
@@ -99,6 +99,7 @@ export interface Donation {
   amount: number;
   type: DonationType;
   purpose?: DonationPurpose;
+  category?: string;
   status: DonationStatus;
   isAnonymous?: boolean;
   leadId?: string;
@@ -112,14 +113,18 @@ export interface Donation {
   paytmUpiReferenceNo?: string;
   donationDate: Timestamp | Date;
   paymentApp?: string;
+  senderPaymentApp?: string;
+  recipientPaymentApp?: string;
   donorUpiId?: string;
   donorPhone?: string;
   donorBankAccount?: string;
+  senderName?: string;
   phonePeSenderName?: string;
-  phonePeRecipientName?: string;
   googlePaySenderName?: string;
-  googlePayRecipientName?: string;
   paytmSenderName?: string;
+  recipientName?: string;
+  phonePeRecipientName?: string;
+  googlePayRecipientName?: string;
   paytmRecipientName?: string;
   recipientId?: string;
   recipientRole?: 'Beneficiary' | 'Referral' | 'Organization Member' | 'To Organization';

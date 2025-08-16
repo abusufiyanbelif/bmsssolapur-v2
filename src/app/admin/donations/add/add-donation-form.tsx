@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building } from "lucide-react";
-import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign } from "@/services/types";
+import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -45,10 +45,19 @@ import { useDebounce } from "@/hooks/use-debounce";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
-const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
+const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 const recipientRoles = ['Beneficiary', 'Referral', 'To Organization', 'Organization Member'] as const;
+
+const categoryOptions: Record<string, string[]> = {
+    'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
+    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
+    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
+    'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
+    'Loan': ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'],
+};
+
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -62,6 +71,7 @@ const formSchema = z.object({
   donationDate: z.date(),
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
+  category: z.string().optional(),
   transactionId: z.string().optional(),
   utrNumber: z.string().optional(),
   googlePayTransactionId: z.string().optional(),
@@ -176,6 +186,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const recipientUpiId = watch("recipientUpiId");
   const recipientAccountNumber = watch("recipientAccountNumber");
   const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
+  const selectedPurpose = watch("purpose");
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -244,9 +255,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
         const donorIdParam = searchParams.get('donorId');
         const notesParam = searchParams.get('notes');
         const dateParam = searchParams.get('date');
-        const donorUpiIdParam = searchParams.get('donorUpiId');
+        const donorUpiIdParam = searchParams.get('senderUpiId');
         const donorPhoneParam = searchParams.get('donorPhone');
-        const donorBankAccountParam = searchParams.get('bankAccountNumber');
+        const donorBankAccountParam = searchParams.get('senderAccountNumber');
         const rawTextParam = searchParams.get('rawText');
 
         if (amountParam) setValue('amount', parseFloat(amountParam));
@@ -594,7 +605,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
           
-            {showOnlineFields && (
+            {paymentMethod && paymentMethod !== 'Cash' && paymentMethod !== 'Other' && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         <ImageIcon className="h-5 w-5"/>
@@ -1143,20 +1154,20 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </FormItem>
                 )}
                 />
-                <FormField
+                 <FormField
                 control={form.control}
                 name="purpose"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Primary Donation Purpose</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={(value) => { field.onChange(value); setValue("category", undefined); }} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a purpose (optional)" />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {donationPurposes.filter(p => p !== 'To Organization Use').map(purpose => (
+                        {donationPurposes.map(purpose => (
                             <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
                         ))}
                         </SelectContent>
@@ -1166,12 +1177,32 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
                 />
             </div>
+             {selectedPurpose && categoryOptions[selectedPurpose] && (
+                <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Specific Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a specific category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {categoryOptions[selectedPurpose as keyof typeof categoryOptions].map(sub => (
+                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
 
-            <FormField control={form.control} name="senderName" render={({ field }) => (
-                <FormItem><FormLabel>Sender Name (if different from Donor)</FormLabel><FormControl><Input placeholder="Full name of the sender" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            
-            {showOnlineFields && (
+             {paymentMethod !== 'Cash' && paymentMethod !== 'Other' ? (
                 <>
                     <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1207,22 +1238,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                     <FormControl>
                                     <Input placeholder="Enter UPI Transaction ID" {...field} />
                                     </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        ) : (paymentApp === 'PhonePe' || paymentApp === 'Paytm') ? (
-                            <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter Transaction ID" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -1233,178 +1248,26 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 name="utrNumber"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>UTR Number</FormLabel>
+                                    <FormLabel>UTR or Transaction ID</FormLabel>
                                     <FormControl>
-                                    <Input placeholder="Enter UTR number" {...field} />
+                                    <Input placeholder="Enter UTR or Transaction ID" {...field} />
                                     </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
                                     <FormMessage />
                                 </FormItem>
                                 )}
                             />
                         )}
                     </div>
-                    <div className="space-y-4">
-                        {paymentApp === 'Google Pay' && (
-                            <FormField
-                                control={form.control}
-                                name="googlePayTransactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Google Pay Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Google Pay ID" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
-                        {paymentApp === 'PhonePe' && (
-                            <FormField
-                                control={form.control}
-                                name="phonePeTransactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>PhonePe Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="PhonePe ID" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
-                        {paymentApp === 'Paytm' && (
-                            <FormField
-                                control={form.control}
-                                name="paytmUpiReferenceNo"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Paytm UPI Reference No</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Paytm Ref No" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
-                    </div>
-
-                    <h4 className="font-semibold text-sm">Sender & Recipient Details</h4>
-                    
-                    {paymentApp === 'Google Pay' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (
-                                <FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (
-                                <FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                        </div>
-                    )}
-                    {paymentApp === 'PhonePe' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <FormField control={form.control} name="phonePeSenderName" render={({ field }) => (
-                                <FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name="phonePeRecipientName" render={({ field }) => (
-                                <FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                        </div>
-                    )}
-                    {paymentApp === 'Paytm' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <FormField control={form.control} name="paytmSenderName" render={({ field }) => (
-                                <FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name="paytmRecipientName" render={({ field }) => (
-                                <FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                        </div>
-                    )}
-
-
-                    <h4 className="font-semibold text-sm">Donor Contact Details (for reference)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField
-                            control={form.control}
-                            name="donorPhone"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Donor Phone</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="10-digit phone number" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        {!donorBankAccount && (
-                            <FormField
-                                control={form.control}
-                                name="donorUpiId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Donor UPI ID</FormLabel>
-                                        {selectedDonor?.upiIds && selectedDonor.upiIds.length > 0 ? (
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a UPI ID" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {selectedDonor.upiIds.map((id) => (
-                                                        <SelectItem key={id} value={id}>{id}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        ) : (
-                                            <FormControl>
-                                                <Input placeholder="e.g., username@okhdfc" {...field} />
-                                            </FormControl>
-                                        )}
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )}
-                    </div>
-                    {!donorUpiId && (
-                        <FormField
-                            control={form.control}
-                            name="donorBankAccount"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Donor Bank Account (Optional)</FormLabel>
-                                <FormControl>
-                                <Input placeholder="Last 4 digits or full number" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    )}
-                    
-                    <h4 className="font-semibold text-sm">Recipient Contact Details (for reference)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="recipientPhone" render={({ field }) => (
-                            <FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input placeholder="10-digit phone number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        {!recipientAccountNumber && (
-                            <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
-                                <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                        )}
-                    </div>
-                    {!recipientUpiId && (
-                        <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
-                            <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    )}
+                     <FormField control={form.control} name="senderName" render={({ field }) => (
+                        <FormItem><FormLabel>Sender Name (if different from Donor)</FormLabel><FormControl><Input placeholder="Full name of the sender" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                 </>
-            )}
+             ) : (
+                <FormField control={form.control} name="senderName" render={({ field }) => (
+                    <FormItem><FormLabel>Payer Name</FormLabel><FormControl><Input placeholder="Full name of the person giving cash" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+             )}
           
           <FormField
               control={form.control}

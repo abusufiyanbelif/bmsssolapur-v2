@@ -86,6 +86,7 @@ export async function handleAddDonation(
         amount: parseFloat(formData.get("amount") as string),
         type: formData.get("type") as DonationType,
         purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
+        category: formData.get("category") as string | undefined,
         status: "Pending verification",
         transactionId: transactionId,
         utrNumber: formData.get("utrNumber") as string | undefined,
