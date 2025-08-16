@@ -1149,7 +1149,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         )}
                     />
                  )}
-                 {googlePayTransactionId && (
+                 {paymentApp === 'Google Pay' && googlePayTransactionId && (
                     <FormField
                         control={form.control}
                         name="googlePayTransactionId"
@@ -1352,7 +1352,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-
-    
-
