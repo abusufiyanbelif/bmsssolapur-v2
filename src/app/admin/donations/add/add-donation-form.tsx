@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddDonation, checkTransactionId } from "./actions";
-import { scanProof, getRawTextFromImage } from "@/ai/text-extraction-actions";
+import { scanProof } from '@/ai/text-extraction-actions';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -406,6 +406,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     setIsExtractingText(true);
     const formData = new FormData();
     formData.append('imageFile', file);
+    const { getRawTextFromImage } = await import('@/ai/text-extraction-actions');
     const result = await getRawTextFromImage(formData);
     if(result.success && result.text) {
         setRawText(result.text);
@@ -448,6 +449,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     formData.append('proofFile', localFiles[0].file);
     
     try {
+      const { scanProof } = await import('@/ai/text-extraction-actions');
       const scanResult = await scanProof(formData);
       
       if (scanAbortController.current.signal.aborted) return;
@@ -644,6 +646,29 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
            
+             <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select payment method" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {paymentMethods.map(method => (
+                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
             {(paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer') && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -781,108 +806,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     <FormDescription>Review the extracted text. You can copy-paste from here to correct any fields above.</FormDescription>
                 </div>
             )}
-            
-            <h3 className="text-lg font-semibold border-b pb-2">Primary Details</h3>
-             <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select payment method" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {paymentMethods.map(method => (
-                            <SelectItem key={method} value={method}>{method}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        
-           {isAdminView ? (
-               <FormField
-                  control={form.control}
-                  name="donorId"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Donor</FormLabel>
-                       <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value
-                                ? donorUsers.find(
-                                    (user) => user.id === field.value
-                                  )?.name
-                                : "Select a donor"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                          <Command>
-                            <CommandInput placeholder="Search donor..." />
-                            <CommandList>
-                                <CommandEmpty>No donors found.</CommandEmpty>
-                                <CommandGroup>
-                                {donorUsers.map((user) => (
-                                    <CommandItem
-                                    value={user.name}
-                                    key={user.id}
-                                    onSelect={async () => {
-                                        field.onChange(user.id!);
-                                        const donor = await getUser(user.id!);
-                                        setSelectedDonor(donor);
-                                        setDonorPopoverOpen(false);
-                                    }}
-                                    >
-                                    <Check
-                                        className={cn(
-                                        "mr-2 h-4 w-4",
-                                        user.id === field.value
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                    />
-                                    {user.name} ({user.phone})
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-           ) : (
-             currentUser && (
-                <div className="space-y-2">
-                    <FormLabel>Donor</FormLabel>
-                    <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-                        <UserIcon className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">{currentUser.name}</span>
-                    </div>
-                     <FormDescription>You are submitting this donation for your own profile.</FormDescription>
-                </div>
-             )
-           )}
-            <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
+
+             <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
@@ -1010,112 +935,87 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     )}
                 />
             )}
+        
             
-            <h3 className="text-lg font-semibold border-b pb-2">Recipient (Optional)</h3>
-            <div className="space-y-4 rounded-lg border p-4">
-                <FormField
-                    control={form.control}
-                    name="recipientRole"
-                    render={({ field }) => (
-                    <FormItem className="space-y-3">
-                        <FormLabel>Recipient Type</FormLabel>
-                        <FormControl>
-                        <RadioGroup
-                            onValueChange={(value: any) => {
-                                field.onChange(value);
-                                setValue('recipientId', undefined);
-                                setSelectedRecipient(null);
-                            }}
-                            value={field.value}
-                            className="flex flex-wrap gap-x-4 gap-y-2"
-                        >
-                            <FormItem className="flex items-center space-x-2">
-                                <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
-                                <FormLabel className="font-normal">Beneficiary</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2">
-                                <FormControl><RadioGroupItem value="Referral" /></FormControl>
-                                <FormLabel className="font-normal">Referral</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2">
-                                <FormControl><RadioGroupItem value="To Organization" /></FormControl>
-                                <FormLabel className="font-normal">To Organization</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2">
-                                <FormControl><RadioGroupItem value="Organization Member" /></FormControl>
-                                <FormLabel className="font-normal">Organization Member</FormLabel>
-                            </FormItem>
-                        </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {(recipientRole && recipientRole !== 'To Organization') && (
-                     <FormField
-                        control={form.control}
-                        name="recipientId"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Select {recipientRole}</FormLabel>
-                            <Popover open={recipientPopoverOpen} onOpenChange={setRecipientPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    className={cn("w-full justify-between",!field.value && "text-muted-foreground")}
-                                    >
-                                    {field.value ? users.find((user) => user.id === field.value)?.name : `Select a ${recipientRole}`}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder={`Search ${recipientRole}...`} />
-                                    <CommandList>
-                                        <CommandEmpty>No {recipientRole}s found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {users.filter(u => {
-                                                if(recipientRole === 'Organization Member') return u.roles.includes('Admin') || u.roles.includes('Super Admin');
-                                                if(recipientRole) return u.roles.includes(recipientRole as UserRole);
-                                                return false;
-                                            }).map((user) => (
-                                                <CommandItem
-                                                    value={user.name}
-                                                    key={user.id}
-                                                    onSelect={async () => {
-                                                        field.onChange(user.id!);
-                                                        setSelectedRecipient(user);
-                                                        setRecipientPopoverOpen(false);
-                                                    }}
-                                                >
-                                                <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                {user.name} ({user.phone})
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                )}
-                 {recipientRole === 'To Organization' && (
-                     <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-                        <Building className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium text-sm">This donation will be marked for general organizational use.</span>
-                    </div>
-                )}
-            </div>
-             
             {showOnlineFields && (
                 <div className="space-y-4">
                     <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
+                     {isAdminView ? (
+                        <FormField
+                            control={form.control}
+                            name="donorId"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Donor</FormLabel>
+                                <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        className={cn(
+                                            "w-full justify-between",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value
+                                            ? donorUsers.find(
+                                                (user) => user.id === field.value
+                                            )?.name
+                                            : "Select a donor"}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Search donor..." />
+                                        <CommandList>
+                                            <CommandEmpty>No donors found.</CommandEmpty>
+                                            <CommandGroup>
+                                            {donorUsers.map((user) => (
+                                                <CommandItem
+                                                value={user.name}
+                                                key={user.id}
+                                                onSelect={async () => {
+                                                    field.onChange(user.id!);
+                                                    const donor = await getUser(user.id!);
+                                                    setSelectedDonor(donor);
+                                                    setDonorPopoverOpen(false);
+                                                }}
+                                                >
+                                                <Check
+                                                    className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    user.id === field.value
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
+                                                    )}
+                                                />
+                                                {user.name} ({user.phone})
+                                                </CommandItem>
+                                            ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                    ) : (
+                        currentUser && (
+                            <div className="space-y-2">
+                                <FormLabel>Donor</FormLabel>
+                                <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                                    <UserIcon className="h-5 w-5 text-muted-foreground" />
+                                    <span className="font-medium">{currentUser.name}</span>
+                                </div>
+                                <FormDescription>You are submitting this donation for your own profile.</FormDescription>
+                            </div>
+                        )
+                    )}
                      <FormField
                         control={form.control}
                         name="senderName"
@@ -1223,6 +1123,106 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             />
                         </div>
                       )}
+                       <div className="space-y-4 rounded-lg border p-4">
+                        <FormField
+                            control={form.control}
+                            name="recipientRole"
+                            render={({ field }) => (
+                            <FormItem className="space-y-3">
+                                <FormLabel>Recipient Type</FormLabel>
+                                <FormControl>
+                                <RadioGroup
+                                    onValueChange={(value: any) => {
+                                        field.onChange(value);
+                                        setValue('recipientId', undefined);
+                                        setSelectedRecipient(null);
+                                    }}
+                                    value={field.value}
+                                    className="flex flex-wrap gap-x-4 gap-y-2"
+                                >
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
+                                        <FormLabel className="font-normal">Beneficiary</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl><RadioGroupItem value="Referral" /></FormControl>
+                                        <FormLabel className="font-normal">Referral</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl><RadioGroupItem value="To Organization" /></FormControl>
+                                        <FormLabel className="font-normal">To Organization</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl><RadioGroupItem value="Organization Member" /></FormControl>
+                                        <FormLabel className="font-normal">Organization Member</FormLabel>
+                                    </FormItem>
+                                </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        {(recipientRole && recipientRole !== 'To Organization') && (
+                            <FormField
+                                control={form.control}
+                                name="recipientId"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                    <FormLabel>Select {recipientRole}</FormLabel>
+                                    <Popover open={recipientPopoverOpen} onOpenChange={setRecipientPopoverOpen}>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn("w-full justify-between",!field.value && "text-muted-foreground")}
+                                            >
+                                            {field.value ? users.find((user) => user.id === field.value)?.name : `Select a ${recipientRole}`}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <Command>
+                                            <CommandInput placeholder={`Search ${recipientRole}...`} />
+                                            <CommandList>
+                                                <CommandEmpty>No {recipientRole}s found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {users.filter(u => {
+                                                        if(recipientRole === 'Organization Member') return u.roles.includes('Admin') || u.roles.includes('Super Admin');
+                                                        if(recipientRole) return u.roles.includes(recipientRole as UserRole);
+                                                        return false;
+                                                    }).map((user) => (
+                                                        <CommandItem
+                                                            value={user.name}
+                                                            key={user.id}
+                                                            onSelect={async () => {
+                                                                field.onChange(user.id!);
+                                                                setSelectedRecipient(user);
+                                                                setRecipientPopoverOpen(false);
+                                                            }}
+                                                        >
+                                                        <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                        {user.name} ({user.phone})
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                        )}
+                        {recipientRole === 'To Organization' && (
+                            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                                <Building className="h-5 w-5 text-muted-foreground" />
+                                <span className="font-medium text-sm">This donation will be marked for general organizational use.</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
              )}
 
