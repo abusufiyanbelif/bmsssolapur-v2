@@ -63,6 +63,8 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - utrNumber: The UTR number, if explicitly labeled.
             - date: The date of the transaction (Format: YYYY-MM-DD).
             - time: The time of the transaction (e.g., "11:48 am").
+            - type: The category of donation if mentioned (e.g., Zakat, Sadaqah). Check the notes/remarks for this.
+            - purpose: The specific purpose of the donation if mentioned (e.g., Education, Hospital). Check the notes/remarks for this.
             - paymentMethod: The method used, like "UPI" or "Bank Transfer". If you see "UPI", you MUST return "Online (UPI/Card)".
             - senderName: The generic sender name. If possible, prefer the app-specific name.
             - senderUpiId: The sender's UPI ID (contains '@').

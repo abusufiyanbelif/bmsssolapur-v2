@@ -94,6 +94,8 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   utrNumber: z.string().optional().describe("The UTR number if it is explicitly visible. It's often a long number."),
   date: z.string().optional().describe('The date of the transaction. Format it as YYYY-MM-DD.'),
   time: z.string().optional().describe('The time of the transaction. Format it as hh:mm am/pm.'),
+  type: z.enum(['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah']).optional().describe("The category of donation if mentioned (e.g., Zakat, Sadaqah)."),
+  purpose: z.enum(['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use']).optional().describe("The specific purpose of the donation if mentioned (e.g., Education, Hospital)."),
   paymentApp: z.string().optional().describe('The method or app of payment (e.g., GPay, PhonePe, Paytm). Infer this from the UI, especially logos like "पे" for PhonePe or "Paytm Bank".'),
   paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer. Often found near the transaction ID.'),
   
