@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -213,6 +212,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     if (scanAbortController.current) {
         scanAbortController.current.abort();
         toast({ title: 'Scan Cancelled', description: 'The scanning process has been stopped.' });
+        setIsScanning(false);
     }
   };
 
