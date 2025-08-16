@@ -260,11 +260,13 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     if (selectedDonor && form.formState.touchedFields.donorId) {
         setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
         setValue('donorPhone', selectedDonor.phone);
-        // Only set bank account if UPI is not already set by a scan
+        
+        // Only populate profile bank account if scan hasn't found a UPI
         if (!getValues('donorUpiId')) {
           setValue('donorBankAccount', selectedDonor.bankAccountNumber);
         }
-         // Only set UPI if it's not already set by a scan
+        
+        // Only populate profile UPI if scan hasn't found one
         if (!getValues('donorUpiId') && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
              setValue('donorUpiId', selectedDonor.upiIds[0]);
         }
@@ -327,9 +329,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
       }
       
+      const details = scanResult.details;
       toast({ variant: 'success', title: 'Data Extracted', description: 'Form fields have been populated. Checking for users...' });
       
-      const details = scanResult.details;
       // Populate form with all extracted details first
       for (const [key, value] of Object.entries(details)) {
         if (value !== undefined && value !== null) {
@@ -362,11 +364,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
           });
           // Populate fields from profile ONLY if they weren't found in the scan
           if (!details.donorPhone && foundDonor.phone) setValue('donorPhone', foundDonor.phone);
-          
-          // CRITICAL FIX: Only set bank account if a UPI ID wasn't found in the scan.
-          if (!details.senderUpiId && foundDonor.bankAccountNumber) {
-             setValue('donorBankAccount', foundDonor.bankAccountNumber);
-          }
+          if (!details.senderUpiId && foundDonor.bankAccountNumber) setValue('donorBankAccount', foundDonor.bankAccountNumber);
       }
       
       // Find RECIPIENT
@@ -389,10 +387,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               });
               // Populate fields from profile ONLY if they weren't found in the scan
               if (!details.recipientPhone && foundRecipient.phone) setValue('recipientPhone', foundRecipient.phone);
-              // CRITICAL FIX: Only set bank account if a UPI ID wasn't found in the scan.
-              if (!details.recipientUpiId && foundRecipient.bankAccountNumber) {
-                 setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
-              }
+              if (!details.recipientUpiId && foundRecipient.bankAccountNumber) setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
            }
       }
 
@@ -998,24 +993,24 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     </FormItem>
                     )}
                 />
-                 {(!donorBankAccount) && (
+                {!donorBankAccount && (
                     <FormField
                         control={form.control}
                         name="donorUpiId"
                         render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Donor UPI ID</FormLabel>
-                                {(selectedDonor?.upiIds && selectedDonor.upiIds.length > 0) ? (
+                            <FormItem>
+                                <FormLabel>Donor UPI ID</FormLabel>
+                                {selectedDonor?.upiIds && selectedDonor.upiIds.length > 0 ? (
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a UPI ID" />
-                                        </SelectTrigger>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a UPI ID" />
+                                            </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                        {selectedDonor.upiIds.map((id) => (
-                                            <SelectItem key={id} value={id}>{id}</SelectItem>
-                                        ))}
+                                            {selectedDonor.upiIds.map((id) => (
+                                                <SelectItem key={id} value={id}>{id}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 ) : (
@@ -1023,13 +1018,13 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                         <Input placeholder="e.g., username@okhdfc" {...field} />
                                     </FormControl>
                                 )}
-                            <FormMessage />
-                        </FormItem>
+                                <FormMessage />
+                            </FormItem>
                         )}
                     />
-                 )}
+                )}
             </div>
-             {(!donorUpiId) && (
+             {!donorUpiId && (
                 <FormField
                     control={form.control}
                     name="donorBankAccount"
@@ -1050,13 +1045,13 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                 <FormField control={form.control} name="recipientPhone" render={({ field }) => (
                     <FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input placeholder="10-digit phone number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                 {(!recipientAccountNumber) && (
+                 {!recipientAccountNumber && (
                     <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
                         <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                 )}
             </div>
-             {(!recipientUpiId) && (
+             {!recipientUpiId && (
                 <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
                     <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
