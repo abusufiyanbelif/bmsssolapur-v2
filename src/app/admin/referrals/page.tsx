@@ -249,7 +249,7 @@ function ReferralsPageContent() {
                                     setSelectedUsers(prev => prev.filter(id => !pageUserIds.includes(id)));
                                 }
                             }}
-                            aria-label="Select all current page items"
+                            aria-label="Select all on current page"
                         />
                     </TableHead>
                     <TableHead>User Key</TableHead>

@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FundTransfer } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 interface EnrichedTransfer extends FundTransfer {
@@ -44,7 +45,8 @@ function AllTransfersPageContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const isMobile = useIsMobile();
-    
+    const [selectedTransfers, setSelectedTransfers] = useState<string[]>([]);
+
     // Input states
     const [searchInput, setSearchInput] = useState('');
     

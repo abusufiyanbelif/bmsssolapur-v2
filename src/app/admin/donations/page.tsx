@@ -281,15 +281,16 @@ function DonationsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedDonations.length === paginatedDonations.length && paginatedDonations.length > 0}
+                            checked={paginatedDonations.length > 0 && selectedDonations.length === paginatedDonations.length}
                             onCheckedChange={(checked) => {
+                                const currentPageIds = paginatedDonations.map(d => d.id!);
                                 if (checked) {
-                                    setSelectedDonations(paginatedDonations.map(d => d.id!));
+                                    setSelectedDonations(prev => [...new Set([...prev, ...currentPageIds])]);
                                 } else {
-                                    setSelectedDonations([]);
+                                    setSelectedDonations(prev => prev.filter(id => !currentPageIds.includes(id)));
                                 }
                             }}
-                             aria-label="Select all current page items"
+                            aria-label="Select all on current page"
                         />
                     </TableHead>
                     <TableHead className="w-12"></TableHead>
@@ -443,7 +444,7 @@ function DonationsPageContent() {
                                                 return (
                                                 <TableRow key={alloc.leadId + i}>
                                                      <TableCell>
-                                                        <Link href={`/admin/donations/${donation.id}/allocations/${i}`} className="font-mono text-xs hover:underline text-primary">
+                                                        <Link href={`/admin/donations/${donation.id}/edit`} className="font-mono text-xs hover:underline text-primary">
                                                             {allocationId}
                                                         </Link>
                                                     </TableCell>
