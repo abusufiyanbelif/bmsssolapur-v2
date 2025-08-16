@@ -3,9 +3,10 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting donation details from an image.
- * This is now a two-step flow:
+ * This is now a three-step flow:
  * 1. Extract raw text from the image.
  * 2. Parse the raw text to get structured data.
+ * 3. Enrich the data by identifying if the recipient is an organization member.
  *
  * - extractDonationDetails - A function that handles parsing a donation screenshot.
  */
@@ -19,6 +20,7 @@ import {
 } from '@/ai/schemas';
 import { extractRawText } from './extract-raw-text-flow';
 import { extractDetailsFromText } from './extract-details-from-text-flow';
+import { getUserByPhone, getUserByUpiId } from '@/services/user-service';
 
 
 export async function extractDonationDetails(input: ExtractDonationDetailsInput): Promise<ExtractDonationDetailsOutput> {
@@ -41,7 +43,7 @@ const extractDonationDetailsFlow = ai.defineFlow(
     }
     
     // Step 2: Use the extracted text to get structured details.
-    const structuredOutput = await extractDetailsFromText({ rawText: rawTextOutput.rawText });
+    let structuredOutput = await extractDetailsFromText({ rawText: rawTextOutput.rawText });
 
     if (!structuredOutput) {
       throw new Error("The AI model did not return any structured output from the text.");
@@ -55,6 +57,25 @@ const extractDonationDetailsFlow = ai.defineFlow(
         throw new Error(`Scan failed: Could not extract required fields (${missingFields.join(', ')}). Please try a clearer image or enter details manually.`);
     }
 
+    // Step 3: Enrich data by checking if the recipient is an organization member.
+    let recipientUser = null;
+    if (structuredOutput.recipientUpiId) {
+        recipientUser = await getUserByUpiId(structuredOutput.recipientUpiId);
+    }
+    if (!recipientUser && structuredOutput.recipientPhone) {
+        recipientUser = await getUserByPhone(structuredOutput.recipientPhone);
+    }
+
+    // If the found user is an admin, classify this as a donation "To Organization"
+    if (recipientUser && recipientUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
+        structuredOutput = {
+            ...structuredOutput,
+            recipientRole: 'Organization',
+            recipientId: recipientUser.id,
+            recipientName: recipientUser.name, // Overwrite with official name
+        };
+    }
+    
     // Combine the structured data with the raw text for the final output
     return {
         ...structuredOutput,
@@ -62,3 +83,4 @@ const extractDonationDetailsFlow = ai.defineFlow(
     };
   }
 );
+
