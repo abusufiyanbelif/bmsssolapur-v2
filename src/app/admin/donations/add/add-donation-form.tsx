@@ -159,6 +159,49 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
     return null;
 }
 
+const initialFormValues: AddDonationFormValues = {
+    isAnonymous: false,
+    amount: 0,
+    donationDate: new Date(),
+    includeTip: false,
+    tipAmount: 0,
+    notes: "",
+    paymentScreenshots: [],
+    paymentScreenshotDataUrl: undefined,
+    donorId: '',
+    paymentMethod: 'Online (UPI/Card)',
+    purpose: undefined,
+    category: undefined,
+    transactionId: '',
+    utrNumber: '',
+    googlePayTransactionId: '',
+    phonePeTransactionId: '',
+    paytmUpiReferenceNo: '',
+    paymentApp: undefined,
+    senderPaymentApp: '',
+    recipientPaymentApp: '',
+    donorUpiId: '',
+    donorPhone: '',
+    donorBankAccount: '',
+    senderName: '',
+    phonePeSenderName: '',
+    googlePaySenderName: '',
+    paytmSenderName: '',
+    recipientName: '',
+    phonePeRecipientName: '',
+    googlePayRecipientName: '',
+    paytmRecipientName: '',
+    recipientId: '',
+    recipientRole: undefined,
+    recipientPhone: '',
+    recipientUpiId: '',
+    recipientAccountNumber: '',
+    leadId: '',
+    campaignId: '',
+    type: 'Sadaqah',
+};
+
+
 function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -181,16 +224,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      isAnonymous: false,
-      amount: 0,
-      donationDate: new Date(),
-      includeTip: false,
-      tipAmount: 0,
-      notes: "",
-      paymentScreenshots: [],
-      paymentScreenshotDataUrl: undefined,
-    },
+    defaultValues: initialFormValues,
   });
   
   const { watch, setValue, reset, getValues } = form;
@@ -255,22 +289,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const clearForm = () => {
     stopScan();
-    reset({
-        isAnonymous: false,
-        amount: 0,
-        donationDate: new Date(),
-        includeTip: false,
-        tipAmount: 0,
-        notes: "",
-        paymentScreenshots: [],
-        paymentScreenshotDataUrl: undefined,
-        donorId: undefined,
-        paymentMethod: undefined,
-        purpose: undefined,
-        category: undefined,
-        transactionId: '',
-        // Clear all other fields as well
-    });
+    reset(initialFormValues);
     setLocalFiles([]);
     setRawText(null);
     setSelectedDonor(null);
@@ -386,7 +405,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-        if (!showOnlineFields && paymentMethod === 'Other') { // Multi-file for "Other"
+        if (paymentMethod === 'Other') { // Multi-file for "Other"
             const newPreviews = files.map(file => ({
                 file,
                 previewUrl: URL.createObjectURL(file)
@@ -641,7 +660,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
           
-            {paymentMethod && paymentMethod !== 'Cash' && paymentMethod !== 'Other' && (
+            {showOnlineFields && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         <ImageIcon className="h-5 w-5"/>
@@ -1238,8 +1257,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 />
             )}
 
-             {paymentMethod !== 'Cash' && paymentMethod !== 'Other' ? (
-                <>
+             {showOnlineFields ? (
+                <div className="space-y-4">
                     <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
@@ -1299,7 +1318,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                      <FormField control={form.control} name="senderName" render={({ field }) => (
                         <FormItem><FormLabel>Sender Name (if different from Donor)</FormLabel><FormControl><Input placeholder="Full name of the sender" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                </>
+                </div>
              ) : (
                 <FormField control={form.control} name="senderName" render={({ field }) => (
                     <FormItem><FormLabel>Payer Name</FormLabel><FormControl><Input placeholder="Full name of the person giving cash" {...field} /></FormControl><FormMessage /></FormItem>
