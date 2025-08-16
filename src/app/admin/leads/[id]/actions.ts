@@ -226,4 +226,3 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         return { success: false, error };
     }
 }
-

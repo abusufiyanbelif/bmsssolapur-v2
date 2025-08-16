@@ -213,11 +213,11 @@ function LeadsPageContent() {
             const bValue = b[sortColumn];
 
             let comparison = 0;
-            const aTime = aValue instanceof Date ? aValue.getTime() : 0;
-            const bTime = bValue instanceof Date ? bValue.getTime() : 0;
-            
             if (aValue === undefined || aValue === null) return 1;
             if (bValue === undefined || bValue === null) return -1;
+            
+            const aTime = aValue instanceof Date ? aValue.getTime() : 0;
+            const bTime = bValue instanceof Date ? bValue.getTime() : 0;
             
             if (aTime > 0 && bTime > 0) {
                 comparison = aTime - bTime;
@@ -377,7 +377,7 @@ function LeadsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
+                            checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
                             onCheckedChange={(checked) => {
                                 const pageLeadIds = paginatedLeads.map(l => l.id!);
                                 if (checked) {
@@ -816,4 +816,3 @@ export default function LeadsPage() {
         </Suspense>
     )
 }
-
