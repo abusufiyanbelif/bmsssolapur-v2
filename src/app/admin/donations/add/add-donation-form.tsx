@@ -38,7 +38,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, scanProof, getRawTextFromImage } from "./actions";
+import { handleAddDonation, checkTransactionId } from "./actions";
+import { scanProof, getRawTextFromImage } from "@/ai/text-extraction-actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -309,6 +310,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     router.push(isAdminView ? '/admin/donations' : '/donate');
   }
   
+    const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        return new File([blob], filename, { type: blob.type });
+    };
+
   useEffect(() => {
     const prefillData = async () => {
         const amountParam = searchParams.get('amount');
@@ -630,12 +637,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   }
 
   const isFormInvalid = transactionIdState.isAvailable === false;
-  
-  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: blob.type });
-  };
 
 
   return (
@@ -643,7 +644,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
            
-            {showOnlineFields && (
+            {(paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer') && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         <ImageIcon className="h-5 w-5"/>
@@ -938,7 +939,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             />
             </div>
             
-             <h3 className="text-lg font-semibold border-b pb-2">Categorization</h3>
+            <h3 className="text-lg font-semibold border-b pb-2">Categorization</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
@@ -1224,7 +1225,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                       )}
                 </div>
              )}
-            
+
             <h3 className="text-lg font-semibold border-b pb-2">Linkage (Optional)</h3>
             <div className="space-y-4 rounded-lg border p-4">
                  <FormField
@@ -1326,7 +1327,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                   )}
                 />
             </div>
-
+            
             <FormField
                 control={form.control}
                 name="includeTip"
@@ -1449,5 +1450,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-    
