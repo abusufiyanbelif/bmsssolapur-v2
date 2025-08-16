@@ -51,6 +51,7 @@ const recipientRoles = ['Beneficiary', 'Referral', 'To Organization', 'Organizat
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
+  paymentMethod: z.enum(paymentMethods),
   recipientId: z.string().optional(),
   recipientRole: z.enum(recipientRoles).optional(),
   leadId: z.string().optional(),
@@ -82,7 +83,6 @@ const formSchema = z.object({
   recipientPhone: z.string().optional(),
   recipientUpiId: z.string().optional(),
   recipientAccountNumber: z.string().optional(),
-  paymentMethod: z.enum(paymentMethods).optional(),
   paymentScreenshots: z.any().optional(),
   paymentScreenshotDataUrl: z.string().optional(),
   includeTip: z.boolean().default(false),
@@ -174,6 +174,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const linkedLeadId = watch("leadId");
   const linkedCampaignId = watch("campaignId");
+  const paymentMethod = watch("paymentMethod");
+  const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -230,6 +232,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       notes: "",
       paymentScreenshots: [],
       paymentScreenshotDataUrl: undefined,
+      donorId: undefined,
+      recipientId: undefined,
+      recipientRole: undefined,
+      recipientPhone: undefined,
+      recipientUpiId: undefined,
+      recipientAccountNumber: undefined,
     });
     setLocalFiles([]);
     setRawText(null);
@@ -545,91 +553,115 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-          <div className="space-y-4">
-            {manualScreenshotPreview && (
-                <div className="mb-8 p-4 border rounded-lg bg-muted/50">
-                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <ImageIcon className="h-5 w-5"/>
-                        Screenshot for Manual Entry
-                    </h3>
-                    <div className="flex justify-center">
+            <h3 className="text-lg font-semibold border-b pb-2">Primary Details</h3>
+             <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select payment method" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {paymentMethods.map(method => (
+                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+          
+          {showOnlineFields && (
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5"/>
+                    Payment Proof & Scanning
+                </h3>
+                {manualScreenshotPreview ? (
+                     <div className="flex justify-center">
                         <div className="relative w-full h-80">
                                 <Image src={manualScreenshotPreview} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
                             </div>
                     </div>
-                </div>
-            )}
-            {!manualScreenshotPreview && (
-                <FormField
-                control={form.control}
-                name="paymentScreenshots"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Payment Screenshot</FormLabel>
-                        <FormControl>
-                            <Input 
-                                type="file" 
-                                accept="image/*,application/pdf"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
-                            />
-                        </FormControl>
-                        <FormDescription>
-                            Upload a screenshot of the payment to scan it with AI or enter details manually.
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-                />
-            )}
-
-            {localFiles.length > 0 && (
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {localFiles.map((fp, index) => (
-                            <div key={index} className="p-2 border rounded-md bg-muted/50 space-y-2 group relative">
-                                {fp.file.type.startsWith('image/') ? (
-                                    <Image src={fp.previewUrl} alt={`Preview ${index + 1}`} width={200} height={200} className="w-full h-auto object-contain rounded-md aspect-square" data-ai-hint="payment screenshot" />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
-                                        <FileText className="h-8 w-8 text-primary" />
-                                        <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
-                                    </div>
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => removeFile(index)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-            
-            <div className="flex gap-2">
-                {isScanning ? (
-                    <Button type="button" variant="destructive" className="w-full" onClick={stopScan}>
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Stop Scan
-                    </Button>
                 ) : (
-                    <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={localFiles.length === 0}>
-                        <ScanEye className="mr-2 h-4 w-4" />
-                        Scan & Auto-Fill
-                    </Button>
+                    <FormField
+                    control={form.control}
+                    name="paymentScreenshots"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Upload Screenshot</FormLabel>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                Upload a screenshot to scan with AI or enter details manually.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                 )}
-                 <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={localFiles.length === 0 || isExtractingText}>
-                    {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
-                    Get Raw Text
-                </Button>
+
+                {localFiles.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {localFiles.map((fp, index) => (
+                                <div key={index} className="p-2 border rounded-md bg-background space-y-2 group relative">
+                                    {fp.file.type.startsWith('image/') ? (
+                                        <Image src={fp.previewUrl} alt={`Preview ${index + 1}`} width={200} height={200} className="w-full h-auto object-contain rounded-md aspect-square" data-ai-hint="payment screenshot" />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
+                                            <FileText className="h-8 w-8 text-primary" />
+                                            <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
+                                        </div>
+                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        size="icon"
+                                        className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => removeFile(index)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
+                <div className="flex gap-2">
+                    {isScanning ? (
+                        <Button type="button" variant="destructive" className="w-full" onClick={stopScan}>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Stop Scan
+                        </Button>
+                    ) : (
+                        <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={localFiles.length === 0}>
+                            <ScanEye className="mr-2 h-4 w-4" />
+                            Scan & Auto-Fill
+                        </Button>
+                    )}
+                    <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={localFiles.length === 0 || isExtractingText}>
+                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
+                        Get Raw Text
+                    </Button>
+                </div>
             </div>
-            
-            {rawText && (
+          )}
+
+           {rawText && (
                 <div className="space-y-2">
                     <FormLabel htmlFor="rawTextOutput">Extracted Text</FormLabel>
                     <Textarea id="rawTextOutput" readOnly value={rawText} rows={10} className="text-xs font-mono" />
@@ -637,7 +669,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
             )}
 
-          </div>
         
            {isAdminView ? (
                <FormField
@@ -919,7 +950,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                   )}
                 />
             </div>
-
+            
+            <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField
@@ -1072,28 +1104,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
               />
           </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Payment Method</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select payment method" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {paymentMethods.map(method => (
-                                <SelectItem key={method} value={method}>{method}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                
                  <FormField
                     control={form.control}
                     name="paymentApp"
@@ -1116,8 +1127,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </FormItem>
                     )}
                 />
-            </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <FormField
                     control={form.control}
                     name="utrNumber"
@@ -1370,5 +1379,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-    
