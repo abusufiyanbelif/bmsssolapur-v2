@@ -47,7 +47,7 @@ const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as cons
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
-const recipientRoles = ['Beneficiary', 'Referral', 'Organization Member', 'To Organization'] as const;
+const recipientRoles = ['Beneficiary', 'Referral', 'To Organization', 'Organization Member'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -221,7 +221,23 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const clearForm = () => {
     stopScan();
-    router.push('/admin/donations/add');
+    reset({
+      isAnonymous: false,
+      amount: 0,
+      donationDate: new Date(),
+      includeTip: false,
+      tipAmount: 0,
+      notes: "",
+      paymentScreenshots: [],
+      paymentScreenshotDataUrl: undefined,
+    });
+    setLocalFiles([]);
+    setRawText(null);
+    setManualScreenshotPreview(null);
+    setSelectedDonor(null);
+    setSelectedRecipient(null);
+    if(fileInputRef.current) fileInputRef.current.value = "";
+    router.push('/admin/donations/add'); // Navigate to clean URL
   };
   
   const handleCancel = () => {
@@ -1370,3 +1386,5 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
+    
