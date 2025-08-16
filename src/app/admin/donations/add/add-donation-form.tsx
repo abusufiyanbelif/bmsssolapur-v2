@@ -223,22 +223,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const clearForm = () => {
     stopScan();
-    reset({
-      isAnonymous: false,
-      amount: 0,
-      donationDate: new Date(),
-      includeTip: false,
-      tipAmount: 0,
-      notes: "",
-      paymentScreenshots: [],
-      paymentScreenshotDataUrl: undefined,
-      donorId: undefined,
-      recipientId: undefined,
-      recipientRole: undefined,
-      recipientPhone: undefined,
-      recipientUpiId: undefined,
-      recipientAccountNumber: undefined,
-    });
+    reset();
     setLocalFiles([]);
     setRawText(null);
     setManualScreenshotPreview(null);
@@ -435,45 +420,49 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       }
       
       // Find RECIPIENT
+      let foundRecipient: User | null = null;
       if (details.recipientId) { // This implies the AI identified a user
-          const foundRecipient = users.find(u => u.id === details.recipientId);
-           if (foundRecipient) {
-                setSelectedRecipient(foundRecipient);
-                setValue('recipientId', foundRecipient.id);
-                setValue('recipientName', details.recipientName || foundRecipient.name);
-                setValue('recipientPhone', details.recipientPhone || foundRecipient.phone);
-                
-                // Set recipient role from found user's roles
-                let suitableRole: 'Organization Member' | 'Beneficiary' | 'Referral' | undefined;
-                if (foundRecipient.roles.includes('Admin') || foundRecipient.roles.includes('Super Admin')) {
-                    suitableRole = 'Organization Member';
-                } else if (foundRecipient.roles.includes('Beneficiary')) {
-                    suitableRole = 'Beneficiary';
-                } else if (foundRecipient.roles.includes('Referral')) {
-                    suitableRole = 'Referral';
-                }
-                
-                if (suitableRole) {
-                    setValue('recipientRole', suitableRole);
-                    toast({
-                        variant: 'success',
-                        title: 'Recipient Found!',
-                        description: `Automatically selected: ${foundRecipient.name} as ${suitableRole}`,
-                        icon: <UserIcon />,
-                    });
-                }
-                // Recipient account details
-                if (details.recipientUpiId) {
-                    setValue('recipientUpiId', details.recipientUpiId);
-                    setValue('recipientAccountNumber', '');
-                } else if (foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
-                    setValue('recipientUpiId', foundRecipient.upiIds[0]);
-                    setValue('recipientAccountNumber', '');
-                } else if (foundRecipient.bankAccountNumber) {
-                    setValue('recipientUpiId', '');
-                    setValue('recipientAccountNumber', details.recipientAccountNumber || foundRecipient.bankAccountNumber);
-                }
-           }
+          foundRecipient = users.find(u => u.id === details.recipientId) || null;
+      }
+      if (!foundRecipient && details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
+      if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
+      if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
+      
+      if (foundRecipient) {
+            setSelectedRecipient(foundRecipient);
+            setValue('recipientId', foundRecipient.id!);
+            setValue('recipientName', details.recipientName || foundRecipient.name);
+            setValue('recipientPhone', details.recipientPhone || foundRecipient.phone);
+            
+            let suitableRole: 'Organization Member' | 'Beneficiary' | 'Referral' | undefined;
+            if (foundRecipient.roles.includes('Admin') || foundRecipient.roles.includes('Super Admin')) {
+                suitableRole = 'Organization Member';
+            } else if (foundRecipient.roles.includes('Beneficiary')) {
+                suitableRole = 'Beneficiary';
+            } else if (foundRecipient.roles.includes('Referral')) {
+                suitableRole = 'Referral';
+            }
+            
+            if (suitableRole) {
+                setValue('recipientRole', suitableRole);
+                toast({
+                    variant: 'success',
+                    title: 'Recipient Found!',
+                    description: `Automatically selected: ${foundRecipient.name} as ${suitableRole}`,
+                    icon: <UserIcon />,
+                });
+            }
+            // Recipient account details
+            if (details.recipientUpiId) {
+                setValue('recipientUpiId', details.recipientUpiId);
+                setValue('recipientAccountNumber', '');
+            } else if (foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
+                setValue('recipientUpiId', foundRecipient.upiIds[0]);
+                setValue('recipientAccountNumber', '');
+            } else if (foundRecipient.bankAccountNumber) {
+                setValue('recipientUpiId', '');
+                setValue('recipientAccountNumber', details.recipientAccountNumber || foundRecipient.bankAccountNumber);
+            }
       }
 
       if (details.rawText) {
@@ -959,159 +948,164 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             
             <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Primary Donation Amount</FormLabel>
-                <FormControl>
-                    <Input type="number" placeholder="Enter amount" {...field} />
-                </FormControl>
-                    <FormDescription>The main amount for the donation's purpose.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="donationDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Donation Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Amount</FormLabel>
                     <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
+                        <Input type="number" placeholder="Enter amount" {...field} />
                     </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
+                        <FormDescription>The main amount for the donation's purpose.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="donationDate"
+                render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Donation Date</FormLabel>
+                    <Popover>
+                    <PopoverTrigger asChild>
+                        <FormControl>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                            )}
+                        >
+                            {field.value ? (
+                            format(field.value, "PPP")
+                            ) : (
+                            <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                        />
+                    </PopoverContent>
+                    </Popover>
+                    <FormDescription>The date the transaction was made.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            </div>
+            <FormField
+                control={form.control}
+                name="includeTip"
+                render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                    <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                     />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>The date the transaction was made.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-          <FormField
-            control={form.control}
-            name="includeTip"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    Split Transaction with Tip
-                  </FormLabel>
-                  <FormDescription>
-                    Check this if the transaction includes a separate amount for organization expenses.
-                  </FormDescription>
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                    <FormLabel>
+                        Split Transaction with Tip
+                    </FormLabel>
+                    <FormDescription>
+                        Check this if the transaction includes a separate amount for organization expenses.
+                    </FormDescription>
+                    </div>
+                </FormItem>
+                )}
+            />
+            
+            {includeTip && (
+                <div className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="tipAmount"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Tip Amount</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="Enter tip amount" {...field} />
+                            </FormControl>
+                            <FormDescription>This amount will be recorded as a separate donation for 'To Organization Use'.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Total Transaction Amount</AlertTitle>
+                        <AlertDescription>
+                            The total amount you should see on the bank statement is <span className="font-bold">₹{totalAmount.toLocaleString()}</span>.
+                        </AlertDescription>
+                    </Alert>
                 </div>
-              </FormItem>
             )}
-          />
-          
-          {includeTip && (
-              <div className="space-y-4">
-                  <FormField
-                      control={form.control}
-                      name="tipAmount"
-                      render={({ field }) => (
-                          <FormItem>
-                          <FormLabel>Tip Amount</FormLabel>
-                          <FormControl>
-                              <Input type="number" placeholder="Enter tip amount" {...field} />
-                          </FormControl>
-                          <FormDescription>This amount will be recorded as a separate donation for 'To Organization Use'.</FormDescription>
-                          <FormMessage />
-                          </FormItem>
-                      )}
-                  />
-                  <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertTitle>Total Transaction Amount</AlertTitle>
-                      <AlertDescription>
-                          The total amount you should see on the bank statement is <span className="font-bold">₹{totalAmount.toLocaleString()}</span>.
-                      </AlertDescription>
-                  </Alert>
-              </div>
-          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Primary Donation Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                      {donationTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                      </SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
-              )}
-              />
-              <FormField
-              control={form.control}
-              name="purpose"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Primary Donation Purpose</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Select a purpose (optional)" />
-                      </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                      {donationPurposes.filter(p => p !== 'To Organization Use').map(purpose => (
-                          <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                      ))}
-                      </SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
-              )}
-              />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {donationTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="purpose"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Purpose</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a purpose (optional)" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {donationPurposes.filter(p => p !== 'To Organization Use').map(purpose => (
+                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+
+            <FormField control={form.control} name="senderName" render={({ field }) => (
+                <FormItem><FormLabel>Sender Name (if different from Donor)</FormLabel><FormControl><Input placeholder="Full name of the sender" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
             
             {showOnlineFields && (
                 <>
+                    <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
                             control={form.control}
@@ -1145,6 +1139,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                     <FormControl>
                                     <Input placeholder="Enter UPI Transaction ID" {...field} />
                                     </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -1159,17 +1154,18 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                     <FormControl>
                                     <Input placeholder="Enter Transaction ID" {...field} />
                                     </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
                                     <FormMessage />
                                 </FormItem>
                                 )}
                             />
                         ) : (
-                            <FormField
+                             <FormField
                                 control={form.control}
                                 name="utrNumber"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>UTR Number (Optional)</FormLabel>
+                                    <FormLabel>UTR Number</FormLabel>
                                     <FormControl>
                                     <Input placeholder="Enter UTR number" {...field} />
                                     </FormControl>
@@ -1226,13 +1222,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             />
                         )}
                     </div>
-                    
-                    <h4 className="font-semibold text-lg border-b pb-2">Sender & Recipient Details</h4>
-                    
-                    <FormField control={form.control} name="senderName" render={({ field }) => (
-                        <FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input placeholder="Full name of the sender" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
 
+                    <h4 className="font-semibold text-sm">Sender & Recipient Details</h4>
+                    
                     {paymentApp === 'Google Pay' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (
@@ -1419,4 +1411,5 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
 
