@@ -62,6 +62,10 @@ const formSchema = z.object({
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
   transactionId: z.string().optional(),
+  utrNumber: z.string().optional(),
+  googlePayTransactionId: z.string().optional(),
+  phonePeTransactionId: z.string().optional(),
+  paytmUpiReferenceNo: z.string().optional(),
   paymentApp: z.enum(paymentApps).optional(),
   donorUpiId: z.string().optional(),
   donorPhone: z.string().optional(),
@@ -303,15 +307,19 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     if (selectedDonor && form.formState.touchedFields.donorId) {
         setValue('isAnonymous', !!selectedDonor.isAnonymousAsDonor);
         setValue('donorPhone', selectedDonor.phone);
-        
-        // Only populate profile bank account if scan hasn't found a UPI
-        if (!getValues('donorUpiId')) {
-          setValue('donorBankAccount', selectedDonor.bankAccountNumber);
-        }
-        
-        // Only populate profile UPI if scan hasn't found one
-        if (!getValues('donorUpiId') && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
-             setValue('donorUpiId', selectedDonor.upiIds[0]);
+
+        // Clear previous details
+        setValue('donorUpiId', '');
+        setValue('donorBankAccount', '');
+
+        // Prioritize UPI ID if it exists and wasn't populated by a scan.
+        const upiIdFromScan = getValues('donorUpiId');
+        if (!upiIdFromScan && selectedDonor.upiIds && selectedDonor.upiIds.length > 0) {
+            setValue('donorUpiId', selectedDonor.upiIds[0]);
+        } 
+        // Fallback to bank account only if no UPI was found from scan or profile.
+        else if (!upiIdFromScan && selectedDonor.bankAccountNumber) {
+             setValue('donorBankAccount', selectedDonor.bankAccountNumber);
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1086,25 +1094,40 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     )}
                 />
             </div>
-             <FormField
-                control={form.control}
-                name="transactionId"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Transaction ID (Optional)</FormLabel>
-                    <FormControl>
-                    <Input placeholder="Enter reference number" {...field} />
-                    </FormControl>
-                     {transactionIdState.isChecking && <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>}
-                    {transactionIdState.isAvailable === false && (
-                        <p className="text-sm text-destructive flex items-center mt-2">
-                           <AlertTriangle className="mr-2 h-4 w-4" /> This Transaction ID already exists. (ID: {transactionIdState.existingDonationId})
-                        </p>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                    control={form.control}
+                    name="transactionId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Transaction ID (Optional)</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Enter reference number" {...field} />
+                        </FormControl>
+                        {transactionIdState.isChecking && <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>}
+                        {transactionIdState.isAvailable === false && (
+                            <p className="text-sm text-destructive flex items-center mt-2">
+                            <AlertTriangle className="mr-2 h-4 w-4" /> This Transaction ID already exists. (ID: {transactionIdState.existingDonationId})
+                            </p>
+                        )}
+                        <FormMessage />
+                    </FormItem>
                     )}
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
+                />
+                 <FormField
+                    control={form.control}
+                    name="utrNumber"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>UTR Number (Optional)</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Enter UTR number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
             
             <h4 className="font-semibold text-lg border-b pb-2">Sender & Recipient Details</h4>
             
@@ -1292,3 +1315,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
