@@ -281,7 +281,7 @@ function DonationsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedDonations.length > 0 && selectedDonations.length === paginatedDonations.length}
+                            checked={selectedDonations.length === paginatedDonations.length && paginatedDonations.length > 0}
                             onCheckedChange={(checked) => {
                                 if (checked) {
                                     setSelectedDonations(paginatedDonations.map(d => d.id!));
@@ -289,7 +289,7 @@ function DonationsPageContent() {
                                     setSelectedDonations([]);
                                 }
                             }}
-                            aria-label="Select all"
+                             aria-label="Select all current page items"
                         />
                     </TableHead>
                     <TableHead className="w-12"></TableHead>

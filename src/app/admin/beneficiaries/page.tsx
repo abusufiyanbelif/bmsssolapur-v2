@@ -277,16 +277,16 @@ function BeneficiariesPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
+                            checked={paginatedBeneficiaries.length > 0 && selectedUsers.length === paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
-                                const unProtectedUsers = paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
+                                const pageUserIds = paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
-                                    setSelectedUsers(unProtectedUsers);
+                                     setSelectedUsers(prev => [...new Set([...prev, ...pageUserIds])]);
                                 } else {
-                                    setSelectedUsers([]);
+                                    setSelectedUsers(prev => prev.filter(id => !pageUserIds.includes(id)));
                                 }
                             }}
-                            aria-label="Select all"
+                            aria-label="Select all current page items"
                         />
                     </TableHead>
                     <TableHead>User Key</TableHead>

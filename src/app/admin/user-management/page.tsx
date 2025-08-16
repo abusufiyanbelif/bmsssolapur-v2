@@ -255,16 +255,16 @@ export default function UserManagementPage() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
-                            onCheckedChange={(checked) => {
-                                const unProtectedUsers = paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
+                            checked={paginatedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
+                             onCheckedChange={(checked) => {
+                                const pageUserIds = paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
-                                    setSelectedUsers(unProtectedUsers);
+                                     setSelectedUsers(prev => [...new Set([...prev, ...pageUserIds])]);
                                 } else {
-                                    setSelectedUsers([]);
+                                    setSelectedUsers(prev => prev.filter(id => !pageUserIds.includes(id)));
                                 }
                             }}
-                            aria-label="Select all"
+                            aria-label="Select all current page items"
                         />
                     </TableHead>
                     <TableHead>User Key</TableHead>

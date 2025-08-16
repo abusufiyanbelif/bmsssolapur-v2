@@ -1,5 +1,4 @@
 
-
 // src/app/admin/referrals/page.tsx
 "use client";
 
@@ -241,16 +240,16 @@ function ReferralsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedUsers.length > 0 && selectedUsers.length === paginatedReferrals.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
+                            checked={paginatedReferrals.length > 0 && selectedUsers.length === paginatedReferrals.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
-                                const unProtectedUsers = paginatedReferrals.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
+                                const pageUserIds = paginatedReferrals.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
-                                    setSelectedUsers(unProtectedUsers);
+                                     setSelectedUsers(prev => [...new Set([...prev, ...pageUserIds])]);
                                 } else {
-                                    setSelectedUsers([]);
+                                    setSelectedUsers(prev => prev.filter(id => !pageUserIds.includes(id)));
                                 }
                             }}
-                            aria-label="Select all"
+                            aria-label="Select all current page items"
                         />
                     </TableHead>
                     <TableHead>User Key</TableHead>
