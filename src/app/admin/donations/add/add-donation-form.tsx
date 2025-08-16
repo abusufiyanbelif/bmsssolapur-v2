@@ -414,8 +414,11 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           setValue('senderName', foundDonor.name);
           if (!details.donorPhone) setValue('donorPhone', foundDonor.phone);
           
-           if (foundDonor.upiIds && foundDonor.upiIds.length > 0) {
-            setValue('donorUpiId', details.senderUpiId || foundDonor.upiIds[0]);
+           if (details.senderUpiId) {
+             setValue('donorUpiId', details.senderUpiId);
+             setValue('donorBankAccount', '');
+          } else if (foundDonor.upiIds && foundDonor.upiIds.length > 0) {
+            setValue('donorUpiId', foundDonor.upiIds[0]);
             setValue('donorBankAccount', ''); 
           } else if (foundDonor.bankAccountNumber) {
               setValue('donorUpiId', '');
@@ -1115,25 +1118,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 />
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                    control={form.control}
-                    name="transactionId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Transaction ID (Optional)</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Enter reference number" {...field} />
-                        </FormControl>
-                        {transactionIdState.isChecking && <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>}
-                        {transactionIdState.isAvailable === false && (
-                            <p className="text-sm text-destructive flex items-center mt-2">
-                            <AlertTriangle className="mr-2 h-4 w-4" /> This Transaction ID already exists. (ID: {transactionIdState.existingDonationId})
-                            </p>
-                        )}
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
                  <FormField
                     control={form.control}
                     name="utrNumber"
