@@ -484,7 +484,7 @@ function ReferralsPageContent() {
                     <p className="text-muted-foreground">No referrals match your current filters.</p>
                      <Button variant="outline" onClick={resetFilters} className="mt-4">
                         <FilterX className="mr-2 h-4 w-4" />
-                        Clear
+                        Clear Filters
                     </Button>
                 </div>
             )

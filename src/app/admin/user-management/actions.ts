@@ -14,6 +14,7 @@ export async function handleDeleteUser(userId: string) {
         revalidatePath("/admin/user-management");
         revalidatePath("/admin/beneficiaries");
         revalidatePath("/admin/donors");
+        revalidatePath("/admin/referrals");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
@@ -32,6 +33,7 @@ export async function handleBulkDeleteUsers(userIds: string[]) {
         revalidatePath("/admin/user-management");
         revalidatePath("/admin/beneficiaries");
         revalidatePath("/admin/donors");
+        revalidatePath("/admin/referrals");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
@@ -46,6 +48,7 @@ export async function handleToggleUserStatus(userId: string, isActive: boolean) 
         revalidatePath("/admin/user-management");
         revalidatePath("/admin/beneficiaries");
         revalidatePath("/admin/donors");
+        revalidatePath("/admin/referrals");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
