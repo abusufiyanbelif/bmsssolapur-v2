@@ -156,6 +156,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const isAnonymous = watch("isAnonymous");
   const paymentApp = watch("paymentApp");
   const recipientRole = watch("recipientRole");
+  const donorUpiId = watch("donorUpiId");
+  const donorBankAccount = watch("donorBankAccount");
+  const recipientUpiId = watch("recipientUpiId");
+  const recipientAccountNumber = watch("recipientAccountNumber");
 
   const recipientUsers = users.filter(u => recipientRole && u.roles.includes(recipientRole));
 
@@ -329,7 +333,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       }
       
       const details = scanResult.details;
-      toast({ variant: 'success', title: 'Data Extracted', description: 'Form fields have been auto-filled. Now checking for users...' });
+      toast({ variant: 'success', title: 'Data Extracted', description: 'Checking for users...' });
 
       // Handle special mapping first to avoid being overwritten.
       let finalPaymentApp = details.paymentApp;
@@ -372,6 +376,12 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
           // Preserve the scanned UPI ID, do not overwrite from profile
           if (details.senderUpiId) {
             setValue('donorUpiId', details.senderUpiId);
+          } else if(foundDonor.upiIds && foundDonor.upiIds.length > 0) {
+            setValue('donorUpiId', foundDonor.upiIds[0]);
+          }
+
+          if(!details.donorBankAccount && foundDonor.bankAccountNumber) {
+              setValue('donorBankAccount', foundDonor.bankAccountNumber);
           }
       }
       
@@ -396,7 +406,13 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
               // Preserve the scanned recipient UPI ID
                if (details.recipientUpiId) {
                   setValue('recipientUpiId', details.recipientUpiId);
-              }
+               } else if (foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
+                  setValue('recipientUpiId', foundRecipient.upiIds[0]);
+               }
+
+               if(!details.recipientAccountNumber && foundRecipient.bankAccountNumber) {
+                   setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
+               }
            }
       }
 
@@ -1003,61 +1019,69 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="donorUpiId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Donor UPI ID</FormLabel>
-                            {(selectedDonor?.upiIds && selectedDonor.upiIds.length > 0) ? (
-                                <Select onValueChange={field.onChange} value={field.value}>
+                {(!donorBankAccount || donorBankAccount.length === 0) && (
+                    <FormField
+                        control={form.control}
+                        name="donorUpiId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Donor UPI ID</FormLabel>
+                                {(selectedDonor?.upiIds && selectedDonor.upiIds.length > 0) ? (
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a UPI ID" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {selectedDonor.upiIds.map((id) => (
+                                            <SelectItem key={id} value={id}>{id}</SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
                                     <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a UPI ID" />
-                                    </SelectTrigger>
+                                        <Input placeholder="e.g., username@okhdfc" {...field} />
                                     </FormControl>
-                                    <SelectContent>
-                                    {selectedDonor.upiIds.map((id) => (
-                                        <SelectItem key={id} value={id}>{id}</SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <FormControl>
-                                    <Input placeholder="e.g., username@okhdfc" {...field} />
-                                </FormControl>
-                            )}
-                        <FormMessage />
-                    </FormItem>
+                                )}
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                )}
+            </div>
+            {(!donorUpiId || donorUpiId.length === 0) && (
+                <FormField
+                        control={form.control}
+                        name="donorBankAccount"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Donor Bank Account (Optional)</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Last 4 digits or full number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
                     )}
                 />
-            </div>
-             <FormField
-                    control={form.control}
-                    name="donorBankAccount"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Donor Bank Account (Optional)</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Last 4 digits or full number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            )}
             
             <h4 className="font-semibold text-sm">Recipient Contact Details (for reference)</h4>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField control={form.control} name="recipientPhone" render={({ field }) => (
                     <FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input placeholder="10-digit phone number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                 <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
-                    <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                {(!recipientAccountNumber || recipientAccountNumber.length === 0) && (
+                    <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
+                        <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                )}
             </div>
-             <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
-                <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
+            {(!recipientUpiId || recipientUpiId.length === 0) && (
+                 <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
+                    <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            )}
           
           <FormField
               control={form.control}
