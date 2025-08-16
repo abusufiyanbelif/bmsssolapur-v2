@@ -53,7 +53,7 @@ export function AllocateToCampaignDialog({ donation, allCampaigns, onAllocation 
         }
 
         setIsSubmitting(true);
-        const result = await handleAllocateDonation(donation.id!, 'campaign', selectedCampaignId, adminUserId);
+        const result = await handleAllocateDonation(donation.id!, [], adminUserId, selectedCampaignId);
         if (result.success) {
             onAllocation();
             setOpen(false);

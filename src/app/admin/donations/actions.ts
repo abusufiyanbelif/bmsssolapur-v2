@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/actions.ts
 "use server";
 
@@ -73,7 +74,8 @@ export async function handleUpdateDonationStatus(donationId: string, status: Don
 export async function handleAllocateDonation(
     donationId: string, 
     allocations: { leadId: string; amount: number }[],
-    adminUserId: string
+    adminUserId: string,
+    campaignId?: string
 ) {
     try {
         const [donation, adminUser] = await Promise.all([
@@ -84,17 +86,28 @@ export async function handleAllocateDonation(
         if (!donation) return { success: false, error: "Donation not found." };
         if (!adminUser) return { success: false, error: "Admin user not found." };
         
-        const totalAllocated = allocations.reduce((sum, alloc) => sum + alloc.amount, 0);
-        if (totalAllocated > donation.amount) {
-            return { success: false, error: "Total allocation cannot exceed the donation amount." };
+        if (campaignId) {
+             // Simple campaign allocation
+            await updateDonation(donationId, { 
+                campaignId: campaignId,
+                status: 'Allocated'
+            }, adminUser, 'Donation Allocated');
+        } else {
+            // Complex lead allocation
+            const totalAllocated = allocations.reduce((sum, alloc) => sum + alloc.amount, 0);
+            if (totalAllocated > donation.amount) {
+                return { success: false, error: "Total allocation cannot exceed the donation amount." };
+            }
+
+            await allocateDonationToLeads(donation, allocations, adminUser);
+             allocations.forEach(alloc => {
+                revalidatePath(`/admin/leads/${alloc.leadId}`);
+            });
         }
-
-        await allocateDonationToLeads(donation, allocations, adminUser);
-
+       
         revalidatePath("/admin/donations");
-        allocations.forEach(alloc => {
-            revalidatePath(`/admin/leads/${alloc.leadId}`);
-        });
+        if(campaignId) revalidatePath(`/admin/campaigns/${campaignId}/edit`);
+        
         return { success: true };
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";
