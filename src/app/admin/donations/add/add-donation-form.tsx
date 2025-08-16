@@ -219,53 +219,11 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const clearForm = () => {
     stopScan();
-    reset({
-        donorId: '',
-        isAnonymous: false,
-        amount: 0,
-        donationDate: new Date(),
-        includeTip: false,
-        tipAmount: 0,
-        notes: "",
-        transactionId: "",
-        purpose: undefined,
-        type: undefined,
-        paymentMethod: undefined,
-        paymentApp: undefined,
-        donorUpiId: '',
-        donorPhone: '',
-        donorBankAccount: '',
-        paymentScreenshots: [],
-        paymentScreenshotDataUrl: undefined,
-        recipientId: '',
-        recipientRole: undefined,
-        recipientPhone: '',
-        recipientUpiId: '',
-        recipientAccountNumber: '',
-        senderName: '',
-        googlePaySenderName: '',
-        phonePeSenderName: '',
-        paytmSenderName: '',
-        recipientName: '',
-        googlePayRecipientName: '',
-        phonePeRecipientName: '',
-        paytmRecipientName: '',
-        leadId: undefined,
-        campaignId: undefined,
-    });
-    if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-    }
-    setSelectedDonor(null);
-    setSelectedRecipient(null);
-    setManualScreenshotPreview(null);
-    setLocalFiles([]);
-    setRawText(null);
-    setTransactionIdState(initialAvailabilityState);
+    // Navigate to the base URL to clear all query params and state
+    router.push('/admin/donations/add');
   };
   
   const handleCancel = () => {
-    clearForm();
     // Context-aware redirect
     router.push(isAdminView ? '/admin/donations' : '/donate');
   }
@@ -439,12 +397,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           setValue('senderName', foundDonor.name);
           if (!details.donorPhone) setValue('donorPhone', foundDonor.phone);
           
-          if (!details.senderUpiId && foundDonor.upiIds && foundDonor.upiIds.length > 0) {
-            setValue('donorUpiId', foundDonor.upiIds[0]);
+           if (foundDonor.upiIds && foundDonor.upiIds.length > 0) {
+            setValue('donorUpiId', details.senderUpiId || foundDonor.upiIds[0]);
             setValue('donorBankAccount', ''); 
-          } else if (!details.senderUpiId && foundDonor.bankAccountNumber) {
+          } else if (foundDonor.bankAccountNumber) {
               setValue('donorUpiId', '');
-              setValue('donorBankAccount', foundDonor.bankAccountNumber);
+              setValue('donorBankAccount', details.senderAccountNumber || foundDonor.bankAccountNumber);
           }
       }
       
@@ -1411,5 +1369,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-    
