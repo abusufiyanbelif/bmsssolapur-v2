@@ -15,14 +15,14 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true }:
     const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
     const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
     const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
-    const widowsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Widow').length;
+    const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
     
     const Wrapper = ({ children, type }: { children: React.ReactNode, type: string }) => {
         if (!isAdmin) {
             return <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 h-full">{children}</div>;
         }
         
-        const queryParam = `type=${type}`;
+        const queryParam = type === 'Widow' ? 'isWidow=true' : `type=${type}`;
         return (
             <Link href={`/admin/beneficiaries?${queryParam}`}>
                 <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
