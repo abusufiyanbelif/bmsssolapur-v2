@@ -50,8 +50,9 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The sender's name might be split across multiple lines. Find the line starting with "From:". Combine the text on that line (after "From:") and the text on the immediately following line to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(State Bank of India)"). Use this for 'googlePaySenderName'.
             - The sender's UPI ID is on the line immediately following the full sender name block and contains an '@' symbol. Use this for 'senderUpiId'.
             - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName'.
-            - "UPI transaction ID" should be prioritized for the 'transactionId' and 'googlePayTransactionId' fields. The "Google transaction ID" is secondary.
-
+            - The **"UPI transaction ID"** is the most important ID. You MUST map its value to BOTH the 'transactionId' and 'googlePayTransactionId' fields.
+            - DO NOT map the "Google transaction ID" to the 'utrNumber' field. Only capture the "Google transaction ID" if the "UPI transaction ID" is not present.
+            
             **Paytm Rules:**
             - Look for "From" and "To" sections.
             - The sender's name is usually next to "From". Use this for 'paytmSenderName'.
