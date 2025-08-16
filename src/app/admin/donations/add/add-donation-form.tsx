@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddDonation, checkTransactionId } from "./actions";
-import { scanProof, getRawTextFromImage } from "@/app/admin/donations/add/actions";
+import { scanProof, getRawTextFromImage } from "./actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -255,7 +255,22 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const clearForm = () => {
     stopScan();
-    reset();
+    reset({
+        isAnonymous: false,
+        amount: 0,
+        donationDate: new Date(),
+        includeTip: false,
+        tipAmount: 0,
+        notes: "",
+        paymentScreenshots: [],
+        paymentScreenshotDataUrl: undefined,
+        donorId: undefined,
+        paymentMethod: undefined,
+        purpose: undefined,
+        category: undefined,
+        transactionId: '',
+        // Clear all other fields as well
+    });
     setLocalFiles([]);
     setRawText(null);
     setSelectedDonor(null);
