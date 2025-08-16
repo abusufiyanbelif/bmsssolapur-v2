@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Link2, Check, AlertTriangle, PlusCircle, MinusCircle, Search, FilterX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Donation, Lead, LeadStatus } from "@/services/types";
+import type { Donation, Lead, LeadStatus, Campaign } from "@/services/types";
 import { handleAllocateDonation } from "./actions";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -24,13 +24,14 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 interface AllocateToLeadDialogProps {
     donation: Donation;
     allLeads: Lead[];
+    allCampaigns: Campaign[];
     onAllocation: () => void;
 }
 
@@ -44,7 +45,7 @@ interface SelectedLead {
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "On Hold"];
 
 
-export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: AllocateToLeadDialogProps) {
+export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAllocation }: AllocateToLeadDialogProps) {
     const [open, setOpen] = useState(false);
     const [selectedLeads, setSelectedLeads] = useState<SelectedLead[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,12 +66,18 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
     }, [open]);
     
     const openLeads = useMemo(() => {
+        // If donation is linked to a campaign, only show leads from that campaign.
+        if (donation.campaignId) {
+            return allLeads.filter(lead => lead.campaignId === donation.campaignId && lead.helpGiven < lead.helpRequested && lead.status !== 'Closed' && lead.status !== 'Cancelled');
+        }
+        // Otherwise, show general, unassigned leads.
         return allLeads.filter(lead => 
+            !lead.campaignId &&
             lead.status !== 'Closed' && 
             lead.status !== 'Cancelled' &&
             lead.helpGiven < lead.helpRequested
         );
-    }, [allLeads]);
+    }, [allLeads, donation.campaignId]);
     
     const filteredLeads = useMemo(() => {
         return openLeads.filter(lead => {
@@ -85,6 +92,8 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
     
     const totalAllocated = selectedLeads.reduce((sum, lead) => sum + lead.amountToAllocate, 0);
     const remainingToAllocate = donation.amount - totalAllocated;
+    const campaignForDonation = donation.campaignId ? allCampaigns.find(c => c.id === donation.campaignId) : null;
+
 
     const handleSelectLead = (lead: Lead) => {
         const pendingAmount = lead.helpRequested - lead.helpGiven;
@@ -160,6 +169,9 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                     <DialogTitle>Allocate Donation to Leads</DialogTitle>
                     <DialogDescription>
                         Select one or more leads to allocate this donation of <span className="font-bold">₹{donation.amount.toLocaleString()}</span> from <span className="font-bold">{donation.donorName}</span>.
+                         {campaignForDonation && (
+                            <span className="block mt-1">This donation is part of the <span className="font-semibold text-primary">"{campaignForDonation.name}"</span> campaign.</span>
+                        )}
                     </DialogDescription>
                 </DialogHeader>
                 
@@ -251,9 +263,9 @@ export function AllocateToLeadDialog({ donation, allLeads, onAllocation }: Alloc
                         <AlertTitle className="text-lg font-bold">
                             ₹{remainingToAllocate.toLocaleString()}
                         </AlertTitle>
-                        <DialogDescription>
+                        <AlertDescription>
                             Remaining to allocate from this donation.
-                        </DialogDescription>
+                        </AlertDescription>
                     </Alert>
                     <div className="flex gap-2">
                          <DialogClose asChild>
