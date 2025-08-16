@@ -207,6 +207,14 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   }, [debouncedTransactionId, handleTxnIdCheck]);
 
 
+  const stopScan = () => {
+    if (scanAbortController.current) {
+        scanAbortController.current.abort();
+        toast({ title: 'Scan Cancelled', description: 'The scanning process has been stopped.' });
+    }
+  };
+
+
   const clearForm = () => {
     stopScan();
     reset({
@@ -419,32 +427,44 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           if (!details.senderAccountNumber && foundDonor.bankAccountNumber) setValue('donorBankAccount', foundDonor.bankAccountNumber);
       }
       
-      // Find RECIPIENT
-      let foundRecipient: User | null = null;
-      if (details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
-      if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
-      if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
-
-      if (foundRecipient) {
-           let suitableRole: UserRole | undefined;
-           if (foundRecipient.roles.includes('Beneficiary')) suitableRole = 'Beneficiary';
-           else if (foundRecipient.roles.includes('Referral')) suitableRole = 'Referral';
-           else if (foundRecipient.roles.some(r => ['Admin', 'Super Admin'].includes(r))) suitableRole = 'Organization' as any;
-           
-           if (suitableRole) {
-              setValue('recipientRole', suitableRole as any);
-              setValue('recipientId', foundRecipient.id);
-              setSelectedRecipient(foundRecipient);
+      // Find RECIPIENT - including the new logic for organization member
+      if (details.recipientRole === 'Organization' && details.recipientId) {
+          const foundAdmin = users.find(u => u.id === details.recipientId);
+          if (foundAdmin) {
+              setValue('recipientRole', 'Organization');
+              setValue('recipientId', foundAdmin.id);
+              setSelectedRecipient(foundAdmin);
               toast({
                   variant: 'success',
-                  title: 'Recipient Found!',
-                  description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
+                  title: 'Recipient is an Organization Member!',
+                  description: `Automatically selected: ${foundAdmin.name}`,
                   icon: <UserIcon />,
               });
-              // Populate fields from profile ONLY if they weren't found in the scan
-              if (!details.recipientPhone && foundRecipient.phone) setValue('recipientPhone', foundRecipient.phone);
-              if (!details.recipientAccountNumber && foundRecipient.bankAccountNumber) setValue('recipientAccountNumber', foundRecipient.bankAccountNumber);
-           }
+          }
+      } else {
+          // Fallback to previous logic if AI doesn't identify an org member
+          let foundRecipient: User | null = null;
+          if (details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
+          if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
+          if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
+
+          if (foundRecipient) {
+              let suitableRole: UserRole | undefined;
+              if (foundRecipient.roles.includes('Beneficiary')) suitableRole = 'Beneficiary';
+              else if (foundRecipient.roles.includes('Referral')) suitableRole = 'Referral';
+              
+              if (suitableRole) {
+                  setValue('recipientRole', suitableRole as any);
+                  setValue('recipientId', foundRecipient.id);
+                  setSelectedRecipient(foundRecipient);
+                  toast({
+                      variant: 'success',
+                      title: 'Recipient Found!',
+                      description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
+                      icon: <UserIcon />,
+                  });
+              }
+          }
       }
 
       if (details.rawText) {
@@ -461,14 +481,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       scanAbortController.current = null;
     }
   };
-
-  const stopScan = () => {
-    if (scanAbortController.current) {
-        scanAbortController.current.abort();
-        toast({ title: 'Scan Cancelled', description: 'The scanning process has been stopped.' });
-    }
-  };
-
 
   const removeFile = (index: number) => {
     const updatedFiles = localFiles.filter((_, i) => i !== index);
@@ -810,8 +822,13 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     <FormItem>
                       <FormLabel className="flex items-center gap-2"><Megaphone className="h-4 w-4"/> Link to Campaign</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        onValueChange={(value) => {
+                           field.onChange(value === 'none' ? '' : value);
+                           if (value !== 'none') {
+                               setValue('leadId', undefined); // Clear linked lead if campaign is selected
+                           }
+                        }}
+                        value={field.value}
                         disabled={!!linkedLeadId}
                       >
                         <FormControl>
