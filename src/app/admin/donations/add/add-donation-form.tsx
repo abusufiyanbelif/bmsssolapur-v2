@@ -429,7 +429,14 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           });
           // Populate fields from profile ONLY if they weren't found in the scan
           if (!details.donorPhone && foundDonor.phone) setValue('donorPhone', foundDonor.phone);
-          if (!details.senderAccountNumber && foundDonor.bankAccountNumber) setValue('donorBankAccount', foundDonor.bankAccountNumber);
+          
+          // CRITICAL FIX: Prioritize UPI from profile if not in scan
+          if (!details.senderUpiId && foundDonor.upiIds && foundDonor.upiIds.length > 0) {
+              setValue('donorUpiId', foundDonor.upiIds[0]);
+              setValue('donorBankAccount', ''); // Clear bank account if UPI is found
+          } else if (!details.senderAccountNumber && foundDonor.bankAccountNumber) {
+              setValue('donorBankAccount', foundDonor.bankAccountNumber);
+          }
       }
       
       // Find RECIPIENT
@@ -455,8 +462,13 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
           if (foundRecipient) {
               let suitableRole: UserRole | undefined;
-              if (foundRecipient.roles.includes('Beneficiary')) suitableRole = 'Beneficiary';
-              else if (foundRecipient.roles.includes('Referral')) suitableRole = 'Referral';
+              if (foundRecipient.roles.includes('Admin') || foundRecipient.roles.includes('Super Admin')) {
+                  suitableRole = 'Organization Member';
+              } else if (foundRecipient.roles.includes('Beneficiary')) {
+                  suitableRole = 'Beneficiary';
+              } else if (foundRecipient.roles.includes('Referral')) {
+                  suitableRole = 'Referral';
+              }
               
               if (suitableRole) {
                   setValue('recipientRole', suitableRole as any);
@@ -1396,3 +1408,5 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
+    
