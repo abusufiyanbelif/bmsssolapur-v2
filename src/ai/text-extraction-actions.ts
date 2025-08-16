@@ -1,5 +1,4 @@
-
-
+// src/ai/text-extraction-actions.ts
 'use server';
 /**
  * @fileOverview This file acts as an intermediary for text extraction AI flows.

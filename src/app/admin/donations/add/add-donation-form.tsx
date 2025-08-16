@@ -316,11 +316,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
 
     setIsScanning(true);
     scanAbortController.current = new AbortController();
-    const file = localFiles[0].file;
+    
+    const formData = new FormData();
+    formData.append('proofFile', localFiles[0].file);
     
     try {
-      const formData = new FormData();
-      formData.append('proofFile', file);
       const scanResult = await scanProof(formData);
       
       if (scanAbortController.current.signal.aborted) return;
@@ -1133,6 +1133,7 @@ export function AddDonationForm(props: AddDonationFormProps) {
 
 
     
+
 
 
 

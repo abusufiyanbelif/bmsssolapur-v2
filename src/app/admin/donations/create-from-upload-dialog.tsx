@@ -84,7 +84,7 @@ export function CreateFromUploadDialog({ children }: CreateFromUploadDialogProps
 
     const result = await scanProof(formData);
 
-    if (result.success && result.details) {
+    if (result && result.success && result.details) {
       const queryParams = new URLSearchParams();
       Object.entries(result.details).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {

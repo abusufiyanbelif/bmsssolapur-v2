@@ -89,7 +89,9 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     setScannedDetails(null);
     setRawText(null);
     
-    const result = await scanProof(file);
+    const formData = new FormData();
+    formData.append('proofFile', file);
+    const result = await scanProof(formData);
     
     if (result && result.success && result.details) {
         setScannedDetails(result.details);
@@ -106,7 +108,9 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
       return;
     }
     setIsExtractingText(true);
-    const result = await getRawTextFromImage(file);
+    const formData = new FormData();
+    formData.append('imageFile', file);
+    const result = await getRawTextFromImage(formData);
     if(result.success && result.text) {
         setRawText(result.text);
     } else {
