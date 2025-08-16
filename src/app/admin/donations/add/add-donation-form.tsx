@@ -165,6 +165,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const transactionId = watch('transactionId');
   const debouncedTransactionId = useDebounce(transactionId, 500);
 
+  const linkedLeadId = watch("leadId");
+  const linkedCampaignId = watch("campaignId");
+
   useEffect(() => {
     const initializeUser = async () => {
       const storedUserId = localStorage.getItem('userId');
@@ -800,6 +803,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        disabled={!!linkedLeadId}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -832,6 +836,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             <Button
                               variant="outline"
                               role="combobox"
+                              disabled={!!linkedCampaignId && linkedCampaignId !== 'none'}
                               className={cn(
                                 "w-full justify-between",
                                 !field.value && "text-muted-foreground"
