@@ -439,10 +439,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           setValue('senderName', foundDonor.name);
           if (!details.donorPhone) setValue('donorPhone', foundDonor.phone);
           
-          if (foundDonor.upiIds && foundDonor.upiIds.length > 0) {
-              setValue('donorUpiId', foundDonor.upiIds[0]);
-              setValue('donorBankAccount', ''); 
-          } else if (foundDonor.bankAccountNumber) {
+          if (!details.senderUpiId && foundDonor.upiIds && foundDonor.upiIds.length > 0) {
+            setValue('donorUpiId', foundDonor.upiIds[0]);
+            setValue('donorBankAccount', ''); 
+          } else if (!details.senderUpiId && foundDonor.bankAccountNumber) {
               setValue('donorUpiId', '');
               setValue('donorBankAccount', foundDonor.bankAccountNumber);
           }
@@ -452,12 +452,18 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       if (details.recipientId) { // This implies the AI identified a user
           const foundRecipient = users.find(u => u.id === details.recipientId);
            if (foundRecipient) {
+                setSelectedRecipient(foundRecipient);
                 setValue('recipientId', foundRecipient.id);
                 setValue('recipientPhone', foundRecipient.phone);
-                setSelectedRecipient(foundRecipient);
+                setValue('recipientName', foundRecipient.name);
+                if (foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
+                    setValue('recipientUpiId', foundRecipient.upiIds[0]);
+                } else {
+                    setValue('recipientAccountNumber', foundRecipient.bankAccountNumber || '');
+                }
                 
                 // Determine recipient role from found user's roles
-                let suitableRole: UserRole | undefined;
+                let suitableRole: 'Organization Member' | 'Beneficiary' | 'Referral' | undefined;
                 if (foundRecipient.roles.includes('Admin') || foundRecipient.roles.includes('Super Admin')) {
                     suitableRole = 'Organization Member';
                 } else if (foundRecipient.roles.includes('Beneficiary')) {
@@ -467,7 +473,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 }
                 
                 if (suitableRole) {
-                    setValue('recipientRole', suitableRole as any);
+                    setValue('recipientRole', suitableRole);
                     toast({
                         variant: 'success',
                         title: 'Recipient Found!',
