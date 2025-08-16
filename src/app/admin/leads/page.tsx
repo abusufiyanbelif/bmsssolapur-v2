@@ -360,7 +360,7 @@ function LeadsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedLeads.length > 0 && paginatedLeads.every(l => selectedLeads.includes(l.id!))}
+                            checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
                             onCheckedChange={(checked) => {
                                 const pageLeadIds = paginatedLeads.map(l => l.id!);
                                 if (checked) {
