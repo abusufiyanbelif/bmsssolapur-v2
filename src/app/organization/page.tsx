@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
 import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard, Award, Users, Banknote } from "lucide-react";
@@ -98,7 +97,6 @@ export default async function OrganizationPage() {
                 </Avatar>
                 <div>
                     <p className="font-semibold">{member.name}</p>
-                    <p className="text-sm text-muted-foreground">{member.phone}</p>
                 </div>
             </div>
         );
