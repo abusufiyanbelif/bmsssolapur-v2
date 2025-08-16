@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,11 +69,13 @@ const formSchema = z.object({
   donorUpiId: z.string().optional(),
   donorPhone: z.string().optional(),
   donorBankAccount: z.string().optional(),
+  senderName: z.string().optional(),
   phonePeSenderName: z.string().optional(),
-  phonePeRecipientName: z.string().optional(),
   googlePaySenderName: z.string().optional(),
-  googlePayRecipientName: z.string().optional(),
   paytmSenderName: z.string().optional(),
+  recipientName: z.string().optional(),
+  phonePeRecipientName: z.string().optional(),
+  googlePayRecipientName: z.string().optional(),
   paytmRecipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
   recipientUpiId: z.string().optional(),
@@ -167,10 +168,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const recipientUpiId = watch("recipientUpiId");
   const recipientAccountNumber = watch("recipientAccountNumber");
   const transactionId = watch('transactionId');
-  const utrNumber = watch('utrNumber');
-  const googlePayTransactionId = watch('googlePayTransactionId');
-  const phonePeTransactionId = watch('phonePeTransactionId');
-  const paytmUpiReferenceNo = watch('paytmUpiReferenceNo');
   const debouncedTransactionId = useDebounce(transactionId, 500);
 
   const linkedLeadId = watch("leadId");
@@ -245,6 +242,14 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
         recipientPhone: '',
         recipientUpiId: '',
         recipientAccountNumber: '',
+        senderName: '',
+        googlePaySenderName: '',
+        phonePeSenderName: '',
+        paytmSenderName: '',
+        recipientName: '',
+        googlePayRecipientName: '',
+        phonePeRecipientName: '',
+        paytmRecipientName: '',
         leadId: undefined,
         campaignId: undefined,
     });
@@ -430,62 +435,47 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
               description: `Automatically selected existing donor: ${foundDonor.name}`,
               icon: <UserIcon />,
           });
-          // Populate fields from profile ONLY if they weren't found in the scan
-          if (!details.donorPhone && foundDonor.phone) setValue('donorPhone', foundDonor.phone);
+          // Populate fields from profile, prioritizing profile data unless scan data is more specific.
+          setValue('senderName', foundDonor.name);
+          if (!details.donorPhone) setValue('donorPhone', foundDonor.phone);
           
-          // Prioritize UPI from profile if not in scan
-          if (!details.senderUpiId && foundDonor.upiIds && foundDonor.upiIds.length > 0) {
+          if (foundDonor.upiIds && foundDonor.upiIds.length > 0) {
               setValue('donorUpiId', foundDonor.upiIds[0]);
-              setValue('donorBankAccount', ''); // Clear bank account if UPI is found
-          } else if (!details.senderAccountNumber && foundDonor.bankAccountNumber && !details.senderUpiId && !(foundDonor.upiIds && foundDonor.upiIds.length > 0)) {
+              setValue('donorBankAccount', ''); 
+          } else if (foundDonor.bankAccountNumber) {
+              setValue('donorUpiId', '');
               setValue('donorBankAccount', foundDonor.bankAccountNumber);
           }
       }
       
       // Find RECIPIENT
-      if (details.recipientRole === 'Organization Member' && details.recipientId) {
-          const foundAdmin = users.find(u => u.id === details.recipientId);
-          if (foundAdmin) {
-              setValue('recipientRole', 'Organization Member');
-              setValue('recipientId', foundAdmin.id);
-              setValue('recipientPhone', foundAdmin.phone);
-              setSelectedRecipient(foundAdmin);
-              toast({
-                  variant: 'success',
-                  title: 'Recipient is an Organization Member!',
-                  description: `Automatically selected: ${foundAdmin.name}`,
-                  icon: <UserIcon />,
-              });
-          }
-      } else {
-          let foundRecipient: User | null = null;
-          if (details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
-          if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
-          if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
-
-          if (foundRecipient) {
-              let suitableRole: UserRole | undefined;
-              if (foundRecipient.roles.includes('Admin') || foundRecipient.roles.includes('Super Admin')) {
-                  suitableRole = 'Organization Member';
-              } else if (foundRecipient.roles.includes('Beneficiary')) {
-                  suitableRole = 'Beneficiary';
-              } else if (foundRecipient.roles.includes('Referral')) {
-                  suitableRole = 'Referral';
-              }
-              
-              if (suitableRole) {
-                  setValue('recipientRole', suitableRole as any);
-                  setValue('recipientId', foundRecipient.id);
-                  setValue('recipientPhone', foundRecipient.phone);
-                  setSelectedRecipient(foundRecipient);
-                  toast({
-                      variant: 'success',
-                      title: 'Recipient Found!',
-                      description: `Automatically selected existing recipient: ${foundRecipient.name} as ${suitableRole}`,
-                      icon: <UserIcon />,
-                  });
-              }
-          }
+      if (details.recipientId) { // This implies the AI identified a user
+          const foundRecipient = users.find(u => u.id === details.recipientId);
+           if (foundRecipient) {
+                setValue('recipientId', foundRecipient.id);
+                setValue('recipientPhone', foundRecipient.phone);
+                setSelectedRecipient(foundRecipient);
+                
+                // Determine recipient role from found user's roles
+                let suitableRole: UserRole | undefined;
+                if (foundRecipient.roles.includes('Admin') || foundRecipient.roles.includes('Super Admin')) {
+                    suitableRole = 'Organization Member';
+                } else if (foundRecipient.roles.includes('Beneficiary')) {
+                    suitableRole = 'Beneficiary';
+                } else if (foundRecipient.roles.includes('Referral')) {
+                    suitableRole = 'Referral';
+                }
+                
+                if (suitableRole) {
+                    setValue('recipientRole', suitableRole as any);
+                    toast({
+                        variant: 'success',
+                        title: 'Recipient Found!',
+                        description: `Automatically selected: ${foundRecipient.name} as ${suitableRole}`,
+                        icon: <UserIcon />,
+                    });
+                }
+           }
       }
 
       if (details.rawText) {
@@ -1163,22 +1153,22 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </FormItem>
                     )}
                 />
-                 {(utrNumber || paymentApp === 'PhonePe') && (
-                    <FormField
-                        control={form.control}
-                        name="utrNumber"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>UTR Number (Optional)</FormLabel>
-                            <FormControl>
-                            <Input placeholder="Enter UTR number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                 )}
-                 {(googlePayTransactionId || paymentApp === 'Google Pay') && (
+                 <FormField
+                    control={form.control}
+                    name="utrNumber"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>UTR Number (Optional)</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Enter UTR number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+             <div className="space-y-4">
+                {paymentApp === 'Google Pay' && (
                     <FormField
                         control={form.control}
                         name="googlePayTransactionId"
@@ -1192,8 +1182,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </FormItem>
                         )}
                     />
-                 )}
-                 {(phonePeTransactionId || paymentApp === 'PhonePe') && (
+                )}
+                 {paymentApp === 'PhonePe' && (
                     <FormField
                         control={form.control}
                         name="phonePeTransactionId"
@@ -1208,7 +1198,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         )}
                     />
                  )}
-                 {(paytmUpiReferenceNo || paymentApp === 'Paytm') && (
+                 {paymentApp === 'Paytm' && (
                     <FormField
                         control={form.control}
                         name="paytmUpiReferenceNo"
@@ -1227,6 +1217,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             
             <h4 className="font-semibold text-lg border-b pb-2">Sender & Recipient Details</h4>
             
+            <FormField control={form.control} name="senderName" render={({ field }) => (
+                <FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input placeholder="Full name of the sender" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+
             {paymentApp === 'Google Pay' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (
