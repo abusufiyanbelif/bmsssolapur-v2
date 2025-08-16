@@ -212,13 +212,15 @@ function LeadsPageContent() {
             const bValue = b[sortColumn];
 
             let comparison = 0;
-            // Handle date/timestamp objects
+            const aTime = aValue instanceof Date ? aValue.getTime() : 0;
+            const bTime = bValue instanceof Date ? bValue.getTime() : 0;
+            
             if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
-            } else if (aValue === undefined && bValue !== undefined) {
-                comparison = -1; // undefined values go first
-            } else if (aValue !== undefined && bValue === undefined) {
-                comparison = 1;
+                comparison = aTime - bTime;
+            } else if (aValue instanceof Date) {
+                comparison = 1; // Dates always come after undefined
+            } else if (bValue instanceof Date) {
+                comparison = -1; // Undefined comes before dates
             } else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
