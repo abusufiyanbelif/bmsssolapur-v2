@@ -22,7 +22,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FundTransfer } from "@/services/types";
@@ -44,7 +43,6 @@ function AllTransfersPageContent() {
     const [allTransfers, setAllTransfers] = useState<EnrichedTransfer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const isMobile = useIsMobile();
     const [selectedTransfers, setSelectedTransfers] = useState<string[]>([]);
 
     // Input states
@@ -166,7 +164,7 @@ function AllTransfersPageContent() {
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
 
-    const renderDesktopTable = () => (
+    const renderTable = () => (
         <Table>
             <TableHeader>
                 <TableRow>
@@ -221,39 +219,6 @@ function AllTransfersPageContent() {
         </Table>
     );
 
-    const renderMobileCards = () => (
-        <div className="space-y-4">
-            {paginatedTransfers.map((transfer, index) => {
-                 return (
-                    <Card key={transfer.transactionId + index}>
-                        <CardHeader>
-                             <CardTitle className="text-lg flex justify-between">
-                                <span>₹{transfer.amount.toLocaleString()}</span>
-                                <span className="text-sm font-normal text-muted-foreground">{format(transfer.transferredAt, "dd MMM yyyy")}</span>
-                             </CardTitle>
-                             <CardDescription>To: <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">{transfer.leadName}</Link></CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Transaction ID</span>
-                                <span className="font-mono text-xs">{transfer.transactionId || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Transferred By</span>
-                                <span className="font-semibold">{transfer.transferredByUserName}</span>
-                            </div>
-                        </CardContent>
-                         <CardFooter className="flex justify-end">
-                            <Button asChild variant="outline" size="sm">
-                                <Link href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">View Proof</Link>
-                            </Button>
-                         </CardFooter>
-                    </Card>
-                );
-            })}
-        </div>
-    );
-    
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
@@ -349,7 +314,7 @@ function AllTransfersPageContent() {
 
         return (
             <>
-                {isMobile ? renderMobileCards() : renderDesktopTable()}
+                {renderTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
         )

@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Donation, DonationStatus, User } from "@/services/types";
@@ -112,7 +111,6 @@ export default function MyDonationsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const isMobile = useIsMobile();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -169,7 +167,7 @@ export default function MyDonationsPage() {
         setCurrentPage(1);
     }, [itemsPerPage]);
   
-  const renderDesktopTable = () => (
+  const renderTable = () => (
      <Table>
         <TableHeader>
             <TableRow>
@@ -204,39 +202,6 @@ export default function MyDonationsPage() {
     </Table>
   );
 
-  const renderMobileCards = () => (
-      <div className="space-y-4">
-          {paginatedDonations.map((donation, index) => (
-               <Card key={donation.id}>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                             <div>
-                                <CardTitle className="text-lg">#{(currentPage - 1) * itemsPerPage + index + 1}: ₹{donation.amount.toFixed(2)}</CardTitle>
-                                <CardDescription>{format(donation.createdAt as Date, "dd MMM yyyy")}</CardDescription>
-                            </div>
-                             <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
-                                {donation.status}
-                             </Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Category</span>
-                            <span>{donation.type}</span>
-                        </div>
-                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Purpose</span>
-                            <span>{donation.purpose || 'N/A'}</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end">
-                       <DonationReceiptDialog donation={donation} user={user!} />
-                    </CardFooter>
-                </Card>
-          ))}
-      </div>
-  );
-  
    const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
@@ -327,7 +292,7 @@ export default function MyDonationsPage() {
 
     return (
         <>
-            {isMobile ? renderMobileCards() : renderDesktopTable()}
+            {renderTable()}
             {totalPages > 1 && renderPaginationControls()}
         </>
     )

@@ -17,7 +17,6 @@ import { getReferredBeneficiaries } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,6 @@ export default function MyBeneficiariesPage() {
     const [beneficiaries, setBeneficiaries] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const isMobile = useIsMobile();
     
     // Filter and pagination states
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -89,10 +87,10 @@ export default function MyBeneficiariesPage() {
             <div className="text-center py-10"><p className="text-muted-foreground">No beneficiaries match your filters.</p></div>
         );
 
-        return isMobile ? renderMobileCards() : renderDesktopTable();
+        return renderTable();
     };
 
-    const renderDesktopTable = () => (
+    const renderTable = () => (
         <Table>
             <TableHeader>
                 <TableRow>
@@ -123,28 +121,6 @@ export default function MyBeneficiariesPage() {
         </Table>
     );
 
-    const renderMobileCards = () => (
-        <div className="space-y-4">
-            {paginatedBeneficiaries.map(user => (
-                <Card key={user.id}>
-                    <CardHeader>
-                        <CardTitle>{user.name}</CardTitle>
-                        <CardDescription>{user.phone}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-between items-center">
-                        <Badge variant={user.isActive ? 'default' : 'outline'} className={user.isActive ? "bg-green-100 text-green-800" : ""}>{user.isActive ? 'Active' : 'Inactive'}</Badge>
-                        <span className="text-sm text-muted-foreground">Referred: {format(user.createdAt, "dd MMM yyyy")}</span>
-                    </CardContent>
-                    <CardFooter>
-                         <Button asChild variant="outline" className="w-full">
-                            <Link href={`/referral/my-beneficiaries/${user.id}/edit`}><Edit className="mr-2 h-4 w-4" />Edit Profile</Link>
-                        </Button>
-                    </CardFooter>
-                </Card>
-            ))}
-        </div>
-    );
-    
      const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">

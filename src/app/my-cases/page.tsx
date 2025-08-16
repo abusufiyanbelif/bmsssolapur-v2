@@ -12,7 +12,6 @@ import { FilePlus2, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart, 
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Lead, LeadStatus } from "@/services/types";
 
@@ -35,7 +34,6 @@ export default function MyCasesPage() {
     const [cases, setCases] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string |null>(null);
-    const isMobile = useIsMobile();
     const [userId, setUserId] = useState<string | null>(null);
 
     // Sorting state
@@ -118,7 +116,7 @@ export default function MyCasesPage() {
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
 
-    const renderDesktopTable = () => (
+    const renderTable = () => (
          <Table>
             <TableHeader>
                 <TableRow>
@@ -169,42 +167,6 @@ export default function MyCasesPage() {
                 })}
             </TableBody>
         </Table>
-    );
-
-    const renderMobileCards = () => (
-        <div className="space-y-4">
-            {paginatedCases.map((caseItem, index) => {
-                const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
-                return (
-                    <Card key={caseItem.id}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-lg">#{(currentPage - 1) * itemsPerPage + index + 1}: For: {caseItem.purpose}</CardTitle>
-                                    <CardDescription>Submitted: {format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</CardDescription>
-                                </div>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
-                                    {caseItem.status}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <div className="flex justify-between text-sm mb-2">
-                                    <span className="font-semibold">Funding Goal</span>
-                                    <span className="font-semibold">₹{caseItem.helpRequested.toLocaleString()}</span>
-                                </div>
-                                <Progress value={progress} />
-                                <div className="flex justify-between text-xs mt-2 text-muted-foreground">
-                                    <span>Raised: ₹{caseItem.helpGiven.toLocaleString()}</span>
-                                    <span>{progress.toFixed(0)}%</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-            })}
-        </div>
     );
     
      const renderPaginationControls = () => (
@@ -291,7 +253,7 @@ export default function MyCasesPage() {
 
         return (
             <>
-                {isMobile ? renderMobileCards() : renderDesktopTable()}
+                {renderTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
         )

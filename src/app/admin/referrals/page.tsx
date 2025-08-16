@@ -1,3 +1,4 @@
+
 // src/app/admin/referrals/page.tsx
 "use client";
 
@@ -18,7 +19,6 @@ import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -44,7 +44,6 @@ function ReferralsPageContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
-    const isMobile = useIsMobile();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -233,7 +232,7 @@ function ReferralsPageContent() {
     };
 
 
-    const renderDesktopTable = () => (
+    const renderTable = () => (
         <Table>
             <TableHeader>
                 <TableRow>
@@ -323,69 +322,6 @@ function ReferralsPageContent() {
         </Table>
     );
 
-    const renderMobileCards = () => (
-        <div className="space-y-4">
-            {paginatedReferrals.map((user, index) => {
-                 const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
-                 return (
-                <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                             <div className="flex items-center gap-4">
-                                <Checkbox
-                                    className="mt-1"
-                                    checked={selectedUsers.includes(user.id!)}
-                                    onCheckedChange={(checked) => {
-                                        setSelectedUsers(prev => 
-                                            checked ? [...prev, user.id!] : prev.filter(id => id !== user.id!)
-                                        );
-                                    }}
-                                    aria-label="Select card"
-                                    disabled={isProtectedUser}
-                                />
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
-                                        {user.name}
-                                    </Link>
-                                </CardTitle>
-                            </div>
-                            <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
-                                {user.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                        </div>
-                        <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">User Key</span>
-                            <span className="font-semibold">{user.userKey || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">User ID</span>
-                             <div className="text-right">
-                                <span className="font-mono text-xs">{user.userId}</span>
-                            </div>
-                        </div>
-                         <div>
-                            <h4 className="font-semibold mb-2">Roles</h4>
-                             <div className="flex flex-wrap gap-1">
-                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
-                            </div>
-                        </div>
-                        <div className="flex justify-between text-xs text-muted-foreground pt-2">
-                             <span>Joined On</span>
-                             <span>{format(user.createdAt, "dd MMM yyyy")}</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end">
-                       {renderActions(user)}
-                    </CardFooter>
-                </Card>
-                 )
-            })}
-        </div>
-    );
-    
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
@@ -510,7 +446,7 @@ function ReferralsPageContent() {
                         </DeleteConfirmationDialog>
                     </div>
                 )}
-                {isMobile ? renderMobileCards() : renderDesktopTable()}
+                {renderTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
         )
