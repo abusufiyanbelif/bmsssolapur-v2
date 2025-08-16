@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -880,7 +881,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
              )
            )}
-
             <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
@@ -938,7 +938,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <h3 className="text-lg font-semibold border-b pb-2">Categorization</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
                 name="type"
@@ -990,7 +991,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     name="category"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Specific Category</FormLabel>
+                        <FormLabel>Specific Category for {selectedPurpose}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
@@ -1223,9 +1224,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                       )}
                 </div>
              )}
-
+            
+            <h3 className="text-lg font-semibold border-b pb-2">Linkage (Optional)</h3>
             <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-semibold text-lg">Linkage (Optional)</h3>
                  <FormField
                   control={form.control}
                   name="campaignId"
@@ -1325,7 +1326,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                   )}
                 />
             </div>
-          
+
             <FormField
                 control={form.control}
                 name="includeTip"
@@ -1374,8 +1375,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </Alert>
                 </div>
             )}
-            
-          <FormField
+          
+            <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (

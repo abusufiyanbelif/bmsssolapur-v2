@@ -51,6 +51,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The sender's name might be split across multiple lines. Find the line starting with "From:". Combine the text on that line (after "From:") and the text on the immediately following line to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(State Bank of India)"). Use this for 'googlePaySenderName'.
             - The sender's UPI ID is on the line immediately following the full sender name block and contains an '@' symbol. Use this for 'senderUpiId'.
             - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName'.
+            - The recipient's phone number is sometimes shown near their name. Capture it for 'recipientPhone'.
             - The **"UPI transaction ID"** is the most important ID. You MUST map its value to BOTH the 'transactionId' and 'googlePayTransactionId' fields.
             - If you see "Google transaction ID", map its value ONLY to the 'googlePayTransactionId' field. **DO NOT map the "Google transaction ID" to the 'utrNumber' field.**
             - **DO NOT capture a 'utrNumber' for Google Pay unless you see the explicit text "UTR" or "UTR No".**
@@ -86,7 +87,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - recipientUpiId: The recipient's UPI ID (contains '@').
             - recipientAccountNumber: The recipient's bank account number, even if partial.
             - status: The transaction status (e.g., Successful, Completed).
-            - notes: Any user-added comments, remarks, or descriptions.
+            - notes: Any user-added comments, remarks, or descriptions found in the payment details.
 
             Raw Text to Parse:
             ---
