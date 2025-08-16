@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
@@ -134,6 +134,31 @@ const initialAvailabilityState: AvailabilityState = {
     isAvailable: null,
 };
 
+function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: AvailabilityState, fieldName: string, onSuggestionClick?: (suggestion: string) => void }) {
+    if (state.isChecking) {
+        return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>;
+    }
+    if (state.isAvailable === true) {
+        return <p className="text-sm text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-4 w-4" /> Available</p>;
+    }
+    if (state.isAvailable === false) {
+        return (
+            <div className="mt-2">
+                <p className="text-sm text-destructive flex items-center">
+                    <XCircle className="mr-2 h-4 w-4" />
+                    This {fieldName} is already in use
+                    {state.existingDonationId && (
+                        <Link href={`/admin/donations/${state.existingDonationId}/edit`} className="ml-1 underline hover:no-underline">
+                            (View existing)
+                        </Link>
+                    )}.
+                </p>
+            </div>
+        );
+    }
+    return null;
+}
+
 function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -181,10 +206,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const linkedCampaignId = watch("campaignId");
   const paymentMethod = watch("paymentMethod");
   const paymentApp = watch("paymentApp");
-  const donorUpiId = watch("donorUpiId");
-  const donorBankAccount = watch("donorBankAccount");
-  const recipientUpiId = watch("recipientUpiId");
-  const recipientAccountNumber = watch("recipientAccountNumber");
   const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
   const selectedPurpose = watch("purpose");
 
@@ -1238,6 +1259,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                     <FormControl>
                                     <Input placeholder="Enter UPI Transaction ID" {...field} />
                                     </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="UPI Transaction ID" />
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -1245,7 +1267,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         ) : (
                              <FormField
                                 control={form.control}
-                                name="utrNumber"
+                                name="transactionId"
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>UTR or Transaction ID</FormLabel>
