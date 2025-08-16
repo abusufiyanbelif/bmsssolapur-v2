@@ -255,7 +255,7 @@ export default function UserManagementPage() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={paginatedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
+                             checked={selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0}
                              onCheckedChange={(checked) => {
                                 const pageUserIds = paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {

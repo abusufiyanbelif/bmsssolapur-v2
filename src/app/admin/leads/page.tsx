@@ -360,15 +360,16 @@ function LeadsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
+                            checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
                             onCheckedChange={(checked) => {
+                                const pageLeadIds = paginatedLeads.map(l => l.id!);
                                 if (checked) {
-                                    setSelectedLeads(paginatedLeads.map(d => d.id!));
+                                     setSelectedLeads(prev => [...new Set([...prev, ...pageLeadIds])]);
                                 } else {
-                                    setSelectedLeads([]);
+                                    setSelectedLeads(prev => prev.filter(id => !pageLeadIds.includes(id)));
                                 }
                             }}
-                            aria-label="Select all current page items"
+                            aria-label="Select all on current page"
                         />
                     </TableHead>
                     <TableHead>
