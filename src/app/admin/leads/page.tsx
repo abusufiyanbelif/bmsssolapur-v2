@@ -33,7 +33,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleBulkDeleteLeads } from "./[id]/actions";
+import { handleDeleteLead, handleBulkDeleteLeads } from "./[id]/actions";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
@@ -360,7 +360,7 @@ function LeadsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
+                            checked={selectedLeads.length > 0 && paginatedLeads.every(l => selectedLeads.includes(l.id!))}
                             onCheckedChange={(checked) => {
                                 const pageLeadIds = paginatedLeads.map(l => l.id!);
                                 if (checked) {

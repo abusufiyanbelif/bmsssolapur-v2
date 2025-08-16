@@ -281,7 +281,7 @@ function DonationsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={paginatedDonations.length > 0 && selectedDonations.length === paginatedDonations.length}
+                            checked={selectedDonations.length > 0 && paginatedDonations.every(d => selectedDonations.includes(d.id!))}
                             onCheckedChange={(checked) => {
                                 const currentPageIds = paginatedDonations.map(d => d.id!);
                                 if (checked) {
