@@ -48,7 +48,7 @@ const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as cons
 const donationPurposes = ['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use', 'Loan Repayment'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
-const recipientRoles = ['Beneficiary', 'Referral'] as const;
+const recipientRoles = ['Beneficiary', 'Referral', 'Organization'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -407,9 +407,13 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
       if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
 
       if (foundRecipient) {
-           const suitableRole = foundRecipient.roles.includes('Beneficiary') ? 'Beneficiary' : foundRecipient.roles.includes('Referral') ? 'Referral' : undefined;
+           let suitableRole: UserRole | undefined;
+           if (foundRecipient.roles.includes('Beneficiary')) suitableRole = 'Beneficiary';
+           else if (foundRecipient.roles.includes('Referral')) suitableRole = 'Referral';
+           else if (foundRecipient.roles.some(r => ['Admin', 'Super Admin'].includes(r))) suitableRole = 'Organization' as any;
+           
            if (suitableRole) {
-              setValue('recipientRole', suitableRole);
+              setValue('recipientRole', suitableRole as any);
               setValue('recipientId', foundRecipient.id);
               setSelectedRecipient(foundRecipient);
               toast({
@@ -702,7 +706,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                 setSelectedRecipient(null);
                             }}
                             value={field.value}
-                            className="flex space-x-4"
+                            className="flex flex-wrap space-x-4"
                         >
                             <FormItem className="flex items-center space-x-2">
                                 <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
@@ -711,6 +715,10 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                             <FormItem className="flex items-center space-x-2">
                                 <FormControl><RadioGroupItem value="Referral" /></FormControl>
                                 <FormLabel className="font-normal">Referral</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2">
+                                <FormControl><RadioGroupItem value="Organization" /></FormControl>
+                                <FormLabel className="font-normal">To Organization</FormLabel>
                             </FormItem>
                         </RadioGroup>
                         </FormControl>
@@ -733,7 +741,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                     role="combobox"
                                     className={cn("w-full justify-between",!field.value && "text-muted-foreground")}
                                     >
-                                    {field.value ? users.filter(u => recipientRole && u.roles.includes(recipientRole)).find((user) => user.id === field.value)?.name : `Select a ${recipientRole}`}
+                                    {field.value ? users.find((user) => user.id === field.value)?.name : `Select a ${recipientRole}`}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </FormControl>
@@ -744,7 +752,11 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                     <CommandList>
                                         <CommandEmpty>No {recipientRole}s found.</CommandEmpty>
                                         <CommandGroup>
-                                            {users.filter(u => recipientRole && u.roles.includes(recipientRole)).map((user) => (
+                                            {users.filter(u => {
+                                                if(recipientRole === 'Organization') return u.roles.includes('Admin') || u.roles.includes('Super Admin');
+                                                if(recipientRole) return u.roles.includes(recipientRole);
+                                                return false;
+                                            }).map((user) => (
                                                 <CommandItem
                                                     value={user.name}
                                                     key={user.id}

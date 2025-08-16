@@ -14,7 +14,8 @@ export type UserRole =
   | 'Referral'
   | 'Admin'
   | 'Finance Admin'
-  | 'Super Admin';
+  | 'Super Admin'
+  | 'Organization';
 
 export type Privilege =
   | 'all'
@@ -121,7 +122,7 @@ export interface Donation {
   paytmSenderName?: string;
   paytmRecipientName?: string;
   recipientId?: string;
-  recipientRole?: 'Beneficiary' | 'Referral';
+  recipientRole?: 'Beneficiary' | 'Referral' | 'Organization';
   recipientPhone?: string;
   recipientUpiId?: string;
   recipientAccountNumber?: string;
