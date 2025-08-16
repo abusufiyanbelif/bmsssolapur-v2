@@ -32,20 +32,28 @@ export function QrCodeDialog({
 }: QrCodeDialogProps) {
   const { toast } = useToast();
   const [hasCopied, setHasCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
+    setIsDownloading(true);
     try {
-      const response = await fetch(qrCodeUrl);
+      // Use the new API route to download the image
+      const response = await fetch(`/api/download-image?url=${encodeURIComponent(qrCodeUrl)}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to download image from server.');
+      }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.style.display = "none";
       a.href = url;
       a.download = `bms-qr-code.png`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
+      
       toast({
         title: "Download Started",
         description: "The QR code image is being downloaded.",
@@ -57,6 +65,8 @@ export function QrCodeDialog({
         title: "Download Failed",
         description: "Could not download the QR code image.",
       });
+    } finally {
+        setIsDownloading(false);
     }
   };
 
@@ -103,7 +113,7 @@ export function QrCodeDialog({
           </div>
         </div>
         <DialogFooter className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" onClick={handleDownload}>
+            <Button variant="secondary" onClick={handleDownload} disabled={isDownloading}>
                 <Download className="mr-2 h-4 w-4" /> Download
             </Button>
             <DialogClose asChild>

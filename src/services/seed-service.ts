@@ -113,7 +113,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     contactPhone: "919372145889",
     website: "https://baitulmalsolapur.org",
     upiId: "9372145889@paytm",
-    qrCodeUrl: "https://storage.googleapis.com/static.invertase.io/assets/phonepe-qr-code.png",
+    qrCodeUrl: "https://assets.dev.braze.com/ui/qr_codes/braze_to_the_qr_code_future.png",
 };
 
 

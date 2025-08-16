@@ -10,7 +10,7 @@ export function Logo({ className }: LogoProps) {
   return (
     <div className={cn("relative", className)}>
       <Image
-        src="https://placehold.co/100x100/4285F4/ffffff.png?text=BMS"
+        src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app_assets%2Flogo.png?alt=media&token=143585ad-4977-4d32-901b-3b02e3b835ca"
         alt="Baitul Mal Samajik Sanstha (Solapur) Logo"
         fill
         priority
