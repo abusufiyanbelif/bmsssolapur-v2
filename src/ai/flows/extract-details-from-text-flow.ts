@@ -43,7 +43,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The recipient's name is under the "To" or "Paid to" section. Use this for 'phonePeRecipientName'.
             - The recipient's UPI ID is often on the line directly below their name, or next to it. Look for the '@' symbol. The line "Sent to" also indicates the recipient's UPI ID.
             - "Transaction ID" should be mapped to 'phonePeTransactionId'.
-            - "UTR" or "UTR No" should be mapped to 'utrNumber'.
+            - "UTR" or "UTR No" should be mapped to 'utrNumber'. **A UTR is a long alphanumeric string, do not extract short numbers or bank account snippets as the UTR.**
 
             **Google Pay (GPay) Rules:**
             - Look for "From:" and "To:" labels to identify sender and recipient blocks.
@@ -51,7 +51,8 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The sender's UPI ID is on the line immediately following the full sender name block and contains an '@' symbol. Use this for 'senderUpiId'.
             - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName'.
             - The **"UPI transaction ID"** is the most important ID. You MUST map its value to BOTH the 'transactionId' and 'googlePayTransactionId' fields.
-            - DO NOT map the "Google transaction ID" to the 'utrNumber' field. Only capture the "Google transaction ID" if the "UPI transaction ID" is not present.
+            - If you see "Google transaction ID", map its value ONLY to the 'googlePayTransactionId' field. **DO NOT map the "Google transaction ID" to the 'utrNumber' field.**
+            - **DO NOT capture a 'utrNumber' for Google Pay unless you see the explicit text "UTR" or "UTR No".**
             
             **Paytm Rules:**
             - Look for "From" and "To" sections.

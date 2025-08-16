@@ -167,6 +167,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const recipientUpiId = watch("recipientUpiId");
   const recipientAccountNumber = watch("recipientAccountNumber");
   const transactionId = watch('transactionId');
+  const utrNumber = watch('utrNumber');
+  const googlePayTransactionId = watch('googlePayTransactionId');
   const debouncedTransactionId = useDebounce(transactionId, 500);
 
   const linkedLeadId = watch("leadId");
@@ -1132,19 +1134,36 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="utrNumber"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>UTR Number (Optional)</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Enter UTR number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                 {utrNumber && (
+                    <FormField
+                        control={form.control}
+                        name="utrNumber"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>UTR Number (Optional)</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Enter UTR number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                 )}
+                 {googlePayTransactionId && (
+                    <FormField
+                        control={form.control}
+                        name="googlePayTransactionId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Google Pay Transaction ID</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Google Pay ID" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                 )}
             </div>
             
             <h4 className="font-semibold text-lg border-b pb-2">Sender & Recipient Details</h4>
@@ -1336,3 +1355,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
 
 
     
+
