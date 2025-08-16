@@ -432,12 +432,13 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           if (!details.senderAccountNumber && foundDonor.bankAccountNumber) setValue('donorBankAccount', foundDonor.bankAccountNumber);
       }
       
-      // Find RECIPIENT - including the new logic for organization member
+      // Find RECIPIENT
       if (details.recipientRole === 'Organization Member' && details.recipientId) {
           const foundAdmin = users.find(u => u.id === details.recipientId);
           if (foundAdmin) {
               setValue('recipientRole', 'Organization Member');
               setValue('recipientId', foundAdmin.id);
+              setValue('recipientPhone', foundAdmin.phone);
               setSelectedRecipient(foundAdmin);
               toast({
                   variant: 'success',
@@ -447,7 +448,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
               });
           }
       } else {
-          // Fallback to previous logic if AI doesn't identify an org member
           let foundRecipient: User | null = null;
           if (details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
           if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
@@ -461,6 +461,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
               if (suitableRole) {
                   setValue('recipientRole', suitableRole as any);
                   setValue('recipientId', foundRecipient.id);
+                  setValue('recipientPhone', foundRecipient.phone);
                   setSelectedRecipient(foundRecipient);
                   toast({
                       variant: 'success',
@@ -1147,7 +1148,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </FormItem>
                     )}
                 />
-                 {utrNumber && (
+                 {(utrNumber || paymentApp === 'PhonePe') && (
                     <FormField
                         control={form.control}
                         name="utrNumber"
@@ -1162,7 +1163,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         )}
                     />
                  )}
-                 {paymentApp === 'Google Pay' && googlePayTransactionId && (
+                 {(googlePayTransactionId || paymentApp === 'Google Pay') && (
                     <FormField
                         control={form.control}
                         name="googlePayTransactionId"
@@ -1177,7 +1178,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         )}
                     />
                  )}
-                 {paymentApp === 'PhonePe' && phonePeTransactionId && (
+                 {(phonePeTransactionId || paymentApp === 'PhonePe') && (
                     <FormField
                         control={form.control}
                         name="phonePeTransactionId"
@@ -1192,7 +1193,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         )}
                     />
                  )}
-                 {paymentApp === 'Paytm' && paytmUpiReferenceNo && (
+                 {(paytmUpiReferenceNo || paymentApp === 'Paytm') && (
                     <FormField
                         control={form.control}
                         name="paytmUpiReferenceNo"
