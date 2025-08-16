@@ -242,6 +242,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
         paymentScreenshotDataUrl: undefined,
         recipientId: '',
         recipientRole: undefined,
+        recipientPhone: '',
+        recipientUpiId: '',
+        recipientAccountNumber: '',
         leadId: undefined,
         campaignId: undefined,
     });
@@ -430,11 +433,11 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           // Populate fields from profile ONLY if they weren't found in the scan
           if (!details.donorPhone && foundDonor.phone) setValue('donorPhone', foundDonor.phone);
           
-          // CRITICAL FIX: Prioritize UPI from profile if not in scan
+          // Prioritize UPI from profile if not in scan
           if (!details.senderUpiId && foundDonor.upiIds && foundDonor.upiIds.length > 0) {
               setValue('donorUpiId', foundDonor.upiIds[0]);
               setValue('donorBankAccount', ''); // Clear bank account if UPI is found
-          } else if (!details.senderAccountNumber && foundDonor.bankAccountNumber) {
+          } else if (!details.senderAccountNumber && foundDonor.bankAccountNumber && !details.senderUpiId && !(foundDonor.upiIds && foundDonor.upiIds.length > 0)) {
               setValue('donorBankAccount', foundDonor.bankAccountNumber);
           }
       }
