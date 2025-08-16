@@ -208,6 +208,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
 
   const clearForm = () => {
+    stopScan();
     reset({
         donorId: '',
         isAnonymous: false,
@@ -820,7 +821,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
-                          {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                          {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
                             <SelectItem key={campaign.id} value={campaign.id!}>
                               {campaign.name} ({campaign.status})
                             </SelectItem>
@@ -865,7 +866,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             <CommandList>
                                 <CommandEmpty>No open leads found.</CommandEmpty>
                                 <CommandGroup>
-                                {leads.map((lead) => (
+                                {(leads || []).map((lead) => (
                                     <CommandItem
                                     value={`${lead.name} ${lead.id}`}
                                     key={lead.id}
@@ -1316,3 +1317,5 @@ export function AddDonationForm(props: AddDonationFormProps) {
     )
 }
 
+
+    
