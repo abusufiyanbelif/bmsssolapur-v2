@@ -99,7 +99,11 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   time: z.string().optional().describe('The time of the transaction. Format it as hh:mm am/pm.'),
   type: z.enum(['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah']).optional().describe("The category of donation if mentioned (e.g., Zakat, Sadaqah)."),
   purpose: z.enum(['Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use']).optional().describe("The specific purpose of the donation if mentioned (e.g., Education, Hospital)."),
-  paymentApp: z.string().optional().describe('The method or app of payment (e.g., GPay, PhonePe, Paytm). Infer this from the UI, especially logos like "पे" for PhonePe or "Paytm Bank".'),
+  
+  paymentApp: z.string().optional().describe('The primary method or app of payment (e.g., GPay, PhonePe, Paytm). Infer this from the UI, especially logos like "पे" for PhonePe or "Paytm Bank".'),
+  senderPaymentApp: z.string().optional().describe("The app the sender used (e.g., 'PhonePe')."),
+  recipientPaymentApp: z.string().optional().describe("The app the recipient received money on, if specified (e.g., 'Google Pay')."),
+  
   paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer. Often found near the transaction ID.'),
   
   senderName: z.string().optional().describe("The full name of the person who sent the money, often found under a 'FROM' or 'Debited From' heading."),

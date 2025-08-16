@@ -66,6 +66,8 @@ const formSchema = z.object({
   phonePeTransactionId: z.string().optional(),
   paytmUpiReferenceNo: z.string().optional(),
   paymentApp: z.enum(paymentApps).optional(),
+  senderPaymentApp: z.string().optional(),
+  recipientPaymentApp: z.string().optional(),
   donorUpiId: z.string().optional(),
   donorPhone: z.string().optional(),
   donorBankAccount: z.string().optional(),
@@ -219,7 +221,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const clearForm = () => {
     stopScan();
-    // Navigate to the base URL to clear all query params and state
     router.push('/admin/donations/add');
   };
   
