@@ -577,8 +577,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
           
-            <fieldset disabled={paymentMethod === 'Cash'}>
-                <div className={cn("space-y-4 p-4 border rounded-lg bg-muted/50", paymentMethod === 'Cash' && "opacity-50 cursor-not-allowed")}>
+            <fieldset disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'}>
+                <div className={cn("space-y-4 p-4 border rounded-lg bg-muted/50", (paymentMethod === 'Cash' || paymentMethod === 'Other') && "opacity-50 cursor-not-allowed")}>
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         <ImageIcon className="h-5 w-5"/>
                         Payment Proof & Scanning
@@ -602,7 +602,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                         accept="image/*,application/pdf"
                                         ref={fileInputRef}
                                         onChange={handleFileChange}
-                                        disabled={paymentMethod === 'Cash'}
+                                        disabled={!showOnlineFields}
                                     />
                                 </FormControl>
                                 <FormDescription>
@@ -633,7 +633,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                             size="icon"
                                             className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                             onClick={() => removeFile(index)}
-                                            disabled={paymentMethod === 'Cash'}
+                                            disabled={!showOnlineFields}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -650,12 +650,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 Stop Scan
                             </Button>
                         ) : (
-                            <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={localFiles.length === 0 || paymentMethod === 'Cash'}>
+                            <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={localFiles.length === 0 || !showOnlineFields}>
                                 <ScanEye className="mr-2 h-4 w-4" />
                                 Scan & Auto-Fill
                             </Button>
                         )}
-                        <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={localFiles.length === 0 || isExtractingText || paymentMethod === 'Cash'}>
+                        <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={localFiles.length === 0 || isExtractingText || !showOnlineFields}>
                             {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
                             Get Raw Text
                         </Button>
@@ -1112,7 +1112,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Payment App</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select payment app" />
@@ -1142,7 +1142,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </FormItem>
                         )}
                     />
-                 ) : paymentApp === 'PhonePe' || paymentApp === 'Paytm' ? (
+                 ) : (paymentApp === 'PhonePe' || paymentApp === 'Paytm') ? (
                      <FormField
                         control={form.control}
                         name="transactionId"
@@ -1164,7 +1164,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         <FormItem>
                             <FormLabel>UTR Number (Optional)</FormLabel>
                             <FormControl>
-                            <Input placeholder="Enter UTR number" {...field} />
+                            <Input placeholder="Enter UTR number" {...field} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -1267,7 +1267,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     <FormItem>
                         <FormLabel>Donor Phone</FormLabel>
                         <FormControl>
-                            <Input placeholder="10-digit phone number" {...field} />
+                            <Input placeholder="10-digit phone number" {...field} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -1281,7 +1281,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             <FormItem>
                                 <FormLabel>Donor UPI ID</FormLabel>
                                 {selectedDonor?.upiIds && selectedDonor.upiIds.length > 0 ? (
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select a UPI ID" />
@@ -1295,7 +1295,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                     </Select>
                                 ) : (
                                     <FormControl>
-                                        <Input placeholder="e.g., username@okhdfc" {...field} />
+                                        <Input placeholder="e.g., username@okhdfc" {...field} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'} />
                                     </FormControl>
                                 )}
                                 <FormMessage />
@@ -1312,7 +1312,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     <FormItem>
                         <FormLabel>Donor Bank Account (Optional)</FormLabel>
                         <FormControl>
-                        <Input placeholder="Last 4 digits or full number" {...field} />
+                        <Input placeholder="Last 4 digits or full number" {...field} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -1323,17 +1323,17 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             <h4 className="font-semibold text-sm">Recipient Contact Details (for reference)</h4>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField control={form.control} name="recipientPhone" render={({ field }) => (
-                    <FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input placeholder="10-digit phone number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input placeholder="10-digit phone number" {...field} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'} /></FormControl><FormMessage /></FormItem>
                 )} />
                  {!recipientAccountNumber && (
                     <FormField control={form.control} name="recipientUpiId" render={({ field }) => (
-                        <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input placeholder="e.g., username@okaxis" {...field} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'} /></FormControl><FormMessage /></FormItem>
                     )} />
                 )}
             </div>
              {!recipientUpiId && (
                 <FormField control={form.control} name="recipientAccountNumber" render={({ field }) => (
-                    <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Recipient Bank Account</FormLabel><FormControl><Input placeholder="Last 4 digits or full number" {...field} disabled={paymentMethod === 'Cash' || paymentMethod === 'Other'} /></FormControl><FormMessage /></FormItem>
                 )} />
              )}
           
@@ -1410,3 +1410,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
