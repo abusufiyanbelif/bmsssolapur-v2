@@ -1,4 +1,5 @@
 
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -27,13 +28,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
 import type { LeadPriority } from "@/services/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteLead, handleBulkDeleteLeads } from "./[id]/actions";
+import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/actions";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
@@ -215,15 +216,17 @@ function LeadsPageContent() {
             const aTime = aValue instanceof Date ? aValue.getTime() : 0;
             const bTime = bValue instanceof Date ? bValue.getTime() : 0;
             
-            if (aValue instanceof Date && bValue instanceof Date) {
+            if (aValue === undefined || aValue === null) return 1;
+            if (bValue === undefined || bValue === null) return -1;
+            
+            if (aTime > 0 && bTime > 0) {
                 comparison = aTime - bTime;
-            } else if (aValue instanceof Date) {
-                comparison = 1; // Dates always come after undefined
-            } else if (bValue instanceof Date) {
-                comparison = -1; // Undefined comes before dates
-            } else if (aValue > bValue) {
+            } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+                comparison = aValue - bValue;
+            }
+            else if (String(aValue) > String(bValue)) {
                 comparison = 1;
-            } else if (aValue < bValue) {
+            } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
             }
             
@@ -252,14 +255,26 @@ function LeadsPageContent() {
         setCurrentPage(1);
     }, [itemsPerPage]);
     
-    const onBulkLeadDeleted = () => {
+    const onBulkActionSuccess = () => {
         toast({
-            title: "Leads Deleted",
-            description: `${selectedLeads.length} lead(s) have been successfully removed.`,
+            title: "Success",
+            description: "The selected leads have been updated.",
+            variant: 'success',
         });
         setSelectedLeads([]);
         fetchData();
     }
+    
+    const handleBulkStatusUpdate = async (type: 'caseStatus' | 'verificationStatus', newStatus: LeadStatus | LeadVerificationStatus) => {
+        if (selectedLeads.length === 0 || !adminUserId) return;
+        const result = await handleBulkUpdateLeadStatus(selectedLeads, type, newStatus, adminUserId);
+        if (result.success) {
+            onBulkActionSuccess();
+        } else {
+            toast({ variant: 'destructive', title: "Update Failed", description: result.error });
+        }
+    }
+
 
     const renderSortIcon = (column: SortableColumn) => {
         if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
@@ -362,7 +377,7 @@ function LeadsPageContent() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                            checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
+                            checked={selectedLeads.length === paginatedLeads.length && paginatedLeads.length > 0}
                             onCheckedChange={(checked) => {
                                 const pageLeadIds = paginatedLeads.map(l => l.id!);
                                 if (checked) {
@@ -475,7 +490,7 @@ function LeadsPageContent() {
                             </TableCell>
                             <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
                             <TableCell className="text-xs text-muted-foreground truncate max-w-xs">{lead.headline || 'N/A'}</TableCell>
-                            <TableCell>{format(lead.dateCreated, "dd MMM yyyy")}</TableCell>
+                            <TableCell>{lead.dateCreated ? format(lead.dateCreated, "dd MMM yyyy") : 'N/A'}</TableCell>
                             <TableCell>{lead.verifiedAt ? format(lead.verifiedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
                             <TableCell>{lead.lastAllocatedAt ? format(lead.lastAllocatedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
                             <TableCell>{lead.closedAt ? format(lead.closedAt, "dd MMM yyyy") : 'N/A'}</TableCell>
@@ -495,12 +510,24 @@ function LeadsPageContent() {
                  const verifConfig = verificationStatusConfig[lead.verifiedStatus];
                  const StatusIcon = statusIcons[lead.status];
                  return (
-                    <Card key={lead.id}>
+                    <Card key={lead.id} className={cn(selectedLeads.includes(lead.id!) && "ring-2 ring-primary")}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
-                                    <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
+                                <div className="flex items-center gap-4">
+                                     <Checkbox
+                                        className="mt-1"
+                                        checked={selectedLeads.includes(lead.id!)}
+                                        onCheckedChange={(checked) => {
+                                            setSelectedLeads(prev => 
+                                                checked ? [...prev, lead.id!] : prev.filter(id => id !== lead.id!)
+                                            );
+                                        }}
+                                        aria-label="Select row"
+                                    />
+                                    <div>
+                                        <CardTitle className="text-lg">{lead.name}</CardTitle>
+                                        <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
+                                    </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
                                     <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
@@ -517,7 +544,7 @@ function LeadsPageContent() {
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Created On</span>
-                                <span>{format(lead.dateCreated, "dd MMM yyyy")}</span>
+                                <span>{lead.dateCreated ? format(lead.dateCreated, "dd MMM yyyy") : 'N/A'}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Verified On</span>
@@ -647,21 +674,46 @@ function LeadsPageContent() {
         return (
             <>
                  {selectedLeads.length > 0 && adminUserId && (
-                    <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
-                        <p className="text-sm font-medium">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm font-medium flex-shrink-0">
                             {selectedLeads.length} item(s) selected.
                         </p>
-                         <DeleteConfirmationDialog
-                            itemType={`${selectedLeads.length} lead(s)`}
-                            itemName="the selected items"
-                            onDelete={() => handleBulkDeleteLeads(selectedLeads, adminUserId)}
-                            onSuccess={onBulkLeadDeleted}
-                        >
-                            <Button variant="destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Selected
-                            </Button>
-                        </DeleteConfirmationDialog>
+                        <div className="flex flex-wrap items-center gap-2">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button>Change Status</Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger>Case Status</DropdownMenuSubTrigger>
+                                        <DropdownMenuContent>
+                                            {statusOptions.filter(s => s !== 'all').map(s => (
+                                                <DropdownMenuItem key={s} onSelect={() => handleBulkStatusUpdate('caseStatus', s)}>{s}</DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenuSub>
+                                     <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger>Verification Status</DropdownMenuSubTrigger>
+                                        <DropdownMenuContent>
+                                             {verificationOptions.filter(v => v !== 'all').map(v => (
+                                                <DropdownMenuItem key={v} onSelect={() => handleBulkStatusUpdate('verificationStatus', v)}>{v}</DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenuSub>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <DeleteConfirmationDialog
+                                itemType={`${selectedLeads.length} lead(s)`}
+                                itemName="the selected items"
+                                onDelete={() => handleBulkDeleteLeads(selectedLeads, adminUserId)}
+                                onSuccess={onBulkActionSuccess}
+                            >
+                                <Button variant="destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Selected
+                                </Button>
+                            </DeleteConfirmationDialog>
+                        </div>
                     </div>
                 )}
                 {isMobile ? renderMobileCards() : renderDesktopTable()}
@@ -764,3 +816,4 @@ export default function LeadsPage() {
         </Suspense>
     )
 }
+

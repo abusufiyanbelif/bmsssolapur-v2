@@ -6,7 +6,7 @@ import { deleteLead as deleteLeadService, getLead, updateLead } from "@/services
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
-import { FundTransfer } from "@/services/types";
+import { FundTransfer, LeadStatus, LeadVerificationStatus } from "@/services/types";
 import { arrayUnion, increment, writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 
@@ -58,6 +58,48 @@ export async function handleBulkDeleteLeads(leadIds: string[], adminUserId: stri
         return { success: false, error };
     }
 }
+
+
+export async function handleBulkUpdateLeadStatus(
+    leadIds: string[], 
+    statusType: 'caseStatus' | 'verificationStatus',
+    newStatus: LeadStatus | LeadVerificationStatus,
+    adminUserId: string
+) {
+     try {
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
+
+        const batch = writeBatch(db);
+        const logPromises: Promise<void>[] = [];
+
+        for (const id of leadIds) {
+            const leadDocRef = doc(db, "leads", id);
+            const updatePayload = statusType === 'caseStatus' 
+                ? { status: newStatus } 
+                : { verifiedStatus: newStatus };
+            batch.update(leadDocRef, updatePayload);
+            
+            logPromises.push(logActivity({
+                userId: adminUser.id!,
+                userName: adminUser.name,
+                userEmail: adminUser.email,
+                role: 'Admin',
+                activity: `Bulk Status Change`,
+                details: { leadId: id, newStatus: newStatus, type: statusType, details: `Part of bulk update operation.` },
+            }));
+        }
+        
+        await Promise.all([batch.commit(), ...logPromises]);
+        
+        revalidatePath("/admin/leads");
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred";
+        return { success: false, error };
+    }
+}
+
 
 export async function handleUploadVerificationDocument(leadId: string, formData: FormData) {
     try {
@@ -184,3 +226,4 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         return { success: false, error };
     }
 }
+
