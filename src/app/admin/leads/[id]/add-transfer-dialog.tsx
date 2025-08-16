@@ -48,7 +48,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const formRef = useRef<HTMLFormElement>(null);
   
   const form = useForm();
-  const { setValue, register, handleSubmit, getValues } = form;
+  const { setValue, register, handleSubmit, getValues, watch } = form;
 
   useEffect(() => {
     if (scannedDetails) {
@@ -151,6 +151,8 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
       toast({ variant: "destructive", title: "Submission Failed", description: result.error || "An unknown error occurred." });
     }
   };
+  
+  const paymentApp = watch("paymentApp");
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -195,14 +197,18 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Label htmlFor="transactionId">Main Transaction ID</Label>
                     <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" />
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="utrNumber">UTR Number</Label>
-                    <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label>
-                    <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} type="text" />
-                </div>
+                {paymentApp === "Google Pay" && (
+                    <div className="space-y-2">
+                        <Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label>
+                        <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} type="text" />
+                    </div>
+                )}
+                 {scannedDetails?.utrNumber && (
+                    <div className="space-y-2">
+                        <Label htmlFor="utrNumber">UTR Number</Label>
+                        <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
+                    </div>
+                 )}
                  <div className="space-y-2">
                     <Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label>
                     <Input id="phonePeTransactionId" {...register("phonePeTransactionId")} type="text" />
