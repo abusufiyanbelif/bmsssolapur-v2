@@ -192,12 +192,24 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     </div>
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="transactionId">Transaction ID</Label>
-                    <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter transaction reference" />
+                    <Label htmlFor="transactionId">Main Transaction ID</Label>
+                    <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="utrNumber">UTR Number</Label>
                     <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label>
+                    <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} type="text" />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label>
+                    <Input id="phonePeTransactionId" {...register("phonePeTransactionId")} type="text" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label>
+                    <Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} type="text" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">

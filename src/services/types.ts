@@ -105,6 +105,10 @@ export interface Donation {
   campaignName?: string;
   paymentScreenshotUrls?: string[];
   transactionId?: string;
+  utrNumber?: string;
+  googlePayTransactionId?: string;
+  phonePeTransactionId?: string;
+  paytmUpiReferenceNo?: string;
   donationDate: Timestamp | Date;
   paymentApp?: string;
   donorUpiId?: string;
@@ -160,6 +164,9 @@ export interface FundTransfer {
     notes?: string;
     transactionId?: string;
     utrNumber?: string;
+    googlePayTransactionId?: string;
+    phonePeTransactionId?: string;
+    paytmUpiReferenceNo?: string;
     senderName?: string; // General sender name
     phonePeSenderName?: string;
     googlePaySenderName?: string;

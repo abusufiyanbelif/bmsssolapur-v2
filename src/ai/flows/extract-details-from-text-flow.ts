@@ -42,25 +42,30 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - The sender's name is under the "Paid from" or "Debited from" section. Use this for 'phonePeSenderName'. **The sender UPI is almost never shown on PhonePe receipts.** Do not guess it.
             - The recipient's name is under the "To" or "Paid to" section. Use this for 'phonePeRecipientName'.
             - The recipient's UPI ID is often on the line directly below their name, or next to it. Look for the '@' symbol. The line "Sent to" also indicates the recipient's UPI ID.
+            - "Transaction ID" should be mapped to 'phonePeTransactionId'.
+            - "UTR" or "UTR No" should be mapped to 'utrNumber'.
 
             **Google Pay (GPay) Rules:**
             - Look for "From:" and "To:" labels to identify sender and recipient blocks.
             - The sender's name might be split across multiple lines. Find the line starting with "From:". Combine the text on that line (after "From:") and the text on the immediately following line to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(State Bank of India)"). Use this for 'googlePaySenderName'.
             - The sender's UPI ID is on the line immediately following the full sender name block and contains an '@' symbol. Use this for 'senderUpiId'.
             - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName'.
-            - The "UPI transaction ID" should be prioritized for the transactionId field. The "Google transaction ID" is secondary.
+            - "UPI transaction ID" should be prioritized for the 'transactionId' and 'googlePayTransactionId' fields. The "Google transaction ID" is secondary.
 
             **Paytm Rules:**
             - Look for "From" and "To" sections.
             - The sender's name is usually next to "From". Use this for 'paytmSenderName'.
             - The recipient's name is usually next to "To". Use this for 'paytmRecipientName'.
-            - The "UPI Reference No." is the most important transaction identifier. Prioritize this for the 'transactionId' field.
+            - The "UPI Reference No." is the most important transaction identifier. Prioritize this for the 'transactionId' and 'paytmUpiReferenceNo' fields.
 
             **General Fields to Extract:**
             - paymentApp: The app used (e.g., GPay, PhonePe, Paytm). If you see "G Pay", you MUST return "Google Pay". If you see "PhonePe", return "PhonePe". If you see "Paytm", return "Paytm".
             - amount: The primary transaction amount. Must be a number.
             - transactionId: The main Transaction ID, Reference Number, or UPI Reference No.
             - utrNumber: The UTR number, if explicitly labeled.
+            - googlePayTransactionId: The Google Pay specific transaction ID.
+            - phonePeTransactionId: The PhonePe specific transaction ID.
+            - paytmUpiReferenceNo: The Paytm specific UPI Reference No.
             - date: The date of the transaction (Format: YYYY-MM-DD).
             - time: The time of the transaction (e.g., "11:48 am").
             - type: The category of donation if mentioned (e.g., Zakat, Sadaqah). Check the notes/remarks for this.
