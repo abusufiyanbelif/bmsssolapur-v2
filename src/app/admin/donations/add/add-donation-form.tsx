@@ -26,8 +26,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle } from "lucide-react";
-import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart } from "lucide-react";
+import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -54,6 +54,8 @@ const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
   recipientId: z.string().optional(),
   recipientRole: z.enum(recipientRoles).optional(),
+  leadId: z.string().optional(),
+  campaignId: z.string().optional(),
   isAnonymous: z.boolean().default(false),
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
   donationDate: z.date(),
@@ -93,7 +95,9 @@ type AddDonationFormValues = z.infer<typeof formSchema>;
 
 interface AddDonationFormProps {
   users: User[];
-  currentUser?: User | null; // For identifying if an admin is using the form vs. a donor
+  leads: Lead[];
+  campaigns: Campaign[];
+  currentUser?: User | null;
 }
 
 interface FilePreview {
@@ -112,7 +116,7 @@ const initialAvailabilityState: AvailabilityState = {
     isAvailable: null,
 };
 
-function AddDonationFormContent({ users }: AddDonationFormProps) {
+function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -128,6 +132,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
+  const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
   const [recipientPopoverOpen, setRecipientPopoverOpen] = useState(false);
   const scanAbortController = useRef<AbortController | null>(null);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
@@ -216,6 +221,8 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
         paymentScreenshotDataUrl: undefined,
         recipientId: '',
         recipientRole: undefined,
+        leadId: undefined,
+        campaignId: undefined,
     });
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -781,6 +788,102 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                         />
                 )}
             </div>
+
+             <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="font-semibold text-lg">Linkage (Optional)</h3>
+                 <FormField
+                  control={form.control}
+                  name="campaignId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><Megaphone className="h-4 w-4"/> Link to Campaign</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a campaign" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                            <SelectItem key={campaign.id} value={campaign.id!}>
+                              {campaign.name} ({campaign.status})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Link this donation to a specific fundraising campaign.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="leadId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="flex items-center gap-2"><FileHeart className="h-4 w-4" />Link to Lead</FormLabel>
+                       <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? leads.find(
+                                    (lead) => lead.id === field.value
+                                  )?.name
+                                : "Select a lead"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search lead by name or ID..." />
+                            <CommandList>
+                                <CommandEmpty>No open leads found.</CommandEmpty>
+                                <CommandGroup>
+                                {leads.map((lead) => (
+                                    <CommandItem
+                                    value={`${lead.name} ${lead.id}`}
+                                    key={lead.id}
+                                    onSelect={() => {
+                                        field.onChange(lead.id!);
+                                        setLeadPopoverOpen(false);
+                                    }}
+                                    >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        lead.id === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                    />
+                                    {lead.name} (Req: ₹{lead.helpRequested})
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>Allocate this donation to a specific help case.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField

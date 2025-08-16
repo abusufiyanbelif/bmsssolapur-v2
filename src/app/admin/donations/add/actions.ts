@@ -111,6 +111,8 @@ export async function handleAddDonation(
         paymentMethod: formData.get("paymentMethod") as PaymentMethod | undefined,
         notes: formData.get("notes") as string | undefined,
         paymentScreenshotUrls: paymentScreenshotUrls,
+        leadId: formData.get("leadId") as string | undefined,
+        campaignId: formData.get("campaignId") as string | undefined,
     };
 
     const newDonation = await createDonation(

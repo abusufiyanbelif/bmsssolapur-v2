@@ -3,11 +3,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddDonationForm } from "./add-donation-form";
 import { getAllUsers } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
+import { getAllCampaigns } from "@/services/campaign-service";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function AddDonationPage() {
-    const users = await getAllUsers();
+    const [users, leads, campaigns] = await Promise.all([
+        getAllUsers(),
+        getAllLeads(),
+        getAllCampaigns(),
+    ]);
+
+    const linkableLeads = leads.filter(l => l.status !== 'Closed' && l.status !== 'Cancelled');
+    const linkableCampaigns = campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled');
     
     return (
         <div className="flex-1 space-y-4">
@@ -23,7 +32,7 @@ export default async function AddDonationPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddDonationForm users={users} />
+                    <AddDonationForm users={users} leads={linkableLeads} campaigns={linkableCampaigns} />
                 </CardContent>
             </Card>
         </div>
