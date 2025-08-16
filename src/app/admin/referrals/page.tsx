@@ -1,4 +1,3 @@
-
 // src/app/admin/referrals/page.tsx
 "use client";
 
