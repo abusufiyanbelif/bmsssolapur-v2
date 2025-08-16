@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,8 +37,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId } from "./actions";
-import { scanProof, getRawTextFromImage } from "./actions";
+import { handleAddDonation, checkTransactionId, scanProof, getRawTextFromImage } from "./actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -797,7 +795,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     <FormDescription>Review the extracted text. You can copy-paste from here to correct any fields above.</FormDescription>
                 </div>
             )}
-
         
            {isAdminView ? (
                <FormField
@@ -876,7 +873,252 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
              )
            )}
 
-            <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Amount</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="Enter amount" {...field} />
+                    </FormControl>
+                        <FormDescription>The main amount for the donation's purpose.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="donationDate"
+                render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Donation Date</FormLabel>
+                    <Popover>
+                    <PopoverTrigger asChild>
+                        <FormControl>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                            )}
+                        >
+                            {field.value ? (
+                            format(field.value, "PPP")
+                            ) : (
+                            <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                        />
+                    </PopoverContent>
+                    </Popover>
+                    <FormDescription>The date the transaction was made.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            </div>
+            <FormField
+                control={form.control}
+                name="includeTip"
+                render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                    <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                    />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                    <FormLabel>
+                        Split Transaction with Tip
+                    </FormLabel>
+                    <FormDescription>
+                        Check this if the transaction includes a separate amount for organization expenses.
+                    </FormDescription>
+                    </div>
+                </FormItem>
+                )}
+            />
+            
+            {includeTip && (
+                <div className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="tipAmount"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Tip Amount</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="Enter tip amount" {...field} />
+                            </FormControl>
+                            <FormDescription>This amount will be recorded as a separate donation for 'To Organization Use'.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Total Transaction Amount</AlertTitle>
+                        <AlertDescription>
+                            The total amount you should see on the bank statement is <span className="font-bold">₹{totalAmount.toLocaleString()}</span>.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {donationTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="purpose"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Purpose</FormLabel>
+                    <Select onValueChange={(value) => { field.onChange(value); setValue("category", undefined); }} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a purpose (optional)" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {donationPurposes.map(purpose => (
+                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             {selectedPurpose && categoryOptions[selectedPurpose] && (
+                <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Specific Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a specific category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {categoryOptions[selectedPurpose as keyof typeof categoryOptions].map(sub => (
+                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+             
+            {showOnlineFields && (
+                <div className="space-y-4">
+                    <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField
+                            control={form.control}
+                            name="paymentApp"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Payment App</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select payment app" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {paymentApps.map(app => (
+                                        <SelectItem key={app} value={app}>{app}</SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {paymentApp === 'Google Pay' ? (
+                            <FormField
+                                control={form.control}
+                                name="transactionId"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>UPI Transaction ID</FormLabel>
+                                    <FormControl>
+                                    <Input placeholder="Enter UPI Transaction ID" {...field} />
+                                    </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="UPI Transaction ID" />
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        ) : (
+                             <FormField
+                                control={form.control}
+                                name="transactionId"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>UTR or Transaction ID</FormLabel>
+                                    <FormControl>
+                                    <Input placeholder="Enter UTR or Transaction ID" {...field} />
+                                    </FormControl>
+                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        )}
+                    </div>
+                </div>
+             )}
+
+             <FormField control={form.control} name="senderName" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Sender/Payer Name {showOnlineFields ? '(if different from Donor)' : ''}</FormLabel>
+                    <FormControl><Input placeholder="Full name of the person who paid" {...field} /></FormControl><FormMessage />
+                </FormItem>
+            )} />
+
+             <div className="space-y-4 rounded-lg border p-4">
                 <h3 className="font-semibold text-lg">Recipient (Optional)</h3>
                 <FormField
                     control={form.control}
@@ -1079,251 +1321,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                   )}
                 />
             </div>
-            
-            <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Amount</FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="Enter amount" {...field} />
-                    </FormControl>
-                        <FormDescription>The main amount for the donation's purpose.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="donationDate"
-                render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Donation Date</FormLabel>
-                    <Popover>
-                    <PopoverTrigger asChild>
-                        <FormControl>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                            )}
-                        >
-                            {field.value ? (
-                            format(field.value, "PPP")
-                            ) : (
-                            <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                        </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        />
-                    </PopoverContent>
-                    </Popover>
-                    <FormDescription>The date the transaction was made.</FormDescription>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-            </div>
-            <FormField
-                control={form.control}
-                name="includeTip"
-                render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                    <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                    />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                    <FormLabel>
-                        Split Transaction with Tip
-                    </FormLabel>
-                    <FormDescription>
-                        Check this if the transaction includes a separate amount for organization expenses.
-                    </FormDescription>
-                    </div>
-                </FormItem>
-                )}
-            />
-            
-            {includeTip && (
-                <div className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="tipAmount"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Tip Amount</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="Enter tip amount" {...field} />
-                            </FormControl>
-                            <FormDescription>This amount will be recorded as a separate donation for 'To Organization Use'.</FormDescription>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>Total Transaction Amount</AlertTitle>
-                        <AlertDescription>
-                            The total amount you should see on the bank statement is <span className="font-bold">₹{totalAmount.toLocaleString()}</span>.
-                        </AlertDescription>
-                    </Alert>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {donationTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
-                control={form.control}
-                name="purpose"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Purpose</FormLabel>
-                    <Select onValueChange={(value) => { field.onChange(value); setValue("category", undefined); }} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a purpose (optional)" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {donationPurposes.map(purpose => (
-                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-             {selectedPurpose && categoryOptions[selectedPurpose] && (
-                <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Specific Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a specific category" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {categoryOptions[selectedPurpose as keyof typeof categoryOptions].map(sub => (
-                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
-
-             {showOnlineFields ? (
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField
-                            control={form.control}
-                            name="paymentApp"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Payment App</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select payment app" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                        {paymentApps.map(app => (
-                                        <SelectItem key={app} value={app}>{app}</SelectItem>
-                                        ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {paymentApp === 'Google Pay' ? (
-                            <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UPI Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter UPI Transaction ID" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="UPI Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        ) : (
-                             <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UTR or Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter UTR or Transaction ID" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
-                    </div>
-                     <FormField control={form.control} name="senderName" render={({ field }) => (
-                        <FormItem><FormLabel>Sender Name (if different from Donor)</FormLabel><FormControl><Input placeholder="Full name of the sender" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                </div>
-             ) : (
-                <FormField control={form.control} name="senderName" render={({ field }) => (
-                    <FormItem><FormLabel>Payer Name</FormLabel><FormControl><Input placeholder="Full name of the person giving cash" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-             )}
           
           <FormField
               control={form.control}
