@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
@@ -38,9 +38,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation } from "./actions";
+import { handleAddDonation, checkTransactionId } from "./actions";
 import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
@@ -100,6 +101,17 @@ interface FilePreview {
     previewUrl: string;
 }
 
+type AvailabilityState = {
+    isChecking: boolean;
+    isAvailable: boolean | null;
+    existingDonationId?: string;
+};
+
+const initialAvailabilityState: AvailabilityState = {
+    isChecking: false,
+    isAvailable: null,
+};
+
 function AddDonationFormContent({ users }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -118,22 +130,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [recipientPopoverOpen, setRecipientPopoverOpen] = useState(false);
   const scanAbortController = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    const initializeUser = async () => {
-      const storedUserId = localStorage.getItem('userId');
-      setAdminUserId(storedUserId); // This is the user performing the action
-      if (storedUserId) {
-        const user = await getUser(storedUserId);
-        setCurrentUser(user);
-      }
-    };
-    initializeUser();
-  }, []);
-  
-  const donorUsers = users.filter(u => u.roles.includes('Donor'));
-  const isAdminView = currentUser?.roles.some(role => ['Admin', 'Super Admin', 'Finance Admin'].includes(role)) ?? false;
-
+  const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
 
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(formSchema),
@@ -160,8 +157,43 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
   const donorBankAccount = watch("donorBankAccount");
   const recipientUpiId = watch("recipientUpiId");
   const recipientAccountNumber = watch("recipientAccountNumber");
+  const transactionId = watch('transactionId');
+  const debouncedTransactionId = useDebounce(transactionId, 500);
 
-  const recipientUsers = users.filter(u => recipientRole && u.roles.includes(recipientRole));
+  useEffect(() => {
+    const initializeUser = async () => {
+      const storedUserId = localStorage.getItem('userId');
+      setAdminUserId(storedUserId); // This is the user performing the action
+      if (storedUserId) {
+        const user = await getUser(storedUserId);
+        setCurrentUser(user);
+      }
+    };
+    initializeUser();
+  }, []);
+  
+  const donorUsers = users.filter(u => u.roles.includes('Donor'));
+  const isAdminView = currentUser?.roles.some(role => ['Admin', 'Super Admin', 'Finance Admin'].includes(role)) ?? false;
+
+
+  const handleTxnIdCheck = useCallback(async (txnId: string) => {
+    if (!txnId) {
+        setTransactionIdState(initialAvailabilityState);
+        return;
+    }
+    setTransactionIdState({ isChecking: true, isAvailable: null });
+    const result = await checkTransactionId(txnId);
+    setTransactionIdState({ 
+        isChecking: false, 
+        isAvailable: result.isAvailable,
+        existingDonationId: result.existingDonationId
+    });
+  }, []);
+
+  useEffect(() => {
+    handleTxnIdCheck(debouncedTransactionId || '');
+  }, [debouncedTransactionId, handleTxnIdCheck]);
+
 
   const clearForm = () => {
     reset({
@@ -193,6 +225,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     setManualScreenshotPreview(null);
     setLocalFiles([]);
     setRawText(null);
+    setTransactionIdState(initialAvailabilityState);
   };
   
   const handleCancel = () => {
@@ -475,6 +508,9 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
     }
   }
 
+  const isFormInvalid = transactionIdState.isAvailable === false;
+
+
   return (
     <>
       <Form {...form}>
@@ -697,7 +733,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                     role="combobox"
                                     className={cn("w-full justify-between",!field.value && "text-muted-foreground")}
                                     >
-                                    {field.value ? recipientUsers.find((user) => user.id === field.value)?.name : `Select a ${recipientRole}`}
+                                    {field.value ? users.filter(u => recipientRole && u.roles.includes(recipientRole)).find((user) => user.id === field.value)?.name : `Select a ${recipientRole}`}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </FormControl>
@@ -708,7 +744,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                                     <CommandList>
                                         <CommandEmpty>No {recipientRole}s found.</CommandEmpty>
                                         <CommandGroup>
-                                            {recipientUsers.map((user) => (
+                                            {users.filter(u => recipientRole && u.roles.includes(recipientRole)).map((user) => (
                                                 <CommandItem
                                                     value={user.name}
                                                     key={user.id}
@@ -939,6 +975,12 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
                     <FormControl>
                     <Input placeholder="Enter reference number" {...field} />
                     </FormControl>
+                     {transactionIdState.isChecking && <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>}
+                    {transactionIdState.isAvailable === false && (
+                        <p className="text-sm text-destructive flex items-center mt-2">
+                           <AlertTriangle className="mr-2 h-4 w-4" /> This Transaction ID already exists. (ID: {transactionIdState.existingDonationId})
+                        </p>
+                    )}
                     <FormMessage />
                 </FormItem>
                 )}
@@ -1104,7 +1146,7 @@ function AddDonationFormContent({ users }: AddDonationFormProps) {
           )}
 
           <div className="flex gap-4">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || isFormInvalid}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Add Donation
             </Button>
@@ -1130,10 +1172,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-
-    
-
-
-
 

@@ -1,4 +1,5 @@
 
+
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -20,7 +21,8 @@ import {
   writeBatch,
   increment,
   arrayUnion,
-  serverTimestamp
+  serverTimestamp,
+  limit
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import { logActivity } from './activity-log-service';
@@ -312,6 +314,40 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
         return [];
     }
 };
+
+export const getDonationByTransactionId = async (transactionId: string): Promise<Donation | null> => {
+  if (!isConfigValid || !transactionId) return null;
+  try {
+    const q = query(collection(db, DONATIONS_COLLECTION), where("transactionId", "==", transactionId), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      const data = doc.data();
+      const allocations = (data.allocations || []).map((alloc: Allocation) => ({
+        ...alloc,
+        allocatedAt: (alloc.allocatedAt as Timestamp).toDate(),
+      }));
+      return { 
+        id: doc.id, 
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
+        verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+        allocations: allocations,
+      } as Donation;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error getting donation by transactionId: ${transactionId}`, error);
+    // This could be due to a missing index. Log a helpful message.
+    if (error instanceof Error && error.message.includes('index')) {
+        console.error("Firestore index missing. Please create a single-field index on 'transactionId' for the 'donations' collection.");
+    }
+    // Don't throw, just return null so the check can proceed gracefully.
+    return null;
+  }
+};
+
 
 // Quick status update function
 export const handleUpdateDonationStatus = async (donationId: string, newStatus: DonationStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {

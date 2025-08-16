@@ -2,7 +2,7 @@
 
 "use server";
 
-import { createDonation } from "@/services/donation-service";
+import { createDonation, getDonationByTransactionId } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole } from "@/services/types";
@@ -54,6 +54,14 @@ export async function handleAddDonation(
         return { success: false, error: "Selected donor user not found." };
     }
 
+    const transactionId = formData.get("transactionId") as string | undefined;
+    if (transactionId) {
+        const existingDonation = await getDonationByTransactionId(transactionId);
+        if (existingDonation) {
+            return { success: false, error: `A donation with Transaction ID "${transactionId}" already exists.` };
+        }
+    }
+
     const screenshotFile = formData.get("paymentScreenshots") as File | null;
     const screenshotDataUrl = formData.get("paymentScreenshotDataUrl") as string | undefined;
 
@@ -79,7 +87,7 @@ export async function handleAddDonation(
         type: formData.get("type") as DonationType,
         purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
         status: "Pending verification",
-        transactionId: formData.get("transactionId") as string | undefined,
+        transactionId: transactionId,
         donationDate: donationDate,
         paymentApp: formData.get("paymentApp") as string | undefined,
         donorUpiId: formData.get("donorUpiId") as string | undefined,
@@ -140,4 +148,18 @@ export async function handleAddDonation(
       error: error,
     };
   }
+}
+
+interface AvailabilityResult {
+    isAvailable: boolean;
+    existingDonationId?: string;
+}
+
+export async function checkTransactionId(transactionId: string): Promise<AvailabilityResult> {
+    if (!transactionId) return { isAvailable: true };
+    const existingDonation = await getDonationByTransactionId(transactionId);
+    if (existingDonation) {
+        return { isAvailable: false, existingDonationId: existingDonation.id };
+    }
+    return { isAvailable: true };
 }

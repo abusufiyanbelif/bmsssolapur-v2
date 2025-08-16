@@ -1,17 +1,15 @@
 
 import { useState, useEffect } from 'react';
 
-export function useDebounce<T>(value: T, delay: number): T {
+// This hook is used to delay the execution of a function until after a certain amount of time has passed since the last time it was invoked.
+export function useDebounce<T>(value: T, delay?: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
+    const timer = setTimeout(() => setDebouncedValue(value), delay || 500);
 
-    // Cancel the timeout if value changes (also on delay change or unmount)
     return () => {
-      clearTimeout(handler);
+      clearTimeout(timer);
     };
   }, [value, delay]);
 
