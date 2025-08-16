@@ -245,7 +245,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     setSelectedDonor(null);
     setSelectedRecipient(null);
     if(fileInputRef.current) fileInputRef.current.value = "";
-    router.push('/admin/donations/add'); // Navigate to clean URL
+    router.push('/admin/donations/add', { scroll: false });
   };
   
   const handleCancel = () => {
@@ -1104,8 +1104,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
               />
           </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                 <FormField
+                <FormField
                     control={form.control}
                     name="paymentApp"
                     render={({ field }) => (
@@ -1127,19 +1126,36 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="utrNumber"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>UTR Number (Optional)</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Enter UTR number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                 {paymentApp !== 'Google Pay' && (
+                    <FormField
+                        control={form.control}
+                        name="utrNumber"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>UTR Number (Optional)</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Enter UTR number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                )}
+                 {paymentApp === 'Google Pay' && (
+                    <FormField
+                        control={form.control}
+                        name="transactionId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>UPI Transaction ID</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Enter UPI Transaction ID" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                )}
             </div>
              <div className="space-y-4">
                 {paymentApp === 'Google Pay' && (
