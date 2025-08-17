@@ -54,21 +54,18 @@ const formSchema = z.object({
   transactionDate: z.date(),
   transactionId: z.string().optional(),
   utrNumber: z.string().optional(),
-  googlePayTransactionId: z.string().optional(),
-  phonePeTransactionId: z.string().optional(),
-  paytmUpiReferenceNo: z.string().optional(),
-  paymentApp: z.enum(paymentApps).optional(),
   proof: z.any().refine(file => file instanceof File && file.size > 0, 'A proof file is required.').optional(),
   notes: z.string().optional(),
+  paymentApp: z.enum(paymentApps).optional(),
   // Participant details
   senderName: z.string().optional(),
+  senderPhone: z.string().optional(),
   senderAccountNumber: z.string().optional(),
   senderUpiId: z.string().optional(),
-  senderPhone: z.string().optional(),
   recipientName: z.string().optional(),
+  recipientPhone: z.string().optional(),
   recipientAccountNumber: z.string().optional(),
   recipientUpiId: z.string().optional(),
-  recipientPhone: z.string().optional(),
   status: z.string().optional(),
 });
 
@@ -84,20 +81,17 @@ const initialFormValues: Partial<AddTransferFormValues> = {
   recipientId: undefined,
   transactionId: '',
   utrNumber: '',
-  googlePayTransactionId: '',
-  phonePeTransactionId: '',
-  paytmUpiReferenceNo: '',
   paymentApp: undefined,
   proof: undefined,
   notes: '',
   senderName: '',
+  senderPhone: '',
   senderAccountNumber: '',
   senderUpiId: '',
-  senderPhone: '',
   recipientName: '',
+  recipientPhone: '',
   recipientAccountNumber: '',
   recipientUpiId: '',
-  recipientPhone: '',
   status: '',
 };
 
@@ -189,7 +183,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   // Set Recipient Details based on selection
   useEffect(() => {
       if (recipientType === 'Beneficiary') {
-          // Do not automatically copy details. This should come from scan or manual entry.
           setRecipientDetails(beneficiaryDetails);
       } else if (recipientType === 'Referral') {
           const referral = users.find(u => u.id === selectedRecipientId);
@@ -198,20 +191,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
           setRecipientDetails(null);
       }
   }, [recipientType, beneficiaryDetails, selectedRecipientId, users]);
-
-  // Update form fields only when recipient details change from a manual selection
-  useEffect(() => {
-      if (recipientDetails && form.formState.isDirty) {
-          setValue('recipientName', recipientDetails.name);
-          setValue('recipientPhone', recipientDetails.phone);
-          setValue('recipientAccountNumber', recipientDetails.bankAccountNumber);
-          if (recipientDetails.upiIds && recipientDetails.upiIds.length > 0) {
-              setValue('recipientUpiId', recipientDetails.upiIds[0]);
-          } else {
-              setValue('recipientUpiId', '');
-          }
-      }
-  }, [recipientDetails, setValue, form.formState.isDirty]);
 
   const handleScan = async () => {
     if (!file) {
@@ -317,6 +296,15 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
       toast({ variant: "destructive", title: "Error", description: result.error || "An unknown error occurred." });
     }
   }
+
+    const transactionIdLabel = useMemo(() => {
+        switch (paymentApp) {
+            case 'PhonePe': return 'Transaction ID';
+            case 'Paytm': return 'UPI Ref. No';
+            case 'Google Pay': return 'UPI Transaction ID';
+            default: return 'Primary Transaction ID';
+        }
+    }, [paymentApp]);
   
   return (
     <Form {...form}>
@@ -458,17 +446,21 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             </div>
         )}
 
-        {beneficiaryDetails && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details (For Case)</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm space-y-2">
-                    <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
-                    <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
-                </CardContent>
-            </Card>
-        )}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details (For Case)</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+                {beneficiaryDetails ? (
+                    <>
+                        <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
+                        <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
+                    </>
+                ) : (
+                    <p className="text-muted-foreground">Select a lead to see beneficiary details.</p>
+                )}
+            </CardContent>
+        </Card>
         
         <Card>
             <CardHeader>
@@ -556,10 +548,10 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                     <FormField control={control} name="paymentApp" render={({ field }) => (<FormItem><FormLabel>Payment App</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Select payment app" /></SelectTrigger></FormControl><SelectContent>{paymentApps.map(app => (<SelectItem key={app} value={app}>{app}</SelectItem>))}</SelectContent></Select></FormItem>)} />
                     <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                 </div>
-                {paymentApp !== 'PhonePe' && (<FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />)}
-                {paymentApp === 'Google Pay' && (<FormField control={control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />)}
-                {paymentApp === 'Paytm' && (<FormField control={control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />)}
-                {paymentApp === 'PhonePe' && (<><FormField control={control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /><FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /></>)}
+                <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number (if available)</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                
+                <h4 className="font-semibold border-b pb-1">Sender & Recipient Details</h4>
                 <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                 <FormField control={control} name="senderPhone" render={({ field }) => (<FormItem><FormLabel>Sender Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                 <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
@@ -599,3 +591,4 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
+
