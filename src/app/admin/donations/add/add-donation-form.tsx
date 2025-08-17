@@ -106,7 +106,7 @@ const formSchema = z.object({
     }
     return true;
 }, {
-    message: "Tip amount must be greater than 0.",
+    message: "Amount must be greater than 0.",
     path: ["tipAmount"],
 }).refine(data => {
     if (data.includeTip && data.tipAmount) {
@@ -114,7 +114,7 @@ const formSchema = z.object({
     }
     return true;
 }, {
-    message: "Tip cannot be greater than or equal to the total amount.",
+    message: "Support amount cannot be greater than or equal to the total amount.",
     path: ["tipAmount"],
 });
 
@@ -1366,7 +1366,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </FormControl>
                     <div className="space-y-1 leading-none">
                     <FormLabel>
-                        Add a tip for the Organization
+                        Support for the Organization
                     </FormLabel>
                     <FormDescription>
                         Check this to include a small amount from the total transaction for organizational expenses.
@@ -1383,9 +1383,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         name="tipAmount"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Tip Amount for Organization</FormLabel>
+                            <FormLabel>Amount for Organization</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="Enter tip amount" {...field} />
+                                <Input type="number" placeholder="Enter amount for organization" {...field} />
                             </FormControl>
                             <FormDescription>This amount will be recorded as a separate 'Sadaqah' donation for 'To Organization Use'.</FormDescription>
                             <FormMessage />
