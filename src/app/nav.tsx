@@ -105,7 +105,7 @@ const allNavItems: NavItem[] = [
     
      // Admin - Beneficiaries Transfer Management (Collapsible)
     {
-        label: "Transfers",
+        label: "Transfers Management",
         icon: ArrowRightLeft,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
