@@ -96,6 +96,7 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
   const { watch, setValue, reset, control } = form;
   const paymentMethod = watch("paymentMethod");
   const selectedLeadId = watch("leadId");
+  const paymentApp = watch("paymentApp");
   
   const selectedLead = leads.find(l => l.id === selectedLeadId);
   
@@ -347,10 +348,37 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
         )}
 
         <h3 className="text-lg font-semibold border-b pb-2">Transaction Details (from scan)</h3>
-        <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={control} name="paymentApp" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Payment App</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select payment app" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {paymentApps.map(app => (<SelectItem key={app} value={app}>{app}</SelectItem>))}
+                        </SelectContent>
+                    </Select>
+                </FormItem>
+            )} />
+            {paymentApp !== 'PhonePe' && (
+                <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+            )}
+        </div>
+        
+        {paymentApp === 'Google Pay' && (
+            <FormField control={control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        )}
+        
+        {paymentApp === 'PhonePe' && (
+            <>
+                <FormField control={control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+            </>
+        )}
+        
         <FormField control={control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
