@@ -61,6 +61,15 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+        ]
+    },
+    
+    // Admin - Campaigns Management (Collapsible)
+    {
+        label: "Campaigns Management",
+        icon: Megaphone,
+        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        subItems: [
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
         ]
     },
