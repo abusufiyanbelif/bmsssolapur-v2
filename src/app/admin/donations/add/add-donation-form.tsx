@@ -396,7 +396,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDonor]);
   
-  const totalAmount = parseFloat(String(amount || 0)) + parseFloat(String(tipAmount || 0));
+  const totalAmount = Number(amount || 0) + Number(tipAmount || 0);
 
    const handleExtractText = async () => {
     if (localFiles.length === 0) {
@@ -1346,10 +1346,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </FormControl>
                     <div className="space-y-1 leading-none">
                     <FormLabel>
-                        Split Transaction with Tip
+                        Add a tip for the Organization
                     </FormLabel>
                     <FormDescription>
-                        Check this if the transaction includes a separate amount for organization expenses.
+                        Check this to include a small amount from the total transaction for organizational expenses.
                     </FormDescription>
                     </div>
                 </FormItem>
@@ -1363,11 +1363,11 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         name="tipAmount"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Tip Amount</FormLabel>
+                            <FormLabel>Tip Amount for Organization</FormLabel>
                             <FormControl>
                                 <Input type="number" placeholder="Enter tip amount" {...field} />
                             </FormControl>
-                            <FormDescription>This amount will be recorded as a separate donation for 'To Organization Use'.</FormDescription>
+                            <FormDescription>This amount will be recorded as a separate 'Sadaqah' donation for 'To Organization Use'.</FormDescription>
                             <FormMessage />
                             </FormItem>
                         )}
