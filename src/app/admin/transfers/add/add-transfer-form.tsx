@@ -276,7 +276,6 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
             </FormItem>
           )}
         />
-
         <FormField
             control={form.control}
             name="campaignId"
@@ -284,8 +283,8 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
                 <FormItem>
                 <FormLabel>Link to Campaign (Optional)</FormLabel>
                 <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    value={field.value}
                 >
                     <FormControl>
                     <SelectTrigger>
@@ -293,7 +292,7 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
                             <SelectItem key={campaign.id} value={campaign.id!}>
                             {campaign.name} ({campaign.status})
@@ -306,7 +305,6 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
                 </FormItem>
             )}
         />
-        
         <FormField
             control={control}
             name="paymentMethod"
@@ -327,7 +325,6 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
                 </FormItem>
             )}
         />
-        
         {(paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer') && (
             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
             <h3 className="font-semibold text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Payment Proof & Scanning</h3>
