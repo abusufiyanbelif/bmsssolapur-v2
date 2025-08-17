@@ -511,7 +511,9 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             </>
         )}
         
-        <FormField control={control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        {paymentApp === 'Paytm' && (
+            <FormField control={control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        )}
        
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Participant Details</h3>
         <div className="space-y-4 rounded-lg border p-4">
