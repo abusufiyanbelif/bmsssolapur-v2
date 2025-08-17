@@ -1,5 +1,3 @@
-
-
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -676,6 +674,22 @@ function LeadsPageContent() {
                             {selectedLeads.length} item(s) selected.
                         </p>
                         <div className="flex flex-wrap items-center gap-2">
+                            {isMobile && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        const pageLeadIds = paginatedLeads.map(l => l.id!);
+                                        if (selectedLeads.length === paginatedLeads.length) {
+                                            setSelectedLeads(prev => prev.filter(id => !pageLeadIds.includes(id)));
+                                        } else {
+                                            setSelectedLeads(prev => [...new Set([...prev, ...pageLeadIds])]);
+                                        }
+                                    }}
+                                >
+                                    <Check className="mr-2 h-4 w-4"/>
+                                    {selectedLeads.length === paginatedLeads.length ? 'Deselect Page' : 'Select Page'}
+                                </Button>
+                            )}
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button>Change Status</Button>
