@@ -67,19 +67,21 @@ const allNavItems: NavItem[] = [
     {
         label: "Campaigns Management",
         icon: Megaphone,
-        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Super Admin", "Finance Admin"] },
         ]
     },
+    { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin"] },
+
 
      // Admin - Lead Management (Collapsible)
     {
         label: "Lead Management",
         icon: FileCheck,
-        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Super Admin", "Finance Admin"] },
             { 
                 label: "Configuration", 
                 icon: BookText, 
@@ -91,28 +93,32 @@ const allNavItems: NavItem[] = [
             },
         ]
     },
+    { href: "/admin/leads", label: "All Leads", icon: FileCheck, allowedRoles: ["Admin"] },
     
      // Admin - Donations Management (Collapsible)
     {
         label: "Donations Management",
         icon: HandHeart,
-        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/donations", label: "All Donations", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/donations", label: "All Donations", icon: HandHeart, allowedRoles: ["Super Admin", "Finance Admin"] },
             { href: "/admin/donations/configuration", label: "Configuration", icon: Banknote, allowedRoles: ["Super Admin"] },
         ]
     },
+    { href: "/admin/donations", label: "All Donations", icon: HandHeart, allowedRoles: ["Admin"] },
     
      // Admin - Beneficiaries Transfer Management (Collapsible)
     {
         label: "Transfers Management",
         icon: ArrowRightLeft,
-        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft, allowedRoles: ["Super Admin", "Finance Admin"] },
             { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
+    { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft, allowedRoles: ["Admin"] },
+
 
     // Super Admin - User Management (Collapsible)
     { 
