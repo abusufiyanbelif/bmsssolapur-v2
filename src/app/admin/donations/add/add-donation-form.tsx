@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -807,8 +806,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     <FormDescription>Review the extracted text. You can copy-paste from here to correct any fields above.</FormDescription>
                 </div>
             )}
+            
+            <h3 className="text-lg font-semibold border-b pb-2">Donation & Donor Details</h3>
 
-             <h3 className="text-lg font-semibold border-b pb-2">Payment Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
@@ -864,159 +864,87 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
             </div>
-            
-            <h3 className="text-lg font-semibold border-b pb-2">Categorization</h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {donationTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
-                control={form.control}
-                name="purpose"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Purpose</FormLabel>
-                    <Select onValueChange={(value) => { field.onChange(value); setValue("category", undefined); }} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a purpose (optional)" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {donationPurposes.map(purpose => (
-                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-             {selectedPurpose && categoryOptions[selectedPurpose] && (
+             {isAdminView ? (
                 <FormField
                     control={form.control}
-                    name="category"
+                    name="donorId"
                     render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Specific Category for {selectedPurpose}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Donor</FormLabel>
+                        <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
+                            <PopoverTrigger asChild>
                             <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a specific category" />
-                            </SelectTrigger>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value
+                                    ? donorUsers.find(
+                                        (user) => user.id === field.value
+                                    )?.name
+                                    : "Select a donor"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
                             </FormControl>
-                            <SelectContent>
-                            {categoryOptions[selectedPurpose as keyof typeof categoryOptions].map(sub => (
-                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search donor..." />
+                                <CommandList>
+                                    <CommandEmpty>No donors found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {donorUsers.map((user) => (
+                                        <CommandItem
+                                        value={user.name}
+                                        key={user.id}
+                                        onSelect={async () => {
+                                            field.onChange(user.id!);
+                                            const donor = await getUser(user.id!);
+                                            setSelectedDonor(donor);
+                                            setDonorPopoverOpen(false);
+                                        }}
+                                        >
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            user.id === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                        />
+                                        {user.name} ({user.phone})
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
                         <FormMessage />
                         </FormItem>
                     )}
-                />
+                    />
+            ) : (
+                currentUser && (
+                    <div className="space-y-2">
+                        <FormLabel>Donor</FormLabel>
+                        <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                            <UserIcon className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">{currentUser.name}</span>
+                        </div>
+                        <FormDescription>You are submitting this donation for your own profile.</FormDescription>
+                    </div>
+                )
             )}
         
             
             {showOnlineFields && (
                 <div className="space-y-4">
                     <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
-                     {isAdminView ? (
-                        <FormField
-                            control={form.control}
-                            name="donorId"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                <FormLabel>Donor</FormLabel>
-                                <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
-                                    <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        className={cn(
-                                            "w-full justify-between",
-                                            !field.value && "text-muted-foreground"
-                                        )}
-                                        >
-                                        {field.value
-                                            ? donorUsers.find(
-                                                (user) => user.id === field.value
-                                            )?.name
-                                            : "Select a donor"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Search donor..." />
-                                        <CommandList>
-                                            <CommandEmpty>No donors found.</CommandEmpty>
-                                            <CommandGroup>
-                                            {donorUsers.map((user) => (
-                                                <CommandItem
-                                                value={user.name}
-                                                key={user.id}
-                                                onSelect={async () => {
-                                                    field.onChange(user.id!);
-                                                    const donor = await getUser(user.id!);
-                                                    setSelectedDonor(donor);
-                                                    setDonorPopoverOpen(false);
-                                                }}
-                                                >
-                                                <Check
-                                                    className={cn(
-                                                    "mr-2 h-4 w-4",
-                                                    user.id === field.value
-                                                        ? "opacity-100"
-                                                        : "opacity-0"
-                                                    )}
-                                                />
-                                                {user.name} ({user.phone})
-                                                </CommandItem>
-                                            ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                    ) : (
-                        currentUser && (
-                            <div className="space-y-2">
-                                <FormLabel>Donor</FormLabel>
-                                <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-                                    <UserIcon className="h-5 w-5 text-muted-foreground" />
-                                    <span className="font-medium">{currentUser.name}</span>
-                                </div>
-                                <FormDescription>You are submitting this donation for your own profile.</FormDescription>
-                            </div>
-                        )
-                    )}
                      <FormField
                         control={form.control}
                         name="senderName"
@@ -1096,41 +1024,41 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             )}
                         />
                      )}
-                      {scannedRecipientName && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <FormField
-                                control={form.control}
-                                name="recipientName"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Scanned Recipient Name</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} readOnly className="bg-muted/50" />
-                                    </FormControl>
-                                </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="recipientUpiId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Scanned Recipient UPI</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} readOnly className="bg-muted/50" />
-                                    </FormControl>
-                                </FormItem>
-                                )}
-                            />
-                        </div>
-                      )}
-                       <div className="space-y-4 rounded-lg border p-4">
+                     <div className="space-y-4 rounded-lg border p-4">
                         <FormField
                             control={form.control}
                             name="recipientRole"
                             render={({ field }) => (
                             <FormItem className="space-y-3">
                                 <FormLabel>Recipient Type</FormLabel>
+                                 {scannedRecipientName && (
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-background p-3 rounded-md">
+                                        <FormField
+                                            control={form.control}
+                                            name="recipientName"
+                                            render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs">Scanned Recipient Name</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} readOnly className="bg-muted/50 h-8" />
+                                                </FormControl>
+                                            </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="recipientUpiId"
+                                            render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs">Scanned Recipient UPI</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} readOnly className="bg-muted/50 h-8" />
+                                                </FormControl>
+                                            </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                )}
                                 <FormControl>
                                 <RadioGroup
                                     onValueChange={(value: any) => {
@@ -1227,8 +1155,80 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
              )}
 
-            <h3 className="text-lg font-semibold border-b pb-2">Linkage (Optional)</h3>
+            <h3 className="text-lg font-semibold border-b pb-2">Categorization</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {donationTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="purpose"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Purpose</FormLabel>
+                    <Select onValueChange={(value) => { field.onChange(value); setValue("category", undefined); }} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a purpose (optional)" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {donationPurposes.map(purpose => (
+                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             {selectedPurpose && categoryOptions[selectedPurpose] && (
+                <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Specific Category for {selectedPurpose}</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a specific category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {categoryOptions[selectedPurpose as keyof typeof categoryOptions].map(sub => (
+                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+            
             <div className="space-y-4 rounded-lg border p-4">
+                 <h3 className="text-lg font-semibold">Linkage (Optional)</h3>
                  <FormField
                   control={form.control}
                   name="campaignId"
@@ -1329,7 +1329,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 />
             </div>
             
-            <FormField
+             <FormField
                 control={form.control}
                 name="includeTip"
                 render={({ field }) => (
