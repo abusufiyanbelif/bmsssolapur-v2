@@ -5,10 +5,11 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAllCampaigns, type Campaign, type CampaignStatus, deleteCampaign } from "@/services/campaign-service";
+import { getAllCampaigns, type Campaign, type CampaignStatus } from "@/services/campaign-service";
+import { handleBulkDeleteCampaigns } from "./actions";
 import { getAllLeads, Lead } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -17,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const statusColors: Record<CampaignStatus, string> = {
     "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -46,6 +49,9 @@ function CampaignsPageContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
+    const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
+    const isMobile = useIsMobile();
+
 
     const fetchData = async () => {
         try {
@@ -92,14 +98,25 @@ function CampaignsPageContent() {
         });
     }, [campaigns, leads]);
     
-    const onCampaignDeleted = () => {
+    const onCampaignDeleted = (campaignId?: string) => {
+        const campaignName = campaigns.find(c => c.id === campaignId)?.name || "The campaign";
         toast({
             title: "Campaign Deleted",
-            description: "The campaign has been successfully removed.",
+            description: `${campaignName} has been successfully removed.`,
         });
+        setSelectedCampaigns(prev => prev.filter(id => id !== campaignId));
         fetchData();
     };
 
+    const onBulkCampaignsDeleted = () => {
+         toast({
+            title: "Campaigns Deleted",
+            description: `${selectedCampaigns.length} campaign(s) have been successfully removed.`,
+        });
+        setSelectedCampaigns([]);
+        fetchData();
+    }
+    
     const renderActions = (campaign: Campaign) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -117,8 +134,8 @@ function CampaignsPageContent() {
                 <DeleteConfirmationDialog
                     itemType="campaign"
                     itemName={campaign.name}
-                    onDelete={() => deleteCampaign(campaign.id!)}
-                    onSuccess={onCampaignDeleted}
+                    onDelete={() => handleBulkDeleteCampaigns([campaign.id!])}
+                    onSuccess={() => onCampaignDeleted(campaign.id)}
                 >
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -169,61 +186,101 @@ function CampaignsPageContent() {
         }
         
         return (
+            <>
+            {selectedCampaigns.length > 0 && (
+                <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                    <p className="text-sm font-medium">
+                        {selectedCampaigns.length} item(s) selected.
+                    </p>
+                    {isMobile && (
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                if (selectedCampaigns.length === filteredCampaigns.length) {
+                                    setSelectedCampaigns([]);
+                                } else {
+                                    setSelectedCampaigns(filteredCampaigns.map(c => c.id!));
+                                }
+                            }}
+                        >
+                            <Check className="mr-2 h-4 w-4"/>
+                            {selectedCampaigns.length === filteredCampaigns.length ? 'Deselect All' : 'Select All'}
+                        </Button>
+                    )}
+                     <DeleteConfirmationDialog
+                        itemType={`${selectedCampaigns.length} campaign(s)`}
+                        itemName="the selected items"
+                        onDelete={() => handleBulkDeleteCampaigns(selectedCampaigns)}
+                        onSuccess={onBulkCampaignsDeleted}
+                    >
+                        <Button variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Selected
+                        </Button>
+                    </DeleteConfirmationDialog>
+                </div>
+            )}
              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredCampaigns.map((campaign) => (
-                    <Card key={campaign.id} className="flex flex-col h-full hover:shadow-lg transition-shadow rounded-lg">
-                        <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex flex-col h-full">
-                            <CardHeader>
-                                <div className="flex justify-between items-start gap-4">
+                    <Card key={campaign.id} className={cn("flex flex-col h-full hover:shadow-lg transition-shadow rounded-lg", selectedCampaigns.includes(campaign.id!) && "ring-2 ring-primary")}>
+                        <div className="flex items-start p-4 gap-4">
+                           {isMobile && <Checkbox className="mt-1.5" checked={selectedCampaigns.includes(campaign.id!)} onCheckedChange={checked => {
+                                setSelectedCampaigns(prev => checked ? [...prev, campaign.id!] : prev.filter(id => id !== campaign.id!))
+                           }} />}
+                            <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex flex-col h-full flex-grow">
+                                <CardHeader className="p-0">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div>
+                                            <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                                            <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
+                                        </div>
+                                        <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
+                                            {campaign.status}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4 flex-grow p-0 pt-4">
                                     <div>
-                                        <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                                        <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
+                                        <div className="text-xs text-muted-foreground flex justify-between mb-1">
+                                            <span>
+                                                Raised: <span className="font-semibold text-foreground">₹{campaign.raisedAmount.toLocaleString()}</span>
+                                            </span>
+                                            <span>
+                                                Goal: ₹{campaign.goal.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <Progress value={campaign.fundingProgress} />
                                     </div>
-                                    <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
-                                        {campaign.status}
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4 flex-grow">
-                                <div>
-                                    <div className="text-xs text-muted-foreground flex justify-between mb-1">
-                                        <span>
-                                            Raised: <span className="font-semibold text-foreground">₹{campaign.raisedAmount.toLocaleString()}</span>
-                                        </span>
-                                        <span>
-                                            Goal: ₹{campaign.goal.toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <Progress value={campaign.fundingProgress} />
-                                </div>
 
-                                <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
-                                    <div>
-                                        <p className="font-bold text-lg">{campaign.leadCount}</p>
-                                        <p className="text-xs text-muted-foreground">Linked Leads</p>
+                                    <div className="grid grid-cols-3 gap-4 text-center border-t pt-4">
+                                        <div>
+                                            <p className="font-bold text-lg">{campaign.leadCount}</p>
+                                            <p className="text-xs text-muted-foreground">Linked Leads</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-lg">{campaign.beneficiaryCount}</p>
+                                            <p className="text-xs text-muted-foreground">Beneficiaries</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-lg text-green-600">{campaign.statusCounts.Closed || 0}</p>
+                                            <p className="text-xs text-muted-foreground">Cases Closed</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-lg">{campaign.beneficiaryCount}</p>
-                                        <p className="text-xs text-muted-foreground">Beneficiaries</p>
+                                </CardContent>
+                                <CardFooter className="flex justify-between items-center bg-muted/50 p-4 -mx-4 -mb-4 mt-4">
+                                    <div className="text-xs text-muted-foreground">
+                                        <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-lg text-green-600">{campaign.statusCounts.Closed || 0}</p>
-                                        <p className="text-xs text-muted-foreground">Cases Closed</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                            <CardFooter className="flex justify-between items-center bg-muted/50 p-4 mt-auto">
-                                <div className="text-xs text-muted-foreground">
-                                    <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
-                                </div>
-                                <div onClick={(e) => e.preventDefault()}>
-                                    {renderActions(campaign)}
-                                </div>
-                            </CardFooter>
-                        </Link>
+                                </CardFooter>
+                            </Link>
+                             <div className="flex-shrink-0" onClick={(e) => e.preventDefault()}>
+                                {renderActions(campaign)}
+                            </div>
+                        </div>
                     </Card>
                 ))}
             </div>
+            </>
         );
     }
 
