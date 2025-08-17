@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddTransfer } from "./actions";
-import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
+import { scanProof, getRawTextFromImage } from '@/app/admin/donations/add/actions';
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
@@ -130,6 +130,8 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
         if (value !== undefined && value !== null) {
           if (key === 'date' && typeof value === 'string') {
             setValue('transactionDate', new Date(value));
+          } else if (key === 'amount') {
+            setValue('amount', value as number);
           } else {
             setValue(key as any, value);
           }
