@@ -1,15 +1,18 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddTransferForm } from "./add-transfer-form";
 import { getAllLeads } from "@/services/lead-service";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getAllCampaigns } from "@/services/campaign-service";
+import { getAllUsers } from "@/services/user-service";
 
 export default async function AddTransferPage() {
-    const [leads, campaigns] = await Promise.all([
+    const [leads, campaigns, users] = await Promise.all([
         getAllLeads(),
         getAllCampaigns(),
+        getAllUsers(),
     ]);
 
     // Filter for leads that can receive funds
@@ -31,7 +34,7 @@ export default async function AddTransferPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddTransferForm leads={openLeads} campaigns={campaigns} />
+                    <AddTransferForm leads={openLeads} campaigns={campaigns} users={users} />
                 </CardContent>
             </Card>
         </div>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +27,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp } from "lucide-react";
-import type { User, Lead, PaymentMethod, Campaign } from "@/services/types";
+import type { User, Lead, PaymentMethod, Campaign, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +39,7 @@ import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddTransfer } from "./actions";
 import { scanProof, getRawTextFromImage } from '@/app/admin/donations/add/actions';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
@@ -45,6 +47,8 @@ const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 const formSchema = z.object({
   leadId: z.string().min(1, "Please select a lead/beneficiary."),
   campaignId: z.string().optional(),
+  recipientType: z.enum(['Beneficiary', 'Referral']).default('Beneficiary'),
+  recipientId: z.string().optional(),
   paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
   transactionDate: z.date(),
@@ -72,9 +76,10 @@ type AddTransferFormValues = z.infer<typeof formSchema>;
 interface AddTransferFormProps {
     leads: Lead[];
     campaigns: Campaign[];
+    users: User[];
 }
 
-function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
+function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,17 +88,22 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
   const [rawText, setRawText] = useState<string | null>(null);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [beneficiaryDetails, setBeneficiaryDetails] = useState<User | null>(null);
+  const [recipientDetails, setRecipientDetails] = useState<User | null>(null);
   
+  const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
+
   const form = useForm<AddTransferFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: 0,
       transactionDate: new Date(),
       paymentMethod: 'Online (UPI/Card)',
+      recipientType: 'Beneficiary',
     },
   });
 
@@ -101,7 +111,9 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
   const paymentMethod = watch("paymentMethod");
   const selectedLeadId = watch("leadId");
   const paymentApp = watch("paymentApp");
-  
+  const recipientType = watch("recipientType");
+  const selectedRecipientId = watch("recipientId");
+
   const selectedLead = leads.find(l => l.id === selectedLeadId);
   
   useEffect(() => {
@@ -118,21 +130,14 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
         setPreviewUrl(null);
     }
   }, [file]);
-
+  
+  // Set Beneficiary Details when a lead is selected
   useEffect(() => {
     const fetchBeneficiary = async () => {
       if (selectedLead?.beneficiaryId) {
         try {
             const beneficiary = await getUser(selectedLead.beneficiaryId);
             setBeneficiaryDetails(beneficiary);
-            if(beneficiary) {
-                setValue('recipientName', beneficiary.name);
-                setValue('recipientPhone', beneficiary.phone);
-                setValue('recipientAccountNumber', beneficiary.bankAccountNumber);
-                if (beneficiary.upiIds && beneficiary.upiIds.length > 0) {
-                    setValue('recipientUpiId', beneficiary.upiIds[0]);
-                }
-            }
         } catch (e) {
             console.error("Failed to fetch beneficiary details", e);
             setBeneficiaryDetails(null);
@@ -142,7 +147,38 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
       }
     };
     fetchBeneficiary();
-  }, [selectedLead, setValue]);
+  }, [selectedLead]);
+
+  // Set Recipient Details based on selection
+  useEffect(() => {
+      if (recipientType === 'Beneficiary') {
+          setRecipientDetails(beneficiaryDetails);
+      } else if (recipientType === 'Referral') {
+          const referral = users.find(u => u.id === selectedRecipientId);
+          setRecipientDetails(referral || null);
+      } else {
+          setRecipientDetails(null);
+      }
+  }, [recipientType, beneficiaryDetails, selectedRecipientId, users]);
+
+  // Update form fields when recipient details change
+  useEffect(() => {
+      if (recipientDetails) {
+          setValue('recipientName', recipientDetails.name);
+          setValue('recipientPhone', recipientDetails.phone);
+          setValue('recipientAccountNumber', recipientDetails.bankAccountNumber);
+          if (recipientDetails.upiIds && recipientDetails.upiIds.length > 0) {
+              setValue('recipientUpiId', recipientDetails.upiIds[0]);
+          } else {
+              setValue('recipientUpiId', '');
+          }
+      } else {
+           setValue('recipientName', '');
+           setValue('recipientPhone', '');
+           setValue('recipientAccountNumber', '');
+           setValue('recipientUpiId', '');
+      }
+  }, [recipientDetails, setValue]);
 
   const handleScan = async () => {
     if (!file) {
@@ -284,7 +320,7 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
                 <FormLabel>Link to Campaign (Optional)</FormLabel>
                 <Select
                     onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
-                    value={field.value}
+                    value={field.value || 'none'}
                 >
                     <FormControl>
                     <SelectTrigger>
@@ -450,19 +486,90 @@ function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
         <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         
-        {/* Recipient Section */}
         <div className="space-y-4 rounded-lg border p-4">
-             <h4 className="font-semibold">Recipient Details (from Beneficiary Profile)</h4>
-             {beneficiaryDetails ? (
-                <div className="space-y-2">
-                     <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
-                     <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
-                     <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
-                     <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+             <h4 className="font-semibold">Recipient</h4>
+            <FormField
+                control={form.control}
+                name="recipientType"
+                render={({ field }) => (
+                <FormItem className="space-y-3">
+                    <FormLabel>Transfer funds directly to:</FormLabel>
+                    <FormControl>
+                    <RadioGroup
+                        onValueChange={(value: any) => {
+                            field.onChange(value);
+                            setValue('recipientId', undefined);
+                        }}
+                        value={field.value}
+                        className="flex flex-wrap gap-x-4 gap-y-2"
+                    >
+                        <FormItem className="flex items-center space-x-2">
+                            <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
+                            <FormLabel className="font-normal">Beneficiary</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2">
+                            <FormControl><RadioGroupItem value="Referral" /></FormControl>
+                            <FormLabel className="font-normal">Referral</FormLabel>
+                        </FormItem>
+                    </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            {recipientType === 'Referral' && (
+                <FormField
+                    control={form.control}
+                    name="recipientId"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Select Referral</FormLabel>
+                        <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button variant="outline" role="combobox" className={cn("w-full justify-between",!field.value && "text-muted-foreground")}>
+                                {field.value ? users.find((user) => user.id === field.value)?.name : "Select a referral"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search referral..." />
+                                <CommandList>
+                                    <CommandEmpty>No referrals found.</CommandEmpty>
+                                    <CommandGroup>
+                                        {potentialReferrals.map((user) => (
+                                            <CommandItem
+                                                value={user.name}
+                                                key={user.id}
+                                                onSelect={() => { field.onChange(user.id!); setReferralPopoverOpen(false); }}
+                                            >
+                                            <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                            {user.name} ({user.phone})
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+            
+            {recipientDetails ? (
+                <div className="space-y-2 mt-4">
+                    <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+                    <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+                    <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+                    <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
                 </div>
-             ) : (
-                 <p className="text-sm text-muted-foreground text-center py-4">Select a lead above to view beneficiary details.</p>
-             )}
+            ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">Recipient payment details will appear here.</p>
+            )}
         </div>
 
 
