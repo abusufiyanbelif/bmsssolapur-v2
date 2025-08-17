@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -16,9 +15,12 @@ import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "fireb
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+
 
 export function LoginForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -43,9 +45,10 @@ export function LoginForm() {
       sessionStorage.removeItem('redirectAfterLogin'); // Clean up the stored path
 
       // Use a standard redirect to avoid router issues in this context
-      window.location.href = redirectPath;
+      router.push(redirectPath);
+      router.refresh(); // Force a refresh to ensure layout updates with user state
     }
-  }, [loginSuccessData, toast]);
+  }, [loginSuccessData, toast, router]);
 
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

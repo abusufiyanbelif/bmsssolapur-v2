@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -70,6 +69,7 @@ export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
 
 function PayNowForm({ user, targetLead, targetCampaignId, organization }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null }) {
     const { toast } = useToast();
+    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
     const [donationData, setDonationData] = useState<PayNowFormValues | null>(null);
@@ -103,9 +103,18 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization }: { user
 
     const isAnonymous = form.watch("isAnonymous");
 
+    const handleLoginRedirect = () => {
+        toast({
+            title: "Login Required",
+            description: "Please log in to continue with your donation.",
+        });
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        router.push('/login');
+    }
+
     async function onSubmit(values: PayNowFormValues) {
         if (!user || !user.id) {
-            toast({ variant: 'destructive', title: 'Login Required', description: 'Please log in to make a donation.' });
+            handleLoginRedirect();
             return;
         }
         setIsSubmitting(true);
@@ -236,7 +245,13 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization }: { user
                     )}
                     />
 
-                    <Button type="submit" disabled={!user || isSubmitting} className="w-full" size="lg">
+                    <Button 
+                        type={!user ? "button" : "submit"} 
+                        onClick={!user ? handleLoginRedirect : undefined}
+                        disabled={isSubmitting} 
+                        className="w-full" 
+                        size="lg"
+                    >
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
                         {user ? 'Proceed to Pay' : 'Login to Pay'}
                     </Button>
@@ -322,6 +337,15 @@ function UploadProofSection({ user }: { user: User | null }) {
         setIsScanning(false);
     };
 
+    const handleLoginRedirect = () => {
+        toast({
+            title: "Login Required",
+            description: "Please log in to upload proof.",
+        });
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        router.push('/login');
+    }
+
     return (
         <div className="space-y-6">
             <div className="space-y-2">
@@ -346,7 +370,11 @@ function UploadProofSection({ user }: { user: User | null }) {
                 </div>
             )}
             
-            <Button onClick={handleScan} disabled={isScanning || !file || !user} className="w-full">
+            <Button 
+                onClick={user ? handleScan : handleLoginRedirect} 
+                disabled={isScanning || !file} 
+                className="w-full"
+            >
                 {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                 {user ? 'Scan and Confirm Donation' : 'Login to Scan'}
             </Button>

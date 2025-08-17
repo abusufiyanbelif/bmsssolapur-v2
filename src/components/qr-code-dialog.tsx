@@ -34,7 +34,7 @@ export function QrCodeDialog({ open, onOpenChange, donationDetails, organization
     const [isDownloading, setIsDownloading] = useState(false);
     const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
 
-    const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${donationDetails.amount}&cu=INR&tn=Donation%20for%20${encodeURIComponent(donationDetails.purpose)}`;
+    const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${donationDetails.amount}&cu=INR&tn=Donation for ${encodeURIComponent(donationDetails.purpose)}`;
 
     const handleDownload = async () => {
         if (!organization.qrCodeUrl) return;
