@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat, UploadCloud, Eye } from "lucide-react";
 import Link from "next/link";
@@ -76,6 +77,7 @@ export default async function DashboardPage() {
   const currentUserRole: UserRole = "Super Admin"; 
 
   const settings = await getAppSettings();
+  const allDonations = await getAllDonations();
 
   // The main page now loads instantly. Each component below will stream in as it's ready.
 
@@ -121,7 +123,7 @@ export default async function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
            {isCardVisible('donationsChart', settings, currentUserRole) && (
                 <Suspense fallback={<ChartSkeleton />}>
-                    <DonationsChart />
+                    <DonationsChart donations={allDonations} />
                 </Suspense>
             )}
           {isCardVisible('topDonors', settings, currentUserRole) && (

@@ -1,7 +1,7 @@
 
-
 "use client"
 
+import * as React from "react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import {
   Card,
@@ -25,7 +25,6 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
-import { getAllDonations } from "@/services/donation-service"
 
 const chartConfig = {
   donations: {
@@ -35,12 +34,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 
-export async function DonationsChart() {
-    const allDonations = await getAllDonations();
-    return <DonationsChartClient donations={allDonations} />;
-}
-
-function DonationsChartClient({ donations }: { donations: Donation[] }) {
+export function DonationsChart({ donations }: { donations: Donation[] }) {
     const [date, setDate] = useState<DateRange | undefined>({
         from: subMonths(new Date(), 6),
         to: new Date(),
