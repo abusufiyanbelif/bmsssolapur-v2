@@ -26,7 +26,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 import Image from "next/image";
 import { FormDescription } from "@/components/ui/form";
-import { scanProof, getRawTextFromImage } from '@/ai/text-extraction-actions';
+import { scanProof, getRawTextFromImage } from '@/app/admin/donations/add/actions';
 
 
 interface AddTransferDialogProps {
@@ -230,22 +230,9 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
 
                 <h3 className="font-semibold text-lg border-b pb-2 pt-4">Participant Details</h3>
                 <div className="space-y-2">
-                    <Label htmlFor="senderName">General Sender Name</Label>
+                    <Label htmlFor="senderName">Sender Name</Label>
                     <Input id="senderName" {...register("senderName")} type="text" placeholder="As per bank records" />
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label>
-                    <Input id="phonePeSenderName" {...register("phonePeSenderName")} type="text" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label>
-                    <Input id="googlePaySenderName" {...register("googlePaySenderName")} type="text" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="paytmSenderName">Paytm Sender Name</Label>
-                    <Input id="paytmSenderName" {...register("paytmSenderName")} type="text" />
-                </div>
-
                 <div className="space-y-2">
                     <Label htmlFor="senderUpiId">Sender UPI ID</Label>
                     <Input id="senderUpiId" {...register("senderUpiId")} type="text" placeholder="e.g., sender@upi" />
@@ -255,22 +242,9 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Input id="senderAccountNumber" {...register("senderAccountNumber")} type="text" placeholder="e.g., XXXXXX1234" />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="recipientName">General Recipient Name</Label>
+                    <Label htmlFor="recipientName">Recipient Name</Label>
                     <Input id="recipientName" {...register("recipientName")} type="text" placeholder="As per bank records" />
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label>
-                    <Input id="phonePeRecipientName" {...register("phonePeRecipientName")} type="text" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label>
-                    <Input id="googlePayRecipientName" {...register("googlePayRecipientName")} type="text" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label>
-                    <Input id="paytmRecipientName" {...register("paytmRecipientName")} type="text" />
-                </div>
-
                  <div className="space-y-2">
                     <Label htmlFor="recipientAccountNumber">Recipient Account Number</Label>
                     <Input id="recipientAccountNumber" {...register("recipientAccountNumber")} type="text" placeholder="e.g., XXXXXX5678" />
