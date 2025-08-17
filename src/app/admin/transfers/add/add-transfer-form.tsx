@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -130,7 +131,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     defaultValues: initialFormValues,
   });
 
-  const { watch, setValue, reset, control } = form;
+  const { watch, setValue, reset, control, trigger } = form;
   const paymentMethod = watch("paymentMethod");
   const selectedLeadId = watch("leadId");
   const paymentApp = watch("paymentApp");
@@ -265,6 +266,9 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
               setValue('recipientId', foundRecipient.id);
           }
       }
+      
+      // Explicitly trigger validation and re-render
+      trigger();
 
     } else {
       toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details." });
@@ -367,17 +371,36 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             </FormItem>
           )}
         />
-        {beneficiaryDetails && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details (For Case)</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm space-y-2">
-                    <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
-                    <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
-                </CardContent>
-            </Card>
-        )}
+        
+        <FormField
+          control={form.control}
+          name="campaignId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Link to Campaign (Optional)</FormLabel>
+              <Select
+                onValueChange={(value) => { field.onChange(value === 'none' ? undefined : value) }}
+                value={field.value || 'none'}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a campaign" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                    <SelectItem key={campaign.id} value={campaign.id!}>
+                      {campaign.name} ({campaign.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         <FormField
             control={control}
             name="paymentMethod"
@@ -441,6 +464,18 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             </div>
         )}
 
+        {beneficiaryDetails && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details (For Case)</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm space-y-2">
+                    <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
+                    <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
+                </CardContent>
+            </Card>
+        )}
+        
         <Card>
             <CardHeader>
                 <CardTitle>Recipient & Transaction Details</CardTitle>
@@ -570,4 +605,5 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
+
 
