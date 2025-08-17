@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link"
@@ -95,7 +94,7 @@ const allNavItems: NavItem[] = [
     
      // Admin - Donations Management (Collapsible)
     {
-        label: "Donations",
+        label: "Donations Management",
         icon: HandHeart,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
