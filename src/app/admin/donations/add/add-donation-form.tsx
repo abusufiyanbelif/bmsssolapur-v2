@@ -468,7 +468,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
           } else if (key === 'phonePeTransactionId' && value) {
               // Special handling for PhonePe ID to avoid duplicates
-              setValue('transactionId', value as string, { shouldDirty: true });
               setValue('phonePeTransactionId', value as string, { shouldDirty: true });
           } else {
             setValue(key as any, value, { shouldDirty: true });
@@ -1457,3 +1456,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
