@@ -100,19 +100,24 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
     const isAnonymous = form.watch("isAnonymous");
 
     async function onSubmit(values: PayNowFormValues) {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Login Required', description: 'Please log in to make a donation.' });
+            return;
+        }
+        
         setIsSubmitting(true);
         
         try {
-            const donationData = { ...values, userId: user?.id };
+            const donationData = { ...values, userId: user.id };
             const result = await handleCreatePendingDonation(donationData);
 
-            if (result.success && result.upiUrl) {
+            if (result.success && result.redirectUrl) {
                 toast({
-                    title: "Redirecting to UPI...",
-                    description: "Your donation has been recorded as pending. Please complete the payment.",
+                    title: "Redirecting to Payment...",
+                    description: "Please complete your donation on the secure payment page.",
                     variant: 'success'
                 });
-                window.location.href = result.upiUrl;
+                window.location.href = result.redirectUrl;
             } else {
                 toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to initiate donation.' });
             }
@@ -238,9 +243,9 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
                 )}
                 />
 
-                <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+                <Button type="submit" disabled={isSubmitting || !user} className="w-full" size="lg">
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                    Proceed to Pay with UPI
+                    {user ? 'Proceed to Pay' : 'Login to Pay'}
                 </Button>
             </form>
         </Form>
@@ -339,9 +344,9 @@ function UploadProofSection({ user }: { user: User | null }) {
                 </div>
             )}
             
-            <Button onClick={handleScan} disabled={isScanning || !file} className="w-full">
+            <Button onClick={handleScan} disabled={isScanning || !file || !user} className="w-full">
                 {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                Scan and Confirm Donation
+                {user ? 'Scan and Confirm Donation' : 'Login to Scan'}
             </Button>
         </div>
     );

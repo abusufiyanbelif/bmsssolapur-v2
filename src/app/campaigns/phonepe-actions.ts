@@ -15,6 +15,7 @@ interface PhonePePaymentResponse {
     success: boolean;
     error?: string;
     redirectUrl?: string;
+    merchantTransactionId?: string;
 }
 
 /**
@@ -87,6 +88,7 @@ export async function startPhonePePayment(payload: PhonePePaymentRequest): Promi
         return {
             success: true,
             redirectUrl: mockApiResponse.data.instrumentResponse.redirectInfo.url,
+            merchantTransactionId: mockApiResponse.data.merchantTransactionId,
         };
     } else {
         return {
