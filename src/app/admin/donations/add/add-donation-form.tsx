@@ -471,12 +471,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
             setValue('paymentApp', value as any, { shouldDirty: true });
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-          } else if (key === 'transactionId') {
-              if (!getValues('googlePayTransactionId') && !getValues('phonePeTransactionId') && !getValues('paytmUpiReferenceNo')) {
-                  setValue('transactionId', value, { shouldDirty: true });
-              }
-          }
-          else {
+          } else {
             setValue(key as any, value, { shouldDirty: true });
           }
         }
