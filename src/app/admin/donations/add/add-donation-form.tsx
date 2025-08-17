@@ -39,7 +39,6 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddDonation, checkTransactionId } from "./actions";
-import { scanProof } from '@/ai/text-extraction-actions';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -244,9 +243,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const selectedPurpose = watch("purpose");
   
   // Fields for scanned details
-  const googlePayId = watch('googlePayTransactionId');
-  const phonePeId = watch('phonePeTransactionId');
-  const utrNumber = watch('utrNumber');
   const scannedRecipientName = watch('recipientName');
   const scannedRecipientUpiId = watch('recipientUpiId');
 
@@ -974,39 +970,22 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 </FormItem>
                             )}
                         />
-                        {paymentApp === 'Google Pay' ? (
-                            <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UPI Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter UPI Transaction ID" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="UPI Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        ) : (
-                             <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UTR or Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter UTR or Transaction ID" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
+                        <FormField
+                            control={form.control}
+                            name="transactionId"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Primary Transaction ID</FormLabel>
+                                <FormControl>
+                                <Input placeholder="Enter primary Transaction ID" {...field} />
+                                </FormControl>
+                                    <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
                     </div>
-                     {googlePayId && (
+                     {paymentApp === 'Google Pay' && (
                          <FormField
                             control={form.control}
                             name="googlePayTransactionId"
@@ -1014,39 +993,39 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             <FormItem>
                                 <FormLabel>Google Transaction ID (from scan)</FormLabel>
                                 <FormControl>
-                                    <Input {...field} readOnly className="bg-muted/50" />
+                                    <Input {...field} />
                                 </FormControl>
                             </FormItem>
                             )}
                         />
                      )}
-                     {phonePeId && (
-                         <FormField
-                            control={form.control}
-                            name="phonePeTransactionId"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>PhonePe Transaction ID (from scan)</FormLabel>
-                                <FormControl>
-                                    <Input {...field} readOnly className="bg-muted/50" />
-                                </FormControl>
-                            </FormItem>
-                            )}
-                        />
-                     )}
-                     {utrNumber && (
-                         <FormField
-                            control={form.control}
-                            name="utrNumber"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>UTR Number (from scan)</FormLabel>
-                                <FormControl>
-                                    <Input {...field} readOnly className="bg-muted/50" />
-                                </FormControl>
-                            </FormItem>
-                            )}
-                        />
+                     {paymentApp === 'PhonePe' && (
+                        <>
+                             <FormField
+                                control={form.control}
+                                name="phonePeTransactionId"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>PhonePe Transaction ID</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} />
+                                    </FormControl>
+                                </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="utrNumber"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>UTR Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} placeholder="Enter UTR number" />
+                                    </FormControl>
+                                </FormItem>
+                                )}
+                            />
+                        </>
                      )}
                      <div className="space-y-4 rounded-lg border p-4">
                         {scannedRecipientName && (
