@@ -396,7 +396,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDonor]);
   
-  const totalAmount = (amount || 0) + (tipAmount || 0);
+  const totalAmount = parseFloat(String(amount || 0)) + parseFloat(String(tipAmount || 0));
 
    const handleExtractText = async () => {
     if (localFiles.length === 0) {
