@@ -1383,7 +1383,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         name="tipAmount"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Amount for Organization</FormLabel>
+                            <FormLabel>Contribution Amount for Organization</FormLabel>
                             <FormControl>
                                 <Input type="number" placeholder="Enter amount for organization" {...field} />
                             </FormControl>
