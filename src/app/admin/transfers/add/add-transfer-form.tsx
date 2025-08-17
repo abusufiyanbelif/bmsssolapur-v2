@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp } from "lucide-react";
 import type { User, Lead, PaymentMethod, Campaign, UserRole } from "@/services/types";
-import { getUser } from "@/services/user-service";
+import { getUser, getUserByPhone, getUserByUpiId } from "@/services/user-service";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -40,6 +40,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { handleAddTransfer } from "./actions";
 import { scanProof, getRawTextFromImage } from '@/app/admin/donations/add/actions';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
@@ -173,6 +174,9 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
         try {
             const beneficiary = await getUser(selectedLead.beneficiaryId);
             setBeneficiaryDetails(beneficiary);
+            // Default recipient is the beneficiary
+            setValue('recipientType', 'Beneficiary');
+            setValue('recipientId', beneficiary?.id);
         } catch (e) {
             console.error("Failed to fetch beneficiary details", e);
             setBeneficiaryDetails(null);
@@ -182,7 +186,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
       }
     };
     fetchBeneficiary();
-  }, [selectedLead]);
+  }, [selectedLead, setValue]);
 
   // Set Recipient Details based on selection
   useEffect(() => {
@@ -229,6 +233,8 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     
     if (result.success && result.details) {
       toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields populated. Please review.' });
+      
+      // Populate fields from scan
       Object.entries(result.details).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           if (key === 'date' && typeof value === 'string') {
@@ -241,6 +247,24 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
         }
       });
       if(result.details.rawText) setRawText(result.details.rawText);
+
+      // Auto-detect recipient user from scanned details
+      let foundRecipient: User | null = null;
+      if (result.details.recipientUpiId) foundRecipient = await getUserByUpiId(result.details.recipientUpiId);
+      if (!foundRecipient && result.details.recipientPhone) foundRecipient = await getUserByPhone(result.details.recipientPhone);
+
+      if (foundRecipient) {
+          toast({ variant: 'info', title: 'Recipient Detected!', description: `Automatically matched ${foundRecipient.name}.`});
+          if (foundRecipient.roles.includes('Referral')) {
+              setValue('recipientType', 'Referral');
+              setValue('recipientId', foundRecipient.id);
+          } else {
+              // Default to beneficiary if not a referral (even if they have other roles)
+              setValue('recipientType', 'Beneficiary');
+              setValue('recipientId', foundRecipient.id);
+          }
+      }
+
     } else {
       toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details." });
     }
@@ -303,7 +327,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
           name="leadId"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Select Lead/Beneficiary</FormLabel>
+              <FormLabel>Select Lead</FormLabel>
               <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -338,43 +362,24 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                   </Command>
                 </PopoverContent>
               </Popover>
-              {selectedLead && (
-                 <FormDescription>
-                    Pending Amount for this lead: <span className="font-bold">₹{(selectedLead.helpRequested - selectedLead.helpGiven).toLocaleString()}</span>
-                </FormDescription>
-              )}
               <FormMessage />
             </FormItem>
           )}
         />
+        {beneficiaryDetails && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm space-y-2">
+                    <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
+                    <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
+                    <div className="flex justify-between"><span>Account No:</span><span className="font-semibold">{beneficiaryDetails.bankAccountNumber || 'N/A'}</span></div>
+                    <div className="flex justify-between"><span>UPI:</span><span className="font-semibold">{beneficiaryDetails.upiIds?.[0] || 'N/A'}</span></div>
+                </CardContent>
+            </Card>
+        )}
         <FormField
-            control={form.control}
-            name="campaignId"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Link to Campaign (Optional)</FormLabel>
-                <Select
-                    onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
-                    value={field.value || 'none'}
-                >
-                    <FormControl>
-                    <SelectTrigger><SelectValue placeholder="Select a campaign" /></SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
-                            <SelectItem key={campaign.id} value={campaign.id!}>
-                            {campaign.name} ({campaign.status})
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <FormDescription>Associate this transfer with a specific fundraising campaign.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-         <FormField
             control={control}
             name="paymentMethod"
             render={({ field }) => (
@@ -600,18 +605,13 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 />
             )}
             
-            {recipientDetails ? (
-                <div className="space-y-2 mt-4">
-                    <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
-                    <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
-                    <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
-                    <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
-                </div>
-            ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">Recipient payment details will appear here.</p>
-            )}
+            <div className="space-y-2 mt-4">
+                <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+            </div>
         </div>
-
 
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Additional Info</h3>
         <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea placeholder="Any internal notes about this transfer?" {...field} /></FormControl></FormItem>)} />
