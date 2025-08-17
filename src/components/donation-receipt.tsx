@@ -25,7 +25,7 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
             <div ref={ref} className="p-8 bg-white text-black font-sans w-[800px] relative">
                 <div 
                     className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-5" 
-                    style={{ backgroundImage: "url('https://placehold.co/400x400/16a34a/ffffff.png?text=BMS')" }}
+                    style={{ backgroundImage: "url('https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media')" }}
                 >
                 </div>
                 <div className="relative z-10">
