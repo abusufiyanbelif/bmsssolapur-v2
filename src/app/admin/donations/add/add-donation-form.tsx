@@ -466,7 +466,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     try {
       const scanResult = await scanProof(formData);
       
-      if (scanAbortController.current.signal.aborted) return;
+      if (scanAbortController.current?.signal.aborted) return;
       
       if (!scanResult || !scanResult.success || !scanResult.details) {
         throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
