@@ -38,7 +38,7 @@ import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
-import { QrCodeDialog } from "./qr-code-dialog";
+import { QrCodeDialog } from "@/components/qr-code-dialog";
 import { getCurrentOrganization } from "@/services/organization-service";
 
 
@@ -311,7 +311,7 @@ function UploadProofSection({ user }: { user: User | null }) {
                 const dataUrl = await fileToDataUrl(file);
                 sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
             } catch (e) {
-                 toast({ variant: 'destructive', title: 'Error preparing screenshot' });
+                 toast({ variant: 'destructive', title: "Error preparing screenshot" });
             }
             
             router.push(`/donate/confirm?${queryParams.toString()}`);

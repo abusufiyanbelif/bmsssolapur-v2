@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization } from "@/services/types";
-import { PayNowFormValues } from "./page";
+import { PayNowFormValues } from "@/app/donate/page";
 import Image from "next/image";
 import { Download, Copy, Check, X, HandHeart } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -140,4 +140,3 @@ export function QrCodeDialog({ open, onOpenChange, donationDetails, organization
         </Dialog>
     );
 }
-
