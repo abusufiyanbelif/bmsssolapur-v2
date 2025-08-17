@@ -467,6 +467,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
             setValue('paymentApp', value as any, { shouldDirty: true });
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+          } else if (key === 'phonePeTransactionId' && value) {
+              // Special handling for PhonePe ID to avoid duplicates
+              setValue('transactionId', value as string, { shouldDirty: true });
+              setValue('phonePeTransactionId', value as string, { shouldDirty: true });
           } else {
             setValue(key as any, value, { shouldDirty: true });
           }
@@ -970,20 +974,22 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="transactionId"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Primary Transaction ID</FormLabel>
-                                <FormControl>
-                                <Input placeholder="Enter primary Transaction ID" {...field} />
-                                </FormControl>
-                                    <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
+                        {paymentApp !== 'PhonePe' && (
+                             <FormField
+                                control={form.control}
+                                name="transactionId"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Primary Transaction ID</FormLabel>
+                                    <FormControl>
+                                    <Input placeholder="Enter primary Transaction ID" {...field} />
+                                    </FormControl>
+                                        <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        )}
                     </div>
                      {paymentApp === 'Google Pay' && (
                          <FormField
