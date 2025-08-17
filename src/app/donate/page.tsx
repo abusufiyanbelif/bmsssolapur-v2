@@ -38,6 +38,7 @@ import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
+import { UpiPaymentDialog } from "./upi-payment-dialog";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -63,12 +64,14 @@ const payNowFormSchema = z.object({
     path: ["donorName"],
 });
 
-type PayNowFormValues = z.infer<typeof payNowFormSchema>;
+export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
 
 
 function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null }) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
+    const [donationData, setDonationData] = useState<PayNowFormValues | null>(null);
     
     const form = useForm<PayNowFormValues>({
         resolver: zodResolver(payNowFormSchema),
@@ -99,156 +102,146 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
 
     const isAnonymous = form.watch("isAnonymous");
 
-    async function onSubmit(values: PayNowFormValues) {
+    function onSubmit(values: PayNowFormValues) {
         if (!user) {
             toast({ variant: 'destructive', title: 'Login Required', description: 'Please log in to make a donation.' });
             return;
         }
-        
-        setIsSubmitting(true);
-        
-        try {
-            const donationData = { ...values, userId: user.id };
-            const result = await handleCreatePendingDonation(donationData);
-
-            if (result.success && result.redirectUrl) {
-                toast({
-                    title: "Redirecting to Payment...",
-                    description: "Please complete your donation on the secure payment page.",
-                    variant: 'success'
-                });
-                window.location.href = result.redirectUrl;
-            } else {
-                toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to initiate donation.' });
-            }
-        } catch(e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
-        } finally {
-            setIsSubmitting(false);
-        }
+        setDonationData(values);
+        setIsUpiDialogOpen(true);
     }
     
      return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                 {targetLead && (
-                    <Alert className="mb-6">
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>You are donating to a specific case!</AlertTitle>
-                        <AlertDescription>
-                           Your contribution will be directed to help <span className="font-semibold">{targetLead.name}</span> for the purpose of <span className="font-semibold">{targetLead.purpose}</span>.
-                        </AlertDescription>
-                    </Alert>
-                )}
-                
-                {targetCampaignId && (
-                     <Alert className="mb-6">
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>You are donating to a specific campaign!</AlertTitle>
-                        <AlertDescription>
-                           Your contribution will support our <span className="font-semibold">{targetCampaignId.replace(/-/g, ' ')}</span> campaign.
-                        </AlertDescription>
-                    </Alert>
-                )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <FormField
-                    control={form.control}
-                    name="purpose"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Donation Purpose</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!targetLead || !!targetCampaignId}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a purpose" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {donationPurposes.map(type => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                            { (!!targetLead || !!targetCampaignId) && <FormDescription>Purpose is automatically set.</FormDescription>}
-                        <FormMessage />
-                        </FormItem>
+        <>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    {targetLead && (
+                        <Alert className="mb-6">
+                            <Info className="h-4 w-4" />
+                            <AlertTitle>You are donating to a specific case!</AlertTitle>
+                            <AlertDescription>
+                            Your contribution will be directed to help <span className="font-semibold">{targetLead.name}</span> for the purpose of <span className="font-semibold">{targetLead.purpose}</span>.
+                            </AlertDescription>
+                        </Alert>
                     )}
+                    
+                    {targetCampaignId && (
+                        <Alert className="mb-6">
+                            <Info className="h-4 w-4" />
+                            <AlertTitle>You are donating to a specific campaign!</AlertTitle>
+                            <AlertDescription>
+                            Your contribution will support our <span className="font-semibold">{targetCampaignId.replace(/-/g, ' ')}</span> campaign.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField
+                        control={form.control}
+                        name="purpose"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Donation Purpose</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!targetLead || !!targetCampaignId}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a purpose" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {donationPurposes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                                { (!!targetLead || !!targetCampaignId) && <FormDescription>Purpose is automatically set.</FormDescription>}
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Donation Amount (INR)</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="Enter amount" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
+                    
+                    <FormField
+                        control={form.control}
+                        name="isAnonymous"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                    <FormLabel className="text-base">Donate Anonymously</FormLabel>
+                                    <FormDescription>Your name will not be publicly displayed.</FormDescription>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
                     />
+
+                    {!isAnonymous && (
+                            <FormField
+                            control={form.control}
+                            name="donorName"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Your Name</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter your full name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                    
                     <FormField
                     control={form.control}
-                    name="amount"
+                    name="notes"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Donation Amount (INR)</FormLabel>
+                        <FormLabel>Notes (Optional)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="Enter amount" {...field} />
+                            <Textarea
+                                placeholder="Any specific instructions or notes for your donation?"
+                                className="resize-y"
+                                {...field}
+                            />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                     />
-                </div>
-                
-                <FormField
-                    control={form.control}
-                    name="isAnonymous"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <FormLabel className="text-base">Donate Anonymously</FormLabel>
-                                <FormDescription>Your name will not be publicly displayed.</FormDescription>
-                            </div>
-                            <FormControl>
-                                <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
 
-                {!isAnonymous && (
-                        <FormField
-                        control={form.control}
-                        name="donorName"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Your Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter your full name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-                
-                <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl>
-                        <Textarea
-                            placeholder="Any specific instructions or notes for your donation?"
-                            className="resize-y"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                    <Button type="submit" disabled={!user} className="w-full" size="lg">
+                        <HandHeart className="mr-2 h-4 w-4" />
+                        {user ? 'Proceed to Pay' : 'Login to Pay'}
+                    </Button>
+                </form>
+            </Form>
+            {donationData && user && (
+                <UpiPaymentDialog
+                    open={isUpiDialogOpen}
+                    onOpenChange={setIsUpiDialogOpen}
+                    donationDetails={donationData}
+                    user={user}
                 />
-
-                <Button type="submit" disabled={isSubmitting || !user} className="w-full" size="lg">
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                    {user ? 'Proceed to Pay' : 'Login to Pay'}
-                </Button>
-            </form>
-        </Form>
+            )}
+        </>
      );
 }
 
