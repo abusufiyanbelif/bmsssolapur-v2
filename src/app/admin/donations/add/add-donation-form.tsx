@@ -279,8 +279,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   }, []);
 
   useEffect(() => {
-    handleTxnIdCheck(debouncedTransactionId || '');
-  }, [debouncedTransactionId, handleTxnIdCheck]);
+    if (paymentApp !== 'PhonePe') {
+        handleTxnIdCheck(debouncedTransactionId || '');
+    }
+  }, [debouncedTransactionId, handleTxnIdCheck, paymentApp]);
 
 
   const stopScan = () => {
@@ -466,9 +468,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
           } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
             setValue('paymentApp', value as any, { shouldDirty: true });
             setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-          } else if (key === 'phonePeTransactionId' && value) {
-              // Special handling for PhonePe ID to avoid duplicates
-              setValue('phonePeTransactionId', value as string, { shouldDirty: true });
           } else {
             setValue(key as any, value, { shouldDirty: true });
           }
@@ -531,7 +530,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             }
             
             if (suitableRole) {
-                setValue('recipientRole', suitableRole);
+                setValue('recipientRole', suitableRole, { shouldDirty: true });
                 toast({
                     variant: 'success',
                     title: 'Recipient Found!',
@@ -1456,4 +1455,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
