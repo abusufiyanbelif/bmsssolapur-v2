@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -174,9 +173,8 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
         try {
             const beneficiary = await getUser(selectedLead.beneficiaryId);
             setBeneficiaryDetails(beneficiary);
-            // Default recipient is the beneficiary
+            // Default recipient type to beneficiary when a lead is picked
             setValue('recipientType', 'Beneficiary');
-            setValue('recipientId', beneficiary?.id);
         } catch (e) {
             console.error("Failed to fetch beneficiary details", e);
             setBeneficiaryDetails(null);
@@ -191,6 +189,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   // Set Recipient Details based on selection
   useEffect(() => {
       if (recipientType === 'Beneficiary') {
+          // Do not automatically copy details. This should come from scan or manual entry.
           setRecipientDetails(beneficiaryDetails);
       } else if (recipientType === 'Referral') {
           const referral = users.find(u => u.id === selectedRecipientId);
@@ -200,9 +199,9 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
       }
   }, [recipientType, beneficiaryDetails, selectedRecipientId, users]);
 
-  // Update form fields when recipient details change (from dropdown selection)
+  // Update form fields only when recipient details change from a manual selection
   useEffect(() => {
-      if (recipientDetails) {
+      if (recipientDetails && form.formState.isDirty) {
           setValue('recipientName', recipientDetails.name);
           setValue('recipientPhone', recipientDetails.phone);
           setValue('recipientAccountNumber', recipientDetails.bankAccountNumber);
@@ -211,13 +210,8 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
           } else {
               setValue('recipientUpiId', '');
           }
-      } else {
-           setValue('recipientName', '');
-           setValue('recipientPhone', '');
-           setValue('recipientAccountNumber', '');
-           setValue('recipientUpiId', '');
       }
-  }, [recipientDetails, setValue]);
+  }, [recipientDetails, setValue, form.formState.isDirty]);
 
   const handleScan = async () => {
     if (!file) {
@@ -379,7 +373,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             <FormItem>
               <FormLabel>Link to Campaign (Optional)</FormLabel>
               <Select
-                onValueChange={(value) => { field.onChange(value === 'none' ? undefined : value) }}
+                onValueChange={(value) => { field.onChange(value === 'none' ? '' : value) }}
                 value={field.value || 'none'}
               >
                 <FormControl>
@@ -605,5 +599,3 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
-
-
