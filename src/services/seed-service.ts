@@ -60,7 +60,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR13", name: "AnonymousBoth User", userId: "anonymous.user.both", firstName: "AnonymousBoth", lastName: "User", email: "anonymous.both@example.com", phone: "3333333333", password: "admin", roles: ["Beneficiary", "Donor"], isAnonymousAsBeneficiary: true, isAnonymousAsDonor: true, isActive: true, gender: 'Other', source: 'Seeded' },
     
     // Hardcoded Donor user
-    { userKey: "USR14", name: "Donor User", userId: "donor.user", firstName: "Donor", middleName: "", lastName: "User", email: "donor@example.com", phone: "1111111111", password: "admin", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR14", name: "Donor User", userId: "donor.user", firstName: "Donor", middleName: "", lastName: "User", email: "donor@example.com", phone: "1111111111", password: "admin", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['abusufiyan.belief5@okicici'], source: 'Seeded' },
 
     // Hardcoded Beneficiary user
     { userKey: "USR15", name: "Beneficiary User", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
@@ -106,7 +106,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "BAITULMAL SAMAJIK SANSTHA SOLAPUR",
     city: "Solapur",
-    address: "Solapur, Maharashtra, India",
+    address: "123 Muslim Peth, Solapur, Maharashtra 413001",
     registrationNumber: "MAHA/123/2024",
     panNumber: "AAFTB9401P",
     contactEmail: "contact@baitulmalsolapur.org",
