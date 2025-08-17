@@ -687,7 +687,7 @@ function LeadsPageContent() {
                                     }}
                                 >
                                     <Check className="mr-2 h-4 w-4"/>
-                                    {selectedLeads.length === paginatedLeads.length ? 'Deselect Page' : 'Select Page'}
+                                    {selectedLeads.length === paginatedLeads.length ? 'Deselect All' : 'Select All'}
                                 </Button>
                             )}
                              <DropdownMenu>
