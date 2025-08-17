@@ -115,7 +115,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     bankAccountName: "BAITULMAL SAMAJIK SANSTHA",
     bankAccountNumber: "012345678901",
     bankIfscCode: "BKID0000707",
-    upiId: "9372145889@paytm",
+    upiId: "maaz9145@okhdfcbank",
     qrCodeUrl: "https://assets.dev.braze.com/ui/qr_codes/braze_to_the_qr_code_future.png",
 };
 
