@@ -243,39 +243,62 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
             </FormItem>
           )}
         />
-
-        <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-          <h3 className="font-semibold text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Payment Proof & Scanning</h3>
-          <FormField
+        
+        <FormField
             control={control}
-            name="proof"
+            name="paymentMethod"
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Upload Screenshot</FormLabel>
-                    <FormControl>
-                        <Input 
-                            type="file" 
-                            accept="image/*,application/pdf"
-                            ref={fileInputRef}
-                            onChange={(e) => { field.onChange(e.target.files?.[0]); setFile(e.target.files?.[0] || null); }}
-                        />
-                    </FormControl>
+                    <FormLabel>Payment Method</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Select payment method" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {paymentMethods.map(method => (
+                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                 </FormItem>
             )}
-            />
-            {previewUrl && (
-              <div className="relative w-full h-64"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
-            )}
-            <div className="flex gap-2">
-                <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
-                    {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />} Scan & Auto-Fill
-                </Button>
-                <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
-                    {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />} Get Raw Text
-                </Button>
+        />
+        
+        {(paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer') && (
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+            <h3 className="font-semibold text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Payment Proof & Scanning</h3>
+            <FormField
+                control={control}
+                name="proof"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Upload Screenshot</FormLabel>
+                        <FormControl>
+                            <Input 
+                                type="file" 
+                                accept="image/*,application/pdf"
+                                ref={fileInputRef}
+                                onChange={(e) => { field.onChange(e.target.files?.[0]); setFile(e.target.files?.[0] || null); }}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+                />
+                {previewUrl && (
+                <div className="relative w-full h-64"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
+                )}
+                <div className="flex gap-2">
+                    <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
+                        {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />} Scan & Auto-Fill
+                    </Button>
+                    <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
+                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />} Get Raw Text
+                    </Button>
+                </div>
             </div>
-        </div>
+        )}
 
         {rawText && (
             <div className="space-y-2">
@@ -329,26 +352,6 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-                control={control}
-                name="paymentMethod"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select payment method" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {paymentMethods.map(method => (
-                                <SelectItem key={method} value={method}>{method}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
             <FormField control={control} name="paymentApp" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Payment App</FormLabel>
@@ -362,13 +365,13 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
                     </Select>
                 </FormItem>
             )} />
+            <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {paymentApp !== 'PhonePe' && (
                 <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
             )}
-             <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         </div>
         
         {paymentApp === 'Google Pay' && (
@@ -418,5 +421,3 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
-
-    
