@@ -26,7 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp } from "lucide-react";
-import type { User, Lead, PaymentMethod } from "@/services/types";
+import type { User, Lead, PaymentMethod, Campaign } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +44,7 @@ const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 
 const formSchema = z.object({
   leadId: z.string().min(1, "Please select a lead/beneficiary."),
+  campaignId: z.string().optional(),
   paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
   amount: z.coerce.number().min(1, "Amount must be greater than 0."),
   transactionDate: z.date(),
@@ -70,9 +71,10 @@ type AddTransferFormValues = z.infer<typeof formSchema>;
 
 interface AddTransferFormProps {
     leads: Lead[];
+    campaigns: Campaign[];
 }
 
-function AddTransferFormContent({ leads }: AddTransferFormProps) {
+function AddTransferFormContent({ leads, campaigns }: AddTransferFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -273,6 +275,36 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        <FormField
+            control={form.control}
+            name="campaignId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Link to Campaign (Optional)</FormLabel>
+                <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                >
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a campaign" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                            <SelectItem key={campaign.id} value={campaign.id!}>
+                            {campaign.name} ({campaign.status})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <FormDescription>Associate this transfer with a specific fundraising campaign.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
         />
         
         <FormField
