@@ -6,7 +6,7 @@
 import { createDonation } from "@/services/donation-service";
 import { getUser } from "@/services/user-service";
 import type { Donation } from "@/services/types";
-import { scanProof } from "@/ai/text-extraction-actions";
+import { scanProof } from "@/app/admin/donations/add/actions";
 import { isConfigValid } from "@/services/firebase";
 
 interface FormState {
@@ -45,7 +45,9 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
             return { success: false, error: "Could not find the logged-in user's profile." };
         }
 
-        const scanResult = await scanProof(screenshotFile);
+        const formData = new FormData();
+        formData.append("proofFile", screenshotFile);
+        const scanResult = await scanProof(formData);
 
         if (!scanResult.success || !scanResult.details) {
             throw new Error(scanResult.error || "Failed to extract details from screenshot.");
