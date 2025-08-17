@@ -324,9 +324,9 @@ function AllTransfersPageContent() {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">All Fund Transfers</h2>
             <Button asChild>
-                <Link href="/admin/leads">
+                <Link href="/admin/transfers/add">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Select Lead to Add Transfer
+                    Add New Transfer
                 </Link>
             </Button>
         </div>
@@ -334,7 +334,7 @@ function AllTransfersPageContent() {
             <CardHeader>
                 <CardTitle>Transfer History</CardTitle>
                 <CardDescription>
-                    A complete log of all funds transferred to beneficiaries. To add a new transfer, go to the Leads page and select a lead.
+                    A complete log of all funds transferred to beneficiaries.
                 </CardDescription>
             </CardHeader>
             <CardContent>
