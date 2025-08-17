@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp } from "lucide-react";
 import type { User, Lead, PaymentMethod } from "@/services/types";
+import { getUser } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -83,6 +84,7 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [beneficiaryDetails, setBeneficiaryDetails] = useState<User | null>(null);
   
   const form = useForm<AddTransferFormValues>({
     resolver: zodResolver(formSchema),
@@ -110,8 +112,35 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
+    } else {
+        setPreviewUrl(null);
     }
   }, [file]);
+
+  useEffect(() => {
+    const fetchBeneficiary = async () => {
+      if (selectedLead?.beneficiaryId) {
+        try {
+            const beneficiary = await getUser(selectedLead.beneficiaryId);
+            setBeneficiaryDetails(beneficiary);
+            if(beneficiary) {
+                setValue('recipientName', beneficiary.name);
+                setValue('recipientPhone', beneficiary.phone);
+                setValue('recipientAccountNumber', beneficiary.bankAccountNumber);
+                if (beneficiary.upiIds && beneficiary.upiIds.length > 0) {
+                    setValue('recipientUpiId', beneficiary.upiIds[0]);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch beneficiary details", e);
+            setBeneficiaryDetails(null);
+        }
+      } else {
+        setBeneficiaryDetails(null);
+      }
+    };
+    fetchBeneficiary();
+  }, [selectedLead, setValue]);
 
   const handleScan = async () => {
     if (!file) {
@@ -174,8 +203,10 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
     Object.entries(values).forEach(([key, value]) => {
         if (value instanceof Date) {
             formData.append(key, value.toISOString());
+        } else if(key === 'proof' && value instanceof File) {
+             formData.append('proof', value);
         } else if (value) {
-            formData.append(key, value);
+            formData.append(key, String(value));
         }
     });
 
@@ -368,11 +399,9 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
             <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {paymentApp !== 'PhonePe' && (
-                <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-            )}
-        </div>
+        {paymentApp !== 'PhonePe' && (
+            <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        )}
         
         {paymentApp === 'Google Pay' && (
             <FormField control={control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
@@ -391,10 +420,22 @@ function AddTransferFormContent({ leads }: AddTransferFormProps) {
         <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        
+        {/* Recipient Section */}
+        <div className="space-y-4 rounded-lg border p-4">
+             <h4 className="font-semibold">Recipient Details (from Beneficiary Profile)</h4>
+             {beneficiaryDetails ? (
+                <div className="space-y-2">
+                     <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+                     <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+                     <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+                     <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} readOnly className="bg-muted/50" /></FormControl></FormItem>)} />
+                </div>
+             ) : (
+                 <p className="text-sm text-muted-foreground text-center py-4">Select a lead above to view beneficiary details.</p>
+             )}
+        </div>
+
 
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Additional Info</h3>
         <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea placeholder="Any internal notes about this transfer?" {...field} /></FormControl></FormItem>)} />
