@@ -9,85 +9,135 @@ import {
   DialogHeader,
   DialogTitle,
   DialogProps,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import type { User } from "@/services/types";
+import type { Organization } from "@/services/types";
 import { PayNowFormValues } from "./page";
-import { handleCreatePendingDonation } from "./actions";
-import { GooglePayLogo, PhonePeLogo, PaytmLogo } from "@/components/logo";
-import { Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Download, Copy, Check, X, HandHeart } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-interface UpiPaymentDialogProps extends DialogProps {
+
+interface QrCodeDialogProps extends DialogProps {
   donationDetails: PayNowFormValues;
-  user: User;
+  organization: Organization;
 }
 
-export function UpiPaymentDialog({ open, onOpenChange, donationDetails, user }: UpiPaymentDialogProps) {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const initiatePayment = async (gateway: 'phonepe' | 'gpay' | 'paytm') => {
-      setIsSubmitting(true);
-      try {
-        const donationData = { ...donationDetails, userId: user.id };
-        const result = await handleCreatePendingDonation(donationData);
+export function QrCodeDialog({ open, onOpenChange, donationDetails, organization }: QrCodeDialogProps) {
+    const { toast } = useToast();
+    const router = useRouter();
+    const [hasCopied, setHasCopied] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
-        if (result.success && result.redirectUrl) {
-            toast({
-                title: "Redirecting to Payment...",
-                description: "Please complete your donation on the secure payment page.",
-                variant: 'success'
-            });
-            window.location.href = result.redirectUrl;
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to initiate donation.' });
+    const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${donationDetails.amount}&cu=INR&tn=Donation%20for%20${encodeURIComponent(donationDetails.purpose)}`;
+
+    const handleDownload = async () => {
+        if (!organization.qrCodeUrl) return;
+        setIsDownloading(true);
+        try {
+            const response = await fetch(`/api/download-image?url=${encodeURIComponent(organization.qrCodeUrl)}`);
+            if (!response.ok) throw new Error('Failed to download image from server.');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `bms-qr-code.png`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            toast({ title: "Download Started", description: "The QR code image is being downloaded." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Download Failed", description: "Could not download the QR code image." });
+        } finally {
+            setIsDownloading(false);
         }
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred.' });
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
+    };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Select Your UPI App</DialogTitle>
-          <DialogDescription>
-            Choose your preferred application to complete the payment of <span className="font-bold">₹{donationDetails.amount.toLocaleString()}</span>.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-            <Button
-                variant="outline"
-                className="h-16 justify-start text-lg gap-4 px-4"
-                onClick={() => initiatePayment('phonepe')}
-                disabled={isSubmitting}
-            >
-                {isSubmitting ? <Loader2 className="animate-spin" /> : <PhonePeLogo className="h-full w-auto" />}
-                PhonePe
-            </Button>
-            <Button
-                variant="outline"
-                className="h-16 justify-start text-lg gap-4 px-4"
-                onClick={() => initiatePayment('gpay')}
-                disabled={isSubmitting}
-            >
-                 {isSubmitting ? <Loader2 className="animate-spin" /> : <GooglePayLogo className="h-full w-auto" />}
-                Google Pay
-            </Button>
-             <Button
-                variant="outline"
-                className="h-16 justify-start text-lg gap-4 px-4"
-                onClick={() => initiatePayment('paytm')}
-                disabled={isSubmitting}
-            >
-                 {isSubmitting ? <Loader2 className="animate-spin" /> : <PaytmLogo className="h-full w-auto" />}
-            </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+    const handleCopy = () => {
+        if (!organization.upiId) return;
+        navigator.clipboard.writeText(organization.upiId);
+        setHasCopied(true);
+        toast({ title: "UPI ID Copied!", description: "The UPI ID has been copied to your clipboard." });
+        setTimeout(() => setHasCopied(false), 2000);
+    };
+
+    const handleDonationComplete = () => {
+        if(onOpenChange) onOpenChange(false);
+        router.push("/my-donations");
+        toast({
+            variant: "success",
+            title: "Donation Initiated",
+            description: "Thank you! Your donation will be marked as 'Verified' by our team shortly."
+        });
+    }
+
+    if (!organization.upiId || !organization.qrCodeUrl) {
+        return (
+             <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Payment Unavailable</DialogTitle>
+                        <DialogDescription>
+                            Online payments are currently unavailable. Please contact the organization directly.
+                        </DialogDescription>
+                    </DialogHeader>
+                </DialogContent>
+            </Dialog>
+        )
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+            <DialogTitle>Scan to Pay or Use UPI App</DialogTitle>
+            <DialogDescription>
+                Use any UPI app to complete your donation of <span className="font-bold">₹{donationDetails.amount.toLocaleString()}</span>.
+            </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col items-center justify-center gap-4 py-4">
+                <div className="relative w-56 h-56">
+                    <Image
+                    src={organization.qrCodeUrl}
+                    alt="UPI QR Code"
+                    fill
+                    className="object-contain rounded-md"
+                    data-ai-hint="qr code"
+                    />
+                </div>
+                <div className="flex items-center w-full gap-2 rounded-lg bg-muted p-3">
+                    <p className="font-mono text-sm flex-grow overflow-x-auto whitespace-nowrap">{organization.upiId}</p>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCopy}
+                        className="flex-shrink-0"
+                    >
+                        {hasCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                 <Button asChild className="w-full" size="lg">
+                    <a href={upiLink}><HandHeart className="mr-2 h-4 w-4" />Pay with UPI</a>
+                 </Button>
+                <Button variant="secondary" onClick={handleDownload} disabled={isDownloading}>
+                    <Download className="mr-2 h-4 w-4" /> Download QR
+                </Button>
+            </div>
+            <DialogFooter className="mt-4">
+                <Button variant="outline" className="w-full" onClick={handleDonationComplete}>
+                   I have completed the payment
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+        </Dialog>
+    );
 }
+

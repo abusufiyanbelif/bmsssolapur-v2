@@ -2,16 +2,14 @@
 // src/app/donate/actions.ts
 "use server";
 
-import { createDonation, updateDonation } from "@/services/donation-service";
-import type { Donation, DonationPurpose, DonationType } from "@/services/types";
+import { createDonation } from "@/services/donation-service";
+import type { Donation, DonationPurpose } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
-import { startPhonePePayment } from '../campaigns/phonepe-actions';
-
 
 interface FormState {
     success: boolean;
     error?: string;
-    redirectUrl?: string;
+    donation?: Donation;
 }
 
 interface DonationFormData {
@@ -26,13 +24,20 @@ interface DonationFormData {
     campaignId?: string;
 }
 
+/**
+ * Creates a pending donation record in Firestore.
+ * This is called before the user is shown the QR code/UPI details.
+ * It allows tracking initiated but potentially uncompleted donations.
+ * @param formData - The details of the donation.
+ * @returns An object indicating success or failure.
+ */
 export async function handleCreatePendingDonation(formData: DonationFormData): Promise<FormState> {
   try {
     if (!formData.userId || !formData.donorName) {
         return { success: false, error: "User information is missing. Please log in." };
     }
     
-    // Step 1: Create a pending donation record in our database
+    // Create a pending donation record in our database
     const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
         donorId: formData.userId,
         donorName: formData.isAnonymous ? 'Anonymous Donor' : formData.donorName,
@@ -41,7 +46,7 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
         type: formData.purpose === 'Zakat' ? 'Zakat' : formData.purpose === 'Fitr' ? 'Fitr' : 'Sadaqah', // Simple mapping
         purpose: formData.purpose,
         status: "Pending verification", // Initial status
-        notes: `Donation initiated. Waiting for payment completion. User notes: ${formData.notes || 'N/A'}`,
+        notes: `Donation initiated via QR/UPI. Waiting for user to complete payment. User notes: ${formData.notes || 'N/A'}`,
         leadId: formData.leadId,
         campaignId: formData.campaignId,
         donationDate: Timestamp.now(), // Tentative date
@@ -54,29 +59,7 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
         undefined
     );
 
-    // Step 2: Initiate payment with the gateway
-    const paymentRequest = {
-        amount: formData.amount,
-        userId: formData.userId,
-        userName: formData.donorName,
-        userPhone: formData.phone,
-    };
-    const paymentResponse = await startPhonePePayment(paymentRequest);
-
-    if (paymentResponse.success) {
-        // Step 3: Update our pending donation record with the gateway's transaction ID
-        await updateDonation(newDonation.id!, {
-            transactionId: paymentResponse.merchantTransactionId
-        });
-        return { success: true, redirectUrl: paymentResponse.redirectUrl };
-    } else {
-        // If gateway fails, update our record to reflect the failure
-        await updateDonation(newDonation.id!, {
-            status: "Failed/Incomplete",
-            notes: `Gateway failed to initiate payment. Error: ${paymentResponse.error}`
-        });
-        return { success: false, error: paymentResponse.error };
-    }
+    return { success: true, donation: newDonation };
 
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

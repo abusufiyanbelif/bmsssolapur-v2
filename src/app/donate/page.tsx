@@ -33,12 +33,13 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
 import { scanProof } from '@/app/admin/donations/add/actions';
-import type { User, Lead, DonationPurpose } from '@/services/types';
+import type { User, Lead, DonationPurpose, Organization } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
-import { UpiPaymentDialog } from "./upi-payment-dialog";
+import { QrCodeDialog } from "./qr-code-dialog";
+import { getCurrentOrganization } from "@/services/organization-service";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -67,10 +68,10 @@ const payNowFormSchema = z.object({
 export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
 
 
-function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null }) {
+function PayNowForm({ user, targetLead, targetCampaignId, organization }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null }) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
+    const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
     const [donationData, setDonationData] = useState<PayNowFormValues | null>(null);
     
     const form = useForm<PayNowFormValues>({
@@ -102,13 +103,21 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
 
     const isAnonymous = form.watch("isAnonymous");
 
-    function onSubmit(values: PayNowFormValues) {
-        if (!user) {
+    async function onSubmit(values: PayNowFormValues) {
+        if (!user || !user.id) {
             toast({ variant: 'destructive', title: 'Login Required', description: 'Please log in to make a donation.' });
             return;
         }
-        setDonationData(values);
-        setIsUpiDialogOpen(true);
+        setIsSubmitting(true);
+        const result = await handleCreatePendingDonation({ ...values, userId: user.id });
+
+        if (result.success) {
+            setDonationData(values);
+            setIsQrDialogOpen(true);
+        } else {
+             toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to prepare donation.' });
+        }
+        setIsSubmitting(false);
     }
     
      return (
@@ -227,18 +236,18 @@ function PayNowForm({ user, targetLead, targetCampaignId }: { user: User | null,
                     )}
                     />
 
-                    <Button type="submit" disabled={!user} className="w-full" size="lg">
-                        <HandHeart className="mr-2 h-4 w-4" />
+                    <Button type="submit" disabled={!user || isSubmitting} className="w-full" size="lg">
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
                         {user ? 'Proceed to Pay' : 'Login to Pay'}
                     </Button>
                 </form>
             </Form>
-            {donationData && user && (
-                <UpiPaymentDialog
-                    open={isUpiDialogOpen}
-                    onOpenChange={setIsUpiDialogOpen}
+            {donationData && organization && (
+                <QrCodeDialog
+                    open={isQrDialogOpen}
+                    onOpenChange={setIsQrDialogOpen}
                     donationDetails={donationData}
-                    user={user}
+                    organization={organization}
                 />
             )}
         </>
@@ -353,6 +362,7 @@ function DonatePageContent() {
   const [user, setUser] = useState<User | null>(null);
   const [targetLead, setTargetLead] = useState<Lead | null>(null);
   const [targetCampaignId, setTargetCampaignId] = useState<string | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [donationMethod, setDonationMethod] = useState<'payNow' | 'uploadProof'>('payNow');
@@ -366,6 +376,9 @@ function DonatePageContent() {
       const storedUserId = localStorage.getItem('userId');
       
       try {
+        const orgData = await getCurrentOrganization();
+        setOrganization(orgData);
+
         if (storedUserId) {
             const fetchedUser = await getUser(storedUserId);
             setUser(fetchedUser);
@@ -427,7 +440,7 @@ function DonatePageContent() {
                 </div>
 
                 {donationMethod === 'payNow' ? (
-                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} />
+                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} />
                 ) : (
                    <UploadProofSection user={user} />
                 )}
