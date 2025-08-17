@@ -112,6 +112,9 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     contactEmail: "contact@baitulmalsolapur.org",
     contactPhone: "919372145889",
     website: "https://baitulmalsolapur.org",
+    bankAccountName: "BAITULMAL SAMAJIK SANSTHA",
+    bankAccountNumber: "012345678901",
+    bankIfscCode: "BKID0000707",
     upiId: "9372145889@paytm",
     qrCodeUrl: "https://assets.dev.braze.com/ui/qr_codes/braze_to_the_qr_code_future.png",
 };

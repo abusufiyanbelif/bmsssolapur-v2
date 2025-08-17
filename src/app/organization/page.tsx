@@ -1,7 +1,8 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
-import { Building, Mail, Phone, Globe, Hash, MapPin, ShieldCheck, CreditCard, Award, Users, Banknote } from "lucide-react";
+import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import Image from "next/image";
@@ -82,9 +83,15 @@ export default async function OrganizationPage() {
         { icon: MapPin, label: "Address", value: `${organization.address}, ${organization.city}` },
         { icon: Hash, label: "Registration No.", value: organization.registrationNumber },
         { icon: Mail, label: "Contact Email", value: organization.contactEmail },
-        { icon: CreditCard, label: "UPI ID", value: organization.upiId || "Not Available" },
-        { icon: Globe, label: "Website", value: organization.website || "Not Available" },
         { icon: ShieldCheck, label: "PAN Number", value: organization.panNumber || "Not Available" },
+        { icon: Globe, label: "Website", value: organization.website || "Not Available" },
+    ];
+    
+    const paymentDetails = [
+        { icon: Banknote, label: "Bank Account Name", value: organization.bankAccountName },
+        { icon: CreditCard, label: "Bank Account No.", value: organization.bankAccountNumber },
+        { icon: Hash, label: "IFSC Code", value: organization.bankIfscCode },
+        { icon: CreditCard, label: "UPI ID", value: organization.upiId },
     ];
     
     const MemberCard = ({ member }: { member: User }) => {
@@ -149,6 +156,20 @@ export default async function OrganizationPage() {
                                 </div>
                             </QrCodeDialog>
                         )}
+                    </div>
+                     <div className="mt-8 pt-6 border-t">
+                        <h3 className="text-lg font-semibold mb-4">Bank Account Details</h3>
+                        <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
+                            {paymentDetails.map(item => (
+                                <div key={item.label} className="flex items-start gap-4">
+                                    <item.icon className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">{item.label}</p>
+                                        <p className="text-muted-foreground font-mono text-sm">{item.value || "Not Available"}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </CardContent>
             </Card>

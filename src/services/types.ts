@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -257,6 +256,9 @@ export interface Organization {
     contactEmail: string;
     contactPhone: string;
     website?: string;
+    bankAccountName?: string;
+    bankAccountNumber?: string;
+    bankIfscCode?: string;
     upiId?: string;
     qrCodeUrl?: string;
     createdAt: Date;

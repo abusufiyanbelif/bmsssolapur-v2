@@ -33,6 +33,9 @@ const formSchema = z.object({
   contactEmail: z.string().email("Please enter a valid email."),
   contactPhone: z.string().min(1, "Phone number is required."),
   website: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+  bankAccountName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
   upiId: z.string().min(1, "UPI ID is required."),
   qrCodeUrl: z.string().optional(),
   qrCodeFile: z.any().optional(),
@@ -61,6 +64,9 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
       contactEmail: organization.contactEmail,
       contactPhone: organization.contactPhone,
       website: organization.website || '',
+      bankAccountName: organization.bankAccountName || '',
+      bankAccountNumber: organization.bankAccountNumber || '',
+      bankIfscCode: organization.bankIfscCode || '',
       upiId: organization.upiId || '',
       qrCodeUrl: organization.qrCodeUrl || '',
       qrCodeFile: null,
@@ -79,6 +85,9 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
       contactEmail: organization.contactEmail,
       contactPhone: organization.contactPhone,
       website: organization.website || '',
+      bankAccountName: organization.bankAccountName || '',
+      bankAccountNumber: organization.bankAccountNumber || '',
+      bankIfscCode: organization.bankIfscCode || '',
       upiId: organization.upiId || '',
       qrCodeUrl: organization.qrCodeUrl || '',
       qrCodeFile: null,
@@ -252,7 +261,54 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                             </FormItem>
                         )}
                     />
-                    <FormField
+                </div>
+                
+                 <h4 className="text-md font-semibold border-b pb-2">Bank Account</h4>
+                 <FormField
+                    control={form.control}
+                    name="bankAccountName"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Account Holder Name</FormLabel>
+                            <FormControl>
+                                <Input {...field} placeholder="e.g., BAITULMAL SAMAJIK SANSTHA" disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <div className="grid md:grid-cols-2 gap-8">
+                     <FormField
+                        control={form.control}
+                        name="bankAccountNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Account Number</FormLabel>
+                                <FormControl>
+                                    <Input {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="bankIfscCode"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>IFSC Code</FormLabel>
+                                <FormControl>
+                                    <Input {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                
+                <h4 className="text-md font-semibold border-b pb-2">UPI / QR Code</h4>
+                <div className="grid md:grid-cols-2 gap-8">
+                     <FormField
                         control={form.control}
                         name="upiId"
                         render={({ field }) => (
@@ -265,38 +321,36 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                             </FormItem>
                         )}
                     />
+                     <FormField
+                    control={form.control}
+                    name="qrCodeFile"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Upload New QR Code</FormLabel>
+                        <FormControl>
+                            <Input 
+                            type="file" 
+                            accept="image/png, image/jpeg, image/jpg"
+                            disabled={!isEditing}
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                field.onChange(file);
+                                if (file) {
+                                    setPreviewUrl(URL.createObjectURL(file));
+                                } else {
+                                    setPreviewUrl(organization.qrCodeUrl || '');
+                                }
+                            }}
+                            />
+                        </FormControl>
+                        <FormDescription>
+                            This will replace the existing QR code.
+                        </FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                 </div>
-                
-                <FormField
-                control={form.control}
-                name="qrCodeFile"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Upload New QR Code</FormLabel>
-                    <FormControl>
-                        <Input 
-                        type="file" 
-                        accept="image/png, image/jpeg, image/jpg"
-                        disabled={!isEditing}
-                        onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            field.onChange(file);
-                            if (file) {
-                                setPreviewUrl(URL.createObjectURL(file));
-                            } else {
-                                setPreviewUrl(organization.qrCodeUrl || '');
-                            }
-                        }}
-                        />
-                    </FormControl>
-                    <FormDescription>
-                        Upload a new QR code image. This will replace the existing one.
-                    </FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-
 
                 {isEditing && (
                     <div className="flex gap-4">

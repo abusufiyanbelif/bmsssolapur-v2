@@ -40,6 +40,9 @@ export async function handleUpdateOrganization(
         contactEmail: formData.get('contactEmail') as string,
         contactPhone: formData.get('contactPhone') as string,
         website: formData.get('website') as string,
+        bankAccountName: formData.get('bankAccountName') as string,
+        bankAccountNumber: formData.get('bankAccountNumber') as string,
+        bankIfscCode: formData.get('bankIfscCode') as string,
         upiId: formData.get('upiId') as string,
         qrCodeUrl: qrCodeUrl,
     };
