@@ -19,7 +19,7 @@ import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -485,10 +485,8 @@ function DonationsPageContent() {
                                     <Checkbox
                                         className="mt-1"
                                         checked={selectedDonations.includes(donation.id!)}
-                                        onCheckedChange={(checked) => {
-                                            setSelectedDonations(prev => 
-                                                checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!)
-                                            );
+                                        onCheckedChange={checked => {
+                                            setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!))
                                         }}
                                         aria-label="Select card"
                                     />
@@ -572,7 +570,7 @@ function DonationsPageContent() {
                         <>
                             <DropdownMenuLabel>Allocate Funds</DropdownMenuLabel>
                              <DropdownMenuItem asChild onSelect={e=>e.preventDefault()}>
-                                <AllocateToLeadDialog donation={donation} allLeads={allLeads} onAllocation={onAllocationSuccess} />
+                                <AllocateToLeadDialog donation={donation} allLeads={allLeads} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild onSelect={e=>e.preventDefault()}>
                                <AllocateToCampaignDialog donation={donation} allCampaigns={allCampaigns} onAllocation={onAllocationSuccess} />
@@ -724,6 +722,23 @@ function DonationsPageContent() {
                         <p className="text-sm font-medium">
                             {selectedDonations.length} item(s) selected.
                         </p>
+                         {isMobile && (
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    if (selectedDonations.length === paginatedDonations.length) {
+                                        const pageIds = paginatedDonations.map(d => d.id!);
+                                        setSelectedDonations(prev => prev.filter(id => !pageIds.includes(id)));
+                                    } else {
+                                        const pageIds = paginatedDonations.map(d => d.id!);
+                                        setSelectedDonations(prev => [...new Set([...prev, ...pageIds])]);
+                                    }
+                                }}
+                            >
+                                <Check className="mr-2 h-4 w-4"/>
+                                {selectedDonations.length === paginatedDonations.length ? 'Deselect All' : 'Select All'}
+                            </Button>
+                        )}
                          <DeleteConfirmationDialog
                             itemType={`${selectedDonations.length} donation(s)`}
                             itemName="the selected items"
