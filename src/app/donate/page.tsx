@@ -109,7 +109,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization }: { user
             return;
         }
         setIsSubmitting(true);
-        const result = await handleCreatePendingDonation({ ...values, userId: user.id });
+        const result = await handleCreatePendingDonation({ ...values, userId: user.id, donorName: user.name });
 
         if (result.success) {
             setDonationData(values);
