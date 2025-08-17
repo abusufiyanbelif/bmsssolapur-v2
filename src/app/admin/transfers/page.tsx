@@ -1,4 +1,3 @@
-
 // src/app/admin/transfers/page.tsx
 "use client";
 
@@ -327,7 +326,7 @@ function AllTransfersPageContent() {
             <Button asChild>
                 <Link href="/admin/leads">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New Transfer
+                    Select Lead to Add Transfer
                 </Link>
             </Button>
         </div>
