@@ -67,7 +67,8 @@ const formSchema = z.object({
   leadId: z.string().optional(),
   campaignId: z.string().optional(),
   isAnonymous: z.boolean().default(false),
-  amount: z.coerce.number().min(1, "Amount must be greater than 0."),
+  totalTransactionAmount: z.coerce.number().min(1, "Total amount must be greater than 0."),
+  amount: z.coerce.number(), // This will hold the calculated primary donation amount
   donationDate: z.date(),
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes).optional(),
@@ -106,6 +107,14 @@ const formSchema = z.object({
     return true;
 }, {
     message: "Tip amount must be greater than 0.",
+    path: ["tipAmount"],
+}).refine(data => {
+    if (data.includeTip && data.tipAmount) {
+        return data.tipAmount < data.totalTransactionAmount;
+    }
+    return true;
+}, {
+    message: "Tip cannot be greater than or equal to the total amount.",
     path: ["tipAmount"],
 });
 
@@ -161,6 +170,7 @@ function AvailabilityFeedback({ state, fieldName }: { state: AvailabilityState, 
 
 const initialFormValues: AddDonationFormValues = {
     isAnonymous: false,
+    totalTransactionAmount: 0,
     amount: 0,
     donationDate: new Date(),
     includeTip: false,
@@ -229,7 +239,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   
   const { watch, setValue, reset, getValues } = form;
   const includeTip = watch("includeTip");
-  const amount = watch("amount");
+  const totalTransactionAmount = watch("totalTransactionAmount");
   const tipAmount = watch("tipAmount");
   const isAnonymous = watch("isAnonymous");
   const recipientRole = watch("recipientRole");
@@ -246,6 +256,13 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   // Fields for scanned details
   const scannedRecipientName = watch('recipientName');
   const scannedRecipientUpiId = watch('recipientUpiId');
+
+  useEffect(() => {
+    const total = totalTransactionAmount || 0;
+    const tip = includeTip ? (tipAmount || 0) : 0;
+    const primaryAmount = Math.max(0, total - tip);
+    setValue('amount', primaryAmount, { shouldDirty: true, shouldValidate: true });
+  }, [totalTransactionAmount, tipAmount, includeTip, setValue]);
 
 
   useEffect(() => {
@@ -329,7 +346,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
         const donorBankAccountParam = searchParams.get('senderAccountNumber');
         const rawTextParam = searchParams.get('rawText');
 
-        if (amountParam) setValue('amount', parseFloat(amountParam));
+        if (amountParam) setValue('totalTransactionAmount', parseFloat(amountParam));
         if (transactionIdParam) setValue('transactionId', transactionIdParam);
         if (notesParam) setValue('notes', notesParam);
         if (dateParam) setValue('donationDate', new Date(dateParam));
@@ -395,8 +412,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDonor]);
-  
-  const totalAmount = Number(amount || 0) + Number(tipAmount || 0);
 
    const handleExtractText = async () => {
     if (localFiles.length === 0) {
@@ -463,7 +478,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       // Populate form with all extracted details first
       for (const [key, value] of Object.entries(details)) {
         if (value !== undefined && value !== null) {
-          if (key === 'date' && typeof value === 'string') {
+            if (key === 'amount') { // The main amount from scan is the total
+                setValue('totalTransactionAmount', value as number, { shouldDirty: true });
+            }
+            else if (key === 'date' && typeof value === 'string') {
             setValue('donationDate', new Date(value), { shouldDirty: true });
           } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
             setValue('paymentApp', value as any, { shouldDirty: true });
@@ -806,12 +824,12 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
-                name="amount"
+                name="totalTransactionAmount"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Primary Donation Amount</FormLabel>
+                    <FormLabel>Total Transaction Amount</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="Enter amount" {...field} />
+                        <Input type="number" placeholder="Enter full amount from receipt" {...field} />
                     </FormControl>
                         <FormDescription>The main amount for the donation's purpose.</FormDescription>
                     <FormMessage />
@@ -1013,6 +1031,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                     <FormControl>
                                         <Input {...field} />
                                     </FormControl>
+                                    <FormMessage />
                                 </FormItem>
                                 )}
                             />
@@ -1025,6 +1044,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                     <FormControl>
                                         <Input {...field} placeholder="Enter UTR number" />
                                     </FormControl>
+                                    <FormMessage />
                                 </FormItem>
                                 )}
                             />
@@ -1372,11 +1392,11 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             </FormItem>
                         )}
                     />
-                    <Alert>
+                     <Alert>
                         <Info className="h-4 w-4" />
-                        <AlertTitle>Total Transaction Amount</AlertTitle>
+                        <AlertTitle>Donation Calculation</AlertTitle>
                         <AlertDescription>
-                            The total amount you should see on the bank statement is <span className="font-bold">₹{totalAmount.toLocaleString()}</span>.
+                             The primary donation amount for the selected purpose will be <span className="font-bold">₹{getValues('amount').toLocaleString()}</span>. The total transaction amount remains <span className="font-bold">₹{totalTransactionAmount.toLocaleString()}</span>.
                         </AlertDescription>
                     </Alert>
                 </div>
