@@ -174,6 +174,7 @@ export interface FundTransfer {
     phonePeTransactionId?: string;
     paytmUpiReferenceNo?: string;
     senderName?: string; // General sender name
+    senderPhone?: string;
     phonePeSenderName?: string;
     googlePaySenderName?: string;
     paytmSenderName?: string;

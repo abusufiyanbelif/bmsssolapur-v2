@@ -186,6 +186,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             phonePeTransactionId: formData.get("phonePeTransactionId") as string | undefined,
             paytmUpiReferenceNo: formData.get("paytmUpiReferenceNo") as string | undefined,
             senderName: formData.get("senderName") as string | undefined,
+            senderPhone: formData.get("senderPhone") as string | undefined,
             senderAccountNumber: formData.get("senderAccountNumber") as string | undefined,
             senderUpiId: formData.get("senderUpiId") as string | undefined,
             recipientName: formData.get("recipientName") as string | undefined,

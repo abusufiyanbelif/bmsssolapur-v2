@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +29,7 @@ import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp } from "lucide-react";
 import type { User, Lead, PaymentMethod, Campaign, UserRole } from "@/services/types";
 import { getUser } from "@/services/user-service";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -63,6 +64,7 @@ const formSchema = z.object({
   senderName: z.string().optional(),
   senderAccountNumber: z.string().optional(),
   senderUpiId: z.string().optional(),
+  senderPhone: z.string().optional(),
   recipientName: z.string().optional(),
   recipientAccountNumber: z.string().optional(),
   recipientUpiId: z.string().optional(),
@@ -91,6 +93,7 @@ const initialFormValues: Partial<AddTransferFormValues> = {
   senderName: '',
   senderAccountNumber: '',
   senderUpiId: '',
+  senderPhone: '',
   recipientName: '',
   recipientAccountNumber: '',
   recipientUpiId: '',
@@ -355,9 +358,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                     value={field.value || 'none'}
                 >
                     <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a campaign" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select a campaign" /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
                         <SelectItem value="none">None</SelectItem>
@@ -373,7 +374,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 </FormItem>
             )}
         />
-        <FormField
+         <FormField
             control={control}
             name="paymentMethod"
             render={({ field }) => (
@@ -393,6 +394,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 </FormItem>
             )}
         />
+
         {(paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer') && (
             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
             <h3 className="font-semibold text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Payment Proof & Scanning</h3>
@@ -483,7 +485,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             <FormField control={control} name="paymentApp" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Payment App</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                             <SelectTrigger><SelectValue placeholder="Select payment app" /></SelectTrigger>
                         </FormControl>
@@ -504,21 +506,22 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             <FormField control={control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         )}
         
+        {paymentApp === 'Paytm' && (
+            <FormField control={control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        )}
+        
         {paymentApp === 'PhonePe' && (
             <>
                 <FormField control={control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                 <FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
             </>
-        )}
-        
-        {paymentApp === 'Paytm' && (
-            <FormField control={control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        )}
+         )}
        
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Participant Details</h3>
         <div className="space-y-4 rounded-lg border p-4">
             <h4 className="font-semibold">Sender</h4>
             <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+            <FormField control={control} name="senderPhone" render={({ field }) => (<FormItem><FormLabel>Sender Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
             <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
             <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
         </div>
