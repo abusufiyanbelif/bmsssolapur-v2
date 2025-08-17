@@ -19,6 +19,7 @@ import { PayNowFormValues } from "@/app/donate/page";
 import Image from "next/image";
 import { Download, Copy, Check, X, HandHeart } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { UpiPaymentDialog } from "./upi-payment-dialog";
 
 
 interface QrCodeDialogProps extends DialogProps {
@@ -31,6 +32,7 @@ export function QrCodeDialog({ open, onOpenChange, donationDetails, organization
     const router = useRouter();
     const [hasCopied, setHasCopied] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isUpiDialogOpen, setIsUpiDialogOpen] = useState(false);
 
     const upiLink = `upi://pay?pa=${organization.upiId}&pn=${encodeURIComponent(organization.name)}&am=${donationDetails.amount}&cu=INR&tn=Donation%20for%20${encodeURIComponent(donationDetails.purpose)}`;
 
@@ -93,50 +95,58 @@ export function QrCodeDialog({ open, onOpenChange, donationDetails, organization
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-            <DialogTitle>Scan to Pay or Use UPI App</DialogTitle>
-            <DialogDescription>
-                Use any UPI app to complete your donation of <span className="font-bold">₹{donationDetails.amount.toLocaleString()}</span>.
-            </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col items-center justify-center gap-4 py-4">
-                <div className="relative w-56 h-56">
-                    <Image
-                    src={organization.qrCodeUrl}
-                    alt="UPI QR Code"
-                    fill
-                    className="object-contain rounded-md"
-                    data-ai-hint="qr code"
-                    />
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                <DialogTitle>Scan to Pay or Use UPI App</DialogTitle>
+                <DialogDescription>
+                    Use any UPI app to complete your donation of <span className="font-bold">₹{donationDetails.amount.toLocaleString()}</span>.
+                </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col items-center justify-center gap-4 py-4">
+                    <div className="relative w-56 h-56">
+                        <Image
+                        src={organization.qrCodeUrl}
+                        alt="UPI QR Code"
+                        fill
+                        className="object-contain rounded-md"
+                        data-ai-hint="qr code"
+                        />
+                    </div>
+                    <div className="flex items-center w-full gap-2 rounded-lg bg-muted p-3">
+                        <p className="font-mono text-sm flex-grow overflow-x-auto whitespace-nowrap">{organization.upiId}</p>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleCopy}
+                            className="flex-shrink-0"
+                        >
+                            {hasCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                    </div>
                 </div>
-                <div className="flex items-center w-full gap-2 rounded-lg bg-muted p-3">
-                    <p className="font-mono text-sm flex-grow overflow-x-auto whitespace-nowrap">{organization.upiId}</p>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleCopy}
-                        className="flex-shrink-0"
-                    >
-                        {hasCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                <div className="flex flex-col gap-2">
+                    <Button onClick={() => setIsUpiDialogOpen(true)} className="w-full" size="lg">
+                        <HandHeart className="mr-2 h-4 w-4" />Pay with UPI App
+                    </Button>
+                    <Button variant="secondary" onClick={handleDownload} disabled={isDownloading}>
+                        <Download className="mr-2 h-4 w-4" /> Download QR
                     </Button>
                 </div>
-            </div>
-            <div className="flex flex-col gap-2">
-                 <Button asChild className="w-full" size="lg">
-                    <a href={upiLink}><HandHeart className="mr-2 h-4 w-4" />Pay with UPI</a>
-                 </Button>
-                <Button variant="secondary" onClick={handleDownload} disabled={isDownloading}>
-                    <Download className="mr-2 h-4 w-4" /> Download QR
-                </Button>
-            </div>
-            <DialogFooter className="mt-4">
-                <Button variant="outline" className="w-full" onClick={handleDonationComplete}>
-                   I have completed the payment
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-        </Dialog>
+                <DialogFooter className="mt-4">
+                    <Button variant="outline" className="w-full" onClick={handleDonationComplete}>
+                    I have completed the payment
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+            </Dialog>
+            
+            <UpiPaymentDialog
+                open={isUpiDialogOpen}
+                onOpenChange={setIsUpiDialogOpen}
+                upiLink={upiLink}
+            />
+        </>
     );
 }
