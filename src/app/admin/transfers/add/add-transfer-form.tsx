@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -73,6 +72,32 @@ const formSchema = z.object({
 
 type AddTransferFormValues = z.infer<typeof formSchema>;
 
+const initialFormValues: Partial<AddTransferFormValues> = {
+  amount: 0,
+  transactionDate: new Date(),
+  paymentMethod: 'Online (UPI/Card)',
+  recipientType: 'Beneficiary',
+  leadId: undefined,
+  campaignId: undefined,
+  recipientId: undefined,
+  transactionId: '',
+  utrNumber: '',
+  googlePayTransactionId: '',
+  phonePeTransactionId: '',
+  paytmUpiReferenceNo: '',
+  paymentApp: undefined,
+  proof: undefined,
+  notes: '',
+  senderName: '',
+  senderAccountNumber: '',
+  senderUpiId: '',
+  recipientName: '',
+  recipientAccountNumber: '',
+  recipientUpiId: '',
+  recipientPhone: '',
+  status: '',
+};
+
 interface AddTransferFormProps {
     leads: Lead[];
     campaigns: Campaign[];
@@ -99,12 +124,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
 
   const form = useForm<AddTransferFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      amount: 0,
-      transactionDate: new Date(),
-      paymentMethod: 'Online (UPI/Card)',
-      recipientType: 'Beneficiary',
-    },
+    defaultValues: initialFormValues,
   });
 
   const { watch, setValue, reset, control } = form;
@@ -115,6 +135,18 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   const selectedRecipientId = watch("recipientId");
 
   const selectedLead = leads.find(l => l.id === selectedLeadId);
+
+  const clearForm = () => {
+    reset(initialFormValues);
+    setFile(null);
+    setPreviewUrl(null);
+    setRawText(null);
+    setBeneficiaryDetails(null);
+    setRecipientDetails(null);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  };
   
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -482,9 +514,12 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
         <FormField control={control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
        
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Participant Details</h3>
-        <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-        <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        <div className="space-y-4 rounded-lg border p-4">
+            <h4 className="font-semibold">Sender</h4>
+            <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+            <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+            <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+        </div>
         
         <div className="space-y-4 rounded-lg border p-4">
              <h4 className="font-semibold">Recipient</h4>
@@ -585,6 +620,10 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 <X className="mr-2 h-4 w-4" />
                 Cancel
             </Button>
+             <Button type="button" variant="secondary" onClick={clearForm} disabled={isSubmitting}>
+                <XCircle className="mr-2 h-4 w-4" />
+                Clear Form
+            </Button>
         </div>
       </form>
     </Form>
@@ -598,3 +637,4 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
+
