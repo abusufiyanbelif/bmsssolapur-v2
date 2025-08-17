@@ -245,6 +245,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   
   // Fields for scanned details
   const googlePayId = watch('googlePayTransactionId');
+  const phonePeId = watch('phonePeTransactionId');
+  const utrNumber = watch('utrNumber');
   const scannedRecipientName = watch('recipientName');
   const scannedRecipientUpiId = watch('recipientUpiId');
 
@@ -807,7 +809,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
             )}
             
-            <h3 className="text-lg font-semibold border-b pb-2">Donation & Donor Details</h3>
+            <h3 className="text-lg font-semibold border-b pb-2">Donation Details</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
@@ -864,87 +866,86 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
             </div>
-             {isAdminView ? (
-                <FormField
-                    control={form.control}
-                    name="donorId"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Donor</FormLabel>
-                        <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                    "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value
-                                    ? donorUsers.find(
-                                        (user) => user.id === field.value
-                                    )?.name
-                                    : "Select a donor"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                                <CommandInput placeholder="Search donor..." />
-                                <CommandList>
-                                    <CommandEmpty>No donors found.</CommandEmpty>
-                                    <CommandGroup>
-                                    {donorUsers.map((user) => (
-                                        <CommandItem
-                                        value={user.name}
-                                        key={user.id}
-                                        onSelect={async () => {
-                                            field.onChange(user.id!);
-                                            const donor = await getUser(user.id!);
-                                            setSelectedDonor(donor);
-                                            setDonorPopoverOpen(false);
-                                        }}
-                                        >
-                                        <Check
-                                            className={cn(
-                                            "mr-2 h-4 w-4",
-                                            user.id === field.value
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                        />
-                                        {user.name} ({user.phone})
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-            ) : (
-                currentUser && (
-                    <div className="space-y-2">
-                        <FormLabel>Donor</FormLabel>
-                        <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-                            <UserIcon className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">{currentUser.name}</span>
-                        </div>
-                        <FormDescription>You are submitting this donation for your own profile.</FormDescription>
-                    </div>
-                )
-            )}
         
-            
             {showOnlineFields && (
                 <div className="space-y-4">
                     <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
+                     {isAdminView ? (
+                        <FormField
+                            control={form.control}
+                            name="donorId"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Donor</FormLabel>
+                                <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        className={cn(
+                                            "w-full justify-between",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value
+                                            ? donorUsers.find(
+                                                (user) => user.id === field.value
+                                            )?.name
+                                            : "Select a donor"}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Search donor..." />
+                                        <CommandList>
+                                            <CommandEmpty>No donors found.</CommandEmpty>
+                                            <CommandGroup>
+                                            {donorUsers.map((user) => (
+                                                <CommandItem
+                                                value={user.name}
+                                                key={user.id}
+                                                onSelect={async () => {
+                                                    field.onChange(user.id!);
+                                                    const donor = await getUser(user.id!);
+                                                    setSelectedDonor(donor);
+                                                    setDonorPopoverOpen(false);
+                                                }}
+                                                >
+                                                <Check
+                                                    className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    user.id === field.value
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
+                                                    )}
+                                                />
+                                                {user.name} ({user.phone})
+                                                </CommandItem>
+                                            ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                    ) : (
+                        currentUser && (
+                            <div className="space-y-2">
+                                <FormLabel>Donor</FormLabel>
+                                <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                                    <UserIcon className="h-5 w-5 text-muted-foreground" />
+                                    <span className="font-medium">{currentUser.name}</span>
+                                </div>
+                                <FormDescription>You are submitting this donation for your own profile.</FormDescription>
+                            </div>
+                        )
+                    )}
                      <FormField
                         control={form.control}
                         name="senderName"
@@ -1024,41 +1025,70 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             )}
                         />
                      )}
+                     {phonePeId && (
+                         <FormField
+                            control={form.control}
+                            name="phonePeTransactionId"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>PhonePe Transaction ID (from scan)</FormLabel>
+                                <FormControl>
+                                    <Input {...field} readOnly className="bg-muted/50" />
+                                </FormControl>
+                            </FormItem>
+                            )}
+                        />
+                     )}
+                     {utrNumber && (
+                         <FormField
+                            control={form.control}
+                            name="utrNumber"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>UTR Number (from scan)</FormLabel>
+                                <FormControl>
+                                    <Input {...field} readOnly className="bg-muted/50" />
+                                </FormControl>
+                            </FormItem>
+                            )}
+                        />
+                     )}
                      <div className="space-y-4 rounded-lg border p-4">
+                        {scannedRecipientName && (
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-background p-3 rounded-md">
+                                <FormField
+                                    control={form.control}
+                                    name="recipientName"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs">Scanned Recipient Name</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} readOnly className="bg-muted/50 h-8" />
+                                        </FormControl>
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="recipientUpiId"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs">Scanned Recipient UPI/Phone</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} readOnly className="bg-muted/50 h-8" />
+                                        </FormControl>
+                                    </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
                         <FormField
                             control={form.control}
                             name="recipientRole"
                             render={({ field }) => (
                             <FormItem className="space-y-3">
                                 <FormLabel>Recipient Type</FormLabel>
-                                 {scannedRecipientName && (
-                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-background p-3 rounded-md">
-                                        <FormField
-                                            control={form.control}
-                                            name="recipientName"
-                                            render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-xs">Scanned Recipient Name</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} readOnly className="bg-muted/50 h-8" />
-                                                </FormControl>
-                                            </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="recipientUpiId"
-                                            render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-xs">Scanned Recipient UPI</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} readOnly className="bg-muted/50 h-8" />
-                                                </FormControl>
-                                            </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                )}
+                                
                                 <FormControl>
                                 <RadioGroup
                                     onValueChange={(value: any) => {
