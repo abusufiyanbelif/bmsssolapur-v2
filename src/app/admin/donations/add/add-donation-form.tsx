@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,7 +39,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId } from "./actions";
+import { handleAddDonation, checkTransactionId, scanProof, getRawTextFromImage } from "./actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -404,7 +405,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     setIsExtractingText(true);
     const formData = new FormData();
     formData.append('imageFile', file);
-    const { getRawTextFromImage } = await import('@/ai/text-extraction-actions');
     const result = await getRawTextFromImage(formData);
     if(result.success && result.text) {
         setRawText(result.text);
@@ -447,7 +447,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     formData.append('proofFile', localFiles[0].file);
     
     try {
-      const { scanProof } = await import('@/ai/text-extraction-actions');
       const scanResult = await scanProof(formData);
       
       if (scanAbortController.current.signal.aborted) return;
@@ -1287,10 +1286,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                               variant="outline"
                               role="combobox"
                               disabled={!!linkedCampaignId && linkedCampaignId !== 'none'}
-                              className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                              )}
+                              className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
                             >
                               {field.value
                                 ? leads.find(
