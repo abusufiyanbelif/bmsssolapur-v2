@@ -61,11 +61,20 @@ export const createDonation = async (
     
     const donationRef = doc(db, DONATIONS_COLLECTION, customDonationId);
     
-    const newDonation: Donation = {
+    const newDonation: Partial<Donation> = {
         ...donation,
         id: donationRef.id,
         createdAt: Timestamp.now()
     };
+    
+    // Remove undefined fields to prevent Firestore errors
+    Object.keys(newDonation).forEach(key => {
+        const typedKey = key as keyof Donation;
+        if (newDonation[typedKey] === undefined) {
+            delete (newDonation as any)[typedKey];
+        }
+    });
+
     await setDoc(donationRef, newDonation);
     
     await logActivity({
@@ -83,7 +92,7 @@ export const createDonation = async (
         },
     });
 
-    return newDonation;
+    return newDonation as Donation;
   } catch (error) {
     console.error('Error creating donation: ', error);
     // Pass the specific error message up

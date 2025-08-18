@@ -53,7 +53,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
     // --- End Custom Lead ID Generation ---
 
-    const newLead: Lead = {
+    const newLead: Partial<Lead> = {
       id: leadRef.id,
       name: leadData.name!,
       beneficiaryId: leadData.beneficiaryId!,
@@ -96,7 +96,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     });
 
     await setDoc(leadRef, newLead);
-    return newLead;
+    return newLead as Lead;
   } catch (error) {
     console.error('Error creating lead: ', error);
     throw new Error('Failed to create lead in Firestore.');
