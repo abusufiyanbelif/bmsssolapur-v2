@@ -222,11 +222,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                <HeaderTitle />
                             </div>
                            {isSessionReady && (
-                             <Nav 
-                                userRoles={user.roles}
-                                activeRole={activeRole}
-                                onRoleSwitchRequired={handleOpenRoleSwitcher}
-                            />
+                             <div className="flex-1 overflow-y-auto">
+                                <Nav 
+                                    userRoles={user.roles}
+                                    activeRole={activeRole}
+                                    onRoleSwitchRequired={handleOpenRoleSwitcher}
+                                />
+                             </div>
                            )}
                         </SheetContent>
                     </Sheet>
