@@ -369,11 +369,11 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                          <Button 
                             type="button" 
                             onClick={form.handleSubmit(handlePayWithRazorpay)}
-                            disabled={isSubmitting || !isRazorpayLoaded}
+                            disabled={!isRazorpayLoaded || isSubmitting}
                             className="w-full" 
                             size="lg"
                         >
-                             {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                             {!isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
                             Pay with Razorpay (Card, Netbanking, etc.)
                         </Button>
                         <Button 
