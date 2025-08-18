@@ -67,31 +67,28 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    // Check for duplicate User ID
-    if (user.userId) {
-      const idExists = await getUserByUserId(user.userId);
-      if (idExists && idExists.id !== user.id) {
-        throw new Error(`A user with the ID '${user.userId}' already exists.`);
-      }
-    } else {
-        throw new Error("User ID is a mandatory field.");
+    const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
+    
+    // Use provided userId or generate one
+    const finalUserId = user.userId || `${user.firstName?.toLowerCase() || 'user'}.${user.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
+    const idExists = await getUserByUserId(finalUserId);
+    if (idExists && idExists.id !== userRef.id) {
+        throw new Error(`A user with the ID '${finalUserId}' already exists.`);
     }
 
     // Check for duplicate email if one is provided
     if (user.email) {
       const emailExists = await getUserByEmail(user.email);
-      if (emailExists && emailExists.id !== user.id) {
+      if (emailExists && emailExists.id !== userRef.id) {
           throw new Error(`A user with the email ${user.email} already exists.`);
       }
     }
     // Check for duplicate phone number
     const phoneExists = await getUserByPhone(user.phone);
-    if(phoneExists && phoneExists.id !== user.id) {
+    if(phoneExists && phoneExists.id !== userRef.id) {
         throw new Error(`A user with the phone number ${user.phone} already exists.`);
     }
 
-    const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(db, USERS_COLLECTION, user.userId);
-    
     // Use provided userKey or auto-generate one
     let userKey = user.userKey;
     if (!userKey) {
@@ -110,7 +107,7 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
     const finalUserData: User = { 
         userKey: userKey,
         name: user.name || `${user.firstName || ''} ${user.middleName || ''} ${user.lastName || ''}`.replace(/\s+/g, ' ').trim(),
-        userId: user.userId,
+        userId: finalUserId,
         firstName: user.firstName,
         middleName: user.middleName,
         lastName: user.lastName,

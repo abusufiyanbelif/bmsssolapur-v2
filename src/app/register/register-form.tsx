@@ -20,7 +20,6 @@ const formSchema = z.object({
   email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
-  userId: z.string().min(3, "User ID must be at least 3 characters."),
   bankAccountName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
@@ -43,7 +42,6 @@ export function RegisterForm() {
       email: "",
       phone: "",
       password: "",
-      userId: "",
       upiIds: [{ value: "" }],
     },
   });
@@ -53,26 +51,12 @@ export function RegisterForm() {
     name: "upiIds"
   });
 
-  const firstName = form.watch("firstName");
-  const lastName = form.watch("lastName");
-  
-  useEffect(() => {
-    if (firstName && lastName) {
-        const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
-        // Only set the value if the user hasn't typed in the userId field yet
-        if (!form.formState.dirtyFields.userId) {
-            form.setValue('userId', generatedUserId);
-        }
-    }
-  }, [firstName, lastName, form]);
-
   const onSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append("firstName", values.firstName);
     formData.append("lastName", values.lastName);
     if(values.email) formData.append("email", values.email);
-    if(values.userId) formData.append("userId", values.userId);
     formData.append("phone", values.phone);
     formData.append("password", values.password);
     if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
@@ -136,19 +120,6 @@ export function RegisterForm() {
             )}
             />
         </div>
-         <FormField
-          control={form.control}
-          name="userId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>User ID</FormLabel>
-              <FormControl>
-                <Input type="text" placeholder="Create a custom user ID" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="email"

@@ -22,10 +22,9 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const phone = formData.get("phone") as string;
-  const userId = formData.get("userId") as string;
 
-  if (!firstName || !lastName || !phone || !password || !userId) {
-    return { success: false, error: "First Name, Last Name, User ID, Phone, and Password are required." };
+  if (!firstName || !lastName || !phone || !password) {
+    return { success: false, error: "First Name, Last Name, Phone, and Password are required." };
   }
    if (password.length < 6) {
     return { success: false, error: "Password must be at least 6 characters long." };
@@ -58,7 +57,6 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       email: email || undefined,
       phone,
       password,
-      userId: userId || undefined,
       roles: ["Donor"], // Default role for new registrations
       isActive: true, // New users are active by default
       createdAt: Timestamp.now(),
