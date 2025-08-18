@@ -1,47 +1,87 @@
 
-import { getOpenGeneralLeads, EnrichedLead, getAllCampaigns } from "@/app/campaigns/actions";
-import { getRandomQuotes } from "@/services/quotes-service";
-import type { Quote, Campaign } from "@/services/types";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+    MainMetricsCard, 
+    TopDonorsCard,
+    RecentCampaignsCard
+} from "./admin/dashboard-cards";
+import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
+import { DonationsChart } from "./admin/donations-chart";
 import { getAllDonations } from "@/services/donation-service";
-import { getAllLeads } from "@/services/lead-service";
-import { PublicHomePage } from "@/app/home/public-home-page";
+import { PublicHomePage } from "./home/public-home-page";
 
 
-async function getHomePageData() {
-    try {
-        const [
-            leads,
-            randomQuotes,
-            donations,
-            allLeadsData,
-            campaigns,
-        ] = await Promise.all([
-            getOpenGeneralLeads(),
-            getRandomQuotes(3),
-            getAllDonations(),
-            getAllLeads(),
-            getAllCampaigns(),
-        ]);
-        return { leads, randomQuotes, donations, allLeadsData, campaigns, error: null };
-    } catch (e) {
-        console.error("Failed to load page data:", e);
-        const error = e instanceof Error ? e.message : "An unknown error occurred.";
-        return { leads: [], randomQuotes: [], donations: [], allLeadsData: [], campaigns: [], error };
-    }
-}
+const CardSkeleton = () => (
+    <Card>
+        <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
+        <CardContent>
+            <Skeleton className="h-10 w-full" />
+        </CardContent>
+    </Card>
+);
+
+const ChartSkeleton = () => (
+     <Card className="col-span-4">
+        <CardHeader>
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
+        </CardHeader>
+        <CardContent>
+            <Skeleton className="h-[350px] w-full" />
+        </CardContent>
+    </Card>
+);
+
+const TableSkeleton = () => (
+    <Card>
+        <CardHeader>
+             <Skeleton className="h-6 w-1/4" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+        </CardContent>
+    </Card>
+)
 
 
 export default async function Page() {
-  const { leads, randomQuotes, donations, allLeadsData, campaigns, error } = await getHomePageData();
+    const allDonations = await getAllDonations();
 
-  return (
-    <PublicHomePage
-      initialLeads={leads}
-      initialQuotes={randomQuotes}
-      initialDonations={donations}
-      initialAllLeads={allLeadsData}
-      initialCampaigns={campaigns}
-      error={error}
-    />
-  );
+    return (
+        <div className="flex-1 space-y-8">
+            <PublicHomePage />
+
+            <div className="space-y-4">
+                <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
+                    <MainMetricsCard />
+                </Suspense>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <Suspense fallback={<CardSkeleton />}><BeneficiaryBreakdownCard isAdmin={false} /></Suspense>
+                    <Suspense fallback={<CardSkeleton />}><CampaignBreakdownCard /></Suspense>
+                    <Suspense fallback={<CardSkeleton />}><DonationTypeCard /></Suspense>
+                </div>
+            
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                    <Suspense fallback={<ChartSkeleton />}>
+                        <DonationsChart donations={allDonations} />
+                    </Suspense>
+                    <Suspense fallback={<CardSkeleton />}>
+                        <TopDonorsCard />
+                    </Suspense>
+                </div>
+
+                <Suspense fallback={<TableSkeleton />}>
+                    <RecentCampaignsCard />
+                </Suspense>
+            </div>
+        </div>
+    );
 }

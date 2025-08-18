@@ -4,16 +4,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users, TrendingUp, Megaphone, Eye } from "lucide-react";
-import { EnrichedLead } from "@/app/campaigns/actions";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon } from "lucide-react";
+import { EnrichedLead, getOpenGeneralLeads } from "@/app/campaigns/actions";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import type { Lead, Quote, Campaign, Donation } from "@/services/types";
-import { Progress } from "@/components/ui/progress";
+import type { Quote } from "@/services/types";
+import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { useRouter } from 'next/navigation';
+import { getRandomQuotes } from "@/services/quotes-service";
 
 function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
     if (loading) {
@@ -58,73 +56,33 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
     );
 }
 
-interface PublicHomePageProps {
-    initialLeads: EnrichedLead[];
-    initialQuotes: Quote[];
-    initialDonations: Donation[];
-    initialAllLeads: Lead[];
-    initialCampaigns: (Campaign & { raisedAmount: number, fundingProgress: number })[];
-    error: string | null;
-}
-
-export function PublicHomePage({ 
-    initialLeads, 
-    initialQuotes,
-    initialDonations,
-    initialAllLeads,
-    initialCampaigns,
-    error 
-}: PublicHomePageProps) {
+export function PublicHomePage() {
   const router = useRouter();
-
-  const {
-    totalRaised,
-    totalDistributed,
-    beneficiariesHelpedCount,
-    casesClosed,
-    casesPublished
-  } = useMemo(() => {
-    const totalRaised = initialDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
-    const totalDistributed = initialAllLeads.reduce((acc, l) => acc + l.helpGiven, 0);
-    const helpedBeneficiaryIds = new Set(initialAllLeads.map(l => l.beneficiaryId));
-    const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
-    const casesClosed = initialAllLeads.filter(l => l.status === 'Closed').length;
-    const casesPublished = initialAllLeads.filter(l => l.status === 'Publish').length;
-    return { totalRaised, totalDistributed, beneficiariesHelpedCount, casesClosed, casesPublished };
-  }, [initialDonations, initialAllLeads]);
-
-  const mainMetrics = [
-    { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/public-leads" },
-    { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/public-leads" },
-    { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, href: "/public-leads" },
-    { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
-    { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, href: "/public-leads" },
-  ];
+  const [leads, setLeads] = useState<EnrichedLead[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(true);
+  const [quotesLoading, setQuotesLoading] = useState(true);
   
-  const activeAndUpcomingCampaigns = useMemo(() => {
-      return initialCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming');
-  }, [initialCampaigns]);
+  useEffect(() => {
+      const fetchData = async () => {
+          setLeadsLoading(true);
+          const fetchedLeads = await getOpenGeneralLeads();
+          setLeads(fetchedLeads);
+          setLeadsLoading(false);
+      };
+      const fetchQuotes = async () => {
+          setQuotesLoading(true);
+          const fetchedQuotes = await getRandomQuotes(3);
+          setQuotes(fetchedQuotes);
+          setQuotesLoading(false);
+      }
+      fetchData();
+      fetchQuotes();
+  }, []);
 
-
-  const campaignStatusColors: Record<string, string> = {
-    "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
-    "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-  };
-  
   const handleDonateClick = () => {
-    // This will redirect to login, and the login page should handle redirecting back to /donate
     sessionStorage.setItem('redirectAfterLogin', '/donate');
     router.push('/login');
-  }
-
-   if (error) {
-    return (
-      <Alert variant="destructive" className="max-w-2xl mx-auto">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
   }
 
   return (
@@ -146,24 +104,7 @@ export function PublicHomePage({
         </CardContent>
       </Card>
       
-      <InspirationalQuotes quotes={initialQuotes} loading={false} />
-
-      {/* Impact Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {mainMetrics.map((metric) => (
-              <Link href={metric.href} key={metric.title}>
-                <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                        <metric.icon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{metric.value}</div>
-                    </CardContent>
-                </Card>
-              </Link>
-          ))}
-      </div>
+      <InspirationalQuotes quotes={quotes} loading={quotesLoading} />
 
       {/* Open Cases */}
       <Card>
@@ -172,9 +113,11 @@ export function PublicHomePage({
               <CardDescription>These are verified, individual cases that need your direct support right now.</CardDescription>
           </CardHeader>
           <CardContent>
-              {initialLeads.length > 0 ? (
+              {leadsLoading ? (
+                  <div className="flex justify-center items-center h-40"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>
+              ) : leads.length > 0 ? (
                   <div className="space-y-4">
-                      {initialLeads.slice(0, 3).map(lead => {
+                      {leads.slice(0, 3).map(lead => {
                           const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
                           const remainingAmount = lead.helpRequested - lead.helpGiven;
                           return (
@@ -203,7 +146,7 @@ export function PublicHomePage({
                   </div>
               )}
           </CardContent>
-          {initialLeads.length > 0 && (
+          {leads.length > 0 && (
               <CardFooter>
                   <Button asChild variant="secondary" className="w-full">
                       <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
@@ -211,47 +154,6 @@ export function PublicHomePage({
               </CardFooter>
           )}
       </Card>
-      
-       {/* Campaigns */}
-       {activeAndUpcomingCampaigns.length > 0 && (
-         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Megaphone className="text-primary"/>
-                    Active Campaigns
-                </CardTitle>
-                <CardDescription>
-                    These are our focused fundraising drives for specific, large-scale projects.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {activeAndUpcomingCampaigns.slice(0,3).map((campaign) => (
-                    <Card key={campaign.id} className="flex flex-col">
-                        <CardHeader>
-                            <div className="flex justify-between items-start gap-4">
-                                <CardTitle>{campaign.name}</CardTitle>
-                                 <Badge variant="outline" className={cn("capitalize flex-shrink-0", campaignStatusColors[campaign.status])}>
-                                    {campaign.status}
-                                </Badge>
-                            </div>
-                            <CardDescription>
-                                Goal: <span className="font-bold text-foreground">₹{campaign.goal.toLocaleString()}</span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                             <p className="text-sm text-muted-foreground line-clamp-2">{campaign.description || "No details provided."}</p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button className="w-full" asChild><Link href={`/donate?campaignId=${campaign.id}`}>Support this Campaign</Link></Button>
-                        </CardFooter>
-                    </Card>
-                ))}
-            </CardContent>
-             <CardFooter>
-                <Button variant="secondary" className="w-full" asChild><Link href="/campaigns">View All Campaigns <ArrowRight className="ml-2" /></Link></Button>
-            </CardFooter>
-        </Card>
-       )}
     </div>
   );
 }
