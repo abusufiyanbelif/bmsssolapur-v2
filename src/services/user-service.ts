@@ -31,7 +31,9 @@ export { updateLead } from './lead-service';
 
 // Helper to remove duplicates from an array
 const getUniqueRoles = (roles: UserRole[] = []): UserRole[] => {
-    return [...new Set(roles)];
+    // This handles cases where roles might be null or undefined, and ensures uniqueness
+    if (!Array.isArray(roles)) return [];
+    return [...new Set(roles.filter(Boolean))];
 }
 
 // Function to get a user by their custom userId field

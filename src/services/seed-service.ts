@@ -215,6 +215,7 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
         throw new Error("Firebase is not configured. Cannot seed users.");
     }
     const results: SeedItemResult[] = [];
+    const batch = writeBatch(db);
 
     for (const userData of users) {
         if (userData.roles.includes('Super Admin') || userData.userId === 'admin') {
@@ -223,38 +224,34 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
 
         let existingUser: User | null = null;
         
-        // Prioritize checking by a unique, non-optional field if available
-        if (userData.userId) {
-            existingUser = await getUserByUserId(userData.userId);
-        }
-        if (!existingUser && userData.email) {
-            existingUser = await getUserByEmail(userData.email);
-        }
-        if (!existingUser && userData.phone) {
+        if (userData.phone) {
             existingUser = await getUserByPhone(userData.phone);
         }
         
         if (existingUser) {
-             // Merge roles and remove duplicates
+            const userRef = doc(db, USERS_COLLECTION, existingUser.id!);
             const updatedRoles = [...new Set([...(existingUser.roles || []), ...userData.roles])];
             const updatedGroups = [...new Set([...(existingUser.groups || []), ...(userData.groups || [])])];
-
-            await updateUser(existingUser.id!, {...userData, roles: updatedRoles, groups: updatedGroups});
+            batch.update(userRef, { ...userData, roles: updatedRoles, groups: updatedGroups });
             results.push({ name: userData.name, status: 'Updated' });
         } else {
-            if (!userData.userId) {
-                console.warn(`Skipping user "${userData.name}" due to missing userId.`);
-                results.push({ name: userData.name, status: 'Failed' });
-                continue;
-            }
-            await createUser({
+            // This path is for creating a brand new user
+            const userRef = doc(collection(db, USERS_COLLECTION));
+            const userKey = `USR${(await getCountFromServer(collection(db, USERS_COLLECTION))).data().count() + results.length + 1}`;
+            const userId = userData.userId || `${userData.firstName?.toLowerCase()}.${userData.lastName?.toLowerCase()}`.replace(/\s+/g, '');
+            const finalUserData = {
                 ...userData,
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now()
-            });
+                id: userRef.id,
+                userKey,
+                userId,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            };
+            batch.set(userRef, finalUserData);
             results.push({ name: userData.name, status: 'Created' });
         }
     }
+    await batch.commit();
     return results;
 };
 
