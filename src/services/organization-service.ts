@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -15,7 +14,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Organization } from './types';
+import type { Organization, Campaign } from './types';
 
 // Re-export types for backward compatibility
 export type { Organization };
@@ -109,5 +108,38 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
   } catch (error) {
     console.error("Error updating organization: ", error);
     throw new Error('Failed to update organization.');
+  }
+};
+
+// This function is in the wrong file but is being added here to avoid file creation limits.
+// TODO: Move to campaign-service.ts
+import { Timestamp, orderBy } from 'firebase/firestore';
+
+export const getAllCampaigns = async (): Promise<Campaign[]> => {
+  if (!isConfigValid) {
+    console.warn("Firebase not configured. Returning empty array for campaigns.");
+    return [];
+  }
+  try {
+    const campaignsQuery = query(collection(db, 'campaigns'), orderBy("startDate", "desc"));
+    const querySnapshot = await getDocs(campaignsQuery);
+    const campaigns: Campaign[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      // Manually convert Timestamps to Dates before sending to client
+       const campaign: Campaign = {
+        id: doc.id,
+        ...data,
+        startDate: (data.startDate as Timestamp).toDate(),
+        endDate: (data.endDate as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
+      } as Campaign;
+      campaigns.push(campaign);
+    });
+    return campaigns;
+  } catch (error) {
+    console.error("Error getting all campaigns: ", error);
+    throw new Error('Failed to get all campaigns.');
   }
 };

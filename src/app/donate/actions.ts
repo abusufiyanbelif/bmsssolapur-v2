@@ -1,4 +1,3 @@
-
 // src/app/donate/actions.ts
 "use server";
 
@@ -47,8 +46,8 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
         purpose: formData.purpose,
         status: "Pending verification", // Initial status
         notes: `Donation initiated via QR/UPI. Waiting for user to complete payment. User notes: ${formData.notes || 'N/A'}`,
-        leadId: formData.leadId,
-        campaignId: formData.campaignId,
+        leadId: formData.leadId || undefined,
+        campaignId: formData.campaignId || undefined,
         donationDate: Timestamp.now(), // Tentative date
     };
     
