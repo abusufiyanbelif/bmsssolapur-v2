@@ -1,4 +1,5 @@
 
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -218,7 +219,23 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             },
             theme: {
                 color: '#3399cc'
-            }
+            },
+            config: {
+                display: {
+                    blocks: {
+                        banks: {
+                            name: 'Pay with UPI',
+                            instruments: [
+                                { method: 'upi' }
+                            ],
+                        },
+                    },
+                    sequence: ['block.banks'],
+                    preferences: {
+                        show_default_blocks: true,
+                    },
+                },
+            },
         };
 
         const rzp = new (window as any).Razorpay(options);
