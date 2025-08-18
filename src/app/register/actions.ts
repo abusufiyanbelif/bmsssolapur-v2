@@ -50,7 +50,7 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       return { success: false, error: "A user with this phone number already exists. Please login instead." };
     }
 
-    const newUser: Omit<User, 'id'> = {
+    const newUser: Omit<User, 'id' | 'createdAt' | 'userKey'> = {
       name: `${firstName} ${lastName}`.trim(),
       firstName,
       lastName,
@@ -59,7 +59,6 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       password,
       roles: ["Donor"], // Default role for new registrations
       isActive: true, // New users are active by default
-      createdAt: Timestamp.now(),
       gender: 'Other',
       bankAccountName: formData.get("bankAccountName") as string || undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string || undefined,

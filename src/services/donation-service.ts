@@ -48,7 +48,7 @@ export const createDonation = async (
   try {
     const donorUser = await getUser(donation.donorId);
     if (!donorUser || !donorUser.userKey) {
-        throw new Error("Cannot create donation. The selected donor does not have a UserKey.");
+        throw new Error(`Cannot create donation. The selected donor ("${donation.donorName}") does not have a valid UserKey. Please ensure the user profile is complete.`);
     }
     
     const donationsCollection = collection(db, DONATIONS_COLLECTION);

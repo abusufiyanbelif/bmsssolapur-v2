@@ -64,7 +64,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 
 
 // Function to create or update a user
-export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
+export const createUser = async (user: Omit<User, 'id' | 'createdAt' | 'userKey'> & { id?: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
@@ -89,14 +89,11 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         throw new Error(`A user with the phone number ${user.phone} already exists.`);
     }
 
-    // Use provided userKey or auto-generate one
-    let userKey = user.userKey;
-    if (!userKey) {
-        const usersCollection = collection(db, USERS_COLLECTION);
-        const countSnapshot = await getCountFromServer(usersCollection);
-        const userNumber = countSnapshot.data().count + 1;
-        userKey = `USR${userNumber.toString().padStart(2, '0')}`;
-    }
+    // Auto-generate a new userKey. This is now the single source of truth.
+    const usersCollection = collection(db, USERS_COLLECTION);
+    const countSnapshot = await getCountFromServer(usersCollection);
+    const userNumber = countSnapshot.data().count + 1;
+    const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
 
 
     // Always generate an anonymous ID for every user upon creation
@@ -148,8 +145,8 @@ export const createUser = async (user: Omit<User, 'id'> & { id?: string }) => {
         monthlyPledgeEnabled: user.monthlyPledgeEnabled || false,
         monthlyPledgeAmount: user.monthlyPledgeAmount || 0,
         id: userRef.id,
-        createdAt: user.createdAt || Timestamp.now(),
-        updatedAt: user.updatedAt || Timestamp.now(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
     };
 
     // Remove undefined fields to prevent Firestore errors
