@@ -213,18 +213,23 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             config: {
                 display: {
                     blocks: {
-                        banks: {
-                            name: 'Pay with UPI / Cards / Netbanking',
+                        upi: {
+                            name: "Pay with UPI",
                             instruments: [
-                                { method: 'upi' },
-                                { method: 'card' },
-                                { method: 'netbanking' }
+                                { method: "upi" },
                             ],
                         },
+                        cards: {
+                            name: "Pay with Card",
+                            instruments: [
+                                { method: "card" },
+                                { method: "netbanking" },
+                            ]
+                        }
                     },
-                    sequence: ['block.banks'],
+                    sequence: ["block.upi", "block.cards"],
                     preferences: {
-                        show_default_blocks: true,
+                        show_default_blocks: false,
                     },
                 },
             },
@@ -386,12 +391,12 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                     <div className="flex flex-col gap-4">
                          <Button 
                             type="button" 
-                            onClick={() => handlePayWithRazorpay(form.getValues())}
-                            disabled={isSubmitting || !isRazorpayLoaded} 
+                            onClick={form.handleSubmit(handlePayWithRazorpay)}
+                            disabled={isSubmitting || !isRazorpayLoaded}
                             className="w-full" 
                             size="lg"
                         >
-                             {!isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                             {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
                             Pay with Razorpay (Card, Netbanking, etc.)
                         </Button>
                         <Button 
