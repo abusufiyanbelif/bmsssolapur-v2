@@ -91,7 +91,9 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         document.body.appendChild(script);
 
         return () => {
-            document.body.removeChild(script);
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
         };
     }, []);
 
@@ -224,9 +226,11 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                 display: {
                     blocks: {
                         banks: {
-                            name: 'Pay with UPI',
+                            name: 'Pay with UPI / Cards / Netbanking',
                             instruments: [
-                                { method: 'upi' }
+                                { method: 'upi' },
+                                { method: 'card' },
+                                { method: 'netbanking' }
                             ],
                         },
                     },
@@ -399,13 +403,13 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                             className="w-full" 
                             size="lg"
                         >
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                             {!isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
                             Pay with Razorpay (Card, Netbanking, etc.)
                         </Button>
                         <Button 
                             type={!user ? "button" : "submit"} 
                             onClick={!user ? handleLoginRedirect : undefined}
-                            disabled={isSubmitting} 
+                            disabled={isSubmitting || (razorpayKeyId && !isRazorpayLoaded)} 
                             className="w-full" 
                             size="lg"
                             variant="secondary"
@@ -495,7 +499,7 @@ function UploadProofSection({ user }: { user: User | null }) {
                  toast({ variant: 'destructive', title: "Error preparing screenshot" });
             }
             
-            router.push(`/donate/confirm?${queryParams.toString()}`);
+            router.push(`/admin/donations/add?${queryParams.toString()}`);
 
         } else {
              toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "An unknown error occurred." });
