@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Organization } from "@/services/types";
 import { PayNowFormValues } from "@/app/donate/page";
 import Image from "next/image";
-import { Download, Copy, Check, X, HandHeart } from "lucide-react";
+import { Download, Copy, Check, X, HandHeart, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { UpiPaymentDialog } from "./upi-payment-dialog";
 
@@ -40,9 +40,10 @@ export function QrCodeDialog({ open, onOpenChange, donationDetails, organization
         if (!organization.qrCodeUrl) return;
         setIsDownloading(true);
         try {
-            const response = await fetch(`/api/download-image?url=${encodeURIComponent(organization.qrCodeUrl)}`);
-            if (!response.ok) throw new Error('Failed to download image from server.');
-            
+            const response = await fetch(organization.qrCodeUrl);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch QR code: ${response.statusText}`);
+            }
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -55,7 +56,7 @@ export function QrCodeDialog({ open, onOpenChange, donationDetails, organization
             
             toast({ title: "Download Started", description: "The QR code image is being downloaded." });
         } catch (error) {
-            toast({ variant: "destructive", title: "Download Failed", description: "Could not download the QR code image." });
+            toast({ variant: "destructive", title: "Download Failed", description: "Could not download the QR code image. Please try again or right-click to save." });
         } finally {
             setIsDownloading(false);
         }
@@ -131,7 +132,8 @@ export function QrCodeDialog({ open, onOpenChange, donationDetails, organization
                         <HandHeart className="mr-2 h-4 w-4" />Pay with UPI App
                     </Button>
                     <Button variant="secondary" onClick={handleDownload} disabled={isDownloading}>
-                        <Download className="mr-2 h-4 w-4" /> Download QR
+                        {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Download className="mr-2 h-4 w-4" />}
+                         Download QR
                     </Button>
                 </div>
                 <DialogFooter className="mt-4">

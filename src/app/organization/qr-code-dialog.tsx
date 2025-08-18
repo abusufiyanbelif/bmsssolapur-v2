@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Download, Copy, Check, X } from "lucide-react";
+import { Download, Copy, Check, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
@@ -37,13 +37,10 @@ export function QrCodeDialog({
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      // Use the new API route to download the image
-      const response = await fetch(`/api/download-image?url=${encodeURIComponent(qrCodeUrl)}`);
-
+      const response = await fetch(qrCodeUrl);
       if (!response.ok) {
-        throw new Error('Failed to download image from server.');
+        throw new Error(`Failed to fetch QR code: ${response.statusText}`);
       }
-      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -53,7 +50,7 @@ export function QrCodeDialog({
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
-      
+
       toast({
         title: "Download Started",
         description: "The QR code image is being downloaded.",
@@ -63,7 +60,7 @@ export function QrCodeDialog({
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: "Could not download the QR code image.",
+        description: "Could not download the QR code image. Please try again or right-click to save.",
       });
     } finally {
         setIsDownloading(false);
@@ -114,7 +111,8 @@ export function QrCodeDialog({
         </div>
         <DialogFooter className="grid grid-cols-2 gap-2">
             <Button variant="secondary" onClick={handleDownload} disabled={isDownloading}>
-                <Download className="mr-2 h-4 w-4" /> Download
+                {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Download className="mr-2 h-4 w-4" />}
+                 Download
             </Button>
             <DialogClose asChild>
                 <Button variant="outline">
