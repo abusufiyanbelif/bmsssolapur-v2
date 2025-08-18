@@ -22,6 +22,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'assets.dev.braze.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   env: {
