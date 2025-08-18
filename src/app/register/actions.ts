@@ -2,7 +2,7 @@
 
 "use server";
 
-import { getUserByEmail, getUserByPhone, createUser, User } from '@/services/user-service';
+import { createUser, User } from '@/services/user-service';
 import { isConfigValid } from '@/services/firebase';
 import { Timestamp } from 'firebase/firestore';
 
@@ -38,19 +38,7 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
 
 
   try {
-    // Check if user already exists
-    if (email) {
-        const existingUserByEmail = await getUserByEmail(email);
-        if (existingUserByEmail) {
-        return { success: false, error: "A user with this email address already exists. Please login instead." };
-        }
-    }
-     const existingPhone = await getUserByPhone(phone);
-    if (existingPhone) {
-      return { success: false, error: "A user with this phone number already exists. Please login instead." };
-    }
-
-    const newUser: Omit<User, 'id' | 'createdAt' | 'userKey'> = {
+    const newUser: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> = {
       name: `${firstName} ${lastName}`.trim(),
       firstName,
       lastName,
@@ -58,13 +46,14 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       phone,
       password,
       roles: ["Donor"], // Default role for new registrations
-      isActive: true, // New users are active by default
+      isActive: true,
       gender: 'Other',
       bankAccountName: formData.get("bankAccountName") as string || undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string || undefined,
       bankIfscCode: formData.get("bankIfscCode") as string || undefined,
       upiPhone: formData.get("upiPhone") as string || undefined,
       upiIds: (formData.getAll("upiIds") as string[]).filter(id => id.trim() !== ''),
+      source: 'Manual Entry'
     };
 
     const createdUser = await createUser(newUser);

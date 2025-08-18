@@ -64,112 +64,111 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 
 
 // Function to create or update a user
-export const createUser = async (user: Omit<User, 'id' | 'createdAt' | 'userKey'> & { id?: string }) => {
+export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
+  
   try {
-    const userRef = user.id ? doc(db, USERS_COLLECTION, user.id) : doc(collection(db, USERS_COLLECTION));
+    const userRef = doc(collection(db, USERS_COLLECTION));
     
-    // Use provided userId or generate one
-    const finalUserId = user.userId || `${user.firstName?.toLowerCase() || 'user'}.${user.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
-    const idExists = await getUserByUserId(finalUserId);
-    if (idExists && idExists.id !== userRef.id) {
-        throw new Error(`A user with the ID '${finalUserId}' already exists.`);
-    }
-
     // Check for duplicate email if one is provided
-    if (user.email) {
-      const emailExists = await getUserByEmail(user.email);
-      if (emailExists && emailExists.id !== userRef.id) {
-          throw new Error(`A user with the email ${user.email} already exists.`);
+    if (userData.email) {
+      const emailExists = await getUserByEmail(userData.email);
+      if (emailExists) {
+          throw new Error(`A user with the email ${userData.email} already exists.`);
       }
     }
     // Check for duplicate phone number
-    const phoneExists = await getUserByPhone(user.phone);
-    if(phoneExists && phoneExists.id !== userRef.id) {
-        throw new Error(`A user with the phone number ${user.phone} already exists.`);
+    const phoneExists = await getUserByPhone(userData.phone!);
+    if(phoneExists) {
+        throw new Error(`A user with the phone number ${userData.phone} already exists.`);
+    }
+    
+    // Generate a unique userId if not provided
+    let finalUserId = userData.userId;
+    if (!finalUserId) {
+        finalUserId = `${userData.firstName?.toLowerCase() || 'user'}.${userData.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
+        const idExists = await getUserByUserId(finalUserId);
+        if (idExists) {
+           finalUserId = `${finalUserId}${Date.now().toString().slice(-4)}`;
+        }
     }
 
-    // Auto-generate a new userKey. This is now the single source of truth.
+    // Generate a new userKey.
     const usersCollection = collection(db, USERS_COLLECTION);
     const countSnapshot = await getCountFromServer(usersCollection);
     const userNumber = countSnapshot.data().count + 1;
     const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
 
+    // Always generate anonymous IDs
+    const anonymousBeneficiaryId = `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
+    const anonymousDonorId = `Donor-${userRef.id.substring(0, 6).toUpperCase()}`;
 
-    // Always generate an anonymous ID for every user upon creation
-    const anonymousBeneficiaryId = user.anonymousBeneficiaryId || `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
-    const anonymousDonorId = user.anonymousDonorId || `Donor-${userRef.id.substring(0, 6).toUpperCase()}`;
-
-    // Ensure createdAt is a Firestore Timestamp
-    const finalUserData: User = { 
+    const newUser: User = { 
+        id: userRef.id,
         userKey: userKey,
-        name: user.name || `${user.firstName || ''} ${user.middleName || ''} ${user.lastName || ''}`.replace(/\s+/g, ' ').trim(),
+        name: userData.name || `${userData.firstName || ''} ${userData.middleName || ''} ${userData.lastName || ''}`.replace(/\s+/g, ' ').trim(),
         userId: finalUserId,
-        firstName: user.firstName,
-        middleName: user.middleName,
-        lastName: user.lastName,
-        email: user.email,
-        phone: user.phone,
-        password: user.password,
-        isActive: user.isActive,
+        firstName: userData.firstName!,
+        middleName: userData.middleName,
+        lastName: userData.lastName!,
+        email: userData.email,
+        phone: userData.phone!,
+        password: userData.password,
+        isActive: userData.isActive !== undefined ? userData.isActive : true,
         address: {
-            addressLine1: user.address?.addressLine1 || '',
-            city: user.address?.city || 'Solapur',
-            state: user.address?.state || 'Maharashtra',
-            country: user.address?.country || 'India',
-            pincode: user.address?.pincode || '',
+            addressLine1: userData.address?.addressLine1 || '',
+            city: userData.address?.city || 'Solapur',
+            state: userData.address?.state || 'Maharashtra',
+            country: userData.address?.country || 'India',
+            pincode: userData.address?.pincode || '',
         },
-        gender: user.gender,
-        beneficiaryType: user.beneficiaryType,
-        isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
-        isAnonymousAsDonor: user.isAnonymousAsDonor || false,
+        gender: userData.gender || 'Other',
+        beneficiaryType: userData.beneficiaryType,
+        isAnonymousAsBeneficiary: userData.isAnonymousAsBeneficiary || false,
+        isAnonymousAsDonor: userData.isAnonymousAsDonor || false,
         anonymousBeneficiaryId,
         anonymousDonorId,
-        occupation: user.occupation,
-        familyMembers: user.familyMembers,
-        isWidow: user.isWidow,
-        secondaryPhone: user.secondaryPhone,
-        aadhaarNumber: user.aadhaarNumber,
-        panNumber: user.panNumber,
-        bankAccountName: user.bankAccountName || '',
-        bankAccountNumber: user.bankAccountNumber || '',
-        bankIfscCode: user.bankIfscCode || '',
-        upiPhone: user.upiPhone || '',
-        upiIds: user.upiIds || [],
-        roles: getUniqueRoles(user.roles || []),
-        privileges: user.privileges || [],
-        groups: user.groups || [],
-        referredByUserId: user.referredByUserId,
-        referredByUserName: user.referredByUserName,
-        enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
-        monthlyPledgeEnabled: user.monthlyPledgeEnabled || false,
-        monthlyPledgeAmount: user.monthlyPledgeAmount || 0,
-        id: userRef.id,
+        occupation: userData.occupation,
+        familyMembers: userData.familyMembers,
+        isWidow: userData.isWidow,
+        secondaryPhone: userData.secondaryPhone,
+        aadhaarNumber: userData.aadhaarNumber,
+        panNumber: userData.panNumber,
+        bankAccountName: userData.bankAccountName,
+        bankAccountNumber: userData.bankAccountNumber,
+        bankIfscCode: userData.bankIfscCode,
+        upiPhone: userData.upiPhone,
+        upiIds: userData.upiIds || [],
+        roles: getUniqueRoles(userData.roles || ['Donor']),
+        privileges: userData.privileges || [],
+        groups: userData.groups || [],
+        referredByUserId: userData.referredByUserId,
+        referredByUserName: userData.referredByUserName,
+        enableMonthlyDonationReminder: userData.enableMonthlyDonationReminder || false,
+        monthlyPledgeEnabled: userData.monthlyPledgeEnabled || false,
+        monthlyPledgeAmount: userData.monthlyPledgeAmount || 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
+        source: userData.source || 'Manual Entry',
     };
 
     // Remove undefined fields to prevent Firestore errors
-    Object.keys(finalUserData).forEach(key => {
+    Object.keys(newUser).forEach(key => {
         const typedKey = key as keyof User;
-        if (finalUserData[typedKey] === undefined) {
-            delete (finalUserData as any)[typedKey];
+        if ((newUser as any)[typedKey] === undefined) {
+            delete (newUser as any)[typedKey];
         }
     });
 
-    await setDoc(userRef, finalUserData, { merge: true }); // Use merge to avoid overwriting on OAuth creation
-    
-    // Fetch the potentially merged document to return the full user object
-    const savedUserDoc = await getDoc(userRef);
-    return { id: savedUserDoc.id, ...savedUserDoc.data() } as User;
+    await setDoc(userRef, newUser);
+    return newUser;
 
   } catch (error) {
     console.error('Error creating user: ', error);
-    // Re-throw the specific error message for the client to handle
     if (error instanceof Error) {
         throw error;
     }
-    throw new Error('Failed to create user.');
+    throw new Error('An unknown error occurred while creating the user.');
   }
 };
 

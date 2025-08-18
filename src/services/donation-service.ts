@@ -1,5 +1,3 @@
-
-
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -47,8 +45,11 @@ export const createDonation = async (
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const donorUser = await getUser(donation.donorId);
-    if (!donorUser || !donorUser.userKey) {
-        throw new Error(`Cannot create donation. The selected donor ("${donation.donorName}") does not have a valid UserKey. Please ensure the user profile is complete.`);
+    if (!donorUser) {
+        throw new Error(`Donor user with ID "${donation.donorId}" could not be found.`);
+    }
+    if (!donorUser.userKey) {
+        throw new Error(`The selected donor ("${donation.donorName}") does not have a valid UserKey. Please ensure the user profile is complete.`);
     }
     
     const donationsCollection = collection(db, DONATIONS_COLLECTION);
@@ -85,7 +86,11 @@ export const createDonation = async (
     return newDonation;
   } catch (error) {
     console.error('Error creating donation: ', error);
-    throw new Error('Failed to create donation.');
+    // Pass the specific error message up
+    if (error instanceof Error) {
+        throw new Error(error.message);
+    }
+    throw new Error('An unknown error occurred while creating the donation.');
   }
 };
 

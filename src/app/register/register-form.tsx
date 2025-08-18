@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { handleRegister } from "./actions";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle, UserPlus, PlusCircle, Trash2 } from "lucide-react";
