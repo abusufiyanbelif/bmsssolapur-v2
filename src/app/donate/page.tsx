@@ -77,10 +77,23 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
     const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
     const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
     const [donationData, setDonationData] = useState<PayNowFormValues | null>(null);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.onload = () => setIsRazorpayLoaded(true);
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
+
     const form = useForm<PayNowFormValues>({
         resolver: zodResolver(payNowFormSchema),
         defaultValues: {
@@ -144,8 +157,8 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             handleLoginRedirect();
             return;
         }
-        if (!razorpayKeyId) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Razorpay is not configured on the server.' });
+        if (!razorpayKeyId || !isRazorpayLoaded) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Payment gateway is not ready. Please try again in a moment.' });
             return;
         }
 
@@ -365,7 +378,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                          <Button 
                             type="button" 
                             onClick={() => handlePayWithRazorpay(form.getValues())}
-                            disabled={isSubmitting || !razorpayKeyId} 
+                            disabled={isSubmitting || !razorpayKeyId || !isRazorpayLoaded} 
                             className="w-full" 
                             size="lg"
                         >
@@ -580,10 +593,7 @@ function DonatePageContent() {
   
   if (isLoading) {
     return (
-        <>
-            <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-            <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
-        </>
+        <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
     );
   }
 
@@ -595,7 +605,6 @@ function DonatePageContent() {
 
   return (
      <div className="flex-1 space-y-4">
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Make a Donation</h2>
         </div>
