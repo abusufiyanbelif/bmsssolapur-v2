@@ -210,6 +210,43 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             theme: {
                 color: '#3399cc'
             },
+            config: {
+                display: {
+                    blocks: {
+                        upi: {
+                            name: "Pay with UPI",
+                            instruments: [
+                                { method: "upi" },
+                                { method: "gpay" },
+                                { method: "phonepe" },
+                                { method: "paytm" },
+                            ],
+                        },
+                        banks: {
+                            name: "Pay with Netbanking",
+                            instruments: [
+                                { method: "netbanking" }
+                            ]
+                        },
+                        cards: {
+                             name: "Pay with Card",
+                            instruments: [
+                                { method: "card" }
+                            ]
+                        },
+                         wallets: {
+                             name: "Pay with Wallet",
+                            instruments: [
+                                { method: "wallet" }
+                            ]
+                        }
+                    },
+                    sequence: ["block.upi", "block.banks", "block.cards", "block.wallets"],
+                    preferences: {
+                        show_default_blocks: true,
+                    },
+                },
+            },
         };
 
         const rzp = new (window as any).Razorpay(options);
@@ -366,15 +403,15 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                     />
                     
                     <div className="flex flex-col gap-4">
-                         <Button 
+                        <Button 
                             type="button" 
                             onClick={form.handleSubmit(handlePayWithRazorpay)}
                             disabled={!isRazorpayLoaded || isSubmitting}
                             className="w-full" 
                             size="lg"
                         >
-                             {!isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                            Pay with Razorpay (Card, Netbanking, etc.)
+                             {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                            Pay with Razorpay (Card, UPI, etc.)
                         </Button>
                         <Button 
                             type={!user ? "button" : "submit"} 
@@ -384,8 +421,8 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                             size="lg"
                             variant="secondary"
                         >
-                            {isSubmitting && !razorpayKeyId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                            {user ? 'Pay with UPI / QR Code' : 'Login to Pay'}
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
+                            {user ? 'Pay via Manual UPI / QR Code' : 'Login to Pay'}
                         </Button>
                     </div>
                 </form>
