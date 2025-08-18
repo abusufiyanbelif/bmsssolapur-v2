@@ -210,29 +210,6 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             theme: {
                 color: '#3399cc'
             },
-            config: {
-                display: {
-                    blocks: {
-                        upi: {
-                            name: "Pay with UPI",
-                            instruments: [
-                                { method: "upi" },
-                            ],
-                        },
-                        cards: {
-                            name: "Pay with Card",
-                            instruments: [
-                                { method: "card" },
-                                { method: "netbanking" },
-                            ]
-                        }
-                    },
-                    sequence: ["block.upi", "block.cards"],
-                    preferences: {
-                        show_default_blocks: false,
-                    },
-                },
-            },
         };
 
         const rzp = new (window as any).Razorpay(options);
