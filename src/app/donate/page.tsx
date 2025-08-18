@@ -41,7 +41,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import { QrCodeDialog } from "@/components/qr-code-dialog";
 import { getAppSettings } from "@/services/app-settings-service";
-import { getAllCampaigns as getAllCampaignsService } from "@/services/organization-service";
+import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-service";
+import { getCurrentOrganization } from "@/services/organization-service";
 import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
 
