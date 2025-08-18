@@ -46,6 +46,7 @@ import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-s
 import { getCurrentOrganization } from "@/services/organization-service";
 import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
+import { useRazorpay } from "@/hooks/use-razorpay";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -78,24 +79,11 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
     const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
+    const [isRazorpayLoaded, razorpayError] = useRazorpay();
     const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
     const [donationData, setDonationData] = useState<PayNowFormValues | null>(null);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     
-    useEffect(() => {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.async = true;
-        script.onload = () => setIsRazorpayLoaded(true);
-        document.body.appendChild(script);
-
-        return () => {
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
-        };
-    }, []);
 
     const form = useForm<PayNowFormValues>({
         resolver: zodResolver(payNowFormSchema),
@@ -161,7 +149,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             return;
         }
         if (!razorpayKeyId || !isRazorpayLoaded) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Payment gateway is not ready. Please try again in a moment.' });
+            toast({ variant: 'destructive', title: 'Error', description: razorpayError || 'Payment gateway is not ready. Please try again in a moment.' });
             return;
         }
 
@@ -399,7 +387,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                          <Button 
                             type="button" 
                             onClick={() => handlePayWithRazorpay(form.getValues())}
-                            disabled={isSubmitting || !razorpayKeyId || !isRazorpayLoaded} 
+                            disabled={isSubmitting || !isRazorpayLoaded} 
                             className="w-full" 
                             size="lg"
                         >
@@ -409,12 +397,12 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                         <Button 
                             type={!user ? "button" : "submit"} 
                             onClick={!user ? handleLoginRedirect : undefined}
-                            disabled={isSubmitting || (razorpayKeyId && !isRazorpayLoaded)} 
+                            disabled={isSubmitting}
                             className="w-full" 
                             size="lg"
                             variant="secondary"
                         >
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
+                            {isSubmitting && !razorpayKeyId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
                             {user ? 'Pay with UPI / QR Code' : 'Login to Pay'}
                         </Button>
                     </div>
