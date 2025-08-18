@@ -1,3 +1,4 @@
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -26,19 +27,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
+import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
 import { scanProof } from '@/app/admin/donations/add/actions';
-import type { User, Lead, DonationPurpose, Organization, Campaign } from '@/services/types';
+import type { User, Lead, DonationPurpose, Organization, Campaign, Donation } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import { QrCodeDialog } from "@/components/qr-code-dialog";
-import { getCurrentOrganization, getAllCampaigns as getAllCampaignsService } from "@/services/organization-service";
+import { getAppSettings } from "@/services/app-settings-service";
+import { getAllCampaigns as getAllCampaignsService } from "@/services/organization-service";
 import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
 
@@ -69,7 +72,7 @@ const payNowFormSchema = z.object({
 export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
 
 
-function PayNowForm({ user, targetLead, targetCampaignId, organization, openLeads, activeCampaigns }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null, openLeads: Lead[], activeCampaigns: Campaign[] }) {
+function PayNowForm({ user, targetLead, targetCampaignId, organization, openLeads, activeCampaigns, razorpayKeyId }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string }) {
     const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,6 +138,79 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         setValue('campaignId', undefined);
     };
 
+    const handlePayWithRazorpay = async (values: PayNowFormValues) => {
+        if (!user || !user.id) {
+            handleLoginRedirect();
+            return;
+        }
+        if (!razorpayKeyId) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Razorpay is not configured on the server.' });
+            return;
+        }
+
+        setIsSubmitting(true);
+        const pendingResult = await handleCreatePendingDonation({ ...values, userId: user.id, donorName: user.name });
+
+        if (!pendingResult.success || !pendingResult.donation?.id) {
+            toast({ variant: 'destructive', title: 'Error', description: pendingResult.error || 'Failed to create a pending donation record.' });
+            setIsSubmitting(false);
+            return;
+        }
+
+        const donationId = pendingResult.donation.id;
+
+        const orderResult = await createRazorpayOrder(values.amount, 'INR');
+
+        if (!orderResult.success || !orderResult.order) {
+            toast({ variant: 'destructive', title: 'Error', description: orderResult.error || 'Could not create Razorpay order.' });
+            setIsSubmitting(false);
+            return;
+        }
+
+        const { order } = orderResult;
+        
+        const options = {
+            key: razorpayKeyId,
+            amount: order.amount,
+            currency: order.currency,
+            name: organization?.name || 'Baitul Mal',
+            description: `Donation for ${values.purpose}`,
+            order_id: order.id,
+            handler: async function (response: any) {
+                const verificationResult = await verifyRazorpayPayment({
+                    orderCreationId: order.id,
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpayOrderId: response.razorpay_order_id,
+                    razorpaySignature: response.razorpay_signature,
+                    donationId: donationId,
+                    adminUserId: user.id! // The user is the one performing this action.
+                });
+                
+                if (verificationResult.success) {
+                    router.push('/my-donations');
+                    toast({ variant: 'success', title: 'Payment Successful!', description: 'Thank you for your generous donation.' });
+                } else {
+                    toast({ variant: 'destructive', title: 'Payment Failed', description: verificationResult.error || 'Payment verification failed. Please contact support.' });
+                }
+            },
+            prefill: {
+                name: user.name,
+                email: user.email,
+                contact: user.phone,
+            },
+            notes: {
+                donation_id: donationId,
+                user_id: user.id,
+            },
+            theme: {
+                color: '#3399cc'
+            }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+        setIsSubmitting(false);
+    }
 
     async function onSubmit(values: PayNowFormValues) {
         if (!user || !user.id) {
@@ -283,17 +359,30 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                         </FormItem>
                     )}
                     />
-
-                    <Button 
-                        type={!user ? "button" : "submit"} 
-                        onClick={!user ? handleLoginRedirect : undefined}
-                        disabled={isSubmitting} 
-                        className="w-full" 
-                        size="lg"
-                    >
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                        {user ? 'Proceed to Pay' : 'Login to Pay'}
-                    </Button>
+                    
+                    <div className="flex flex-col gap-4">
+                         <Button 
+                            type="button" 
+                            onClick={() => handlePayWithRazorpay(form.getValues())}
+                            disabled={isSubmitting || !razorpayKeyId} 
+                            className="w-full" 
+                            size="lg"
+                        >
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                            Pay with Razorpay (Card, Netbanking, etc.)
+                        </Button>
+                        <Button 
+                            type={!user ? "button" : "submit"} 
+                            onClick={!user ? handleLoginRedirect : undefined}
+                            disabled={isSubmitting} 
+                            className="w-full" 
+                            size="lg"
+                            variant="secondary"
+                        >
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
+                            {user ? 'Pay with UPI / QR Code' : 'Login to Pay'}
+                        </Button>
+                    </div>
                 </form>
             </Form>
             {donationData && organization && (
@@ -439,6 +528,7 @@ function DonatePageContent() {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [openLeads, setOpenLeads] = useState<Lead[]>([]);
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [donationMethod, setDonationMethod] = useState<'payNow' | 'uploadProof'>('payNow');
@@ -452,12 +542,14 @@ function DonatePageContent() {
       const storedUserId = localStorage.getItem('userId');
       
       try {
-        const [orgData, allLeads, allCampaigns] = await Promise.all([
+        const [appSettings, orgData, allLeads, allCampaigns] = await Promise.all([
+          getAppSettings(),
           getCurrentOrganization(),
           getAllLeads(),
           getAllCampaignsService()
         ]);
         
+        setSettings(appSettings);
         setOrganization(orgData);
         setOpenLeads(allLeads.filter(l => l.status === 'Ready For Help' || l.status === 'Publish' || l.status === 'Partial'));
         setActiveCampaigns(allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming'));
@@ -486,15 +578,23 @@ function DonatePageContent() {
   }, [leadId, campaignId, router]);
   
   if (isLoading) {
-    return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
+    return (
+        <>
+            <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+            <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
+        </>
+    );
   }
 
   if (error) {
     return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
   }
   
+  const razorpayEnabled = settings?.paymentGateway?.razorpay?.enabled;
+
   return (
      <div className="flex-1 space-y-4">
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Make a Donation</h2>
         </div>
@@ -524,7 +624,7 @@ function DonatePageContent() {
                 </div>
 
                 {donationMethod === 'payNow' ? (
-                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} openLeads={openLeads} activeCampaigns={activeCampaigns} />
+                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} openLeads={openLeads} activeCampaigns={activeCampaigns} razorpayKeyId={razorpayEnabled ? settings.paymentGateway.razorpay.keyId : undefined} />
                 ) : (
                    <UploadProofSection user={user} />
                 )}
