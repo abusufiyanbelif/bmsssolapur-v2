@@ -31,3 +31,5 @@ runConfig:
     - secret: SMTP_PASS
     - secret: EMAIL_FROM
     - secret: NEXT_PUBLIC_RAZORPAY_KEY_ID
+    - secret: RAZORPAY_KEY_SECRET
+

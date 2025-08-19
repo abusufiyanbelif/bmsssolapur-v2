@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  */
@@ -142,7 +141,7 @@ export const getAppSettings = async (): Promise<AppSettings> => {
  * Updates the global application settings.
  * @param updates A partial object of the settings to update.
  */
-export const updateAppSettings = async (updates: Partial<AppSettings>): Promise<void> => {
+export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'| 'updatedAt'>>): Promise<void> => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, MAIN_SETTINGS_DOC_ID);

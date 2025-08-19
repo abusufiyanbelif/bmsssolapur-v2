@@ -1,3 +1,4 @@
+
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file
@@ -24,5 +25,9 @@ export const config = {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
   },
-  emailFrom: process.env.EMAIL_FROM
+  emailFrom: process.env.EMAIL_FROM,
+  razorpay: {
+    keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+    keySecret: process.env.RAZORPAY_KEY_SECRET,
+  }
 };
