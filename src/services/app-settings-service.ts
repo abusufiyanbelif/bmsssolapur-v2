@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { AppSettings, UserRole, LeadStatus } from './types';
+import { set } from 'react-hook-form';
 
 // Re-export type for backward compatibility
 export type { AppSettings };
@@ -47,14 +48,15 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     paymentGateway: {
         razorpay: {
             enabled: false,
-            keyId: '',
-            keySecret: '',
+            mode: 'test',
+            test: { keyId: '', keySecret: '' },
+            live: { keyId: '', keySecret: '' },
         },
         phonepe: {
-            enabled: true,
-            merchantId: '',
-            saltKey: '',
-            saltIndex: 1,
+            enabled: false,
+            mode: 'test',
+            test: { merchantId: '', saltKey: '', saltIndex: 1 },
+            live: { merchantId: '', saltKey: '', saltIndex: 1 },
         }
     },
     leadConfiguration: {
@@ -81,6 +83,31 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     }
 };
 
+const mergeDeep = (target: any, source: any) => {
+    const isObject = (obj: any) => obj && typeof obj === 'object';
+
+    if (!isObject(target) || !isObject(source)) {
+        return source;
+    }
+
+    Object.keys(source).forEach(key => {
+        const targetValue = target[key];
+        const sourceValue = source[key];
+
+        if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
+            // This is a simple merge; more complex logic may be needed for arrays of objects
+            target[key] = [...new Set([...targetValue, ...sourceValue])];
+        } else if (isObject(targetValue) && isObject(sourceValue)) {
+            target[key] = mergeDeep({ ...targetValue }, sourceValue);
+        } else {
+            target[key] = sourceValue;
+        }
+    });
+
+    return target;
+};
+
+
 /**
  * Retrieves the global application settings.
  * If no settings document exists, it creates one with default values.
@@ -97,29 +124,8 @@ export const getAppSettings = async (): Promise<AppSettings> => {
     
     if (settingsDoc.exists()) {
       const data = settingsDoc.data();
-      // Merge with defaults to handle cases where new settings are added
-      // to the code but don't exist in the Firestore document yet.
-      const mergedSettings = {
-        ...defaultSettings,
-        ...data,
-        loginMethods: { ...defaultSettings.loginMethods, ...data.loginMethods },
-        services: { ...defaultSettings.services, ...data.services },
-        features: { ...defaultSettings.features, ...data.features },
-        paymentMethods: { ...defaultSettings.paymentMethods, ...data.paymentMethods },
-        paymentGateway: { 
-            ...defaultSettings.paymentGateway, 
-            ...data.paymentGateway,
-            razorpay: { ...defaultSettings.paymentGateway.razorpay, ...data.paymentGateway?.razorpay },
-            phonepe: { ...defaultSettings.paymentGateway.phonepe, ...data.paymentGateway?.phonepe },
-        },
-        leadConfiguration: { 
-            ...defaultSettings.leadConfiguration, 
-            ...data.leadConfiguration,
-            // Ensure workflow is populated if it's missing from DB
-            workflow: data.leadConfiguration?.workflow || defaultSettings.leadConfiguration.workflow,
-        },
-        dashboard: { ...defaultSettings.dashboard, ...data.dashboard },
-      };
+      // Deep merge with defaults to handle nested objects and new settings
+      const mergedSettings = mergeDeep({ ...defaultSettings }, data);
       return { id: settingsDoc.id, ...mergedSettings } as AppSettings;
     } else {
       // Document doesn't exist, so create it with defaults

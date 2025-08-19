@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -272,6 +273,14 @@ export interface Quote {
     category: "Quran" | "Hadith" | "Scholar";
 }
 
+interface PaymentGatewayCredentials {
+  keyId?: string;
+  keySecret?: string;
+  merchantId?: string;
+  saltKey?: string;
+  saltIndex?: number;
+}
+
 export interface AppSettings {
     id: string;
     loginMethods: {
@@ -296,14 +305,15 @@ export interface AppSettings {
     paymentGateway?: {
         razorpay: {
             enabled: boolean;
-            keyId?: string;
-            keySecret?: string;
+            mode: 'test' | 'live';
+            test: PaymentGatewayCredentials;
+            live: PaymentGatewayCredentials;
         };
         phonepe: {
             enabled: boolean;
-            merchantId?: string;
-            saltKey?: string;
-            saltIndex?: number;
+            mode: 'test' | 'live';
+            test: PaymentGatewayCredentials;
+            live: PaymentGatewayCredentials;
         };
     };
     leadConfiguration?: {

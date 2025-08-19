@@ -27,7 +27,17 @@ export const config = {
   },
   emailFrom: process.env.EMAIL_FROM,
   razorpay: {
-    keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-    keySecret: process.env.RAZORPAY_KEY_SECRET,
+    test_key_id: process.env.RAZORPAY_TEST_KEY_ID,
+    test_key_secret: process.env.RAZORPAY_TEST_KEY_SECRET,
+    live_key_id: process.env.RAZORPAY_LIVE_KEY_ID,
+    live_key_secret: process.env.RAZORPAY_LIVE_KEY_SECRET,
+  },
+  phonepe: {
+      test_merchant_id: process.env.PHONEPE_TEST_MERCHANT_ID,
+      test_salt_key: process.env.PHONEPE_TEST_SALT_KEY,
+      test_salt_index: process.env.PHONEPE_TEST_SALT_INDEX,
+      live_merchant_id: process.env.PHONEPE_LIVE_MERCHANT_ID,
+      live_salt_key: process.env.PHONEPE_LIVE_SALT_KEY,
+      live_salt_index: process.env.PHONEPE_LIVE_SALT_INDEX,
   }
 };

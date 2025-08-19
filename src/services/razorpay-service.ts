@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { getAppSettings } from '@/services/app-settings-service';
 import { updateDonation } from '@/services/donation-service';
 import { getUser } from '@/services/user-service';
+import { config } from '@/lib/config';
 
 interface OrderResponse {
     id: string;
@@ -18,13 +19,21 @@ export async function createRazorpayOrder(amount: number, currency: string = 'IN
         const settings = await getAppSettings();
         const razorpaySettings = settings.paymentGateway?.razorpay;
 
-        if (!razorpaySettings?.enabled || !razorpaySettings.keyId || !razorpaySettings.keySecret) {
-            throw new Error("Razorpay gateway is not configured or enabled.");
+        if (!razorpaySettings?.enabled) {
+            throw new Error("Razorpay gateway is not enabled.");
+        }
+        
+        const mode = razorpaySettings.mode;
+        const keyId = mode === 'live' ? config.razorpay.live_key_id : config.razorpay.test_key_id;
+        const keySecret = mode === 'live' ? config.razorpay.live_key_secret : config.razorpay.test_key_secret;
+        
+        if (!keyId || !keySecret) {
+            throw new Error(`Razorpay ${mode} credentials are not configured in secrets.`);
         }
 
         const instance = new Razorpay({
-            key_id: razorpaySettings.keyId,
-            key_secret: razorpaySettings.keySecret,
+            key_id: keyId,
+            key_secret: keySecret,
         });
 
         const options = {
@@ -57,11 +66,19 @@ export async function verifyRazorpayPayment(payload: VerificationPayload): Promi
      try {
         const settings = await getAppSettings();
         const razorpaySettings = settings.paymentGateway?.razorpay;
-        if (!razorpaySettings?.enabled || !razorpaySettings.keySecret) {
-             throw new Error("Razorpay gateway is not configured for verification.");
+
+        if (!razorpaySettings?.enabled) {
+             throw new Error("Razorpay gateway is not enabled for verification.");
+        }
+        
+        const mode = razorpaySettings.mode;
+        const keySecret = mode === 'live' ? config.razorpay.live_key_secret : config.razorpay.test_key_secret;
+
+        if (!keySecret) {
+             throw new Error(`Razorpay ${mode} Key Secret is not configured for verification.`);
         }
 
-        const shasum = crypto.createHmac('sha256', razorpaySettings.keySecret);
+        const shasum = crypto.createHmac('sha256', keySecret);
         shasum.update(`${payload.orderCreationId}|${payload.razorpayPaymentId}`);
         const digest = shasum.digest('hex');
 

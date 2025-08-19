@@ -30,6 +30,14 @@ runConfig:
     - secret: SMTP_USER
     - secret: SMTP_PASS
     - secret: EMAIL_FROM
-    - secret: NEXT_PUBLIC_RAZORPAY_KEY_ID
-    - secret: RAZORPAY_KEY_SECRET
+    - secret: RAZORPAY_TEST_KEY_ID
+    - secret: RAZORPAY_TEST_KEY_SECRET
+    - secret: RAZORPAY_LIVE_KEY_ID
+    - secret: RAZORPAY_LIVE_KEY_SECRET
+    - secret: PHONEPE_TEST_MERCHANT_ID
+    - secret: PHONEPE_TEST_SALT_KEY
+    - secret: PHONEPE_TEST_SALT_INDEX
+    - secret: PHONEPE_LIVE_MERCHANT_ID
+    - secret: PHONEPE_LIVE_SALT_KEY
+    - secret: PHONEPE_LIVE_SALT_INDEX
 
