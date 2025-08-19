@@ -7,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -153,6 +153,7 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/settings", label: "General Settings" },
             { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: LayoutDashboard },
+            { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard },
             { href: "/admin/seed", label: "Seed Database", icon: Database },
             { href: "/services", label: "Services Summary", icon: Server },
             { href: "/dependencies", label: "Dependency Map", icon: Share2 },

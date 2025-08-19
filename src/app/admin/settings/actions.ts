@@ -35,19 +35,6 @@ export async function handleUpdateAppSettings(
         upi: { enabled: formData.get("payment.upi") === 'on' },
         other: { enabled: formData.get("payment.other") === 'on' },
       },
-      paymentGateway: {
-        razorpay: {
-            enabled: formData.get("gateway.razorpay.enabled") === 'on',
-            keyId: formData.get("gateway.razorpay.keyId") as string,
-            keySecret: formData.get("gateway.razorpay.keySecret") as string,
-        },
-        phonepe: {
-            enabled: formData.get("gateway.phonepe.enabled") === 'on',
-            merchantId: formData.get("gateway.phonepe.merchantId") as string,
-            saltKey: formData.get("gateway.phonepe.saltKey") as string,
-            saltIndex: Number(formData.get("gateway.phonepe.saltIndex") as string),
-        },
-      }
     };
 
     await updateAppSettings(updates);
