@@ -1,5 +1,4 @@
 
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -150,7 +149,7 @@ export const DonationTypeCard = async () => {
                     A breakdown of verified funds received by category.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
                  {Object.entries(donationTypeBreakdown).map(([type, data]) => {
                     const Icon = donationTypeIcons[type as DonationType] || DollarSign;
                     return (

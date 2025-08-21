@@ -263,7 +263,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     {donationsNotificationCount > 0 ? (
                                         pendingDonations.slice(0, 5).map(donation => (
                                             <DropdownMenuItem key={donation.id} asChild>
-                                                 <Link href={`/admin/donations/${donation.id}/edit`} className="flex flex-col items-start">
+                                                 <Link href={`/admin/donations/${donation.id}/edit`} className="flex flex-col items-start w-full">
                                                     <p className="font-semibold text-destructive">Verify: ₹{donation.amount.toLocaleString()} from {donation.donorName}</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         Received {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
@@ -315,7 +315,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                         <>
                                             {pendingLeads.slice(0, 3).map(lead => (
                                                 <DropdownMenuItem key={lead.id} asChild>
-                                                     <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start">
+                                                     <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start w-full">
                                                         <p className="font-semibold text-destructive">Verify: {lead.name}</p>
                                                         <p className="text-xs text-muted-foreground">
                                                             Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated, { addSuffix: true })}
@@ -325,7 +325,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                             ))}
                                             {readyToPublishLeads.slice(0, 2).map(lead => (
                                                  <DropdownMenuItem key={lead.id} asChild>
-                                                     <Link href={`/admin/leads/${lead.id}/edit`} className="flex flex-col items-start">
+                                                     <Link href={`/admin/leads/${lead.id}/edit`} className="flex flex-col items-start w-full">
                                                         <p className="font-semibold text-blue-600">Publish: {lead.name}</p>
                                                         <p className="text-xs text-muted-foreground">
                                                             Verified {formatDistanceToNow(lead.dateCreated, { addSuffix: true })}
@@ -388,7 +388,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     </DropdownMenuItem>
                                      {user.roles.length > 1 && (
                                         <DropdownMenuItem onClick={() => handleOpenRoleSwitcher()}>
-                                            <Users className="mr-2 h-4 w-4" />
+                                            <UsersIcon className="mr-2 h-4 w-4" />
                                             <span>Switch Role ({user.activeRole})</span>
                                         </DropdownMenuItem>
                                      )}
