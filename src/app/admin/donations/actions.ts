@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/actions.ts
 "use server";
 
@@ -64,6 +63,7 @@ export async function handleUpdateDonationStatus(donationId: string, status: Don
         }
         await updateStatusService(donationId, status, adminUser);
         revalidatePath("/admin/donations");
+        revalidatePath(`/admin/donations/${donationId}/edit`);
         return { success: true };
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred";

@@ -1,4 +1,3 @@
-
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -209,7 +208,7 @@ export const deleteDonation = async (id: string, adminUser: Pick<User, 'id' | 'n
         if (!donationToDelete) throw new Error("Donation to delete not found.");
 
         await deleteDoc(doc(db, DONATIONS_COLLECTION, id));
-
+        
          await logActivity({
             userId: adminUser.id!,
             userName: adminUser.name,

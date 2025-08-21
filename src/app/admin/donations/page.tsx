@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteDonation, handleBulkDeleteDonations, handleUpdateDonationStatus } from "./actions";
+import { handleBulkDeleteDonations, handleUpdateDonationStatus, handleDeleteDonation } from "./actions";
 import { UploadProofDialog } from "./upload-proof-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
@@ -514,9 +514,29 @@ function DonationsPageContent() {
                                         </CardDescription>
                                     </div>
                                 </div>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[donation.status])}>
-                                    {donation.status}
-                                </Badge>
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="capitalize">
+                                        <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[donation.status])}>
+                                            {donation.status}
+                                        </Badge>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {statusOptions.filter(s => s !== 'all').map(status => (
+                                         <DropdownMenuItem
+                                            key={status}
+                                            onSelect={() => handleQuickStatusChange(donation.id!, status)}
+                                            disabled={donation.status === status}
+                                        >
+                                            {donation.status === status && <CheckCircle className="mr-2 h-4 w-4" />}
+                                            {status}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
