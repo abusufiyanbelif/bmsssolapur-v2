@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users, User, Home, Loader2, Bell, AlertTriangle } from "lucide-react";
+import { LogIn, LogOut, Menu, Users, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
-import type { User as UserType, Lead as LeadType } from "@/services/types";
+import type { User as UserType, Lead as LeadType, Donation as DonationType } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
+import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
 
@@ -33,6 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [isSessionReady, setIsSessionReady] = useState(false);
     const [pendingLeads, setPendingLeads] = useState<LeadType[]>([]);
     const [readyToPublishLeads, setReadyToPublishLeads] = useState<LeadType[]>([]);
+    const [pendingDonations, setPendingDonations] = useState<DonationType[]>([]);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -77,9 +79,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     setUser(userData);
                     
                     if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
-                        const allLeads = await getAllLeads();
+                        const [allLeads, allDonations] = await Promise.all([
+                            getAllLeads(),
+                            getAllDonations()
+                        ]);
                         setPendingLeads(allLeads.filter(l => l.verifiedStatus === 'Pending'));
                         setReadyToPublishLeads(allLeads.filter(l => l.status === 'Ready For Help'));
+                        setPendingDonations(allDonations.filter(d => d.status === 'Pending verification'));
                     }
 
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
@@ -173,7 +179,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const activeRole = user.activeRole;
-    const notificationCount = pendingLeads.length + readyToPublishLeads.length;
+    const leadsNotificationCount = pendingLeads.length + readyToPublishLeads.length;
+    const donationsNotificationCount = pendingDonations.length;
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
@@ -238,21 +245,54 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                      <div className="w-full flex-1 flex justify-end items-center gap-4">
                         {user.isLoggedIn ? (
                             <>
-                             <DropdownMenu>
+                            <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="relative">
-                                        <Bell className="h-5 w-5" />
-                                        {notificationCount > 0 && (
+                                        <HandHeart className="h-5 w-5 text-red-600" />
+                                        {donationsNotificationCount > 0 && (
                                             <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                                                {notificationCount}
+                                                {donationsNotificationCount}
                                             </span>
                                         )}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-80" align="end">
-                                    <DropdownMenuLabel>Pending Actions ({notificationCount})</DropdownMenuLabel>
+                                    <DropdownMenuLabel>Pending Donations ({donationsNotificationCount})</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    {notificationCount > 0 ? (
+                                    {donationsNotificationCount > 0 ? (
+                                        pendingDonations.slice(0, 5).map(donation => (
+                                            <DropdownMenuItem key={donation.id} asChild>
+                                                 <Link href={`/admin/donations/${donation.id}/edit`} className="flex flex-col items-start">
+                                                    <p className="font-semibold text-destructive">Verify: ₹{donation.amount.toLocaleString()} from {donation.donorName}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Received {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
+                                                    </p>
+                                                 </Link>
+                                            </DropdownMenuItem>
+                                        ))
+                                    ) : (
+                                        <div className="px-2 py-4 text-center text-sm text-muted-foreground">No pending donations.</div>
+                                    )}
+                                    {donationsNotificationCount > 0 && <DropdownMenuSeparator />}
+                                    <DropdownMenuItem asChild><Link href="/admin/donations?status=Pending+verification">View All Pending Donations</Link></DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <FileCheck className="h-5 w-5 text-blue-600" />
+                                        {leadsNotificationCount > 0 && (
+                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                                {leadsNotificationCount}
+                                            </span>
+                                        )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-80" align="end">
+                                    <DropdownMenuLabel>Pending Lead Actions ({leadsNotificationCount})</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                     {leadsNotificationCount > 0 ? (
                                         <>
                                             {pendingLeads.slice(0, 3).map(lead => (
                                                 <DropdownMenuItem key={lead.id} asChild>
@@ -274,20 +314,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                                      </Link>
                                                 </DropdownMenuItem>
                                             ))}
-                                             {(pendingLeads.length > 3 || readyToPublishLeads.length > 2) && (
-                                                <>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem asChild>
-                                                    <Link href="/admin/leads?verification=Pending">View All Pending Items</Link>
-                                                </DropdownMenuItem>
-                                                </>
-                                            )}
                                         </>
                                     ) : (
-                                        <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                                            No pending actions.
-                                        </div>
+                                        <div className="px-2 py-4 text-center text-sm text-muted-foreground">No pending lead actions.</div>
                                     )}
+                                    {leadsNotificationCount > 0 && <DropdownMenuSeparator />}
+                                    <DropdownMenuItem asChild><Link href="/admin/leads?verification=Pending">View All Pending Leads</Link></DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <Megaphone className="h-5 w-5 text-gray-500" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-80" align="end">
+                                    <DropdownMenuLabel>Campaign Updates</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">No campaign updates.</div>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 

@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat, UploadCloud, Eye } from "lucide-react";
 import Link from "next/link";
@@ -112,6 +111,8 @@ export default async function DashboardPage() {
             {isCardVisible('pendingDonations', settings, currentUserRole) && (
                <Suspense fallback={<CardSkeleton />}><PendingDonationsCard /></Suspense>
            )}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
              {isCardVisible('leadsReadyToPublish', settings, currentUserRole) && (
                <Suspense fallback={<CardSkeleton />}><LeadsReadyToPublishCard /></Suspense>
            )}
