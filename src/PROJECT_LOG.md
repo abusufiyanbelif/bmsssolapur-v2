@@ -2,6 +2,12 @@
 
 This document tracks the features and changes requested for the project.
 
+## Guiding Principles
+
+- **Interactive Dashboards**: All dashboard cards and metrics should be clickable links that navigate the user to a relevant, pre-filtered view of the underlying data. This makes the dashboard an interactive entry point for data exploration and management, not just a static display.
+
+---
+
 ## Project Status & Next Steps
 
 ### Pending Configurations (Blocked)
