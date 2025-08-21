@@ -15,33 +15,32 @@ export async function handleUpdateUser(
   userId: string,
   formData: FormData
 ): Promise<FormState> {
-  const rawFormData = {
-    firstName: formData.get("firstName") as string,
-    middleName: formData.get("middleName") as string,
-    lastName: formData.get("lastName") as string,
-    email: formData.get("email") as string,
-    phone: formData.get("phone") as string,
-    roles: formData.getAll("roles") as UserRole[],
-    isActive: formData.get("isActive") === 'on',
-    isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
-    isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
-    gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
-    beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
-    
-    addressLine1: formData.get("addressLine1") as string | undefined,
-    city: formData.get("city") as string | undefined,
-    state: formData.get("state") as string | undefined,
-    country: formData.get("country") as string | undefined,
-    pincode: formData.get("pincode") as string | undefined,
-
-    occupation: formData.get("occupation") as string | undefined,
-    familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string, 10) : undefined,
-    isWidow: formData.get("isWidow") === 'on',
-    
-    panNumber: formData.get("panNumber") as string | undefined,
-    aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
-    bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
-    upiIds: formData.getAll("upiIds") as string[],
+  
+   const rawFormData = {
+      firstName: formData.get("firstName") as string,
+      middleName: formData.get("middleName") as string,
+      lastName: formData.get("lastName") as string,
+      phone: formData.get("phone") as string,
+      roles: formData.getAll("roles") as UserRole[],
+      isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
+      isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
+      gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
+      beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow' | undefined,
+      addressLine1: formData.get("addressLine1") as string | undefined,
+      city: formData.get("city") as string | undefined,
+      state: formData.get("state") as string | undefined,
+      country: formData.get("country") as string | undefined,
+      pincode: formData.get("pincode") as string | undefined,
+      occupation: formData.get("occupation") as string | undefined,
+      familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string, 10) : undefined,
+      isWidow: formData.get("isWidow") === 'on',
+      panNumber: formData.get("panNumber") as string | undefined,
+      aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
+      bankAccountName: formData.get("bankAccountName") as string | undefined,
+      bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
+      bankIfscCode: formData.get("bankIfscCode") as string | undefined,
+      upiPhone: formData.get("upiPhone") as string | undefined,
+      upiIds: formData.getAll("upiIds") as string[] | undefined,
   };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
@@ -54,10 +53,8 @@ export async function handleUpdateUser(
         firstName: rawFormData.firstName,
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
-        // Email cannot be changed
         phone: rawFormData.phone,
         roles: rawFormData.roles,
-        isActive: rawFormData.isActive,
         isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
         isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
         gender: rawFormData.gender,
@@ -77,8 +74,11 @@ export async function handleUpdateUser(
 
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
+        bankAccountName: rawFormData.bankAccountName || '',
         bankAccountNumber: rawFormData.bankAccountNumber || '',
-        upiIds: rawFormData.upiIds.filter(id => id.trim() !== ''),
+        bankIfscCode: rawFormData.bankIfscCode || '',
+        upiPhone: rawFormData.upiPhone || '',
+        upiIds: rawFormData.upiIds?.filter(Boolean) || [],
     };
 
     await updateUser(userId, updates);
@@ -87,6 +87,7 @@ export async function handleUpdateUser(
     revalidatePath(`/admin/user-management/${userId}/edit`);
     revalidatePath("/admin/beneficiaries");
     revalidatePath("/admin/donors");
+    revalidatePath("/admin/referrals");
 
 
     return {

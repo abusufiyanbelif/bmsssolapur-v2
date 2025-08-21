@@ -7,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -82,15 +82,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Super Admin", "Finance Admin"] },
-            { 
-                label: "Configuration", 
-                icon: BookText, 
-                allowedRoles: ["Super Admin"],
-                subItems: [
-                    { href: "/admin/leads/configuration", label: "General" },
-                    { href: "/admin/leads/configuration/workflow", label: "Work flow", icon: Workflow },
-                ]
-            },
+            { href: "/admin/leads/configuration", label: "Configuration", icon: BookText, allowedRoles: ["Super Admin"] },
         ]
     },
     { href: "/admin/leads", label: "All Leads", icon: FileCheck, allowedRoles: ["Admin"] },
@@ -130,18 +122,15 @@ const allNavItems: NavItem[] = [
             { href: "/admin/donors", label: "All Donors", icon: HandHeart },
             { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users },
             { href: "/admin/referrals", label: "All Referrals", icon: UserSearch },
-            { href: "/admin/user-management/configuration", label: "Configuration", icon: UserCog },
-        ]
-    },
-     { 
-        label: "Access Management", 
-        icon: KeySquare, 
-        allowedRoles: ["Super Admin"],
-        subItems: [
-            { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
-            { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
-            { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
-            { href: "/admin/user-management/access-configuration", label: "Configuration", icon: ShieldCheck },
+            { 
+                label: "Access Management", 
+                icon: KeySquare,
+                subItems: [
+                    { href: "/admin/user-management/roles", label: "User Roles", icon: Shield },
+                    { href: "/admin/user-management/groups", label: "User Groups", icon: Group },
+                    { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare },
+                ]
+            },
         ]
     },
     
@@ -153,7 +142,7 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/settings", label: "General Settings" },
             { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: LayoutDashboard },
-            { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard },
+            { href: "/admin/payment-gateways", label: "Payment Gateways" },
             { href: "/admin/seed", label: "Seed Database", icon: Database },
             { href: "/services", label: "Services Summary", icon: Server },
             { href: "/dependencies", label: "Dependency Map", icon: Share2 },
@@ -163,7 +152,7 @@ const allNavItems: NavItem[] = [
     },
     
     // Shared / Profile (Visible to all logged-in users)
-    { href: "/profile/settings", label: "My Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
+    { href: "/profile/settings", label: "Profile", icon: UserCog, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
 ];
 
 interface NavProps {
