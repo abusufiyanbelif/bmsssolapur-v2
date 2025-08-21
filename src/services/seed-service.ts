@@ -18,7 +18,7 @@ const USERS_COLLECTION = 'users';
 
 const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
-    { userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], groups: ["Founder"], isActive: true, gender: 'Other', source: 'Seeded' },
+    { userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Other', source: 'Seeded' },
     { 
         userKey: "USR02", 
         name: "Abusufiyan Belif", 
