@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone } from "lucide-react";
+import { LogIn, LogOut, Menu, Users, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
@@ -181,6 +181,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const activeRole = user.activeRole;
     const leadsNotificationCount = pendingLeads.length + readyToPublishLeads.length;
     const donationsNotificationCount = pendingDonations.length;
+    const transfersNotificationCount = 0; // Placeholder for now
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
@@ -278,6 +279,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <ArrowRightLeft className="h-5 w-5 text-green-600" />
+                                        {transfersNotificationCount > 0 && (
+                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                                {transfersNotificationCount}
+                                            </span>
+                                        )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-80" align="end">
+                                    <DropdownMenuLabel>Transfer Updates ({transfersNotificationCount})</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">No transfer updates.</div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="relative">
@@ -322,8 +341,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     <DropdownMenuItem asChild><Link href="/admin/leads?verification=Pending">View All Pending Leads</Link></DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-
-                             <DropdownMenu>
+                            
+                            <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="relative">
                                         <Megaphone className="h-5 w-5 text-gray-500" />
@@ -336,7 +355,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
-                            <DropdownMenu>
+                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                         <Avatar className="h-9 w-9">
