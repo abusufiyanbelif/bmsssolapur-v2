@@ -92,6 +92,11 @@ export default function BoardManagementPage() {
             const categorizedMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [] };
 
             allUsers.forEach(user => {
+                // Explicitly filter out the default 'admin' user here
+                if (user.userId === 'admin') {
+                    return;
+                }
+                
                 user.groups?.forEach(group => {
                     const category = groupMapping[group];
                     if (category) {
