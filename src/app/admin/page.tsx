@@ -1,8 +1,8 @@
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, TrendingUp, HandCoins, Banknote, Hourglass, CheckCircle, AlertTriangle, ArrowRight, Award, Megaphone, Repeat, UploadCloud, Eye } from "lucide-react";
-import Link from "next/link";
-import { Suspense } from "react";
+'use client';
+
+import { Suspense, useEffect, useState } from "react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
     MainMetricsCard, 
@@ -20,17 +20,20 @@ import { UserRole } from "@/services/types";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
 import { DonationsChart } from "./donations-chart";
 import { getAllDonations } from "@/services/donation-service";
+import { Loader2 } from "lucide-react";
+
 
 // A simple helper function to check card visibility based on settings
 const isCardVisible = (cardKey: keyof AppSettings['dashboard'], settings?: AppSettings, activeRole?: UserRole) => {
-    if (!settings?.dashboard?.[cardKey]) {
-        return true; // Default to visible if not configured
+    if (!settings?.dashboard?.[cardKey] || !activeRole) {
+        return false; // Default to hidden if not configured or no role
     }
     const visibleTo = settings.dashboard[cardKey]?.visibleTo || [];
     // Super Admins should see everything by default, regardless of settings
     if (activeRole === 'Super Admin') return true;
-    return visibleTo.includes(activeRole || 'Admin');
+    return visibleTo.includes(activeRole);
 };
+
 
 const CardSkeleton = () => (
     <Card>
@@ -70,15 +73,36 @@ const TableSkeleton = () => (
 )
 
 
-export default async function DashboardPage() {
-  // In a real app, we would get the current user's role from the session.
-  // For this server component, we'll assume a role for demonstration.
-  const currentUserRole: UserRole = "Super Admin"; 
+export default function DashboardPage() {
+  const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [allDonations, setAllDonations] = useState<any[]>([]); // Use a more specific type if possible
+  const [loading, setLoading] = useState(true);
 
-  const settings = await getAppSettings();
-  const allDonations = await getAllDonations();
+  useEffect(() => {
+    async function fetchData() {
+        const role = localStorage.getItem('activeRole') as UserRole;
+        setCurrentUserRole(role);
+        
+        const [appSettings, donations] = await Promise.all([
+            getAppSettings(),
+            getAllDonations(),
+        ]);
+        setSettings(appSettings);
+        setAllDonations(donations);
+        setLoading(false);
+    }
+    fetchData();
+  }, []);
 
-  // The main page now loads instantly. Each component below will stream in as it's ready.
+  if (loading || !currentUserRole) {
+    return (
+        <div className="flex flex-col flex-1 items-center justify-center h-full">
+            <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
+            <p className="mt-4 text-muted-foreground">Loading Dashboard...</p>
+        </div>
+    )
+  }
 
   return (
     <div className="flex-1 space-y-4">
