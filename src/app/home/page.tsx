@@ -33,9 +33,6 @@ export default function HomePage() {
         redirectTo = '/admin';
       }
       
-      // If redirectTo is still the fallback, it means the activeRole is invalid.
-      // In this case, we simply redirect to the homepage without trying to fetch data.
-      // This prevents the error state if something is wrong with local storage.
       router.replace(redirectTo);
     };
 
