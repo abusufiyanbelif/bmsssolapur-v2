@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  */
@@ -25,6 +26,13 @@ const defaultAdminRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin'];
 const allUserRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin', 'Donor', 'Beneficiary', 'Referral'];
 const allLeadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 
+const defaultGatewayConfig = {
+    enabled: false,
+    mode: 'test' as 'test' | 'live',
+    test: {},
+    live: {},
+};
+
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {
         password: { enabled: true },
@@ -46,18 +54,12 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         other: { enabled: true },
     },
     paymentGateway: {
-        razorpay: {
-            enabled: false,
-            mode: 'test',
-            test: { keyId: '', keySecret: '' },
-            live: { keyId: '', keySecret: '' },
-        },
-        phonepe: {
-            enabled: false,
-            mode: 'test',
-            test: { merchantId: '', saltKey: '', saltIndex: 1 },
-            live: { merchantId: '', saltKey: '', saltIndex: 1 },
-        }
+        razorpay: defaultGatewayConfig,
+        phonepe: defaultGatewayConfig,
+        paytm: defaultGatewayConfig,
+        cashfree: defaultGatewayConfig,
+        instamojo: defaultGatewayConfig,
+        stripe: defaultGatewayConfig,
     },
     leadConfiguration: {
         disabledPurposes: [],

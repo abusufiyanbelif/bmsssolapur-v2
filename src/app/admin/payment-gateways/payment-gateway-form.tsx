@@ -25,6 +25,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
 
 const formSchema = z.object({
   // Razorpay
@@ -44,6 +46,38 @@ const formSchema = z.object({
   "phonepe.live.merchantId": z.string().optional(),
   "phonepe.live.saltKey": z.string().optional(),
   "phonepe.live.saltIndex": z.coerce.number().optional(),
+
+  // Paytm
+  "paytm.enabled": z.boolean().default(false),
+  "paytm.mode": z.enum(['test', 'live']),
+  "paytm.test.merchantId": z.string().optional(),
+  "paytm.test.merchantKey": z.string().optional(),
+  "paytm.live.merchantId": z.string().optional(),
+  "paytm.live.merchantKey": z.string().optional(),
+
+  // Cashfree
+  "cashfree.enabled": z.boolean().default(false),
+  "cashfree.mode": z.enum(['test', 'live']),
+  "cashfree.test.appId": z.string().optional(),
+  "cashfree.test.secretKey": z.string().optional(),
+  "cashfree.live.appId": z.string().optional(),
+  "cashfree.live.secretKey": z.string().optional(),
+  
+  // Instamojo
+  "instamojo.enabled": z.boolean().default(false),
+  "instamojo.mode": z.enum(['test', 'live']),
+  "instamojo.test.apiKey": z.string().optional(),
+  "instamojo.test.authToken": z.string().optional(),
+  "instamojo.live.apiKey": z.string().optional(),
+  "instamojo.live.authToken": z.string().optional(),
+
+  // Stripe
+  "stripe.enabled": z.boolean().default(false),
+  "stripe.mode": z.enum(['test', 'live']),
+  "stripe.test.publishableKey": z.string().optional(),
+  "stripe.test.secretKey": z.string().optional(),
+  "stripe.live.publishableKey": z.string().optional(),
+  "stripe.live.secretKey": z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof formSchema>;
@@ -73,6 +107,30 @@ export function PaymentGatewayForm({ settings }: PaymentGatewayFormProps) {
       "phonepe.live.merchantId": settings?.phonepe?.live?.merchantId ?? '',
       "phonepe.live.saltKey": settings?.phonepe?.live?.saltKey ?? '',
       "phonepe.live.saltIndex": settings?.phonepe?.live?.saltIndex ?? 1,
+      "paytm.enabled": settings?.paytm?.enabled ?? false,
+      "paytm.mode": settings?.paytm?.mode ?? 'test',
+      "paytm.test.merchantId": settings?.paytm?.test?.merchantId ?? '',
+      "paytm.test.merchantKey": settings?.paytm?.test?.merchantKey ?? '',
+      "paytm.live.merchantId": settings?.paytm?.live?.merchantId ?? '',
+      "paytm.live.merchantKey": settings?.paytm?.live?.merchantKey ?? '',
+      "cashfree.enabled": settings?.cashfree?.enabled ?? false,
+      "cashfree.mode": settings?.cashfree?.mode ?? 'test',
+      "cashfree.test.appId": settings?.cashfree?.test?.appId ?? '',
+      "cashfree.test.secretKey": settings?.cashfree?.test?.secretKey ?? '',
+      "cashfree.live.appId": settings?.cashfree?.live?.appId ?? '',
+      "cashfree.live.secretKey": settings?.cashfree?.live?.secretKey ?? '',
+      "instamojo.enabled": settings?.instamojo?.enabled ?? false,
+      "instamojo.mode": settings?.instamojo?.mode ?? 'test',
+      "instamojo.test.apiKey": settings?.instamojo?.test?.apiKey ?? '',
+      "instamojo.test.authToken": settings?.instamojo?.test?.authToken ?? '',
+      "instamojo.live.apiKey": settings?.instamojo?.live?.apiKey ?? '',
+      "instamojo.live.authToken": settings?.instamojo?.live?.authToken ?? '',
+      "stripe.enabled": settings?.stripe?.enabled ?? false,
+      "stripe.mode": settings?.stripe?.mode ?? 'test',
+      "stripe.test.publishableKey": settings?.stripe?.test?.publishableKey ?? '',
+      "stripe.test.secretKey": settings?.stripe?.test?.secretKey ?? '',
+      "stripe.live.publishableKey": settings?.stripe?.live?.publishableKey ?? '',
+      "stripe.live.secretKey": settings?.stripe?.live?.secretKey ?? '',
     },
   });
 
@@ -82,7 +140,8 @@ export function PaymentGatewayForm({ settings }: PaymentGatewayFormProps) {
     setIsSubmitting(true);
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-        if(key.endsWith('enabled') && value) {
+        const typedKey = key as keyof SettingsFormValues;
+        if(typedKey.endsWith('enabled') && value) {
             formData.append(key, 'on');
         } else if (value !== undefined && value !== null) {
             formData.append(key, String(value));
@@ -111,111 +170,160 @@ export function PaymentGatewayForm({ settings }: PaymentGatewayFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
         
-        {/* Razorpay Section */}
-        <Card className="border-primary/50">
-            <CardHeader>
-                <CardTitle>Razorpay</CardTitle>
-                <CardDescription>Configure credentials for the Razorpay payment gateway.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="razorpay.enabled"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <FormLabel className="text-base">Enable Razorpay Gateway</FormLabel>
+        <Accordion type="multiple" className="w-full space-y-6">
+            <AccordionItem value="razorpay">
+                 <Card className="border-primary/50">
+                    <AccordionTrigger className="p-6">
+                        <CardTitle>Razorpay</CardTitle>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-6 pt-0">
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="razorpay.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Razorpay</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="razorpay.mode" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Active Mode</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="razorpay.test.keyId" render={({field}) => (<FormItem><FormLabel>Test Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="razorpay.test.keySecret" render={({field}) => (<FormItem><FormLabel>Test Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
                             </div>
-                            <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="razorpay.mode"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                        <FormLabel>Active Mode</FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex items-center space-x-4"
-                            >
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test Mode</FormLabel></FormItem>
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live Mode</FormLabel></FormItem>
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <Separator />
-                <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="razorpay.test.keyId" render={({field}) => (<FormItem><FormLabel>Test Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="razorpay.test.keySecret" render={({field}) => (<FormItem><FormLabel>Test Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-                 <Separator />
-                <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="razorpay.live.keyId" render={({field}) => (<FormItem><FormLabel>Live Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="razorpay.live.keySecret" render={({field}) => (<FormItem><FormLabel>Live Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-            </CardContent>
-        </Card>
-
-        {/* PhonePe Section */}
-        <Card>
-            <CardHeader>
-                <CardTitle>PhonePe</CardTitle>
-                <CardDescription>Configure credentials for the PhonePe payment gateway.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                 <FormField
-                    control={form.control}
-                    name="phonepe.enabled"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5"><FormLabel className="text-base">Enable PhonePe Gateway</FormLabel></div>
-                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="phonepe.mode"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                        <FormLabel>Active Mode</FormLabel>
-                        <FormControl>
-                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4">
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test Mode</FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live Mode</FormLabel></FormItem>
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <Separator />
-                <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <FormField control={form.control} name="phonepe.test.merchantId" render={({field}) => ( <FormItem><FormLabel>Test Merchant ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                     <FormField control={form.control} name="phonepe.test.saltKey" render={({field}) => ( <FormItem><FormLabel>Test Salt Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
-                     <FormField control={form.control} name="phonepe.test.saltIndex" render={({field}) => ( <FormItem><FormLabel>Test Salt Index</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
-                </div>
-                 <Separator />
-                <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="phonepe.live.merchantId" render={({field}) => ( <FormItem><FormLabel>Live Merchant ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="phonepe.live.saltKey" render={({field}) => ( <FormItem><FormLabel>Live Salt Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="phonepe.live.saltIndex" render={({field}) => ( <FormItem><FormLabel>Live Salt Index</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
-                </div>
-            </CardContent>
-        </Card>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="razorpay.live.keyId" render={({field}) => (<FormItem><FormLabel>Live Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="razorpay.live.keySecret" render={({field}) => (<FormItem><FormLabel>Live Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </Card>
+            </AccordionItem>
+            <AccordionItem value="phonepe">
+                 <Card>
+                    <AccordionTrigger className="p-6">
+                        <CardTitle>PhonePe</CardTitle>
+                    </AccordionTrigger>
+                     <AccordionContent className="p-6 pt-0">
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="phonepe.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable PhonePe</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="phonepe.mode" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Active Mode</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="phonepe.test.merchantId" render={({field}) => ( <FormItem><FormLabel>Test Merchant ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="phonepe.test.saltKey" render={({field}) => ( <FormItem><FormLabel>Test Salt Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="phonepe.test.saltIndex" render={({field}) => ( <FormItem><FormLabel>Test Salt Index</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="phonepe.live.merchantId" render={({field}) => ( <FormItem><FormLabel>Live Merchant ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="phonepe.live.saltKey" render={({field}) => ( <FormItem><FormLabel>Live Salt Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="phonepe.live.saltIndex" render={({field}) => ( <FormItem><FormLabel>Live Salt Index</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </Card>
+            </AccordionItem>
+             <AccordionItem value="paytm">
+                 <Card>
+                    <AccordionTrigger className="p-6">
+                        <CardTitle>Paytm</CardTitle>
+                    </AccordionTrigger>
+                     <AccordionContent className="p-6 pt-0">
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="paytm.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Paytm</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="paytm.mode" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Active Mode</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="paytm.test.merchantId" render={({field}) => ( <FormItem><FormLabel>Test Merchant ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="paytm.test.merchantKey" render={({field}) => ( <FormItem><FormLabel>Test Merchant Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="paytm.live.merchantId" render={({field}) => ( <FormItem><FormLabel>Live Merchant ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="paytm.live.merchantKey" render={({field}) => ( <FormItem><FormLabel>Live Merchant Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </Card>
+            </AccordionItem>
+            <AccordionItem value="cashfree">
+                 <Card>
+                    <AccordionTrigger className="p-6">
+                        <CardTitle>Cashfree</CardTitle>
+                    </AccordionTrigger>
+                     <AccordionContent className="p-6 pt-0">
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="cashfree.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Cashfree</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="cashfree.mode" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Active Mode</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="cashfree.test.appId" render={({field}) => ( <FormItem><FormLabel>Test App ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="cashfree.test.secretKey" render={({field}) => ( <FormItem><FormLabel>Test Secret Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="cashfree.live.appId" render={({field}) => ( <FormItem><FormLabel>Live App ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="cashfree.live.secretKey" render={({field}) => ( <FormItem><FormLabel>Live Secret Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </Card>
+            </AccordionItem>
+            <AccordionItem value="instamojo">
+                 <Card>
+                    <AccordionTrigger className="p-6">
+                        <CardTitle>Instamojo</CardTitle>
+                    </AccordionTrigger>
+                     <AccordionContent className="p-6 pt-0">
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="instamojo.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Instamojo</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="instamojo.mode" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Active Mode</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="instamojo.test.apiKey" render={({field}) => ( <FormItem><FormLabel>Test API Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="instamojo.test.authToken" render={({field}) => ( <FormItem><FormLabel>Test Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="instamojo.live.apiKey" render={({field}) => ( <FormItem><FormLabel>Live API Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="instamojo.live.authToken" render={({field}) => ( <FormItem><FormLabel>Live Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </Card>
+            </AccordionItem>
+             <AccordionItem value="stripe">
+                 <Card>
+                    <AccordionTrigger className="p-6">
+                        <CardTitle>Stripe</CardTitle>
+                    </AccordionTrigger>
+                     <AccordionContent className="p-6 pt-0">
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="stripe.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Stripe</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="stripe.mode" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Active Mode</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="stripe.test.publishableKey" render={({field}) => ( <FormItem><FormLabel>Test Publishable Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="stripe.test.secretKey" render={({field}) => ( <FormItem><FormLabel>Test Secret Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="stripe.live.publishableKey" render={({field}) => ( <FormItem><FormLabel>Live Publishable Key</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="stripe.live.secretKey" render={({field}) => ( <FormItem><FormLabel>Live Secret Key</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </Card>
+            </AccordionItem>
+        </Accordion>
 
         {isDirty && (
             <Button type="submit" disabled={isSubmitting} size="lg">

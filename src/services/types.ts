@@ -277,8 +277,21 @@ interface PaymentGatewayCredentials {
   keyId?: string;
   keySecret?: string;
   merchantId?: string;
+  merchantKey?: string;
   saltKey?: string;
   saltIndex?: number;
+  appId?: string;
+  secretKey?: string;
+  apiKey?: string;
+  authToken?: string;
+  publishableKey?: string;
+}
+
+interface GatewayConfig {
+    enabled: boolean;
+    mode: 'test' | 'live';
+    test: PaymentGatewayCredentials;
+    live: PaymentGatewayCredentials;
 }
 
 export interface AppSettings {
@@ -303,18 +316,12 @@ export interface AppSettings {
         other: { enabled: boolean };
     };
     paymentGateway?: {
-        razorpay: {
-            enabled: boolean;
-            mode: 'test' | 'live';
-            test: PaymentGatewayCredentials;
-            live: PaymentGatewayCredentials;
-        };
-        phonepe: {
-            enabled: boolean;
-            mode: 'test' | 'live';
-            test: PaymentGatewayCredentials;
-            live: PaymentGatewayCredentials;
-        };
+        razorpay: GatewayConfig;
+        phonepe: GatewayConfig;
+        paytm: GatewayConfig;
+        cashfree: GatewayConfig;
+        instamojo: GatewayConfig;
+        stripe: GatewayConfig;
     };
     leadConfiguration?: {
         disabledPurposes: string[];
