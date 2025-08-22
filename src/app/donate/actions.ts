@@ -66,7 +66,7 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
     console.error("Error creating pending donation:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to create pending donation: ${error}`,
     };
   }
 }

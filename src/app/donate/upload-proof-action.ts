@@ -105,6 +105,6 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
         console.error("Error recording past donation:", error);
-        return { success: false, error: error };
+        return { success: false, error: `Failed to record donation: ${error}` };
     }
 }

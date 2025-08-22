@@ -33,7 +33,7 @@ function CopyButton({ text }: { text: React.ReactNode }) {
     };
 
     return (
-        <Button size="sm" variant="outline" className="absolute bottom-4 right-16 h-7" onClick={onCopy}>
+        <Button size="sm" variant="outline" className="absolute bottom-2 right-14 h-7" onClick={onCopy}>
             {hasCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             <span className="sr-only">Copy</span>
         </Button>

@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/actions.ts
 "use server";
 
@@ -12,20 +13,21 @@ import { logActivity } from "@/services/activity-log-service";
 export async function handleDeleteDonation(donationId: string, adminUserId: string) {
     try {
         const adminUser = await getUser(adminUserId);
-        if (!adminUser) return { success: false, error: "Admin user not found." };
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
         await deleteDonationService(donationId, adminUser);
         revalidatePath("/admin/donations");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred while deleting the donation.";
+        console.error("Error deleting donation:", error);
+        return { success: false, error: `Failed to delete donation: ${error}` };
     }
 }
 
 export async function handleBulkDeleteDonations(donationIds: string[], adminUserId: string) {
     try {
         const adminUser = await getUser(adminUserId);
-        if (!adminUser) return { success: false, error: "Admin user not found." };
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
 
         const batch = writeBatch(db);
         const logPromises: Promise<void>[] = [];
@@ -50,8 +52,9 @@ export async function handleBulkDeleteDonations(donationIds: string[], adminUser
         revalidatePath("/admin/donations");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred during bulk deletion.";
+        console.error("Error bulk deleting donations:", error);
+        return { success: false, error: `Failed to delete donations: ${error}` };
     }
 }
 
@@ -66,8 +69,9 @@ export async function handleUpdateDonationStatus(donationId: string, status: Don
         revalidatePath(`/admin/donations/${donationId}/edit`);
         return { success: true };
     } catch(e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred while updating status.";
+        console.error("Error updating donation status:", error);
+        return { success: false, error: `Failed to update status: ${error}` };
     }
 }
 
@@ -84,7 +88,7 @@ export async function handleAllocateDonation(
         ]);
 
         if (!donation) return { success: false, error: "Donation not found." };
-        if (!adminUser) return { success: false, error: "Admin user not found." };
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
         
         if (campaignId) {
              // Simple campaign allocation
@@ -110,8 +114,9 @@ export async function handleAllocateDonation(
         
         return { success: true };
     } catch(e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred during allocation.";
+        console.error("Error allocating donation:", error);
+        return { success: false, error: `Failed to allocate donation: ${error}` };
     }
 }
 
@@ -128,9 +133,9 @@ async function handleFileUpload(file: File): Promise<string> {
 export async function handleUploadDonationProof(donationId: string, formData: FormData) {
     try {
         const adminUserId = formData.get("adminUserId") as string | undefined;
-        if (!adminUserId) return { success: false, error: "Admin user not found." };
+        if (!adminUserId) return { success: false, error: "Admin user ID is missing." };
         const adminUser = await getUser(adminUserId);
-        if (!adminUser) return { success: false, error: "Admin user not found." };
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
 
         const screenshotFile = formData.get("paymentScreenshot") as File | undefined;
         if (!screenshotFile || screenshotFile.size === 0) {
@@ -142,11 +147,13 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
         await updateDonation(donationId, { paymentScreenshotUrls: [paymentScreenshotUrl] }, adminUser, 'Proof Uploaded');
         
         revalidatePath("/admin/donations");
+        revalidatePath(`/admin/donations/${donationId}/edit`);
         
         return { success: true, url: paymentScreenshotUrl };
 
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred during file upload.";
+        console.error("Error uploading donation proof:", error);
+        return { success: false, error: `Failed to upload proof: ${error}` };
     }
 }

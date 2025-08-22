@@ -25,11 +25,11 @@ export async function handleAddBoardMember(userId: string, role: string): Promis
 
     return { success: true };
   } catch (e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    const error = e instanceof Error ? e.message : "An unknown error occurred while adding the board member.";
     console.error("Error adding board member:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to add board member: ${error}`,
     };
   }
 }

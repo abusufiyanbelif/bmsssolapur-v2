@@ -71,11 +71,11 @@ export async function handleCreateCampaign(formData: CampaignFormData): Promise<
 
     return { success: true };
   } catch (e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    const error = e instanceof Error ? e.message : "An unknown error occurred while creating the campaign.";
     console.error("Error creating campaign:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to create campaign: ${error}`,
     };
   }
 }

@@ -26,8 +26,9 @@ export async function handleDeleteLead(leadId: string, adminUserId: string) {
         revalidatePath("/admin/leads");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred while deleting the lead.";
+        console.error("Error deleting lead:", error);
+        return { success: false, error: `Failed to delete lead: ${error}` };
     }
 }
 
@@ -54,8 +55,9 @@ export async function handleBulkDeleteLeads(leadIds: string[], adminUserId: stri
         revalidatePath("/admin/leads");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred during bulk deletion.";
+        console.error("Error bulk deleting leads:", error);
+        return { success: false, error: `Failed to delete leads: ${error}` };
     }
 }
 
@@ -95,8 +97,9 @@ export async function handleBulkUpdateLeadStatus(
         revalidatePath("/admin/leads");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred during bulk status update.";
+        console.error("Error bulk updating lead status:", error);
+        return { success: false, error: `Failed to update lead statuses: ${error}` };
     }
 }
 
@@ -145,8 +148,9 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
         return { success: true, url: verificationDocumentUrl };
 
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred while uploading document.";
+        console.error("Error uploading verification document:", error);
+        return { success: false, error: `Failed to upload document: ${error}` };
     }
 }
 
@@ -220,7 +224,8 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         return { success: true };
 
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred while recording the transfer.";
+        console.error("Error handling fund transfer:", error);
+        return { success: false, error: `Failed to record fund transfer: ${error}` };
     }
 }

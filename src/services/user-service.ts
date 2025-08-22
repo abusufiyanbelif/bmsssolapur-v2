@@ -60,7 +60,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
         return null;
     } catch (error) {
         console.error(`Error getting user by userId: ${userId}`, error);
-        throw new Error('Failed to get user by userId.');
+        throw new Error(`Failed to get user by userId. This could be due to a missing Firestore index on the 'userId' field in the 'users' collection.`);
     }
 };
 
@@ -194,8 +194,8 @@ export const getUser = async (id: string): Promise<User | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting user: ', error);
-    throw new Error('Failed to get user.');
+    console.error(`Error getting user with ID ${id}:`, error);
+    throw new Error(`Failed to get user with ID ${id}.`);
   }
 };
 
@@ -222,7 +222,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
     return null;
   } catch (error) {
     console.error(`Error getting user by name: ${name}`, error);
-    throw new Error('Failed to get user by name.');
+    throw new Error(`Failed to get user by name. This could be due to a missing Firestore index on the 'name' field in the 'users' collection.`);
   }
 }
 
@@ -294,7 +294,9 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
     console.error('Error getting user by phone: ', error);
     // This could be due to a missing index. Log a helpful message.
     if (error instanceof Error && error.message.includes('index')) {
-        console.error("Firestore index missing. Please create a composite index in Firestore on the 'users' collection for 'phone' (ascending). The link in the error message will help you do this.");
+        const detailedError = `Firestore query error. This likely indicates a missing index. Please create a single-field index on 'phone' in the 'users' collection.`;
+        console.error(detailedError);
+        throw new Error(detailedError);
     }
     throw new Error('Failed to get user by phone.');
   }
@@ -349,9 +351,11 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
   } catch (error) {
     console.error('Error getting user by UPI ID: ', error);
      if (error instanceof Error && error.message.includes('index')) {
-        console.error("Firestore index missing. Please create an array-contains index in Firestore on the 'users' collection for 'upiIds'.");
+        const detailedError = `Firestore query error. This indicates a missing index. Please create an array-contains index in Firestore on the 'users' collection for the 'upiIds' field.`;
+        console.error(detailedError);
+        return null; // Return null to prevent crash
     }
-    return null; // Return null on any error to avoid crashing the app flow
+    return null; // Return null on any other error
   }
 }
 
@@ -380,7 +384,9 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
   } catch (error) {
     console.error('Error getting user by bank account number: ', error);
     if (error instanceof Error && error.message.includes('index')) {
-        console.error("Firestore index missing. Please create a single-field index in Firestore on the 'users' collection for 'bankAccountNumber' (ascending).");
+        const detailedError = `Firestore query error. This indicates a missing index. Please create a single-field index in Firestore on the 'users' collection for 'bankAccountNumber' (ascending).`;
+        console.error(detailedError);
+        throw new Error(detailedError);
     }
     throw new Error('Failed to get user by bank account number.');
   }
@@ -437,8 +443,8 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
             updatedAt: serverTimestamp()
         });
     } catch (error) {
-        console.error("Error updating user: ", error);
-        throw new Error('Failed to update user.');
+        console.error(`Error updating user ${id}:`, error);
+        throw new Error(`Failed to update user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 };
 
@@ -449,8 +455,8 @@ export const deleteUser = async (id: string) => {
         const userRef = doc(db, USERS_COLLECTION, id);
         await deleteDoc(userRef);
     } catch (error) {
-        console.error("Error deleting user: ", error);
-        throw new Error('Failed to delete user.');
+        console.error(`Error deleting user ${id}:`, error);
+        throw new Error(`Failed to delete user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
 

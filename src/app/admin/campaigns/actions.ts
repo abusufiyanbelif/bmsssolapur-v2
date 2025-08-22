@@ -18,7 +18,8 @@ export async function handleBulkDeleteCampaigns(campaignIds: string[]) {
         revalidatePath("/admin/campaigns");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred during bulk deletion.";
+        console.error("Error bulk deleting campaigns:", error);
+        return { success: false, error: `Failed to delete campaigns: ${error}` };
     }
 }

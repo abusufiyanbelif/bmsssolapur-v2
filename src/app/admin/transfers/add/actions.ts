@@ -31,7 +31,7 @@ export async function handleAddTransfer(
         return { success: true };
     } else {
         // Pass the specific error from the underlying function
-        return { success: false, error: `Failed to add transfer: ${result.error}` };
+        return { success: false, error: result.error || "An unknown error occurred while adding the transfer." };
     }
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

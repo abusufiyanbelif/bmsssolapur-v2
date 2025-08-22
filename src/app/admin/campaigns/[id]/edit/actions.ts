@@ -38,11 +38,11 @@ export async function handleUpdateCampaign(campaignId: string, formData: Campaig
 
     return { success: true };
   } catch (e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    const error = e instanceof Error ? e.message : "An unknown error occurred while updating the campaign.";
     console.error("Error updating campaign:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to update campaign: ${error}`,
     };
   }
 }

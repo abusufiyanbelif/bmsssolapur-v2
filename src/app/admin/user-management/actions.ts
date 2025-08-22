@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/actions.ts
 "use server";
 
@@ -7,7 +8,6 @@ import { writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 
 export async function handleDeleteUser(userId: string) {
-    // Add check to prevent deleting super admin or other critical users if needed
     try {
         await deleteUser(userId);
         revalidatePath("/admin/user-management");
@@ -16,8 +16,9 @@ export async function handleDeleteUser(userId: string) {
         revalidatePath("/admin/referrals");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred while deleting user.";
+        console.error("Error deleting user:", error);
+        return { success: false, error: `Failed to delete user: ${error}` };
     }
 }
 
@@ -35,8 +36,9 @@ export async function handleBulkDeleteUsers(userIds: string[]) {
         revalidatePath("/admin/referrals");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred during bulk deletion.";
+        console.error("Error bulk deleting users:", error);
+        return { success: false, error: `Failed to delete users: ${error}` };
     }
 }
 
@@ -50,7 +52,8 @@ export async function handleToggleUserStatus(userId: string, isActive: boolean) 
         revalidatePath("/admin/referrals");
         return { success: true };
     } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred";
-        return { success: false, error };
+        const error = e instanceof Error ? e.message : "An unknown error occurred while toggling user status.";
+        console.error("Error toggling user status:", error);
+        return { success: false, error: `Failed to update user status: ${error}` };
     }
 }
