@@ -29,7 +29,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
         email: "abusufiyan.belif@gmail.com", 
         phone: "7887646583", 
         password: "admin", 
-        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], 
+        roles: ["Super Admin", "Donor", "Beneficiary"], 
         privileges: ["all"], 
         groups: ["Member of Organization", "Mandatory Lead Approver"], 
         isActive: true, 
