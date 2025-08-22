@@ -15,15 +15,6 @@ interface FormState {
     error?: string;
 }
 
-const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
-    'Education': 'Sadaqah',
-    'Medical': 'Sadaqah',
-    'Relief Fund': 'Lillah',
-    'Deen': 'Sadaqah',
-    'Loan': 'Lillah', // Loans are a form of Lillah
-    'Other': 'Sadaqah',
-};
-
 // Helper function to find differences between two objects for logging
 const getChangedFields = (original: Lead, updates: Partial<Lead>) => {
     const changes: Record<string, { from: any; to: any }> = {};
@@ -88,7 +79,6 @@ export async function handleUpdateLead(
         story: rawFormData.story as string | undefined,
         purpose: purpose,
         otherPurposeDetail: rawFormData.otherPurposeDetail as string | undefined,
-        donationType: purposeCategoryMap[purpose], // Infer category from purpose
         category: rawFormData.category as string | undefined,
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
@@ -148,3 +138,4 @@ export async function handleUpdateLead(
     };
   }
 }
+
