@@ -6,9 +6,10 @@ import { deleteLead as deleteLeadService, getLead, updateLead } from "@/services
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
-import { FundTransfer, LeadStatus, LeadVerificationStatus } from "@/services/types";
-import { arrayUnion, increment, writeBatch, doc } from "firebase/firestore";
+import { FundTransfer, LeadStatus, LeadVerificationStatus, User, Donation, Allocation } from "@/services/types";
+import { arrayUnion, increment, writeBatch, doc, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
+import { getDonation, updateDonation } from "@/services/donation-service";
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
 // and get a URL. This function is a placeholder.
@@ -227,5 +228,75 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const error = e instanceof Error ? e.message : "An unknown error occurred while recording the transfer.";
         console.error("Error handling fund transfer:", error);
         return { success: false, error: `Failed to record fund transfer: ${error}` };
+    }
+}
+
+export async function handleAllocateDonationsToLead(leadId: string, donationIds: string[], adminUserId: string) {
+    try {
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found for logging." };
+        
+        const lead = await getLead(leadId);
+        if (!lead) return { success: false, error: "Lead not found." };
+        
+        let amountNeeded = lead.helpRequested - lead.helpGiven;
+        if (amountNeeded <= 0) {
+            return { success: false, error: "This lead has already been fully funded." };
+        }
+        
+        const batch = writeBatch(db);
+        let totalAllocatedInThisAction = 0;
+        
+        for (const donationId of donationIds) {
+            if (amountNeeded <= 0) break; // Stop if the lead is fully funded
+            
+            const donation = await getDonation(donationId);
+            if (!donation || (donation.status !== 'Verified' && donation.status !== 'Partially Allocated')) {
+                continue; // Skip invalid or fully allocated donations
+            }
+
+            const alreadyAllocated = donation.allocations?.reduce((sum, alloc) => sum + alloc.amount, 0) || 0;
+            const availableAmount = donation.amount - alreadyAllocated;
+            if (availableAmount <= 0) continue;
+
+            const amountToAllocate = Math.min(amountNeeded, availableAmount);
+            totalAllocatedInThisAction += amountToAllocate;
+            amountNeeded -= amountToAllocate;
+
+            // 1. Update Donation
+            const donationRef = doc(db, 'donations', donationId);
+            const newAllocationForDonation: Allocation = {
+                leadId: leadId,
+                amount: amountToAllocate,
+                allocatedAt: Timestamp.now(),
+                allocatedByUserId: adminUser.id!,
+                allocatedByUserName: adminUser.name,
+            };
+            const newDonationStatus = (availableAmount - amountToAllocate < 1) ? 'Allocated' : 'Partially Allocated';
+            batch.update(donationRef, {
+                allocations: arrayUnion(newAllocationForDonation),
+                status: newDonationStatus,
+                updatedAt: serverTimestamp()
+            });
+        }
+        
+        // 2. Update Lead
+        const leadRef = doc(db, 'leads', leadId);
+        batch.update(leadRef, {
+            helpGiven: increment(totalAllocatedInThisAction),
+            updatedAt: serverTimestamp()
+        });
+
+        await batch.commit();
+
+        revalidatePath(`/admin/leads/${leadId}`);
+        donationIds.forEach(id => revalidatePath(`/admin/donations/${id}/edit`));
+        revalidatePath("/admin/donations");
+
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred during allocation.";
+        console.error("Error allocating donations to lead:", error);
+        return { success: false, error: `Failed to allocate donations: ${error}` };
     }
 }

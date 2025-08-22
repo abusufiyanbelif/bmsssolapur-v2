@@ -2,7 +2,7 @@
 
 import { getLead, Lead } from "@/services/lead-service";
 import { getUser, User } from "@/services/user-service";
-import { getDonation, Donation } from "@/services/donation-service";
+import { getDonation, Donation, getAllDonations } from "@/services/donation-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,6 +23,7 @@ import { AddTransferDialog } from "./add-transfer-dialog";
 import { AuditTrail } from "./audit-trail";
 import { VerificationStatusCard } from "./verification-status-card";
 import { getAllUsers } from "@/services/user-service";
+import { AllocateDonationsDialog } from "./allocate-donations-dialog";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['status'], string> = {
@@ -65,7 +66,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         notFound();
     }
     
-    const [beneficiary, allocatedDonations, activityLogs, allUsers] = await Promise.all([
+    const [beneficiary, allocatedDonations, activityLogs, allUsers, allDonations] = await Promise.all([
         getUser(lead.beneficiaryId),
         Promise.all(
             (lead.donations || []).map(async (alloc) => {
@@ -75,6 +76,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         ),
         getUserActivity(lead.beneficiaryId), // Fetching activity for the beneficiary
         getAllUsers(), // Fetch all users to identify approvers
+        getAllDonations(),
     ]);
     
     const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
@@ -223,7 +225,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     A record of all funds transferred to the beneficiary for this case.
                                 </CardDescription>
                             </div>
-                             <AddTransferDialog leadId={lead.id!} />
+                            <div className="flex gap-2">
+                                 <AddTransferDialog leadId={lead.id!} />
+                                 <AllocateDonationsDialog lead={lead} allDonations={allDonations} onAllocation={() => { revalidatePath(`/admin/leads/${lead.id}`) }} />
+                            </div>
                         </CardHeader>
                         <CardContent>
                            {lead.fundTransfers && lead.fundTransfers.length > 0 ? (
