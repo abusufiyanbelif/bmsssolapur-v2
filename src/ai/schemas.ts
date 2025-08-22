@@ -45,6 +45,20 @@ export const SendEmailOutputSchema = z.object({
 });
 export type SendEmailOutput = z.infer<typeof SendEmailOutputSchema>;
 
+// Schema for sending a WhatsApp message
+export const SendWhatsappInputSchema = z.object({
+  to: z.string().describe('The recipient phone number in E.164 format.'),
+  body: z.string().describe('The body of the WhatsApp message.'),
+});
+export type SendWhatsappInput = z.infer<typeof SendWhatsappInputSchema>;
+
+export const SendWhatsappOutputSchema = z.object({
+  success: z.boolean().describe('Whether the message was sent successfully.'),
+  error: z.string().optional().describe('The error message if the message failed to send.'),
+});
+export type SendWhatsappOutput = z.infer<typeof SendWhatsappOutputSchema>;
+
+
 // Schema for Configuration Validator
 export const ValidateConfigurationInputSchema = z.object({
   firebaseConfig: z

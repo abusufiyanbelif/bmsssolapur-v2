@@ -28,11 +28,6 @@ const formSchema = z.object({
   loginOtp: z.boolean().default(false),
   loginGoogle: z.boolean().default(false),
 
-  // Services
-  serviceEmail: z.boolean().default(false),
-  serviceSms: z.boolean().default(false),
-  serviceWhatsapp: z.boolean().default(false),
-  
   // Features
   featureDirectPayment: z.boolean().default(false),
 
@@ -59,9 +54,6 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
       loginPassword: settings.loginMethods.password.enabled,
       loginOtp: settings.loginMethods.otp.enabled,
       loginGoogle: settings.loginMethods.google.enabled,
-      serviceEmail: settings.services.nodemailer.enabled,
-      serviceSms: settings.services.twilio.enabled,
-      serviceWhatsapp: settings.services.whatsapp.enabled,
       featureDirectPayment: settings.features.directPaymentToBeneficiary.enabled,
       paymentBankTransfer: settings.paymentMethods?.bankTransfer.enabled ?? true,
       paymentCash: settings.paymentMethods?.cash.enabled ?? true,
@@ -80,10 +72,6 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
     if(values.loginOtp) formData.append("login.otp", "on");
     if(values.loginGoogle) formData.append("login.google", "on");
     
-    if(values.serviceEmail) formData.append("service.email", "on");
-    if(values.serviceSms) formData.append("service.sms", "on");
-    if(values.serviceWhatsapp) formData.append("service.whatsapp", "on");
-
     if(values.featureDirectPayment) formData.append("feature.directPayment", "on");
     
     if(values.paymentBankTransfer) formData.append("payment.bankTransfer", "on");
@@ -157,60 +145,6 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
                             <div className="space-y-0.5">
                                 <FormLabel className="text-base">Google Sign-In</FormLabel>
                                 <FormDescription>Allow users to log in using their Google account.</FormDescription>
-                            </div>
-                            <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-            </CardContent>
-        </Card>
-
-         <Card>
-            <CardHeader>
-                <CardTitle>Notification Services</CardTitle>
-                <CardDescription>Toggle external notification services on or off. Disabling a service will prevent any notifications of that type from being sent.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="serviceEmail"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <FormLabel className="text-base">Email Notifications (Nodemailer)</FormLabel>
-                                <FormDescription>Enable or disable sending emails for alerts and receipts.</FormDescription>
-                            </div>
-                            <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="serviceSms"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <FormLabel className="text-base">SMS Notifications (Twilio)</FormLabel>
-                                <FormDescription>Enable or disable sending SMS for OTPs and other alerts.</FormDescription>
-                            </div>
-                            <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="serviceWhatsapp"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <FormLabel className="text-base">WhatsApp Notifications</FormLabel>
-                                <FormDescription>Enable or disable sending notifications via WhatsApp (requires separate setup).</FormDescription>
                             </div>
                             <FormControl>
                                 <Switch checked={field.value} onCheckedChange={field.onChange} />

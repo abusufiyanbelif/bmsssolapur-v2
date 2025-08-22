@@ -21,11 +21,6 @@ export async function handleUpdateAppSettings(
         otp: { enabled: formData.get("login.otp") === 'on' },
         google: { enabled: formData.get("login.google") === 'on' },
       },
-      services: {
-        nodemailer: { enabled: formData.get("service.email") === 'on' },
-        twilio: { enabled: formData.get("service.sms") === 'on' },
-        whatsapp: { enabled: formData.get("service.whatsapp") === 'on' },
-      },
       features: {
         directPaymentToBeneficiary: { enabled: formData.get("feature.directPayment") === 'on' },
       },

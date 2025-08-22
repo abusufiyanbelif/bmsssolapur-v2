@@ -301,10 +301,35 @@ export interface AppSettings {
         otp: { enabled: boolean };
         google: { enabled: boolean };
     };
-    services: {
-        twilio: { enabled: boolean };
-        nodemailer: { enabled: boolean };
-        whatsapp: { enabled: boolean };
+    notificationSettings?: {
+        sms: {
+            provider: 'twilio';
+            twilio: {
+                accountSid: string;
+                authToken: string;
+                verifySid: string;
+                fromNumber: string;
+            }
+        };
+        whatsapp: {
+            provider: 'twilio';
+            twilio: {
+                accountSid: string;
+                authToken: string;
+                fromNumber: string;
+            }
+        };
+        email: {
+            provider: 'nodemailer';
+            nodemailer: {
+                host: string;
+                port: number;
+                secure: boolean;
+                user: string;
+                pass: string;
+                from: string;
+            }
+        };
     };
     features: {
         directPaymentToBeneficiary: { enabled: boolean };

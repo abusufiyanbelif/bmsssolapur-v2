@@ -1,3 +1,4 @@
+
 import { config } from 'dotenv';
 config();
 
@@ -9,3 +10,4 @@ import '@/ai/flows/get-inspirational-quotes-flow.ts';
 import '@/ai/flows/extract-donation-details-flow.ts';
 import '@/ai/flows/extract-raw-text-flow.ts';
 import '@/ai/flows/extract-details-from-text-flow.ts';
+import '@/ai/flows/send-whatsapp-flow.ts';

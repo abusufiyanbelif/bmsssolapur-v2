@@ -39,10 +39,19 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         otp: { enabled: false },
         google: { enabled: false },
     },
-    services: {
-        twilio: { enabled: true },
-        nodemailer: { enabled: true },
-        whatsapp: { enabled: false },
+    notificationSettings: {
+        sms: {
+            provider: 'twilio',
+            twilio: { accountSid: '', authToken: '', verifySid: '', fromNumber: '' }
+        },
+        whatsapp: {
+            provider: 'twilio',
+            twilio: { accountSid: '', authToken: '', fromNumber: '' }
+        },
+        email: {
+            provider: 'nodemailer',
+            nodemailer: { host: '', port: 587, secure: true, user: '', pass: '', from: '' }
+        }
     },
     features: {
         directPaymentToBeneficiary: { enabled: false },
