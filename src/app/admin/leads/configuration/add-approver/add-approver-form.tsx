@@ -24,16 +24,17 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { handleAddApprover } from "../actions";
 import { useState } from "react";
-import { Loader2, Check, ChevronsUpDown, X } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown, X, XCircle } from "lucide-react";
 import type { User } from "@/services/types";
 import { useRouter } from "next/navigation";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 
 const formSchema = z.object({
-  userId: z.string({ required_error: "Please select a user." }).min(1, "Please select a user."),
+  userIds: z.array(z.string()).min(1, "Please select at least one user."),
   approverType: z.enum(['Mandatory', 'Optional']),
 });
 
@@ -59,23 +60,27 @@ export function AddApproverForm({ users }: AddApproverFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+        userIds: [],
         approverType: 'Optional'
     }
   });
+  
+  const { watch, setValue } = form;
+  const selectedUserIds = watch('userIds') || [];
 
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     
     const groupToAssign = values.approverType === 'Mandatory' ? 'Mandatory Lead Approver' : 'Lead Approver';
-    const result = await handleAddApprover(values.userId, groupToAssign);
+    const result = await handleAddApprover(values.userIds, groupToAssign);
 
     setIsSubmitting(false);
 
     if (result.success) {
       toast({
-        title: "Approver Added",
-        description: `Successfully added user to the ${values.approverType} Approver group.`,
+        title: "Approvers Added",
+        description: `Successfully added ${values.userIds.length} user(s) to the ${values.approverType} Approver group.`,
       });
       router.push("/admin/leads/configuration");
     } else {
@@ -92,10 +97,10 @@ export function AddApproverForm({ users }: AddApproverFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-lg">
         <FormField
           control={form.control}
-          name="userId"
+          name="userIds"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Select User</FormLabel>
+              <FormLabel>Select Users</FormLabel>
                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -103,38 +108,47 @@ export function AddApproverForm({ users }: AddApproverFormProps) {
                       variant="outline"
                       role="combobox"
                       className={cn(
-                        "w-full justify-between",
-                        !field.value && "text-muted-foreground"
+                        "w-full justify-between font-normal min-h-10 h-auto",
+                        !field.value?.length && "text-muted-foreground"
                       )}
                     >
-                      {field.value
-                        ? eligibleUsers.find(
-                            (user) => user.id === field.value
-                          )?.name
-                        : "Select a user"}
+                     <div className="flex flex-wrap gap-1">
+                        {selectedUserIds.length > 0 ? (
+                            selectedUserIds.map(userId => {
+                                const user = eligibleUsers.find(u => u.id === userId);
+                                return <Badge key={userId} variant="secondary">{user?.name}</Badge>
+                            })
+                        ) : (
+                            "Select one or more users..."
+                        )}
+                     </div>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
                     <CommandInput placeholder="Search user..." />
                     <CommandList>
-                        <CommandEmpty>No users found.</CommandEmpty>
+                        <CommandEmpty>No eligible users found.</CommandEmpty>
                         <CommandGroup>
                         {eligibleUsers.map((user) => (
                             <CommandItem
                             value={user.name}
                             key={user.id}
                             onSelect={() => {
-                                form.setValue("userId", user.id!);
-                                setPopoverOpen(false);
+                                const isSelected = selectedUserIds.includes(user.id!);
+                                if (isSelected) {
+                                    setValue('userIds', selectedUserIds.filter(id => id !== user.id!));
+                                } else {
+                                    setValue('userIds', [...selectedUserIds, user.id!]);
+                                }
                             }}
                             >
                             <Check
                                 className={cn(
                                 "mr-2 h-4 w-4",
-                                user.id === field.value
+                                selectedUserIds.includes(user.id!)
                                     ? "opacity-100"
                                     : "opacity-0"
                                 )}

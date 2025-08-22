@@ -5,7 +5,8 @@
 import { updateAppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
 import { updateUser } from "@/services/user-service";
-import { arrayRemove, arrayUnion } from "firebase/firestore";
+import { arrayRemove, arrayUnion, writeBatch, doc } from "firebase/firestore";
+import { db } from "@/services/firebase";
 
 interface FormState {
     success: boolean;
@@ -39,9 +40,15 @@ export async function handleUpdateLeadConfiguration(
   }
 }
 
-export async function handleAddApprover(userId: string, group: string): Promise<FormState> {
+export async function handleAddApprover(userIds: string[], group: string): Promise<FormState> {
   try {
-    await updateUser(userId, { groups: arrayUnion(group) as any });
+    const batch = writeBatch(db);
+    userIds.forEach(userId => {
+        const userRef = doc(db, 'users', userId);
+        batch.update(userRef, { groups: arrayUnion(group) });
+    });
+    await batch.commit();
+
     revalidatePath("/admin/leads/configuration");
     return { success: true };
   } catch(e) {
@@ -89,4 +96,3 @@ export async function handleMakeOptional(userId: string): Promise<FormState> {
     return { success: false, error: error };
   }
 }
-
