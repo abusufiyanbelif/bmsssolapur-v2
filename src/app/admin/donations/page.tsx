@@ -39,8 +39,8 @@ import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Partially Allocated", "Allocated", "Failed/Incomplete"];
-const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split"];
-const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Deen", "Hospital", "Loan and Relief Fund", "To Organization Use", "Loan Repayment"];
+const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split", "Any"];
+const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Medical", "Deen", "Loan", "Relief Fund", "To Organization Use", "Loan Repayment", "Other"];
 
 type SortableColumn = 'id' | 'donorName' | 'amount' | 'donationDate' | 'type' | 'status';
 type SortDirection = 'asc' | 'desc';
@@ -179,9 +179,11 @@ function DonationsPageContent() {
             // Handle date/timestamp objects
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (aValue > bValue) {
+            } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+                comparison = aValue - bValue;
+            } else if (String(aValue) > String(bValue)) {
                 comparison = 1;
-            } else if (aValue < bValue) {
+            } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
             }
 
@@ -483,7 +485,7 @@ function DonationsPageContent() {
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-4">
                                     <Checkbox
-                                        className="mt-1"
+                                        className="mt-1.5"
                                         checked={selectedDonations.includes(donation.id!)}
                                         onCheckedChange={checked => {
                                             setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!))

@@ -1,4 +1,3 @@
-
 'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +33,8 @@ export default function LeadConfigurationPage() {
             setSettings(fetchedSettings);
             setAllUsers(fetchedUsers);
         } catch (e) {
-            setError("Failed to load configuration data.");
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+            setError(`Failed to load configuration data. Error: ${errorMessage}`);
             console.error(e);
         } finally {
             setLoading(false);
@@ -84,21 +84,23 @@ export default function LeadConfigurationPage() {
             </Card>
             
             <Card>
-                <CardHeader>
-                     <CardTitle className="flex items-center gap-2">
-                        <Workflow />
-                       Lead Status Workflow
-                    </CardTitle>
-                     <CardDescription>
-                        Define the allowed transitions between different lead statuses to create a custom workflow.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="p-8 text-center border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">A simplified lead workflow editor will be available here soon.</p>
-                         <Button variant="secondary" disabled className="mt-4">Coming Soon</Button>
+                <CardHeader className="flex flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="flex items-center gap-2">
+                           <Workflow />
+                           Lead Status Workflow
+                        </CardTitle>
+                         <CardDescription>
+                            Define the allowed transitions between different lead statuses to create a custom workflow.
+                        </CardDescription>
                     </div>
-                </CardContent>
+                     <Button asChild>
+                        <Link href="/admin/leads/configuration/workflow">
+                           <Settings className="mr-2 h-4 w-4" />
+                           Manage Workflow
+                        </Link>
+                    </Button>
+                </CardHeader>
             </Card>
 
             <Card>
