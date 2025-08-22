@@ -112,7 +112,7 @@ export async function handleAddUser(
     console.error("Error creating user:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to create user: ${error}`,
     };
   }
 }

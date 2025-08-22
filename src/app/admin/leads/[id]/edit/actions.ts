@@ -134,8 +134,7 @@ export async function handleUpdateLead(
     console.error("Error updating lead:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to update lead: ${error}`,
     };
   }
 }
-

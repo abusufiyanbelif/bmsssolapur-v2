@@ -81,7 +81,7 @@ export async function handleRequestHelp(
     console.error("Error creating lead from user request:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to create request: ${error}`,
     };
   }
 }

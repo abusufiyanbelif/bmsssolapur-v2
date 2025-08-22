@@ -143,7 +143,7 @@ export async function handleUpdateDonation(
     console.error("Error updating donation:", error);
     return {
       success: false,
-      error: error, // Return the specific error message
+      error: `Failed to update donation: ${error}`,
     };
   }
 }

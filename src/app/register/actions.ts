@@ -61,6 +61,6 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
     return { success: true, user: createdUser };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown database error occurred during registration.";
-    return { success: false, error };
+    return { success: false, error: `Registration failed: ${error}` };
   }
 }

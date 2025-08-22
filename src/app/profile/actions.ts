@@ -50,7 +50,7 @@ export async function handleUpdateProfile(
     console.error("Error updating profile:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to update profile: ${error}`,
     };
   }
 }

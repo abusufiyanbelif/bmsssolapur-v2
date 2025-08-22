@@ -172,7 +172,7 @@ export async function handleUpdateUser(
     console.error("Error updating user:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to update user: ${error}`,
     };
   }
 }
@@ -197,7 +197,7 @@ export async function handleSetPassword(formData: FormData): Promise<FormState> 
     console.error("Error setting password:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to set password: ${error}`,
     };
   }
 }

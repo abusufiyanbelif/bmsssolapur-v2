@@ -155,7 +155,7 @@ export async function handleAddDonation(
     console.error("Error adding donation:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to add donation: ${error}`,
     };
   }
 }

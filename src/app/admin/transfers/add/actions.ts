@@ -31,14 +31,14 @@ export async function handleAddTransfer(
         return { success: true };
     } else {
         // Pass the specific error from the underlying function
-        return { success: false, error: result.error };
+        return { success: false, error: `Failed to add transfer: ${result.error}` };
     }
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     console.error("Error adding transfer:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to add transfer: ${error}`,
     };
   }
 }
