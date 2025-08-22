@@ -448,7 +448,7 @@ function LeadsPageContent() {
                                 />
                             </TableCell>
                             <TableCell>
-                                <div className="font-medium">{lead.name}</div>
+                                <Link href={`/admin/leads/${lead.id}`} className="font-medium hover:underline text-primary">{lead.name}</Link>
                                  <div className="font-mono text-xs text-muted-foreground">{lead.id}</div>
                             </TableCell>
                             <TableCell>
@@ -510,68 +510,58 @@ function LeadsPageContent() {
     );
 
     const renderMobileCards = () => (
-        <div className="space-y-4">
-            {paginatedLeads.map((lead) => {
-                 const verifConfig = verificationStatusConfig[lead.verifiedStatus];
-                 const StatusIcon = statusIcons[lead.status];
-                 return (
-                    <Card key={lead.id} className={cn(selectedLeads.includes(lead.id!) && "ring-2 ring-primary")}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-4">
-                                     <Checkbox
-                                        className="mt-1"
-                                        checked={selectedLeads.includes(lead.id!)}
-                                        onCheckedChange={(checked) => {
-                                            setSelectedLeads(prev => 
-                                                checked ? [...prev, lead.id!] : prev.filter(id => id !== lead.id!)
-                                            );
-                                        }}
-                                        aria-label="Select row"
-                                    />
-                                    <div>
-                                        <CardTitle className="text-lg">{lead.name}</CardTitle>
-                                        <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
+    <div className="space-y-4">
+        {paginatedLeads.map((lead) => {
+            const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+            const StatusIcon = statusIcons[lead.status];
+            return (
+                <Card key={lead.id} className={cn("flex flex-col", selectedLeads.includes(lead.id!) && "ring-2 ring-primary")}>
+                    <div className="p-4 flex gap-4">
+                        <Checkbox
+                            className="mt-1.5 flex-shrink-0"
+                            checked={selectedLeads.includes(lead.id!)}
+                            onCheckedChange={(checked) => {
+                                setSelectedLeads(prev => checked ? [...prev, lead.id!] : prev.filter(id => id !== lead.id!));
+                            }}
+                            aria-label="Select card"
+                        />
+                        <Link href={`/admin/leads/${lead.id}`} className="flex-grow space-y-3">
+                            <CardHeader className="p-0">
+                                <div className="flex justify-between items-start">
+                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
+                                    <div className="flex flex-col items-end gap-2">
+                                        <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                            <StatusIcon className="mr-1 h-3 w-3" />
+                                            {lead.status}
+                                        </Badge>
+                                        <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
+                                            <verifConfig.icon className="mr-1 h-3 w-3" />
+                                            {lead.verifiedStatus}
+                                        </Badge>
                                     </div>
                                 </div>
-                                <div className="flex flex-col items-end gap-2">
-                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
-                                        <StatusIcon className="mr-1 h-3 w-3" />
-                                        {lead.status}
-                                    </Badge>
-                                    <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
-                                        <verifConfig.icon className="mr-1 h-3 w-3" />
-                                        {lead.verifiedStatus}
-                                    </Badge>
+                                <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0 space-y-3 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Created</span>
+                                    <span>{lead.dateCreated ? format(lead.dateCreated, "dd MMM yyyy") : 'N/A'}</span>
                                 </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Created On</span>
-                                <span>{lead.dateCreated ? format(lead.dateCreated, "dd MMM yyyy") : 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Verified On</span>
-                                <span>{lead.verifiedAt ? format(lead.verifiedAt, "dd MMM yyyy") : 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Closed On</span>
-                                <span>{lead.closedAt ? format(lead.closedAt, "dd MMM yyyy") : 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Lead ID</span>
-                                <span className="font-mono text-xs">{lead.id}</span>
-                            </div>
-                        </CardContent>
-                         <CardFooter className="flex justify-end">
-                            {renderActions(lead)}
-                         </CardFooter>
-                    </Card>
-                );
-            })}
-        </div>
-    );
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Lead ID</span>
+                                    <span className="font-mono text-xs">{lead.id}</span>
+                                </div>
+                            </CardContent>
+                        </Link>
+                        <div className="flex-shrink-0">
+                           {renderActions(lead)}
+                        </div>
+                    </div>
+                </Card>
+            );
+        })}
+    </div>
+);
     
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
