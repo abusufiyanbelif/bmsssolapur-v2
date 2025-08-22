@@ -23,11 +23,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { format } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from "next/navigation";
 
 interface AllocateDonationsDialogProps {
     lead: Lead;
     allDonations: Donation[];
-    onAllocation: () => void;
 }
 
 interface SelectedDonation {
@@ -35,12 +35,13 @@ interface SelectedDonation {
     availableAmount: number;
 }
 
-export function AllocateDonationsDialog({ lead, allDonations, onAllocation }: AllocateDonationsDialogProps) {
+export function AllocateDonationsDialog({ lead, allDonations }: AllocateDonationsDialogProps) {
     const [open, setOpen] = useState(false);
     const [selectedDonations, setSelectedDonations] = useState<SelectedDonation[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
     const [adminUserId, setAdminUserId] = useState<string | null>(null);
+    const router = useRouter();
     
     useEffect(() => {
         if(open) {
@@ -90,7 +91,8 @@ export function AllocateDonationsDialog({ lead, allDonations, onAllocation }: Al
         setIsSubmitting(true);
         const result = await handleAllocateDonationsToLead(lead.id, selectedDonations.map(d => d.id), adminUserId);
         if (result.success) {
-            onAllocation();
+            toast({ variant: 'success', title: 'Allocation Successful', description: `Successfully allocated funds to ${lead.name}.` });
+            router.refresh();
             setOpen(false);
         } else {
             toast({ variant: 'destructive', title: "Allocation Failed", description: result.error });

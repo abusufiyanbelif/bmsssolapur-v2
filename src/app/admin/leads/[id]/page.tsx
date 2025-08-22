@@ -227,7 +227,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             </div>
                             <div className="flex gap-2">
                                  <AddTransferDialog leadId={lead.id!} />
-                                 <AllocateDonationsDialog lead={lead} allDonations={allDonations} onAllocation={() => { revalidatePath(`/admin/leads/${lead.id}`) }} />
+                                 <AllocateDonationsDialog lead={lead} allDonations={allDonations} />
                             </div>
                         </CardHeader>
                         <CardContent>
