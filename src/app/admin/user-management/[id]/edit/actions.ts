@@ -168,7 +168,7 @@ export async function handleUpdateUser(
       success: true,
     };
   } catch (e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    const error = e instanceof Error ? e.message : "An unknown error occurred while updating the user.";
     console.error("Error updating user:", error);
     return {
       success: false,
@@ -193,7 +193,7 @@ export async function handleSetPassword(formData: FormData): Promise<FormState> 
     await updateUser(userId, { password: newPassword });
     return { success: true };
   } catch(e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    const error = e instanceof Error ? e.message : "An unknown error occurred while setting the password.";
     console.error("Error setting password:", error);
     return {
       success: false,

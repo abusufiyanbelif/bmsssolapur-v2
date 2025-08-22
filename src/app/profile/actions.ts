@@ -46,7 +46,7 @@ export async function handleUpdateProfile(
     return { success: true };
 
   } catch (e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    const error = e instanceof Error ? e.message : "An unknown error occurred while updating your profile.";
     console.error("Error updating profile:", error);
     return {
       success: false,
