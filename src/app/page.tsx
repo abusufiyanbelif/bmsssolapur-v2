@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,9 @@ import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } fro
 import { DonationsChart } from "./admin/donations-chart";
 import { getAllDonations } from "@/services/donation-service";
 import { PublicHomePage } from "./home/public-home-page";
+import { getAllUsers } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
+import { getAllCampaigns } from "@/services/campaign-service";
 
 
 const CardSkeleton = () => (
@@ -52,7 +56,13 @@ const TableSkeleton = () => (
 
 
 export default async function Page() {
-    const allDonations = await getAllDonations();
+    // Fetch all data required for the server-rendered part of the page
+    const [allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
+        getAllDonations(),
+        getAllUsers(),
+        getAllLeads(),
+        getAllCampaigns()
+    ]);
 
     return (
         <div className="flex-1 space-y-8">
@@ -64,9 +74,15 @@ export default async function Page() {
                 </Suspense>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <Suspense fallback={<CardSkeleton />}><BeneficiaryBreakdownCard isAdmin={false} /></Suspense>
-                    <Suspense fallback={<CardSkeleton />}><CampaignBreakdownCard /></Suspense>
-                    <Suspense fallback={<CardSkeleton />}><DonationTypeCard /></Suspense>
+                    <Suspense fallback={<CardSkeleton />}>
+                        <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
+                    </Suspense>
+                    <Suspense fallback={<CardSkeleton />}>
+                        <CampaignBreakdownCard allCampaigns={allCampaigns} />
+                    </Suspense>
+                    <Suspense fallback={<CardSkeleton />}>
+                        <DonationTypeCard donations={allDonations} />
+                    </Suspense>
                 </div>
             
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

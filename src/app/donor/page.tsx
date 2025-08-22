@@ -119,7 +119,7 @@ export default function DonorDashboardPage() {
   }
   
   if (!user) {
-      return null; // Or a message indicating no user data
+      return null;
   }
 
   return (

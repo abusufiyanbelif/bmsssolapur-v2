@@ -5,13 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { User, Lead, Campaign, Donation, DonationType } from "@/services/types";
 import { HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield } from "lucide-react";
-import { getAllLeads } from "@/services/lead-service";
-import { getAllUsers } from "@/services/user-service";
-import { getAllCampaigns } from "@/services/campaign-service";
-import { getAllDonations } from "@/services/donation-service";
 
-export const BeneficiaryBreakdownCard = async ({ isAdmin = true }: { isAdmin?: boolean }) => {
-    const [allUsers, allLeads] = await Promise.all([getAllUsers(), getAllLeads()]);
+export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true }: { allUsers: User[], allLeads: Lead[], isAdmin?: boolean }) => {
     const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
     const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
   
@@ -73,8 +68,7 @@ export const BeneficiaryBreakdownCard = async ({ isAdmin = true }: { isAdmin?: b
 };
 
 
-export const CampaignBreakdownCard = async () => {
-    const allCampaigns = await getAllCampaigns();
+export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns: Campaign[] }) => {
     const completedCampaignsCount = allCampaigns.filter(c => c.status === 'Completed').length;
     const activeCampaignsCount = allCampaigns.filter(c => c.status === 'Active').length;
     const upcomingCampaignsCount = allCampaigns.filter(c => c.status === 'Upcoming').length;
@@ -124,8 +118,7 @@ const donationTypeIcons: Record<DonationType, React.ElementType> = {
     'Any': DollarSign,
 }
 
-export const DonationTypeCard = async () => {
-    const donations = await getAllDonations();
+export const DonationTypeCard = ({ donations }: { donations: Donation[] }) => {
      const donationTypeBreakdown = donations
         .filter(d => d.status === 'Verified' || d.status === 'Allocated')
         .reduce((acc, donation) => {
