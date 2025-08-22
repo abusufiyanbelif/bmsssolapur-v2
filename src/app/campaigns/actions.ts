@@ -14,8 +14,8 @@ export interface EnrichedLead extends Lead {
 }
 
 /**
- * Fetches leads that are verified, open, AND are NOT linked to any campaign.
- * These are the general leads that should be displayed publicly for donations.
+ * Fetches leads that are verified and public.
+ * These are the general leads that should be displayed for donations.
  */
 export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
     if (!isConfigValid) {
@@ -29,7 +29,7 @@ export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
         const q = query(
             leadsCollection, 
             where("verifiedStatus", "==", "Verified"),
-            where("status", "in", ["Publish", "Partial", "Ready For Help"])
+            where("caseAction", "==", "Publish")
         );
         
         const querySnapshot = await getDocs(q);
@@ -37,7 +37,7 @@ export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
         const leads: Lead[] = [];
         querySnapshot.forEach((doc) => {
             const leadData = doc.data() as Omit<Lead, 'id'>;
-            // Filter for leads that do NOT have a campaignId
+            // Additional filter for leads that do NOT have a campaignId
             if (!leadData.campaignId) {
                 leads.push({ id: doc.id, ...leadData });
             }
@@ -56,7 +56,7 @@ export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
     } catch (error) {
         console.error("Error fetching open general leads: ", error);
         if (error instanceof Error && error.message.includes('index')) {
-            console.error("Firestore composite index missing. Please create one on 'leads' for 'verifiedStatus' (asc) and 'status' (in).");
+            console.error("Firestore composite index missing. Please create one on 'leads' for 'verifiedStatus' (asc) and 'caseAction' (asc).");
         }
         return [];
     }
@@ -97,8 +97,3 @@ export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: num
         return [];
     }
 }
-
-
-
-
-

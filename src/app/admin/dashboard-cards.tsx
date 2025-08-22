@@ -33,7 +33,7 @@ export const MainMetricsCard = async () => {
   
     const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
-    const casesPublished = allLeads.filter(l => l.status === 'Publish').length;
+    const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
 
     const mainMetrics = [
         { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
@@ -249,7 +249,7 @@ export const PendingDonationsCard = async () => {
 export const LeadsReadyToPublishCard = async () => {
     const allLeads = await getAllLeads();
     const readyToPublishLeads = allLeads
-        .filter(lead => lead.status === 'Ready For Help')
+        .filter(lead => lead.verifiedStatus === 'Verified' && lead.caseAction !== 'Publish')
         .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
 
     return (
