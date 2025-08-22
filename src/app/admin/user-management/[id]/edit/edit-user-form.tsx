@@ -574,24 +574,18 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Account Settings & Roles</h3>
                     <FormField
-                    control={form.control}
-                    name="roles"
-                    render={() => (
-                        <FormItem>
-                        <div className="mb-4">
-                            <FormLabel className="text-base">User Roles</FormLabel>
-                            <FormDescription>
-                            Select all roles that apply to this user.
-                            </FormDescription>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {availableRoles.map((role) => (
-                                <FormField
-                                key={role}
-                                control={form.control}
-                                name="roles"
-                                render={({ field }) => {
-                                    return (
+                        control={form.control}
+                        name="roles"
+                        render={({ field }) => (
+                            <FormItem>
+                            <div className="mb-4">
+                                <FormLabel className="text-base">User Roles</FormLabel>
+                                <FormDescription>
+                                Select all roles that apply to this user.
+                                </FormDescription>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {availableRoles.map((role) => (
                                     <FormItem
                                         key={role}
                                         className="flex flex-row items-start space-x-3 space-y-0"
@@ -615,15 +609,13 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                             {role}
                                         </FormLabel>
                                     </FormItem>
-                                    )
-                                }}
-                                />
-                            ))}
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                                ))}
+                            </div>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                     />
+
                     
                     {selectedRoles.includes("Beneficiary") && (
                         <>
