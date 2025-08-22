@@ -21,7 +21,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
 import type { User as UserType, Lead as LeadType, Donation as DonationType } from "@/services/types";
-import { getUser } from "@/services/user-service";
+import { getUser, getUserByUserId } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
@@ -60,7 +60,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
             if (storedUserId) {
-                const fetchedUser = await getUser(storedUserId);
+                // Try fetching by Firestore ID first, then fall back to custom userId
+                let fetchedUser = await getUser(storedUserId);
+                if (!fetchedUser) {
+                    fetchedUser = await getUserByUserId(storedUserId);
+                }
+
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
                     const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
