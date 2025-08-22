@@ -5,6 +5,11 @@ This document tracks the features and changes requested for the project.
 ## Guiding Principles
 
 - **Interactive Dashboards**: All dashboard cards and metrics should be clickable links that navigate the user to a relevant, pre-filtered view of the underlying data. This makes the dashboard an interactive entry point for data exploration and management, not just a static display.
+- **Robust Error Handling & User Feedback**: The system must provide clear, specific, and actionable feedback for errors.
+    - **No Generic Errors**: Avoid vague messages like "An error occurred." Instead, propagate and display the specific error message from the server (e.g., "Duplicate transaction ID found").
+    - **UI Feedback**: Invalid form fields should be clearly highlighted (e.g., red border/label) with an inline message explaining the requirement.
+    - **Actionable Guidance**: When possible, errors should guide the user toward a solution (e.g., "A user with this email already exists. Please try logging in.").
+    - **Developer-Friendly Logging**: Server-side logs must contain sufficient context to facilitate Root Cause Analysis (RCA) and debugging.
 
 ---
 
