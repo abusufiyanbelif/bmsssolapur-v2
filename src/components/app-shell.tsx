@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft } from "lucide-react";
+import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
