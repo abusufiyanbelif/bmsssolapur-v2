@@ -9,7 +9,7 @@ import { getAllCampaigns, type Campaign, type CampaignStatus } from "@/services/
 import { handleBulkDeleteCampaigns } from "./actions";
 import { getAllLeads, Lead } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle, Check } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle, Check, Share2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -117,7 +117,14 @@ function CampaignsPageContent() {
         fetchData();
     }
     
-    const renderActions = (campaign: Campaign) => (
+     const handleShare = (campaign: CampaignWithStats) => {
+        const campaignUrl = `${window.location.origin}/campaigns`;
+        const message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\n*Progress:*\n- Raised: ₹${campaign.raisedAmount.toLocaleString()}\n- Beneficiaries Helped: ${campaign.beneficiaryCount}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    };
+    
+    const renderActions = (campaign: CampaignWithStats) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -130,6 +137,9 @@ function CampaignsPageContent() {
                     <Link href={`/admin/campaigns/${campaign.id}/edit`}>
                         <Edit className="mr-2 h-4 w-4" /> Edit
                     </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => handleShare(campaign)}>
+                    <Share2 className="mr-2 h-4 w-4" /> Share on WhatsApp
                 </DropdownMenuItem>
                 <DeleteConfirmationDialog
                     itemType="campaign"

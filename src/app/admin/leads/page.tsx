@@ -17,7 +17,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllLeads, type Lead, type LeadStatus, type LeadVerificationStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, getUser, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check, Trash2 } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check, Trash2, Share2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -312,6 +312,13 @@ function LeadsPageContent() {
         }
     };
     
+    const handleShare = (lead: Lead) => {
+        const leadUrl = `${window.location.origin}/public-leads#${lead.id}`; // Simple anchor link
+        const message = `*Help Needed for ${lead.name}*\n\nThis individual requires assistance for *${lead.purpose} (${lead.category})*.\n\n*Amount Required:* ₹${lead.helpRequested.toLocaleString()}\n\nYour contribution can make a significant difference. Please donate and share this message.\n\nView more details here:\n${leadUrl}`;
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    };
+    
     const renderActions = (lead: Lead) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -330,6 +337,9 @@ function LeadsPageContent() {
                     <Link href={`/admin/leads/${lead.id}/edit`}>
                         <Edit className="mr-2 h-4 w-4" /> Edit Lead
                     </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => handleShare(lead)}>
+                    <Share2 className="mr-2 h-4 w-4" /> Share on WhatsApp
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />

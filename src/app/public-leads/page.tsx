@@ -5,7 +5,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CreditCard, Copy, Loader2, AlertCircle } from "lucide-react";
+import { CreditCard, Copy, Loader2, AlertCircle, Share2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Organization, User } from "@/services/types";
@@ -26,6 +26,14 @@ function PublicLeadsList({ leads }: PublicLeadsListProps) {
     const handleDonateClick = (leadId: string) => {
         router.push(`/donate?leadId=${leadId}`);
     }
+
+    const handleShare = (lead: EnrichedLead) => {
+        const leadUrl = `${window.location.origin}/donate?leadId=${lead.id}`;
+        const displayName = lead.beneficiary?.isAnonymousAsBeneficiary ? `an Anonymous Beneficiary` : lead.name;
+        const message = `*Help Needed for ${displayName}*\n\nThis case requires assistance for *${lead.purpose} (${lead.category})*.\n\n*Amount Required:* ₹${lead.helpRequested.toLocaleString()}\n\nYour contribution can make a significant difference. Please donate and share this message.\n\nView more and donate here:\n${leadUrl}`;
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    };
 
     if (leads.length === 0) {
         return (
@@ -55,9 +63,14 @@ function PublicLeadsList({ leads }: PublicLeadsListProps) {
                     : lead.name;
 
                 return (
-                    <Card key={lead.id} className="flex flex-col">
+                    <Card key={lead.id} id={lead.id} className="flex flex-col">
                         <CardHeader>
-                            <CardTitle>{displayName}</CardTitle>
+                             <div className="flex justify-between items-start gap-4">
+                                <CardTitle>{displayName}</CardTitle>
+                                <Button variant="ghost" size="icon" onClick={() => handleShare(lead)}>
+                                    <Share2 className="h-5 w-5" />
+                                </Button>
+                            </div>
                             <CardDescription>
                                 Seeking help for: <span className="font-semibold">{lead.purpose} {lead.category ? `(${lead.category})` : ''}</span>
                             </CardDescription>

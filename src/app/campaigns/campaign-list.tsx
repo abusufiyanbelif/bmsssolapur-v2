@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { HandHeart, Target, CheckCircle, XCircle } from 'lucide-react';
+import { HandHeart, Target, CheckCircle, XCircle, Share2 } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import type { Campaign } from '@/services/types';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,13 @@ export function CampaignList({ campaigns }: CampaignListProps) {
     const handleDonateClick = (campaignId: string) => {
         router.push(`/donate?campaignId=${campaignId}`);
     }
+
+    const handleShare = (campaign: CampaignWithStats) => {
+        const campaignUrl = `${window.location.origin}/campaigns`;
+        const message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    };
 
     if (campaigns.length === 0) {
         return (
@@ -103,10 +110,15 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                                     {isUpcoming ? `Starts in ${formatDistanceToNowStrict(campaign.startDate as Date)}` : `${daysRemaining} remaining`}
                                 </p>
                              )}
-                            <Button onClick={() => handleDonateClick(campaign.id!)} className="w-full" disabled={isUpcoming || isEnded}>
-                                {buttonIcon}
-                                {buttonText}
-                            </Button>
+                            <div className="w-full flex gap-2">
+                                <Button onClick={() => handleDonateClick(campaign.id!)} className="w-full" disabled={isUpcoming || isEnded}>
+                                    {buttonIcon}
+                                    {buttonText}
+                                </Button>
+                                <Button variant="outline" size="icon" onClick={() => handleShare(campaign)}>
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </CardFooter>
                     </Card>
                 );
