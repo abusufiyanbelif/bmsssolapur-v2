@@ -55,7 +55,7 @@ export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
         return enrichedLeads;
     } catch (error) {
         console.error("Error fetching open general leads: ", error);
-        if (error instanceof Error && error.message.includes('requires an index')) {
+        if (error instanceof Error && error.message.includes('index')) {
             console.error("Firestore composite index missing. Please create one on 'leads' for 'verifiedStatus' (asc) and 'status' (in).");
         }
         return [];
@@ -97,6 +97,7 @@ export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: num
         return [];
     }
 }
+
 
 
 
