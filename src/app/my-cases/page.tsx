@@ -13,9 +13,9 @@ import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Lead, LeadStatus } from "@/services/types";
+import type { Lead, LeadAction } from "@/services/types";
 
-const statusColors: Record<LeadStatus, string> = {
+const statusColors: Record<LeadAction, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
     "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -26,7 +26,7 @@ const statusColors: Record<LeadStatus, string> = {
     "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
 
-type SortableColumn = 'createdAt' | 'helpRequested' | 'status';
+type SortableColumn = 'createdAt' | 'helpRequested' | 'caseAction';
 type SortDirection = 'asc' | 'desc';
 
 
@@ -128,8 +128,8 @@ export default function MyCasesPage() {
                     </TableHead>
                     <TableHead>Purpose</TableHead>
                     <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort('status')}>
-                           Status {renderSortIcon('status')}
+                        <Button variant="ghost" onClick={() => handleSort('caseAction')}>
+                           Status {renderSortIcon('caseAction')}
                         </Button>
                     </TableHead>
                     <TableHead className="w-[30%]">Funding Progress</TableHead>
@@ -143,14 +143,15 @@ export default function MyCasesPage() {
             <TableBody>
                 {paginatedCases.map((caseItem, index) => {
                     const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
+                    const caseAction = caseItem.caseAction || 'Pending';
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
-                                    {caseItem.status}
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>
+                                    {caseAction}
                                 </Badge>
                             </TableCell>
                             <TableCell>

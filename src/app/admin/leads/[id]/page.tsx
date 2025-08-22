@@ -26,7 +26,7 @@ import { getAllUsers } from "@/services/user-service";
 import { AllocateDonationsDialog } from "./allocate-donations-dialog";
 
 // Helper data for styling statuses
-const statusColors: Record<Lead['status'], string> = {
+const statusColors: Record<Lead['caseAction'], string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
     "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -37,7 +37,7 @@ const statusColors: Record<Lead['status'], string> = {
     "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
 
-const statusIcons: Record<Lead['status'], React.ElementType> = {
+const statusIcons: Record<Lead['caseAction'], React.ElementType> = {
     "Pending": Clock,
     "Ready For Help": Package,
     "Publish": Eye,
@@ -81,7 +81,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     
     const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
-    const StatusIcon = statusIcons[lead.status];
+    const caseAction = lead.caseAction || 'Pending';
+    const StatusIcon = statusIcons[caseAction];
     const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
     const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
     const dueDate = lead.dueDate;
@@ -138,10 +139,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
                             <div className="flex flex-wrap gap-4 text-sm">
                                 <div className="flex items-center">
-                                    <span className="text-muted-foreground mr-2">Case Status:</span> 
-                                    <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                    <span className="text-muted-foreground mr-2">Case Action:</span> 
+                                    <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>
                                       <StatusIcon className="mr-1 h-3 w-3" />
-                                      {lead.status}
+                                      {caseAction}
                                     </Badge>
                                 </div>
                                 <div className="flex items-center">

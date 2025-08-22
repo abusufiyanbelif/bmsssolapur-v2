@@ -28,19 +28,19 @@ export const MainMetricsCard = async () => {
     const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
     const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
     
-    const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
+    const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.caseAction === 'Closed' || l.caseAction === 'Complete').map(l => l.beneficiaryId));
     const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
   
-    const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+    const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
     const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
     const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
 
     const mainMetrics = [
         { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
         { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?status=Closed" },
+        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
         { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
-        { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public.", href: "/admin/leads?status=Publish" },
+        { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public.", href: "/admin/leads?caseAction=Publish" },
         { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
     
@@ -260,7 +260,7 @@ export const LeadsReadyToPublishCard = async () => {
                 Action Required: Leads Ready for Publishing
             </CardTitle>
             <CardDescription>
-                These leads are verified and ready to be made public on the campaigns page.
+                These leads are verified and ready to be made public on the campaigns page. Change their "Case Action" to "Publish".
             </CardDescription>
         </CardHeader>
         <CardContent>
