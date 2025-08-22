@@ -30,6 +30,7 @@ export async function handleAddTransfer(
         revalidatePath("/admin/transfers");
         return { success: true };
     } else {
+        // Pass the specific error from the underlying function
         return { success: false, error: result.error };
     }
   } catch (e) {
