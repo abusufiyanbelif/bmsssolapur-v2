@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -477,22 +478,22 @@ function DonationsPageContent() {
     const renderMobileCards = () => (
         <div className="space-y-4">
             {paginatedDonations.map((donation, index) => {
-                 const hasAllocations = donation.allocations && donation.allocations.length > 0;
-                 const allocatedAmount = hasAllocations ? donation.allocations!.reduce((sum, alloc) => sum + alloc.amount, 0) : 0;
-                 return (
-                    <Card key={donation.id} className={cn(selectedDonations.includes(donation.id!) && "ring-2 ring-primary")}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-4">
-                                    <Checkbox
-                                        className="mt-1.5"
-                                        checked={selectedDonations.includes(donation.id!)}
-                                        onCheckedChange={checked => {
-                                            setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!))
-                                        }}
-                                        aria-label="Select card"
-                                    />
-                                    <div>
+                const hasAllocations = donation.allocations && donation.allocations.length > 0;
+                const allocatedAmount = hasAllocations ? donation.allocations!.reduce((sum, alloc) => sum + alloc.amount, 0) : 0;
+                return (
+                    <Card key={donation.id} className={cn("flex flex-col", selectedDonations.includes(donation.id!) && "ring-2 ring-primary")}>
+                         <div className="p-4 flex gap-4">
+                            <Checkbox
+                                className="mt-1.5 flex-shrink-0"
+                                checked={selectedDonations.includes(donation.id!)}
+                                onCheckedChange={(checked) => {
+                                    setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!));
+                                }}
+                                aria-label="Select card"
+                            />
+                            <Link href={`/admin/donations/${donation.id}/edit`} className="flex-grow space-y-3">
+                                <CardHeader className="p-0">
+                                    <div className="flex justify-between items-start">
                                         <CardTitle className="text-lg">
                                             {donation.status === 'Partially Allocated' && hasAllocations ? (
                                                 <div className="flex items-baseline gap-2">
@@ -503,78 +504,55 @@ function DonationsPageContent() {
                                                 `₹${donation.amount.toFixed(2)}`
                                             )}
                                         </CardTitle>
-                                        <CardDescription>
-                                            <div className="flex items-center gap-2">
-                                                <span>{donation.donorName}</span>
-                                                {donation.isAnonymous && (
-                                                    <Badge variant="secondary" title="This donation is marked as anonymous for public display">
-                                                        <EyeOff className="mr-1 h-3 w-3" />
-                                                        Anonymous
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="capitalize -mr-2 -mt-2">
+                                                    <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[donation.status])}>
+                                                        {donation.status}
                                                     </Badge>
-                                                )}
-                                            </div>
-                                        </CardDescription>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                                {statusOptions.filter(s => s !== 'all').map(status => (
+                                                    <DropdownMenuItem
+                                                        key={status}
+                                                        onSelect={() => handleQuickStatusChange(donation.id!, status)}
+                                                        disabled={donation.status === status}
+                                                    >
+                                                        {status}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                </div>
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="capitalize">
-                                        <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[donation.status])}>
-                                            {donation.status}
-                                        </Badge>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {statusOptions.filter(s => s !== 'all').map(status => (
-                                         <DropdownMenuItem
-                                            key={status}
-                                            onSelect={() => handleQuickStatusChange(donation.id!, status)}
-                                            disabled={donation.status === status}
-                                        >
-                                            {donation.status === status && <CheckCircle className="mr-2 h-4 w-4" />}
-                                            {status}
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                    <CardDescription>
+                                        <div className="flex items-center gap-2">
+                                            <span>{donation.donorName}</span>
+                                            {donation.isAnonymous && <Badge variant="secondary" title="Anonymous"><EyeOff className="h-3 w-3" /></Badge>}
+                                        </div>
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-0 space-y-3 text-sm">
+                                     <div className="flex justify-between"><span className="text-muted-foreground">ID</span><span className="font-mono text-xs">{donation.id}</span></div>
+                                     <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{format(new Date(donation.donationDate), "dd MMM yyyy")}</span></div>
+                                     <div className="flex justify-between"><span className="text-muted-foreground">Category</span><span>{donation.type}</span></div>
+                                     <div>
+                                        <span className="text-muted-foreground">Linked To: </span>
+                                        {hasAllocations ? <Badge variant="outline">{donation.allocations!.length} Allocation(s)</Badge> : <span className="text-xs text-muted-foreground italic">Unallocated</span>}
+                                     </div>
+                                </CardContent>
+                            </Link>
+                            <div className="flex-shrink-0 -mr-2 -mt-2">
+                                {renderActions(donation)}
                             </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Donation ID</span>
-                                 <Link href={`/admin/donations/${donation.id}/edit`} className="font-mono text-xs hover:underline text-primary">
-                                    {donation.id}
-                                </Link>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Date</span>
-                                <span>{format(new Date(donation.donationDate), "dd MMM yyyy")}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Category</span>
-                                <span>{donation.type}</span>
-                            </div>
-                            <div className="space-y-2">
-                                <span className="text-muted-foreground">Linked To</span>
-                                <div className="flex flex-col items-start gap-2">
-                                    {donation.allocations && donation.allocations.length > 0 ? (
-                                        <Badge variant="outline">{donation.allocations.length} Allocation(s)</Badge>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground italic">Unallocated</span>
-                                    )}
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-end">
-                        {renderActions(donation)}
-                        </CardFooter>
+                        </div>
                     </Card>
-                )
+                );
             })}
         </div>
     );
+
     
     const renderActions = (donation: Donation) => {
         const canAllocate = donation.status === 'Verified' || donation.status === 'Partially Allocated';
