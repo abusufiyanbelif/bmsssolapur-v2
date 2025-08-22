@@ -25,12 +25,11 @@ export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
     try {
         const leadsCollection = collection(db, 'leads');
         
-        // This query fetches all open/verified leads and we filter client-side.
-        // A more scalable solution would be to add a flag like `isGeneralCase` during lead creation.
+        // This query fetches all open/verified leads that are meant for public viewing.
         const q = query(
             leadsCollection, 
             where("verifiedStatus", "==", "Verified"),
-            where("status", "in", ["Pending", "Partial", "Publish", "Ready For Help"])
+            where("status", "in", ["Publish", "Partial", "Ready For Help"])
         );
         
         const querySnapshot = await getDocs(q);
@@ -98,6 +97,7 @@ export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: num
         return [];
     }
 }
+
 
 
 
