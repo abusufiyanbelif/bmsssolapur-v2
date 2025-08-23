@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
-import type { LeadPriority } from "@/services/types";
+import type { LeadPriority, LeadPurpose } from "@/services/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,6 +38,15 @@ import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
+const allLeadPurposes: (LeadPurpose | 'all')[] = ['all', 'Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'];
+const categoryOptions: Record<string, string[]> = {
+    'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
+    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
+    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
+    'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
+    'Loan': ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'],
+};
+
 
 type BeneficiaryTypeFilter = 'all' | 'Adult' | 'Kid' | 'Family' | 'Widow';
 const beneficiaryTypeOptions: { value: BeneficiaryTypeFilter, label: string, icon?: React.ElementType }[] = [
@@ -101,6 +110,7 @@ function LeadsPageContent() {
     const statusFromUrl = searchParams.get('status');
     const verificationFromUrl = searchParams.get('verification');
     const typeFromUrl = searchParams.get('beneficiaryType');
+    const purposeFromUrl = searchParams.get('purpose');
 
     const [leads, setLeads] = useState<EnrichedLead[]>([]);
     const [users, setUsers] = useState<User[]>([]);
@@ -116,6 +126,8 @@ function LeadsPageContent() {
     const [statusInput, setStatusInput] = useState<string>(statusFromUrl || 'all');
     const [verificationInput, setVerificationInput] = useState<string>(verificationFromUrl || 'all');
     const [beneficiaryTypeInput, setBeneficiaryTypeInput] = useState<BeneficiaryTypeFilter>(typeFromUrl as BeneficiaryTypeFilter || 'all');
+    const [purposeInput, setPurposeInput] = useState<string>(purposeFromUrl || 'all');
+    const [categoryInput, setCategoryInput] = useState<string>('all');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
@@ -123,6 +135,8 @@ function LeadsPageContent() {
         status: statusFromUrl || 'all',
         verification: verificationFromUrl || 'all',
         beneficiaryType: typeFromUrl as BeneficiaryTypeFilter || 'all',
+        purpose: purposeFromUrl || 'all',
+        category: 'all',
     });
 
     // Sorting state
@@ -174,6 +188,8 @@ function LeadsPageContent() {
             status: statusInput,
             verification: verificationInput,
             beneficiaryType: beneficiaryTypeInput,
+            purpose: purposeInput,
+            category: categoryInput,
         });
     };
     
@@ -194,6 +210,9 @@ function LeadsPageContent() {
                               lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const statusMatch = appliedFilters.status === 'all' || lead.status === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.verifiedStatus === appliedFilters.verification;
+            const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
+            const categoryMatch = appliedFilters.category === 'all' || lead.category === appliedFilters.category;
+
             
             let typeMatch = true;
             if (beneficiary && appliedFilters.beneficiaryType !== 'all') {
@@ -204,7 +223,7 @@ function LeadsPageContent() {
                 }
             }
 
-            return nameMatch && statusMatch && verificationMatch && typeMatch;
+            return nameMatch && statusMatch && verificationMatch && typeMatch && purposeMatch && categoryMatch;
         });
 
        return filtered.sort((a, b) => {
@@ -243,7 +262,9 @@ function LeadsPageContent() {
         setStatusInput('all');
         setVerificationInput('all');
         setBeneficiaryTypeInput('all');
-        setAppliedFilters({ name: '', status: 'all', verification: 'all', beneficiaryType: 'all' });
+        setPurposeInput('all');
+        setCategoryInput('all');
+        setAppliedFilters({ name: '', status: 'all', verification: 'all', beneficiaryType: 'all', purpose: 'all', category: 'all' });
         setCurrentPage(1);
     };
 
@@ -758,8 +779,8 @@ function LeadsPageContent() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 xl:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
                          <Label htmlFor="nameFilter">Search by Name or Lead ID</Label>
                          <Input
                             id="nameFilter"
@@ -767,6 +788,25 @@ function LeadsPageContent() {
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
                          />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="purposeFilter">Purpose</Label>
+                        <Select value={purposeInput} onValueChange={(v) => { setPurposeInput(v); setCategoryInput('all'); }}>
+                            <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {allLeadPurposes.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="categoryFilter">Category</Label>
+                        <Select value={categoryInput} onValueChange={setCategoryInput} disabled={purposeInput === 'all' || !categoryOptions[purposeInput]}>
+                            <SelectTrigger id="categoryFilter"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Categories</SelectItem>
+                                {(categoryOptions[purposeInput] || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="beneficiaryTypeFilter">Beneficiary Type</Label>
@@ -808,14 +848,14 @@ function LeadsPageContent() {
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="flex items-end gap-4 xl:col-span-full">
+                     <div className="flex items-end gap-4 lg:col-start-3 lg:col-span-1">
                         <Button onClick={handleSearch} className="w-full">
                            <Search className="mr-2 h-4 w-4" />
                             Apply Filters
                         </Button>
                         <Button variant="outline" onClick={resetFilters} className="w-full">
                             <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filters
+                            Clear
                         </Button>
                     </div>
                 </div>
