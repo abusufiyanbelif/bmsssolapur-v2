@@ -228,6 +228,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const [campaignPopoverOpen, setCampaignPopoverOpen] = useState(false);
   const [recipientPopoverOpen, setRecipientPopoverOpen] = useState(false);
   const scanAbortController = useRef<AbortController | null>(null);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
@@ -1256,41 +1257,58 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             
             <div className="space-y-4 rounded-lg border p-4">
                  <h3 className="text-lg font-semibold">Linkage (Optional)</h3>
-                 <FormField
-                  control={form.control}
-                  name="campaignId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Megaphone className="h-4 w-4"/> Link to Campaign</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                           field.onChange(value === 'none' ? '' : value);
-                           if (value !== 'none') {
-                               setValue('leadId', undefined); // Clear linked lead if campaign is selected
-                           }
-                        }}
-                        value={field.value}
-                        disabled={!!linkedLeadId}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a campaign" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
-                            <SelectItem key={campaign.id} value={campaign.id!}>
-                              {campaign.name} ({campaign.status})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>Link this donation to a specific fundraising campaign.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="campaignId"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel className="flex items-center gap-2"><Megaphone className="h-4 w-4"/> Link to Campaign</FormLabel>
+                        <Popover open={campaignPopoverOpen} onOpenChange={setCampaignPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    disabled={!!linkedLeadId}
+                                    className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                                    >
+                                    {field.value
+                                        ? campaigns.find(c => c.id === field.value)?.name
+                                        : "Select a campaign"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search campaign..." />
+                                <CommandList>
+                                    <CommandEmpty>No active campaigns found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                                        <CommandItem
+                                            value={campaign.name}
+                                            key={campaign.id}
+                                            onSelect={() => {
+                                                field.onChange(campaign.id!);
+                                                setCampaignPopoverOpen(false);
+                                                setValue('leadId', undefined); // Clear linked lead if campaign is selected
+                                            }}
+                                        >
+                                        <Check className={cn("mr-2 h-4 w-4", campaign.id === field.value ? "opacity-100" : "opacity-0")} />
+                                        {campaign.name} ({campaign.status})
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormDescription>Link this donation to a specific fundraising campaign.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                  <FormField
                   control={form.control}
                   name="leadId"
