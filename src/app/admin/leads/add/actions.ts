@@ -25,7 +25,7 @@ const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
 };
 
 // In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. For this prototype, we'll just acknowledge the file was received.
+// and get a URL. This function is a placeholder.
 async function handleFileUpload(file: File): Promise<string> {
     console.log(`Received file for verification: ${file.name}, size: ${file.size} bytes`);
     // Placeholder for file upload logic
@@ -133,13 +133,11 @@ export async function handleAddLead(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData = {
+    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'caseVerification'> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
         campaignId: rawFormData.campaignId === 'none' ? undefined : rawFormData.campaignId,
         campaignName: rawFormData.campaignName || undefined,
-        referredByUserId: rawFormData.referredByUserId || undefined,
-        referredByUserName: rawFormData.referredByUserName || undefined,
         headline: rawFormData.headline,
         story: rawFormData.story,
         purpose: rawFormData.purpose,
@@ -150,10 +148,19 @@ export async function handleAddLead(
         priority: rawFormData.priority,
         acceptableDonationTypes: rawFormData.acceptableDonationTypes,
         helpRequested: rawFormData.helpRequested,
+        helpGiven: 0,
+        caseStatus: 'Pending',
+        caseAction: 'Pending',
         dueDate: rawFormData.dueDate,
         isLoan: rawFormData.isLoan,
         caseDetails: rawFormData.caseDetails,
         verificationDocumentUrl,
+        adminAddedBy: { id: adminUser.id!, name: adminUser.name },
+        referredByUserId: rawFormData.referredByUserId || undefined,
+        referredByUserName: rawFormData.referredByUserName || undefined,
+        dateCreated: Timestamp.now(),
+        verifiers: [],
+        donations: [],
     };
 
     const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });

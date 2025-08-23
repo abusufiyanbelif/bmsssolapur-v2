@@ -210,9 +210,9 @@ export interface Lead {
     priority?: LeadPriority;
     helpRequested: number;
     helpGiven: number;
-    status: LeadStatus;
+    caseStatus: LeadStatus;
     caseAction?: LeadAction;
-    verifiedStatus: LeadVerificationStatus;
+    caseVerification: LeadVerificationStatus;
     verifiers: Verifier[];
     donations: LeadDonationAllocation[];
     fundTransfers?: FundTransfer[];
