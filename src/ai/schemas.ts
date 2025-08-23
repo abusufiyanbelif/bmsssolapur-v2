@@ -81,7 +81,6 @@ export type ValidateConfigurationOutput = z.infer<typeof ValidateConfigurationOu
 export const QuoteSchema = z.object({
   text: z.string().describe('The text of the quote.'),
   source: z.string().describe('The source of the quote (e.g., Quran 2:261, Sahih al-Bukhari, Imam Al-Ghazali).'),
-  category: z.enum(['Quran', 'Hadith', 'Scholar']).describe('The category of the quote.')
 });
 export type Quote = z.infer<typeof QuoteSchema>;
 
