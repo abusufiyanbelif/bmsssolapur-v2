@@ -33,6 +33,7 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, Command
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/actions";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
@@ -312,9 +313,20 @@ function LeadsPageContent() {
         }
     };
     
-    const handleShare = (lead: Lead) => {
-        const leadUrl = `${window.location.origin}/public-leads#${lead.id}`; // Simple anchor link
-        const message = `*Help Needed for ${lead.name}*\n\nThis individual requires assistance for *${lead.purpose} (${lead.category})*.\n\n*Amount Required:* ₹${lead.helpRequested.toLocaleString()}\n\nYour contribution can make a significant difference. Please donate and share this message.\n\nView more details here:\n${leadUrl}`;
+    const handleShare = async (lead: Lead) => {
+        const leadUrl = `${window.location.origin}/public-leads#${lead.id}`;
+        let message = `*Help Needed for ${lead.name}*\n\nThis individual requires assistance for *${lead.purpose} (${lead.category})*.\n\n*Amount Required:* ₹${lead.helpRequested.toLocaleString()}\n\nYour contribution can make a significant difference. Please donate and share this message.\n\nView more details here:\n${leadUrl}`;
+        
+        try {
+            const quotes = await getInspirationalQuotes(1);
+            if (quotes.length > 0) {
+                const quoteText = `_"${quotes[0].text}"_\n- ${quotes[0].source}\n\n`;
+                message = quoteText + message;
+            }
+        } catch (e) {
+            console.error("Could not fetch quote for share message", e);
+        }
+
         const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
     };
@@ -543,14 +555,8 @@ function LeadsPageContent() {
                                 <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Created</span>
-                                    <span>{lead.dateCreated ? format(lead.dateCreated, "dd MMM yyyy") : 'N/A'}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Lead ID</span>
-                                    <span className="font-mono text-xs">{lead.id}</span>
-                                </div>
+                                 <div className="flex justify-between"><span className="text-muted-foreground">ID</span><span className="font-mono text-xs">{lead.id}</span></div>
+                                 <div className="flex justify-between"><span className="text-muted-foreground">Created</span><span>{lead.dateCreated ? format(lead.dateCreated, "dd MMM yyyy") : 'N/A'}</span></div>
                             </CardContent>
                         </Link>
                         <div className="flex-shrink-0">

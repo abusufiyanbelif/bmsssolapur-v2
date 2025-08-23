@@ -4,6 +4,7 @@
 import { getLead } from "@/services/lead-service";
 import type { Lead } from "@/services/types";
 import { format } from "date-fns";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 interface ActionResult {
     success: boolean;
@@ -54,7 +55,12 @@ export async function generateAppealMessage(
 ): Promise<ActionResult> {
     
     try {
-        const { leads, error } = await getLeadsToProcess(appealType, data);
+        const [quoteResult, leadsResult] = await Promise.all([
+            getInspirationalQuotes(1),
+            getLeadsToProcess(appealType, data)
+        ]);
+
+        const { leads, error } = leadsResult;
         if (error) {
             return { success: false, error };
         }
@@ -62,6 +68,8 @@ export async function generateAppealMessage(
         if (leads.length === 0) {
             return { success: false, error: "No leads found to generate an appeal message." };
         }
+
+        const quoteText = quoteResult.length > 0 ? `_"${quoteResult[0].text}"_\n- ${quoteResult[0].source}\n\n` : '';
 
 
         let messageBody = `*Priority wise leads & required amt:*\n`;
@@ -83,7 +91,7 @@ export async function generateAppealMessage(
         const ctaLink = `${appBaseUrl}/public-leads`;
         messageBody += `\n\n*View details and contribute here:*\n${ctaLink}`;
 
-        const fullMessage = `${introMessage}\n\n${messageBody}\n\n${outroMessage}`;
+        const fullMessage = `${quoteText}${introMessage}\n\n${messageBody}\n\n${outroMessage}`;
         
         return { success: true, message: fullMessage };
 

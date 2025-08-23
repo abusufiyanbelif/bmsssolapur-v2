@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 const statusColors: Record<CampaignStatus, string> = {
     "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -117,9 +118,20 @@ function CampaignsPageContent() {
         fetchData();
     }
     
-     const handleShare = (campaign: CampaignWithStats) => {
+     const handleShare = async (campaign: CampaignWithStats) => {
         const campaignUrl = `${window.location.origin}/campaigns`;
-        const message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\n*Progress:*\n- Raised: ₹${campaign.raisedAmount.toLocaleString()}\n- Beneficiaries Helped: ${campaign.beneficiaryCount}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
+        let message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\n*Progress:*\n- Raised: ₹${campaign.raisedAmount.toLocaleString()}\n- Beneficiaries Helped: ${campaign.beneficiaryCount}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
+        
+        try {
+            const quotes = await getInspirationalQuotes(1);
+            if (quotes.length > 0) {
+                const quoteText = `_"${quotes[0].text}"_\n- ${quotes[0].source}\n\n`;
+                message = quoteText + message;
+            }
+        } catch (e) {
+            console.error("Could not fetch quote for campaign share", e);
+        }
+
         const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
     };
