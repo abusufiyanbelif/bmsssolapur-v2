@@ -133,7 +133,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
         
-        window.location.href = '/home'; // Always redirect to the home router page
+        // Force a hard reload to ensure the entire app state resets with the new role.
+        window.location.href = '/home';
     };
     
     const handleLogout = () => {
