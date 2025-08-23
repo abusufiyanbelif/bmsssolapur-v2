@@ -226,6 +226,7 @@ export interface Lead {
     referredByUserName?: string;
     dateCreated: Timestamp | Date;
     dueDate?: Timestamp | Date;
+    verificationDueDate?: Timestamp | Date;
     closedAt?: Timestamp | Date;
     verifiedAt?: Timestamp | Date; // Date of the latest verification
     lastAllocatedAt?: Timestamp | Date; // Date of the latest donation allocation
