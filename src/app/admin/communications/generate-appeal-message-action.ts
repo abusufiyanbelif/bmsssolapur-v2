@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getLead } from "@/services/lead-service";
+import { getAllLeads, getLead } from "@/services/lead-service";
 
 interface ActionResult {
     success: boolean;
@@ -9,23 +9,54 @@ interface ActionResult {
     error?: string;
 }
 
+type AppealType = 'selected' | 'purpose' | 'all';
+
 export async function generateAppealMessage(
-    leadIds: string[],
+    appealType: AppealType,
+    data: { leadIds?: string[], purpose?: string },
     introMessage: string,
     outroMessage: string
 ): Promise<ActionResult> {
-    if (!leadIds || leadIds.length === 0) {
-        return { success: false, error: "No lead IDs provided." };
-    }
-
+    
     try {
-        const leadPromises = leadIds.map(id => getLead(id));
-        const leads = await Promise.all(leadPromises);
+        let leadsToProcess: any[] = [];
+
+        if (appealType === 'selected') {
+            if (!data.leadIds || data.leadIds.length === 0) {
+                return { success: false, error: "For a 'selected' appeal, you must provide lead IDs." };
+            }
+            const leadPromises = data.leadIds.map(id => getLead(id));
+            const results = await Promise.all(leadPromises);
+            leadsToProcess = results.filter(lead => lead !== null);
+        } else {
+            const allLeads = await getAllLeads();
+            const openLeads = allLeads.filter(lead => 
+                lead.verifiedStatus === 'Verified' && 
+                (lead.caseAction === 'Publish' || lead.caseAction === 'Ready For Help' || lead.caseAction === 'Partial')
+            );
+
+            if (appealType === 'purpose') {
+                if (!data.purpose) {
+                    return { success: false, error: "A purpose is required for a 'purpose-based' appeal." };
+                }
+                leadsToProcess = openLeads.filter(lead => lead.purpose === data.purpose);
+                 if (leadsToProcess.length === 0) {
+                    return { success: false, error: `No open leads found for the purpose "${data.purpose}".` };
+                }
+            } else { // 'all'
+                leadsToProcess = openLeads;
+            }
+        }
+        
+        if (leadsToProcess.length === 0) {
+            return { success: false, error: "No leads found to generate an appeal message." };
+        }
+
 
         let messageBody = `*Priority wise leads & required amt:*\n`;
         let totalRequired = 0;
 
-        leads.forEach((lead, index) => {
+        leadsToProcess.forEach((lead, index) => {
             if (lead) {
                 const requiredAmount = lead.helpRequested - lead.helpGiven;
                 totalRequired += requiredAmount;

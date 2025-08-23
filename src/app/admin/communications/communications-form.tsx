@@ -6,13 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Loader2, Share2, Wand2 } from "lucide-react";
-import type { Lead } from "@/services/types";
+import type { Lead, LeadPurpose } from "@/services/types";
 import { generateAppealMessage } from "./generate-appeal-message-action";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+
+const allLeadPurposes: LeadPurpose[] = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'];
+
+type AppealType = 'selected' | 'purpose' | 'all';
 
 interface CommunicationsFormProps {
     openLeads: Lead[];
@@ -22,18 +29,30 @@ export function CommunicationsForm({ openLeads }: CommunicationsFormProps) {
     const { toast } = useToast();
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedMessage, setGeneratedMessage] = useState("");
+    const [appealType, setAppealType] = useState<AppealType>('selected');
     const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+    const [selectedPurpose, setSelectedPurpose] = useState<LeadPurpose | undefined>();
     const [introMessage, setIntroMessage] = useState("Alhamdullilah kuch pending aur new cases hai, jiske liye hume aap sabse aur funds ki umeed hai aur sabi se appeal hai sabi iss Baitul Mal Sanstha ka hissa bane aur zyada se zyada apna mal is neak amal mae lagaye.");
     const [outroMessage, setOutroMessage] = useState("Note: Zakat and Interest amts are accepted.");
 
     const handleGenerate = async () => {
-        if (selectedLeadIds.length === 0) {
-            toast({ variant: "destructive", title: "No leads selected", description: "Please select at least one lead to include in the appeal." });
-            return;
+        let data = {};
+        if (appealType === 'selected') {
+            if (selectedLeadIds.length === 0) {
+                toast({ variant: "destructive", title: "No leads selected", description: "Please select at least one lead to include in the appeal." });
+                return;
+            }
+            data = { leadIds: selectedLeadIds };
+        } else if (appealType === 'purpose') {
+            if (!selectedPurpose) {
+                toast({ variant: "destructive", title: "No purpose selected", description: "Please select a lead purpose for the appeal." });
+                return;
+            }
+            data = { purpose: selectedPurpose };
         }
-
+        
         setIsGenerating(true);
-        const result = await generateAppealMessage(selectedLeadIds, introMessage, outroMessage);
+        const result = await generateAppealMessage(appealType, data, introMessage, outroMessage);
 
         if (result.success && result.message) {
             setGeneratedMessage(result.message);
@@ -82,44 +101,76 @@ export function CommunicationsForm({ openLeads }: CommunicationsFormProps) {
                     />
                 </div>
 
-                <h3 className="text-lg font-semibold">2. Select Priority Leads</h3>
-                 <div className="space-y-2 h-96 overflow-y-auto border rounded-lg p-4">
-                    {openLeads.map(lead => {
-                        const isChecked = selectedLeadIds.includes(lead.id);
-                        return (
-                             <div 
-                                key={lead.id}
-                                className="flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors"
-                            >
-                                <Checkbox
-                                    id={`lead-${lead.id}`}
-                                    checked={isChecked}
-                                    onCheckedChange={(checked) => {
-                                        setSelectedLeadIds(prev => 
-                                            checked ? [...prev, lead.id!] : prev.filter(id => id !== lead.id!)
-                                        );
-                                    }}
-                                />
-                                 <label
-                                    htmlFor={`lead-${lead.id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-grow"
-                                >
-                                    {lead.name} - {lead.purpose} (Req: ₹{(lead.helpRequested - lead.helpGiven).toLocaleString()})
-                                </label>
-                            </div>
-                        )
-                    })}
-                </div>
-                
-                 <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Total Required Amount</AlertTitle>
-                    <AlertDescription>
-                        Based on your selection, the total required amount is approximately <span className="font-bold">₹{totalRequired.toLocaleString()}</span>.
-                    </AlertDescription>
-                </Alert>
+                <h3 className="text-lg font-semibold">2. Select Leads for Appeal</h3>
+                <RadioGroup value={appealType} onValueChange={(v) => setAppealType(v as AppealType)} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                     <Label className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
+                        <RadioGroupItem value="selected" />
+                        <span>Selected Leads</span>
+                    </Label>
+                    <Label className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
+                        <RadioGroupItem value="purpose" />
+                        <span>By Purpose</span>
+                    </Label>
+                    <Label className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
+                        <RadioGroupItem value="all" />
+                        <span>All Open</span>
+                    </Label>
+                </RadioGroup>
 
-                <Button onClick={handleGenerate} disabled={isGenerating || selectedLeadIds.length === 0} className="w-full">
+                 {appealType === 'selected' && (
+                     <div className="space-y-2 h-96 overflow-y-auto border rounded-lg p-4">
+                        {openLeads.map(lead => {
+                            const isChecked = selectedLeadIds.includes(lead.id!);
+                            return (
+                                <div 
+                                    key={lead.id}
+                                    className="flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors"
+                                >
+                                    <Checkbox
+                                        id={`lead-${lead.id}`}
+                                        checked={isChecked}
+                                        onCheckedChange={(checked) => {
+                                            setSelectedLeadIds(prev => 
+                                                checked ? [...prev, lead.id!] : prev.filter(id => id !== lead.id!)
+                                            );
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor={`lead-${lead.id}`}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-grow"
+                                    >
+                                        {lead.name} - {lead.purpose} (Req: ₹{(lead.helpRequested - lead.helpGiven).toLocaleString()})
+                                    </label>
+                                </div>
+                            )
+                        })}
+                    </div>
+                 )}
+                 {appealType === 'purpose' && (
+                    <Select onValueChange={(v) => setSelectedPurpose(v as LeadPurpose)}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a lead purpose..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {allLeadPurposes.map(purpose => (
+                                <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 )}
+                
+                 {appealType === 'selected' && (
+                    <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Total Required for Selection</AlertTitle>
+                        <AlertDescription>
+                            Based on your selection, the total required amount is approximately <span className="font-bold">₹{totalRequired.toLocaleString()}</span>.
+                        </AlertDescription>
+                    </Alert>
+                 )}
+
+
+                <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
                     {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                     Generate Message
                 </Button>
@@ -127,13 +178,15 @@ export function CommunicationsForm({ openLeads }: CommunicationsFormProps) {
              <div className="space-y-6">
                 <h3 className="text-lg font-semibold">3. Copy or Share</h3>
                 <div className="relative">
-                    <Textarea
-                        readOnly
-                        value={generatedMessage}
-                        placeholder="Your generated WhatsApp message will appear here..."
-                        rows={20}
-                        className="bg-muted pr-12"
-                    />
+                    <ScrollArea className="h-96 w-full rounded-md border">
+                        <Textarea
+                            readOnly
+                            value={generatedMessage}
+                            placeholder="Your generated WhatsApp message will appear here..."
+                            rows={20}
+                            className="bg-muted pr-12 border-none"
+                        />
+                    </ScrollArea>
                 </div>
                  {generatedMessage && (
                      <div className="flex gap-4">
