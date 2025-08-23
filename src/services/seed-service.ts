@@ -9,7 +9,7 @@ import { createOrganization, Organization, getCurrentOrganization } from './orga
 import { seedInitialQuotes } from './quotes-service';
 import { db, isConfigValid } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer } from './types';
+import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
 import { createDonation } from './donation-service';
@@ -31,7 +31,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
         password: "admin", 
         roles: ["Super Admin", "Donor", "Beneficiary"], 
         privileges: ["all"], 
-        groups: ["Member of Organization", "Mandatory Lead Approver"], 
+        groups: ["Founder", "Member of Organization", "Mandatory Lead Approver"], 
         isActive: true, 
         gender: 'Male', 
         address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, 
@@ -342,12 +342,21 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
         const leadRef = doc(db, 'leads', leadId);
         const randomDonor = allDonors[Math.floor(Math.random() * allDonors.length)];
         
+        const leadStatus: Lead['status'] = leadInfo.isFunded ? 'Closed' : 'Ready For Help';
+        let leadAction: LeadAction = leadStatus;
+        if(campaignData.status === 'Upcoming') {
+            leadAction = 'Pending';
+        } else if (!leadInfo.isFunded) {
+            leadAction = 'Publish';
+        }
+
         const newLead: Partial<Lead> = {
             id: leadRef.id, name: beneficiary.name, beneficiaryId: beneficiary.id!,
             campaignId: campaignRef.id, campaignName: campaignData.name,
             purpose: leadInfo.purpose, category: leadInfo.category, donationType: leadInfo.donationType,
             helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
-            status: leadInfo.isFunded ? 'Closed' : 'Ready For Help',
+            status: leadStatus,
+            caseAction: leadAction,
             isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details,
             verifiedStatus: 'Verified', verifiers: [verifierToUse],
@@ -418,12 +427,16 @@ const seedGeneralLeads = async (adminUser: User): Promise<SeedResult> => {
             leadResults.push({ name: `General Lead for ${beneficiary.name}`, status: 'Skipped (already exists)' });
             continue;
         }
+        
+        const leadStatus: Lead['status'] = leadInfo.isFunded ? 'Closed' : 'Ready For Help';
+        const leadAction: LeadAction = leadInfo.isFunded ? 'Closed' : 'Publish';
 
         const newLeadData: Partial<Lead> = {
             id: leadId, name: beneficiary.name, beneficiaryId: beneficiary.id!,
             purpose: leadInfo.purpose as any, category: leadInfo.category, donationType: leadInfo.donationType as any,
             helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
-            status: leadInfo.isFunded ? 'Closed' : 'Ready For Help',
+            status: leadStatus,
+            caseAction: leadAction,
             isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details,
             verifiedStatus: 'Verified', verifiers: [verifier],
