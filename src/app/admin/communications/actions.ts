@@ -80,7 +80,7 @@ export async function generateAppealMessage(
                 const requiredAmount = lead.helpRequested - lead.helpGiven;
                 totalRequired += requiredAmount;
                 
-                const leadLine = `${index + 1}. ${lead.purpose} (${lead.category}) - Required amt.: ₹${requiredAmount.toLocaleString('en-IN')}\n`;
+                const leadLine = `${index + 1}. ${lead.purpose} (${lead.id}) - Required amt.: ₹${requiredAmount.toLocaleString('en-IN')}\n`;
                 messageBody += leadLine;
             }
         });
@@ -123,6 +123,7 @@ export async function generateAdminActionMessage(leadIds: string[]): Promise<Act
             const submittedDate = format(lead.dateCreated as Date, 'dd MMM, yyyy');
 
             messageBody += `\n${index + 1}. *${lead.name}*
+   - *Lead ID:* ${lead.id}
    - *Purpose:* ${lead.purpose} (${lead.category})
    - *Amount Req:* ₹${lead.helpRequested.toLocaleString('en-IN')}
    - *Submitted:* ${submittedDate}
