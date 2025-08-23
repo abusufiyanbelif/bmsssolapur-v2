@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/chart"
 import type { Donation } from "@/services/types"
 import { useMemo, useState } from "react"
-import { addDays, format, subMonths, subYears, startOfMonth, endOfMonth, startOfYear, endOfYear, getWeek, startOfWeek, endOfWeek } from "date-fns"
+import { addDays, format, subMonths, startOfMonth, endOfMonth, startOfYear, endOfYear, getWeek, startOfWeek, endOfWeek, eachWeekOfInterval, addWeeks, subDays } from "date-fns"
 import { DateRange } from "react-day-picker"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarIcon } from "lucide-react"
@@ -92,18 +92,34 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
             day = addDays(day, 1);
         }
         filteredDonations.forEach(d => {
-            const dayKey = format((d.createdAt as Date), 'MMM d');
+            const dayKey = format(d.createdAt, 'MMM d');
             dailyTotals[dayKey] += d.amount;
         });
         return Object.entries(dailyTotals).map(([day, total]) => ({ month: day, donations: total }));
 
     } else if (aggregation === 'weekly' && selectedTimeframe === 'monthly') {
         const weeklyTotals: { [key: string]: number } = {};
-        filteredDonations.forEach(d => {
-            const weekStart = startOfWeek((d.createdAt as Date), { weekStartsOn: 1 });
+        const monthStart = date.from;
+        const monthEnd = date.to;
+        
+        // Initialize all weeks of the month with 0
+        const weeksInMonth = eachWeekOfInterval({
+            start: monthStart,
+            end: monthEnd,
+        }, { weekStartsOn: 1 });
+
+        weeksInMonth.forEach(weekStart => {
             const weekKey = `Week of ${format(weekStart, 'MMM d')}`;
-            if (!weeklyTotals[weekKey]) weeklyTotals[weekKey] = 0;
-            weeklyTotals[weekKey] += d.amount;
+            weeklyTotals[weekKey] = 0;
+        });
+        
+        // Populate with actual donation data
+        filteredDonations.forEach(d => {
+            const weekStart = startOfWeek(d.createdAt, { weekStartsOn: 1 });
+            const weekKey = `Week of ${format(weekStart, 'MMM d')}`;
+            if (weeklyTotals.hasOwnProperty(weekKey)) {
+                weeklyTotals[weekKey] += d.amount;
+            }
         });
         return Object.entries(weeklyTotals).map(([week, total]) => ({ month: week, donations: total }));
     
@@ -117,7 +133,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
             currentDate.setMonth(currentDate.getMonth() + 1);
         }
         filteredDonations.forEach(d => {
-            const monthKey = format((d.createdAt as Date), "MMM yyyy");
+            const monthKey = format(d.createdAt, "MMM yyyy");
             if (monthKey in monthlyTotals) {
               monthlyTotals[monthKey] += d.amount;
             }
