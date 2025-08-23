@@ -357,7 +357,7 @@ function DonationsPageContent() {
                             )}
                         </TableCell>
                         <TableCell>
-                            <Link href={`/admin/donations/${donation.id}/edit`} className="font-mono text-xs hover:underline text-primary">
+                            <Link href={`/admin/donations/${encodeURIComponent(donation.id!)}/edit`} className="font-mono text-xs hover:underline text-primary">
                                 {donation.id}
                             </Link>
                             <div className="text-xs text-muted-foreground">{donation.source || 'Manual Entry'}</div>
@@ -445,7 +445,7 @@ function DonationsPageContent() {
                                                 return (
                                                 <TableRow key={alloc.leadId + i}>
                                                      <TableCell>
-                                                        <Link href={`/admin/donations/${donation.id}/edit`} className="font-mono text-xs hover:underline text-primary">
+                                                        <Link href={`/admin/donations/${encodeURIComponent(donation.id!)}/edit`} className="font-mono text-xs hover:underline text-primary">
                                                             {allocationId}
                                                         </Link>
                                                     </TableCell>
@@ -491,7 +491,7 @@ function DonationsPageContent() {
                                 }}
                                 aria-label="Select card"
                             />
-                            <Link href={`/admin/donations/${donation.id}/edit`} className="flex-grow space-y-3">
+                            <Link href={`/admin/donations/${encodeURIComponent(donation.id!)}/edit`} className="flex-grow space-y-3">
                                 <CardHeader className="p-0">
                                     <div className="flex justify-between items-start">
                                         <CardTitle className="text-lg">
@@ -580,7 +580,7 @@ function DonationsPageContent() {
                     )}
 
                     <DropdownMenuItem asChild>
-                        <Link href={`/admin/donations/${donation.id}/edit`}>
+                        <Link href={`/admin/donations/${encodeURIComponent(donation.id!)}/edit`}>
                             <Edit className="mr-2 h-4 w-4" /> Edit Donation
                         </Link>
                     </DropdownMenuItem>
