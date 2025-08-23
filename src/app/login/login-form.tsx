@@ -44,9 +44,10 @@ export function LoginForm() {
       const redirectPath = sessionStorage.getItem('redirectAfterLogin') || loginSuccessData.redirectTo;
       sessionStorage.removeItem('redirectAfterLogin'); // Clean up the stored path
 
-      // Use a standard redirect to avoid router issues in this context
+      // Dispatch a custom event to notify AppShell that login was successful
+      window.dispatchEvent(new CustomEvent('loginSuccess'));
+
       router.push(redirectPath);
-      router.refresh(); // Force a refresh to ensure layout updates with user state
     }
   }, [loginSuccessData, toast, router]);
 

@@ -87,6 +87,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         leadsReadyToPublish: { visibleTo: defaultAdminRoles },
         beneficiaryBreakdown: { visibleTo: defaultAdminRoles },
         campaignBreakdown: { visibleTo: defaultAdminRoles },
+        leadBreakdown: { visibleTo: defaultAdminRoles },
         donationsChart: { visibleTo: defaultAdminRoles },
         topDonors: { visibleTo: defaultAdminRoles },
         recentCampaigns: { visibleTo: defaultAdminRoles },

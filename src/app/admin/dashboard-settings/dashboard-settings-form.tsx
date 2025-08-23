@@ -54,6 +54,7 @@ const cardDefinitions: { id: keyof DashboardSettings, label: string, description
     { id: 'leadsReadyToPublish', label: 'Leads Ready to Publish', description: 'Action Required card for verified leads that need to be published.' },
     { id: 'beneficiaryBreakdown', label: 'Beneficiaries Breakdown', description: 'Shows counts of different beneficiary types helped.' },
     { id: 'campaignBreakdown', label: 'Campaigns Breakdown', description: 'Shows counts of active, completed, and upcoming campaigns.' },
+    { id: 'leadBreakdown', label: 'Lead Purpose Breakdown', description: 'Shows a summary of all leads organized by their primary purpose.' },
     { id: 'donationsChart', label: 'Donations Overview Chart', description: 'The main bar chart showing monthly donation totals.' },
     { id: 'topDonors', label: 'Top Donors List', description: 'Shows a list of the top 5 donors.' },
     { id: 'recentCampaigns', label: 'Recent Campaigns Table', description: 'A table listing the most recent campaigns.' },

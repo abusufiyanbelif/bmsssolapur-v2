@@ -54,59 +54,70 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
     
-    useEffect(() => {
-        const checkUser = async () => {
-            const storedUserId = localStorage.getItem('userId');
-            const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
+    const checkUserSession = async () => {
+        const storedUserId = localStorage.getItem('userId');
+        const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
-            if (storedUserId) {
-                // Try fetching by Firestore ID first, then fall back to custom userId
-                let fetchedUser = await getUser(storedUserId);
-                if (!fetchedUser) {
-                    fetchedUser = await getUserByUserId(storedUserId);
+        if (storedUserId) {
+            let fetchedUser = await getUser(storedUserId);
+            if (!fetchedUser) {
+                fetchedUser = await getUserByUserId(storedUserId);
+            }
+
+            if (fetchedUser) {
+                const savedRole = localStorage.getItem('activeRole');
+                const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
+                
+                if (localStorage.getItem('activeRole') !== activeRole) {
+                     localStorage.setItem('activeRole', activeRole);
+                }
+                
+                 const userData = {
+                    ...fetchedUser,
+                    isLoggedIn: true,
+                    activeRole: activeRole,
+                    initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
+                    avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
+                };
+                setUser(userData);
+                
+                if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
+                    const [allLeads, allDonations] = await Promise.all([
+                        getAllLeads(),
+                        getAllDonations()
+                    ]);
+                    setPendingLeads(allLeads.filter(l => l.verifiedStatus === 'Pending'));
+                    setReadyToPublishLeads(allLeads.filter(l => l.status === 'Ready For Help'));
+                    setPendingDonations(allDonations.filter(d => d.status === 'Pending verification'));
                 }
 
-                if (fetchedUser) {
-                    const savedRole = localStorage.getItem('activeRole');
-                    const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
-                    
-                    if (localStorage.getItem('activeRole') !== activeRole) {
-                         localStorage.setItem('activeRole', activeRole);
-                    }
-                    
-                     const userData = {
-                        ...fetchedUser,
-                        isLoggedIn: true,
-                        activeRole: activeRole,
-                        initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
-                        avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
-                    };
-                    setUser(userData);
-                    
-                    if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
-                        const [allLeads, allDonations] = await Promise.all([
-                            getAllLeads(),
-                            getAllDonations()
-                        ]);
-                        setPendingLeads(allLeads.filter(l => l.verifiedStatus === 'Pending'));
-                        setReadyToPublishLeads(allLeads.filter(l => l.status === 'Ready For Help'));
-                        setPendingDonations(allDonations.filter(d => d.status === 'Pending verification'));
-                    }
-
-                    if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
-                        setIsRoleSwitcherOpen(true);
-                        localStorage.removeItem('showRoleSwitcher'); 
-                    }
-                } else {
-                    handleLogout();
+                if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
+                    setIsRoleSwitcherOpen(true);
+                    localStorage.removeItem('showRoleSwitcher'); 
                 }
             } else {
-                setUser(guestUser);
+                handleLogout(false); // Don't redirect if user is just invalid
             }
-             // Mark session as ready regardless of user status
-            setIsSessionReady(true);
+        } else {
+            setUser(guestUser);
+        }
+        setIsSessionReady(true);
+    };
+
+    useEffect(() => {
+        checkUserSession();
+        
+        // Listen for custom event that signals a login has occurred
+        const handleLoginSuccess = () => {
+            setIsSessionReady(false); // Force re-initialization
+            checkUserSession();
         };
-        checkUser();
+
+        window.addEventListener('loginSuccess', handleLoginSuccess);
+
+        return () => {
+            window.removeEventListener('loginSuccess', handleLoginSuccess);
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); 
 
@@ -133,16 +144,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
         
-        // Force a hard reload to ensure the entire app state resets with the new role.
         window.location.href = '/home';
     };
     
-    const handleLogout = () => {
+    const handleLogout = (shouldRedirect = true) => {
         localStorage.removeItem('userId');
         localStorage.removeItem('activeRole');
         setUser(guestUser);
         setIsSessionReady(true);
-        router.push('/');
+        if (shouldRedirect) {
+             router.push('/');
+        }
     }
 
     const handleOpenRoleSwitcher = (requiredRoleName: string | null = null) => {
@@ -151,19 +163,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     const handleOpenChange = (open: boolean) => {
-        // Prevent closing the dialog if a specific role is required or selection is mandatory
         if (!open && isMandatory) {
             return; 
         }
         setIsRoleSwitcherOpen(open);
         if (!open) {
             setRequiredRole(null);
-            // If the role switcher was mandatory, confirm session is ready now.
             if (isMandatory) setIsSessionReady(true);
         }
     };
     
-    // Derived state to check if the role switcher is mandatory
     const isMandatory = !!user && user.isLoggedIn && !isSessionReady && user.roles.length > 1;
 
     const childrenWithProps = Children.map(children, child => {
@@ -324,7 +333,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                                      <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start w-full">
                                                         <p className="font-semibold text-destructive">Verify: {lead.name}</p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated, { addSuffix: true })}
+                                                            Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated as Date, { addSuffix: true })}
                                                         </p>
                                                      </Link>
                                                 </DropdownMenuItem>
@@ -334,7 +343,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                                      <Link href={`/admin/leads/${lead.id}/edit`} className="flex flex-col items-start w-full">
                                                         <p className="font-semibold text-blue-600">Publish: {lead.name}</p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            Verified {formatDistanceToNow(lead.dateCreated, { addSuffix: true })}
+                                                            Verified {formatDistanceToNow(lead.dateCreated as Date, { addSuffix: true })}
                                                         </p>
                                                      </Link>
                                                 </DropdownMenuItem>
@@ -399,7 +408,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                         </DropdownMenuItem>
                                      )}
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={handleLogout}>
+                                    <DropdownMenuItem onClick={() => handleLogout()}>
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>Log out</span>
                                     </DropdownMenuItem>

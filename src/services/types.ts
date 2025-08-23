@@ -306,6 +306,7 @@ export interface DashboardSettings {
     leadsReadyToPublish: { visibleTo: UserRole[] };
     beneficiaryBreakdown: { visibleTo: UserRole[] };
     campaignBreakdown: { visibleTo: UserRole[] };
+    leadBreakdown: { visibleTo: UserRole[] };
     donationsChart: { visibleTo: UserRole[] };
     topDonors: { visibleTo: UserRole[] };
     recentCampaigns: { visibleTo: UserRole[] };
