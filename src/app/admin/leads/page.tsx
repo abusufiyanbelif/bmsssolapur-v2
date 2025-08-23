@@ -36,7 +36,7 @@ import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/action
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 
-const statusOptions: (LeadStatus | 'all')[] = ["all", "Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
+const statusOptions: (LeadStatus | 'all')[] = ["all", "Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
 const allLeadPurposes: (LeadPurpose | 'all')[] = ['all', 'Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'];
 const categoryOptions: Record<string, string[]> = {
@@ -62,9 +62,8 @@ type SortableColumn = 'id' | 'name' | 'helpRequested' | 'helpGiven' | 'dateCreat
 type SortDirection = 'asc' | 'desc';
 
 const statusColors: Record<LeadStatus, string> = {
+    "Open": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-    "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
-    "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Complete": "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
@@ -73,9 +72,8 @@ const statusColors: Record<LeadStatus, string> = {
 };
 
 const statusIcons: Record<LeadStatus, React.ElementType> = {
+    "Open": Eye,
     "Pending": Clock,
-    "Ready For Help": Package,
-    "Publish": Eye,
     "Partial": Clock,
     "Complete": CheckCircle,
     "Closed": CheckCircle,
@@ -91,6 +89,9 @@ const verificationStatusConfig: Record<LeadVerificationStatus, { color: string; 
     "Duplicate": { color: "bg-purple-500/20 text-purple-700 border-purple-500/30", icon: Ban },
     "Other": { color: "bg-gray-500/20 text-gray-700 border-gray-500/30", icon: MoreHorizontal },
 };
+
+const defaultVerificationConfig = { color: "bg-gray-500/20 text-gray-700 border-gray-500/30", icon: MoreHorizontal };
+
 
 const priorityConfig: Record<LeadPriority, { color: string; icon?: React.ElementType }> = {
     "Urgent": { color: "border-red-500 bg-red-500/10 text-red-700", icon: AlertTriangle },
@@ -388,7 +389,7 @@ function LeadsPageContent() {
                     </>
                 )}
 
-                {lead.caseVerification === 'Verified' && lead.caseStatus === 'Ready For Help' && (
+                {lead.caseVerification === 'Verified' && lead.caseAction === 'Ready For Help' && (
                     <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Publish')}>
                         <UploadCloud className="mr-2 h-4 w-4 text-blue-600" /> Publish Lead
                     </DropdownMenuItem>
@@ -465,7 +466,7 @@ function LeadsPageContent() {
             </TableHeader>
             <TableBody>
                 {paginatedLeads.map((lead) => {
-                    const verifConfig = verificationStatusConfig[lead.caseVerification];
+                    const verifConfig = verificationStatusConfig[lead.caseVerification] || defaultVerificationConfig;
                     const StatusIcon = statusIcons[lead.caseStatus];
                     return (
                         <TableRow key={lead.id} data-state={selectedLeads.includes(lead.id!) ? 'selected' : ''}>
@@ -545,7 +546,7 @@ function LeadsPageContent() {
     const renderMobileCards = () => (
     <div className="space-y-4">
         {paginatedLeads.map((lead) => {
-            const verifConfig = verificationStatusConfig[lead.caseVerification];
+            const verifConfig = verificationStatusConfig[lead.caseVerification] || defaultVerificationConfig;
             const StatusIcon = statusIcons[lead.caseStatus];
             return (
                 <Card key={lead.id} className={cn("flex flex-col", selectedLeads.includes(lead.id!) && "ring-2 ring-primary")}>
