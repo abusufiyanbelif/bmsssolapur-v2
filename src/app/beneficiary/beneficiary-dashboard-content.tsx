@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -18,9 +19,8 @@ import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 
 const statusColors: Record<LeadStatus, string> = {
+    "Open": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-    "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
-    "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Complete": "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
@@ -76,10 +76,10 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
         cases.forEach(caseItem => {
             totalRequested += caseItem.helpRequested;
             totalAidReceived += caseItem.helpGiven;
-            if (caseItem.caseAction === 'Closed') {
+            if (caseItem.caseStatus === 'Closed') {
                 myCasesClosed++;
             }
-            if (caseItem.caseAction === 'Pending' || caseItem.caseAction === 'Partial' || caseItem.caseAction === 'Ready For Help' || caseItem.caseAction === 'Publish') {
+            if (caseItem.caseStatus === 'Pending' || caseItem.caseStatus === 'Partial' || caseItem.caseStatus === 'Open') {
                 activeCases++;
             }
         });
@@ -120,14 +120,14 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                     const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                     const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
                     const donationCount = caseItem.donations?.length || 0;
-                    const caseAction = caseItem.caseAction || 'Pending';
+                    const caseStatus = caseItem.caseStatus || 'Pending';
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{format(caseItem.createdAt, "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction as LeadStatus])}>
-                                    {caseAction}
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseStatus as LeadStatus])}>
+                                    {caseStatus}
                                 </Badge>
                             </TableCell>
                             <TableCell>
@@ -154,7 +154,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                 const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                 const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
                 const donationCount = caseItem.donations?.length || 0;
-                const caseAction = caseItem.caseAction || 'Pending';
+                const caseStatus = caseItem.caseStatus || 'Pending';
                 return (
                     <Card key={caseItem.id}>
                         <CardHeader>
@@ -163,8 +163,8 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                                     <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
                                     <CardDescription>Submitted: {format(caseItem.createdAt, "dd MMM yyyy")}</CardDescription>
                                 </div>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction as LeadStatus])}>
-                                    {caseAction}
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseStatus as LeadStatus])}>
+                                    {caseStatus}
                                 </Badge>
                             </div>
                         </CardHeader>

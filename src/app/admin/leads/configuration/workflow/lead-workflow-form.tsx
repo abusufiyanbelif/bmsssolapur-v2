@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -22,17 +23,16 @@ import type { AppSettings, LeadStatus } from "@/services/types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 
-const allLeadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
+const allLeadStatuses: LeadStatus[] = ["Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 
 const statusDescriptions: Record<LeadStatus, string> = {
+    "Open": "A verified case that is published and open for funding.",
     "Pending": "A new lead has been submitted and is awaiting initial review and verification.",
-    "Ready For Help": "The lead has been verified and is ready to be published or receive funding.",
-    "Publish": "The lead is visible to the public on the campaigns page for donations.",
-    "Partial": "The lead has received some funding but has not yet met its total goal.",
     "Complete": "The lead has been fully funded, but funds are not yet transferred or the case is not formally closed.",
-    "Closed": "The case is fully funded, all actions are complete, and the beneficiary has received the aid.",
     "On Hold": "The lead is temporarily paused, pending further information or other external factors.",
-    "Cancelled": "The lead has been cancelled and is no longer active."
+    "Cancelled": "The lead has been cancelled and is no longer active.",
+    "Closed": "The case is fully funded, all actions are complete, and the beneficiary has received the aid.",
+    "Partial": "The lead has received some funding but has not yet met its total goal.",
 };
 
 

@@ -96,3 +96,51 @@ export async function handleMakeOptional(userId: string): Promise<FormState> {
     return { success: false, error: error };
   }
 }
+
+export async function handleSkipVerification(leadId: string, adminUserId: string, reason: string): Promise<{success: boolean, error?: string}> {
+    try {
+        const { getLead, updateLead } = await import('@/services/lead-service');
+        const { getUser } = await import('@/services/user-service');
+        const { logActivity } = await import('@/services/activity-log-service');
+        
+        const [lead, adminUser] = await Promise.all([
+            getLead(leadId),
+            getUser(adminUserId)
+        ]);
+
+        if (!lead) return { success: false, error: "Lead not found." };
+        if (!adminUser) return { success: false, error: "Admin user not found." };
+
+        const updates = {
+            caseVerification: 'Verified' as const,
+            caseAction: 'Ready For Help' as const,
+            verifiers: arrayUnion({
+                verifierId: adminUserId,
+                verifierName: adminUser.name,
+                verifiedAt: new Date(),
+                notes: `Verification skipped by admin. Reason: ${reason}`
+            })
+        };
+
+        await updateLead(leadId, updates);
+        
+        await logActivity({
+            userId: adminUserId,
+            userName: adminUser.name,
+            userEmail: adminUser.email,
+            role: "Admin",
+            activity: "Lead Verification Skipped",
+            details: { leadId, leadName: lead.name, reason }
+        });
+        
+        revalidatePath(`/admin/leads/${leadId}`);
+        revalidatePath('/admin/leads');
+
+        return { success: true };
+
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        console.error("Error skipping verification:", error);
+        return { success: false, error: `Failed to skip verification: ${error}` };
+    }
+}

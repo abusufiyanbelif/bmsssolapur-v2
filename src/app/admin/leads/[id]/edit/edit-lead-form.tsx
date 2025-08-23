@@ -44,7 +44,7 @@ import { Label } from "@/components/ui/label";
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
-const leadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Complete", "On Hold", "Cancelled", "Publish", "Partial"];
+const leadStatuses: LeadStatus[] = ["Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
 const leadActions: LeadAction[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
@@ -157,7 +157,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       isLoan: lead.isLoan,
       status: lead.caseStatus,
       caseAction: lead.caseAction,
-      verifiedStatus: lead.verifiedStatus,
+      verifiedStatus: lead.caseVerification,
     },
   });
 
@@ -166,6 +166,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const selectedCategory = watch("category");
   const hasReferral = watch("hasReferral");
   const caseAction = watch("caseAction");
+  const caseVerification = watch("verifiedStatus");
   
   const handleCancel = () => {
     reset({
@@ -188,7 +189,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         isLoan: lead.isLoan,
         status: lead.caseStatus,
         caseAction: lead.caseAction,
-        verifiedStatus: lead.verifiedStatus,
+        verifiedStatus: lead.caseVerification,
     });
     if (lead.referredByUserId) {
         const referralUser = users.find(u => u.id === lead.referredByUserId);
@@ -757,13 +758,37 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                     </FormItem>
                 )}
                 />
+                
+                <FormField
+                    control={form.control}
+                    name="verifiedStatus"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Verification Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a verification status" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {leadVerificationStatuses.map(status => (
+                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
                 <FormField
                     control={form.control}
                     name="caseAction"
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Case Action</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing || lead.verifiedStatus !== 'Verified'}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing || caseVerification !== 'Verified'}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select an action" />
@@ -806,28 +831,6 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                     />
                 )}
 
-                <FormField
-                    control={form.control}
-                    name="verifiedStatus"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Verification Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a verification status" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {leadVerificationStatuses.map(status => (
-                                <SelectItem key={status} value={status}>{status}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 
                  {selectedPurpose === 'Loan' && (
                      <FormField
