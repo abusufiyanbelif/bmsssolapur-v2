@@ -8,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -52,6 +52,16 @@ const allNavItems: NavItem[] = [
     
     // Referral
     { href: "/referral/my-beneficiaries", label: "My Referrals", icon: Users, allowedRoles: ["Referral"] },
+    
+    // Admin - Communications (Collapsible)
+    {
+        label: "Communications",
+        icon: MessageSquare,
+        allowedRoles: ["Admin", "Super Admin"],
+        subItems: [
+            { href: "/admin/communications", label: "Generate Messages", icon: MessageSquare, allowedRoles: ["Admin", "Super Admin"] },
+        ]
+    },
 
     // Admin - Organization (Collapsible)
     {
