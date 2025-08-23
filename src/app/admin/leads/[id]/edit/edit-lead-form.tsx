@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, Info, Edit, Save, X, ChevronsUpDown, Check } from "lucide-react";
-import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
+import { Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/lead-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -44,8 +43,9 @@ import { Label } from "@/components/ui/label";
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
-const leadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
+const leadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Complete", "On Hold", "Cancelled"];
 const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
+const leadActions: LeadAction[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
 
@@ -76,9 +76,11 @@ const formSchema = z.object({
   }),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
   dueDate: z.date().optional(),
+  verificationDueDate: z.date().optional(),
   caseDetails: z.string().optional(),
   isLoan: z.boolean().default(false),
   status: z.enum(leadStatuses),
+  caseAction: z.enum(leadActions),
   verifiedStatus: z.enum(leadVerificationStatuses),
 })
 .refine(data => {
@@ -148,9 +150,11 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
       dueDate: lead.dueDate ? lead.dueDate : undefined,
+      verificationDueDate: lead.verificationDueDate ? lead.verificationDueDate : undefined,
       caseDetails: lead.caseDetails || '',
       isLoan: lead.isLoan,
       status: lead.status,
+      caseAction: lead.caseAction,
       verifiedStatus: lead.verifiedStatus,
     },
   });
@@ -176,9 +180,11 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         acceptableDonationTypes: lead.acceptableDonationTypes || [],
         helpRequested: lead.helpRequested,
         dueDate: lead.dueDate ? lead.dueDate : undefined,
+        verificationDueDate: lead.verificationDueDate ? lead.verificationDueDate : undefined,
         caseDetails: lead.caseDetails || '',
         isLoan: lead.isLoan,
         status: lead.status,
+        caseAction: lead.caseAction,
         verifiedStatus: lead.verifiedStatus,
     });
     if (lead.referredByUserId) {
@@ -229,8 +235,10 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
+    if (values.verificationDueDate) formData.append("verificationDueDate", values.verificationDueDate.toISOString());
     if(values.isLoan) formData.append("isLoan", "on");
     formData.append("status", values.status);
+    formData.append("caseAction", values.caseAction || 'Pending');
     formData.append("verifiedStatus", values.verifiedStatus);
     if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
     
@@ -603,12 +611,10 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                                           ? [...(field.value || []), type]
                                           : field.value?.filter((value) => value !== type);
                                         
-                                        // If all others are checked, check 'Any' as well
-                                        if (newValue.length === allOtherTypes.length) {
+                                        if (newValue && newValue.length === allOtherTypes.length) {
                                           field.onChange(donationTypes);
                                         } else {
-                                          // Remove 'Any' if not all are checked
-                                          field.onChange(newValue.filter(v => v !== 'Any'));
+                                          field.onChange(newValue?.filter(v => v !== 'Any'));
                                         }
                                       }}
                                       disabled={!isEditing}
@@ -688,6 +694,51 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         )}
                     />
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="verificationDueDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Verification Due Date (Optional)</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                disabled={!isEditing}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a verification deadline</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                date < new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                            <FormDescription>
+                            A deadline for administrators to verify this lead.
+                            </FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <FormField
                 control={form.control}
@@ -705,24 +756,25 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <FormField
+                     <FormField
                         control={form.control}
-                        name="status"
+                        name="caseAction"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Case Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                            <FormLabel>Case Action</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing || lead.verifiedStatus !== 'Verified'}>
                                 <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a status" />
+                                    <SelectValue placeholder="Select an action" />
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                {leadStatuses.map(status => (
-                                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                                {leadActions.map(action => (
+                                    <SelectItem key={action} value={action}>{action}</SelectItem>
                                 ))}
                                 </SelectContent>
                             </Select>
+                             <FormDescription>Can only be changed after lead is verified.</FormDescription>
                             <FormMessage />
                             </FormItem>
                         )}

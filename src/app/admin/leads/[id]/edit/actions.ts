@@ -1,8 +1,7 @@
 
-
 "use server";
 
-import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType } from "@/services/lead-service";
+import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
 import { Timestamp, arrayUnion } from "firebase/firestore";
 import type { User, Verifier } from "@/services/types";
@@ -39,7 +38,7 @@ const getChangedFields = (original: Lead, updates: Partial<Lead>) => {
                  }
             }
             else if (original[typedKey] !== updates[typedKey]) {
-                 changes[typedKey] = { from: original[typedKey], to: updates[typedKey] };
+                 changes[typedKey] = { from: original[typedKey] || 'N/A', to: updates[typedKey] };
             }
         }
     }
@@ -66,11 +65,14 @@ export async function handleUpdateLead(
 
     const purpose = rawFormData.purpose as LeadPurpose;
     const status = rawFormData.status as LeadStatus;
+    const caseAction = rawFormData.caseAction as LeadAction;
     const verifiedStatus = rawFormData.verifiedStatus as LeadVerificationStatus;
     const campaignId = rawFormData.campaignId as string | undefined;
     const campaignName = rawFormData.campaignName as string | undefined;
     const dueDateRaw = rawFormData.dueDate as string | undefined;
+    const verificationDueDateRaw = rawFormData.verificationDueDate as string | undefined;
     const dueDate = dueDateRaw ? new Date(dueDateRaw) : undefined;
+    const verificationDueDate = verificationDueDateRaw ? new Date(verificationDueDateRaw) : undefined;
 
     const updates: Partial<Lead> = {
         campaignId: campaignId,
@@ -84,15 +86,17 @@ export async function handleUpdateLead(
         acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
         helpRequested: parseFloat(rawFormData.helpRequested as string),
         dueDate: dueDate,
+        verificationDueDate: verificationDueDate,
         caseDetails: rawFormData.caseDetails as string | undefined,
         isLoan: rawFormData.isLoan === 'on',
         status: status,
+        caseAction: caseAction,
         verifiedStatus: verifiedStatus,
     };
     
     const changes = getChangedFields(lead, updates);
     
-    if (status === 'Closed' && lead.status !== 'Closed') {
+    if (caseAction === 'Closed' && lead.caseAction !== 'Closed') {
         updates.closedAt = Timestamp.now();
     }
     
