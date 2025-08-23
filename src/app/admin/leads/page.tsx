@@ -208,8 +208,8 @@ function LeadsPageContent() {
             const nameMatch = appliedFilters.name === '' || 
                               lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
                               lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase());
-            const statusMatch = appliedFilters.status === 'all' || lead.status === appliedFilters.status;
-            const verificationMatch = appliedFilters.verification === 'all' || lead.verifiedStatus === appliedFilters.verification;
+            const statusMatch = appliedFilters.status === 'all' || lead.caseStatus === appliedFilters.status;
+            const verificationMatch = appliedFilters.verification === 'all' || lead.caseVerification === appliedFilters.verification;
             const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
             const categoryMatch = appliedFilters.category === 'all' || lead.category === appliedFilters.category;
 
@@ -377,7 +377,7 @@ function LeadsPageContent() {
                 
                 <DropdownMenuSeparator />
 
-                {lead.verifiedStatus === 'Pending' && (
+                {lead.caseVerification === 'Pending' && (
                     <>
                         <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'verification', 'Verified')}>
                             <ShieldCheck className="mr-2 h-4 w-4 text-green-600" /> Quick Verify
@@ -388,19 +388,19 @@ function LeadsPageContent() {
                     </>
                 )}
 
-                {lead.verifiedStatus === 'Verified' && lead.status === 'Ready For Help' && (
+                {lead.caseVerification === 'Verified' && lead.caseStatus === 'Ready For Help' && (
                     <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Publish')}>
                         <UploadCloud className="mr-2 h-4 w-4 text-blue-600" /> Publish Lead
                     </DropdownMenuItem>
                 )}
                 
-                {lead.status === 'Publish' && (
+                {lead.caseStatus === 'Publish' && (
                     <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Ready For Help')}>
                         <DownloadCloud className="mr-2 h-4 w-4 text-gray-600" /> Unpublish Lead
                     </DropdownMenuItem>
                 )}
-
-                {lead.status === 'Complete' && (
+                
+                {lead.caseStatus === 'Complete' && (
                     <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Closed')}>
                         <CheckCircle className="mr-2 h-4 w-4 text-green-600" /> Quick Close Case
                     </DropdownMenuItem>
@@ -465,8 +465,8 @@ function LeadsPageContent() {
             </TableHeader>
             <TableBody>
                 {paginatedLeads.map((lead) => {
-                    const verifConfig = verificationStatusConfig[lead.verifiedStatus];
-                    const StatusIcon = statusIcons[lead.status];
+                    const verifConfig = verificationStatusConfig[lead.caseVerification];
+                    const StatusIcon = statusIcons[lead.caseStatus];
                     return (
                         <TableRow key={lead.id} data-state={selectedLeads.includes(lead.id!) ? 'selected' : ''}>
                              <TableCell padding="checkbox">
@@ -488,17 +488,17 @@ function LeadsPageContent() {
                                  <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="capitalize h-auto p-1">
-                                            <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[lead.status])}>
+                                            <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[lead.caseStatus])}>
                                                 <StatusIcon className="mr-1 h-3 w-3" />
-                                                {lead.status}
+                                                {lead.caseStatus}
                                             </Badge>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Change Case Status</DropdownMenuLabel>
                                         {statusOptions.filter(s => s !== 'all').map(s => (
-                                            <DropdownMenuItem key={s} onSelect={() => handleQuickStatusChange(lead.id!, 'case', s)} disabled={lead.status === s}>
-                                                {lead.status === s && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+                                            <DropdownMenuItem key={s} onSelect={() => handleQuickStatusChange(lead.id!, 'case', s)} disabled={lead.caseStatus === s}>
+                                                {lead.caseStatus === s && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
                                                 {s}
                                             </DropdownMenuItem>
                                         ))}
@@ -511,15 +511,15 @@ function LeadsPageContent() {
                                         <Button variant="ghost" className="capitalize h-auto p-1">
                                             <Badge variant="outline" className={cn("capitalize pointer-events-none", verifConfig.color)}>
                                                 <verifConfig.icon className="mr-1 h-3 w-3" />
-                                                {lead.verifiedStatus}
+                                                {lead.caseVerification}
                                             </Badge>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Change Verification</DropdownMenuLabel>
                                         {verificationOptions.filter(v => v !== 'all').map(v => (
-                                            <DropdownMenuItem key={v} onSelect={() => handleQuickStatusChange(lead.id!, 'verification', v)} disabled={lead.verifiedStatus === v}>
-                                                 {lead.verifiedStatus === v && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+                                            <DropdownMenuItem key={v} onSelect={() => handleQuickStatusChange(lead.id!, 'verification', v)} disabled={lead.caseVerification === v}>
+                                                 {lead.caseVerification === v && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
                                                 {v}
                                             </DropdownMenuItem>
                                         ))}
@@ -545,8 +545,8 @@ function LeadsPageContent() {
     const renderMobileCards = () => (
     <div className="space-y-4">
         {paginatedLeads.map((lead) => {
-            const verifConfig = verificationStatusConfig[lead.verifiedStatus];
-            const StatusIcon = statusIcons[lead.status];
+            const verifConfig = verificationStatusConfig[lead.caseVerification];
+            const StatusIcon = statusIcons[lead.caseStatus];
             return (
                 <Card key={lead.id} className={cn("flex flex-col", selectedLeads.includes(lead.id!) && "ring-2 ring-primary")}>
                     <div className="p-4 flex gap-4">
@@ -563,13 +563,13 @@ function LeadsPageContent() {
                                 <div className="flex justify-between items-start">
                                     <CardTitle className="text-lg">{lead.name}</CardTitle>
                                     <div className="flex flex-col items-end gap-2">
-                                        <Badge variant="outline" className={cn("capitalize", statusColors[lead.status])}>
+                                        <Badge variant="outline" className={cn("capitalize", statusColors[lead.caseStatus])}>
                                             <StatusIcon className="mr-1 h-3 w-3" />
-                                            {lead.status}
+                                            {lead.caseStatus}
                                         </Badge>
                                         <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
                                             <verifConfig.icon className="mr-1 h-3 w-3" />
-                                            {lead.verifiedStatus}
+                                            {lead.caseVerification}
                                         </Badge>
                                     </div>
                                 </div>
