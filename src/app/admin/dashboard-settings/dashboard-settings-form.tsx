@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
-import { Loader2, Save, FilterX } from "lucide-react";
+import { Loader2, Save, FilterX, Edit, X } from "lucide-react";
 import type { DashboardSettings, UserRole } from "@/services/types";
 import { handleUpdateDashboardSettings } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -58,6 +58,11 @@ const cardDefinitions: { id: keyof DashboardSettings, label: string, description
     { id: 'topDonors', label: 'Top Donors List', description: 'Shows a list of the top 5 donors.' },
     { id: 'recentCampaigns', label: 'Recent Campaigns Table', description: 'A table listing the most recent campaigns.' },
     { id: 'donationTypeBreakdown', label: 'Donation Type Breakdown', description: 'Shows total amounts received per donation type (Zakat, Sadaqah, etc.).' },
+    // New Role Specific Cards
+    { id: 'donorContributionSummary', label: 'Donor: Contribution Summary', description: 'Shows a donor their total contributions and donation count.' },
+    { id: 'donorImpactSummary', label: 'Donor: Impact Summary', description: 'Shows a donor how many leads, beneficiaries, and campaigns they have supported.' },
+    { id: 'beneficiarySummary', label: 'Beneficiary: Case Summary', description: 'Shows a beneficiary their total aid received and case statuses.' },
+    { id: 'referralSummary', label: 'Referral: Referral Summary', description: 'Shows a referral user their total referred beneficiary count.' },
 ];
 
 
@@ -65,6 +70,8 @@ export function DashboardSettingsForm({ settings }: DashboardSettingsFormProps) 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [isEditing, setIsEditing] = useState(false);
+
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
@@ -79,6 +86,17 @@ export function DashboardSettingsForm({ settings }: DashboardSettingsFormProps) 
   
   const { watch, formState: { isDirty }, reset } = form;
   const currentCardValues = watch('cards');
+
+  const handleCancel = () => {
+    reset({
+         cards: cardDefinitions.map(card => ({
+            id: card.id,
+            label: card.label,
+            roles: settings?.[card.id]?.visibleTo || [],
+        }))
+    });
+    setIsEditing(false);
+  }
 
   const filteredCardDefinitions = useMemo(() => {
     if (roleFilter === 'all') {
@@ -115,6 +133,7 @@ export function DashboardSettingsForm({ settings }: DashboardSettingsFormProps) 
         description: `Dashboard visibility settings have been updated.`,
       });
       form.reset(values); // This resets the 'dirty' state of the form
+      setIsEditing(false);
     } else {
       toast({
         variant: "destructive",
@@ -125,108 +144,123 @@ export function DashboardSettingsForm({ settings }: DashboardSettingsFormProps) 
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="roleFilter">View Visibility For Role</Label>
-                        <Select value={roleFilter} onValueChange={setRoleFilter}>
-                            <SelectTrigger id="roleFilter">
-                                <SelectValue placeholder="Select a role to filter by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Roles</SelectItem>
-                                {allAppRoles.map(role => (
-                                    <SelectItem key={role} value={role}>{role}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {roleFilter !== 'all' && (
-                         <div className="flex items-end">
-                            <Button variant="outline" onClick={() => setRoleFilter('all')} className="w-full">
-                                <FilterX className="mr-2 h-4 w-4" />
-                                Clear Filter
-                            </Button>
-                         </div>
-                    )}
-                </div>
-                {roleFilter !== 'all' && (
-                     <p className="text-sm text-muted-foreground">
-                        Showing all cards visible to the <span className="font-semibold text-primary">{roleFilter}</span> role.
-                     </p>
-                )}
-            </div>
-            {filteredCardDefinitions.map((card, index) => {
-                const originalIndex = cardDefinitions.findIndex(c => c.id === card.id);
-                return (
-                    <FormField
-                        key={card.id}
-                        control={form.control}
-                        name={`cards.${originalIndex}.roles`}
-                        render={() => (
-                        <FormItem className="space-y-3 p-4 border rounded-lg bg-muted/40">
-                        <div className="mb-4">
-                            <FormLabel className="text-base font-semibold">{card.label}</FormLabel>
-                            <FormDescription>
-                            {card.description}
-                            </FormDescription>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {allAppRoles.map((role) => (
-                            <FormField
-                                key={role}
-                                control={form.control}
-                                name={`cards.${originalIndex}.roles`}
-                                render={({ field }) => {
-                                return (
-                                    <FormItem
-                                    key={role}
-                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                    >
-                                    <FormControl>
-                                        <Checkbox
-                                        checked={field.value?.includes(role)}
-                                        onCheckedChange={(checked) => {
-                                            return checked
-                                            ? field.onChange([...field.value, role])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                    (value) => value !== role
-                                                )
-                                                )
-                                        }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                        {role}
-                                    </FormLabel>
-                                    </FormItem>
-                                )
-                                }}
-                            />
-                            ))}
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                )
-            })}
-
-            {filteredCardDefinitions.length === 0 && roleFilter !== 'all' && (
-                <div className="text-center py-10 border-dashed border-2 rounded-lg">
-                    <p className="text-muted-foreground">No dashboard cards are currently visible for the <span className="font-semibold text-primary">{roleFilter}</span> role.</p>
+    <>
+         <div className="flex justify-end mb-6">
+            {!isEditing ? (
+                <Button onClick={() => setIsEditing(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Settings
+                </Button>
+            ) : (
+                 <div className="flex gap-2">
+                    <Button variant="outline" onClick={handleCancel}>
+                        <X className="mr-2 h-4 w-4" /> Cancel
+                    </Button>
+                     <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Changes
+                    </Button>
                 </div>
             )}
-        {isDirty && (
-            <Button type="submit" disabled={isSubmitting} size="lg">
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save Changes
-            </Button>
-        )}
-      </form>
-    </Form>
+        </div>
+        <Form {...form}>
+        <form className="space-y-8">
+                <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="roleFilter">View Visibility For Role</Label>
+                            <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                <SelectTrigger id="roleFilter">
+                                    <SelectValue placeholder="Select a role to filter by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    {allAppRoles.map(role => (
+                                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {roleFilter !== 'all' && (
+                            <div className="flex items-end">
+                                <Button variant="outline" onClick={() => setRoleFilter('all')} className="w-full">
+                                    <FilterX className="mr-2 h-4 w-4" />
+                                    Clear Filter
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                    {roleFilter !== 'all' && (
+                        <p className="text-sm text-muted-foreground">
+                            Showing all cards visible to the <span className="font-semibold text-primary">{roleFilter}</span> role.
+                        </p>
+                    )}
+                </div>
+                {filteredCardDefinitions.map((card, index) => {
+                    const originalIndex = cardDefinitions.findIndex(c => c.id === card.id);
+                    return (
+                        <FormField
+                            key={card.id}
+                            control={form.control}
+                            name={`cards.${originalIndex}.roles`}
+                            render={() => (
+                            <FormItem className="space-y-3 p-4 border rounded-lg bg-muted/40">
+                            <div className="mb-4">
+                                <FormLabel className="text-base font-semibold">{card.label}</FormLabel>
+                                <FormDescription>
+                                {card.description}
+                                </FormDescription>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {allAppRoles.map((role) => (
+                                <FormField
+                                    key={role}
+                                    control={form.control}
+                                    name={`cards.${originalIndex}.roles`}
+                                    render={({ field }) => {
+                                    return (
+                                        <FormItem
+                                        key={role}
+                                        className="flex flex-row items-start space-x-3 space-y-0"
+                                        >
+                                        <FormControl>
+                                            <Checkbox
+                                            checked={field.value?.includes(role)}
+                                            disabled={!isEditing}
+                                            onCheckedChange={(checked) => {
+                                                return checked
+                                                ? field.onChange([...field.value, role])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                        (value) => value !== role
+                                                    )
+                                                    )
+                                            }}
+                                            />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">
+                                            {role}
+                                        </FormLabel>
+                                        </FormItem>
+                                    )
+                                    }}
+                                />
+                                ))}
+                            </div>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )
+                })}
+
+                {filteredCardDefinitions.length === 0 && roleFilter !== 'all' && (
+                    <div className="text-center py-10 border-dashed border-2 rounded-lg">
+                        <p className="text-muted-foreground">No dashboard cards are currently visible for the <span className="font-semibold text-primary">{roleFilter}</span> role.</p>
+                    </div>
+                )}
+        </form>
+        </Form>
+    </>
   );
 }

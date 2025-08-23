@@ -296,6 +296,28 @@ interface GatewayConfig {
     live: PaymentGatewayCredentials;
 }
 
+export interface DashboardSettings {
+    mainMetrics: { visibleTo: UserRole[] };
+    fundsInHand: { visibleTo: UserRole[] };
+    monthlyContributors: { visibleTo: UserRole[] };
+    monthlyPledge: { visibleTo: UserRole[] };
+    pendingLeads: { visibleTo: UserRole[] };
+    pendingDonations: { visibleTo: UserRole[] };
+    leadsReadyToPublish: { visibleTo: UserRole[] };
+    beneficiaryBreakdown: { visibleTo: UserRole[] };
+    campaignBreakdown: { visibleTo: UserRole[] };
+    donationsChart: { visibleTo: UserRole[] };
+    topDonors: { visibleTo: UserRole[] };
+    recentCampaigns: { visibleTo: UserRole[] };
+    donationTypeBreakdown: { visibleTo: UserRole[] };
+    // Role-specific dashboards
+    donorContributionSummary: { visibleTo: UserRole[] };
+    donorImpactSummary: { visibleTo: UserRole[] };
+    beneficiarySummary: { visibleTo: UserRole[] };
+    referralSummary: { visibleTo: UserRole[] };
+}
+
+
 export interface AppSettings {
     id: string;
     loginMethods: {
@@ -354,21 +376,7 @@ export interface AppSettings {
         disabledPurposes: string[];
         workflow?: Record<LeadStatus, LeadStatus[]>;
     };
-    dashboard?: {
-        mainMetrics: { visibleTo: UserRole[] };
-        fundsInHand: { visibleTo: UserRole[] };
-        monthlyContributors: { visibleTo: UserRole[] };
-        monthlyPledge: { visibleTo: UserRole[] };
-        pendingLeads: { visibleTo: UserRole[] };
-        pendingDonations: { visibleTo: UserRole[] };
-        leadsReadyToPublish: { visibleTo: UserRole[] };
-        beneficiaryBreakdown: { visibleTo: UserRole[] };
-        campaignBreakdown: { visibleTo: UserRole[] };
-        donationsChart: { visibleTo: UserRole[] };
-        topDonors: { visibleTo: UserRole[] };
-        recentCampaigns: { visibleTo: UserRole[] };
-        donationTypeBreakdown: { visibleTo: UserRole[] };
-    };
+    dashboard?: DashboardSettings;
     updatedAt?: FieldValue;
 }
 

@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, Users, Loader2, AlertCircle, FileText, Quote as QuoteIcon } from "lucide-react";
+import { ArrowRight, HandHeart, Users, Loader2, AlertCircle, FileText, Quote as QuoteIcon, PlusCircle } from "lucide-react";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -146,49 +147,62 @@ export default function ReferralDashboardPage() {
             
             <InspirationalQuotes quotes={quotes} loading={loading} />
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Beneficiaries Referred</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{referredBeneficiaries.length}</div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Aid Requested</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{totalAidRequested.toLocaleString()}</div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Aid Received</CardTitle>
-                        <HandHeart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{totalAidReceived.toLocaleString()}</div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Open Cases</CardTitle>
-                        <Loader2 className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{openCases}</div>
-                    </CardContent>
-                </Card>
-            </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle>My Referrals Summary</CardTitle>
+                    <CardDescription>An overview of the beneficiaries you've introduced to the organization.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Beneficiaries Referred</CardTitle>
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{referredBeneficiaries.length}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Aid Requested</CardTitle>
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">₹{totalAidRequested.toLocaleString()}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Aid Received</CardTitle>
+                            <HandHeart className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">₹{totalAidReceived.toLocaleString()}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Open Cases</CardTitle>
+                            <Loader2 className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{openCases}</div>
+                        </CardContent>
+                    </Card>
+                </CardContent>
+            </Card>
             
             <Card>
                  <CardHeader>
-                    <CardTitle>My Referred Beneficiaries</CardTitle>
-                    <CardDescription>A quick view of your most recently added beneficiaries.</CardDescription>
+                    <div className="flex justify-between items-center">
+                         <div>
+                            <CardTitle>My Referred Beneficiaries</CardTitle>
+                            <CardDescription>A quick view of your most recently added beneficiaries.</CardDescription>
+                         </div>
+                         <Button asChild>
+                            <Link href="/referral/add-beneficiary"><PlusCircle className="mr-2 h-4 w-4" />Add Beneficiary</Link>
+                         </Button>
+                    </div>
                 </CardHeader>
                  <CardContent>
                     {referredBeneficiaries.length > 0 ? (
@@ -210,7 +224,7 @@ export default function ReferralDashboardPage() {
                          <div className="text-center py-10">
                             <p className="text-muted-foreground">You have not referred any beneficiaries yet.</p>
                              <Button asChild className="mt-4">
-                                <Link href="/referral/my-beneficiaries">Add Your First Beneficiary</Link>
+                                <Link href="/referral/add-beneficiary">Add Your First Beneficiary</Link>
                             </Button>
                         </div>
                     )}

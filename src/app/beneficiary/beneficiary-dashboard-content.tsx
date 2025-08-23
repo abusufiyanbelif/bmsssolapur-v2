@@ -1,14 +1,15 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Target, ChevronLeft, ChevronRight, FilePlus2, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, HandCoins, Hourglass, Eye } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Target, ChevronLeft, ChevronRight, FilePlus2, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import type { User, Lead, Quote, LeadStatus, Campaign, Donation } from "@/services/types";
+import type { User, Lead, Quote, LeadStatus, Campaign, Donation, AppSettings } from "@/services/types";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,12 +29,14 @@ const statusColors: Record<LeadStatus, string> = {
     "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
 
-export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], quotes: Quote[] }) {
+export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases: Lead[], quotes: Quote[], settings: AppSettings }) {
     const isMobile = useIsMobile();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
     const [loadingStats, setLoadingStats] = useState(true);
     const [mainMetrics, setMainMetrics] = useState<any[]>([]);
+    
+    const dashboardSettings = settings.dashboard;
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -48,16 +51,16 @@ export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], 
             const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
             const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
             const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
-            const casesClosed = allLeads.filter(l => l.status === 'Closed').length;
+            const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
             const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
             
             setMainMetrics([
-                { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization.", href: "/public-leads" },
-                { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries.", href: "/public-leads" },
-                { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement.", href: "/public-leads" },
-                { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed.", href: "/public-leads" },
-                { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
-                { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported.", href: "/public-leads" },
+                { id: 'mainMetrics', title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization.", href: "/public-leads" },
+                { id: 'mainMetrics', title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries.", href: "/public-leads" },
+                { id: 'fundsInHand', title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement.", href: "/public-leads" },
+                { id: 'mainMetrics', title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed.", href: "/public-leads" },
+                { id: 'mainMetrics', title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
+                { id: 'mainMetrics', title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported.", href: "/public-leads" },
             ]);
             setLoadingStats(false);
         };
@@ -74,10 +77,10 @@ export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], 
         cases.forEach(caseItem => {
             totalRequested += caseItem.helpRequested;
             totalAidReceived += caseItem.helpGiven;
-            if (caseItem.status === 'Closed') {
+            if (caseItem.caseAction === 'Closed') {
                 myCasesClosed++;
             }
-            if (caseItem.status === 'Pending' || caseItem.status === 'Partial') {
+            if (caseItem.caseAction === 'Pending' || caseItem.caseAction === 'Partial' || caseItem.caseAction === 'Ready For Help' || caseItem.caseAction === 'Publish') {
                 activeCases++;
             }
         });
@@ -118,13 +121,14 @@ export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], 
                     const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                     const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
                     const donationCount = caseItem.donations?.length || 0;
+                    const caseAction = caseItem.caseAction || caseItem.status;
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{format(caseItem.createdAt, "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
-                                    {caseItem.status}
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>
+                                    {caseAction}
                                 </Badge>
                             </TableCell>
                             <TableCell>
@@ -151,6 +155,7 @@ export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], 
                 const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                 const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
                 const donationCount = caseItem.donations?.length || 0;
+                const caseAction = caseItem.caseAction || caseItem.status;
                 return (
                     <Card key={caseItem.id}>
                         <CardHeader>
@@ -159,8 +164,8 @@ export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], 
                                     <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
                                     <CardDescription>Submitted: {format(caseItem.createdAt, "dd MMM yyyy")}</CardDescription>
                                 </div>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseItem.status])}>
-                                    {caseItem.status}
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>
+                                    {caseAction}
                                 </Badge>
                             </div>
                         </CardHeader>
@@ -228,7 +233,7 @@ export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], 
                     {loadingStats ? (
                         Array.from({ length: 6 }).map((_, i) => <div key={i} className="p-4 border rounded-lg h-32 bg-muted animate-pulse" />)
                     ) : (
-                        mainMetrics.map((metric) => (
+                        mainMetrics.filter(m => dashboardSettings?.[m.id]?.visibleTo.includes('Beneficiary')).map((metric) => (
                             <Link href={metric.href} key={metric.title}>
                                 <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
                                     <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
@@ -241,24 +246,26 @@ export function BeneficiaryDashboardContent({ cases, quotes }: { cases: Lead[], 
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>My Personal Summary</CardTitle>
-                    <CardDescription>Your personal history and status with our organization.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    {beneficiaryMetrics.map((metric) => (
-                         <Link href="/my-cases" key={metric.title}>
-                            <div className="p-4 border rounded-lg bg-primary/5 h-full hover:bg-primary/10 transition-colors">
-                                <metric.icon className="h-6 w-6 text-primary mb-2" />
-                                <p className="text-2xl font-bold text-primary">{metric.value}</p>
-                                <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                                <p className="text-xs text-muted-foreground">{metric.description}</p>
-                            </div>
-                        </Link>
-                    ))}
-                </CardContent>
-            </Card>
+            {dashboardSettings?.beneficiarySummary?.visibleTo.includes('Beneficiary') && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Personal Summary</CardTitle>
+                        <CardDescription>Your personal history and status with our organization.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {beneficiaryMetrics.map((metric) => (
+                            <Link href="/my-cases" key={metric.title}>
+                                <div className="p-4 border rounded-lg bg-primary/5 h-full hover:bg-primary/10 transition-colors">
+                                    <metric.icon className="h-6 w-6 text-primary mb-2" />
+                                    <p className="text-2xl font-bold text-primary">{metric.value}</p>
+                                    <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                                    <p className="text-xs text-muted-foreground">{metric.description}</p>
+                                </div>
+                            </Link>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
             <Card>
             <CardHeader>

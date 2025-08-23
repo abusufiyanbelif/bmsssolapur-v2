@@ -13,7 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { AppSettings, UserRole, LeadStatus } from './types';
+import type { AppSettings, UserRole, LeadStatus, DashboardSettings } from './types';
 import { set } from 'react-hook-form';
 
 // Re-export type for backward compatibility
@@ -91,6 +91,11 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         topDonors: { visibleTo: defaultAdminRoles },
         recentCampaigns: { visibleTo: defaultAdminRoles },
         donationTypeBreakdown: { visibleTo: defaultAdminRoles },
+        // New role-specific card defaults
+        donorContributionSummary: { visibleTo: ['Donor'] },
+        donorImpactSummary: { visibleTo: ['Donor'] },
+        beneficiarySummary: { visibleTo: ['Beneficiary'] },
+        referralSummary: { visibleTo: ['Referral'] },
     }
 };
 
@@ -107,7 +112,7 @@ const mergeDeep = (target: any, source: any) => {
 
         if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
             // This is a simple merge; more complex logic may be needed for arrays of objects
-            target[key] = [...new Set([...targetValue, ...sourceValue])];
+            target[key] = [...new Set([...sourceValue])];
         } else if (isObject(targetValue) && isObject(sourceValue)) {
             target[key] = mergeDeep({ ...targetValue }, sourceValue);
         } else {
@@ -127,7 +132,7 @@ const mergeDeep = (target: any, source: any) => {
 export const getAppSettings = async (): Promise<AppSettings> => {
   if (!isConfigValid) {
     console.warn("Firebase not configured. Returning default app settings.");
-    return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings };
+    return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings } as AppSettings;
   }
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, MAIN_SETTINGS_DOC_ID);
@@ -146,7 +151,7 @@ export const getAppSettings = async (): Promise<AppSettings> => {
         updatedAt: serverTimestamp(),
       };
       await setDoc(settingsDocRef, newSettings);
-      return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings }; // Return without timestamp for immediate use
+      return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings } as AppSettings; // Return without timestamp for immediate use
     }
   } catch (error) {
     console.error('Error getting app settings: ', error);

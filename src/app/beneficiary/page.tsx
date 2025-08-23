@@ -1,28 +1,23 @@
 
+
 'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, ChevronLeft, ChevronRight, Check, Save, FilePlus2, Baby, PersonStanding, HomeIcon, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, HandCoins, Hourglass, Eye } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { DonorDashboardContent } from '../donor/donor-dashboard-content';
+import { Loader2, AlertCircle } from "lucide-react";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Lead, Quote, LeadStatus, Campaign, Donation } from "@/services/types";
-import { getUser } from "@/services/user-service";
-import { Progress } from "@/components/ui/progress";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getUser, User } from "@/services/user-service";
+import type { Lead, Quote, AppSettings } from "@/services/types";
 import { BeneficiaryDashboardContent } from './beneficiary-dashboard-content';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getAppSettings } from "@/services/app-settings-service";
 
 export default function BeneficiaryDashboardPage() {
     const [user, setUser] = useState<User | null>(null);
     const [cases, setCases] = useState<Lead[]>([]);
     const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [settings, setSettings] = useState<AppSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -45,12 +40,14 @@ export default function BeneficiaryDashboardPage() {
                 }
                 setUser(fetchedUser);
 
-                const [beneficiaryCases, randomQuotes] = await Promise.all([
+                const [beneficiaryCases, randomQuotes, appSettings] = await Promise.all([
                     getLeadsByBeneficiaryId(storedUserId),
                     getRandomQuotes(3),
+                    getAppSettings(),
                 ]);
                 setCases(beneficiaryCases);
                 setQuotes(randomQuotes);
+                setSettings(appSettings);
 
             } catch (e) {
                 setError("Failed to load dashboard data.");
@@ -77,7 +74,7 @@ export default function BeneficiaryDashboardPage() {
     );
   }
   
-  if (!user) {
+  if (!user || !settings) {
       return null;
   }
 
@@ -91,7 +88,7 @@ export default function BeneficiaryDashboardPage() {
               Welcome back, {user.name}. Manage your help requests here.
             </p>
         </div>
-      <BeneficiaryDashboardContent cases={cases} quotes={quotes} />
+      <BeneficiaryDashboardContent cases={cases} quotes={quotes} settings={settings} />
     </div>
   );
 }
