@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/chart"
 import type { Donation } from "@/services/types"
 import { useMemo, useState } from "react"
-import { addDays, format, subMonths } from "date-fns"
+import { addDays, format, subMonths, subYears, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns"
 import { DateRange } from "react-day-picker"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const chartConfig = {
   donations: {
@@ -39,6 +40,25 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
         from: subMonths(new Date(), 6),
         to: new Date(),
     });
+
+    const setTimeframe = (timeframe: string) => {
+        const now = new Date();
+        switch(timeframe) {
+            case 'monthly':
+                setDate({ from: startOfMonth(now), to: endOfMonth(now) });
+                break;
+            case 'quarterly':
+                setDate({ from: subMonths(now, 3), to: now });
+                break;
+            case 'half-yearly':
+                setDate({ from: subMonths(now, 6), to: now });
+                break;
+            case 'yearly':
+                setDate({ from: startOfYear(now), to: endOfYear(now) });
+                break;
+        }
+    }
+
 
   const chartData = useMemo(() => {
     if (!date?.from || !date?.to) {
@@ -93,19 +113,30 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
 
   return (
     <Card className="col-span-4">
-      <CardHeader className="flex flex-row items-start justify-between">
+      <CardHeader className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
             <CardTitle className="font-headline">Donations Overview</CardTitle>
             <CardDescription>Verified donations from the selected time period.</CardDescription>
         </div>
-        <div className="w-[280px]">
+        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+             <Select onValueChange={setTimeframe}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Select timeframe" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="monthly">This Month</SelectItem>
+                    <SelectItem value="quarterly">Last 3 Months</SelectItem>
+                    <SelectItem value="half-yearly">Last 6 Months</SelectItem>
+                    <SelectItem value="yearly">This Year</SelectItem>
+                </SelectContent>
+            </Select>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="date"
                   variant={"outline"}
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full sm:w-[280px] justify-start text-left font-normal",
                     !date && "text-muted-foreground"
                   )}
                 >

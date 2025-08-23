@@ -11,7 +11,8 @@ import {
     PendingDonationsCard,
     LeadsReadyToPublishCard,
     TopDonorsCard,
-    RecentCampaignsCard
+    RecentCampaignsCard,
+    LeadBreakdownCard
 } from "./dashboard-cards";
 import { AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
@@ -93,6 +94,9 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
              <Suspense fallback={<CardSkeleton />}><LeadsReadyToPublishCard /></Suspense>
         </div>
+         <Suspense fallback={<CardSkeleton />}>
+            <LeadBreakdownCard allLeads={allLeads} />
+        </Suspense>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Suspense fallback={<CardSkeleton />}><BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={true} /></Suspense>
             <Suspense fallback={<CardSkeleton />}><CampaignBreakdownCard allCampaigns={allCampaigns} /></Suspense>

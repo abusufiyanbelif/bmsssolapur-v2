@@ -1,11 +1,10 @@
 
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { User, Lead, Campaign, Donation, DonationType } from "@/services/types";
-import { HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award } from "lucide-react";
+import { User, Lead, Campaign, Donation, DonationType, LeadPurpose } from "@/services/types";
+import { HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText } from "lucide-react";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
@@ -364,7 +363,7 @@ export const RecentCampaignsCard = async () => {
         <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="text-primary"/>
-                Active &amp; Recent Campaigns
+                Active & Recent Campaigns
             </CardTitle>
             <CardDescription>
                 An overview of our fundraising campaigns.
@@ -416,5 +415,57 @@ export const RecentCampaignsCard = async () => {
             )}
         </CardContent>
     </Card>
+    )
+}
+
+const leadPurposeIcons: Record<LeadPurpose, React.ElementType> = {
+    'Education': HandHeart,
+    'Medical': HeartHandshake,
+    'Relief Fund': HomeIcon,
+    'Deen': Building,
+    'Loan': DollarSign,
+    'Other': FileText,
+};
+
+export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
+    const leadPurposeBreakdown = allLeads.reduce((acc, lead) => {
+        const purpose = lead.purpose || 'Other';
+        if (!acc[purpose]) {
+            acc[purpose] = { count: 0, requested: 0 };
+        }
+        acc[purpose].count += 1;
+        acc[purpose].requested += lead.helpRequested;
+        return acc;
+    }, {} as Record<LeadPurpose, { count: number, requested: number }>);
+        
+    return (
+        <Card className="col-span-3">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-headline">
+                    <FileText />
+                    Lead Purpose Breakdown
+                </CardTitle>
+                <CardDescription>
+                    A summary of all leads organized by their primary purpose.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                 {Object.entries(leadPurposeBreakdown).map(([purpose, data]) => {
+                    const Icon = leadPurposeIcons[purpose as LeadPurpose] || FileText;
+                    return (
+                        <Link href={`/admin/leads?purpose=${purpose}`} key={purpose}>
+                            <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors">
+                                <Icon className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                                <div>
+                                    <p className="font-semibold text-lg">{purpose}</p>
+                                    <p className="text-2xl font-bold text-foreground">{data.count}</p>
+                                    <p className="text-xs text-muted-foreground">cases</p>
+                                </div>
+                            </div>
+                        </Link>
+                    )
+                })}
+            </CardContent>
+        </Card>
     )
 }
