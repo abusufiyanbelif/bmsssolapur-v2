@@ -77,9 +77,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
     }
 
     const filteredDonations = donations.filter(d => {
-        const donationDate = d.createdAt && typeof (d.createdAt as any).toDate === 'function' 
-            ? (d.createdAt as any).toDate() 
-            : d.createdAt;
+        const donationDate = d.createdAt;
         if (!(donationDate instanceof Date)) return false;
         return (d.status === 'Verified' || d.status === 'Allocated') &&
                donationDate >= date.from! &&
@@ -94,7 +92,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
             day = addDays(day, 1);
         }
         filteredDonations.forEach(d => {
-            const dayKey = format((d.createdAt as any).toDate(), 'MMM d');
+            const dayKey = format((d.createdAt as Date), 'MMM d');
             dailyTotals[dayKey] += d.amount;
         });
         return Object.entries(dailyTotals).map(([day, total]) => ({ month: day, donations: total }));
@@ -102,7 +100,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
     } else if (aggregation === 'weekly' && selectedTimeframe === 'monthly') {
         const weeklyTotals: { [key: string]: number } = {};
         filteredDonations.forEach(d => {
-            const weekStart = startOfWeek((d.createdAt as any).toDate(), { weekStartsOn: 1 });
+            const weekStart = startOfWeek((d.createdAt as Date), { weekStartsOn: 1 });
             const weekKey = `Week of ${format(weekStart, 'MMM d')}`;
             if (!weeklyTotals[weekKey]) weeklyTotals[weekKey] = 0;
             weeklyTotals[weekKey] += d.amount;
@@ -119,7 +117,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
             currentDate.setMonth(currentDate.getMonth() + 1);
         }
         filteredDonations.forEach(d => {
-            const monthKey = format((d.createdAt as any).toDate(), "MMM yyyy");
+            const monthKey = format((d.createdAt as Date), "MMM yyyy");
             if (monthKey in monthlyTotals) {
               monthlyTotals[monthKey] += d.amount;
             }
