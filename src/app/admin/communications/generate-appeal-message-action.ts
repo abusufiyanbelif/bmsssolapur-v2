@@ -70,6 +70,12 @@ export async function generateAppealMessage(
         // Add the total required amount
         messageBody += `\n*Required target amt: ₹${totalRequired.toLocaleString('en-IN')}*`;
 
+        // Add the call to action link
+        // In a real production app, you'd get this from an environment variable.
+        const appBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://baitul-mal-connect.web.app';
+        const ctaLink = `${appBaseUrl}/public-leads`;
+        messageBody += `\n\n*View details and contribute here:*\n${ctaLink}`;
+
         // Construct the full message
         const fullMessage = `${introMessage}\n\n${messageBody}\n\n${outroMessage}`;
         
