@@ -1,12 +1,11 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Target, ChevronLeft, ChevronRight, FilePlus2, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, Eye } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Target, ChevronLeft, ChevronRight, FilePlus2, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, Eye, HandCoins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import type { User, Lead, Quote, LeadStatus, Campaign, Donation, AppSettings } from "@/services/types";
@@ -121,13 +120,13 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                     const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                     const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
                     const donationCount = caseItem.donations?.length || 0;
-                    const caseAction = caseItem.caseAction || caseItem.status;
+                    const caseAction = caseItem.caseAction || 'Pending';
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{format(caseItem.createdAt, "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction as LeadStatus])}>
                                     {caseAction}
                                 </Badge>
                             </TableCell>
@@ -155,7 +154,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                 const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
                 const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
                 const donationCount = caseItem.donations?.length || 0;
-                const caseAction = caseItem.caseAction || caseItem.status;
+                const caseAction = caseItem.caseAction || 'Pending';
                 return (
                     <Card key={caseItem.id}>
                         <CardHeader>
@@ -164,7 +163,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                                     <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
                                     <CardDescription>Submitted: {format(caseItem.createdAt, "dd MMM yyyy")}</CardDescription>
                                 </div>
-                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>
+                                <Badge variant="outline" className={cn("capitalize", statusColors[caseAction as LeadStatus])}>
                                     {caseAction}
                                 </Badge>
                             </div>
