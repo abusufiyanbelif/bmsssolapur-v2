@@ -10,6 +10,7 @@ This document tracks the features and changes requested for the project.
     - **UI Feedback**: Invalid form fields should be clearly highlighted (e.g., red border/label) with an inline message explaining the requirement.
     - **Actionable Guidance**: When possible, errors should guide the user toward a solution (e.g., "A user with this email already exists. Please try logging in.").
     - **Developer-Friendly Logging**: Server-side logs must contain sufficient context to facilitate Root Cause Analysis (RCA) and debugging.
+- **URL Encoding for Dynamic Routes**: To prevent 404 errors, any dynamic segment in a URL (e.g., `[id]`) must be properly encoded if the ID might contain special characters (such as `_`, `/`, `?`). When creating a `Link` component for a path like `/items/[id]/edit`, the `href` must be constructed as `` `/items/${encodeURIComponent(item.id)}/edit` ``. This is a critical step for ensuring routing reliability.
 
 ---
 
@@ -58,7 +59,7 @@ This document tracks the features and changes requested for the project.
 - **Organization Page**: Created a public page at `/organization` to display verifiable details of the registered organization.
 - **Services Summary**: Created a page (`/services`) to display a list of all configured backend and external services.
 - **Dependency Map**: Created a page (`/dependencies`) to visualize the connections between the application's services.
-- **User Profile**: Created a page (`/profile`) for users to manage their settings, including notification preferences and viewing their activity history.
+- **User Profile**: Created a page at `/profile` to manage settings and view activity history.
 - **Admin Dashboard**: Created at `/admin` to show key stats.
 - **Donation Management**: Created a page at `/admin/donations` to list all donations with their status.
 
