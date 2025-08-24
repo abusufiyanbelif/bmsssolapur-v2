@@ -81,7 +81,7 @@ export default async function Page() {
                         <CampaignBreakdownCard allCampaigns={allCampaigns} />
                     </Suspense>
                     <Suspense fallback={<CardSkeleton />}>
-                        <DonationTypeCard donations={allDonations} />
+                        <DonationTypeCard donations={allDonations} isPublicView={true} />
                     </Suspense>
                 </div>
             

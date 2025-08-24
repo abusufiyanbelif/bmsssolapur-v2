@@ -118,7 +118,7 @@ const donationTypeIcons: Record<DonationType, React.ElementType> = {
     'Any': DollarSign,
 }
 
-export const DonationTypeCard = ({ donations }: { donations: Donation[] }) => {
+export const DonationTypeCard = ({ donations, isPublicView = false }: { donations: Donation[], isPublicView?: boolean }) => {
      const donationTypeBreakdown = donations
         .filter(d => d.status === 'Verified' || d.status === 'Allocated')
         .reduce((acc, donation) => {
@@ -145,16 +145,24 @@ export const DonationTypeCard = ({ donations }: { donations: Donation[] }) => {
             <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
                  {Object.entries(donationTypeBreakdown).map(([type, data]) => {
                     const Icon = donationTypeIcons[type as DonationType] || DollarSign;
+                    const content = (
+                        <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors">
+                            <Icon className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                            <div>
+                                <p className="font-semibold text-lg">{type}</p>
+                                <p className="text-2xl font-bold text-foreground">₹{data.total.toLocaleString()}</p>
+                                <p className="text-xs text-muted-foreground">{data.count} donations</p>
+                            </div>
+                        </div>
+                    );
+
+                    if (isPublicView) {
+                        return <div key={type}>{content}</div>;
+                    }
+
                     return (
                         <Link href={`/admin/donations?type=${type}`} key={type}>
-                            <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors">
-                                <Icon className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
-                                <div>
-                                    <p className="font-semibold text-lg">{type}</p>
-                                    <p className="text-2xl font-bold text-foreground">₹{data.total.toLocaleString()}</p>
-                                    <p className="text-xs text-muted-foreground">{data.count} donations</p>
-                                </div>
-                            </div>
+                           {content}
                         </Link>
                     )
                 })}
