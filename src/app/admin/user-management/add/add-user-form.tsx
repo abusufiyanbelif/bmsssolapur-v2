@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -657,7 +658,7 @@ function AddUserFormContent() {
                         Mark as Anonymous Beneficiary
                         </FormLabel>
                         <FormDescription>
-                        If checked, their name will be hidden from public view and their Anonymous ID will be used instead.
+                        If checked, their name will be hidden from public view and a system-generated ID will be used instead.
                         </FormDescription>
                     </div>
                     </FormItem>
@@ -690,13 +691,7 @@ function AddUserFormContent() {
             />
         )}
 
-         {(isAnonymousBeneficiary || isAnonymousDonor) && (
-            <div className="text-sm rounded-lg border bg-muted/50 p-4">
-                Unique anonymous IDs for Donor and Beneficiary roles will be generated for this user upon creation.
-            </div>
-        )}
-
-         {selectedRoles.includes("Beneficiary") && (
+        {selectedRoles.includes("Beneficiary") && (
             <FormField
                 control={form.control}
                 name="beneficiaryType"
