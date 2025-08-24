@@ -47,7 +47,15 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`);
+      
+      // Use data URI for mobile-friendly download
+      const pdfDataUri = pdf.output('datauristring');
+      const link = document.createElement('a');
+      link.href = pdfDataUri;
+      link.download = `Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       toast({
           variant: 'success',

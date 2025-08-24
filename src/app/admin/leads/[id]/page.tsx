@@ -6,7 +6,7 @@ import { getDonation, Donation, getAllDonations } from "@/services/donation-serv
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp, Eye, Package, UserSquare } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp, Eye, Package, UserSquare, Download } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -260,8 +260,11 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                                   <p className="font-mono text-xs text-muted-foreground">{transfer.recipientAccountNumber || transfer.recipientUpiId || 'N/A'}</p>
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">View Proof</Link>
+                                                    <Button asChild variant="outline" size="sm" download>
+                                                        <a href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">
+                                                            <Download className="mr-2 h-3 w-3" />
+                                                            View
+                                                        </a>
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -294,10 +297,11 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         <FileText className="h-5 w-5 text-muted-foreground" />
                                         <p className="font-semibold">Verification Document</p>
                                     </div>
-                                    <Button asChild variant="outline" size="sm">
-                                        <Link href={lead.verificationDocumentUrl} target="_blank" rel="noopener noreferrer">
-                                            View Document
-                                        </Link>
+                                     <Button asChild variant="outline" size="sm" download>
+                                        <a href={lead.verificationDocumentUrl} target="_blank" rel="noopener noreferrer">
+                                            <Download className="mr-2 h-3 w-3" />
+                                            View
+                                        </a>
                                     </Button>
                                 </div>
                              ) : (

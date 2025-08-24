@@ -51,8 +51,17 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Donation-Receipt-${donation.id}.pdf`);
       
+      // Use data URI for mobile-friendly download
+      const pdfDataUri = pdf.output('datauristring');
+
+      const link = document.createElement('a');
+      link.href = pdfDataUri;
+      link.download = `Donation-Receipt-${donation.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
       toast({
           variant: 'success',
           title: "Download Started",
