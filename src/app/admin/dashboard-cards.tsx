@@ -40,12 +40,12 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
         { id: "totalDistributed", title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
         { id: "casesClosed", title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
         { id: "casesPending", title: "Pending Leads", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
-        { id: "openLeads", title: "Open Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/admin/leads?caseAction=Publish" },
+        { id: "openLeads", title: "Open Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/public-leads" },
         { id: "beneficiariesHelped", title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
     
-    const CardWrapper = ({ children, href }: { children: React.ReactNode, href: string }) => {
-        if (isPublicView) {
+    const CardWrapper = ({ children, href, isClickable }: { children: React.ReactNode, href: string, isClickable: boolean }) => {
+        if (!isClickable) {
             return <div className="h-full">{children}</div>;
         }
         return <Link href={href}>{children}</Link>;
@@ -57,8 +57,9 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
                 if (isPublicView && metric.id === 'casesPending') {
                     return null; // Skip rendering pending cases card on public view
                 }
+                const isClickable = !isPublicView || metric.id === 'openLeads'; // Open Leads is always clickable
                 return (
-                    <CardWrapper href={metric.href} key={metric.title}>
+                    <CardWrapper href={metric.href} key={metric.title} isClickable={isClickable}>
                         <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
@@ -513,21 +514,27 @@ export const TopDonationsCard = ({ donations, isPublicView = false }: { donation
             <CardContent>
                 {topDonations.length > 0 ? (
                     <div className="space-y-4">
-                        {topDonations.map(donation => (
-                            <CardRow key={donation.id} donationId={donation.id!}>
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={`https://placehold.co/100x100.png?text=${donation.isAnonymous ? 'A' : donation.donorName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}`} alt={donation.donorName} data-ai-hint="abstract geometric" />
-                                    <AvatarFallback>{donation.isAnonymous ? 'A' : donation.donorName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <div className="ml-4 flex-grow">
-                                    <p className="text-sm font-medium leading-none">{donation.isAnonymous ? 'Anonymous Donor' : donation.donorName}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {format(donation.donationDate as Date, "dd MMM, yyyy")}
-                                    </p>
-                                </div>
-                                <div className="ml-4 font-semibold text-lg">₹{donation.amount.toLocaleString()}</div>
-                            </CardRow>
-                        ))}
+                        {topDonations.map(donation => {
+                            const showDonor = !isPublicView && !donation.isAnonymous;
+                            const displayName = showDonor ? donation.donorName : 'Anonymous Donor';
+                            const avatarText = showDonor ? donation.donorName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'A';
+
+                            return (
+                                <CardRow key={donation.id} donationId={donation.id!}>
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={`https://placehold.co/100x100.png?text=${avatarText}`} alt={displayName} data-ai-hint="abstract geometric" />
+                                        <AvatarFallback>{avatarText}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="ml-4 flex-grow">
+                                        <p className="text-sm font-medium leading-none">{displayName}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {format(donation.donationDate as Date, "dd MMM, yyyy")}
+                                        </p>
+                                    </div>
+                                    <div className="ml-4 font-semibold text-lg">₹{donation.amount.toLocaleString()}</div>
+                                </CardRow>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="text-center py-10 h-full flex flex-col items-center justify-center">
