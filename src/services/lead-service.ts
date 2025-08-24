@@ -119,6 +119,7 @@ export const getLead = async (id: string): Promise<Lead | null> => {
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
         closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
         dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
+        verificationDueDate: data.verificationDueDate ? (data.verificationDueDate as any).toDate() : undefined,
         verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
         donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
         fundTransfers: (data.fundTransfers || []).map((t: any) => ({...t, transferredAt: (t.transferredAt as Timestamp).toDate() })),
@@ -239,6 +240,7 @@ export const getAllLeads = async (): Promise<Lead[]> => {
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
               closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
               dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
+              verificationDueDate: data.verificationDueDate ? (data.verificationDueDate as any).toDate() : undefined,
               verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
               donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
               fundTransfers: (data.fundTransfers || []).map((t: FundTransfer) => ({...t, transferredAt: (t.transferredAt as Timestamp).toDate() })),
@@ -350,3 +352,4 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         throw new Error('Failed to get open beneficiary leads.');
     }
 }
+
