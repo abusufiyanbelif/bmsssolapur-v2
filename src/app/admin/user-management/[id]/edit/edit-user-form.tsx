@@ -236,8 +236,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const { fields, append, remove } = useFieldArray({ control, name: "upiIds" });
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
-  const isAnonymousBeneficiary = form.watch("isAnonymousAsBeneficiary");
-  const isAnonymousDonor = form.watch("isAnonymousAsDonor");
   
   const handleCancel = () => {
       reset({
@@ -642,6 +640,11 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     </FormItem>
                                 )}
                             />
+                            <div className="space-y-2">
+                                <FormLabel>Anonymous Beneficiary ID</FormLabel>
+                                <Input value={user.anonymousBeneficiaryId || "Will be generated on role change"} disabled />
+                                <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
+                            </div>
                              <FormField
                                 control={form.control}
                                 name="beneficiaryType"
@@ -694,43 +697,36 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         </>
                     )}
                     {selectedRoles.includes("Donor") && (
-                         <FormField
-                            control={form.control}
-                            name="isAnonymousAsDonor"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    disabled={!isEditing}
-                                    />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel>
-                                    Mark as Anonymous Donor
-                                    </FormLabel>
-                                    <FormDescription>
-                                    If checked, their name will be hidden from public view for all their donations.
-                                    </FormDescription>
-                                </div>
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                    {(isAnonymousBeneficiary) && (
-                        <div className="space-y-2">
-                            <FormLabel>Anonymous Beneficiary ID</FormLabel>
-                            <Input value={user.anonymousBeneficiaryId || "Will be generated on save"} disabled />
-                            <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
-                        </div>
-                    )}
-                     {(isAnonymousDonor) && (
-                        <div className="space-y-2">
-                            <FormLabel>Anonymous Donor ID</FormLabel>
-                            <Input value={user.anonymousDonorId || "Will be generated on save"} disabled />
-                            <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
-                        </div>
+                        <>
+                            <FormField
+                                control={form.control}
+                                name="isAnonymousAsDonor"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        disabled={!isEditing}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                        Mark as Anonymous Donor
+                                        </FormLabel>
+                                        <FormDescription>
+                                        If checked, their name will be hidden from public view for all their donations.
+                                        </FormDescription>
+                                    </div>
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="space-y-2">
+                                <FormLabel>Anonymous Donor ID</FormLabel>
+                                <Input value={user.anonymousDonorId || "Will be generated on role change"} disabled />
+                                <FormDescription>This ID is used for public display to protect privacy.</FormDescription>
+                            </div>
+                        </>
                     )}
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>

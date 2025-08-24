@@ -18,6 +18,7 @@ import {
   limit,
   serverTimestamp,
   getCountFromServer,
+  orderBy,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { User, UserRole } from './types';
@@ -35,6 +36,37 @@ const getUniqueRoles = (roles: UserRole[] = []): UserRole[] => {
     if (!Array.isArray(roles)) return [];
     return [...new Set(roles.filter(Boolean))];
 }
+
+/**
+ * Generates the next available sequential ID for a given anonymous role prefix.
+ * e.g., if the highest DONOR ID is DONOR05, it will return DONOR06.
+ * @param prefix The prefix for the ID (e.g., "DONOR", "BENFCRY").
+ * @param field The field to check in Firestore (e.g., "anonymousDonorId").
+ * @returns The next sequential ID string.
+ */
+const generateNextAnonymousId = async (prefix: string, field: keyof User): Promise<string> => {
+    const q = query(
+        collection(db, USERS_COLLECTION),
+        where(field, '>=', prefix),
+        where(field, '<', prefix + 'Z'), // A trick to query for strings starting with the prefix
+        orderBy(field, 'desc'),
+        limit(1)
+    );
+
+    const querySnapshot = await getDocs(q);
+    let lastNumber = 0;
+    if (!querySnapshot.empty) {
+        const lastUser = querySnapshot.docs[0].data() as User;
+        const lastId = lastUser[field] as string;
+        if(lastId) {
+           const numberPart = lastId.replace(prefix, '');
+           lastNumber = parseInt(numberPart, 10);
+        }
+    }
+    const nextNumber = lastNumber + 1;
+    return `${prefix}${nextNumber.toString().padStart(2, '0')}`;
+}
+
 
 // Function to get a user by their custom userId field
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
@@ -101,9 +133,26 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     const userNumber = countSnapshot.data().count + 1;
     const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
 
-    // Always generate anonymous IDs
-    const anonymousBeneficiaryId = `Beneficiary-${userRef.id.substring(0, 6).toUpperCase()}`;
-    const anonymousDonorId = `Donor-${userRef.id.substring(0, 6).toUpperCase()}`;
+    // --- On-demand Anonymous ID Generation ---
+    const assignedRoles = getUniqueRoles(userData.roles || ['Donor']);
+    let anonymousDonorId: string | undefined;
+    let anonymousBeneficiaryId: string | undefined;
+    let anonymousReferralId: string | undefined;
+    let anonymousAdminId: string | undefined;
+
+    if (assignedRoles.includes('Donor')) {
+        anonymousDonorId = await generateNextAnonymousId('DONOR', 'anonymousDonorId');
+    }
+    if (assignedRoles.includes('Beneficiary')) {
+        anonymousBeneficiaryId = await generateNextAnonymousId('BENFCRY', 'anonymousBeneficiaryId');
+    }
+     if (assignedRoles.includes('Referral')) {
+        anonymousReferralId = await generateNextAnonymousId('REF', 'anonymousReferralId');
+    }
+    if (assignedRoles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
+        anonymousAdminId = await generateNextAnonymousId('ADM', 'anonymousAdminId');
+    }
+    // --- End On-demand ID Generation ---
 
     const newUser: User = { 
         id: userRef.id,
@@ -128,8 +177,10 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         beneficiaryType: userData.beneficiaryType,
         isAnonymousAsBeneficiary: userData.isAnonymousAsBeneficiary || false,
         isAnonymousAsDonor: userData.isAnonymousAsDonor || false,
-        anonymousBeneficiaryId,
-        anonymousDonorId,
+        anonymousBeneficiaryId: anonymousBeneficiaryId,
+        anonymousDonorId: anonymousDonorId,
+        anonymousReferralId: anonymousReferralId,
+        anonymousAdminId: anonymousAdminId,
         occupation: userData.occupation,
         familyMembers: userData.familyMembers,
         isWidow: userData.isWidow,
@@ -141,7 +192,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         bankIfscCode: userData.bankIfscCode,
         upiPhone: userData.upiPhone,
         upiIds: userData.upiIds || [],
-        roles: getUniqueRoles(userData.roles || ['Donor']),
+        roles: assignedRoles,
         privileges: userData.privileges || [],
         groups: userData.groups || [],
         referredByUserId: userData.referredByUserId,
@@ -436,6 +487,23 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
         const finalUpdates: Partial<User> = { ...updates };
         if (updates.roles) {
             finalUpdates.roles = getUniqueRoles(updates.roles);
+
+            const originalUser = await getUser(id);
+            if(originalUser) {
+                // Check if new roles were added and generate anonymous IDs if needed
+                if (!originalUser.anonymousDonorId && finalUpdates.roles.includes('Donor')) {
+                    finalUpdates.anonymousDonorId = await generateNextAnonymousId('DONOR', 'anonymousDonorId');
+                }
+                if (!originalUser.anonymousBeneficiaryId && finalUpdates.roles.includes('Beneficiary')) {
+                    finalUpdates.anonymousBeneficiaryId = await generateNextAnonymousId('BENFCRY', 'anonymousBeneficiaryId');
+                }
+                if (!originalUser.anonymousReferralId && finalUpdates.roles.includes('Referral')) {
+                    finalUpdates.anonymousReferralId = await generateNextAnonymousId('REF', 'anonymousReferralId');
+                }
+                if (!originalUser.anonymousAdminId && finalUpdates.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
+                     finalUpdates.anonymousAdminId = await generateNextAnonymousId('ADM', 'anonymousAdminId');
+                }
+            }
         }
 
         await updateDoc(userRef, {

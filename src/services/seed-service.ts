@@ -236,18 +236,7 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             results.push({ name: userData.name, status: 'Updated' });
         } else {
             // This path is for creating a brand new user
-            const userRef = doc(collection(db, USERS_COLLECTION));
-            const userKey = `USR${(await getCountFromServer(collection(db, USERS_COLLECTION))).data().count() + results.length + 1}`;
-            const userId = userData.userId || `${userData.firstName?.toLowerCase()}.${userData.lastName?.toLowerCase()}`.replace(/\s+/g, '');
-            const finalUserData = {
-                ...userData,
-                id: userRef.id,
-                userKey,
-                userId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            };
-            batch.set(userRef, finalUserData);
+            await createUser(userData); // createUser handles all the logic now
             results.push({ name: userData.name, status: 'Created' });
         }
     }
