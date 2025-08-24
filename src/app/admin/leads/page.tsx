@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -18,7 +17,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllLeads, type Lead, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, getUser, type User } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check, Trash2, Share2 } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check, Trash2, Share2, Clipboard } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -354,6 +353,15 @@ function LeadsPageContent() {
         window.open(whatsappUrl, '_blank');
     };
     
+    const handleCopyTemplate = () => {
+        const template = `Beneficiary Full Name: \nBeneficiary Phone: \nAmount Requested: \nPurpose: (e.g., Education, Medical, Relief Fund)\nCategory: (e.g., School Fees, Hospital Bill, Ration Kit)\nCase Details: (Please provide the full story and reason for the request)`;
+        navigator.clipboard.writeText(template.trim());
+        toast({
+            title: "Template Copied!",
+            description: "The lead details template has been copied to your clipboard.",
+        });
+    };
+
     const renderActions = (lead: Lead) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -766,12 +774,18 @@ function LeadsPageContent() {
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Leads Management</h2>
-            <Button asChild>
-                <Link href="/admin/leads/add">
-                    <PlusCircle className="mr-2" />
-                    Add Lead
-                </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleCopyTemplate}>
+                    <Clipboard className="mr-2 h-4 w-4" />
+                    Copy Template
+                </Button>
+                <Button asChild>
+                    <Link href="/admin/leads/add">
+                        <PlusCircle className="mr-2" />
+                        Add Lead
+                    </Link>
+                </Button>
+            </div>
         </div>
         <Card>
             <CardHeader>
