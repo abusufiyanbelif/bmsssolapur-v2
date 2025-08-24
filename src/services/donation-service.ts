@@ -120,6 +120,7 @@ export const getDonation = async (id: string): Promise<Donation | null> => {
         createdAt: (data.createdAt as Timestamp).toDate(),
         donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
         verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
         allocations: allocations,
       } as Donation;
     }
@@ -250,6 +251,7 @@ export const getAllDonations = async (): Promise<Donation[]> => {
               createdAt: (data.createdAt as Timestamp).toDate(),
               donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
               verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+              updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
               allocations: allocations,
             } as Donation);
         });
@@ -281,6 +283,7 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
               createdAt: (data.createdAt as Timestamp).toDate(),
               donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
               verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+              updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as Donation);
         });
         // Sort in memory instead of in the query
@@ -316,6 +319,7 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
               createdAt: (data.createdAt as Timestamp).toDate(),
               donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
               verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+              updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as Donation);
         });
         return donations;
@@ -347,6 +351,7 @@ export const getDonationByTransactionId = async (transactionId: string): Promise
         createdAt: (data.createdAt as Timestamp).toDate(),
         donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
         verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
         allocations: allocations,
       } as Donation;
     }
