@@ -4,7 +4,6 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Organization } from '@/services/types';
-import { Logo } from './logo';
 
 interface LetterheadProps {
     organization: Organization;
@@ -14,20 +13,26 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
     ({ organization }, ref) => {
         return (
             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative">
-                <div 
-                    className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-5" 
-                    style={{ backgroundImage: "url('https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media')" }}
-                >
-                </div>
+                {/* Use a real img tag for the watermark for better html2canvas compatibility */}
+                <img 
+                    src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
+                    alt="Watermark"
+                    className="absolute inset-0 w-full h-full object-contain opacity-5 z-0"
+                />
                 <div className="relative z-10">
-                    <header className="flex justify-between items-center pb-4 border-b-2 border-gray-800">
+                    <header className="flex justify-between items-start pb-4 border-b-2 border-gray-800">
                         <div className="flex items-center gap-6">
-                            <Logo className="h-32 w-32" />
+                             {/* Use a standard img tag for the logo to ensure it's captured by html2canvas */}
+                            <img
+                                src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
+                                alt="Organization Logo"
+                                className="h-32 w-32 object-contain"
+                            />
                             <div>
                                 <h1 className="text-4xl font-bold tracking-wider">
-                                    <span className="text-primary">Baitul Mal</span> <span className="text-accent">Samajik Sanstha</span>
+                                    <span className="text-[#166534]">Baitul Mal</span> <span className="text-[#F59E0B]">Samajik Sanstha</span>
                                 </h1>
-                                <p className="text-lg font-bold text-primary">(Solapur)</p>
+                                <p className="text-lg font-bold text-[#166534]">(Solapur)</p>
                                 <p className="text-sm text-gray-600 mt-2">{organization.address}</p>
                                 <p className="text-sm text-gray-600">Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
                             </div>
