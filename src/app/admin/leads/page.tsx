@@ -356,11 +356,14 @@ function LeadsPageContent() {
     const handleCopyTemplate = () => {
         const template = `
 Beneficiary Full Name: 
+Father's Name:
+Beneficiary Type: (e.g., Adult, Family)
 Beneficiary Phone: 
 Amount Requested: 
 Headline: (A short, one-sentence summary of the case)
 Purpose: (e.g., Education, Medical, Relief Fund)
 Category: (e.g., School Fees, Hospital Bill, Ration Kit)
+Acceptable Donation Types: (e.g., Zakat, Sadaqah)
 Case Details: (Please provide the full story and reason for the request)
 Referral Name (if any): 
 Referral Phone (if any): 
@@ -893,7 +896,7 @@ Due Date (if any):
   )
 }
 
-export default function LeadsPage() {
+function LeadsPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <LeadsPageContent />
