@@ -28,9 +28,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddLead } from "./actions";
+import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getUserByPhone } from "@/services/user-service";
 
 
 const allLeadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
@@ -148,6 +150,8 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
   const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
+  const [rawText, setRawText] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
@@ -212,12 +216,13 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
         verificationDocument: undefined,
       });
       setSelectedReferralDetails(null);
+      setRawText("");
       if (fileInputRef.current) {
           fileInputRef.current.value = "";
       }
   };
 
-  const { formState: { isValid } } = form;
+  const { formState: { isValid }, setValue } = form;
   const selectedPurpose = form.watch("purpose");
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
@@ -230,6 +235,78 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
         form.setValue('isLoan', false);
     }
   }, [selectedPurpose, form]);
+  
+  const handleGenerateTemplate = () => {
+        const template = `
+Beneficiary Full Name: 
+Beneficiary Phone: 
+Amount Requested: 
+Purpose: (e.g., Education, Medical, Relief Fund)
+Category: (e.g., School Fees, Hospital Bill, Ration Kit)
+Case Details: (Please provide the full story and reason for the request)
+`;
+        navigator.clipboard.writeText(template.trim());
+        toast({
+            title: "Template Copied!",
+            description: "The lead details template has been copied to your clipboard.",
+        });
+    };
+    
+    const handleAutoFill = async () => {
+        if (!rawText) {
+            toast({ variant: 'destructive', title: "No text provided." });
+            return;
+        }
+        setIsExtracting(true);
+        const result = await handleExtractLeadDetailsFromText(rawText);
+        
+        if (result.success && result.details) {
+            const details = result.details;
+            if (details.beneficiaryName) {
+                const nameParts = details.beneficiaryName.split(' ');
+                setValue('newBeneficiaryFirstName', nameParts[0]);
+                setValue('newBeneficiaryLastName', nameParts.slice(1).join(' '));
+                setValue('beneficiaryType', 'new');
+            }
+            if (details.beneficiaryPhone) {
+                const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
+                setValue('newBeneficiaryPhone', phone);
+                // Attempt to find user
+                const existingUser = await getUserByPhone(phone);
+                if (existingUser) {
+                    setValue('beneficiaryType', 'existing');
+                    setValue('beneficiaryId', existingUser.id);
+                    toast({ title: "Beneficiary Found", description: `Existing user ${existingUser.name} has been selected.`});
+                }
+            }
+            if (details.amount) setValue('helpRequested', details.amount);
+            if (details.purpose) {
+                const matchingPurpose = allLeadPurposes.find(p => p.toLowerCase() === details.purpose?.toLowerCase());
+                if (matchingPurpose) setValue('purpose', matchingPurpose);
+            }
+             if (details.category) {
+                // Find category in options
+                const purpose = form.getValues('purpose');
+                const options = purpose === 'Loan' ? loanCategoryOptions : categoryOptions[purpose as Exclude<LeadPurpose, 'Other'|'Loan'>] || [];
+                const matchingCategory = options.find(c => c.toLowerCase() === details.category?.toLowerCase());
+                if (matchingCategory) {
+                    setValue('category', matchingCategory);
+                } else if (details.category) {
+                     // If no direct match, assume it's an "Other" category
+                    setValue('category', 'Other');
+                    setValue('otherCategoryDetail', details.category);
+                }
+            }
+            if (details.caseDetails) setValue('caseDetails', details.caseDetails);
+            if (details.headline) setValue('headline', details.headline);
+            
+            toast({ variant: 'success', title: "Auto-fill Complete", description: "Please review the populated fields." });
+        } else {
+            toast({ variant: 'destructive', title: "Extraction Failed", description: result.error });
+        }
+        
+        setIsExtracting(false);
+    };
 
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
@@ -310,6 +387,43 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                 </AlertDescription>
             </Alert>
         )}
+
+        <Accordion type="single" collapsible className="w-full mb-6">
+            <AccordionItem value="item-1">
+                <AccordionTrigger>
+                    <div className="flex items-center gap-2 text-primary">
+                        <Bot className="h-5 w-5" />
+                        Import from Text (Optional)
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                        <div className="space-y-2">
+                             <Label htmlFor="rawText">Paste Details Here</Label>
+                            <Textarea
+                                id="rawText"
+                                placeholder="Paste the text from the beneficiary or referral here..."
+                                className="min-h-[150px] font-mono text-sm"
+                                value={rawText}
+                                onChange={(e) => setRawText(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                             <Button type="button" variant="outline" className="w-full" onClick={handleGenerateTemplate}>
+                                <Clipboard className="mr-2 h-4 w-4" />
+                                Copy Template
+                            </Button>
+                            <Button type="button" className="w-full" onClick={handleAutoFill} disabled={!rawText || isExtracting}>
+                                {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                Auto-fill Form
+                            </Button>
+                        </div>
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+
+
         <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
             <fieldset disabled={isFormDisabled}>
@@ -588,6 +702,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                     </div>
                 )}
 
+
                 <FormField
                 control={form.control}
                 name="campaignId"
@@ -800,11 +915,11 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                                         : field.value?.filter((value) => value !== type);
                                         
                                         // If all others are checked, check 'Any' as well
-                                        if (newValue.length === allOtherTypes.length) {
+                                        if (newValue && newValue.length === allOtherTypes.length) {
                                         field.onChange(donationTypes);
                                         } else {
                                         // Remove 'Any' if not all are checked
-                                        field.onChange(newValue.filter(v => v !== 'Any'));
+                                        field.onChange(newValue?.filter(v => v !== 'Any'));
                                         }
                                     }}
                                     />

@@ -166,3 +166,20 @@ export const ExtractDetailsFromTextInputSchema = z.object({
   rawText: z.string().describe("A block of raw text from a payment receipt to be parsed."),
 });
 export type ExtractDetailsFromTextInput = z.infer<typeof ExtractDetailsFromTextInputSchema>;
+
+// Schema for extracting lead details from text
+export const ExtractLeadDetailsFromTextInputSchema = z.object({
+  rawText: z.string().describe("A block of raw text containing lead details to be parsed."),
+});
+export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsFromTextInputSchema>;
+
+export const ExtractLeadDetailsOutputSchema = z.object({
+    beneficiaryName: z.string().optional().describe("The full name of the beneficiary."),
+    beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
+    amount: z.number().optional().describe("The amount requested."),
+    purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical)."),
+    category: z.string().optional().describe("The specific category for the purpose (e.g., School Fees, Hospital Bill)."),
+    caseDetails: z.string().optional().describe("The detailed reason or story for the help request."),
+    headline: z.string().optional().describe("A short, one-sentence summary of the case."),
+});
+export type ExtractLeadDetailsOutput = z.infer<typeof ExtractLeadDetailsOutputSchema>;

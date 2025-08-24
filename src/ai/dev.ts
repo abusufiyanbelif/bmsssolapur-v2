@@ -11,3 +11,4 @@ import '@/ai/flows/extract-donation-details-flow.ts';
 import '@/ai/flows/extract-raw-text-flow.ts';
 import '@/ai/flows/extract-details-from-text-flow.ts';
 import '@/ai/flows/send-whatsapp-flow.ts';
+import '@/ai/flows/extract-lead-details-from-text-flow.ts';
