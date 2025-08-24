@@ -38,6 +38,7 @@ export interface User {
   middleName?: string;
   lastName: string;
   fatherName?: string;
+  fatherContact?: string;
   email?: string;
   phone: string;
   password?: string;

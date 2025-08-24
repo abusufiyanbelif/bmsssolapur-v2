@@ -166,7 +166,9 @@ function BeneficiariesPageContent() {
 
     const filteredBeneficiaries = useMemo(() => {
         let filtered = beneficiaries.filter(user => {
-            const nameMatch = appliedFilters.name === '' || user.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const nameMatch = appliedFilters.name === '' || 
+                              user.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
+                              (user.fatherName && user.fatherName.toLowerCase().includes(appliedFilters.name.toLowerCase()));
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
             const typeMatch = appliedFilters.type === 'all' || 
                               (appliedFilters.type === 'Widow' && user.isWidow) || 
@@ -524,53 +526,13 @@ function BeneficiariesPageContent() {
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-1">
-                        <Label htmlFor="nameFilter">Beneficiary Name</Label>
-                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant="outline"
-                                role="combobox"
-                                className="w-full justify-between font-normal"
-                                >
-                                {nameInput
-                                    ? beneficiaries.find((user) => user.name.toLowerCase() === nameInput.toLowerCase())?.name
-                                    : "Select a beneficiary..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput 
-                                        placeholder="Search beneficiary..."
-                                        value={nameInput}
-                                        onValueChange={setNameInput}
-                                    />
-                                    <CommandList>
-                                        <CommandEmpty>No beneficiaries found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {beneficiaries.map((user) => (
-                                            <CommandItem
-                                            value={user.name}
-                                            key={user.id}
-                                            onSelect={(currentValue) => {
-                                                setNameInput(currentValue === nameInput ? "" : currentValue);
-                                                setPopoverOpen(false);
-                                            }}
-                                            >
-                                            <Check
-                                                className={cn(
-                                                "mr-2 h-4 w-4",
-                                                nameInput.toLowerCase() === user.name.toLowerCase() ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                            {user.name}
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
+                        <Label htmlFor="nameFilter">Search by Name</Label>
+                         <Input
+                            id="nameFilter"
+                            placeholder="Beneficiary or Father's Name"
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
+                        />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="typeFilter">Beneficiary Type</Label>
