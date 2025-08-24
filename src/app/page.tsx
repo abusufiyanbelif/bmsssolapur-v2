@@ -64,6 +64,20 @@ export default async function Page() {
         getAllLeads(),
         getAllCampaigns()
     ]);
+    
+    // Enrich top donations with anonymous donor ID for public view
+    const usersById = new Map(allUsers.map(u => [u.id, u]));
+    const topDonationsData = allDonations
+      .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+      .map(donation => {
+          const donor = usersById.get(donation.donorId);
+          return {
+              ...donation,
+              anonymousDonorId: donor?.anonymousDonorId,
+          }
+      });
 
     return (
         <div className="flex-1 space-y-8">
@@ -85,8 +99,8 @@ export default async function Page() {
             
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                     <div className="col-span-full lg:col-span-4">
-                        <Suspense fallback={<TableSkeleton />}>
-                            <TopDonationsCard donations={allDonations} isPublicView={true} />
+                         <Suspense fallback={<TableSkeleton />}>
+                            <TopDonationsCard donations={topDonationsData} isPublicView={true} />
                         </Suspense>
                     </div>
                     <div className="col-span-full lg:col-span-3">

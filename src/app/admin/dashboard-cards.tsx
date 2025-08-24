@@ -484,11 +484,9 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
     )
 }
 
-export const TopDonationsCard = ({ donations, isPublicView = false }: { donations: Donation[], isPublicView?: boolean }) => {
-    const topDonations = donations
-      .filter(d => d.status === 'Verified' || d.status === 'Allocated')
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5);
+type TopDonation = Donation & { anonymousDonorId?: string };
+
+export const TopDonationsCard = ({ donations, isPublicView = false }: { donations: TopDonation[], isPublicView?: boolean }) => {
 
     const CardRow = ({ children, donationId }: { children: React.ReactNode, donationId: string }) => {
         if (isPublicView) {
@@ -512,20 +510,20 @@ export const TopDonationsCard = ({ donations, isPublicView = false }: { donation
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                {topDonations.length > 0 ? (
+                {donations.length > 0 ? (
                     <div className="space-y-4">
-                        {topDonations.map((donation, index) => {
-                            const showDonor = !isPublicView && !donation.isAnonymous;
+                        {donations.map((donation) => {
+                            const isAnon = donation.isAnonymous;
                             let displayName = 'Anonymous Donor';
-                            if (showDonor) {
+                            if (!isPublicView || !isAnon) {
                                 displayName = donation.donorName;
-                            } else if (isPublicView) {
-                                displayName = `Anonymous Donor #${index + 1}`;
+                            } else if (isPublicView && isAnon) {
+                                displayName = donation.anonymousDonorId || "Anonymous Donor";
                             }
                             
-                            const avatarText = showDonor 
+                            const avatarText = !isAnon 
                                 ? donation.donorName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() 
-                                : `A${index + 1}`;
+                                : `AD`;
 
                             return (
                                 <CardRow key={donation.id} donationId={donation.id!}>
