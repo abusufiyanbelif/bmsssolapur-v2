@@ -491,7 +491,7 @@ function LeadsPageContent() {
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="capitalize h-auto p-1">
                                             <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[lead.caseStatus])}>
-                                                <StatusIcon className="mr-1 h-3 w-3" />
+                                                {StatusIcon && <StatusIcon className="mr-1 h-3 w-3" />}
                                                 {lead.caseStatus}
                                             </Badge>
                                         </Button>
@@ -566,7 +566,7 @@ function LeadsPageContent() {
                                     <CardTitle className="text-lg">{lead.name}</CardTitle>
                                     <div className="flex flex-col items-end gap-2">
                                         <Badge variant="outline" className={cn("capitalize", statusColors[lead.caseStatus])}>
-                                            <StatusIcon className="mr-1 h-3 w-3" />
+                                            {StatusIcon && <StatusIcon className="mr-1 h-3 w-3" />}
                                             {lead.caseStatus}
                                         </Badge>
                                         <Badge variant="outline" className={cn("capitalize", verifConfig.color)}>
@@ -868,7 +868,7 @@ function LeadsPageContent() {
   )
 }
 
-export function LeadsPage() {
+export default function LeadsPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <LeadsPageContent />
