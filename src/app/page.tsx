@@ -70,12 +70,12 @@ export default async function Page() {
 
             <div className="space-y-4">
                 <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
-                    <MainMetricsCard />
+                    <MainMetricsCard isPublicView={true} />
                 </Suspense>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <Suspense fallback={<CardSkeleton />}>
-                        <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
+                        <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} isPublicView={true} />
                     </Suspense>
                     <Suspense fallback={<CardSkeleton />}>
                         <CampaignBreakdownCard allCampaigns={allCampaigns} />

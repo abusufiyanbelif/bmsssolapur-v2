@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
 
-export const MainMetricsCard = async () => {
+export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?: boolean }) => {
     const [allDonations, allLeads, allUsers] = await Promise.all([
         getAllDonations(),
         getAllLeads(),
@@ -43,21 +43,28 @@ export const MainMetricsCard = async () => {
         { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
     
+    const CardWrapper = ({ children, href }: { children: React.ReactNode, href: string }) => {
+        if (isPublicView) {
+            return <div className="h-full">{children}</div>;
+        }
+        return <Link href={href}>{children}</Link>;
+    };
+
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {mainMetrics.map((metric) => (
-            <Link href={metric.href} key={metric.title}>
-                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                    <metric.icon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{metric.value}</div>
-                    </CardContent>
-                </Card>
-            </Link>
-        ))}
+            {mainMetrics.map((metric) => (
+                <CardWrapper href={metric.href} key={metric.title}>
+                    <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <metric.icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                        <div className="text-2xl font-bold">{metric.value}</div>
+                        </CardContent>
+                    </Card>
+                </CardWrapper>
+            ))}
         </div>
     )
 }

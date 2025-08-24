@@ -6,7 +6,7 @@ import Link from "next/link";
 import { User, Lead, Campaign, Donation, DonationType } from "@/services/types";
 import { HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield } from "lucide-react";
 
-export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true }: { allUsers: User[], allLeads: Lead[], isAdmin?: boolean }) => {
+export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true, isPublicView = false }: { allUsers: User[], allLeads: Lead[], isAdmin?: boolean, isPublicView?: boolean }) => {
     const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
     const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
   
@@ -16,7 +16,7 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true }:
     const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
     
     const Wrapper = ({ children, type }: { children: React.ReactNode, type: string }) => {
-        if (!isAdmin) {
+        if (isPublicView) {
             return <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 h-full">{children}</div>;
         }
         
