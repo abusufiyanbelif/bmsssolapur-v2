@@ -378,6 +378,8 @@ export interface AppSettings {
         disabledPurposes: string[];
         workflow?: Record<LeadStatus, LeadStatus[]>;
         approvalProcessDisabled?: boolean;
+        roleBasedCreationEnabled?: boolean;
+        leadCreatorRoles?: UserRole[];
     };
     dashboard?: DashboardSettings;
     updatedAt?: FieldValue;

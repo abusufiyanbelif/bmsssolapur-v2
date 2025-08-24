@@ -2,11 +2,12 @@
 
 "use server";
 
-import { updateAppSettings } from "@/services/app-settings-service";
+import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
 import { updateUser } from "@/services/user-service";
 import { arrayRemove, arrayUnion, writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
+import type { UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -15,7 +16,9 @@ interface FormState {
 
 export async function handleUpdateLeadConfiguration(
   disabledPurposes: string[],
-  approvalProcessDisabled: boolean
+  approvalProcessDisabled: boolean,
+  roleBasedCreationEnabled: boolean,
+  leadCreatorRoles: UserRole[]
 ): Promise<FormState> {
   
   try {
@@ -23,6 +26,8 @@ export async function handleUpdateLeadConfiguration(
       leadConfiguration: {
         disabledPurposes,
         approvalProcessDisabled,
+        roleBasedCreationEnabled,
+        leadCreatorRoles,
       }
     };
 
