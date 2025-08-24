@@ -27,7 +27,7 @@ export default async function AddLeadPage() {
                     <AddLeadForm 
                         users={users} 
                         campaigns={campaigns} 
-                        disabledPurposes={settings.leadConfiguration?.disabledPurposes || []} 
+                        settings={settings}
                     />
                 </CardContent>
             </Card>

@@ -24,7 +24,7 @@ const MAIN_SETTINGS_DOC_ID = 'main'; // Use a singleton document for global sett
 
 const defaultAdminRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin'];
 const allUserRoles: UserRole[] = ['Super Admin', 'Admin', 'Finance Admin', 'Donor', 'Beneficiary', 'Referral'];
-const allLeadStatuses: LeadStatus[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
+const allLeadStatuses: LeadStatus[] = ["Pending", "Open", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 
 const defaultGatewayConfig = {
     enabled: false,
@@ -72,6 +72,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     leadConfiguration: {
         disabledPurposes: [],
+        approvalProcessDisabled: false,
         workflow: allLeadStatuses.reduce((acc, status) => {
             acc[status] = allLeadStatuses.filter(s => s !== status); // Default: allow transition to any other status
             return acc;

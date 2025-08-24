@@ -14,13 +14,15 @@ interface FormState {
 }
 
 export async function handleUpdateLeadConfiguration(
-  disabledPurposes: string[]
+  disabledPurposes: string[],
+  approvalProcessDisabled: boolean
 ): Promise<FormState> {
   
   try {
     const updates = {
       leadConfiguration: {
         disabledPurposes,
+        approvalProcessDisabled,
       }
     };
 

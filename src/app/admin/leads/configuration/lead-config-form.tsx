@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useForm, useFieldArray } from "react-hook-form";
@@ -24,7 +25,8 @@ const formSchema = z.object({
     purposes: z.array(z.object({
         name: z.string(),
         enabled: z.boolean(),
-    }))
+    })),
+    approvalProcessDisabled: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -32,9 +34,10 @@ type FormValues = z.infer<typeof formSchema>;
 interface LeadConfigFormProps {
     allPurposes: string[];
     disabledPurposes: string[];
+    approvalProcessDisabled: boolean;
 }
 
-export function LeadConfigForm({ allPurposes, disabledPurposes }: LeadConfigFormProps) {
+export function LeadConfigForm({ allPurposes, disabledPurposes, approvalProcessDisabled }: LeadConfigFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,7 +47,8 @@ export function LeadConfigForm({ allPurposes, disabledPurposes }: LeadConfigForm
       purposes: allPurposes.map(name => ({
         name,
         enabled: !disabledPurposes.includes(name),
-      }))
+      })),
+      approvalProcessDisabled: approvalProcessDisabled,
     },
   });
 
@@ -57,7 +61,7 @@ export function LeadConfigForm({ allPurposes, disabledPurposes }: LeadConfigForm
         .filter(p => !p.enabled)
         .map(p => p.name);
 
-    const result = await handleUpdateLeadConfiguration(newDisabledPurposes);
+    const result = await handleUpdateLeadConfiguration(newDisabledPurposes, values.approvalProcessDisabled);
 
     setIsSubmitting(false);
 

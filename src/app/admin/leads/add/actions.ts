@@ -7,6 +7,7 @@ import { getUser, createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
+import { getAppSettings } from "@/services/app-settings-service";
 
 interface FormState {
     success: boolean;
@@ -73,9 +74,18 @@ export async function handleAddLead(
   }
 
   try {
-    let beneficiaryUser: User | null = null;
-    const adminUser = await getUser(adminUserId);
+    const [adminUser, settings] = await Promise.all([
+        getUser(adminUserId),
+        getAppSettings()
+    ]);
+    const approvalProcessDisabled = settings.leadConfiguration?.approvalProcessDisabled || false;
+    const userHasOverride = adminUser?.groups?.some(g => ['Founder', 'Co-Founder', 'Finance'].includes(g));
 
+    if (approvalProcessDisabled && !userHasOverride) {
+        return { success: false, error: "Lead approval process is disabled. Only authorized users can create leads." };
+    }
+
+    let beneficiaryUser: User | null = null;
     if (!adminUser) {
         return { success: false, error: "Admin user not found for logging." };
     }
@@ -133,7 +143,7 @@ export async function handleAddLead(
         verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
     }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'caseVerification'> = {
+    const newLeadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
         campaignId: rawFormData.campaignId === 'none' ? undefined : rawFormData.campaignId,
@@ -142,32 +152,34 @@ export async function handleAddLead(
         story: rawFormData.story,
         purpose: rawFormData.purpose,
         otherPurposeDetail: rawFormData.purpose === 'Other' ? rawFormData.otherPurposeDetail : undefined,
-        donationType: purposeCategoryMap[rawFormData.purpose], // Infer category from purpose
+        donationType: purposeCategoryMap[rawFormData.purpose],
+        acceptableDonationTypes: rawFormData.acceptableDonationTypes,
         category: rawFormData.category,
         otherCategoryDetail: rawFormData.category === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         priority: rawFormData.priority,
-        acceptableDonationTypes: rawFormData.acceptableDonationTypes,
         helpRequested: rawFormData.helpRequested,
         helpGiven: 0,
-        caseStatus: 'Pending',
-        caseAction: 'Pending',
-        dueDate: rawFormData.dueDate,
-        isLoan: rawFormData.isLoan,
+        caseStatus: approvalProcessDisabled ? 'Open' : 'Pending',
+        caseAction: approvalProcessDisabled ? 'Ready For Help' : 'Pending',
+        caseVerification: approvalProcessDisabled ? 'Verified' : 'Pending',
+        verifiers: approvalProcessDisabled ? [{ verifierId: adminUser.id!, verifierName: adminUser.name, verifiedAt: Timestamp.now(), notes: 'Auto-verified (approval process disabled).' }] : [],
+        donations: [],
         caseDetails: rawFormData.caseDetails,
         verificationDocumentUrl,
         adminAddedBy: { id: adminUser.id!, name: adminUser.name },
         referredByUserId: rawFormData.referredByUserId || undefined,
         referredByUserName: rawFormData.referredByUserName || undefined,
         dateCreated: Timestamp.now(),
-        verifiers: [],
-        donations: [],
+        dueDate: rawFormData.dueDate ? Timestamp.fromDate(rawFormData.dueDate) : undefined,
+        isLoan: rawFormData.isLoan,
+        source: 'Manual Entry'
     };
 
     const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });
     
     revalidatePath("/admin/leads");
-    revalidatePath("/admin/leads/add"); // To refresh the user list if a new one was added
-    revalidatePath("/admin"); // Revalidate the admin dashboard to show new pending lead
+    revalidatePath("/admin/leads/add");
+    revalidatePath("/admin");
 
     return {
       success: true,

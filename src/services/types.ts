@@ -232,7 +232,7 @@ export interface Lead {
     lastAllocatedAt?: Timestamp | Date; // Date of the latest donation allocation
     isLoan: boolean;
     createdAt: Timestamp | Date;
-    updatedAt: Timestamp | Date;
+    updatedAt?: Timestamp | Date;
     source?: 'Seeded' | 'Manual Entry';
 }
 
@@ -377,6 +377,7 @@ export interface AppSettings {
     leadConfiguration?: {
         disabledPurposes: string[];
         workflow?: Record<LeadStatus, LeadStatus[]>;
+        approvalProcessDisabled?: boolean;
     };
     dashboard?: DashboardSettings;
     updatedAt?: FieldValue;
