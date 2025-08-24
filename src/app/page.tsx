@@ -78,9 +78,6 @@ export default async function Page() {
                         <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} isPublicView={true} />
                     </Suspense>
                     <Suspense fallback={<CardSkeleton />}>
-                        <CampaignBreakdownCard allCampaigns={allCampaigns} />
-                    </Suspense>
-                    <Suspense fallback={<CardSkeleton />}>
                         <DonationTypeCard donations={allDonations} isPublicView={true} />
                     </Suspense>
                 </div>
@@ -96,6 +93,10 @@ export default async function Page() {
 
                 <Suspense fallback={<TableSkeleton />}>
                     <RecentCampaignsCard />
+                </Suspense>
+
+                <Suspense fallback={<CardSkeleton />}>
+                    <CampaignBreakdownCard allCampaigns={allCampaigns} />
                 </Suspense>
             </div>
         </div>
