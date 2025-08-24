@@ -35,12 +35,12 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
     const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
 
     const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
-        { title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
-        { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public.", href: "/admin/leads?caseAction=Publish" },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
+        { id: "totalRaised", title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
+        { id: "totalDistributed", title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
+        { id: "casesClosed", title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
+        { id: "casesPending", title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
+        { id: "openLeads", title: "Open Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/admin/leads?caseAction=Publish" },
+        { id: "beneficiariesHelped", title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
     
     const CardWrapper = ({ children, href }: { children: React.ReactNode, href: string }) => {
@@ -52,19 +52,24 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {mainMetrics.map((metric) => (
-                <CardWrapper href={metric.href} key={metric.title}>
-                    <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                        <metric.icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                        <div className="text-2xl font-bold">{metric.value}</div>
-                        </CardContent>
-                    </Card>
-                </CardWrapper>
-            ))}
+            {mainMetrics.map((metric) => {
+                if (isPublicView && metric.id === 'casesPending') {
+                    return null; // Skip rendering pending cases card on public view
+                }
+                return (
+                    <CardWrapper href={metric.href} key={metric.title}>
+                        <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                            <metric.icon className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                            <div className="text-2xl font-bold">{metric.value}</div>
+                            </CardContent>
+                        </Card>
+                    </CardWrapper>
+                )
+            })}
         </div>
     )
 }
