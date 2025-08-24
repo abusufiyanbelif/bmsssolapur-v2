@@ -354,8 +354,19 @@ function LeadsPageContent() {
     };
     
     const handleCopyTemplate = () => {
-        const template = `Beneficiary Full Name: \nBeneficiary Phone: \nAmount Requested: \nPurpose: (e.g., Education, Medical, Relief Fund)\nCategory: (e.g., School Fees, Hospital Bill, Ration Kit)\nCase Details: (Please provide the full story and reason for the request)`;
-        navigator.clipboard.writeText(template.trim());
+        const template = `
+Beneficiary Full Name: 
+Beneficiary Phone: 
+Amount Requested: 
+Headline: (A short, one-sentence summary of the case)
+Purpose: (e.g., Education, Medical, Relief Fund)
+Category: (e.g., School Fees, Hospital Bill, Ration Kit)
+Case Details: (Please provide the full story and reason for the request)
+Referral Name (if any): 
+Referral Phone (if any): 
+Due Date (if any):
+`.trim();
+        navigator.clipboard.writeText(template);
         toast({
             title: "Template Copied!",
             description: "The lead details template has been copied to your clipboard.",
@@ -622,7 +633,7 @@ function LeadsPageContent() {
                         <SelectValue placeholder={itemsPerPage} />
                         </SelectTrigger>
                         <SelectContent side="top">
-                        {[10, 25, 50].map((pageSize) => (
+                        {[10, 25, 50, 100].map((pageSize) => (
                             <SelectItem key={pageSize} value={`${pageSize}`}>
                             {pageSize}
                             </SelectItem>
