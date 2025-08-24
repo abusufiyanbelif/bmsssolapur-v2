@@ -72,7 +72,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     leadConfiguration: {
         disabledPurposes: [],
-        approvalProcessDisabled: false,
+        approvalProcessDisabled: true,
         workflow: allLeadStatuses.reduce((acc, status) => {
             acc[status] = allLeadStatuses.filter(s => s !== status); // Default: allow transition to any other status
             return acc;
