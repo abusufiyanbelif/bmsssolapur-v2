@@ -24,11 +24,11 @@ export async function createRazorpayOrder(amount: number, currency: string = 'IN
         }
         
         const mode = razorpaySettings.mode;
-        const keyId = mode === 'live' ? config.razorpay.live_key_id : config.razorpay.test_key_id;
-        const keySecret = mode === 'live' ? config.razorpay.live_key_secret : config.razorpay.test_key_secret;
+        const keyId = mode === 'live' ? razorpaySettings.live.keyId : razorpaySettings.test.keyId;
+        const keySecret = mode === 'live' ? razorpaySettings.live.keySecret : razorpaySettings.test.keySecret;
         
         if (!keyId || !keySecret) {
-            throw new Error(`Razorpay ${mode} credentials are not configured in secrets.`);
+            throw new Error(`Razorpay ${mode} credentials are not configured.`);
         }
 
         const instance = new Razorpay({
@@ -72,7 +72,7 @@ export async function verifyRazorpayPayment(payload: VerificationPayload): Promi
         }
         
         const mode = razorpaySettings.mode;
-        const keySecret = mode === 'live' ? config.razorpay.live_key_secret : config.razorpay.test_key_secret;
+        const keySecret = mode === 'live' ? razorpaySettings.live.keySecret : razorpaySettings.test.keySecret;
 
         if (!keySecret) {
              throw new Error(`Razorpay ${mode} Key Secret is not configured for verification.`);
