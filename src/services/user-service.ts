@@ -162,6 +162,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         firstName: userData.firstName!,
         middleName: userData.middleName,
         lastName: userData.lastName!,
+        fatherName: userData.fatherName,
         email: userData.email,
         phone: userData.phone!,
         password: userData.password,
@@ -582,5 +583,62 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
     } catch (error) {
         console.error('Error getting referred beneficiaries: ', error);
         throw new Error('Failed to get referred beneficiaries.');
+    }
+}
+
+interface AvailabilityResult {
+    isAvailable: boolean;
+    suggestions?: string[];
+    existingUserName?: string;
+}
+
+export async function checkAvailability(field: string, value: string): Promise<AvailabilityResult> {
+    if (!value) return { isAvailable: true };
+
+    try {
+        let existingUser: User | null = null;
+        switch (field) {
+            case 'userId':
+                existingUser = await getUserByUserId(value);
+                break;
+            case 'email':
+                existingUser = await getUserByEmail(value);
+                break;
+            case 'phone':
+                existingUser = await getUserByPhone(value);
+                break;
+            case 'panNumber':
+                existingUser = await getUserByPan(value);
+                break;
+            case 'aadhaarNumber':
+                existingUser = await getUserByAadhaar(value);
+                break;
+            case 'bankAccountNumber':
+                existingUser = await getUserByBankAccountNumber(value);
+                break;
+            case 'upiId':
+                 existingUser = await getUserByUpiId(value);
+                 break;
+            default:
+                return { isAvailable: true };
+        }
+
+        if (existingUser) {
+            let suggestions: string[] = [];
+            if (field === 'userId') {
+                for (let i = 1; i <= 3; i++) {
+                    const suggestionId = `${value}${i}`;
+                    const isSuggestionTaken = await getUserByUserId(suggestionId);
+                    if (!isSuggestionTaken) {
+                        suggestions.push(suggestionId);
+                    }
+                }
+            }
+            return { isAvailable: false, suggestions, existingUserName: existingUser.name };
+        }
+        return { isAvailable: true };
+    } catch(e) {
+        console.error(`Error checking ${field} availability:`, e);
+        return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }

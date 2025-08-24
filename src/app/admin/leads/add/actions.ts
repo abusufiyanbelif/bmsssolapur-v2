@@ -3,7 +3,7 @@
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId } from "@/services/lead-service";
-import { getUser, createUser } from "@/services/user-service";
+import { getUser, createUser, checkAvailability } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
@@ -194,63 +194,6 @@ export async function handleAddLead(
       error: error,
     };
   }
-}
-
-interface AvailabilityResult {
-    isAvailable: boolean;
-    suggestions?: string[];
-    existingUserName?: string;
-}
-
-export async function checkAvailability(field: string, value: string): Promise<AvailabilityResult> {
-    if (!value) return { isAvailable: true };
-
-    try {
-        let existingUser: User | null = null;
-        switch (field) {
-            case 'userId':
-                existingUser = await getUserByUserId(value);
-                break;
-            case 'email':
-                existingUser = await getUserByEmail(value);
-                break;
-            case 'phone':
-                existingUser = await getUserByPhone(value);
-                break;
-            case 'panNumber':
-                existingUser = await getUserByPan(value);
-                break;
-            case 'aadhaarNumber':
-                existingUser = await getUserByAadhaar(value);
-                break;
-            case 'bankAccountNumber':
-                existingUser = await getUserByBankAccountNumber(value);
-                break;
-            case 'upiId':
-                 existingUser = await getUserByUpiId(value);
-                 break;
-            default:
-                return { isAvailable: true };
-        }
-
-        if (existingUser) {
-            let suggestions: string[] = [];
-            if (field === 'userId') {
-                for (let i = 1; i <= 3; i++) {
-                    const suggestionId = `${value}${i}`;
-                    const isSuggestionTaken = await getUserByUserId(suggestionId);
-                    if (!isSuggestionTaken) {
-                        suggestions.push(suggestionId);
-                    }
-                }
-            }
-            return { isAvailable: false, suggestions, existingUserName: existingUser.name };
-        }
-        return { isAvailable: true };
-    } catch(e) {
-        console.error(`Error checking ${field} availability:`, e);
-        return { isAvailable: false }; // Fail closed to prevent duplicates
-    }
 }
 
 export async function handleExtractLeadDetailsFromText(rawText: string): Promise<{ success: boolean; details?: ExtractLeadDetailsOutput; error?: string }> {
