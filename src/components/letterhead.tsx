@@ -30,9 +30,9 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                             />
                             <div>
                                 <h1 className="text-4xl font-bold tracking-wider">
-                                    <span className="text-[#166534]">Baitul Mal</span> <span className="text-[#F59E0B]">Samajik Sanstha</span>
+                                    <span className="text-primary">Baitul Mal</span> <span className="text-accent">Samajik Sanstha</span>
                                 </h1>
-                                <p className="text-lg font-bold text-[#166534]">(Solapur)</p>
+                                <p className="text-lg font-bold text-primary">(Solapur)</p>
                                 <p className="text-sm text-gray-600 mt-2">{organization.address}</p>
                                 <p className="text-sm text-gray-600">Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
                             </div>
