@@ -200,7 +200,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-10 w-10" />
+            <Logo className="h-12 w-12" />
              <div className="flex flex-col leading-tight">
                 <span className="font-bold font-headline text-primary text-sm">Baitul Mal</span>
                 <span className="font-bold font-headline text-accent text-sm">Samajik Sanstha</span>

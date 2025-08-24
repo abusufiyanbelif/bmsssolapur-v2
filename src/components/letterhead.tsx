@@ -22,7 +22,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                 <div className="relative z-10">
                     <header className="flex justify-between items-center pb-4 border-b-2 border-gray-800">
                         <div className="flex items-center gap-6">
-                            <Logo className="h-24 w-24" />
+                            <Logo className="h-28 w-28" />
                             <div>
                                 <h1 className="text-4xl font-bold text-gray-800 tracking-wider">{organization.name}</h1>
                                 <p className="text-sm text-gray-600 mt-1">{organization.address}</p>

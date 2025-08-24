@@ -39,12 +39,12 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
+        unit: 'px',
+        format: [canvas.width, canvas.height]
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`);
