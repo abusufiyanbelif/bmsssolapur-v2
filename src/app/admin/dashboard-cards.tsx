@@ -512,19 +512,18 @@ export const TopDonationsCard = ({ donations, isPublicView = false }: { donation
             <CardContent>
                 {donations.length > 0 ? (
                     <div className="space-y-4">
-                        {donations.map((donation) => {
-                            const isAnon = donation.isAnonymous;
-                            let displayName = 'Anonymous Donor';
-                            if (!isPublicView || !isAnon) {
+                        {donations.map((donation, index) => {
+                             let displayName: string;
+                            let avatarText: string;
+
+                            if (isPublicView) {
+                                displayName = donation.anonymousDonorId || `Anonymous Donor #${index + 1}`;
+                                avatarText = `D${index + 1}`;
+                            } else {
                                 displayName = donation.donorName;
-                            } else if (isPublicView && isAnon) {
-                                displayName = donation.anonymousDonorId || "Anonymous Donor";
+                                avatarText = donation.donorName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                             }
                             
-                            const avatarText = !isAnon 
-                                ? donation.donorName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() 
-                                : `AD`;
-
                             return (
                                 <CardRow key={donation.id} donationId={donation.id!}>
                                     <Avatar className="h-9 w-9">
