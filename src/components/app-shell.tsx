@@ -200,7 +200,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const HeaderTitle = () => (
         <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-12 w-12" />
+            <Logo className="h-14 w-14" />
              <div className="flex flex-col leading-tight">
                 <span className="font-bold font-headline text-primary text-sm">Baitul Mal</span>
                 <span className="font-bold font-headline text-accent text-sm">Samajik Sanstha</span>
@@ -213,7 +213,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-card md:block">
                 <div className="flex h-full max-h-screen flex-col gap-2">
-                    <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+                    <div className="flex h-[72px] items-center border-b px-4 lg:px-6">
                         <HeaderTitle />
                     </div>
                     {isSessionReady && (
@@ -241,7 +241,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col p-0">
-                            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+                            <div className="flex h-[72px] items-center border-b px-4 lg:px-6">
                                <HeaderTitle />
                             </div>
                            {isSessionReady && (

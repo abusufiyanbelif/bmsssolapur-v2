@@ -13,7 +13,7 @@ export function Footer() {
           {/* Column 1: Organization Info */}
           <div className="space-y-4 lg:col-span-2">
              <div className="flex items-center gap-3">
-                <Logo className="h-20 w-20" />
+                <Logo className="h-24 w-24" />
                 <h3 className="text-xl font-bold font-headline text-foreground">
                     <span className="text-primary font-bold">Baitul Mal</span><br/>
                     <span className="text-accent font-bold">Samajik Sanstha</span><br/>
