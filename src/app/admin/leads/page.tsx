@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button";
-import { getAllLeads, type Lead, type LeadStatus, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
+import { getAllLeads, type Lead, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
 import { getAllUsers, getUser, type User } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check, Trash2, Share2 } from "lucide-react";
@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
-import type { LeadPriority, LeadPurpose, LeadVerificationStatus } from "@/services/types";
+import type { LeadPriority, LeadPurpose, LeadVerificationStatus, LeadStatus, LeadAction } from "@/services/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -396,7 +396,7 @@ function LeadsPageContent() {
                     </DropdownMenuItem>
                 )}
                 
-                {lead.caseStatus === 'Publish' && (
+                {lead.caseAction === 'Publish' && (
                     <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Ready For Help')}>
                         <DownloadCloud className="mr-2 h-4 w-4 text-gray-600" /> Unpublish Lead
                     </DropdownMenuItem>
@@ -866,4 +866,12 @@ function LeadsPageContent() {
         </Card>
     </div>
   )
+}
+
+export function LeadsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <LeadsPageContent />
+        </Suspense>
+    )
 }
