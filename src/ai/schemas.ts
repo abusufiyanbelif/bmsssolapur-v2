@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -174,12 +172,30 @@ export const ExtractLeadDetailsFromTextInputSchema = z.object({
 export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsFromTextInputSchema>;
 
 export const ExtractLeadDetailsOutputSchema = z.object({
-    beneficiaryName: z.string().optional().describe("The full name of the beneficiary."),
-    beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
-    amount: z.number().optional().describe("The amount requested."),
+    // Lead fields
+    headline: z.string().optional().describe("A short, one-sentence summary of the case."),
     purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical)."),
     category: z.string().optional().describe("The specific category for the purpose (e.g., School Fees, Hospital Bill)."),
+    amount: z.number().optional().describe("The amount requested."),
+    dueDate: z.string().optional().describe("The date by which the funds are needed (YYYY-MM-DD)."),
+    acceptableDonationTypes: z.array(z.string()).optional().describe("A list of donation types, e.g., ['Zakat', 'Sadaqah']."),
     caseDetails: z.string().optional().describe("The detailed reason or story for the help request."),
-    headline: z.string().optional().describe("A short, one-sentence summary of the case."),
+    // Beneficiary fields
+    beneficiaryName: z.string().optional().describe("The full name of the beneficiary."),
+    beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
+    fatherName: z.string().optional().describe("The beneficiary's father's name."),
+    beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
+    beneficiaryType: z.string().optional().describe("The type of beneficiary (e.g., Adult, Family, Kid, Widow)."),
+    address: z.string().optional().describe("The full address of the beneficiary."),
+    occupation: z.string().optional().describe("The beneficiary's occupation."),
+    aadhaarNumber: z.string().optional().describe("The beneficiary's Aadhaar card number."),
+    panNumber: z.string().optional().describe("The beneficiary's PAN card number."),
+    bankAccountName: z.string().optional().describe("The name on the beneficiary's bank account."),
+    bankAccountNumber: z.string().optional().describe("The beneficiary's bank account number."),
+    bankIfscCode: z.string().optional().describe("The beneficiary's bank IFSC code."),
+    upiIds: z.string().optional().describe("A comma-separated list of the beneficiary's UPI IDs."),
+    // Referral fields
+    referralName: z.string().optional().describe("The name of the person who referred the case."),
+    referralPhone: z.string().optional().describe("The phone number of the person who referred the case."),
 });
 export type ExtractLeadDetailsOutput = z.infer<typeof ExtractLeadDetailsOutputSchema>;

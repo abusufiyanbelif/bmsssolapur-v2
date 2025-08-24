@@ -238,14 +238,35 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
   
   const handleGenerateTemplate = () => {
         const template = `
-Beneficiary Full Name: 
-Beneficiary Phone: 
-Amount Requested: 
-Purpose: (e.g., Education, Medical, Relief Fund)
+--- LEAD DETAILS ---
+Headline: 
+Purpose: (Education, Medical, Relief Fund, Deen, Loan, Other)
 Category: (e.g., School Fees, Hospital Bill, Ration Kit)
-Case Details: (Please provide the full story and reason for the request)
-`;
-        navigator.clipboard.writeText(template.trim());
+Amount Requested: 
+Due Date: (DD-MM-YYYY)
+Acceptable Donation Types: (Zakat, Sadaqah, Fitr, Lillah, Kaffarah)
+Case Details: (The detailed story or reason for the request)
+
+--- BENEFICIARY DETAILS ---
+Full Name: 
+Father's Name:
+Beneficiary Type: (e.g., Adult, Family, Kid, Widow)
+Phone: 
+Email:
+Address:
+Occupation:
+Aadhaar Number:
+PAN Number:
+Bank Account Name:
+Bank Account Number:
+Bank IFSC Code:
+UPI IDs: (Comma-separated, e.g., user@upi, 9876543210@ybl)
+
+--- REFERRAL DETAILS (IF ANY) ---
+Referral Name: 
+Referral Phone: 
+`.trim();
+        navigator.clipboard.writeText(template);
         toast({
             title: "Template Copied!",
             description: "The lead details template has been copied to your clipboard.",
@@ -262,44 +283,51 @@ Case Details: (Please provide the full story and reason for the request)
         
         if (result.success && result.details) {
             const details = result.details;
-            if (details.beneficiaryName) {
-                const nameParts = details.beneficiaryName.split(' ');
-                setValue('newBeneficiaryFirstName', nameParts[0]);
-                setValue('newBeneficiaryLastName', nameParts.slice(1).join(' '));
-                setValue('beneficiaryType', 'new');
-            }
-            if (details.beneficiaryPhone) {
-                const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-                setValue('newBeneficiaryPhone', phone);
-                // Attempt to find user
-                const existingUser = await getUserByPhone(phone);
-                if (existingUser) {
-                    setValue('beneficiaryType', 'existing');
-                    setValue('beneficiaryId', existingUser.id);
-                    toast({ title: "Beneficiary Found", description: `Existing user ${existingUser.name} has been selected.`});
-                }
-            }
-            if (details.amount) setValue('helpRequested', details.amount);
+            
+            // Auto-fill all simple fields
+            if (details.headline) setValue('headline', details.headline);
             if (details.purpose) {
                 const matchingPurpose = allLeadPurposes.find(p => p.toLowerCase() === details.purpose?.toLowerCase());
                 if (matchingPurpose) setValue('purpose', matchingPurpose);
             }
-             if (details.category) {
-                // Find category in options
-                const purpose = form.getValues('purpose');
-                const options = purpose === 'Loan' ? loanCategoryOptions : categoryOptions[purpose as Exclude<LeadPurpose, 'Other'|'Loan'>] || [];
-                const matchingCategory = options.find(c => c.toLowerCase() === details.category?.toLowerCase());
-                if (matchingCategory) {
-                    setValue('category', matchingCategory);
-                } else if (details.category) {
-                     // If no direct match, assume it's an "Other" category
-                    setValue('category', 'Other');
-                    setValue('otherCategoryDetail', details.category);
-                }
-            }
+            if (details.category) setValue('category', details.category);
+            if (details.amount) setValue('helpRequested', details.amount);
+            if (details.dueDate) setValue('dueDate', new Date(details.dueDate));
+            if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes);
             if (details.caseDetails) setValue('caseDetails', details.caseDetails);
-            if (details.headline) setValue('headline', details.headline);
+
+            // Beneficiary details
+            if (details.beneficiaryName) {
+                const nameParts = details.beneficiaryName.split(' ');
+                setValue('newBeneficiaryFirstName', nameParts[0] || '');
+                setValue('newBeneficiaryLastName', nameParts.slice(1).join(' ') || '');
+            }
+            if (details.fatherName) setValue('newBeneficiaryMiddleName', details.fatherName); // Assuming middleName for father
+            if (details.beneficiaryEmail) setValue('newBeneficiaryEmail', details.beneficiaryEmail);
+            if (details.beneficiaryType) {
+                 const type = details.beneficiaryType as any;
+                 if (['Adult', 'Old Age', 'Kid', 'Family', 'Widow'].includes(type)) {
+                     setValue('beneficiaryType', type);
+                 }
+            }
             
+            // Check for existing user by phone
+            if (details.beneficiaryPhone) {
+                const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
+                setValue('newBeneficiaryPhone', phone);
+                const existingUser = await getUserByPhone(phone);
+                if (existingUser) {
+                    setValue('beneficiaryType', 'existing');
+                    setValue('beneficiaryId', existingUser.id);
+                    toast({ title: "Existing Beneficiary Found", description: `${existingUser.name} has been selected. Their details will be used.`});
+                } else {
+                    setValue('beneficiaryType', 'new');
+                    toast({ title: "New Beneficiary", description: "No existing user found with this phone number. A new profile will be created."});
+                }
+            } else {
+                 setValue('beneficiaryType', 'new');
+            }
+
             toast({ variant: 'success', title: "Auto-fill Complete", description: "Please review the populated fields." });
         } else {
             toast({ variant: 'destructive', title: "Extraction Failed", description: result.error });
