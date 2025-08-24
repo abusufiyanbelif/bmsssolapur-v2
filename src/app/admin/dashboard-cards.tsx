@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +39,7 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
         { id: "totalRaised", title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
         { id: "totalDistributed", title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
         { id: "casesClosed", title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
-        { id: "casesPending", title: "Cases Pending", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
+        { id: "casesPending", title: "Pending Leads", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
         { id: "openLeads", title: "Open Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/admin/leads?caseAction=Publish" },
         { id: "beneficiariesHelped", title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
@@ -481,3 +482,61 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
         </Card>
     )
 }
+
+export const TopDonationsCard = ({ donations, isPublicView = false }: { donations: Donation[], isPublicView?: boolean }) => {
+    const topDonations = donations
+      .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+
+    const CardRow = ({ children, donationId }: { children: React.ReactNode, donationId: string }) => {
+        if (isPublicView) {
+            return <div className="flex items-center rounded-lg border p-4">{children}</div>;
+        }
+        return (
+            <Link href={`/admin/donations/${encodeURIComponent(donationId)}/edit`}>
+                <div className="flex items-center rounded-lg border p-4 hover:bg-muted transition-colors">
+                    {children}
+                </div>
+            </Link>
+        )
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">Top Donations</CardTitle>
+                <CardDescription>
+                    The largest recent contributions to our cause.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {topDonations.length > 0 ? (
+                    <div className="space-y-4">
+                        {topDonations.map(donation => (
+                            <CardRow key={donation.id} donationId={donation.id!}>
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={`https://placehold.co/100x100.png?text=${donation.isAnonymous ? 'A' : donation.donorName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}`} alt={donation.donorName} data-ai-hint="abstract geometric" />
+                                    <AvatarFallback>{donation.isAnonymous ? 'A' : donation.donorName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div className="ml-4 flex-grow">
+                                    <p className="text-sm font-medium leading-none">{donation.isAnonymous ? 'Anonymous Donor' : donation.donorName}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {format(donation.donationDate as Date, "dd MMM, yyyy")}
+                                    </p>
+                                </div>
+                                <div className="ml-4 font-semibold text-lg">₹{donation.amount.toLocaleString()}</div>
+                            </CardRow>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 h-full flex flex-col items-center justify-center">
+                        <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-4 text-lg font-medium">Awaiting Donations</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">Donation data is not yet available.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+};

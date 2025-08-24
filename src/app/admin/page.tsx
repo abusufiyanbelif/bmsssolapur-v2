@@ -1,4 +1,5 @@
 
+
 import { Suspense } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +13,8 @@ import {
     LeadsReadyToPublishCard,
     TopDonorsCard,
     RecentCampaignsCard,
-    LeadBreakdownCard
+    LeadBreakdownCard,
+    TopDonationsCard
 } from "./dashboard-cards";
 import { AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
@@ -105,13 +107,24 @@ export default async function DashboardPage() {
             <Suspense fallback={<ChartSkeleton />}>
                 <DonationsChart donations={allDonations} />
             </Suspense>
-            <Suspense fallback={<CardSkeleton />}>
-                <TopDonorsCard />
-            </Suspense>
+             <div className="col-span-full md:col-span-2 lg:col-span-3">
+                <Suspense fallback={<CardSkeleton />}>
+                    <TopDonorsCard />
+                </Suspense>
+             </div>
         </div>
-        <Suspense fallback={<TableSkeleton />}>
-            <RecentCampaignsCard />
-        </Suspense>
+         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <div className="col-span-full lg:col-span-4">
+                <Suspense fallback={<TableSkeleton />}>
+                    <TopDonationsCard donations={allDonations} />
+                </Suspense>
+            </div>
+            <div className="col-span-full lg:col-span-3">
+                <Suspense fallback={<TableSkeleton />}>
+                    <RecentCampaignsCard />
+                </Suspense>
+            </div>
+         </div>
         <Suspense fallback={<CardSkeleton />}><DonationTypeCard donations={allDonations} /></Suspense>
       </div>
     </div>

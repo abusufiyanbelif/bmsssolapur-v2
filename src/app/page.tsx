@@ -6,7 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
     MainMetricsCard, 
     TopDonorsCard,
-    RecentCampaignsCard
+    RecentCampaignsCard,
+    TopDonationsCard
 } from "./admin/dashboard-cards";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
 import { DonationsChart } from "./admin/donations-chart";
@@ -83,17 +84,17 @@ export default async function Page() {
                 </div>
             
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                    <Suspense fallback={<ChartSkeleton />}>
-                        <DonationsChart donations={allDonations} />
-                    </Suspense>
-                    <Suspense fallback={<CardSkeleton />}>
-                        <TopDonorsCard />
-                    </Suspense>
+                    <div className="col-span-full lg:col-span-4">
+                        <Suspense fallback={<TableSkeleton />}>
+                            <TopDonationsCard donations={allDonations} isPublicView={true} />
+                        </Suspense>
+                    </div>
+                    <div className="col-span-full lg:col-span-3">
+                         <Suspense fallback={<TableSkeleton />}>
+                            <RecentCampaignsCard />
+                        </Suspense>
+                    </div>
                 </div>
-
-                <Suspense fallback={<TableSkeleton />}>
-                    <RecentCampaignsCard />
-                </Suspense>
 
                 <Suspense fallback={<CardSkeleton />}>
                     <CampaignBreakdownCard allCampaigns={allCampaigns} />
