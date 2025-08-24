@@ -155,6 +155,7 @@ const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
+  fatherName: z.string().optional(),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
@@ -207,6 +208,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
       firstName: user.firstName,
       middleName: user.middleName || '',
       lastName: user.lastName,
+      fatherName: user.fatherName || '',
       phone: user.phone,
       roles: user.roles,
       isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
@@ -243,6 +245,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           firstName: user.firstName,
           middleName: user.middleName || '',
           lastName: user.lastName,
+          fatherName: user.fatherName || '',
           phone: user.phone,
           roles: user.roles,
           isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
@@ -408,6 +411,19 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         )}
                         />
                     </div>
+                     <FormField
+                        control={form.control}
+                        name="fatherName"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Father's Name (Optional)</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter father's name" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
                             control={form.control}

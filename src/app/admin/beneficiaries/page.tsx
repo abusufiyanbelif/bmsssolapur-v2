@@ -330,6 +330,7 @@ function BeneficiariesPageContent() {
                             <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
                                 {user.name}
                             </Link>
+                             {user.fatherName && <p className="text-xs text-muted-foreground">s/o {user.fatherName}</p>}
                              {user.isAnonymousAsBeneficiary && <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
                         </TableCell>
                         <TableCell>

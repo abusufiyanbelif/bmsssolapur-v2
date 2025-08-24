@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import type { UserRole } from "@/services/types";
 import { logActivity } from "@/services/activity-log-service";
 
+
 interface FormState {
     success: boolean;
     error?: string;
@@ -56,6 +57,7 @@ export async function handleUpdateUser(
       firstName: formData.get("firstName") as string,
       middleName: formData.get("middleName") as string,
       lastName: formData.get("lastName") as string,
+      fatherName: formData.get("fatherName") as string,
       phone: formData.get("phone") as string,
       roles: formData.getAll("roles") as UserRole[],
       isActive: formData.get("isActive") === 'on',
@@ -108,6 +110,7 @@ export async function handleUpdateUser(
         firstName: rawFormData.firstName,
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
+        fatherName: rawFormData.fatherName,
         phone: rawFormData.phone,
         roles: finalRoles,
         isActive: rawFormData.isActive,

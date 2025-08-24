@@ -58,6 +58,7 @@ const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
+  fatherName: z.string().optional(),
   email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -167,6 +168,7 @@ function AddUserFormContent() {
     defaultValues: {
       firstName: "",
       lastName: "",
+      fatherName: "",
       email: "",
       phone: "",
       userId: "",
@@ -364,6 +366,19 @@ function AddUserFormContent() {
                 )}
             />
         </div>
+         <FormField
+            control={form.control}
+            name="fatherName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Father's Name (Optional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter father's name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
          <FormField
           control={form.control}
           name="userId"

@@ -21,13 +21,14 @@ export async function handleAddUser(
       firstName: formData.get("firstName") as string,
       middleName: formData.get("middleName") as string,
       lastName: formData.get("lastName") as string,
+      fatherName: formData.get("fatherName") as string | undefined,
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       roles: formData.getAll("roles") as UserRole[],
       isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
       isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
       gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
-      beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | undefined,
+      beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow' | undefined,
       
       addressLine1: formData.get("addressLine1") as string | undefined,
       city: formData.get("city") as string | undefined,
@@ -57,14 +58,16 @@ export async function handleAddUser(
   }
   
   try {
-    const newUserData: Omit<User, 'id' | 'createdAt'> = {
+    const newUserData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> = {
         name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
         userId: rawFormData.userId,
         firstName: rawFormData.firstName,
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
+        fatherName: rawFormData.fatherName,
         email: rawFormData.email || undefined,
         phone: rawFormData.phone,
+        password: rawFormData.password,
         roles: rawFormData.roles,
         isActive: true, // Default to active
         isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
