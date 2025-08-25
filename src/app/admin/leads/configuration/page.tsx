@@ -63,6 +63,7 @@ export default function LeadConfigurationPage() {
             updatedLeadConfig.disabledPurposes || [],
             updatedLeadConfig.approvalProcessDisabled || false,
             updatedLeadConfig.roleBasedCreationEnabled || false,
+            updatedLeadConfig.allowBeneficiaryRequests ?? true,
             updatedLeadConfig.leadCreatorRoles || []
         ).then(result => {
             if (result.success) {
