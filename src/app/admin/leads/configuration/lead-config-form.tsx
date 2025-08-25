@@ -17,14 +17,20 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
-import { Loader2, Save, CheckCircle, Lock, UserCheck, Settings, Workflow } from "lucide-react";
+import { Loader2, Save, CheckCircle, Lock, UserCheck, Settings, Workflow, PlusCircle, Trash2, Edit } from "lucide-react";
 import { AppSettings, UserRole } from "@/services/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AddPurposeDialog, DeletePurposeDialog } from "./purpose-dialogs";
+
 
 const formSchema = z.object({
-    disabledPurposes: z.array(z.string()),
+    purposes: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        enabled: z.boolean(),
+    })),
     approvalProcessDisabled: z.boolean().default(false),
     roleBasedCreationEnabled: z.boolean().default(false),
     allowBeneficiaryRequests: z.boolean().default(true),
@@ -34,29 +40,27 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface LeadConfigFormProps {
-    allPurposes: string[];
-    allRoles: UserRole[];
-    currentConfig: AppSettings['leadConfiguration'];
+    settings: AppSettings;
     onUpdate: (newConfig: Partial<AppSettings['leadConfiguration']>) => void;
 }
 
-export function LeadConfigForm({ allPurposes, allRoles, currentConfig, onUpdate }: LeadConfigFormProps) {
+export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const leadConfig = settings.leadConfiguration || {};
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      disabledPurposes: currentConfig?.disabledPurposes || [],
-      approvalProcessDisabled: currentConfig?.approvalProcessDisabled || false,
-      roleBasedCreationEnabled: currentConfig?.roleBasedCreationEnabled || false,
-      allowBeneficiaryRequests: currentConfig?.allowBeneficiaryRequests ?? true,
-      leadCreatorRoles: currentConfig?.leadCreatorRoles || [],
+      purposes: leadConfig.purposes || [],
+      approvalProcessDisabled: leadConfig.approvalProcessDisabled || false,
+      roleBasedCreationEnabled: leadConfig.roleBasedCreationEnabled || false,
+      allowBeneficiaryRequests: leadConfig.allowBeneficiaryRequests ?? true,
+      leadCreatorRoles: leadConfig.leadCreatorRoles || [],
     },
   });
 
   const { formState: { isDirty }, watch } = form;
   const roleBasedCreationEnabled = watch("roleBasedCreationEnabled");
-  const approvalProcessDisabled = watch("approvalProcessDisabled");
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -113,7 +117,7 @@ export function LeadConfigForm({ allPurposes, allRoles, currentConfig, onUpdate 
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
                                 <FormLabel className="text-base">Enable Role-based Creation</FormLabel>
-                                <FormDescription>If enabled, only roles selected below can create leads. Overrides the "Disable Approval" setting.</FormDescription>
+                                <FormDescription>If enabled, only roles selected below can create new leads.</FormDescription>
                             </div>
                             <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                         </FormItem>
@@ -140,7 +144,7 @@ export function LeadConfigForm({ allPurposes, allRoles, currentConfig, onUpdate 
                         render={() => (
                             <FormItem>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {allRoles.filter(r => r !== 'Guest' && r !== 'Beneficiary').map((role) => (
+                                {(['Super Admin', 'Admin', 'Finance Admin', 'Referral'] as UserRole[]).map((role) => (
                                     <FormField
                                     key={role}
                                     control={form.control}
@@ -172,39 +176,44 @@ export function LeadConfigForm({ allPurposes, allRoles, currentConfig, onUpdate 
         )}
         
         <Card>
-             <CardHeader>
-                <CardTitle>Lead Purposes</CardTitle>
-                <CardDescription>
-                    Enable or disable specific purposes for new lead creation.
-                </CardDescription>
+             <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Manage Lead Purposes</CardTitle>
+                    <CardDescription>
+                        Add, edit, or delete the purposes available for new lead creation.
+                    </CardDescription>
+                </div>
+                <AddPurposeDialog />
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-                {allPurposes.map((purpose) => (
-                    <FormField
-                        key={purpose}
-                        control={form.control}
-                        name="disabledPurposes"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base">{purpose}</FormLabel>
-                                </div>
-                                <FormControl>
-                                    <Switch
-                                        checked={!field.value.includes(purpose)}
-                                        onCheckedChange={(checked) => {
-                                            const currentDisabled = form.getValues('disabledPurposes');
-                                            const newDisabled = !checked
-                                                ? [...currentDisabled, purpose]
-                                                : currentDisabled.filter(p => p !== purpose);
-                                            field.onChange(newDisabled);
-                                        }}
-                                    />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
+                {(form.getValues('purposes') || []).map((purpose, index) => (
+                    <div key={purpose.id} className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base">{purpose.name}</FormLabel>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <AddPurposeDialog purposeToEdit={purpose} />
+                            <DeletePurposeDialog purposeToDelete={purpose} allPurposes={form.getValues('purposes')} />
+                            <FormField
+                                control={form.control}
+                                name={`purposes.${index}.enabled`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
                 ))}
+                 {form.getValues('purposes')?.length === 0 && (
+                     <p className="text-sm text-muted-foreground text-center py-4">No purposes defined. Click "Create Purpose" to add one.</p>
+                )}
             </CardContent>
         </Card>
         

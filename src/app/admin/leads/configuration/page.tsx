@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,15 +20,11 @@ import { handleUpdateLeadConfiguration } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 
 
-const allPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'];
-const allRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin", "Donor", "Beneficiary", "Referral"];
-
 export default function LeadConfigurationPage() {
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [allUsers, setAllUsers] = useState<UserType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
 
     const fetchData = async () => {
@@ -57,18 +54,10 @@ export default function LeadConfigurationPage() {
         if (!settings?.leadConfiguration) return;
         const updatedLeadConfig = { ...settings.leadConfiguration, ...newConfig };
 
-        setSettings(prev => prev ? { ...prev, leadConfiguration: updatedLeadConfig } : null);
-
-        handleUpdateLeadConfiguration(
-            updatedLeadConfig.disabledPurposes || [],
-            updatedLeadConfig.approvalProcessDisabled || false,
-            updatedLeadConfig.roleBasedCreationEnabled || false,
-            updatedLeadConfig.allowBeneficiaryRequests ?? true,
-            updatedLeadConfig.leadCreatorRoles || []
-        ).then(result => {
+        handleUpdateLeadConfiguration(updatedLeadConfig).then(result => {
             if (result.success) {
                 toast({ variant: 'success', title: 'Setting Updated', description: 'Lead configuration has been saved.' });
-                fetchData();
+                fetchData(); // Refresh all data from server
             } else {
                 toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
             }
@@ -91,15 +80,12 @@ export default function LeadConfigurationPage() {
 
     const mandatoryApprovers = allUsers.filter(u => u.groups?.includes('Mandatory Lead Approver'));
     const optionalApprovers = allUsers.filter(u => u.groups?.includes('Lead Approver') && !u.groups?.includes('Mandatory Lead Approver'));
-    const leadConfig = settings.leadConfiguration || {};
     
     return (
         <div className="flex-1 space-y-6">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Lead Configuration</h2>
             <LeadConfigForm 
-                allPurposes={allPurposes} 
-                allRoles={allRoles}
-                currentConfig={leadConfig}
+                settings={settings}
                 onUpdate={handleConfigUpdate}
             />
             
