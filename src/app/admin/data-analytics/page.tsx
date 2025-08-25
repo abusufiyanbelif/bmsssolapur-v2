@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
+import { UsersChart } from "./users-chart";
 
 const CardSkeleton = () => (
     <Card>
@@ -17,6 +18,18 @@ const CardSkeleton = () => (
         </CardHeader>
         <CardContent>
             <Skeleton className="h-10 w-full" />
+        </CardContent>
+    </Card>
+);
+
+const ChartSkeleton = () => (
+     <Card className="col-span-4">
+        <CardHeader>
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
+        </CardHeader>
+        <CardContent>
+            <Skeleton className="h-[350px] w-full" />
         </CardContent>
     </Card>
 );
@@ -45,8 +58,12 @@ export default async function DataAnalyticsPage() {
                 <FinancialPerformanceCards allDonations={allDonations} allCampaigns={allCampaigns} />
             </Suspense>
             <Separator />
-            <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
+            <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
                 <SystemHealthCards allUsers={allUsers} allLeads={allLeads} allDonations={allDonations} />
+            </Suspense>
+            <Separator />
+            <Suspense fallback={<ChartSkeleton />}>
+                <UsersChart users={allUsers} />
             </Suspense>
           </CardContent>
         </Card>
