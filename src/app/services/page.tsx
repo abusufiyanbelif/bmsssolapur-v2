@@ -1,70 +1,116 @@
 
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Fingerprint, Server, MessageSquare, Mail, BrainCircuit, Database } from "lucide-react"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Fingerprint,
+  Server,
+  MessageSquare,
+  Mail,
+  BrainCircuit,
+  Database,
+  Users,
+  FileText,
+  HandHeart,
+  ScanEye,
+} from "lucide-react";
+import { getAllUsers } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
+import { getAllDonations } from "@/services/donation-service";
 
-const services = [
-  { name: "Firebase Authentication", type: "Authentication", id: "baitulmal-connect-auth", status: "Active", icon: Fingerprint },
-  { name: "Firebase Hosting", type: "Hosting", id: "baitulmal-connect-web", status: "Active", icon: Server },
-  { name: "Firestore", type: "Database", id: "baitulmal-connect-db", status: "Active", icon: Database },
-  { name: "Gemini LLM", type: "AI/ML", id: "genai-gemini-api", status: "Active", icon: BrainCircuit },
-  { name: "Twilio", type: "Messaging", id: "ACxxxxxxxxxxxxxxxxxxxxx", status: "Active", icon: MessageSquare },
-  { name: "Nodemailer", type: "Email", id: "nodemailer-smtp-pool", status: "Inactive", icon: Mail },
-];
+export default async function ServicesPage() {
+  // Fetch data to calculate usage metrics
+  const [allUsers, allLeads, allDonations] = await Promise.all([
+    getAllUsers(),
+    getAllLeads(),
+    getAllDonations(),
+  ]);
 
-export default function ServicesPage() {
+  const scannedDonations = allDonations.filter(d => d.source?.includes('Scan')).length;
+  const totalDocuments = allUsers.length + allLeads.length + allDonations.length;
+
+  const services = [
+    {
+      name: "Firebase Authentication",
+      description: "Manages user sign-up, login, and sessions.",
+      icon: Fingerprint,
+      metric: allUsers.length.toLocaleString(),
+      metricLabel: "Total Users",
+    },
+    {
+      name: "Firestore Database",
+      description: "Stores all application data like users, leads, and donations.",
+      icon: Database,
+      metric: totalDocuments.toLocaleString(),
+      metricLabel: "Total Documents",
+    },
+    {
+      name: "Gemini LLM",
+      description: "Powers AI features like scanning donation proofs.",
+      icon: BrainCircuit,
+      metric: scannedDonations.toLocaleString(),
+      metricLabel: "Scanned Proofs",
+    },
+     {
+      name: "Firebase Hosting",
+      description: "Serves the Next.js application to users.",
+      icon: Server,
+      metric: "Active",
+      metricLabel: "Status",
+    },
+    {
+      name: "Twilio",
+      description: "Handles sending OTPs via SMS for phone-based login.",
+      icon: MessageSquare,
+      metric: "Configured",
+      metricLabel: "Status",
+    },
+    {
+      name: "Nodemailer",
+      description: "Sends emails for notifications and other purposes.",
+      icon: Mail,
+      metric: "Configured",
+      metricLabel: "Status",
+    },
+  ];
+
   return (
     <div className="flex-1 space-y-4">
-        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Services Summary</h2>
-        <Card>
-            <CardHeader>
-                <CardTitle>Configuration Overview</CardTitle>
-                <CardDescription>
-                    List of all Firebase and external services used in the project.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[100px]">Service</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>ID / Account</TableHead>
-                            <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {services.map((service) => (
-                            <TableRow key={service.name}>
-                                <TableCell className="font-medium">
-                                    <div className="flex items-center gap-2">
-                                        <service.icon className="h-5 w-5 text-muted-foreground" />
-                                        {service.name}
-                                    </div>
-                                </TableCell>
-                                <TableCell>{service.type}</TableCell>
-                                <TableCell className="font-mono text-sm">{service.id}</TableCell>
-                                <TableCell>
-                                    <Badge variant={service.status === "Active" ? "default" : "secondary"} className={service.status === "Active" ? "bg-green-500/20 text-green-700 border-green-500/30" : ""}>
-                                        {service.status}
-                                    </Badge>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+      <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
+        Services Summary
+      </h2>
+      <Card>
+        <CardHeader>
+          <CardTitle>Usage & Configuration Overview</CardTitle>
+          <CardDescription>
+            An overview of all Firebase and external services used in the
+            project, along with their current usage metrics.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <Card key={service.name} className="flex flex-col">
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                    <service.icon className="h-8 w-8 text-primary" />
+                    <CardTitle className="text-lg">{service.name}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-sm text-muted-foreground">{service.description}</p>
+              </CardContent>
+              <CardFooter className="bg-muted/50 p-4 flex justify-between items-center">
+                 <span className="text-sm text-muted-foreground">{service.metricLabel}:</span>
+                 <span className="font-bold text-lg">{service.metric}</span>
+              </CardFooter>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
-
-    
