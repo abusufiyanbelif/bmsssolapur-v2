@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -17,7 +16,6 @@ import {
   Users,
   FileText,
   HandHeart,
-  ScanEye,
   Component,
   Palette,
   Bot,
