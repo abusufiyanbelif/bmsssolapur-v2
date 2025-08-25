@@ -142,6 +142,17 @@ const allNavItems: NavItem[] = [
             },
         ]
     },
+
+    // Super Admin - Data Profiling & Analytics (Collapsible)
+    { 
+        label: "Data Profiling & Analytics", 
+        icon: BrainCircuit, 
+        allowedRoles: ["Super Admin"],
+        subItems: [
+            { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard },
+            { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings },
+        ]
+    },
     
     // Super Admin - App Settings (Collapsible)
     { 
