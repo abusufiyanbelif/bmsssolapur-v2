@@ -20,7 +20,7 @@ import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download, Check } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download, Check, AlertTriangle as AlertTriangleIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -37,6 +37,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
 import { AllocateToCampaignDialog } from './allocate-to-campaign-dialog';
 import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Partially Allocated", "Allocated", "Failed/Incomplete"];
@@ -45,6 +46,9 @@ const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Medica
 
 type SortableColumn = 'id' | 'donorName' | 'amount' | 'donationDate' | 'type' | 'status';
 type SortDirection = 'asc' | 'desc';
+
+const MIN_DONATION_THRESHOLD = 10;
+const MAX_DONATION_THRESHOLD = 50000;
 
 
 const statusColors: Record<DonationStatus, string> = {
@@ -334,6 +338,7 @@ function DonationsPageContent() {
                     const isExpanded = expandedRows.includes(donation.id!);
                     const hasAllocations = donation.allocations && donation.allocations.length > 0;
                     const allocatedAmount = hasAllocations ? donation.allocations!.reduce((sum, alloc) => sum + alloc.amount, 0) : 0;
+                    const isAmountAnomaly = donation.amount < MIN_DONATION_THRESHOLD || donation.amount > MAX_DONATION_THRESHOLD;
                     
                     return (
                     <>
@@ -375,16 +380,30 @@ function DonationsPageContent() {
                             </div>
                         </TableCell>
                         <TableCell>
-                            {donation.status === 'Partially Allocated' && hasAllocations ? (
-                                <div className="flex flex-col">
-                                    <span className="font-semibold">₹{donation.amount.toFixed(2)}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        (Allocated: ₹{allocatedAmount.toFixed(2)})
-                                    </span>
-                                </div>
-                            ) : (
-                                `₹${donation.amount.toFixed(2)}`
-                            )}
+                            <div className="flex items-center gap-2">
+                                {donation.status === 'Partially Allocated' && hasAllocations ? (
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold">₹{donation.amount.toFixed(2)}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            (Allocated: ₹{allocatedAmount.toFixed(2)})
+                                        </span>
+                                    </div>
+                                ) : (
+                                    `₹${donation.amount.toFixed(2)}`
+                                )}
+                                {isAmountAnomaly && (
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <AlertTriangleIcon className="h-4 w-4 text-amber-500" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>This amount is unusually {donation.amount < MIN_DONATION_THRESHOLD ? 'low' : 'high'}. Please verify.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
                         </TableCell>
                         <TableCell>{donation.type}</TableCell>
                         <TableCell>
@@ -415,8 +434,12 @@ function DonationsPageContent() {
                          <TableCell className="space-y-1">
                             {donation.allocations && donation.allocations.length > 0 ? (
                                 <Badge variant="outline" className="text-xs">{donation.allocations.length} Allocation(s)</Badge>
+                            ) : donation.campaignId ? (
+                                <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700">
+                                    Campaign: {donation.campaignName || donation.campaignId}
+                                </Badge>
                             ) : (
-                               <Badge variant="secondary" className="text-xs font-normal">Unallocated</Badge>
+                               <Badge variant="destructive" className="text-xs font-normal">Unallocated</Badge>
                             )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -480,6 +503,7 @@ function DonationsPageContent() {
             {paginatedDonations.map((donation, index) => {
                 const hasAllocations = donation.allocations && donation.allocations.length > 0;
                 const allocatedAmount = hasAllocations ? donation.allocations!.reduce((sum, alloc) => sum + alloc.amount, 0) : 0;
+                const isAmountAnomaly = donation.amount < MIN_DONATION_THRESHOLD || donation.amount > MAX_DONATION_THRESHOLD;
                 return (
                     <Card key={donation.id} className={cn("flex flex-col", selectedDonations.includes(donation.id!) && "ring-2 ring-primary")}>
                          <div className="p-4 flex gap-4">
@@ -495,14 +519,21 @@ function DonationsPageContent() {
                                 <CardHeader className="p-0">
                                     <div className="flex justify-between items-start">
                                         <CardTitle className="text-lg">
-                                            {donation.status === 'Partially Allocated' && hasAllocations ? (
-                                                <div className="flex items-baseline gap-2">
-                                                    <span>₹{donation.amount.toFixed(2)}</span>
-                                                    <span className="text-sm text-muted-foreground font-normal">(Allocated: ₹{allocatedAmount.toFixed(2)})</span>
-                                                </div>
-                                            ) : (
-                                                `₹${donation.amount.toFixed(2)}`
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {donation.status === 'Partially Allocated' && hasAllocations ? (
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span>₹{donation.amount.toFixed(2)}</span>
+                                                        <span className="text-sm text-muted-foreground font-normal">(Allocated: ₹{allocatedAmount.toFixed(2)})</span>
+                                                    </div>
+                                                ) : (
+                                                    `₹${donation.amount.toFixed(2)}`
+                                                )}
+                                                {isAmountAnomaly && (
+                                                    <TooltipProvider>
+                                                        <Tooltip><TooltipTrigger><AlertTriangleIcon className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Amount anomaly</p></TooltipContent></Tooltip>
+                                                    </TooltipProvider>
+                                                )}
+                                            </div>
                                         </CardTitle>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -539,7 +570,9 @@ function DonationsPageContent() {
                                      <div className="flex justify-between"><span className="text-muted-foreground">Category</span><span>{donation.type}</span></div>
                                      <div>
                                         <span className="text-muted-foreground">Linked To: </span>
-                                        {hasAllocations ? <Badge variant="outline">{donation.allocations!.length} Allocation(s)</Badge> : <span className="text-xs text-muted-foreground italic">Unallocated</span>}
+                                        {hasAllocations ? <Badge variant="outline">{donation.allocations!.length} Allocation(s)</Badge> : 
+                                         donation.campaignId ? <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700">Campaign</Badge>
+                                        : <Badge variant="destructive" className="text-xs font-normal">Unallocated</Badge>}
                                      </div>
                                 </CardContent>
                             </Link>

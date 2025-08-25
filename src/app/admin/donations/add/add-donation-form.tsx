@@ -71,7 +71,7 @@ const formSchema = z.object({
   amount: z.coerce.number(), // This will hold the calculated primary donation amount
   donationDate: z.date(),
   type: z.enum(donationTypes),
-  purpose: z.enum(donationPurposes).optional(),
+  purpose: z.enum(donationPurposes, { required_error: "Please select a purpose." }),
   category: z.string().optional(),
   transactionId: z.string().optional(),
   utrNumber: z.string().optional(),
@@ -180,7 +180,7 @@ const initialFormValues: AddDonationFormValues = {
     paymentScreenshotDataUrl: undefined,
     donorId: '',
     paymentMethod: 'Online (UPI/Card)',
-    purpose: undefined,
+    purpose: 'To Organization Use',
     category: undefined,
     transactionId: '',
     utrNumber: '',
@@ -1341,6 +1341,28 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         {selectedLead && (
                              <FormDescription>Only showing donation types acceptable for the selected lead.</FormDescription>
                         )}
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="purpose"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Purpose</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a purpose" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {donationPurposes.map(purpose => (
+                                <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                         </FormItem>
                     )}
