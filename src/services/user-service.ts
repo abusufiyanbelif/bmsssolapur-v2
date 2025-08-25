@@ -104,17 +104,23 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
   try {
     const userRef = doc(collection(db, USERS_COLLECTION));
     
+    // Standardize phone number
+    const standardizedPhone = userData.phone?.replace(/\D/g, '').slice(-10) || '';
+    if (standardizedPhone.length !== 10) {
+        throw new Error("Invalid phone number provided. Must be 10 digits.");
+    }
+
     // Check for duplicate email if one is provided
     if (userData.email) {
       const emailExists = await getUserByEmail(userData.email);
       if (emailExists) {
-          throw new Error(`A user with the email ${userData.email} already exists.`);
+          throw new Error(`A user with the email ${userData.email} already exists (Name: ${emailExists.name}).`);
       }
     }
     // Check for duplicate phone number
-    const phoneExists = await getUserByPhone(userData.phone!);
+    const phoneExists = await getUserByPhone(standardizedPhone);
     if(phoneExists) {
-        throw new Error(`A user with the phone number ${userData.phone} already exists.`);
+        throw new Error(`A user with the phone number ${standardizedPhone} already exists (Name: ${phoneExists.name}).`);
     }
     
     // Generate a unique userId if not provided
@@ -164,7 +170,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         lastName: userData.lastName!,
         fatherName: userData.fatherName,
         email: userData.email,
-        phone: userData.phone!,
+        phone: standardizedPhone,
         password: userData.password,
         isActive: userData.isActive !== undefined ? userData.isActive : true,
         address: {
@@ -327,8 +333,11 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
     console.warn("Firebase not configured. Skipping user fetch by phone.");
     return null;
   }
+  const standardizedPhone = phone.replace(/\D/g, '').slice(-10);
+  if (standardizedPhone.length !== 10) return null;
+
   try {
-    const q = query(collection(db, USERS_COLLECTION), where("phone", "==", phone), limit(1));
+    const q = query(collection(db, USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
