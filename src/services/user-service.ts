@@ -31,10 +31,9 @@ export { updateLead } from './lead-service';
 
 
 // Helper to remove duplicates from an array
-const getUniqueRoles = (roles: UserRole[] = []): UserRole[] => {
-    // This handles cases where roles might be null or undefined, and ensures uniqueness
-    if (!Array.isArray(roles)) return [];
-    return [...new Set(roles.filter(Boolean))];
+const getUnique = <T>(arr: T[] = []): T[] => {
+    if (!Array.isArray(arr)) return [];
+    return [...new Set(arr.filter(Boolean))];
 }
 
 /**
@@ -84,7 +83,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
             return {
               id: userDoc.id,
               ...data,
-              roles: getUniqueRoles(data.roles),
+              roles: getUnique(data.roles),
               createdAt: (data.createdAt as Timestamp)?.toDate(),
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
@@ -140,7 +139,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
 
     // --- On-demand Anonymous ID Generation ---
-    const assignedRoles = getUniqueRoles(userData.roles || ['Donor']);
+    const assignedRoles = getUnique(userData.roles || ['Donor']);
     let anonymousDonorId: string | undefined;
     let anonymousBeneficiaryId: string | undefined;
     let anonymousReferralId: string | undefined;
@@ -156,7 +155,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         anonymousReferralId = await generateNextAnonymousId('REF', 'anonymousReferralId');
     }
     if (assignedRoles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
-        anonymousAdminId = await generateNextAnonymousId('ADM', 'anonymousAdminId');
+         anonymousAdminId = await generateNextAnonymousId('ADM', 'anonymousAdminId');
     }
     // --- End On-demand ID Generation ---
 
@@ -245,7 +244,9 @@ export const getUser = async (id: string): Promise<User | null> => {
       return { 
         id: userDoc.id, 
         ...data,
-        roles: getUniqueRoles(data.roles),
+        roles: getUnique(data.roles),
+        groups: getUnique(data.groups),
+        privileges: getUnique(data.privileges),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -272,7 +273,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
       return {
         id: userDoc.id,
         ...data,
-        roles: getUniqueRoles(data.roles),
+        roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -294,7 +295,7 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
             const doc = snapshot.docs[0];
             const data = doc.data();
             return {
-                id: doc.id, ...data, roles: getUniqueRoles(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
+                id: doc.id, ...data, roles: getUnique(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
         }
@@ -315,7 +316,7 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
             const doc = snapshot.docs[0];
              const data = doc.data();
             return {
-                id: doc.id, ...data, roles: getUniqueRoles(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
+                id: doc.id, ...data, roles: getUnique(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User;
         }
@@ -345,7 +346,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
        return {
         id: userDoc.id,
         ...data,
-        roles: getUniqueRoles(data.roles),
+        roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -379,7 +380,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
       return {
         id: userDoc.id,
         ...data,
-        roles: getUniqueRoles(data.roles),
+        roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -403,7 +404,7 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
        return {
         id: userDoc.id,
         ...data,
-        roles: getUniqueRoles(data.roles),
+        roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -436,7 +437,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
        return {
         id: userDoc.id,
         ...data,
-        roles: getUniqueRoles(data.roles),
+        roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
       } as User;
@@ -496,7 +497,7 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
         
         const finalUpdates: Partial<User> = { ...updates };
         if (updates.roles) {
-            finalUpdates.roles = getUniqueRoles(updates.roles);
+            finalUpdates.roles = getUnique(updates.roles);
 
             const originalUser = await getUser(id);
             if(originalUser) {
@@ -514,6 +515,10 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
                      finalUpdates.anonymousAdminId = await generateNextAnonymousId('ADM', 'anonymousAdminId');
                 }
             }
+        }
+        
+        if (updates.groups) {
+            finalUpdates.groups = getUnique(updates.groups);
         }
 
         // Clean out undefined values before sending to Firestore
@@ -561,7 +566,7 @@ export const getAllUsers = async (): Promise<User[]> => {
             users.push({ 
                 id: doc.id,
                 ...data,
-                roles: getUniqueRoles(data.roles),
+                roles: getUnique(data.roles),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User);
@@ -591,7 +596,7 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
             users.push({ 
                 id: doc.id,
                 ...data,
-                roles: getUniqueRoles(data.roles),
+                roles: getUnique(data.roles),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as User);

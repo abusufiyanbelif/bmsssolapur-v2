@@ -226,24 +226,31 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
         }
 
         let existingUser: User | null = null;
-        
-        if (userData.phone) {
-            existingUser = await getUserByPhone(userData.phone);
-        }
-        
+        if (userData.phone) existingUser = await getUserByPhone(userData.phone);
+        if (!existingUser && userData.email) existingUser = await getUserByEmail(userData.email);
+
         if (existingUser) {
             const userRef = doc(db, USERS_COLLECTION, existingUser.id!);
             const updatedRoles = [...new Set([...(existingUser.roles || []), ...userData.roles])];
             const updatedGroups = [...new Set([...(existingUser.groups || []), ...(userData.groups || [])])];
-            // Only update seeded user data, don't overwrite user-entered info
-            const updatePayload = { ...userData, roles: updatedRoles, groups: updatedGroups };
-            delete (updatePayload as any).password; // Don't overwrite password on update
+            
+            const updatePayload = { 
+                ...userData, 
+                roles: updatedRoles, 
+                groups: updatedGroups,
+                updatedAt: serverTimestamp()
+            };
+            delete (updatePayload as any).password;
             batch.update(userRef, updatePayload);
             results.push({ name: userData.name, status: 'Updated' });
         } else {
-            // This path is for creating a brand new user
-            await createUser(userData); // createUser handles all the logic now
-            results.push({ name: userData.name, status: 'Created' });
+            try {
+                await createUser(userData);
+                results.push({ name: userData.name, status: 'Created' });
+            } catch (e) {
+                 results.push({ name: userData.name, status: 'Failed' });
+                 console.error(`Failed to create user ${userData.name}:`, e);
+            }
         }
     }
     await batch.commit();
