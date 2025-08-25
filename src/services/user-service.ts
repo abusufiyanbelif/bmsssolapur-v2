@@ -516,6 +516,14 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
             }
         }
 
+        // Clean out undefined values before sending to Firestore
+        Object.keys(finalUpdates).forEach(key => {
+            const typedKey = key as keyof User;
+            if (finalUpdates[typedKey] === undefined) {
+                delete finalUpdates[typedKey];
+            }
+        });
+
         await updateDoc(userRef, {
             ...finalUpdates,
             updatedAt: serverTimestamp()

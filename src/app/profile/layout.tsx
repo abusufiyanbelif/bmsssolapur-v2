@@ -72,6 +72,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   }
   
   const userInitials = user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+  const uniqueRoles = [...new Set(user.roles)];
 
   return (
     <div className="flex-1 space-y-4">
@@ -90,7 +91,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                             {user.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                         <div className="flex flex-wrap justify-center gap-2 pt-2">
-                            {user.roles.map(role => (
+                            {uniqueRoles.map(role => (
                                 <Badge key={role} variant="secondary">{role}</Badge>
                             ))}
                         </div>

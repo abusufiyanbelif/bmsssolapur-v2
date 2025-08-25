@@ -235,7 +235,10 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<SeedI
             const userRef = doc(db, USERS_COLLECTION, existingUser.id!);
             const updatedRoles = [...new Set([...(existingUser.roles || []), ...userData.roles])];
             const updatedGroups = [...new Set([...(existingUser.groups || []), ...(userData.groups || [])])];
-            batch.update(userRef, { ...userData, roles: updatedRoles, groups: updatedGroups });
+            // Only update seeded user data, don't overwrite user-entered info
+            const updatePayload = { ...userData, roles: updatedRoles, groups: updatedGroups };
+            delete (updatePayload as any).password; // Don't overwrite password on update
+            batch.update(userRef, updatePayload);
             results.push({ name: userData.name, status: 'Updated' });
         } else {
             // This path is for creating a brand new user
@@ -377,7 +380,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
                 notes: 'Dummy transfer for seeded closed lead.',
                 transactionId: `SEED_TXN_${leadRef.id}`
             };
-
+            
             newLead.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
             newLead.fundTransfers = [newTransfer];
             donationResults.push({ name: `Donation for ${beneficiary.name}`, status: 'Created' });
