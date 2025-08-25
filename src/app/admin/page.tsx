@@ -23,7 +23,9 @@ import { getAllDonations } from "@/services/donation-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
-import { Accordion } from "@/components/ui/accordion";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { BarChart3, CheckCheck, HandCoins, Megaphone, FileText, Users, HandHeart } from "lucide-react";
+
 
 const CardSkeleton = () => (
     <Card>
@@ -92,41 +94,50 @@ export default async function DashboardPage() {
         </div>
         
         <Accordion type="multiple" className="space-y-4">
-            <Suspense fallback={<CardSkeleton />}><PendingLeadsCard /></Suspense>
-            <Suspense fallback={<CardSkeleton />}><PendingDonationsCard /></Suspense>
-            <Suspense fallback={<CardSkeleton />}><LeadsReadyToPublishCard /></Suspense>
+          <AccordionItem value="actions">
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg"><CheckCheck className="mr-2 h-5 w-5 text-destructive"/>Pending Actions</AccordionTrigger>
+            <AccordionContent className="pt-4 space-y-4">
+              <Suspense fallback={<CardSkeleton />}><PendingLeadsCard /></Suspense>
+              <Suspense fallback={<CardSkeleton />}><PendingDonationsCard /></Suspense>
+              <Suspense fallback={<CardSkeleton />}><LeadsReadyToPublishCard /></Suspense>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="breakdowns">
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg"><BarChart3 className="mr-2 h-5 w-5 text-primary"/>Breakdowns</AccordionTrigger>
+            <AccordionContent className="pt-4 space-y-4">
+              <Suspense fallback={<CardSkeleton />}><LeadBreakdownCard allLeads={allLeads} /></Suspense>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <Suspense fallback={<CardSkeleton />}><BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={true} /></Suspense>
+                  <Suspense fallback={<CardSkeleton />}><CampaignBreakdownCard allCampaigns={allCampaigns} /></Suspense>
+              </div>
+              <Suspense fallback={<CardSkeleton />}><DonationTypeCard donations={allDonations} /></Suspense>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="donations-insights">
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg"><HandCoins className="mr-2 h-5 w-5 text-primary"/>Donation Insights</AccordionTrigger>
+            <AccordionContent className="pt-4 space-y-4">
+              <Suspense fallback={<ChartSkeleton />}><DonationsChart donations={allDonations} /></Suspense>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                  <div className="col-span-full lg:col-span-4">
+                      <Suspense fallback={<TableSkeleton />}><TopDonationsCard donations={allDonations} /></Suspense>
+                  </div>
+                  <div className="col-span-full lg:col-span-3">
+                      <Suspense fallback={<CardSkeleton />}><TopDonorsCard /></Suspense>
+                  </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+           <AccordionItem value="campaigns-insights">
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg"><Megaphone className="mr-2 h-5 w-5 text-primary"/>Campaign Insights</AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <Suspense fallback={<TableSkeleton />}><RecentCampaignsCard /></Suspense>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
 
-         <Suspense fallback={<CardSkeleton />}>
-            <LeadBreakdownCard allLeads={allLeads} />
-        </Suspense>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Suspense fallback={<CardSkeleton />}><BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={true} /></Suspense>
-            <Suspense fallback={<CardSkeleton />}><CampaignBreakdownCard allCampaigns={allCampaigns} /></Suspense>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Suspense fallback={<ChartSkeleton />}>
-                <DonationsChart donations={allDonations} />
-            </Suspense>
-             <div className="col-span-full md:col-span-2 lg:col-span-3">
-                <Suspense fallback={<CardSkeleton />}>
-                    <TopDonorsCard />
-                </Suspense>
-             </div>
-        </div>
-         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <div className="col-span-full lg:col-span-4">
-                <Suspense fallback={<TableSkeleton />}>
-                    <TopDonationsCard donations={allDonations} />
-                </Suspense>
-            </div>
-            <div className="col-span-full lg:col-span-3">
-                <Suspense fallback={<TableSkeleton />}>
-                    <RecentCampaignsCard />
-                </Suspense>
-            </div>
-         </div>
-        <Suspense fallback={<CardSkeleton />}><DonationTypeCard donations={allDonations} /></Suspense>
       </div>
     </div>
   );
