@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 import { getAllCampaigns } from "@/services/campaign-service";
@@ -9,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { UsersChart } from "./users-chart";
+import { DonationsChart } from "../donations-chart";
 
 const CardSkeleton = () => (
     <Card>
@@ -60,6 +62,10 @@ export default async function DataAnalyticsPage() {
             <Separator />
             <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
                 <SystemHealthCards allUsers={allUsers} allLeads={allLeads} allDonations={allDonations} />
+            </Suspense>
+            <Separator />
+            <Suspense fallback={<ChartSkeleton />}>
+                <DonationsChart donations={allDonations} />
             </Suspense>
             <Separator />
             <Suspense fallback={<ChartSkeleton />}>
