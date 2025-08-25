@@ -1,11 +1,13 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 import { getAllCampaigns } from "@/services/campaign-service";
 import { getAllDonations } from "@/services/donation-service";
-import { FinancialPerformanceCards } from "./analytics-cards";
+import { FinancialPerformanceCards, SystemHealthCards } from "./analytics-cards";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { getAllUsers } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
 
 const CardSkeleton = () => (
     <Card>
@@ -21,9 +23,11 @@ const CardSkeleton = () => (
 
 
 export default async function DataAnalyticsPage() {
-  const [allDonations, allCampaigns] = await Promise.all([
+  const [allDonations, allCampaigns, allUsers, allLeads] = await Promise.all([
       getAllDonations(),
       getAllCampaigns(),
+      getAllUsers(),
+      getAllLeads()
   ]);
 
   return (
@@ -33,16 +37,19 @@ export default async function DataAnalyticsPage() {
           <CardHeader>
             <CardTitle>Analytics Dashboard</CardTitle>
             <CardDescription>
-              This space is reserved for data profiling and analytics dashboards.
+              A high-level overview of application performance, data integrity, and fundraising metrics.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
              <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
                 <FinancialPerformanceCards allDonations={allDonations} allCampaigns={allCampaigns} />
+            </Suspense>
+            <Separator />
+            <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
+                <SystemHealthCards allUsers={allUsers} allLeads={allLeads} allDonations={allDonations} />
             </Suspense>
           </CardContent>
         </Card>
     </div>
   );
 }
-

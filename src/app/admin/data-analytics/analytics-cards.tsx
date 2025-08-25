@@ -1,12 +1,11 @@
-
 "use client";
 
 import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { HandCoins, Target, Scale, IndianRupee, ScanLine, Pencil, Users } from "lucide-react";
-import type { Donation, Campaign } from "@/services/types";
+import { HandCoins, Target, Scale, IndianRupee, ScanLine, Pencil, Users, Database, FileUp, UserCheck, UserX } from "lucide-react";
+import type { Donation, Campaign, User, Lead } from "@/services/types";
 
 interface FinancialPerformanceCardsProps {
     allDonations: Donation[];
@@ -97,6 +96,86 @@ export function FinancialPerformanceCards({ allDonations, allCampaigns }: Financ
                     </Card>
                 ))}
              </div>
+        </div>
+    );
+}
+
+interface SystemHealthCardsProps {
+    allUsers: User[];
+    allLeads: Lead[];
+    allDonations: Donation[];
+}
+
+export function SystemHealthCards({ allUsers, allLeads, allDonations }: SystemHealthCardsProps) {
+    const {
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        totalLeads,
+        totalDonations,
+        uploadedProofs,
+        uploadedVerificationDocs,
+    } = useMemo(() => {
+        const totalUsers = allUsers.length;
+        const activeUsers = allUsers.filter(u => u.isActive).length;
+        const inactiveUsers = totalUsers - activeUsers;
+
+        const uploadedProofs = allDonations.filter(d => d.paymentScreenshotUrls && d.paymentScreenshotUrls.length > 0).length;
+        const uploadedVerificationDocs = allLeads.filter(l => l.verificationDocumentUrl).length;
+
+        return {
+            totalUsers,
+            activeUsers,
+            inactiveUsers,
+            totalLeads: allLeads.length,
+            totalDonations: allDonations.length,
+            uploadedProofs,
+            uploadedVerificationDocs
+        };
+    }, [allUsers, allLeads, allDonations]);
+    
+    return (
+        <div className="space-y-4">
+            <h3 className="text-xl font-bold tracking-tight font-headline">System & Data Health</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">User Base Health</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold">{totalUsers}</p>
+                        <div className="text-xs text-muted-foreground space-x-2">
+                           <span className="text-green-600 inline-flex items-center"><UserCheck className="mr-1 h-3 w-3"/>{activeUsers} Active</span>
+                           <span className="text-red-600 inline-flex items-center"><UserX className="mr-1 h-3 w-3"/>{inactiveUsers} Inactive</span>
+                        </div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Data Storage Overview</CardTitle>
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold">{totalLeads + totalDonations + totalUsers}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {totalLeads} leads, {totalDonations} donations, {totalUsers} users
+                        </p>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Uploaded Documents</CardTitle>
+                        <FileUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold">{uploadedProofs + uploadedVerificationDocs}</p>
+                         <p className="text-xs text-muted-foreground">
+                            {uploadedProofs} proofs & {uploadedVerificationDocs} verifications
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
