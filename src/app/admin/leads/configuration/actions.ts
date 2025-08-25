@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { updateUser, getAllUsers } from "@/services/user-service";
 import { arrayRemove, arrayUnion, writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
-import type { UserRole, LeadPurpose } from "@/services/types";
+import type { UserRole, LeadPurpose, PurposeCategory } from "@/services/types";
 import { getAllLeads, updateLead } from "@/services/lead-service";
 
 interface FormState {
@@ -50,10 +50,11 @@ export async function handleAddLeadPurpose(name: string): Promise<FormState> {
         return { success: false, error: "A purpose with this name already exists." };
     }
 
-    const newPurpose = {
+    const newPurpose: LeadPurpose = {
         id: name.toLowerCase().replace(/\s+/g, '-'),
         name: name,
         enabled: true,
+        categories: [], // Initialize with empty categories
     };
 
     const updatedPurposes = [...currentPurposes, newPurpose];
@@ -127,7 +128,7 @@ export async function handleDeleteLeadPurpose(purposeToDelete: string, newPurpos
         const batch = writeBatch(db);
         affectedLeads.forEach(lead => {
             const leadRef = doc(db, 'leads', lead.id!);
-            batch.update(leadRef, { purpose: newPurposeForLeads });
+            batch.update(leadRef, { purpose: newPurposeForLeads, category: 'Other', otherCategoryDetail: `Original category moved from deleted purpose: ${purposeToDelete}` });
         });
         
         await batch.commit();
@@ -143,7 +144,120 @@ export async function handleDeleteLeadPurpose(purposeToDelete: string, newPurpos
     }
 }
 
+// --- Category Actions ---
 
+export async function handleAddCategory(purposeId: string, categoryName: string): Promise<FormState> {
+    if (!purposeId || !categoryName) return { success: false, error: "Purpose ID and category name are required." };
+
+    try {
+        const settings = await getAppSettings();
+        const purposes = settings.leadConfiguration?.purposes || [];
+        const purposeIndex = purposes.findIndex(p => p.id === purposeId);
+        if (purposeIndex === -1) return { success: false, error: "Purpose not found." };
+
+        const categories = purposes[purposeIndex].categories || [];
+        if (categories.some(c => c.name.toLowerCase() === categoryName.toLowerCase())) {
+            return { success: false, error: "A category with this name already exists for this purpose." };
+        }
+
+        const newCategory: PurposeCategory = {
+            id: categoryName.toLowerCase().replace(/\s+/g, '-'),
+            name: categoryName,
+            enabled: true,
+        };
+
+        purposes[purposeIndex].categories = [...categories, newCategory];
+        await updateAppSettings({ leadConfiguration: { ...settings.leadConfiguration, purposes } });
+
+        revalidatePath("/admin/leads/configuration", 'layout');
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        return { success: false, error };
+    }
+}
+
+export async function handleUpdateCategory(purposeId: string, oldCategoryName: string, newCategoryName: string): Promise<FormState> {
+    if (!purposeId || !oldCategoryName || !newCategoryName) return { success: false, error: "All fields are required." };
+
+    try {
+        const settings = await getAppSettings();
+        const purposes = settings.leadConfiguration?.purposes || [];
+        const purposeIndex = purposes.findIndex(p => p.id === purposeId);
+        if (purposeIndex === -1) return { success: false, error: "Purpose not found." };
+        
+        const purpose = purposes[purposeIndex];
+        const categories = purpose.categories || [];
+        const categoryIndex = categories.findIndex(c => c.name === oldCategoryName);
+        if (categoryIndex === -1) return { success: false, error: "Original category not found." };
+
+        if (categories.some(c => c.name.toLowerCase() === newCategoryName.toLowerCase() && c.name !== oldCategoryName)) {
+            return { success: false, error: "A category with the new name already exists for this purpose." };
+        }
+        
+        categories[categoryIndex].name = newCategoryName;
+        purposes[purposeIndex].categories = categories;
+
+        // Batch update all leads with the old category
+        const leads = await getAllLeads();
+        const affectedLeads = leads.filter(lead => lead.purpose === purpose.name && lead.category === oldCategoryName);
+        const batch = writeBatch(db);
+        affectedLeads.forEach(lead => {
+            const leadRef = doc(db, 'leads', lead.id!);
+            batch.update(leadRef, { category: newCategoryName });
+        });
+
+        await batch.commit();
+        await updateAppSettings({ leadConfiguration: { ...settings.leadConfiguration, purposes } });
+
+        revalidatePath("/admin/leads/configuration", 'layout');
+        revalidatePath("/admin/leads");
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        return { success: false, error };
+    }
+}
+
+export async function handleDeleteCategory(purposeId: string, categoryToDelete: string, newCategoryForLeads: string): Promise<FormState> {
+     if (!purposeId || !categoryToDelete || !newCategoryForLeads) {
+        return { success: false, error: "All fields are required." };
+    }
+
+    try {
+        const settings = await getAppSettings();
+        const purposes = settings.leadConfiguration?.purposes || [];
+        const purposeIndex = purposes.findIndex(p => p.id === purposeId);
+        if (purposeIndex === -1) return { success: false, error: "Purpose not found." };
+
+        const purpose = purposes[purposeIndex];
+        const updatedCategories = (purpose.categories || []).filter(c => c.name !== categoryToDelete);
+        purposes[purposeIndex].categories = updatedCategories;
+
+        // Batch update all leads with the deleted category
+        const leads = await getAllLeads();
+        const affectedLeads = leads.filter(lead => lead.purpose === purpose.name && lead.category === categoryToDelete);
+        const batch = writeBatch(db);
+        affectedLeads.forEach(lead => {
+            const leadRef = doc(db, 'leads', lead.id!);
+            batch.update(leadRef, { category: newCategoryForLeads });
+        });
+        
+        await batch.commit();
+        await updateAppSettings({ leadConfiguration: { ...settings.leadConfiguration, purposes } });
+
+        revalidatePath("/admin/leads/configuration", 'layout');
+        revalidatePath("/admin/leads");
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        return { success: false, error };
+    }
+}
+
+
+
+// --- Approver Actions ---
 
 export async function handleAddApprover(userIds: string[], group: string): Promise<FormState> {
   try {

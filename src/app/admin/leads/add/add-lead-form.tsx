@@ -29,9 +29,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -54,16 +54,6 @@ import { getUserByPhone } from "@/services/user-service";
 
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
-
-const categoryOptions: Record<string, string[]> = {
-    'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
-    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
-    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
-    'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
-    'Loan': ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'],
-};
-
-const loanCategoryOptions = ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'];
 
 
 const formSchema = z.object({
@@ -108,10 +98,8 @@ const formSchema = z.object({
     path: ["otherPurposeDetail"],
 })
 .refine(data => {
-    if (data.purpose === 'Loan' && data.category === 'Other') {
-        return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
-    }
-    if (data.purpose && categoryOptions[data.purpose as Exclude<LeadPurpose, 'Other' | 'Loan'>] && data.category === 'Other') {
+    // This logic might need refinement depending on how categories are structured per purpose
+    if (data.category === 'Other') {
         return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
     }
     return true;
@@ -159,9 +147,9 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
   const leadConfiguration = settings.leadConfiguration || {};
   const approvalProcessDisabled = leadConfiguration.approvalProcessDisabled || false;
   
-  const leadPurposes = (leadConfiguration.purposes || [])
-    .filter(p => p.enabled)
-    .map(p => p.name);
+  const leadPurposes = useMemo(() => 
+    (leadConfiguration.purposes || []).filter(p => p.enabled)
+  , [leadConfiguration.purposes]);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -224,18 +212,25 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
   };
 
   const { formState: { isValid }, setValue } = form;
-  const selectedPurpose = form.watch("purpose");
+  const selectedPurposeName = form.watch("purpose");
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
   const hasReferral = form.watch("hasReferral");
 
+  const availableCategories = useMemo(() => {
+      if (!selectedPurposeName) return [];
+      const purpose = leadPurposes.find(p => p.name === selectedPurposeName);
+      return (purpose?.categories || []).filter(c => c.enabled);
+  }, [selectedPurposeName, leadPurposes]);
+
+
   useEffect(() => {
-    if (selectedPurpose === 'Loan') {
+    if (selectedPurposeName === 'Loan') {
         form.setValue('isLoan', true);
     } else {
         form.setValue('isLoan', false);
     }
-  }, [selectedPurpose, form]);
+  }, [selectedPurposeName, form]);
   
   const handleGenerateTemplate = () => {
         const template = `
@@ -288,8 +283,8 @@ Referral Phone:
             // Auto-fill all simple fields
             if (details.headline) setValue('headline', details.headline);
             if (details.purpose) {
-                const matchingPurpose = leadPurposes.find(p => p.toLowerCase() === details.purpose?.toLowerCase());
-                if (matchingPurpose) setValue('purpose', matchingPurpose);
+                const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
+                if (matchingPurpose) setValue('purpose', matchingPurpose.name);
             }
             if (details.category) setValue('category', details.category);
             if (details.amount) setValue('helpRequested', details.amount);
@@ -815,7 +810,7 @@ Referral Phone:
                                 form.setValue('category', '');
                                 form.setValue('otherCategoryDetail', '');
                                 form.setValue('otherPurposeDetail', '');
-                            }} defaultValue={field.value}>
+                            }} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a purpose" />
@@ -823,7 +818,7 @@ Referral Phone:
                                 </FormControl>
                                 <SelectContent>
                                 {leadPurposes.map(purpose => (
-                                    <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                                    <SelectItem key={purpose.id} value={purpose.name}>{purpose.name}</SelectItem>
                                 ))}
                                 </SelectContent>
                             </Select>
@@ -832,22 +827,22 @@ Referral Phone:
                             </FormItem>
                         )}
                     />
-                    {selectedPurpose && selectedPurpose !== 'Other' && (
+                    {selectedPurposeName && selectedPurposeName !== 'Other' && (
                         <FormField
                             control={form.control}
                             name="category"
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a category" />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    {(selectedPurpose === 'Loan' ? loanCategoryOptions : categoryOptions[selectedPurpose as Exclude<LeadPurpose, 'Other' | 'Loan'>]).map(sub => (
-                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                    {(availableCategories || []).map(cat => (
+                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                     ))}
                                     </SelectContent>
                                 </Select>
@@ -858,7 +853,7 @@ Referral Phone:
                     )}
                 </div>
                 
-                {selectedPurpose === 'Other' && (
+                {selectedPurposeName === 'Other' && (
                     <FormField
                         control={form.control}
                         name="otherPurposeDetail"
@@ -1075,7 +1070,7 @@ Referral Phone:
                 )}
                 />
         
-                {selectedPurpose === 'Loan' && (
+                {selectedPurposeName === 'Loan' && (
                     <FormField
                         control={form.control}
                         name="isLoan"
