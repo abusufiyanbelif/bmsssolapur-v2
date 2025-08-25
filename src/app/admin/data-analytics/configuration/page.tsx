@@ -27,7 +27,7 @@ export default async function DataAnalyticsConfigurationPage() {
                 <CardHeader>
                     <CardTitle>Dashboard Card Visibility</CardTitle>
                     <CardDescription>
-                       Click "Edit Settings" to configure which cards are visible on the Analytics Dashboard for each user role.
+                       Click "Edit Settings" to configure which analytics sections are visible on the dashboard for each admin role.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

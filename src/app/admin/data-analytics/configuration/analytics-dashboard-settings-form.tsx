@@ -24,16 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 const allAppRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin"];
 
 const cardDefinitions: { id: keyof AnalyticsDashboardSettings, label: string, description: string }[] = [
-    { id: 'mainMetrics', label: 'Main Metrics', description: 'Overall stats like Total Raised, Distributed, etc.' },
-    { id: 'fundsInHand', label: 'Funds in Hand Card', description: 'A separate card showing available funds.' },
-    { id: 'donationsChart', label: 'Donations Overview Chart', description: 'The main bar chart showing monthly donation totals.' },
-    { id: 'leadBreakdown', label: 'Lead Purpose Breakdown', description: 'Shows a summary of all leads organized by their primary purpose.' },
-    { id: 'beneficiaryBreakdown', label: 'Beneficiaries Breakdown', description: 'Shows counts of different beneficiary types helped.' },
-    { id: 'campaignBreakdown', label: 'Campaigns Breakdown', description: 'Shows counts of active, completed, and upcoming campaigns.' },
-    { id: 'donationTypeBreakdown', label: 'Donation Type Breakdown', description: 'Shows total amounts received per donation type (Zakat, Sadaqah, etc.).' },
-    { id: 'topDonors', label: 'Top Donors List', description: 'Shows a list of the top donors.' },
-    { id: 'topDonations', label: 'Top Donations List', description: 'Shows a list of the largest recent donations.' },
-    { id: 'recentCampaigns', label: 'Recent Campaigns Table', description: 'A table listing the most recent campaigns.' },
+    { id: 'financialPerformance', label: 'Financial Performance Section', description: 'Controls visibility for the entire group of cards including Raised vs. Goal, YTD Donations, etc.' },
 ];
 
 const formSchema = z.object({

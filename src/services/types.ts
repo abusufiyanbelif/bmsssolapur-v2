@@ -340,7 +340,8 @@ export interface DashboardSettings {
 }
 
 export interface AnalyticsDashboardSettings {
-    [key: string]: CardVisibility;
+    financialPerformance?: CardVisibility;
+    [key: string]: CardVisibility | undefined;
 }
 
 export interface AppSettings {
