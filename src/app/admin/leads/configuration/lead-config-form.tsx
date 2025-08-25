@@ -179,25 +179,25 @@ export function LeadConfigForm({ allPurposes, allRoles, currentConfig, onUpdate 
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-                {form.watch('disabledPurposes').map((_, index) => (
+                {allPurposes.map((purpose) => (
                     <FormField
-                        key={index}
+                        key={purpose}
                         control={form.control}
-                        name={`disabledPurposes.${index}`}
+                        name="disabledPurposes"
                         render={({ field }) => (
                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                 <div className="space-y-0.5">
-                                    <FormLabel className="text-base">{allPurposes[index]}</FormLabel>
+                                    <FormLabel className="text-base">{purpose}</FormLabel>
                                 </div>
                                 <FormControl>
                                     <Switch
-                                        checked={!field.value} // Visually, "on" means enabled
+                                        checked={!field.value.includes(purpose)}
                                         onCheckedChange={(checked) => {
                                             const currentDisabled = form.getValues('disabledPurposes');
-                                            const newDisabled = checked
-                                                ? currentDisabled.filter(p => p !== allPurposes[index])
-                                                : [...currentDisabled, allPurposes[index]];
-                                            form.setValue('disabledPurposes', newDisabled, { shouldDirty: true });
+                                            const newDisabled = !checked
+                                                ? [...currentDisabled, purpose]
+                                                : currentDisabled.filter(p => p !== purpose);
+                                            field.onChange(newDisabled);
                                         }}
                                     />
                                 </FormControl>
