@@ -20,7 +20,7 @@ import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download, Check, AlertTriangle as AlertTriangleIcon } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download, Check, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -395,7 +395,7 @@ function DonationsPageContent() {
                                      <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <AlertTriangleIcon className="h-4 w-4 text-amber-500" />
+                                                <AlertTriangle className="h-4 w-4 text-amber-500" />
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>This amount is unusually {donation.amount < MIN_DONATION_THRESHOLD ? 'low' : 'high'}. Please verify.</p>
@@ -510,8 +510,8 @@ function DonationsPageContent() {
                             <Checkbox
                                 className="mt-1.5 flex-shrink-0"
                                 checked={selectedDonations.includes(donation.id!)}
-                                onCheckedChange={(checked) => {
-                                    setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!));
+                                onCheckedChange={checked => {
+                                    setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!))
                                 }}
                                 aria-label="Select card"
                             />
@@ -530,7 +530,7 @@ function DonationsPageContent() {
                                                 )}
                                                 {isAmountAnomaly && (
                                                     <TooltipProvider>
-                                                        <Tooltip><TooltipTrigger><AlertTriangleIcon className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Amount anomaly</p></TooltipContent></Tooltip>
+                                                        <Tooltip><TooltipTrigger><AlertTriangle className="h-4 w-4 text-amber-500" /></TooltipTrigger><TooltipContent><p>Amount anomaly</p></TooltipContent></Tooltip>
                                                     </TooltipProvider>
                                                 )}
                                             </div>

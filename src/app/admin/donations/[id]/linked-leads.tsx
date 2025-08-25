@@ -19,7 +19,22 @@ export function LinkedLeads({ donation, leads }: LinkedLeadsProps) {
     const leadsById = new Map(leads.map(lead => [lead.id, lead]));
 
     if (allocations.length === 0) {
-        return null; // Don't render the card if there are no allocations
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <HandHeart />
+                        Linked Leads & Allocations
+                    </CardTitle>
+                    <CardDescription>
+                        This donation has not yet been allocated to any specific help cases.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground text-center py-4">No allocations found.</p>
+                </CardContent>
+            </Card>
+        )
     }
 
     return (
@@ -72,4 +87,3 @@ export function LinkedLeads({ donation, leads }: LinkedLeadsProps) {
         </Card>
     );
 }
-

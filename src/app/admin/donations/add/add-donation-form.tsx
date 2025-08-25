@@ -168,7 +168,7 @@ function AvailabilityFeedback({ state, fieldName }: { state: AvailabilityState, 
     return null;
 }
 
-const initialFormValues: AddDonationFormValues = {
+const initialFormValues: Partial<AddDonationFormValues> = {
     isAnonymous: false,
     totalTransactionAmount: 0,
     amount: 0,

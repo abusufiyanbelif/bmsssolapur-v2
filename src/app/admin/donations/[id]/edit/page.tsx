@@ -2,31 +2,30 @@
 
 import { getDonation } from "@/services/donation-service";
 import { notFound } from "next/navigation";
-import { CampaignForm } from "./campaign-form";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getLeadsByCampaignId } from "@/services/lead-service";
-import { getDonationsByCampaignId } from "@/services/donation-service";
-import { getCampaignActivity } from "@/services/activity-log-service";
-import { LinkedLeadsCard } from "./linked-leads-card";
-import { LinkedDonationsCard } from "./linked-donations-card";
-import { CampaignAuditTrail } from "./campaign-audit-trail";
-import { Separator } from "@/components/ui/separator";
+import { getUser } from "@/services/user-service";
+import { getDonationActivity } from "@/services/activity-log-service";
+import { LinkedLeads } from "../linked-leads";
+import { AuditTrail } from "../audit-trail";
+import { getAllLeads } from "@/services/lead-service";
 
-export default async function EditCampaignPage({ params }: { params: { id: string } }) {
-    const campaign = await getDonation(decodeURIComponent(params.id));
+export default async function EditDonationPage({ params }: { params: { id: string } }) {
+    const donation = await getDonation(decodeURIComponent(params.id));
 
-    if (!campaign) {
+    if (!donation) {
         notFound();
     }
     
-    const [linkedLeads, linkedDonations, activityLogs] = await Promise.all([
-        [], // getLeadsByCampaignId(params.id),
-        [], // getDonationsByCampaignId(params.id),
-        [], // getCampaignActivity(params.id),
+    // Fetch associated data
+    const [donor, activityLogs, allLeads] = await Promise.all([
+        getUser(donation.donorId),
+        getDonationActivity(donation.id!),
+        getAllLeads()
     ]);
 
+    // In a real app, you would have a form here to edit the donation.
+    // For now, we will just display the details.
     
     return (
         <div className="flex-1 space-y-6">
@@ -35,8 +34,18 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
                 Back to All Donations
             </Link>
             
-            <pre>{JSON.stringify(campaign, null, 2)}</pre>
-            
+            <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Placeholder for EditDonationForm */}
+                    <pre className="p-4 bg-muted rounded-lg text-sm">
+                        {JSON.stringify({donation, donor}, null, 2)}
+                    </pre>
+                    <LinkedLeads donation={donation} leads={allLeads} />
+                </div>
+                 <div className="lg:col-span-1">
+                    <AuditTrail activityLogs={activityLogs} />
+                 </div>
+            </div>
         </div>
     );
 }

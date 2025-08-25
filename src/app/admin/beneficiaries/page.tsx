@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check, Edit } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check, Edit, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -32,6 +32,7 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -313,6 +314,7 @@ function BeneficiariesPageContent() {
             <TableBody>
                 {paginatedBeneficiaries.map((user, index) => {
                      const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
+                     const isMissingDocs = !user.aadhaarNumber && !user.panNumber;
                      return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
                          <TableCell padding="checkbox">
@@ -329,9 +331,23 @@ function BeneficiariesPageContent() {
                         </TableCell>
                         <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
                         <TableCell className="font-medium">
-                            <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
-                                {user.name}
-                            </Link>
+                             <div className="flex items-center gap-2">
+                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                                    {user.name}
+                                </Link>
+                                {isMissingDocs && (
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Missing Aadhaar/PAN number.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                             </div>
                              {user.fatherName && <p className="text-xs text-muted-foreground">s/o {user.fatherName}</p>}
                              {user.isAnonymousAsBeneficiary && <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
                         </TableCell>

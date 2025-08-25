@@ -86,7 +86,7 @@ export async function handleAddDonation(
         isAnonymous: formData.get("isAnonymous") === 'true', // Flag for public display logic
         amount: parseFloat(formData.get("amount") as string),
         type: formData.get("type") as DonationType,
-        purpose: formData.get("purpose") ? formData.get("purpose") as DonationPurpose : undefined,
+        purpose: formData.get("purpose") as DonationPurpose, // Now required
         category: formData.get("category") as string | undefined,
         status: "Pending verification",
         transactionId: transactionId,
