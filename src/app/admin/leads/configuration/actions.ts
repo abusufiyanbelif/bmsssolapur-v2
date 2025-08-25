@@ -18,6 +18,7 @@ export async function handleUpdateLeadConfiguration(
   disabledPurposes: string[],
   approvalProcessDisabled: boolean,
   roleBasedCreationEnabled: boolean,
+  allowBeneficiaryRequests: boolean,
   leadCreatorRoles: UserRole[]
 ): Promise<FormState> {
   
@@ -27,6 +28,7 @@ export async function handleUpdateLeadConfiguration(
         disabledPurposes,
         approvalProcessDisabled,
         roleBasedCreationEnabled,
+        allowBeneficiaryRequests,
         leadCreatorRoles,
       }
     };
@@ -34,7 +36,9 @@ export async function handleUpdateLeadConfiguration(
     await updateAppSettings(updates);
     
     revalidatePath("/admin/leads/configuration");
-    revalidatePath("/admin/leads/add"); // Revalidate to ensure form gets new settings
+    revalidatePath("/admin/leads/add");
+    revalidatePath("/request-help"); 
+    revalidatePath("/beneficiary");
 
     return { success: true };
   } catch (e) {

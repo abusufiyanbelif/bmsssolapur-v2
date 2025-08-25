@@ -75,6 +75,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         approvalProcessDisabled: true,
         roleBasedCreationEnabled: false,
         leadCreatorRoles: ['Admin', 'Super Admin'],
+        allowBeneficiaryRequests: true, // New default setting
         workflow: allLeadStatuses.reduce((acc, status) => {
             acc[status] = allLeadStatuses.filter(s => s !== status); // Default: allow transition to any other status
             return acc;

@@ -391,6 +391,7 @@ export interface AppSettings {
         approvalProcessDisabled?: boolean;
         roleBasedCreationEnabled?: boolean;
         leadCreatorRoles?: UserRole[];
+        allowBeneficiaryRequests?: boolean;
     };
     dashboard?: DashboardSettings;
     analyticsDashboard?: AnalyticsDashboardSettings;

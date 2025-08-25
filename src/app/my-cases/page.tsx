@@ -13,7 +13,8 @@ import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Lead, LeadAction } from "@/services/types";
+import type { Lead, LeadAction, AppSettings } from "@/services/types";
+import { getAppSettings } from "@/services/app-settings-service";
 
 const statusColors: Record<LeadAction, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -35,6 +36,7 @@ export default function MyCasesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string |null>(null);
     const [userId, setUserId] = useState<string | null>(null);
+    const [settings, setSettings] = useState<AppSettings | null>(null);
 
     // Sorting state
     const [sortColumn, setSortColumn] = useState<SortableColumn>('createdAt');
@@ -52,6 +54,8 @@ export default function MyCasesPage() {
             setError("You must be logged in to view your cases.");
             setLoading(false);
         }
+        
+        getAppSettings().then(setSettings).catch(() => setError("Could not load app settings."));
     }, []);
 
     useEffect(() => {
@@ -225,7 +229,7 @@ export default function MyCasesPage() {
 
 
     const renderContent = () => {
-        if (loading) {
+        if (loading || !settings) {
             return (
                 <div className="flex items-center justify-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -248,6 +252,11 @@ export default function MyCasesPage() {
             return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">You have not submitted any help requests.</p>
+                     {settings.leadConfiguration?.allowBeneficiaryRequests && (
+                        <Button asChild className="mt-4">
+                            <Link href="/request-help">Request Help Now</Link>
+                        </Button>
+                    )}
                 </div>
             )
         }
@@ -259,17 +268,21 @@ export default function MyCasesPage() {
             </>
         )
     }
+  
+  const allowBeneficiaryRequests = settings?.leadConfiguration?.allowBeneficiaryRequests ?? true;
 
   return (
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Help Requests</h2>
-             <Button asChild>
-                <Link href="/request-help">
-                    <FilePlus2 className="mr-2 h-4 w-4" />
-                    Request Help
-                </Link>
-            </Button>
+             {allowBeneficiaryRequests && (
+                <Button asChild>
+                    <Link href="/request-help">
+                        <FilePlus2 className="mr-2 h-4 w-4" />
+                        Request Help
+                    </Link>
+                </Button>
+            )}
         </div>
       <Card>
         <CardHeader>

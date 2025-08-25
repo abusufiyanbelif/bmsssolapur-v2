@@ -36,6 +36,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
     const [mainMetrics, setMainMetrics] = useState<any[]>([]);
     
     const dashboardSettings = settings.dashboard;
+    const allowBeneficiaryRequests = settings.leadConfiguration?.allowBeneficiaryRequests ?? true;
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -279,9 +280,11 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                         </CardDescription>
                     </div>
                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button asChild variant="secondary">
-                            <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
-                        </Button>
+                        {allowBeneficiaryRequests && (
+                            <Button asChild variant="secondary">
+                                <Link href="/request-help"><FilePlus2 className="mr-2" />Request Help</Link>
+                            </Button>
+                        )}
                     </div>
                 </div>
             </CardHeader>
@@ -294,9 +297,11 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                 ) : (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">You have not submitted any help requests.</p>
-                    <Button asChild className="mt-4">
-                        <Link href="/request-help">Request Help Now</Link>
-                    </Button>
+                     {allowBeneficiaryRequests && (
+                        <Button asChild className="mt-4">
+                            <Link href="/request-help">Request Help Now</Link>
+                        </Button>
+                    )}
                 </div>
                 )}
             </CardContent>

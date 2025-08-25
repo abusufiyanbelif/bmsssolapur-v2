@@ -27,6 +27,7 @@ const formSchema = z.object({
     disabledPurposes: z.array(z.string()),
     approvalProcessDisabled: z.boolean().default(false),
     roleBasedCreationEnabled: z.boolean().default(false),
+    allowBeneficiaryRequests: z.boolean().default(true),
     leadCreatorRoles: z.array(z.string()),
 });
 
@@ -48,6 +49,7 @@ export function LeadConfigForm({ allPurposes, allRoles, currentConfig, onUpdate 
       disabledPurposes: currentConfig?.disabledPurposes || [],
       approvalProcessDisabled: currentConfig?.approvalProcessDisabled || false,
       roleBasedCreationEnabled: currentConfig?.roleBasedCreationEnabled || false,
+      allowBeneficiaryRequests: currentConfig?.allowBeneficiaryRequests ?? true,
       leadCreatorRoles: currentConfig?.leadCreatorRoles || [],
     },
   });
@@ -78,6 +80,19 @@ export function LeadConfigForm({ allPurposes, allRoles, currentConfig, onUpdate 
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
+                <FormField
+                    control={form.control}
+                    name="allowBeneficiaryRequests"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">Allow Beneficiaries to Request Help</FormLabel>
+                                <FormDescription>If enabled, beneficiaries will see a "Request Help" button. Disable this to temporarily stop new requests.</FormDescription>
+                            </div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="approvalProcessDisabled"
