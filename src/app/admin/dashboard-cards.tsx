@@ -1,11 +1,9 @@
-
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { User, Lead, Campaign, Donation, DonationType, LeadPurpose } from "@/services/types";
-import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText } from "lucide-react";
+import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
@@ -16,6 +14,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { useState, useEffect, useMemo } from 'react';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?: boolean }) => {
@@ -76,18 +77,52 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
     )
 }
 
-export const FundsInHandCard = async ({ isPublicView = false }: { isPublicView?: boolean }) => {
+export const FundsInHandCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
+    const [stats, setStats] = useState({ pendingToDisburse: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (isPublicView) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const [allDonations, allLeads] = await Promise.all([getAllDonations(), getAllLeads()]);
+                const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+                const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+                const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
+                setStats({ pendingToDisburse });
+            } catch (error) {
+                console.error("Failed to fetch funds in hand stats", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [isPublicView]);
+    
     if (isPublicView) {
         return null;
     }
     
-     const [allDonations, allLeads] = await Promise.all([
-        getAllDonations(),
-        getAllLeads(),
-    ]);
-    const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
-    const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
-    const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
+    if (loading) {
+        return (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                 <Card className="h-full bg-primary/10">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-8 w-3/4 mb-1" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
 
     return (
          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -98,7 +133,7 @@ export const FundsInHandCard = async ({ isPublicView = false }: { isPublicView?:
                     <Banknote className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                    <div className="text-2xl font-bold">₹{pendingToDisburse.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">₹{stats.pendingToDisburse.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Verified funds ready to be disbursed.</p>
                     </CardContent>
                 </Card>
@@ -311,60 +346,96 @@ export const LeadsReadyToPublishCard = async () => {
     )
 }
 
-export const TopDonorsCard = async () => {
-    const allDonations = await getAllDonations();
-    const donationsByDonor = allDonations
-        .filter(d => (d.status === 'Verified' || d.status === 'Allocated') && !d.isAnonymous)
-        .reduce((acc, donation) => {
-            if (!acc[donation.donorName]) {
-                acc[donation.donorName] = { total: 0, count: 0, id: donation.donorId };
-            }
-            acc[donation.donorName].total += donation.amount;
-            acc[donation.donorName].count += 1;
-            return acc;
-        }, {} as Record<string, { total: number, count: number, id: string }>);
+export const TopDonorsCard = () => {
+    const [donors, setDonors] = useState<{ name: string; total: number; count: number; id: string; }[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
-    const topDonors = Object.entries(donationsByDonor)
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5);
+    useEffect(() => {
+        const fetchDonors = async () => {
+            setLoading(true);
+            try {
+                const allDonations = await getAllDonations();
+                const donationsByDonor = allDonations
+                    .filter(d => (d.status === 'Verified' || d.status === 'Allocated') && !d.isAnonymous)
+                    .reduce((acc, donation) => {
+                        if (!acc[donation.donorName]) {
+                            acc[donation.donorName] = { total: 0, count: 0, id: donation.donorId };
+                        }
+                        acc[donation.donorName].total += donation.amount;
+                        acc[donation.donorName].count += 1;
+                        return acc;
+                    }, {} as Record<string, { total: number, count: number, id: string }>);
+
+                const sortedDonors = Object.entries(donationsByDonor)
+                    .map(([name, data]) => ({ name, ...data }))
+                    .sort((a, b) => b.total - a.total);
+                setDonors(sortedDonors);
+            } catch (error) {
+                console.error("Failed to fetch top donors", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDonors();
+    }, []);
+
+    const totalPages = Math.ceil(donors.length / itemsPerPage);
+    const paginatedDonors = donors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
         <Card className="col-span-4 md:col-span-3">
-        <CardHeader>
-            <CardTitle className="font-headline">Top Donors</CardTitle>
-                <CardDescription>
-                Our most generous supporters. Thank you for your contributions!
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {topDonors.length > 0 ? (
-                <div className="space-y-4">
-                    {topDonors.map(donor => (
-                            <div key={donor.id} className="flex items-center rounded-lg border p-4">
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={`https://placehold.co/100x100.png?text=${donor.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}`} alt={donor.name} data-ai-hint="male portrait" />
-                                <AvatarFallback>{donor.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div className="ml-4 flex-grow">
-                                <p className="text-sm font-medium leading-none">{donor.name}</p>
-                                <p className="text-sm text-muted-foreground">{donor.count} donations</p>
-                            </div>
-                            <div className="ml-4 font-semibold text-lg">₹{donor.total.toLocaleString()}</div>
+            <CardHeader>
+                <CardTitle className="font-headline">Top Donors</CardTitle>
+                <CardDescription>Our most generous supporters. Thank you for your contributions!</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="space-y-4">
+                        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+                    </div>
+                ) : donors.length > 0 ? (
+                    <ScrollArea className="h-80 pr-4">
+                        <div className="space-y-4">
+                            {paginatedDonors.map(donor => (
+                                <div key={donor.id} className="flex items-center rounded-lg border p-4">
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={`https://placehold.co/100x100.png?text=${donor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}`} alt={donor.name} data-ai-hint="male portrait" />
+                                        <AvatarFallback>{donor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="ml-4 flex-grow">
+                                        <p className="text-sm font-medium leading-none">{donor.name}</p>
+                                        <p className="text-sm text-muted-foreground">{donor.count} donations</p>
+                                    </div>
+                                    <div className="ml-4 font-semibold text-lg">₹{donor.total.toLocaleString()}</div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-10 h-full flex flex-col items-center justify-center">
-                    <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-medium">Awaiting Donations</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">Donation data is not yet available.</p>
-                </div>
-            )}
-        </CardContent>
+                    </ScrollArea>
+                ) : (
+                    <div className="text-center py-10 h-full flex flex-col items-center justify-center">
+                        <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-4 text-lg font-medium">Awaiting Donations</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">Donation data is not yet available.</p>
+                    </div>
+                )}
+            </CardContent>
+             <CardFooter className="justify-end gap-2">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="sr-only">Previous Page</span>
+                </Button>
+                 <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                    <ChevronRight className="h-4 w-4" />
+                    <span className="sr-only">Next Page</span>
+                </Button>
+            </CardFooter>
         </Card>
-    )
-}
+    );
+};
+
 
 export const RecentCampaignsCard = async () => {
     const [allCampaigns, allLeads] = await Promise.all([getAllCampaigns(), getAllLeads()]);
@@ -490,7 +561,18 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
 
 type TopDonation = Donation & { anonymousDonorId?: string };
 
-export const TopDonationsCard = ({ donations, isPublicView = false }: { donations: TopDonation[], isPublicView?: boolean }) => {
+export const TopDonationsCard = ({ donations: allDonations, isPublicView = false }: { donations: TopDonation[], isPublicView?: boolean }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+    const topDonations = useMemo(() => {
+        return allDonations
+            .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+            .sort((a, b) => b.amount - a.amount);
+    }, [allDonations]);
+
+    const totalPages = Math.ceil(topDonations.length / itemsPerPage);
+    const paginatedDonations = topDonations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const CardRow = ({ children, donationId }: { children: React.ReactNode, donationId: string }) => {
         if (isPublicView) {
@@ -509,42 +591,42 @@ export const TopDonationsCard = ({ donations, isPublicView = false }: { donation
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline">Top Donations</CardTitle>
-                <CardDescription>
-                    The largest recent contributions to our cause.
-                </CardDescription>
+                <CardDescription>The largest recent contributions to our cause.</CardDescription>
             </CardHeader>
             <CardContent>
-                {donations.length > 0 ? (
-                    <div className="space-y-4">
-                        {donations.map((donation, index) => {
-                             let displayName: string;
-                            let avatarText: string;
+                {topDonations.length > 0 ? (
+                    <ScrollArea className="h-80 pr-4">
+                        <div className="space-y-4">
+                            {paginatedDonations.map((donation, index) => {
+                                let displayName: string;
+                                let avatarText: string;
 
-                            if (isPublicView) {
-                                displayName = donation.anonymousDonorId || `Anonymous Donor #${index + 1}`;
-                                avatarText = `D${index + 1}`;
-                            } else {
-                                displayName = donation.donorName;
-                                avatarText = donation.donorName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                            }
-                            
-                            return (
-                                <CardRow key={donation.id} donationId={donation.id!}>
-                                    <Avatar className="h-9 w-9">
-                                        <AvatarImage src={`https://placehold.co/100x100.png?text=${avatarText}`} alt={displayName} data-ai-hint="abstract geometric" />
-                                        <AvatarFallback>{avatarText}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="ml-4 flex-grow">
-                                        <p className="text-sm font-medium leading-none">{displayName}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {format(donation.donationDate as Date, "dd MMM, yyyy")}
-                                        </p>
-                                    </div>
-                                    <div className="ml-4 font-semibold text-lg">₹{donation.amount.toLocaleString()}</div>
-                                </CardRow>
-                            );
-                        })}
-                    </div>
+                                if (isPublicView) {
+                                    displayName = donation.anonymousDonorId || `Anonymous Donor #${index + 1}`;
+                                    avatarText = `D${index + 1}`;
+                                } else {
+                                    displayName = donation.donorName;
+                                    avatarText = donation.donorName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                                }
+                                
+                                return (
+                                    <CardRow key={donation.id} donationId={donation.id!}>
+                                        <Avatar className="h-9 w-9">
+                                            <AvatarImage src={`https://placehold.co/100x100.png?text=${avatarText}`} alt={displayName} data-ai-hint="abstract geometric" />
+                                            <AvatarFallback>{avatarText}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="ml-4 flex-grow">
+                                            <p className="text-sm font-medium leading-none">{displayName}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {format(donation.donationDate as Date, "dd MMM, yyyy")}
+                                            </p>
+                                        </div>
+                                        <div className="ml-4 font-semibold text-lg">₹{donation.amount.toLocaleString()}</div>
+                                    </CardRow>
+                                );
+                            })}
+                        </div>
+                    </ScrollArea>
                 ) : (
                     <div className="text-center py-10 h-full flex flex-col items-center justify-center">
                         <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -553,6 +635,17 @@ export const TopDonationsCard = ({ donations, isPublicView = false }: { donation
                     </div>
                 )}
             </CardContent>
+            <CardFooter className="justify-end gap-2">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="sr-only">Previous Page</span>
+                </Button>
+                <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                    <ChevronRight className="h-4 w-4" />
+                    <span className="sr-only">Next Page</span>
+                </Button>
+            </CardFooter>
         </Card>
     );
 };
