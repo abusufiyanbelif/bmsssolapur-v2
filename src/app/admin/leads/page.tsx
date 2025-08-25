@@ -1,4 +1,5 @@
 
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -28,18 +29,19 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
-import type { LeadPriority, LeadPurpose, LeadVerificationStatus, LeadStatus, LeadAction } from "@/services/types";
+import type { LeadPriority, LeadPurpose, LeadVerificationStatus, LeadStatus, LeadAction, AppSettings } from "@/services/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/actions";
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getAppSettings } from "@/services/app-settings-service";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
-const allLeadPurposes: (LeadPurpose | 'all')[] = ['all', 'Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'];
+
 const categoryOptions: Record<string, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
@@ -116,6 +118,7 @@ function LeadsPageContent() {
 
     const [leads, setLeads] = useState<EnrichedLead[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [settings, setSettings] = useState<AppSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
@@ -148,16 +151,25 @@ function LeadsPageContent() {
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    
+    const allLeadPurposes = useMemo(() => {
+        return (settings?.leadConfiguration?.purposes || [])
+            .filter(p => p.enabled)
+            .map(p => p.name) || [];
+    }, [settings]);
+
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [fetchedLeads, fetchedUsers] = await Promise.all([
+            const [fetchedLeads, fetchedUsers, fetchedSettings] = await Promise.all([
                 getAllLeads(),
-                getAllUsers()
+                getAllUsers(),
+                getAppSettings(),
             ]);
             setLeads(fetchedLeads);
             setUsers(fetchedUsers);
+            setSettings(fetchedSettings);
             setError(null);
         } catch (e) {
             setError("Failed to fetch data. Please try again later.");
@@ -838,6 +850,7 @@ Referral Phone:
                         <Select value={purposeInput} onValueChange={(v) => { setPurposeInput(v); setCategoryInput('all'); }}>
                             <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
                             <SelectContent>
+                                 <SelectItem value="all">All Purposes</SelectItem>
                                 {allLeadPurposes.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}
                             </SelectContent>
                         </Select>

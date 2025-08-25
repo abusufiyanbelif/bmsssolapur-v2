@@ -386,7 +386,7 @@ export interface AppSettings {
         stripe: GatewayConfig;
     };
     leadConfiguration?: {
-        disabledPurposes: string[];
+        purposes: { id: string; name: string; enabled: boolean }[];
         workflow?: Record<LeadStatus, LeadStatus[]>;
         approvalProcessDisabled?: boolean;
         roleBasedCreationEnabled?: boolean;

@@ -52,15 +52,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { getUserByPhone } from "@/services/user-service";
 
 
-const allLeadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
-const categoryOptions: Record<Exclude<LeadPurpose, 'Other' | 'Loan'>, string[]> = {
+const categoryOptions: Record<string, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
     'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
     'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
     'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
+    'Loan': ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'],
 };
 
 const loanCategoryOptions = ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'];
@@ -84,7 +84,7 @@ const formSchema = z.object({
   referredByUserName: z.string().optional(),
   headline: z.string().min(10, "Headline must be at least 10 characters.").max(100, "Headline cannot exceed 100 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
-  purpose: z.enum(allLeadPurposes),
+  purpose: z.string().min(1, "Purpose is required."),
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
@@ -157,10 +157,11 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
   
   const leadConfiguration = settings.leadConfiguration || {};
-  const disabledPurposes = leadConfiguration.disabledPurposes || [];
   const approvalProcessDisabled = leadConfiguration.approvalProcessDisabled || false;
   
-  const leadPurposes = allLeadPurposes.filter(p => !disabledPurposes.includes(p));
+  const leadPurposes = (leadConfiguration.purposes || [])
+    .filter(p => p.enabled)
+    .map(p => p.name);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -287,7 +288,7 @@ Referral Phone:
             // Auto-fill all simple fields
             if (details.headline) setValue('headline', details.headline);
             if (details.purpose) {
-                const matchingPurpose = allLeadPurposes.find(p => p.toLowerCase() === details.purpose?.toLowerCase());
+                const matchingPurpose = leadPurposes.find(p => p.toLowerCase() === details.purpose?.toLowerCase());
                 if (matchingPurpose) setValue('purpose', matchingPurpose);
             }
             if (details.category) setValue('category', details.category);
@@ -362,6 +363,9 @@ Referral Phone:
     if(values.hasReferral && values.referredByUserId) {
         formData.append("referredByUserId", values.referredByUserId);
         formData.append("referredByUserName", values.referredByUserName || '');
+    } else {
+        formData.append("referredByUserId", "");
+        formData.append("referredByUserName", "");
     }
     if(values.headline) formData.append("headline", values.headline);
     if(values.story) formData.append("story", values.story);
@@ -373,7 +377,7 @@ Referral Phone:
     values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
     formData.append("helpRequested", String(values.helpRequested));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
-    formData.append("isLoan", values.isLoan ? "on" : "off");
+    if(values.isLoan) formData.append("isLoan", "on");
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
     if(values.verificationDocument) formData.append("verificationDocument", values.verificationDocument);
     if (forceCreate) {
@@ -800,33 +804,33 @@ Referral Phone:
                     />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <FormField
-                    control={form.control}
-                    name="purpose"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Lead Purpose</FormLabel>
-                        <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('category', ''); // Reset category on purpose change
-                            form.setValue('otherCategoryDetail', '');
-                            form.setValue('otherPurposeDetail', '');
-                        }} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a purpose" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {leadPurposes.map(purpose => (
-                                <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormDescription>The main reason for the help request.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                     <FormField
+                        control={form.control}
+                        name="purpose"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Lead Purpose</FormLabel>
+                            <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                form.setValue('category', '');
+                                form.setValue('otherCategoryDetail', '');
+                                form.setValue('otherPurposeDetail', '');
+                            }} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a purpose" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {leadPurposes.map(purpose => (
+                                    <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormDescription>The main reason for the help request.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                     />
                     {selectedPurpose && selectedPurpose !== 'Other' && (
                         <FormField
