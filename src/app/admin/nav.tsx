@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link"
@@ -140,6 +139,17 @@ const allNavItems: NavItem[] = [
                     { href: "/admin/user-management/privileges", label: "User Privileges", icon: KeySquare, allowedRoles: ["Super Admin"] },
                 ]
             },
+        ]
+    },
+    
+    // Super Admin - Data Profiling & Analytics (Collapsible)
+    { 
+        label: "Data Profiling & Analytics", 
+        icon: BrainCircuit, 
+        allowedRoles: ["Super Admin"],
+        subItems: [
+            { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard },
+            { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings },
         ]
     },
     

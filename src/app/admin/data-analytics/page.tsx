@@ -1,5 +1,4 @@
 
-
 import { Suspense } from "react";
 import { 
     MainMetricsCard, 
@@ -63,7 +62,7 @@ export default async function DataAnalyticsPage() {
             </Suspense>
         </div>
         <Suspense fallback={<div>Loading breakdown...</div>}>
-            <DonationTypeCard donations={allDonations} />
+            <DonationTypeCard donations={donations={allDonations}} />
         </Suspense>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <div className="col-span-full lg:col-span-4">

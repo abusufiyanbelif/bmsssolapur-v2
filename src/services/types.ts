@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -305,6 +304,19 @@ interface CardVisibility {
     visibleTo: UserRole[];
 }
 
+export interface PurposeCategory {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface LeadPurpose {
+    id: string;
+    name: string;
+    enabled: boolean;
+    categories?: PurposeCategory[];
+}
+
 export interface DashboardSettings {
     mainMetrics: CardVisibility;
     fundsInHand: CardVisibility;
@@ -386,7 +398,7 @@ export interface AppSettings {
         stripe: GatewayConfig;
     };
     leadConfiguration?: {
-        purposes: { id: string; name: string; enabled: boolean }[];
+        purposes: LeadPurpose[];
         workflow?: Record<LeadStatus, LeadStatus[]>;
         approvalProcessDisabled?: boolean;
         roleBasedCreationEnabled?: boolean;
