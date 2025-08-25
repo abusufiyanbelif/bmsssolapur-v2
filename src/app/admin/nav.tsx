@@ -37,7 +37,15 @@ const allNavItems: NavItem[] = [
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (common entry point)
-    { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
+    {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"],
+        subItems: [
+            { href: "/home", label: "Overview", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
+            { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: Settings, allowedRoles: ["Super Admin"] }
+        ]
+    },
     
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
@@ -161,7 +169,6 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Super Admin"],
         subItems: [
             { href: "/admin/settings", label: "General Settings" },
-            { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: LayoutDashboard },
             { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard },
             { href: "/admin/settings/notifications", label: "Notification Settings", icon: BellRing },
             { href: "/admin/seed", label: "Seed Database", icon: Database },
