@@ -1,7 +1,31 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Suspense } from "react";
+import { getAllCampaigns } from "@/services/campaign-service";
+import { getAllDonations } from "@/services/donation-service";
+import { FinancialPerformanceCards } from "./analytics-cards";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const CardSkeleton = () => (
+    <Card>
+        <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
+        <CardContent>
+            <Skeleton className="h-10 w-full" />
+        </CardContent>
+    </Card>
+);
+
 
 export default async function DataAnalyticsPage() {
+  const [allDonations, allCampaigns] = await Promise.all([
+      getAllDonations(),
+      getAllCampaigns(),
+  ]);
+
   return (
     <div className="flex-1 space-y-6">
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Data Profiling & Analytics</h2>
@@ -9,15 +33,16 @@ export default async function DataAnalyticsPage() {
           <CardHeader>
             <CardTitle>Analytics Dashboard</CardTitle>
             <CardDescription>
-              This space is reserved for future data profiling and analytics dashboards.
+              This space is reserved for data profiling and analytics dashboards.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground">Analytics components will be added here.</p>
-            </div>
+             <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
+                <FinancialPerformanceCards allDonations={allDonations} allCampaigns={allCampaigns} />
+            </Suspense>
           </CardContent>
         </Card>
     </div>
   );
 }
+
