@@ -1,23 +1,38 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings } from "lucide-react";
 
-export default function DataAnalyticsConfigurationPage() {
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAppSettings } from "@/services/app-settings-service";
+import { AnalyticsDashboardSettingsForm } from "./analytics-dashboard-settings-form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+
+export default async function DataAnalyticsConfigurationPage() {
+    const settings = await getAppSettings();
+
+    if (!settings) {
+         return (
+            <div className="flex-1 space-y-4">
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>Could not load application settings.</AlertDescription>
+                </Alert>
+            </div>
+        );
+    }
+
     return (
         <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Analytics Configuration</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Analytics Dashboard Settings</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Settings />
-                        Configuration
-                    </CardTitle>
+                    <CardTitle>Dashboard Card Visibility</CardTitle>
                     <CardDescription>
-                        Manage settings for the Data Profiling & Analytics module.
+                       Click "Edit Settings" to configure which cards are visible on the Analytics Dashboard for each user role.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">Configuration options for analytics will be available here in the future.</p>
+                   <AnalyticsDashboardSettingsForm settings={settings.analyticsDashboard} />
                 </CardContent>
             </Card>
         </div>

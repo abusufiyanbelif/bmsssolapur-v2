@@ -301,28 +301,35 @@ interface GatewayConfig {
     live: PaymentGatewayCredentials;
 }
 
-export interface DashboardSettings {
-    mainMetrics: { visibleTo: UserRole[] };
-    fundsInHand: { visibleTo: UserRole[] };
-    monthlyContributors: { visibleTo: UserRole[] };
-    monthlyPledge: { visibleTo: UserRole[] };
-    pendingLeads: { visibleTo: UserRole[] };
-    pendingDonations: { visibleTo: UserRole[] };
-    leadsReadyToPublish: { visibleTo: UserRole[] };
-    beneficiaryBreakdown: { visibleTo: UserRole[] };
-    campaignBreakdown: { visibleTo: UserRole[] };
-    leadBreakdown: { visibleTo: UserRole[] };
-    donationsChart: { visibleTo: UserRole[] };
-    topDonors: { visibleTo: UserRole[] };
-    recentCampaigns: { visibleTo: UserRole[] };
-    donationTypeBreakdown: { visibleTo: UserRole[] };
-    // Role-specific dashboards
-    donorContributionSummary: { visibleTo: UserRole[] };
-    donorImpactSummary: { visibleTo: UserRole[] };
-    beneficiarySummary: { visibleTo: UserRole[] };
-    referralSummary: { visibleTo: UserRole[] };
+interface CardVisibility {
+    visibleTo: UserRole[];
 }
 
+export interface DashboardSettings {
+    mainMetrics: CardVisibility;
+    fundsInHand: CardVisibility;
+    monthlyContributors: CardVisibility;
+    monthlyPledge: CardVisibility;
+    pendingLeads: CardVisibility;
+    pendingDonations: CardVisibility;
+    leadsReadyToPublish: CardVisibility;
+    beneficiaryBreakdown: CardVisibility;
+    campaignBreakdown: CardVisibility;
+    leadBreakdown: CardVisibility;
+    donationsChart: CardVisibility;
+    topDonors: CardVisibility;
+    recentCampaigns: CardVisibility;
+    donationTypeBreakdown: CardVisibility;
+    // Role-specific dashboards
+    donorContributionSummary: CardVisibility;
+    donorImpactSummary: CardVisibility;
+    beneficiarySummary: CardVisibility;
+    referralSummary: CardVisibility;
+}
+
+export interface AnalyticsDashboardSettings {
+    [key: string]: CardVisibility;
+}
 
 export interface AppSettings {
     id: string;
@@ -386,6 +393,7 @@ export interface AppSettings {
         leadCreatorRoles?: UserRole[];
     };
     dashboard?: DashboardSettings;
+    analyticsDashboard?: AnalyticsDashboardSettings;
     updatedAt?: FieldValue;
 }
 
