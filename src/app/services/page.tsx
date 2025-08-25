@@ -18,6 +18,10 @@ import {
   FileText,
   HandHeart,
   ScanEye,
+  Component,
+  Palette,
+  Bot,
+  Cloud,
 } from "lucide-react";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
@@ -86,6 +90,48 @@ export default async function ServicesPage() {
       <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
         Services Summary
       </h2>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Technology Stack</CardTitle>
+          <CardDescription>
+            This application is built with the following technologies and frameworks.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <Component className="h-6 w-6 text-primary flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold">Frontend Framework</p>
+                        <p className="text-muted-foreground">Next.js & React</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <Palette className="h-6 w-6 text-primary flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold">UI Components & Styling</p>
+                        <p className="text-muted-foreground">ShadCN UI & Tailwind CSS</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <Bot className="h-6 w-6 text-primary flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold">Generative AI</p>
+                        <p className="text-muted-foreground">Genkit & Google AI</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <Cloud className="h-6 w-6 text-primary flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold">Backend Platform</p>
+                        <p className="text-muted-foreground">Firebase</p>
+                    </div>
+                </div>
+            </div>
+        </CardContent>
+      </Card>
+      
       <Card>
         <CardHeader>
           <CardTitle>Usage & Configuration Overview</CardTitle>
