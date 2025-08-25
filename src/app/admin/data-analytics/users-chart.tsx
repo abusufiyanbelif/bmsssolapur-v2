@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { CartesianGrid, Legend, Line, LineChart, XAxis, YAxis, Tooltip } from "recharts"
 import {
   Card,
   CardContent,
@@ -157,7 +157,7 @@ export function UsersChart({ users }: { users: User[] }) {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <BarChart
+          <LineChart
             accessibilityLayer
             data={chartData}
             margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
@@ -175,9 +175,9 @@ export function UsersChart({ users }: { users: User[] }) {
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
+                allowDecimals={false}
             />
-            <ChartTooltip
-              cursor={false}
+            <Tooltip
               content={
                 <ChartTooltipContent
                   formatter={(value) => `${value} new users`}
@@ -185,12 +185,19 @@ export function UsersChart({ users }: { users: User[] }) {
                 />
               }
             />
-            <Bar
+            <Legend />
+            <Line
               dataKey="users"
-              fill="var(--color-users)"
-              radius={8}
+              type="monotone"
+              stroke="var(--color-users)"
+              strokeWidth={2}
+              dot={{
+                r: 4,
+                fill: "var(--color-users)",
+                stroke: "hsl(var(--background))"
+              }}
             />
-          </BarChart>
+          </LineChart>
         </ChartContainer>
       </CardContent>
     </Card>

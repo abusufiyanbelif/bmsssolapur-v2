@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -220,7 +220,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
             </div>
         )}
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <BarChart
+          <LineChart
             accessibilityLayer
             data={chartData}
             margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
@@ -240,8 +240,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
                 tickLine={false}
                 axisLine={false}
             />
-            <ChartTooltip
-              cursor={false}
+            <Tooltip
               content={
                 <ChartTooltipContent
                   formatter={(value) => `₹${Number(value).toLocaleString()}`}
@@ -249,12 +248,19 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
                 />
               }
             />
-            <Bar
+             <Legend />
+            <Line
               dataKey="donations"
-              fill="var(--color-donations)"
-              radius={8}
+              type="monotone"
+              stroke="var(--color-donations)"
+              strokeWidth={2}
+              dot={{
+                r: 4,
+                fill: "var(--color-donations)",
+                stroke: "hsl(var(--background))"
+              }}
             />
-          </BarChart>
+          </LineChart>
         </ChartContainer>
       </CardContent>
     </Card>
