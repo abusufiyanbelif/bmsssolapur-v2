@@ -27,7 +27,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useMemo } from "react";
 import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -35,7 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
 import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
 import { scanProof } from '@/app/admin/donations/add/actions';
-import type { User, Lead, DonationPurpose, Organization, Campaign, Donation } from '@/services/types';
+import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -53,7 +53,7 @@ const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
 
 // Schema for paying now
 const payNowFormSchema = z.object({
-  purpose: z.enum(donationPurposes),
+  purpose: z.enum(donationPurposes, { required_error: "Please select a purpose."}),
   amount: z.coerce.number().min(10, "Donation amount must be at least ₹10."),
   donorName: z.string().optional(),
   isAnonymous: z.boolean().default(false),
@@ -90,16 +90,33 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         defaultValues: {
         amount: 100,
         isAnonymous: false,
+        purpose: 'Sadaqah',
         },
     });
 
-    const { watch, setValue } = form;
+    const { watch, setValue, getValues } = form;
 
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
 
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
+    
+    const availableDonationTypes = useMemo(() => {
+        if (linkedLead && linkedLead.acceptableDonationTypes && linkedLead.acceptableDonationTypes.length > 0) {
+            if(linkedLead.acceptableDonationTypes.includes('Any')) return donationPurposes;
+            return linkedLead.acceptableDonationTypes.filter(t => donationPurposes.includes(t as any)) as typeof donationPurposes;
+        }
+        return donationPurposes;
+    }, [linkedLead]);
+    
+    // Auto-update purpose when lead changes
+    useEffect(() => {
+        const currentType = getValues('purpose');
+        if (linkedLead && !availableDonationTypes.includes(currentType)) {
+            setValue('purpose', availableDonationTypes[0]);
+        }
+    }, [linkedLead, availableDonationTypes, setValue, getValues]);
 
 
     useEffect(() => {
@@ -112,12 +129,17 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
     
     useEffect(() => {
         if (targetLead) {
-        setValue('leadId', targetLead.id);
-        setValue('purpose', 'Sadaqah'); // Default purpose when donating to a lead
+            setValue('leadId', targetLead.id);
+            const leadDonationTypes = targetLead.acceptableDonationTypes?.filter(t => donationPurposes.includes(t as any)) as (typeof donationPurposes) | undefined;
+            if(leadDonationTypes && leadDonationTypes.length > 0) {
+                setValue('purpose', leadDonationTypes[0]);
+            } else {
+                setValue('purpose', 'Sadaqah');
+            }
         }
         if (targetCampaignId) {
-        setValue('campaignId', targetCampaignId);
-        setValue('purpose', 'Sadaqah'); // Default purpose
+            setValue('campaignId', targetCampaignId);
+            setValue('purpose', 'Sadaqah'); // Default purpose for campaigns
         }
     }, [targetLead, targetCampaignId, setValue]);
 
@@ -294,6 +316,22 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                             </AlertDescription>
                         </Alert>
                     )}
+
+                     <div className="space-y-2">
+                         <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
+                            <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
+                        </Button>
+                        {(linkedLead || linkedCampaign) && (
+                            <div className="p-2 border rounded-md bg-muted/50 flex items-center justify-between">
+                                <p className="text-sm font-medium">
+                                    Linked to: <Badge variant="secondary">{linkedLead?.name || linkedCampaign?.name}</Badge>
+                                </p>
+                                <Button type="button" variant="ghost" size="icon" onClick={clearLink} className="h-6 w-6">
+                                    <XCircle className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <FormField
@@ -302,19 +340,19 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Donation Purpose</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!targetLead || !!targetCampaignId || !!linkedLead || !!linkedCampaignId}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!!linkedLead}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a purpose" />
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                {donationPurposes.map(type => (
+                                {availableDonationTypes.map(type => (
                                     <SelectItem key={type} value={type}>{type}</SelectItem>
                                 ))}
                                 </SelectContent>
                             </Select>
-                                { (!!targetLead || !!targetCampaignId) && <FormDescription>Purpose is automatically set.</FormDescription>}
+                                { linkedLead && <FormDescription>Only showing types allowed for this lead.</FormDescription>}
                             <FormMessage />
                             </FormItem>
                         )}
@@ -332,21 +370,6 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                             </FormItem>
                         )}
                         />
-                    </div>
-                     <div className="space-y-2">
-                         <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
-                            <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
-                        </Button>
-                        {(linkedLead || linkedCampaign) && (
-                            <div className="p-2 border rounded-md bg-muted/50 flex items-center justify-between">
-                                <p className="text-sm font-medium">
-                                    Linked to: <Badge variant="secondary">{linkedLead?.name || linkedCampaign?.name}</Badge>
-                                </p>
-                                <Button type="button" variant="ghost" size="icon" onClick={clearLink} className="h-6 w-6">
-                                    <XCircle className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
                     </div>
                     
                     <FormField
@@ -630,6 +653,8 @@ function DonatePageContent() {
   }
   
   const razorpayEnabled = settings?.paymentGateway?.razorpay?.enabled;
+  const razorpayKey = razorpayEnabled ? (settings.paymentGateway.razorpay.mode === 'live' ? settings.paymentGateway.razorpay.live.keyId : settings.paymentGateway.razorpay.test.keyId) : undefined;
+
 
   return (
      <div className="flex-1 space-y-4">
@@ -662,7 +687,7 @@ function DonatePageContent() {
                 </div>
 
                 {donationMethod === 'payNow' ? (
-                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} openLeads={openLeads} activeCampaigns={activeCampaigns} razorpayKeyId={razorpayEnabled ? settings.paymentGateway.razorpay.keyId : undefined} />
+                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} openLeads={openLeads} activeCampaigns={activeCampaigns} razorpayKeyId={razorpayKey} />
                 ) : (
                    <UploadProofSection user={user} />
                 )}
