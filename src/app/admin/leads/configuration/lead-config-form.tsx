@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -22,7 +21,8 @@ import { AppSettings, UserRole } from "@/services/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AddPurposeDialog, DeletePurposeDialog } from "./purpose-dialogs";
+import { AddPurposeDialog, DeletePurposeDialog, AddCategoryDialog, DeleteCategoryDialog } from "./purpose-dialogs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 const formSchema = z.object({
@@ -30,6 +30,11 @@ const formSchema = z.object({
         id: z.string(),
         name: z.string(),
         enabled: z.boolean(),
+        categories: z.array(z.object({
+            id: z.string(),
+            name: z.string(),
+            enabled: z.boolean(),
+        })).optional(),
     })),
     approvalProcessDisabled: z.boolean().default(false),
     roleBasedCreationEnabled: z.boolean().default(false),
@@ -59,7 +64,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
     },
   });
 
-  const { formState: { isDirty }, watch } = form;
+  const { formState: { isDirty }, watch, getValues, setValue } = form;
   const roleBasedCreationEnabled = watch("roleBasedCreationEnabled");
 
   async function onSubmit(values: FormValues) {
@@ -67,6 +72,12 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
     onUpdate(values);
     form.reset(values); // This resets the 'dirty' state of the form
     setIsSubmitting(false);
+  }
+
+  const handleToggleCategory = (purposeIndex: number, categoryIndex: number, enabled: boolean) => {
+    const currentPurposes = getValues('purposes');
+    currentPurposes[purposeIndex].categories![categoryIndex].enabled = enabled;
+    setValue('purposes', currentPurposes, { shouldDirty: true });
   }
 
   return (
@@ -178,40 +189,73 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
         <Card>
              <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Manage Lead Purposes</CardTitle>
+                    <CardTitle>Manage Lead Purposes & Categories</CardTitle>
                     <CardDescription>
-                        Add, edit, or delete the purposes available for new lead creation.
+                        Add, edit, or delete the purposes and their sub-categories for new leads.
                     </CardDescription>
                 </div>
                 <AddPurposeDialog />
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-                {(form.getValues('purposes') || []).map((purpose, index) => (
-                    <div key={purpose.id} className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                            <FormLabel className="text-base">{purpose.name}</FormLabel>
+                <Accordion type="multiple" className="w-full">
+                {(getValues('purposes') || []).map((purpose, index) => (
+                    <AccordionItem key={purpose.id} value={purpose.id}>
+                        <div className="flex items-center pr-4">
+                            <AccordionTrigger className="flex-grow">
+                                <div className="flex items-center gap-4">
+                                    <FormLabel className="text-base">{purpose.name}</FormLabel>
+                                     <FormField
+                                        control={form.control}
+                                        name={`purposes.${index}.enabled`}
+                                        render={({ field }) => (
+                                            <FormItem onClick={(e) => e.stopPropagation()}>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </AccordionTrigger>
+                            <div className="flex items-center gap-2 pl-4">
+                                <AddPurposeDialog purposeToEdit={purpose} />
+                                <DeletePurposeDialog purposeToDelete={purpose} allPurposes={form.getValues('purposes')} />
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <AddPurposeDialog purposeToEdit={purpose} />
-                            <DeletePurposeDialog purposeToDelete={purpose} allPurposes={form.getValues('purposes')} />
-                            <FormField
-                                control={form.control}
-                                name={`purposes.${index}.enabled`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
+                        <AccordionContent>
+                           <div className="p-4 border bg-muted/50 rounded-lg space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-semibold text-sm">Sub-Categories for "{purpose.name}"</h4>
+                                    <AddCategoryDialog purposeId={purpose.id} />
+                                </div>
+                                {purpose.categories && purpose.categories.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {purpose.categories.map((category, catIndex) => (
+                                            <div key={category.id} className="flex items-center justify-between p-2 border bg-background rounded-md">
+                                                <p className="text-sm">{category.name}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <AddCategoryDialog purposeId={purpose.id} categoryToEdit={category} />
+                                                    <DeleteCategoryDialog purposeId={purpose.id} categoryToDelete={category} allCategories={purpose.categories} />
+                                                    <Switch
+                                                        checked={category.enabled}
+                                                        onCheckedChange={(checked) => handleToggleCategory(index, catIndex, checked)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-xs text-muted-foreground py-2">No sub-categories defined. Click "Add Category" to create one.</p>
                                 )}
-                            />
-                        </div>
-                    </div>
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
                 ))}
-                 {form.getValues('purposes')?.length === 0 && (
+                 </Accordion>
+                 {getValues('purposes')?.length === 0 && (
                      <p className="text-sm text-muted-foreground text-center py-4">No purposes defined. Click "Create Purpose" to add one.</p>
                 )}
             </CardContent>
