@@ -11,6 +11,7 @@ import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { UsersChart } from "./users-chart";
 import { DonationsChart } from "../donations-chart";
+import { DataGrowthChart } from "./data-growth-chart";
 
 const CardSkeleton = () => (
     <Card>
@@ -62,6 +63,10 @@ export default async function DataAnalyticsPage() {
             <Separator />
             <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
                 <SystemHealthCards allUsers={allUsers} allLeads={allLeads} allDonations={allDonations} />
+            </Suspense>
+            <Separator />
+            <Suspense fallback={<ChartSkeleton />}>
+                <DataGrowthChart users={allUsers} leads={allLeads} donations={allDonations} />
             </Suspense>
             <Separator />
             <Suspense fallback={<ChartSkeleton />}>
