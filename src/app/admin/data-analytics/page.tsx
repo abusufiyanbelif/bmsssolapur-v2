@@ -1,8 +1,6 @@
 
 import { Suspense } from "react";
 import { 
-    MainMetricsCard, 
-    FundsInHandCard, 
     TopDonorsCard,
     RecentCampaignsCard,
     LeadBreakdownCard,
@@ -41,12 +39,6 @@ export default async function DataAnalyticsPage() {
   return (
     <div className="flex-1 space-y-6">
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Data Profiling & Analytics</h2>
-        <Suspense fallback={<div>Loading metrics...</div>}>
-            <MainMetricsCard />
-        </Suspense>
-        <Suspense fallback={<div>Loading funds...</div>}>
-            <FundsInHandCard />
-        </Suspense>
         <Suspense fallback={<div>Loading chart...</div>}>
             <DonationsChart donations={allDonations} />
         </Suspense>
@@ -82,3 +74,4 @@ export default async function DataAnalyticsPage() {
     </div>
   );
 }
+
