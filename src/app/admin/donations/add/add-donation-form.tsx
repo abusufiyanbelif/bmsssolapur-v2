@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef, useCallback } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -257,6 +257,27 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   // Fields for scanned details
   const scannedRecipientName = watch('recipientName');
   const scannedRecipientUpiId = watch('recipientUpiId');
+  
+  const selectedLead = useMemo(() => {
+    if (!linkedLeadId) return null;
+    return leads.find(l => l.id === linkedLeadId);
+  }, [linkedLeadId, leads]);
+  
+  const availableDonationTypes = useMemo(() => {
+    if (selectedLead && selectedLead.acceptableDonationTypes && selectedLead.acceptableDonationTypes.length > 0) {
+        if(selectedLead.acceptableDonationTypes.includes('Any')) return donationTypes;
+        return selectedLead.acceptableDonationTypes.filter(t => donationTypes.includes(t as any));
+    }
+    return donationTypes;
+  }, [selectedLead]);
+  
+  useEffect(() => {
+    const currentType = getValues('type');
+    if (selectedLead && !availableDonationTypes.includes(currentType)) {
+        setValue('type', availableDonationTypes[0] as (typeof donationTypes)[number], { shouldDirty: true });
+    }
+  }, [selectedLead, availableDonationTypes, setValue, getValues]);
+
 
   useEffect(() => {
     const total = totalTransactionAmount || 0;
@@ -1184,80 +1205,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
              )}
 
             <h3 className="text-lg font-semibold border-b pb-2">Categorization</h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {donationTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
-                control={form.control}
-                name="purpose"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Purpose</FormLabel>
-                    <Select onValueChange={(value) => { field.onChange(value); setValue("category", undefined); }} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a purpose (optional)" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {donationPurposes.map(purpose => (
-                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-             {selectedPurpose && categoryOptions[selectedPurpose] && (
-                <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Specific Category for {selectedPurpose}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a specific category" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {categoryOptions[selectedPurpose as keyof typeof categoryOptions].map(sub => (
-                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
-            
+             
             <div className="space-y-4 rounded-lg border p-4">
-                 <h3 className="text-lg font-semibold">Linkage (Optional)</h3>
-                  <FormField
+                <h3 className="text-lg font-semibold">Linkage (Optional)</h3>
+                <FormField
                     control={form.control}
                     name="campaignId"
                     render={({ field }) => (
@@ -1309,32 +1260,32 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </FormItem>
                     )}
                     />
-                 <FormField
-                  control={form.control}
-                  name="leadId"
-                  render={({ field }) => (
+                <FormField
+                control={form.control}
+                name="leadId"
+                render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel className="flex items-center gap-2"><FileHeart className="h-4 w-4" />Link to Lead</FormLabel>
-                       <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                    <FormLabel className="flex items-center gap-2"><FileHeart className="h-4 w-4" />Link to Lead</FormLabel>
+                    <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
                         <PopoverTrigger asChild>
-                          <FormControl>
+                        <FormControl>
                             <Button
-                              variant="outline"
-                              role="combobox"
-                              disabled={!!linkedCampaignId && linkedCampaignId !== 'none'}
-                              className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            variant="outline"
+                            role="combobox"
+                            disabled={!!linkedCampaignId && linkedCampaignId !== 'none'}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
                             >
-                              {field.value
+                            {field.value
                                 ? leads.find(
                                     (lead) => lead.id === field.value
-                                  )?.name
+                                )?.name
                                 : "Select a lead"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
-                          </FormControl>
+                        </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                          <Command>
+                        <Command>
                             <CommandInput placeholder="Search lead by name or ID..." />
                             <CommandList>
                                 <CommandEmpty>No open leads found.</CommandEmpty>
@@ -1361,13 +1312,38 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 ))}
                                 </CommandGroup>
                             </CommandList>
-                          </Command>
+                        </Command>
                         </PopoverContent>
-                      </Popover>
-                      <FormDescription>Allocate this donation to a specific help case.</FormDescription>
-                      <FormMessage />
+                    </Popover>
+                    <FormDescription>Allocate this donation to a specific help case.</FormDescription>
+                    <FormMessage />
                     </FormItem>
-                  )}
+                )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Primary Donation Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {availableDonationTypes.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        {selectedLead && (
+                             <FormDescription>Only showing donation types acceptable for the selected lead.</FormDescription>
+                        )}
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
             </div>
             
