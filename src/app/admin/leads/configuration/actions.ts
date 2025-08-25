@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
