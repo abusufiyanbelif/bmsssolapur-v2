@@ -206,10 +206,10 @@ export const PendingLeadsCard = async () => {
     
     return (
         <AccordionItem value="pending-leads">
-            <AccordionTrigger>
-                <div className="flex items-center gap-2 font-headline text-destructive text-base">
+            <AccordionTrigger className="text-base font-semibold">
+                <div className="flex items-center gap-2 text-destructive">
                      <AlertTriangle />
-                    Action Required: Pending Lead Verifications
+                    Action: Pending Lead Verifications
                     <Badge variant="destructive">{pendingVerificationLeads.length}</Badge>
                 </div>
             </AccordionTrigger>
@@ -257,10 +257,10 @@ export const PendingDonationsCard = async () => {
 
     return (
         <AccordionItem value="pending-donations">
-            <AccordionTrigger>
-                <div className="flex items-center gap-2 font-headline text-destructive text-base">
+            <AccordionTrigger className="text-base font-semibold">
+                <div className="flex items-center gap-2 text-destructive">
                     <AlertTriangle />
-                    Action Required: Pending Donation Verifications
+                    Action: Pending Donation Verifications
                     <Badge variant="destructive">{pendingVerificationDonations.length}</Badge>
                 </div>
             </AccordionTrigger>
@@ -308,10 +308,10 @@ export const LeadsReadyToPublishCard = async () => {
 
     return (
         <AccordionItem value="ready-to-publish">
-            <AccordionTrigger>
-                <div className="flex items-center gap-2 font-headline text-blue-600 text-base">
+            <AccordionTrigger className="text-base font-semibold">
+                <div className="flex items-center gap-2 text-blue-600">
                     <UploadCloud />
-                    Action Required: Leads Ready for Publishing
+                    Action: Leads Ready for Publishing
                     <Badge variant="secondary" className="bg-blue-100 text-blue-700">{readyToPublishLeads.length}</Badge>
                 </div>
             </AccordionTrigger>
