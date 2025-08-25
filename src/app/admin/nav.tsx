@@ -67,6 +67,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin"],
         subItems: [
             { href: "/admin/communications", label: "Generate Messages", icon: MessageSquare, allowedRoles: ["Admin", "Super Admin"] },
+            { href: "/admin/communications/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
 
