@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, Area, AreaChart, Tooltip, XAxis, YAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -21,7 +21,7 @@ import { useMemo, useState } from "react"
 import { addDays, format, subMonths, startOfMonth, endOfMonth, startOfYear, endOfYear, getWeek, startOfWeek, endOfWeek, eachWeekOfInterval, addWeeks, subDays } from "date-fns"
 import { DateRange } from "react-day-picker"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, LineChartIcon, BarChart2, AreaChartIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
@@ -38,6 +38,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 type AggregationLevel = 'daily' | 'weekly' | 'monthly';
+type ChartType = "line" | "bar" | "area";
 
 export function DonationsChart({ donations }: { donations: Donation[] }) {
     const [date, setDate] = useState<DateRange | undefined>({
@@ -46,6 +47,7 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
     });
     const [selectedTimeframe, setSelectedTimeframe] = useState('half-yearly');
     const [aggregation, setAggregation] = useState<AggregationLevel>('monthly');
+    const [chartType, setChartType] = useState<ChartType>("line");
 
     const setTimeframe = (timeframe: string) => {
         const now = new Date();
@@ -145,6 +147,83 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
     }
 
   }, [donations, date, aggregation, selectedTimeframe]);
+  
+   const renderChart = () => {
+        const commonProps = {
+            data: chartData,
+            margin: { top: 20, right: 20, left: 0, bottom: 5 },
+        };
+
+        const components = (
+            <>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                dataKey="month"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={(value) => value}
+                />
+                <YAxis
+                    tickFormatter={(value) => `₹${Number(value) / 1000}k`}
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                />
+                <Tooltip
+                content={
+                    <ChartTooltipContent
+                    formatter={(value) => `₹${Number(value).toLocaleString()}`}
+                    indicator="dot"
+                    />
+                }
+                />
+                <Legend />
+            </>
+        );
+
+        switch(chartType) {
+            case 'bar':
+                return (
+                    <BarChart accessibilityLayer {...commonProps}>
+                        {components}
+                        <Bar dataKey="donations" fill="var(--color-donations)" radius={4} />
+                    </BarChart>
+                );
+            case 'area':
+                 return (
+                    <AreaChart accessibilityLayer {...commonProps}>
+                        {components}
+                        <defs>
+                            <linearGradient id="fillDonations" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-donations)" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="var(--color-donations)" stopOpacity={0.1}/>
+                            </linearGradient>
+                        </defs>
+                        <Area type="monotone" dataKey="donations" stroke="var(--color-donations)" fill="url(#fillDonations)" />
+                    </AreaChart>
+                 );
+            case 'line':
+            default:
+                return (
+                    <LineChart accessibilityLayer {...commonProps}>
+                        {components}
+                        <Line
+                            dataKey="donations"
+                            type="monotone"
+                            stroke="var(--color-donations)"
+                            strokeWidth={2}
+                            dot={{
+                                r: 4,
+                                fill: "var(--color-donations)",
+                                stroke: "hsl(var(--background))"
+                            }}
+                        />
+                    </LineChart>
+                )
+        }
+    }
 
   return (
     <Card className="col-span-4">
@@ -219,48 +298,24 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
                 </RadioGroup>
             </div>
         )}
+        <div className="flex justify-end pb-4">
+             <RadioGroup value={chartType} onValueChange={(v) => setChartType(v as ChartType)} className="flex items-center gap-1 rounded-lg bg-muted p-1">
+                <RadioGroupItem value="line" id="line-donations" className="peer sr-only" />
+                <Label htmlFor="line-donations" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                    <LineChartIcon className="h-4 w-4" />
+                </Label>
+                <RadioGroupItem value="bar" id="bar-donations" className="peer sr-only" />
+                <Label htmlFor="bar-donations" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                    <BarChart2 className="h-4 w-4" />
+                </Label>
+                 <RadioGroupItem value="area" id="area-donations" className="peer sr-only" />
+                 <Label htmlFor="area-donations" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                    <AreaChartIcon className="h-4 w-4" />
+                </Label>
+            </RadioGroup>
+        </div>
         <ChartContainer config={chartConfig} className="h-[350px] w-full">
-          <LineChart
-            accessibilityLayer
-            data={chartData}
-            margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value}
-            />
-             <YAxis
-                tickFormatter={(value) => `₹${Number(value) / 1000}k`}
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-            />
-            <Tooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => `₹${Number(value).toLocaleString()}`}
-                  indicator="dot"
-                />
-              }
-            />
-             <Legend />
-            <Line
-              dataKey="donations"
-              type="monotone"
-              stroke="var(--color-donations)"
-              strokeWidth={2}
-              dot={{
-                r: 4,
-                fill: "var(--color-donations)",
-                stroke: "hsl(var(--background))"
-              }}
-            />
-          </LineChart>
+          {renderChart()}
         </ChartContainer>
       </CardContent>
     </Card>
