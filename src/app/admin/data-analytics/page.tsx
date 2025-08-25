@@ -53,16 +53,16 @@ export default async function DataAnalyticsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
              <Suspense fallback={<div>Loading breakdown...</div>}>
                 <LeadBreakdownCard allLeads={allLeads} />
-            </Suspense>
+             </Suspense>
              <Suspense fallback={<div>Loading breakdown...</div>}>
                 <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} />
-            </Suspense>
+             </Suspense>
             <Suspense fallback={<div>Loading breakdown...</div>}>
                 <CampaignBreakdownCard allCampaigns={allCampaigns} />
             </Suspense>
         </div>
         <Suspense fallback={<div>Loading breakdown...</div>}>
-            <DonationTypeCard donations={donations={allDonations}} />
+            <DonationTypeCard donations={allDonations} />
         </Suspense>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <div className="col-span-full lg:col-span-4">
