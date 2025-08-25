@@ -6,50 +6,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { ArrowRight, HandHeart, FileText, Loader2, AlertCircle, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign, Baby, PersonStanding, HomeIcon, HeartHandshake, Eye } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign, Baby, PersonStanding, HomeIcon, HeartHandshake, Eye } from "lucide-react";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { getRandomQuotes } from "@/services/quotes-service";
-import type { User, Donation, Lead, Quote, LeadPurpose, DonationType, Campaign } from "@/services/types";
-import { getAllUsers, getUser } from "@/services/user-service";
-import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
+import type { User, Donation, Lead, Quote, LeadPurpose, DonationType, Campaign, AppSettings } from "@/services/types";
 import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getAllUsers, getUser } from "@/services/user-service";
+import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
 import { getAllCampaigns } from "@/services/campaign-service";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
+import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
+import { getAppSettings } from "@/services/app-settings-service";
 
+const statusColors: Record<Donation['status'], string> = {
+    "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Verified": "bg-green-500/20 text-green-700 border-green-500/30",
+    "Failed/Incomplete": "bg-red-500/20 text-red-700 border-red-500/30",
+    "Partially Allocated": "bg-orange-500/20 text-orange-700 border-orange-500/30",
+    "Allocated": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+};
 
 export function DonorDashboardContent() {
   const [user, setUser] = useState<User | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
-  
-  // For common stats
-  const [allDonations, setAllDonations] = useState<Donation[]>([]);
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   
   const isMobile = useIsMobile();
   const router = useRouter();
-  const [purposeInput, setPurposeInput] = useState('all');
-  const [searchInput, setSearchInput] = useState('');
-  
-  const [appliedFilters, setAppliedFilters] = useState({
-      purpose: 'all',
-      search: ''
-  });
 
   useEffect(() => {
       const fetchInitialData = async () => {
@@ -62,31 +55,24 @@ export function DonorDashboardContent() {
           }
           
           try {
-              const fetchedUser = await getUser(storedUserId);
+              const [fetchedUser, donorDonations, availableLeads, fetchedAllLeads, fetchedSettings] = await Promise.all([
+                  getUser(storedUserId),
+                  getDonationsByUserId(storedUserId),
+                  getOpenGeneralLeads(),
+                  getAllLeads(),
+                  getAppSettings(),
+              ]);
+
               if (!fetchedUser || !fetchedUser.roles.includes('Donor')) {
                   setError("You do not have permission to view this page.");
                   setLoading(false);
                   return;
               }
               setUser(fetchedUser);
-
-              const [donorDonations, availableLeads, fetchedAllLeads, fetchedAllUsers, fetchedAllDonations, fetchedCampaigns, randomQuotes] = await Promise.all([
-                  getDonationsByUserId(storedUserId),
-                  getOpenGeneralLeads(),
-                  getAllLeads(),
-                  getAllUsers(),
-                  getAllDonations(),
-                  getAllCampaigns(),
-                  getRandomQuotes(3)
-              ]);
               setDonations(donorDonations);
               setOpenLeads(availableLeads);
               setAllLeads(fetchedAllLeads);
-              setAllUsers(fetchedAllUsers);
-              setAllDonations(fetchedAllDonations);
-              setAllCampaigns(fetchedCampaigns);
-              setQuotes(randomQuotes);
-
+              setSettings(fetchedSettings);
           } catch (e) {
               setError("Failed to load dashboard data.");
               console.error(e);
@@ -98,37 +84,6 @@ export function DonorDashboardContent() {
       fetchInitialData();
   }, []);
 
-  const handleSearch = () => {
-    setAppliedFilters({
-        purpose: purposeInput,
-        search: searchInput
-    })
-  };
-
-  const resetFilters = () => {
-    setPurposeInput('all');
-    setSearchInput('');
-    setAppliedFilters({ purpose: 'all', search: '' });
-  };
-  
-    const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
-    const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
-    const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
-    const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
-    const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
-    const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
-    const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
-
-
-    const mainMetrics = [
-        { title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization.", href: "/public-leads" },
-        { title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries.", href: "/public-leads" },
-        { title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement.", href: "/public-leads" },
-        { title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed.", href: "/public-leads" },
-        { title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
-        { title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported.", href: "/public-leads" },
-    ];
-    
     // Donor specific stats
     const { myTotalDonated, myDonationCount, leadsHelpedCount, beneficiariesHelpedCount: myBeneficiariesHelpedCount, campaignsSupportedCount } = useMemo(() => {
         let myTotalDonated = 0;
@@ -162,49 +117,26 @@ export function DonorDashboardContent() {
     }, [donations, allLeads]);
 
     const donorMetrics = [
-        { title: "My Total Contributions", value: `₹${myTotalDonated.toLocaleString()}`, icon: HandHeart, description: "Your total verified contributions." },
-        { title: "Total Donations Made", value: myDonationCount.toString(), icon: History, description: "The total number of donations you have made." },
+        { id: 'donorContributionSummary', title: "My Total Contributions", value: `₹${myTotalDonated.toLocaleString()}`, icon: HandHeart, description: "Your total verified contributions." },
+        { id: 'donorContributionSummary', title: "Total Donations Made", value: myDonationCount.toString(), icon: History, description: "The total number of donations you have made." },
     ];
     
     const impactMetrics = [
-        { title: "Leads Supported", value: leadsHelpedCount, icon: FileCheck, description: "The number of individual cases you've helped fund." },
-        { title: "Beneficiaries Helped", value: myBeneficiariesHelpedCount, icon: UsersIcon, description: "The number of unique people you've supported." },
-        { title: "Campaigns Supported", value: campaignsSupportedCount, icon: Megaphone, description: "The number of special campaigns you've contributed to." },
+        { id: 'donorImpactSummary', title: "Leads Supported", value: leadsHelpedCount, icon: FileCheck, description: "The number of individual cases you've helped fund." },
+        { id: 'donorImpactSummary', title: "Beneficiaries Helped", value: myBeneficiariesHelpedCount, icon: UsersIcon, description: "The number of unique people you've supported." },
+        { id: 'donorImpactSummary', title: "Campaigns Supported", value: campaignsSupportedCount, icon: Megaphone, description: "The number of special campaigns you've contributed to." },
     ];
 
-
-  const filteredLeads = useMemo(() => {
-    return openLeads.filter(lead => {
-      const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
-      const searchMatch = appliedFilters.search === '' || 
-        lead.name.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
-        (lead.caseDetails && lead.caseDetails.toLowerCase().includes(appliedFilters.search.toLowerCase()));
-      return purposeMatch && searchMatch;
-    });
-  }, [openLeads, appliedFilters]);
-  
-  const purposeOptions: (LeadPurpose | 'all')[] = ["all", "Education", "Medical", "Relief Fund", "Deen", "Other"];
-  
-  const campaignStatusColors: Record<string, string> = {
-    "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
-    "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
-    "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-    "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
-  };
 
   if (loading) {
     return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
   }
   
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
+  if (error || !user || !settings) {
+    return null;
   }
+  
+  const dashboardSettings = settings.dashboard;
   
   return (
     <div className="space-y-6">
@@ -216,276 +148,92 @@ export function DonorDashboardContent() {
               Welcome back, {user?.name}. Thank you for your continued support.
             </p>
         </div>
-        <InspirationalQuotes quotes={quotes} loading={loading} />
-        <Card>
-            <CardHeader>
-                <CardTitle>Organization Impact</CardTitle>
-                <CardDescription>A real-time overview of our collective efforts.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mainMetrics.map((metric) => (
-                    <Link href={metric.href} key={metric.title}>
-                        <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
-                            <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
-                            <p className="text-2xl font-bold">{metric.value}</p>
-                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                        </div>
-                    </Link>
-                ))}
-            </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>My Contributions</CardTitle>
-                <CardDescription>Your personal giving summary.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-                {donorMetrics.map((metric) => (
-                     <Link href="/my-donations" key={metric.title}>
-                        <div className="p-4 border rounded-lg bg-primary/5 h-full hover:bg-primary/10 transition-colors">
-                            <metric.icon className="h-6 w-6 text-primary mb-2" />
-                            <p className="text-2xl font-bold text-primary">{metric.value}</p>
-                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                            <p className="text-xs text-muted-foreground">{metric.description}</p>
-                        </div>
-                    </Link>
-                ))}
-            </CardContent>
-        </Card>
-        
-         <Card>
-            <CardHeader>
-                <CardTitle>My Direct Impact</CardTitle>
-                <CardDescription>A summary of the direct impact your donations have made.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
-                {impactMetrics.map((metric) => (
-                    <Link href="/my-donations" key={metric.title}>
-                        <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
-                            <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
-                            <p className="text-2xl font-bold">{metric.value}</p>
-                            <p className="text-sm font-medium text-foreground">{metric.title}</p>
-                            <p className="text-xs text-muted-foreground">{metric.description}</p>
-                        </div>
-                    </Link>
-                ))}
-            </CardContent>
-        </Card>
 
-      {/* Open Cases and Quotes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="space-y-4">
+            <Suspense fallback={<div>Loading...</div>}>
+                <MainMetricsCard isPublicView={true} />
+            </Suspense>
+        </div>
+
+        {dashboardSettings?.donorContributionSummary?.visibleTo.includes('Donor') && (
             <Card>
                 <CardHeader>
-                    <CardTitle>General Help Cases</CardTitle>
-                    <CardDescription>Browse verified general cases that need your support.</CardDescription>
+                    <CardTitle>My Contributions</CardTitle>
+                    <CardDescription>Your personal giving summary.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="search">Search Cases</Label>
-                            <Input id="search" placeholder="Search by name or details..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="purposeFilter">Filter by Purpose</Label>
-                            <Select value={purposeInput} onValueChange={setPurposeInput}>
-                                <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    {purposeOptions.map(p => <SelectItem key={p} value={p} className="capitalize">{p === 'all' ? 'All Purposes' : p}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-end gap-2 md:flex-col lg:flex-row">
-                            <Button onClick={handleSearch} className="w-full">
-                                <Search className="mr-2 h-4 w-4" />
-                                Search
-                            </Button>
-                             <Button onClick={resetFilters} variant="outline" className="w-full">
-                                <FilterX className="mr-2 h-4 w-4" />
-                                Clear
-                            </Button>
-                        </div>
-                    </div>
-
-                    {filteredLeads.length > 0 ? (
-                        <div className="space-y-4">
-                            {filteredLeads.slice(0, 4).map(lead => {
-                                const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
-                                const remainingAmount = lead.helpRequested - lead.helpGiven;
-                                return (
-                                <div key={lead.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                    <div className="flex-grow">
-                                        <p className="font-semibold">{lead.name}</p>
-                                        <p className="text-sm text-muted-foreground">{lead.purpose} - {lead.category}</p>
-                                        <Progress value={progress} className="my-2" />
-                                        <p className="text-xs text-muted-foreground">
-                                            <span className="font-bold text-primary">₹{remainingAmount.toLocaleString()}</span> still needed of ₹{lead.helpRequested.toLocaleString()} goal.
-                                        </p>
-                                    </div>
-                                    <Button asChild size="sm">
-                                        <Link href={`/donate?leadId=${lead.id}`}>Donate</Link>
-                                    </Button>
-                                </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-center text-muted-foreground py-6">No general cases match your filters. Try clearing them.</p>
-                    )}
+                <CardContent className="grid gap-4 md:grid-cols-2">
+                    {donorMetrics.map((metric) => (
+                        <Link href="/my-donations" key={metric.title}>
+                            <div className="p-4 border rounded-lg bg-primary/5 h-full hover:bg-primary/10 transition-colors">
+                                <metric.icon className="h-6 w-6 text-primary mb-2" />
+                                <p className="text-2xl font-bold text-primary">{metric.value}</p>
+                                <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                                <p className="text-xs text-muted-foreground">{metric.description}</p>
+                            </div>
+                        </Link>
+                    ))}
                 </CardContent>
-                <CardFooter className="flex flex-col items-stretch gap-4">
-                    <Button asChild variant="secondary" className="w-full">
-                        <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
-                    </Button>
-                </CardFooter>
             </Card>
-        </div>
-        <div className="lg:col-span-1 space-y-6">
-             <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
-        </div>
-      </div>
-      
+        )}
+        
+        {dashboardSettings?.donorImpactSummary?.visibleTo.includes('Donor') && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>My Direct Impact</CardTitle>
+                    <CardDescription>A summary of the direct impact your donations have made.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-3">
+                    {impactMetrics.map((metric) => (
+                        <Link href="/my-donations" key={metric.title}>
+                            <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
+                                <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
+                                <p className="text-2xl font-bold">{metric.value}</p>
+                                <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                                <p className="text-xs text-muted-foreground">{metric.description}</p>
+                            </div>
+                        </Link>
+                    ))}
+                </CardContent>
+            </Card>
+        )}
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="text-primary"/>
-                    Active &amp; Recent Campaigns
-                </CardTitle>
-                <CardDescription>
-                    An overview of our fundraising campaigns.
-                </CardDescription>
+                <CardTitle>My Recent Donations</CardTitle>
+                <CardDescription>A look at your latest contributions.</CardDescription>
             </CardHeader>
             <CardContent>
-                {allCampaigns.length > 0 ? (
+                {donations.length > 0 ? (
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Campaign</TableHead>
-                                <TableHead>Dates</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Amount</TableHead>
                                 <TableHead>Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {allCampaigns.slice(0, 5).map((campaign) => (
-                                <TableRow key={campaign.id}>
-                                    <TableCell>
-                                        <div className="font-medium">{campaign.name}</div>
-                                        <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={cn(campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
-                                    </TableCell>
+                            {donations.slice(0, 5).map((d) => (
+                                <TableRow key={d.id}>
+                                    <TableCell>{format((d.donationDate), 'dd MMM yyyy')}</TableCell>
+                                    <TableCell className="font-semibold">₹{d.amount.toLocaleString()}</TableCell>
+                                    <TableCell> <Badge variant="outline" className={cn("capitalize", statusColors[d.status])}>{d.status}</Badge></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
-                ) : (
-                    <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                ): (
+                    <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
                 )}
             </CardContent>
-             <CardFooter>
-                <Button variant="secondary" className="w-full" asChild><Link href="/campaigns">View All Campaigns <ArrowRight className="ml-2" /></Link></Button>
+            <CardFooter>
+                <Button asChild variant="secondary" className="w-full">
+                <Link href="/my-donations">
+                    View All My Donations <ArrowRight className="ml-2" />
+                </Link>
+                </Button>
             </CardFooter>
         </Card>
 
-      {/* Recent Donations and Breakdown */}
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>My Recent Donations</CardTitle>
-                        <CardDescription>A look at your latest contributions.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {donations.length > 0 ? (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Sr. No.</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        {!isMobile && <TableHead>Type</TableHead>}
-                                        {!isMobile && <TableHead>Purpose</TableHead>}
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Amount</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {donations.slice(0, 5).map((d, index) => (
-                                        <TableRow key={d.id}>
-                                            <TableCell>{index + 1}</TableCell>
-                                            <TableCell>{format((d.donationDate), 'dd MMM yyyy')}</TableCell>
-                                            {!isMobile && <TableCell>{d.type}</TableCell>}
-                                            {!isMobile && <TableCell>{d.purpose || 'N/A'}</TableCell>}
-                                            <TableCell> <Badge variant={d.status === 'Verified' ? 'default' : 'secondary'}>{d.status}</Badge></TableCell>
-                                            <TableCell className="text-right font-semibold">₹{d.amount.toLocaleString()}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        ): (
-                            <p className="text-muted-foreground text-center py-4">No recent donations found.</p>
-                        )}
-                    </CardContent>
-                    <CardFooter>
-                        <Button asChild variant="secondary" className="w-full">
-                        <Link href="/my-donations">
-                            View All My Donations <ArrowRight className="ml-2" />
-                        </Link>
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </div>
-            <div className="lg:col-span-1">
-                 <DonationTypeCard donations={donations} />
-            </div>
-       </div>
     </div>
   )
-}
-
-function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
-    if (loading) {
-        return (
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <QuoteIcon className="text-primary" />
-                        Wisdom & Reflection
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
-                </CardContent>
-            </Card>
-        )
-    }
-
-    if (quotes.length === 0) {
-        return null;
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
-                    Wisdom & Reflection
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-6">
-                    {quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
-                            <p>"{quote.text}"</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
-                        </blockquote>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-    );
 }

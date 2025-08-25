@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
     MainMetricsCard, 
+    FundsInHandCard, 
     TopDonorsCard,
     RecentCampaignsCard,
     TopDonationsCard
@@ -86,6 +87,10 @@ export default async function Page() {
             <div className="space-y-4">
                 <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
                     <MainMetricsCard isPublicView={true} />
+                </Suspense>
+                
+                <Suspense fallback={<CardSkeleton />}>
+                    <FundsInHandCard isPublicView={true} />
                 </Suspense>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

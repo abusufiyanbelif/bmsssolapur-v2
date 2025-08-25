@@ -76,7 +76,11 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
     )
 }
 
-export const FundsInHandCard = async () => {
+export const FundsInHandCard = async ({ isPublicView = false }: { isPublicView?: boolean }) => {
+    if (isPublicView) {
+        return null;
+    }
+    
      const [allDonations, allLeads] = await Promise.all([
         getAllDonations(),
         getAllLeads(),
