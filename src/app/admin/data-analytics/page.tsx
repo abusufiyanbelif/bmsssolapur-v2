@@ -1,12 +1,11 @@
 
+
 import { Suspense } from "react";
 import { 
     TopDonorsCard,
     RecentCampaignsCard,
-    LeadBreakdownCard,
     TopDonationsCard
 } from "../dashboard-cards";
-import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
 import { DonationsChart } from "../donations-chart";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllUsers } from "@/services/user-service";
@@ -41,20 +40,6 @@ export default async function DataAnalyticsPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Data Profiling & Analytics</h2>
         <Suspense fallback={<div>Loading chart...</div>}>
             <DonationsChart donations={allDonations} />
-        </Suspense>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-             <Suspense fallback={<div>Loading breakdown...</div>}>
-                <LeadBreakdownCard allLeads={allLeads} />
-             </Suspense>
-             <Suspense fallback={<div>Loading breakdown...</div>}>
-                <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} />
-             </Suspense>
-            <Suspense fallback={<div>Loading breakdown...</div>}>
-                <CampaignBreakdownCard allCampaigns={allCampaigns} />
-            </Suspense>
-        </div>
-        <Suspense fallback={<div>Loading breakdown...</div>}>
-            <DonationTypeCard donations={allDonations} />
         </Suspense>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <div className="col-span-full lg:col-span-4">
