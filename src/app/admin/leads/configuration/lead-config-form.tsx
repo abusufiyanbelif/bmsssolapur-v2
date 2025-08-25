@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -23,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AddPurposeDialog, DeletePurposeDialog, AddCategoryDialog, DeleteCategoryDialog } from "./purpose-dialogs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const formSchema = z.object({
@@ -197,64 +199,66 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                 <AddPurposeDialog />
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-                <Accordion type="multiple" className="w-full">
-                {(getValues('purposes') || []).map((purpose, index) => (
-                    <AccordionItem key={purpose.id} value={purpose.id}>
-                        <div className="flex items-center pr-4">
-                            <AccordionTrigger className="flex-grow">
-                                <div className="flex items-center gap-4">
-                                    <FormLabel className="text-base">{purpose.name}</FormLabel>
-                                     <FormField
-                                        control={form.control}
-                                        name={`purposes.${index}.enabled`}
-                                        render={({ field }) => (
-                                            <FormItem onClick={(e) => e.stopPropagation()}>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </AccordionTrigger>
-                            <div className="flex items-center gap-2 pl-4">
-                                <AddPurposeDialog purposeToEdit={purpose} />
-                                <DeletePurposeDialog purposeToDelete={purpose} allPurposes={form.getValues('purposes')} />
-                            </div>
-                        </div>
-                        <AccordionContent>
-                           <div className="p-4 border bg-muted/50 rounded-lg space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h4 className="font-semibold text-sm">Sub-Categories for "{purpose.name}"</h4>
-                                    <AddCategoryDialog purposeId={purpose.id} />
-                                </div>
-                                {purpose.categories && purpose.categories.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {purpose.categories.map((category, catIndex) => (
-                                            <div key={category.id} className="flex items-center justify-between p-2 border bg-background rounded-md">
-                                                <p className="text-sm">{category.name}</p>
-                                                <div className="flex items-center gap-2">
-                                                    <AddCategoryDialog purposeId={purpose.id} categoryToEdit={category} />
-                                                    <DeleteCategoryDialog purposeId={purpose.id} categoryToDelete={category} allCategories={purpose.categories} />
-                                                    <Switch
-                                                        checked={category.enabled}
-                                                        onCheckedChange={(checked) => handleToggleCategory(index, catIndex, checked)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
+                <ScrollArea className="h-96 w-full pr-4">
+                    <Accordion type="multiple" className="w-full">
+                    {(getValues('purposes') || []).map((purpose, index) => (
+                        <AccordionItem key={purpose.id} value={purpose.id}>
+                            <div className="flex items-center pr-4">
+                                <AccordionTrigger className="flex-grow">
+                                    <div className="flex items-center gap-4">
+                                        <FormLabel className="text-base">{purpose.name}</FormLabel>
+                                        <FormField
+                                            control={form.control}
+                                            name={`purposes.${index}.enabled`}
+                                            render={({ field }) => (
+                                                <FormItem onClick={(e) => e.stopPropagation()}>
+                                                    <FormControl>
+                                                        <Switch
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
-                                ) : (
-                                    <p className="text-center text-xs text-muted-foreground py-2">No sub-categories defined. Click "Add Category" to create one.</p>
-                                )}
-                           </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-                 </Accordion>
+                                </AccordionTrigger>
+                                <div className="flex items-center gap-2 pl-4">
+                                    <AddPurposeDialog purposeToEdit={purpose} />
+                                    <DeletePurposeDialog purposeToDelete={purpose} allPurposes={form.getValues('purposes')} />
+                                </div>
+                            </div>
+                            <AccordionContent>
+                            <div className="p-4 border bg-muted/50 rounded-lg space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="font-semibold text-sm">Sub-Categories for "{purpose.name}"</h4>
+                                        <AddCategoryDialog purposeId={purpose.id} />
+                                    </div>
+                                    {purpose.categories && purpose.categories.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {purpose.categories.map((category, catIndex) => (
+                                                <div key={category.id} className="flex items-center justify-between p-2 border bg-background rounded-md">
+                                                    <p className="text-sm">{category.name}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <AddCategoryDialog purposeId={purpose.id} categoryToEdit={category} />
+                                                        <DeleteCategoryDialog purposeId={purpose.id} categoryToDelete={category} allCategories={purpose.categories} />
+                                                        <Switch
+                                                            checked={category.enabled}
+                                                            onCheckedChange={(checked) => handleToggleCategory(index, catIndex, checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-center text-xs text-muted-foreground py-2">No sub-categories defined. Click "Add Category" to create one.</p>
+                                    )}
+                            </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                    </Accordion>
+                </ScrollArea>
                  {getValues('purposes')?.length === 0 && (
                      <p className="text-sm text-muted-foreground text-center py-4">No purposes defined. Click "Create Purpose" to add one.</p>
                 )}

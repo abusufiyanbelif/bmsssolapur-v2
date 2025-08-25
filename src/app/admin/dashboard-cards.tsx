@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { useState, useEffect, useMemo } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?: boolean }) => {
@@ -203,47 +205,47 @@ export const PendingLeadsCard = async () => {
         .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
     
     return (
-        <Card>
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-headline text-destructive">
-                <AlertTriangle />
-                Action Required: Pending Lead Verifications
-            </CardTitle>
-            <CardDescription>
-                These leads are awaiting verification from an administrator before they can be funded.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {pendingVerificationLeads.length > 0 ? (
-                <div className="space-y-4">
-                    {pendingVerificationLeads.slice(0, 3).map(lead => (
-                        <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
-                            <div>
-                                <p className="font-semibold">{lead.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Requested <span className="font-medium text-foreground">₹{lead.helpRequested.toLocaleString()}</span> for {lead.purpose}
-                                </p>
-                                    <p className="text-xs text-muted-foreground">
-                                    Submitted on {format(lead.dateCreated as Date, 'dd MMM, yyyy')}
-                                </p>
-                            </div>
-                            <Button asChild size="sm">
-                                <Link href={`/admin/leads/${lead.id}`}>
-                                    Review <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
+        <AccordionItem value="pending-leads">
+            <AccordionTrigger>
+                <div className="flex items-center gap-2 font-headline text-destructive text-base">
+                     <AlertTriangle />
+                    Action Required: Pending Lead Verifications
+                    <Badge variant="destructive">{pendingVerificationLeads.length}</Badge>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent>
+                <CardContent>
+                    {pendingVerificationLeads.length > 0 ? (
+                        <div className="space-y-4">
+                            {pendingVerificationLeads.slice(0, 3).map(lead => (
+                                <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
+                                    <div>
+                                        <p className="font-semibold">{lead.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Requested <span className="font-medium text-foreground">₹{lead.helpRequested.toLocaleString()}</span> for {lead.purpose}
+                                        </p>
+                                            <p className="text-xs text-muted-foreground">
+                                            Submitted on {format(lead.dateCreated as Date, 'dd MMM, yyyy')}
+                                        </p>
+                                    </div>
+                                    <Button asChild size="sm">
+                                        <Link href={`/admin/leads/${lead.id}`}>
+                                            Review <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-10">
-                    <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                    <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">There are no pending leads that require verification.</p>
-                </div>
-            )}
-        </CardContent>
-        </Card>
+                    ) : (
+                        <div className="text-center py-6">
+                            <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+                            <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">There are no pending leads that require verification.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </AccordionContent>
+        </AccordionItem>
     )
 }
 
@@ -254,95 +256,95 @@ export const PendingDonationsCard = async () => {
         .sort((a, b) => (b.createdAt as any) - (a.createdAt as any));
 
     return (
-        <Card>
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-headline text-destructive">
-                <AlertTriangle />
-                Action Required: Pending Donation Verifications
-            </CardTitle>
-            <CardDescription>
-                These donations need to be verified before they can be allocated to a cause.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {pendingVerificationDonations.length > 0 ? (
-                <div className="space-y-4">
-                    {pendingVerificationDonations.slice(0, 3).map(donation => (
-                        <div key={donation.id} className="flex items-center justify-between rounded-lg border p-4">
-                            <div>
-                                <p className="font-semibold">{donation.donorName}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Donated <span className="font-medium text-foreground">₹{donation.amount.toLocaleString()}</span> for {donation.type}
-                                </p>
-                                    <p className="text-xs text-muted-foreground">
-                                    Received {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
-                                </p>
-                            </div>
-                            <Button asChild size="sm">
-                                <Link href={`/admin/donations/${donation.id}/edit`}>
-                                    Review <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
+        <AccordionItem value="pending-donations">
+            <AccordionTrigger>
+                <div className="flex items-center gap-2 font-headline text-destructive text-base">
+                    <AlertTriangle />
+                    Action Required: Pending Donation Verifications
+                    <Badge variant="destructive">{pendingVerificationDonations.length}</Badge>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent>
+                <CardContent>
+                    {pendingVerificationDonations.length > 0 ? (
+                        <div className="space-y-4">
+                            {pendingVerificationDonations.slice(0, 3).map(donation => (
+                                <div key={donation.id} className="flex items-center justify-between rounded-lg border p-4">
+                                    <div>
+                                        <p className="font-semibold">{donation.donorName}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Donated <span className="font-medium text-foreground">₹{donation.amount.toLocaleString()}</span> for {donation.type}
+                                        </p>
+                                            <p className="text-xs text-muted-foreground">
+                                            Received {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
+                                        </p>
+                                    </div>
+                                    <Button asChild size="sm">
+                                        <Link href={`/admin/donations/${donation.id}/edit`}>
+                                            Review <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-10">
-                    <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                    <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">There are no pending donations that require verification.</p>
-                </div>
-            )}
-        </CardContent>
-        </Card>
+                    ) : (
+                        <div className="text-center py-6">
+                            <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+                            <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">There are no pending donations that require verification.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </AccordionContent>
+        </AccordionItem>
     )
 }
 
 export const LeadsReadyToPublishCard = async () => {
     const allLeads = await getAllLeads();
     const readyToPublishLeads = allLeads
-        .filter(lead => lead.verifiedStatus === 'Verified' && lead.caseAction !== 'Publish')
+        .filter(lead => lead.verifiedStatus === 'Verified' && lead.caseAction === 'Ready For Help')
         .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
 
     return (
-        <Card className="lg:col-span-2">
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-headline text-blue-600">
-                <UploadCloud />
-                Action Required: Leads Ready for Publishing
-            </CardTitle>
-            <CardDescription>
-                These leads are verified and ready to be made public on the campaigns page. Change their "Case Action" to "Publish".
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {readyToPublishLeads.length > 0 ? (
-                <div className="space-y-4">
-                    {readyToPublishLeads.slice(0, 3).map(lead => (
-                        <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
-                            <div>
-                                <p className="font-semibold">{lead.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Requested <span className="font-medium text-foreground">₹{lead.helpRequested.toLocaleString()}</span> for {lead.purpose}
-                                </p>
-                            </div>
-                            <Button asChild size="sm">
-                                <Link href={`/admin/leads/${lead.id}/edit`}>
-                                    Publish <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
+        <AccordionItem value="ready-to-publish">
+            <AccordionTrigger>
+                <div className="flex items-center gap-2 font-headline text-blue-600 text-base">
+                    <UploadCloud />
+                    Action Required: Leads Ready for Publishing
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">{readyToPublishLeads.length}</Badge>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent>
+                <CardContent>
+                    {readyToPublishLeads.length > 0 ? (
+                        <div className="space-y-4">
+                            {readyToPublishLeads.slice(0, 3).map(lead => (
+                                <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
+                                    <div>
+                                        <p className="font-semibold">{lead.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Requested <span className="font-medium text-foreground">₹{lead.helpRequested.toLocaleString()}</span> for {lead.purpose}
+                                        </p>
+                                    </div>
+                                    <Button asChild size="sm">
+                                        <Link href={`/admin/leads/${lead.id}/edit`}>
+                                            Publish <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-10">
-                    <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                    <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">There are no leads waiting to be published.</p>
-                </div>
-            )}
-        </CardContent>
-        </Card>
+                    ) : (
+                        <div className="text-center py-6">
+                            <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+                            <h3 className="mt-4 text-lg font-medium">All Caught Up!</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">There are no leads waiting to be published.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </AccordionContent>
+        </AccordionItem>
     )
 }
 

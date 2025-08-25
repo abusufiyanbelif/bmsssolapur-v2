@@ -23,6 +23,7 @@ import { getAllDonations } from "@/services/donation-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
+import { Accordion } from "@/components/ui/accordion";
 
 const CardSkeleton = () => (
     <Card>
@@ -61,7 +62,7 @@ const TableSkeleton = () => (
     </Card>
 )
 
-// This is now a Server Component, fetching data on the server.
+// This is now a Server Component, fetching all necessary data for its children.
 export default async function DashboardPage() {
   const [settings, allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
       getAppSettings(),
@@ -89,13 +90,13 @@ export default async function DashboardPage() {
             <Suspense fallback={<CardSkeleton />}><MonthlyContributorsCard /></Suspense>
             <Suspense fallback={<CardSkeleton />}><MonthlyPledgeCard /></Suspense>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-           <Suspense fallback={<CardSkeleton />}><PendingLeadsCard /></Suspense>
-           <Suspense fallback={<CardSkeleton />}><PendingDonationsCard /></Suspense>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-             <Suspense fallback={<CardSkeleton />}><LeadsReadyToPublishCard /></Suspense>
-        </div>
+        
+        <Accordion type="multiple" className="space-y-4">
+            <Suspense fallback={<CardSkeleton />}><PendingLeadsCard /></Suspense>
+            <Suspense fallback={<CardSkeleton />}><PendingDonationsCard /></Suspense>
+            <Suspense fallback={<CardSkeleton />}><LeadsReadyToPublishCard /></Suspense>
+        </Accordion>
+
          <Suspense fallback={<CardSkeleton />}>
             <LeadBreakdownCard allLeads={allLeads} />
         </Suspense>
