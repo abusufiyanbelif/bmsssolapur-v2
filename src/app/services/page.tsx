@@ -32,8 +32,7 @@ export default async function ServicesPage() {
   ]);
 
   const scannedDonations = allDonations.filter(d => d.source?.includes('Scan')).length;
-  const totalDocuments = allUsers.length + allLeads.length + allDonations.length;
-
+  
   const services = [
     {
       name: "Firebase Authentication",
@@ -46,8 +45,11 @@ export default async function ServicesPage() {
       name: "Firestore Database",
       description: "Stores all application data like users, leads, and donations.",
       icon: Database,
-      metric: totalDocuments.toLocaleString(),
-      metricLabel: "Total Documents",
+      metrics: [
+        { label: "Users", value: allUsers.length.toLocaleString(), icon: Users },
+        { label: "Leads", value: allLeads.length.toLocaleString(), icon: FileText },
+        { label: "Donations", value: allDonations.length.toLocaleString(), icon: HandHeart },
+      ],
     },
     {
       name: "Gemini LLM",
@@ -104,9 +106,25 @@ export default async function ServicesPage() {
               <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">{service.description}</p>
               </CardContent>
-              <CardFooter className="bg-muted/50 p-4 flex justify-between items-center">
-                 <span className="text-sm text-muted-foreground">{service.metricLabel}:</span>
-                 <span className="font-bold text-lg">{service.metric}</span>
+              <CardFooter className="bg-muted/50 p-4">
+                {service.metrics ? (
+                    <div className="w-full space-y-2">
+                        {service.metrics.map(metric => (
+                             <div key={metric.label} className="flex justify-between items-center text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <metric.icon className="h-4 w-4" />
+                                    <span>{metric.label}</span>
+                                </div>
+                                <span className="font-semibold">{metric.value}</span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex justify-between items-center w-full">
+                        <span className="text-sm text-muted-foreground">{service.metricLabel}:</span>
+                        <span className="font-bold text-lg">{service.metric}</span>
+                    </div>
+                )}
               </CardFooter>
             </Card>
           ))}
