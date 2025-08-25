@@ -13,7 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { AppSettings, UserRole, LeadStatus, DashboardSettings } from './types';
+import type { AppSettings, UserRole, LeadStatus, DashboardSettings, LeadPurpose, PurposeCategory } from './types';
 import { set } from 'react-hook-form';
 
 // Re-export type for backward compatibility
@@ -32,6 +32,80 @@ const defaultGatewayConfig = {
     test: {},
     live: {},
 };
+
+const defaultLeadPurposes: LeadPurpose[] = [
+    { 
+        id: 'education', 
+        name: 'Education', 
+        enabled: true, 
+        categories: [
+            { id: 'school-fees', name: 'School Fees', enabled: true },
+            { id: 'college-fees', name: 'College Fees', enabled: true },
+            { id: 'tuition-fees', name: 'Tuition Fees', enabled: true },
+            { id: 'exam-fees', name: 'Exam Fees', enabled: true },
+            { id: 'hostel-fees', name: 'Hostel Fees', enabled: true },
+            { id: 'books-uniforms', name: 'Books & Uniforms', enabled: true },
+            { id: 'educational-materials', name: 'Educational Materials', enabled: true },
+            { id: 'other', name: 'Other', enabled: true },
+        ]
+    },
+    { 
+        id: 'medical', 
+        name: 'Medical', 
+        enabled: true,
+        categories: [
+            { id: 'hospital-bill', name: 'Hospital Bill', enabled: true },
+            { id: 'medication', name: 'Medication', enabled: true },
+            { id: 'doctor-consultation', name: 'Doctor Consultation', enabled: true },
+            { id: 'surgical-procedure', name: 'Surgical Procedure', enabled: true },
+            { id: 'medical-tests', name: 'Medical Tests', enabled: true },
+            { id: 'medical-equipment', name: 'Medical Equipment', enabled: true },
+            { id: 'other', name: 'Other', enabled: true },
+        ]
+    },
+    { 
+        id: 'relief-fund', 
+        name: 'Relief Fund', 
+        enabled: true,
+        categories: [
+            { id: 'ration-kit', name: 'Ration Kit', enabled: true },
+            { id: 'financial-aid', name: 'Financial Aid', enabled: true },
+            { id: 'disaster-relief', name: 'Disaster Relief', enabled: true },
+            { id: 'shelter-assistance', name: 'Shelter Assistance', enabled: true },
+            { id: 'utility-bill-payment', name: 'Utility Bill Payment', enabled: true },
+            { id: 'other', name: 'Other', enabled: true },
+        ]
+    },
+    { 
+        id: 'deen', 
+        name: 'Deen', 
+        enabled: true,
+        categories: [
+            { id: 'masjid-maintenance', name: 'Masjid Maintenance', enabled: true },
+            { id: 'madrasa-support', name: 'Madrasa Support', enabled: true },
+            { id: 'dawah-activities', name: 'Da\'wah Activities', enabled: true },
+            { id: 'other', name: 'Other', enabled: true },
+        ]
+    },
+    { 
+        id: 'loan', 
+        name: 'Loan', 
+        enabled: true,
+        categories: [
+             { id: 'business-loan', name: 'Business Loan', enabled: true },
+             { id: 'emergency-loan', name: 'Emergency Loan', enabled: true },
+             { id: 'education-loan', name: 'Education Loan', enabled: true },
+             { id: 'personal-loan', name: 'Personal Loan', enabled: true },
+             { id: 'other', name: 'Other', enabled: true },
+        ]
+    },
+    { 
+        id: 'other', 
+        name: 'Other', 
+        enabled: true,
+        categories: []
+    },
+];
 
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {
@@ -71,7 +145,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         stripe: defaultGatewayConfig,
     },
     leadConfiguration: {
-        disabledPurposes: [],
+        purposes: defaultLeadPurposes,
         approvalProcessDisabled: true,
         roleBasedCreationEnabled: false,
         leadCreatorRoles: ['Admin', 'Super Admin'],
@@ -101,6 +175,18 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         donorImpactSummary: { visibleTo: ['Donor'] },
         beneficiarySummary: { visibleTo: ['Beneficiary'] },
         referralSummary: { visibleTo: ['Referral'] },
+    },
+    analyticsDashboard: {
+        mainMetrics: { visibleTo: ['Super Admin'] },
+        fundsInHand: { visibleTo: ['Super Admin', 'Finance Admin'] },
+        donationsChart: { visibleTo: ['Super Admin', 'Finance Admin'] },
+        leadBreakdown: { visibleTo: ['Super Admin'] },
+        beneficiaryBreakdown: { visibleTo: ['Super Admin'] },
+        campaignBreakdown: { visibleTo: ['Super Admin'] },
+        donationTypeBreakdown: { visibleTo: ['Super Admin', 'Finance Admin'] },
+        topDonors: { visibleTo: ['Super Admin', 'Finance Admin'] },
+        topDonations: { visibleTo: ['Super Admin', 'Finance Admin'] },
+        recentCampaigns: { visibleTo: ['Super Admin'] },
     }
 };
 
