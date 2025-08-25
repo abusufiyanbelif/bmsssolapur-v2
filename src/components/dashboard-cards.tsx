@@ -1,10 +1,12 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { User, Lead, Campaign, Donation, DonationType } from "@/services/types";
-import { HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield } from "lucide-react";
+import { HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, UserSearch } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true, isPublicView = false }: { allUsers: User[], allLeads: Lead[], isAdmin?: boolean, isPublicView?: boolean }) => {
     const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
@@ -170,3 +172,88 @@ export const DonationTypeCard = ({ donations, isPublicView = false }: { donation
         </Card>
     )
 }
+
+export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUsers: User[], allLeads: Lead[], currentUser?: User }) => {
+    // If a currentUser is passed, we are on the referral's dashboard.
+    // Otherwise, we are on the admin dashboard.
+    const isReferralView = !!currentUser;
+
+    const referralStats = allUsers
+        .filter(u => u.roles.includes('Referral'))
+        .map(referral => {
+            const referredBeneficiaryIds = allUsers
+                .filter(u => u.referredByUserId === referral.id)
+                .map(u => u.id!);
+            
+            const leadsForReferral = allLeads.filter(l => referredBeneficiaryIds.includes(l.beneficiaryId));
+            
+            const leadCount = leadsForReferral.length;
+            const totalRequested = leadsForReferral.reduce((sum, l) => sum + l.helpRequested, 0);
+
+            return {
+                ...referral,
+                leadCount,
+                totalRequested
+            }
+        })
+        .sort((a, b) => b.leadCount - a.leadCount);
+
+    if (isReferralView && currentUser) {
+        const myStats = referralStats.find(r => r.id === currentUser.id);
+        const myReferredBeneficiariesCount = allUsers.filter(u => u.referredByUserId === currentUser.id).length;
+        
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle>My Referrals Summary</CardTitle>
+                    <CardDescription>An overview of the beneficiaries you've introduced to the organization.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="p-4 border rounded-lg"><p className="text-sm font-medium">Beneficiaries Referred</p><p className="text-2xl font-bold">{myReferredBeneficiariesCount}</p></div>
+                    <div className="p-4 border rounded-lg"><p className="text-sm font-medium">Total Leads Created</p><p className="text-2xl font-bold">{myStats?.leadCount || 0}</p></div>
+                    <div className="p-4 border rounded-lg"><p className="text-sm font-medium">Total Aid Requested</p><p className="text-2xl font-bold">₹{(myStats?.totalRequested || 0).toLocaleString()}</p></div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    // Admin view
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-headline">
+                    <UserSearch />
+                    Top Referrals
+                </CardTitle>
+                <CardDescription>
+                    Users who have referred the most beneficiaries and leads.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {referralStats.slice(0, 3).map(referral => (
+                     <div key={referral.id} className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
+                        <div className="flex items-center gap-3">
+                             <Avatar className="h-10 w-10">
+                                <AvatarFallback>{referral.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <Link href={`/admin/user-management/${referral.id}/edit`} className="font-semibold hover:underline">{referral.name}</Link>
+                                <p className="text-xs text-muted-foreground">{referral.phone}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                             <p className="font-bold text-lg">{referral.leadCount} <span className="font-normal text-sm text-muted-foreground">leads</span></p>
+                             <p className="text-xs text-muted-foreground">Req: ₹{referral.totalRequested.toLocaleString()}</p>
+                        </div>
+                    </div>
+                ))}
+                {referralStats.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No referral data available yet.</p>}
+            </CardContent>
+             <CardFooter>
+                <Link href="/admin/referrals" className="w-full">
+                    <Button variant="secondary" className="w-full">View All Referrals</Button>
+                </Link>
+            </CardFooter>
+        </Card>
+    );
+};

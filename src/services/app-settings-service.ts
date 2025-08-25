@@ -170,11 +170,11 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         topDonors: { visibleTo: defaultAdminRoles },
         recentCampaigns: { visibleTo: defaultAdminRoles },
         donationTypeBreakdown: { visibleTo: defaultAdminRoles },
-        // New role-specific card defaults
+        // Role-specific dashboards
         donorContributionSummary: { visibleTo: ['Donor'] },
         donorImpactSummary: { visibleTo: ['Donor'] },
         beneficiarySummary: { visibleTo: ['Beneficiary'] },
-        referralSummary: { visibleTo: ['Referral'] },
+        referralSummary: { visibleTo: ['Referral', 'Admin', 'Super Admin'] },
     },
     analyticsDashboard: {
         mainMetrics: { visibleTo: ['Super Admin'] },
