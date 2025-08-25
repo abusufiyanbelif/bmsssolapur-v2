@@ -1,12 +1,13 @@
 
 
-"use server";
+'use server';
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db, isConfigValid } from '@/services/firebase';
 import { User, getUserByPhone, getUserByEmail, createUser, getUserByName, getUser, getUserByUserId } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
+import { logActivity } from '@/services/activity-log-service';
 
 interface LoginState {
     success: boolean;
@@ -61,6 +62,15 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
         if (primaryRole === 'Referral') redirectTo = '/referral';
         if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
+
+        await logActivity({
+            userId: user.id!,
+            userName: user.name,
+            userEmail: user.email,
+            role: primaryRole,
+            activity: 'User Logged In',
+            details: { method: 'password' },
+        });
 
         return { success: true, userId: user.id, redirectTo };
 
@@ -137,6 +147,15 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         if (primaryRole === 'Referral') redirectTo = '/referral';
         if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
 
+        await logActivity({
+            userId: user.id!,
+            userName: user.name,
+            userEmail: user.email,
+            role: primaryRole,
+            activity: 'User Logged In',
+            details: { method: 'otp' },
+        });
+
         return { success: true, userId: user.id!, redirectTo };
 
     } catch (e) {
@@ -167,8 +186,10 @@ export async function handleGoogleLogin(firebaseUser: {
 
   try {
     let appUser = await getUserByEmail(firebaseUser.email);
+    let isNewUser = false;
 
     if (!appUser) {
+      isNewUser = true;
       // User doesn't exist, create a new one
       const newUser: Omit<User, 'id'> = {
         name: firebaseUser.displayName || 'Google User',
@@ -197,6 +218,15 @@ export async function handleGoogleLogin(firebaseUser: {
     } else if (!appUser.isActive && !appUser.roles.includes('Super Admin')) {
         return { success: false, error: 'This user account is inactive. Please contact an administrator.' };
     }
+
+    await logActivity({
+        userId: appUser.id!,
+        userName: appUser.name,
+        userEmail: appUser.email,
+        role: appUser.roles[0],
+        activity: 'User Logged In',
+        details: { method: 'google-oauth', isNewUser: isNewUser },
+    });
 
     return { success: true, userId: appUser.id };
   } catch (e) {

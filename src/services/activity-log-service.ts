@@ -39,6 +39,41 @@ export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>
 
 
 /**
+ * Fetches all activity logs, ordered by most recent.
+ * @returns An array of all activity log objects.
+ */
+export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
+    if (!isConfigValid) {
+        console.log("Firebase not configured. Skipping activity fetch.");
+        return [];
+    }
+    try {
+        const q = query(
+            collection(db, ACTIVITY_LOG_COLLECTION),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const activities: ActivityLog[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            activities.push({
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate(),
+            } as ActivityLog);
+        });
+        return activities;
+    } catch (error) {
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a descending index on 'timestamp' for the 'activityLog' collection.");
+             return [];
+        }
+        console.error("Error fetching all activity logs:", error);
+        return [];
+    }
+};
+
+/**
  * Fetches all activity logs for a specific user.
  * This fetches activities *performed by* the user.
  * @param userId The ID of the user.
