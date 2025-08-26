@@ -691,6 +691,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   }
 
   const isFormInvalid = transactionIdState.isAvailable === false;
+  const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
 
 
   return (
@@ -1561,6 +1562,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-
-    
