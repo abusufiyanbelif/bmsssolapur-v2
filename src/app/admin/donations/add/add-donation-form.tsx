@@ -495,22 +495,21 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
       }
       
       const details = scanResult.details;
-      toast({ variant: 'success', title: 'Data Extracted', description: 'Form fields have been populated. Checking for users...' });
+      toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been populated. Please review.' });
       
       // Populate form with all extracted details first
       for (const [key, value] of Object.entries(details)) {
         if (value !== undefined && value !== null) {
-            if (key === 'amount') { // The main amount from scan is the total
+            if (key === 'amount') {
                 setValue('totalTransactionAmount', value as number, { shouldDirty: true });
+            } else if (key === 'date' && typeof value === 'string') {
+                setValue('donationDate', new Date(value), { shouldDirty: true });
+            } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
+                setValue('paymentApp', value as any, { shouldDirty: true });
+                setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
+            } else {
+                setValue(key as any, value, { shouldDirty: true });
             }
-            else if (key === 'date' && typeof value === 'string') {
-            setValue('donationDate', new Date(value), { shouldDirty: true });
-          } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
-            setValue('paymentApp', value as any, { shouldDirty: true });
-            setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-          } else {
-            setValue(key as any, value, { shouldDirty: true });
-          }
         }
       }
       
