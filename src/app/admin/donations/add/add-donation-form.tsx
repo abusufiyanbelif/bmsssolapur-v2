@@ -42,6 +42,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { handleAddDonation, checkTransactionId, scanProof, getRawTextFromImage } from "./actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Switch } from "@/components/ui/switch";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
@@ -914,53 +915,53 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </FormItem>
                 )}
             />
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Primary Donation Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {availableDonationTypes.map(type => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        {selectedLead && (
-                             <FormDescription>Only showing donation types acceptable for the selected lead.</FormDescription>
-                        )}
-                        <FormMessage />
-                        </FormItem>
+             <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Donation Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {availableDonationTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    {selectedLead && (
+                         <FormDescription>Only showing donation types acceptable for the selected lead.</FormDescription>
                     )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="purpose"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Purpose</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a purpose" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {donationPurposes.map(purpose => (
-                                <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="purpose"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Purpose</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a purpose" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {donationPurposes.map(purpose => (
+                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
             </div>
 
             {selectedDonor && selectedDonor.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount && (
