@@ -938,32 +938,73 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </div>
                 )
             )}
+            
+             <FormField
+                control={form.control}
+                name="includePledge"
+                render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                    <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!selectedDonor?.monthlyPledgeEnabled}
+                    />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                    <FormLabel>
+                        Fulfill Monthly Pledge
+                    </FormLabel>
+                    <FormDescription>
+                        {selectedDonor?.monthlyPledgeEnabled ? `This will fulfill this donor's pledge of ₹${selectedDonor.monthlyPledgeAmount?.toLocaleString()}.` : "This donor does not have an active monthly pledge."}
+                    </FormDescription>
+                    </div>
+                </FormItem>
+                )}
+            />
 
-            {selectedDonor && selectedDonor.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount && (
-                <FormField
-                    control={form.control}
-                    name="includePledge"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+            <FormField
+                control={form.control}
+                name="includeTip"
+                render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                    <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                    />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                    <FormLabel>
+                        Support for the Organization
+                    </FormLabel>
+                    <FormDescription>
+                        Check this to include a small amount from the total transaction for organizational expenses.
+                    </FormDescription>
+                    </div>
+                </FormItem>
+                )}
+            />
+            
+            {includeTip && (
+                <div className="space-y-4 pl-4 border-l-2 ml-4">
+                    <FormField
+                        control={form.control}
+                        name="tipAmount"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Contribution Amount for Organization</FormLabel>
                             <FormControl>
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
+                                <Input type="number" placeholder="Enter amount for organization" {...field} />
                             </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                    This donation is for my monthly pledge of ₹{selectedDonor.monthlyPledgeAmount.toLocaleString()}
-                                </FormLabel>
-                                <FormDescription>
-                                    Checking this will automatically set the donation amount.
-                                </FormDescription>
-                            </div>
-                        </FormItem>
-                    )}
-                />
+                            <FormDescription>This amount will be recorded as a separate 'Sadaqah' donation for 'To Organization Use'.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
             )}
-
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                 control={form.control}
@@ -1302,7 +1343,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
              
             <div className="space-y-4 rounded-lg border p-4">
                 <h3 className="text-base font-semibold">Linkage (Optional)</h3>
-                <FormField
+                 <FormField
                     control={form.control}
                     name="linkToCampaign"
                     render={({ field }) => (
@@ -1439,55 +1480,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     />
                  )}
             </div>
-            
-             <FormField
-                control={form.control}
-                name="includeTip"
-                render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                    <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                    />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                    <FormLabel>
-                        Support for the Organization
-                    </FormLabel>
-                    <FormDescription>
-                        Check this to include a small amount from the total transaction for organizational expenses.
-                    </FormDescription>
-                    </div>
-                </FormItem>
-                )}
-            />
-            
-            {includeTip && (
-                <div className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="tipAmount"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Contribution Amount for Organization</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="Enter amount for organization" {...field} />
-                            </FormControl>
-                            <FormDescription>This amount will be recorded as a separate 'Sadaqah' donation for 'To Organization Use'.</FormDescription>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>Donation Calculation</AlertTitle>
-                        <AlertDescription>
-                             The primary donation amount for the selected purpose will be <span className="font-bold">₹{getValues('amount').toLocaleString()}</span>. The total transaction amount remains <span className="font-bold">₹{totalTransactionAmount.toLocaleString()}</span>.
-                        </AlertDescription>
-                    </Alert>
-                </div>
-            )}
           
             <FormField
               control={form.control}
@@ -1562,3 +1554,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
