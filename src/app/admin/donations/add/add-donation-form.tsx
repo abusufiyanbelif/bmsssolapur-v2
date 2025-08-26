@@ -262,7 +262,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const linkedCampaignId = watch("campaignId");
   const paymentMethod = watch("paymentMethod");
   const paymentApp = watch("paymentApp");
-  const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
   const selectedPurpose = watch("purpose");
   const includePledge = watch("includePledge");
   
@@ -861,6 +860,108 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             )}
             
             <h3 className="text-lg font-semibold border-b pb-2">Donation Details</h3>
+            
+            {isAdminView ? (
+                <FormField
+                    control={form.control}
+                    name="donorId"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Donor</FormLabel>
+                        <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value
+                                    ? donorUsers.find(
+                                        (user) => user.id === field.value
+                                    )?.name
+                                    : "Select a donor"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search donor..." />
+                                <CommandList>
+                                    <CommandEmpty>No donors found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {donorUsers.map((user) => (
+                                        <CommandItem
+                                        value={user.name}
+                                        key={user.id}
+                                        onSelect={async () => {
+                                            field.onChange(user.id!);
+                                            const donor = await getUser(user.id!);
+                                            setSelectedDonor(donor);
+                                            setDonorPopoverOpen(false);
+                                        }}
+                                        >
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            user.id === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                        />
+                                        {user.name} ({user.phone})
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+            ) : (
+                currentUser && (
+                    <div className="space-y-2">
+                        <FormLabel>Donor</FormLabel>
+                        <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                            <UserIcon className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">{currentUser.name}</span>
+                        </div>
+                        <FormDescription>You are submitting this donation for your own profile.</FormDescription>
+                    </div>
+                )
+            )}
+
+            {selectedDonor && selectedDonor.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount && (
+                <FormField
+                    control={form.control}
+                    name="includePledge"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                    This donation is for my monthly pledge of ₹{selectedDonor.monthlyPledgeAmount.toLocaleString()}
+                                </FormLabel>
+                                <FormDescription>
+                                    Checking this will automatically set the donation amount.
+                                </FormDescription>
+                            </div>
+                        </FormItem>
+                    )}
+                />
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
@@ -915,159 +1016,61 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </FormItem>
                 )}
             />
-             <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Donation Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {availableDonationTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    {selectedLead && (
-                         <FormDescription>Only showing donation types acceptable for the selected lead.</FormDescription>
-                    )}
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="purpose"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Purpose</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a purpose" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {donationPurposes.map(purpose => (
-                            <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
             </div>
-
-            {selectedDonor && selectedDonor.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount && (
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                     control={form.control}
-                    name="includePledge"
+                    name="type"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormItem>
+                        <FormLabel>Primary Donation Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                             <FormControl>
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
                             </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                    This donation is for my monthly pledge of ₹{selectedDonor.monthlyPledgeAmount.toLocaleString()}
-                                </FormLabel>
-                                <FormDescription>
-                                    Checking this will automatically set the donation amount.
-                                </FormDescription>
-                            </div>
+                            <SelectContent>
+                            {availableDonationTypes.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        {selectedLead && (
+                            <FormDescription>Only showing donation types acceptable for the selected lead.</FormDescription>
+                        )}
+                        <FormMessage />
                         </FormItem>
                     )}
                 />
-            )}
+                <FormField
+                    control={form.control}
+                    name="purpose"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Purpose</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a purpose" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {donationPurposes.map(purpose => (
+                                <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
         
             {showOnlineFields && (
                 <div className="space-y-4">
                     <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
-                     {isAdminView ? (
-                        <FormField
-                            control={form.control}
-                            name="donorId"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                <FormLabel>Donor</FormLabel>
-                                <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
-                                    <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        className={cn(
-                                            "w-full justify-between",
-                                            !field.value && "text-muted-foreground"
-                                        )}
-                                        >
-                                        {field.value
-                                            ? donorUsers.find(
-                                                (user) => user.id === field.value
-                                            )?.name
-                                            : "Select a donor"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Search donor..." />
-                                        <CommandList>
-                                            <CommandEmpty>No donors found.</CommandEmpty>
-                                            <CommandGroup>
-                                            {donorUsers.map((user) => (
-                                                <CommandItem
-                                                value={user.name}
-                                                key={user.id}
-                                                onSelect={async () => {
-                                                    field.onChange(user.id!);
-                                                    const donor = await getUser(user.id!);
-                                                    setSelectedDonor(donor);
-                                                    setDonorPopoverOpen(false);
-                                                }}
-                                                >
-                                                <Check
-                                                    className={cn(
-                                                    "mr-2 h-4 w-4",
-                                                    user.id === field.value
-                                                        ? "opacity-100"
-                                                        : "opacity-0"
-                                                    )}
-                                                />
-                                                {user.name} ({user.phone})
-                                                </CommandItem>
-                                            ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                    ) : (
-                        currentUser && (
-                            <div className="space-y-2">
-                                <FormLabel>Donor</FormLabel>
-                                <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-                                    <UserIcon className="h-5 w-5 text-muted-foreground" />
-                                    <span className="font-medium">{currentUser.name}</span>
-                                </div>
-                                <FormDescription>You are submitting this donation for your own profile.</FormDescription>
-                            </div>
-                        )
-                    )}
+                     
                      <FormField
                         control={form.control}
                         name="senderName"
