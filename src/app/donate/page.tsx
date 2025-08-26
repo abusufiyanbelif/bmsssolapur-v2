@@ -45,6 +45,7 @@ import { getCurrentOrganization } from "@/services/organization-service";
 import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -60,6 +61,7 @@ const payNowFormSchema = z.object({
   notes: z.string().optional(),
   leadId: z.string().optional(),
   campaignId: z.string().optional(),
+  includePledge: z.boolean().default(false),
 }).refine(data => {
     if (!data.isAnonymous) {
         return !!data.donorName && data.donorName.length > 0;
@@ -78,9 +80,6 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
     const [monthlyPledgeAmount, setMonthlyPledgeAmount] = useState(user.monthlyPledgeAmount || 0);
     const [enableMonthlyDonationReminder, setEnableMonthlyDonationReminder] = useState(user.enableMonthlyDonationReminder || false);
     const [isSavingPledge, setIsSavingPledge] = useState(false);
-    const [isProcessingPledge, setIsProcessingPledge] = useState(false);
-    const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
-    const [pledgeDonationData, setPledgeDonationData] = useState<PayNowFormValues | null>(null);
     const [isDirty, setIsDirty] = useState(false);
 
     useEffect(() => {
@@ -109,33 +108,7 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
         }
     };
 
-    const handleMonthlyDonation = async () => {
-        if (!user || !user.id) {
-            toast({ variant: "destructive", title: "Error", description: "You must be logged in to make a pledge donation." });
-            return;
-        }
-
-        setIsProcessingPledge(true);
-        const donationData: PayNowFormValues = {
-            purpose: 'Sadaqah', 
-            amount: monthlyPledgeAmount,
-            donorName: user.name,
-            isAnonymous: user.isAnonymousAsDonor || false,
-            notes: "Monthly pledged donation to organization.",
-        };
-        const result = await handleCreatePendingDonation({ ...donationData, userId: user.id });
-
-        if (result.success) {
-            setPledgeDonationData(donationData);
-            setIsQrDialogOpen(true);
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to prepare your monthly donation.' });
-        }
-        setIsProcessingPledge(false);
-    };
-
     return (
-        <>
          <Card>
             <CardHeader>
                 <CardTitle>Notification & Pledge Settings</CardTitle>
@@ -176,30 +149,15 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
                     <p className="text-sm text-muted-foreground">If enabled, you will receive an email reminder to make your monthly donation.</p>
                 </div>
             </CardContent>
-            <CardFooter className="flex-col sm:flex-row items-start sm:items-center gap-4">
-                 {isDirty && (
+            {isDirty && (
+                <CardFooter>
                     <Button onClick={handleSavePledge} disabled={isSavingPledge}>
                         {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Settings
                     </Button>
-                )}
-                {monthlyPledgeEnabled && monthlyPledgeAmount > 0 && (
-                     <Button onClick={handleMonthlyDonation} disabled={isProcessingPledge} variant="secondary">
-                        {isProcessingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                        Donate My Monthly Pledge (₹{monthlyPledgeAmount.toLocaleString()})
-                    </Button>
-                )}
-            </CardFooter>
+                </CardFooter>
+            )}
         </Card>
-        {pledgeDonationData && organization && (
-            <QrCodeDialog
-                open={isQrDialogOpen}
-                onOpenChange={setIsQrDialogOpen}
-                donationDetails={pledgeDonationData}
-                organization={organization}
-            />
-        )}
-        </>
     );
 }
 
@@ -219,6 +177,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         amount: 100,
         isAnonymous: false,
         purpose: 'Sadaqah',
+        includePledge: false,
         },
     });
 
@@ -226,6 +185,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
 
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
+    const includePledge = watch("includePledge");
 
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
@@ -270,6 +230,18 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             setValue('purpose', 'Sadaqah'); // Default purpose for campaigns
         }
     }, [targetLead, targetCampaignId, setValue]);
+
+    useEffect(() => {
+        if (includePledge && user?.monthlyPledgeEnabled && user.monthlyPledgeAmount) {
+            setValue('amount', user.monthlyPledgeAmount);
+            setValue('notes', 'Monthly pledged donation to organization.');
+        } else {
+            // Reset to default or clear if you want
+            setValue('amount', 100);
+            setValue('notes', '');
+        }
+    }, [includePledge, user, setValue]);
+
 
     const isAnonymous = watch("isAnonymous");
 
@@ -492,13 +464,38 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                             <FormItem>
                             <FormLabel>Donation Amount (INR)</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="Enter amount" {...field} />
+                                <Input type="number" placeholder="Enter amount" {...field} disabled={includePledge} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
                         />
                     </div>
+                    
+                    {user?.monthlyPledgeEnabled && user.monthlyPledgeAmount && user.monthlyPledgeAmount > 0 && (
+                        <FormField
+                            control={form.control}
+                            name="includePledge"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            Include my monthly pledge of ₹{user.monthlyPledgeAmount.toLocaleString()}
+                                        </FormLabel>
+                                        <FormDescription>
+                                            This will set the donation amount to your pledged amount.
+                                        </FormDescription>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+                    )}
                     
                     <FormField
                         control={form.control}
