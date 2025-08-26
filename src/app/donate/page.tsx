@@ -1,5 +1,4 @@
 
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -74,12 +73,15 @@ const payNowFormSchema = z.object({
 
 export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
 
-function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }) {
+function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate: () => void, organization: Organization | null }) {
     const { toast } = useToast();
     const [monthlyPledgeEnabled, setMonthlyPledgeEnabled] = useState(user.monthlyPledgeEnabled || false);
     const [monthlyPledgeAmount, setMonthlyPledgeAmount] = useState(user.monthlyPledgeAmount || 0);
     const [enableMonthlyDonationReminder, setEnableMonthlyDonationReminder] = useState(user.enableMonthlyDonationReminder || false);
     const [isSavingPledge, setIsSavingPledge] = useState(false);
+    const [isProcessingPledge, setIsProcessingPledge] = useState(false);
+    const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
+    const [pledgeDonationData, setPledgeDonationData] = useState<PayNowFormValues | null>(null);
 
     const handleSavePledge = async () => {
         setIsSavingPledge(true);
@@ -90,7 +92,7 @@ function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }
                 enableMonthlyDonationReminder,
             });
             toast({ variant: 'success', title: 'Settings Updated', description: 'Your pledge and notification settings have been saved.' });
-            onUpdate(); // Callback to re-fetch user data in parent
+            onUpdate();
         } catch(e) {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to save your settings.' });
             console.error(e);
@@ -99,7 +101,33 @@ function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }
         }
     };
 
+    const handleMonthlyDonation = async () => {
+        if (!user || !user.id) {
+            toast({ variant: "destructive", title: "Error", description: "You must be logged in to make a pledge donation." });
+            return;
+        }
+
+        setIsProcessingPledge(true);
+        const donationData: PayNowFormValues = {
+            purpose: 'Sadaqah', // Or a more suitable default like 'To Organization Use' if that was a valid purpose
+            amount: monthlyPledgeAmount,
+            donorName: user.name,
+            isAnonymous: user.isAnonymousAsDonor || false,
+            notes: "Monthly pledged donation to organization.",
+        };
+        const result = await handleCreatePendingDonation({ ...donationData, userId: user.id });
+
+        if (result.success) {
+            setPledgeDonationData(donationData);
+            setIsQrDialogOpen(true);
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to prepare your monthly donation.' });
+        }
+        setIsProcessingPledge(false);
+    };
+
     return (
+        <>
          <Card>
             <CardHeader>
                 <CardTitle>Notification & Pledge Settings</CardTitle>
@@ -140,13 +168,28 @@ function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }
                     <p className="text-sm text-muted-foreground">If enabled, you will receive an email reminder to make your monthly donation.</p>
                 </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex-col sm:flex-row items-start sm:items-center gap-4">
                  <Button onClick={handleSavePledge} disabled={isSavingPledge}>
                     {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Save Settings
                 </Button>
+                {monthlyPledgeEnabled && monthlyPledgeAmount > 0 && (
+                     <Button onClick={handleMonthlyDonation} disabled={isProcessingPledge} variant="secondary">
+                        {isProcessingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
+                        Donate My Monthly Pledge (₹{monthlyPledgeAmount.toLocaleString()})
+                    </Button>
+                )}
             </CardFooter>
         </Card>
+        {pledgeDonationData && organization && (
+            <QrCodeDialog
+                open={isQrDialogOpen}
+                onOpenChange={setIsQrDialogOpen}
+                donationDetails={pledgeDonationData}
+                organization={organization}
+            />
+        )}
+        </>
     );
 }
 
@@ -737,7 +780,7 @@ function DonatePageContent() {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Make a Donation</h2>
         </div>
-        {user && user.roles.includes('Donor') && <PledgeSettings user={user} onUpdate={fetchPageData} />}
+        {user && user.roles.includes('Donor') && <PledgeSettings user={user} onUpdate={fetchPageData} organization={organization} />}
         <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>Your Generosity Matters</CardTitle>
