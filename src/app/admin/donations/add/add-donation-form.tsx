@@ -220,6 +220,7 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     linkToLead: false,
 };
 
+const presetTipAmounts = [50, 100, 200];
 
 function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProps) {
   const { toast } = useToast();
@@ -292,10 +293,11 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   useEffect(() => {
     const total = totalTransactionAmount || 0;
+    const pledge = (includePledge && selectedDonor?.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount) ? selectedDonor.monthlyPledgeAmount : 0;
     const tip = includeTip ? (tipAmount || 0) : 0;
-    const primaryAmount = Math.max(0, total - tip);
+    const primaryAmount = Math.max(0, total - tip - pledge);
     setValue('amount', primaryAmount, { shouldDirty: true, shouldValidate: true });
-  }, [totalTransactionAmount, tipAmount, includeTip, setValue]);
+  }, [totalTransactionAmount, tipAmount, includeTip, setValue, includePledge, selectedDonor]);
 
 
   useEffect(() => {
@@ -939,30 +941,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )
             )}
             
-             <FormField
-                control={form.control}
-                name="includePledge"
-                render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                    <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={!selectedDonor?.monthlyPledgeEnabled}
-                    />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                    <FormLabel>
-                        Fulfill Monthly Pledge
-                    </FormLabel>
-                    <FormDescription>
-                        {selectedDonor?.monthlyPledgeEnabled ? `This will fulfill this donor's pledge of ₹${selectedDonor.monthlyPledgeAmount?.toLocaleString()}.` : "This donor does not have an active monthly pledge."}
-                    </FormDescription>
-                    </div>
-                </FormItem>
-                )}
-            />
-
             <FormField
                 control={form.control}
                 name="includeTip"
@@ -988,77 +966,69 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             
             {includeTip && (
                 <div className="space-y-4 pl-4 border-l-2 ml-4">
-                    <FormField
+                     <FormField
                         control={form.control}
                         name="tipAmount"
                         render={({ field }) => (
-                            <FormItem>
+                        <FormItem>
                             <FormLabel>Contribution Amount for Organization</FormLabel>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                                {presetTipAmounts.map(amount => (
+                                    <Button key={amount} type="button" variant={tipAmount === amount ? "default" : "outline"} onClick={() => field.onChange(amount)}>
+                                        ₹{amount}
+                                    </Button>
+                                ))}
+                            </div>
                             <FormControl>
-                                <Input type="number" placeholder="Enter amount for organization" {...field} />
+                                <Input type="number" placeholder="Or enter custom amount" {...field} />
                             </FormControl>
                             <FormDescription>This amount will be recorded as a separate 'Sadaqah' donation for 'To Organization Use'.</FormDescription>
                             <FormMessage />
-                            </FormItem>
+                        </FormItem>
                         )}
                     />
                 </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {selectedDonor?.monthlyPledgeEnabled && (
                 <FormField
-                control={form.control}
-                name="totalTransactionAmount"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Total Transaction Amount</FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="Enter full amount from receipt" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="donationDate"
-                render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Donation Date</FormLabel>
-                    <Popover>
-                    <PopoverTrigger asChild>
+                    control={form.control}
+                    name="includePledge"
+                    render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                            )}
-                        >
-                            {field.value ? (
-                            format(field.value, "PPP")
-                            ) : (
-                            <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                        </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
+                        <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
                         />
-                    </PopoverContent>
-                    </Popover>
-                    <FormDescription>The date the transaction was made.</FormDescription>
-                    <FormMessage />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                        <FormLabel>
+                            Include Monthly Pledge of ₹{selectedDonor.monthlyPledgeAmount?.toLocaleString()}
+                        </FormLabel>
+                        <FormDescription>
+                            This will record a separate donation fulfilling the monthly pledge. The total amount will be adjusted.
+                        </FormDescription>
+                        </div>
+                    </FormItem>
+                    )}
+                />
+            )}
+
+
+            <FormField
+            control={form.control}
+            name="totalTransactionAmount"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Total Transaction Amount</FormLabel>
+                <FormControl>
+                    <Input type="number" placeholder="Enter full amount from receipt" {...field} />
+                </FormControl>
+                <FormMessage />
                 </FormItem>
-                )}
+            )}
             />
-            </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                     control={form.control}
@@ -1105,6 +1075,47 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                         </Select>
                         <FormMessage />
                         </FormItem>
+                    )}
+                />
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                    control={form.control}
+                    name="donationDate"
+                    render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Donation Date</FormLabel>
+                        <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                                )}
+                            >
+                                {field.value ? (
+                                format(field.value, "PPP")
+                                ) : (
+                                <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                        </Popover>
+                        <FormDescription>The date the transaction was made.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
                     )}
                 />
             </div>
@@ -1343,7 +1354,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
              
             <div className="space-y-4 rounded-lg border p-4">
                 <h3 className="text-base font-semibold">Linkage (Optional)</h3>
-                 <FormField
+                <FormField
                     control={form.control}
                     name="linkToCampaign"
                     render={({ field }) => (
