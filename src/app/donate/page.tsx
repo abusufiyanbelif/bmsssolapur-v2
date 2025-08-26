@@ -28,15 +28,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard, Save } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
 import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
 import { scanProof } from '@/app/admin/donations/add/actions';
 import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType } from '@/services/types';
-import { getUser } from '@/services/user-service';
+import { getUser, updateUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
@@ -74,6 +74,81 @@ const payNowFormSchema = z.object({
 
 export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
 
+function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }) {
+    const { toast } = useToast();
+    const [monthlyPledgeEnabled, setMonthlyPledgeEnabled] = useState(user.monthlyPledgeEnabled || false);
+    const [monthlyPledgeAmount, setMonthlyPledgeAmount] = useState(user.monthlyPledgeAmount || 0);
+    const [enableMonthlyDonationReminder, setEnableMonthlyDonationReminder] = useState(user.enableMonthlyDonationReminder || false);
+    const [isSavingPledge, setIsSavingPledge] = useState(false);
+
+    const handleSavePledge = async () => {
+        setIsSavingPledge(true);
+        try {
+            await updateUser(user.id!, {
+                monthlyPledgeEnabled,
+                monthlyPledgeAmount: Number(monthlyPledgeAmount),
+                enableMonthlyDonationReminder,
+            });
+            toast({ variant: 'success', title: 'Settings Updated', description: 'Your pledge and notification settings have been saved.' });
+            onUpdate(); // Callback to re-fetch user data in parent
+        } catch(e) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save your settings.' });
+            console.error(e);
+        } finally {
+            setIsSavingPledge(false);
+        }
+    };
+
+    return (
+         <Card>
+            <CardHeader>
+                <CardTitle>Notification & Pledge Settings</CardTitle>
+                <CardDescription>Manage your recurring donation commitment and related notification settings.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="monthly-pledge-switch" className="font-semibold">Enable Monthly Donation Pledge</Label>
+                        <Switch
+                            id="monthly-pledge-switch"
+                            checked={monthlyPledgeEnabled}
+                            onCheckedChange={setMonthlyPledgeEnabled}
+                        />
+                    </div>
+                     {monthlyPledgeEnabled && (
+                        <div className="space-y-2 pt-2">
+                            <Label htmlFor="pledge-amount">My Monthly Pledge Amount (₹)</Label>
+                            <Input
+                                id="pledge-amount"
+                                type="number"
+                                value={monthlyPledgeAmount}
+                                onChange={(e) => setMonthlyPledgeAmount(Number(e.target.value))}
+                                placeholder="e.g., 500"
+                            />
+                        </div>
+                    )}
+                </div>
+                 <div className="space-y-4 p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="monthly-reminder-switch" className="font-semibold">Enable Monthly Donation Reminder</Label>
+                         <Switch
+                            id="monthly-reminder-switch"
+                            checked={enableMonthlyDonationReminder}
+                            onCheckedChange={setEnableMonthlyDonationReminder}
+                        />
+                    </div>
+                    <p className="text-sm text-muted-foreground">If enabled, you will receive an email reminder to make your monthly donation.</p>
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button onClick={handleSavePledge} disabled={isSavingPledge}>
+                    {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Settings
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+}
 
 function PayNowForm({ user, targetLead, targetCampaignId, organization, openLeads, activeCampaigns, razorpayKeyId }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string }) {
     const { toast } = useToast();
@@ -600,9 +675,8 @@ function DonatePageContent() {
 
   const leadId = searchParams.get('leadId');
   const campaignId = searchParams.get('campaignId');
-
-  useEffect(() => {
-    const checkAuthAndLoadData = async () => {
+  
+  const fetchPageData = async () => {
       setIsLoading(true);
       const storedUserId = localStorage.getItem('userId');
       
@@ -638,8 +712,10 @@ function DonatePageContent() {
         setIsLoading(false);
       }
     };
-    
-    checkAuthAndLoadData();
+
+  useEffect(() => {
+    fetchPageData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId, campaignId, router]);
   
   if (isLoading) {
@@ -661,6 +737,7 @@ function DonatePageContent() {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Make a Donation</h2>
         </div>
+        {user && user.roles.includes('Donor') && <PledgeSettings user={user} onUpdate={fetchPageData} />}
         <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>Your Generosity Matters</CardTitle>

@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,84 +28,6 @@ const statusColors: Record<DonationStatus, string> = {
     "Partially Allocated": "bg-orange-500/20 text-orange-700 border-orange-500/30",
     "Allocated": "bg-blue-500/20 text-blue-700 border-blue-500/30",
 };
-
-
-function PledgeSettings({ user, onUpdate }: { user: User, onUpdate: () => void }) {
-    const { toast } = useToast();
-    const [monthlyPledgeEnabled, setMonthlyPledgeEnabled] = useState(user.monthlyPledgeEnabled || false);
-    const [monthlyPledgeAmount, setMonthlyPledgeAmount] = useState(user.monthlyPledgeAmount || 0);
-    const [enableMonthlyDonationReminder, setEnableMonthlyDonationReminder] = useState(user.enableMonthlyDonationReminder || false);
-    const [isSavingPledge, setIsSavingPledge] = useState(false);
-
-    const handleSavePledge = async () => {
-        setIsSavingPledge(true);
-        try {
-            await updateUser(user.id!, {
-                monthlyPledgeEnabled,
-                monthlyPledgeAmount: Number(monthlyPledgeAmount),
-                enableMonthlyDonationReminder,
-            });
-            toast({ variant: 'success', title: 'Settings Updated', description: 'Your pledge and notification settings have been saved.' });
-            onUpdate(); // Callback to re-fetch user data in parent
-        } catch(e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save your settings.' });
-            console.error(e);
-        } finally {
-            setIsSavingPledge(false);
-        }
-    };
-
-    return (
-         <Card>
-            <CardHeader>
-                <CardTitle>Notification & Pledge Settings</CardTitle>
-                <CardDescription>Manage your recurring donation commitment and related notification settings.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-4 p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="monthly-pledge-switch" className="font-semibold">Enable Monthly Donation Pledge</Label>
-                        <Switch
-                            id="monthly-pledge-switch"
-                            checked={monthlyPledgeEnabled}
-                            onCheckedChange={setMonthlyPledgeEnabled}
-                        />
-                    </div>
-                     {monthlyPledgeEnabled && (
-                        <div className="space-y-2 pt-2">
-                            <Label htmlFor="pledge-amount">My Monthly Pledge Amount (₹)</Label>
-                            <Input
-                                id="pledge-amount"
-                                type="number"
-                                value={monthlyPledgeAmount}
-                                onChange={(e) => setMonthlyPledgeAmount(Number(e.target.value))}
-                                placeholder="e.g., 500"
-                            />
-                        </div>
-                    )}
-                </div>
-                 <div className="space-y-4 p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="monthly-reminder-switch" className="font-semibold">Enable Monthly Donation Reminder</Label>
-                         <Switch
-                            id="monthly-reminder-switch"
-                            checked={enableMonthlyDonationReminder}
-                            onCheckedChange={setEnableMonthlyDonationReminder}
-                        />
-                    </div>
-                    <p className="text-sm text-muted-foreground">If enabled, you will receive an email reminder to make your monthly donation.</p>
-                </div>
-            </CardContent>
-            <CardFooter>
-                 <Button onClick={handleSavePledge} disabled={isSavingPledge}>
-                    {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Settings
-                </Button>
-            </CardFooter>
-        </Card>
-    );
-}
-
 
 export default function MyDonationsPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
@@ -309,8 +232,6 @@ export default function MyDonationsPage() {
                 </Link>
             </Button>
         </div>
-        
-        {user && user.roles.includes('Donor') && <PledgeSettings user={user} onUpdate={fetchData} />}
         
         <Card>
             <CardHeader>
