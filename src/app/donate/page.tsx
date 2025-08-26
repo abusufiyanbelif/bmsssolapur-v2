@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -82,6 +81,15 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
     const [isProcessingPledge, setIsProcessingPledge] = useState(false);
     const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
     const [pledgeDonationData, setPledgeDonationData] = useState<PayNowFormValues | null>(null);
+    const [isDirty, setIsDirty] = useState(false);
+
+    useEffect(() => {
+        const hasChanged = (monthlyPledgeEnabled !== (user.monthlyPledgeEnabled || false)) ||
+                           (Number(monthlyPledgeAmount) !== (user.monthlyPledgeAmount || 0)) ||
+                           (enableMonthlyDonationReminder !== (user.enableMonthlyDonationReminder || false));
+        setIsDirty(hasChanged);
+    }, [monthlyPledgeEnabled, monthlyPledgeAmount, enableMonthlyDonationReminder, user]);
+
 
     const handleSavePledge = async () => {
         setIsSavingPledge(true);
@@ -109,7 +117,7 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
 
         setIsProcessingPledge(true);
         const donationData: PayNowFormValues = {
-            purpose: 'Sadaqah', // Or a more suitable default like 'To Organization Use' if that was a valid purpose
+            purpose: 'Sadaqah', 
             amount: monthlyPledgeAmount,
             donorName: user.name,
             isAnonymous: user.isAnonymousAsDonor || false,
@@ -169,10 +177,12 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
                 </div>
             </CardContent>
             <CardFooter className="flex-col sm:flex-row items-start sm:items-center gap-4">
-                 <Button onClick={handleSavePledge} disabled={isSavingPledge}>
-                    {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Settings
-                </Button>
+                 {isDirty && (
+                    <Button onClick={handleSavePledge} disabled={isSavingPledge}>
+                        {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Settings
+                    </Button>
+                )}
                 {monthlyPledgeEnabled && monthlyPledgeAmount > 0 && (
                      <Button onClick={handleMonthlyDonation} disabled={isProcessingPledge} variant="secondary">
                         {isProcessingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
