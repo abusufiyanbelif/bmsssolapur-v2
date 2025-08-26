@@ -962,9 +962,9 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     )}
                 />
             </div>
-            
-            {currentUser && !isAdminView && currentUser.monthlyPledgeEnabled && currentUser.monthlyPledgeAmount && (
-                 <FormField
+
+            {selectedDonor && selectedDonor.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount && (
+                <FormField
                     control={form.control}
                     name="includePledge"
                     render={({ field }) => (
@@ -977,10 +977,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             </FormControl>
                             <div className="space-y-1 leading-none">
                                 <FormLabel>
-                                    Fulfill my monthly pledge of ₹{currentUser.monthlyPledgeAmount.toLocaleString()}
+                                    This donation is for my monthly pledge of ₹{selectedDonor.monthlyPledgeAmount.toLocaleString()}
                                 </FormLabel>
                                 <FormDescription>
-                                    This will set the donation amount to your pledged amount.
+                                    Checking this will automatically set the donation amount.
                                 </FormDescription>
                             </div>
                         </FormItem>
