@@ -1,3 +1,4 @@
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -417,6 +418,31 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                         </Alert>
                     )}
 
+                    {user?.monthlyPledgeEnabled && user.monthlyPledgeAmount && user.monthlyPledgeAmount > 0 && (
+                        <FormField
+                            control={form.control}
+                            name="includePledge"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            Fulfill my monthly pledge of ₹{user.monthlyPledgeAmount.toLocaleString()}
+                                        </FormLabel>
+                                        <FormDescription>
+                                            This will set the donation amount to your pledged amount.
+                                        </FormDescription>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+                    )}
+
                      <div className="space-y-2">
                          <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
                             <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
@@ -471,31 +497,6 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                         )}
                         />
                     </div>
-                    
-                    {user?.monthlyPledgeEnabled && user.monthlyPledgeAmount && user.monthlyPledgeAmount > 0 && (
-                        <FormField
-                            control={form.control}
-                            name="includePledge"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                        <FormLabel>
-                                            Include my monthly pledge of ₹{user.monthlyPledgeAmount.toLocaleString()}
-                                        </FormLabel>
-                                        <FormDescription>
-                                            This will set the donation amount to your pledged amount.
-                                        </FormDescription>
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-                    )}
                     
                     <FormField
                         control={form.control}

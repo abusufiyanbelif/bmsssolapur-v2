@@ -99,6 +99,7 @@ const formSchema = z.object({
   paymentScreenshotDataUrl: z.string().optional(),
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
+  includePledge: z.boolean().default(false),
   notes: z.string().optional(),
 }).refine(data => {
     if (data.includeTip) {
@@ -209,6 +210,7 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     leadId: '',
     campaignId: '',
     type: 'Sadaqah',
+    includePledge: false,
 };
 
 
@@ -253,6 +255,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   const paymentApp = watch("paymentApp");
   const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
   const selectedPurpose = watch("purpose");
+  const includePledge = watch("includePledge");
   
   // Fields for scanned details
   const scannedRecipientName = watch('recipientName');
@@ -434,6 +437,14 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDonor]);
+
+  // Handle auto-updating the amount when pledge is checked
+  useEffect(() => {
+      if (includePledge && selectedDonor?.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount) {
+          setValue('totalTransactionAmount', selectedDonor.monthlyPledgeAmount);
+          setValue('notes', 'Monthly pledged donation.');
+      }
+  }, [includePledge, selectedDonor, setValue]);
 
    const handleExtractText = async () => {
     if (localFiles.length === 0) {
@@ -897,6 +908,32 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
             </div>
+            
+            {/* Pledge Checkbox added here for donors */}
+            {!isAdminView && currentUser?.monthlyPledgeEnabled && currentUser.monthlyPledgeAmount && (
+                 <FormField
+                    control={form.control}
+                    name="includePledge"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                    Fulfill my monthly pledge of ₹{currentUser.monthlyPledgeAmount.toLocaleString()}
+                                </FormLabel>
+                                <FormDescription>
+                                    This will set the donation amount to your pledged amount.
+                                </FormDescription>
+                            </div>
+                        </FormItem>
+                    )}
+                />
+            )}
         
             {showOnlineFields && (
                 <div className="space-y-4">
