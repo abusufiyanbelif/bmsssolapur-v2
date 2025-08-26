@@ -6,11 +6,22 @@ import { getAllUsers } from "@/services/user-service";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Suspense } from "react";
+import { getAllLeads } from "@/services/lead-service";
+import { getAllCampaigns } from "@/services/campaign-service";
 
-function ConfirmDonationPageContent() {
+async function ConfirmDonationPageContent() {
+    const [users, leads, campaigns] = await Promise.all([
+        getAllUsers(),
+        getAllLeads(),
+        getAllCampaigns(),
+    ]);
+
+    const linkableLeads = leads.filter(l => l.status !== 'Closed' && l.status !== 'Cancelled');
+    const linkableCampaigns = campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled');
+
     // This component will be client-side rendered because AddDonationForm uses client hooks
     // but the data fetching can happen on the server.
-    return <AddDonationForm users={[]} />;
+    return <AddDonationForm users={users} leads={linkableLeads} campaigns={linkableCampaigns} />;
 }
 
 
