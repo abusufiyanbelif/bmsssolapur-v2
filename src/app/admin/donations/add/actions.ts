@@ -37,7 +37,7 @@ export async function handleAddDonation(
   const adminUserId = formData.get("adminUserId") as string;
   
   if (!adminUserId) {
-    return { success: false, error: "Could not identify the administrator performing this action. Please log out and try again." };
+    return { success: false, error: "Could not identify the administrator performing this action. Please log out and back in." };
   }
 
   try {
@@ -80,75 +80,68 @@ export async function handleAddDonation(
     const donationDateStr = formData.get("donationDate") as string;
     const donationDate = donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now();
     
-    const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
+    const baseDonationData = {
         donorId: donor.id!,
-        donorName: donor.name, // Always store the real name for internal records
-        isAnonymous: formData.get("isAnonymous") === 'true', // Flag for public display logic
-        amount: parseFloat(formData.get("amount") as string),
+        donorName: donor.name,
+        isAnonymous: formData.get("isAnonymous") === 'true',
+        status: "Pending verification",
+        transactionId: transactionId,
+        donationDate: donationDate,
+        paymentApp: formData.get("paymentApp") as string | undefined,
+        paymentMethod: formData.get("paymentMethod") as PaymentMethod | undefined,
+        paymentScreenshotUrls: paymentScreenshotUrls,
+    };
+    
+    const includePledge = formData.get("includePledge") === 'true';
+    const pledgeAmount = includePledge ? donor.monthlyPledgeAmount || 0 : 0;
+    
+    const includeTip = formData.get("includeTip") === 'true';
+    const tipAmount = includeTip ? parseFloat(formData.get("tipAmount") as string) : 0;
+
+    const primaryAmount = parseFloat(formData.get("amount") as string);
+    const totalAmount = primaryAmount + pledgeAmount + tipAmount;
+
+
+    // Create Pledge Donation if applicable
+    if (pledgeAmount > 0) {
+      await createDonation({
+        ...baseDonationData,
+        amount: pledgeAmount,
+        type: 'Sadaqah', // Pledges are Sadaqah
+        purpose: 'Monthly Pledge',
+        notes: `Monthly pledge fulfillment as part of transaction ID: ${transactionId}`,
+      }, adminUser.id!, adminUser.name, adminUser.email);
+    }
+    
+    // Create Tip Donation if applicable
+    if (tipAmount > 0) {
+        await createDonation({
+            ...baseDonationData,
+            amount: tipAmount,
+            type: 'Sadaqah', // Tips are Sadaqah
+            purpose: 'To Organization Use',
+            notes: `Support for organization as part of transaction ID: ${transactionId}`,
+        }, adminUser.id!, adminUser.name, adminUser.email);
+    }
+
+    // Create Primary Donation
+    const primaryDonation = await createDonation({
+        ...baseDonationData,
+        amount: primaryAmount,
         type: formData.get("type") as DonationType,
         purpose: formData.get("purpose") as DonationPurpose, // Now required
         category: formData.get("category") as string | undefined,
-        status: "Pending verification",
-        transactionId: transactionId,
-        utrNumber: formData.get("utrNumber") as string | undefined,
-        googlePayTransactionId: formData.get("googlePayTransactionId") as string | undefined,
-        phonePeTransactionId: formData.get("phonePeTransactionId") as string | undefined,
-        paytmUpiReferenceNo: formData.get("paytmUpiReferenceNo") as string | undefined,
-        donationDate: donationDate,
-        paymentApp: formData.get("paymentApp") as string | undefined,
-        donorUpiId: formData.get("donorUpiId") as string | undefined,
-        donorPhone: formData.get("donorPhone") as string | undefined,
-        donorBankAccount: formData.get("donorBankAccount") as string | undefined,
-        senderName: formData.get("senderName") as string | undefined,
-        phonePeSenderName: formData.get("phonePeSenderName") as string | undefined,
-        googlePaySenderName: formData.get("googlePaySenderName") as string | undefined,
-        paytmSenderName: formData.get("paytmSenderName") as string | undefined,
-        recipientName: formData.get("recipientName") as string | undefined,
-        phonePeRecipientName: formData.get("phonePeRecipientName") as string | undefined,
-        googlePayRecipientName: formData.get("googlePayRecipientName") as string | undefined,
-        paytmRecipientName: formData.get("paytmRecipientName") as string | undefined,
-        recipientId: formData.get("recipientId") as string | undefined,
-        recipientRole: formData.get("recipientRole") as 'Beneficiary' | 'Referral' | 'Organization Member' | undefined,
-        recipientPhone: formData.get("recipientPhone") as string | undefined,
-        recipientUpiId: formData.get("recipientUpiId") as string | undefined,
-        recipientAccountNumber: formData.get("recipientAccountNumber") as string | undefined,
-        paymentMethod: formData.get("paymentMethod") as PaymentMethod | undefined,
         notes: formData.get("notes") as string | undefined,
-        paymentScreenshotUrls: paymentScreenshotUrls,
-        leadId: formData.get("leadId") as string | undefined,
-        campaignId: formData.get("campaignId") as string | undefined,
-    };
+        leadId: formData.get("linkToLead") === 'true' ? formData.get("leadId") as string | undefined : undefined,
+        campaignId: formData.get("linkToCampaign") === 'true' ? formData.get("campaignId") as string | undefined : undefined,
+    }, adminUser.id!, adminUser.name, adminUser.email);
 
-    const newDonation = await createDonation(
-        newDonationData,
-        adminUser.id!,
-        adminUser.name,
-        adminUser.email
-    );
-    
-    const tipAmount = parseFloat(formData.get("tipAmount") as string);
-    if (!isNaN(tipAmount) && tipAmount > 0) {
-        const tipDonationData: Omit<Donation, 'id' | 'createdAt'> = {
-            ...newDonationData,
-            amount: tipAmount,
-            type: 'Sadaqah', // Tips can be categorized as Sadaqah
-            purpose: 'To Organization Use', // This is key for tracking
-            notes: `Tip from donation transaction ID: ${newDonationData.transactionId}`,
-            isAnonymous: true, // Tips for the org should likely always be anonymous publicly
-        };
-         await createDonation(
-            tipDonationData,
-            adminUser.id!,
-            adminUser.name,
-            adminUser.email
-        );
-    }
 
     revalidatePath("/admin/donations");
 
     return {
       success: true,
-      donation: newDonation,
+      donation: primaryDonation,
     };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -110,39 +111,88 @@ export const FundsInHandCard = ({ isPublicView = false }: { isPublicView?: boole
     
     if (loading) {
         return (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                 <Card className="h-full bg-primary/10">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
-                        <Banknote className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <Skeleton className="h-8 w-3/4 mb-1" />
-                        <Skeleton className="h-4 w-1/2" />
-                    </CardContent>
-                </Card>
-            </div>
+             <Card className="h-full bg-primary/10">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
+                    <Banknote className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-8 w-3/4 mb-1" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardContent>
+            </Card>
         );
     }
 
 
     return (
-         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Link href="/admin/donations">
-                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 bg-primary/10">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
-                    <Banknote className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">₹{stats.pendingToDisburse.toLocaleString()}</div>
-                    <p className="text-xs text-muted-foreground">Verified funds ready to be disbursed.</p>
-                    </CardContent>
-                </Card>
-            </Link>
-        </div>
+        <Link href="/admin/donations">
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 bg-primary/10">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
+                <Banknote className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                <div className="text-2xl font-bold">₹{stats.pendingToDisburse.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">Verified funds ready to be disbursed.</p>
+                </CardContent>
+            </Card>
+        </Link>
     )
 }
+
+export const OrganizationFundsCard = () => {
+    const [stats, setStats] = useState({ orgFunds: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const allDonations = await getAllDonations();
+                const orgFunds = allDonations
+                    .filter(d => (d.status === 'Verified' || d.status === 'Allocated') && (d.purpose === 'To Organization Use' || d.purpose === 'Monthly Pledge'))
+                    .reduce((sum, d) => sum + d.amount, 0);
+                setStats({ orgFunds });
+            } catch (error) {
+                console.error("Failed to fetch organization funds stats", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+    
+    if (loading) {
+        return (
+             <Card className="h-full bg-accent/10">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Organization Support Funds</CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-8 w-3/4 mb-1" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Link href="/admin/donations?purpose=To+Organization+Use">
+            <Card className="h-full transition-all hover:shadow-md hover:border-accent/50 bg-accent/10">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Organization Support Funds</CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">₹{stats.orgFunds.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">Funds from pledges and direct support.</p>
+                </CardContent>
+            </Card>
+        </Link>
+    )
+}
+
 
 export const MonthlyContributorsCard = async () => {
     const [allDonations, allUsers] = await Promise.all([getAllDonations(), getAllUsers()]);
@@ -515,6 +565,8 @@ const leadPurposeIcons: Record<LeadPurpose, React.ElementType> = {
     'Relief Fund': HomeIcon,
     'Deen': Building,
     'Loan': DollarSign,
+    'To Organization Use': Building,
+    'Monthly Pledge': Repeat,
     'Other': FileText,
 };
 
