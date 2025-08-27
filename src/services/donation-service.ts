@@ -68,14 +68,12 @@ export const createDonation = async (
     let customDonationId = '';
     const isSelfDonation = adminUser.id === donorUser.id;
 
-    if (isSelfDonation) {
-        customDonationId = `D${donationNumber}_${donorUser.userKey}_${dateString}`;
-    } else {
-        if (!adminUser.userKey) {
-             throw new Error(`The admin user ("${adminUser.name}") does not have a valid UserKey.`);
-        }
-        customDonationId = `D${donationNumber}_${donorUser.userKey}_By${adminUser.userKey}_${dateString}`;
-    }
+    // New Structured ID Logic
+    const donationPrefix = `D${donationNumber}`;
+    const donorKeyPart = donorUser.userKey;
+    const adminKeyPart = isSelfDonation ? '' : `_By${adminUser.userKey || 'ADMIN'}`;
+    
+    customDonationId = `${donationPrefix}_${donorKeyPart}${adminKeyPart}_${dateString}`;
     
     const donationRef = doc(db, DONATIONS_COLLECTION, customDonationId);
     
