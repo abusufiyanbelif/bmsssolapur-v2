@@ -285,6 +285,11 @@ export const PendingLeadsCard = async () => {
                                     </Button>
                                 </div>
                             ))}
+                            {pendingVerificationLeads.length > 3 && (
+                                <Button asChild variant="secondary" className="w-full">
+                                    <Link href="/admin/leads?verification=Pending">View All {pendingVerificationLeads.length} Pending Leads</Link>
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-6">
@@ -336,6 +341,11 @@ export const PendingDonationsCard = async () => {
                                     </Button>
                                 </div>
                             ))}
+                             {pendingVerificationDonations.length > 3 && (
+                                <Button asChild variant="secondary" className="w-full">
+                                    <Link href="/admin/donations?status=Pending+verification">View All {pendingVerificationDonations.length} Pending Donations</Link>
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-6">
@@ -384,6 +394,11 @@ export const LeadsReadyToPublishCard = async () => {
                                     </Button>
                                 </div>
                             ))}
+                             {readyToPublishLeads.length > 3 && (
+                                <Button asChild variant="secondary" className="w-full">
+                                    <Link href="/admin/leads?caseAction=Ready+For+Help">View All {readyToPublishLeads.length} Ready Leads</Link>
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-6">
