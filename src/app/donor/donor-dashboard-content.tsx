@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -23,6 +24,7 @@ import { getAllCampaigns } from "@/services/campaign-service";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
 import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
 import { getAppSettings } from "@/services/app-settings-service";
+import { getRandomQuotes } from "@/services/quotes-service";
 
 const statusColors: Record<Donation['status'], string> = {
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -32,10 +34,55 @@ const statusColors: Record<Donation['status'], string> = {
     "Allocated": "bg-blue-500/20 text-blue-700 border-blue-500/30",
 };
 
+function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+    if (loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <QuoteIcon className="text-primary" />
+                        Wisdom & Reflection
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (quotes.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <QuoteIcon className="text-primary" />
+                    Wisdom & Reflection
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {quotes.map((quote, index) => (
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                            <p>"{quote.text}"</p>
+                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                        </blockquote>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+
 export function DonorDashboardContent() {
   const [user, setUser] = useState<User | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
@@ -55,12 +102,13 @@ export function DonorDashboardContent() {
           }
           
           try {
-              const [fetchedUser, donorDonations, availableLeads, fetchedAllLeads, fetchedSettings] = await Promise.all([
+              const [fetchedUser, donorDonations, availableLeads, fetchedAllLeads, fetchedSettings, fetchedQuotes] = await Promise.all([
                   getUser(storedUserId),
                   getDonationsByUserId(storedUserId),
                   getOpenGeneralLeads(),
                   getAllLeads(),
                   getAppSettings(),
+                  getRandomQuotes(3),
               ]);
 
               if (!fetchedUser || !fetchedUser.roles.includes('Donor')) {
@@ -73,6 +121,7 @@ export function DonorDashboardContent() {
               setOpenLeads(availableLeads);
               setAllLeads(fetchedAllLeads);
               setSettings(fetchedSettings);
+              setQuotes(fetchedQuotes);
           } catch (e) {
               setError("Failed to load dashboard data.");
               console.error(e);
@@ -148,6 +197,8 @@ export function DonorDashboardContent() {
               Welcome back, {user?.name}. Thank you for your continued support.
             </p>
         </div>
+        
+        <InspirationalQuotes quotes={quotes} loading={loading} />
 
         <div className="space-y-4">
             <Suspense fallback={<div>Loading...</div>}>

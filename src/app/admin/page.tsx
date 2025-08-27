@@ -24,7 +24,8 @@ import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { BarChart3, CheckCheck, HandCoins, Megaphone, FileText, Users, HandHeart } from "lucide-react";
+import { BarChart3, CheckCheck, HandCoins, Megaphone, FileText, Users, HandHeart, Quote as QuoteIcon, Loader2 } from "lucide-react";
+import { getRandomQuotes, Quote } from "@/services/quotes-service";
 
 
 const CardSkeleton = () => (
@@ -64,14 +65,42 @@ const TableSkeleton = () => (
     </Card>
 )
 
+function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
+    if (quotes.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <QuoteIcon className="text-primary" />
+                    Wisdom & Reflection
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {quotes.map((quote, index) => (
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                            <p>"{quote.text}"</p>
+                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                        </blockquote>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 // This is now a Server Component, fetching all necessary data for its children.
 export default async function DashboardPage() {
-  const [settings, allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
+  const [settings, allDonations, allUsers, allLeads, allCampaigns, quotes] = await Promise.all([
       getAppSettings(),
       getAllDonations(),
       getAllUsers(),
       getAllLeads(),
       getAllCampaigns(),
+      getRandomQuotes(3),
   ]);
 
   // The client component will read the role from localStorage.
@@ -82,12 +111,9 @@ export default async function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Dashboard</h2>
       </div>
       <div className="space-y-4">
-        <Suspense fallback={<CardSkeleton />}>
-            <MainMetricsCard />
-        </Suspense>
-        <Suspense fallback={<CardSkeleton />}>
-            <FundsInHandCard />
-        </Suspense>
+        <Suspense fallback={<CardSkeleton />}><InspirationalQuotes quotes={quotes} /></Suspense>
+        <Suspense fallback={<CardSkeleton />}><MainMetricsCard /></Suspense>
+        <Suspense fallback={<CardSkeleton />}><FundsInHandCard /></Suspense>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Suspense fallback={<CardSkeleton />}><MonthlyContributorsCard /></Suspense>
             <Suspense fallback={<CardSkeleton />}><MonthlyPledgeCard /></Suspense>
