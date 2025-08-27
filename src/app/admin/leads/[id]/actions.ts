@@ -1,17 +1,17 @@
 
 
-
 "use server";
 
 import { deleteLead as deleteLeadService, getLead, updateLead } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/services/activity-log-service";
-import { getUser } from "@/services/user-service";
+import { getUser, getUserByUserId } from "@/services/user-service";
 import { FundTransfer, LeadStatus, LeadVerificationStatus, User, Donation, Allocation } from "@/services/types";
 import { arrayUnion, increment, writeBatch, doc, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { getDonation, updateDonation } from "@/services/donation-service";
 import { uploadFile } from "@/services/storage-service";
+import { format } from "date-fns";
 
 export async function handleDeleteLead(leadId: string, adminUserId: string) {
     try {
@@ -157,7 +157,9 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const amount = amountStr ? parseFloat(amountStr) : 0;
         
         const proofFile = formData.get("proof") as File | undefined;
-        const transactionId = formData.get("transactionId") as string | undefined;
+        const scannedTransactionId = formData.get("transactionId") as string | undefined;
+        const recipientType = formData.get("recipientType") as 'Beneficiary' | 'Referral';
+        const customRecipientId = formData.get("recipientId") as string | undefined;
 
         if (!adminUserId || isNaN(amount) || !proofFile) {
             return { success: false, error: "Missing required fields for fund transfer (Admin, Amount, Proof)." };
@@ -172,7 +174,22 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             return { success: false, error: "Admin user or lead not found." };
         }
         
-        const transferId = transactionId || `transfer_${Date.now()}`;
+        let recipientId = lead.beneficiaryId;
+        if (recipientType === 'Referral' && customRecipientId) {
+            recipientId = customRecipientId;
+        }
+        const recipientUser = await getUser(recipientId);
+        if (!recipientUser) {
+             return { success: false, error: "Recipient user could not be found." };
+        }
+
+        // --- Structured Transfer ID Generation ---
+        const timestamp = Date.now();
+        const adminKey = adminUser.userKey || 'ADMIN';
+        const recipientKey = recipientUser.userKey || 'RECP';
+        const transferId = scannedTransactionId || `TXN_${adminKey}_To${recipientKey}_${timestamp}`;
+        // --- End ID Generation ---
+
         const uploadPath = `leads/${leadId}/transfers/${transferId}/`;
         const proofUrl = await uploadFile(proofFile, uploadPath);
 
@@ -183,7 +200,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             transferredAt: new Date() as any,
             proofUrl: proofUrl,
             notes: formData.get("notes") as string | undefined,
-            transactionId: transactionId,
+            transactionId: transferId, // Use the new structured ID
             utrNumber: formData.get("utrNumber") as string | undefined,
             googlePayTransactionId: formData.get("googlePayTransactionId") as string | undefined,
             phonePeTransactionId: formData.get("phonePeTransactionId") as string | undefined,
