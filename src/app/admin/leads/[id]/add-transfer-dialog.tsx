@@ -135,6 +135,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     formData.append("adminUserId", adminUserId);
     if(file) formData.append("proof", file);
 
+    // Pass the leadId to the server action
     const result = await handleFundTransfer(leadId, formData);
     setIsSubmitting(false);
 

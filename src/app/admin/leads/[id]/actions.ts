@@ -187,7 +187,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const timestamp = Date.now();
         const adminKey = adminUser.userKey || 'ADMIN';
         const recipientKey = recipientUser.userKey || 'RECP';
-        const transferId = scannedTransactionId || `TXN_${adminKey}_To${recipientKey}_${timestamp}`;
+        const transferId = scannedTransactionId || `TXN_By${adminKey}_To${recipientKey}_${timestamp}`;
         // --- End ID Generation ---
 
         const uploadPath = `leads/${leadId}/transfers/${transferId}/`;
