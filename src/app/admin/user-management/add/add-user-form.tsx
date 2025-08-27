@@ -28,6 +28,7 @@ import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
