@@ -3,7 +3,7 @@
 "use server";
 
 import { createDonation, getDonationByTransactionId } from "@/services/donation-service";
-import { getUser } from "@/services/user-service";
+import { getUser, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
@@ -84,7 +84,7 @@ export async function handleAddDonation(
         donorId: donor.id!,
         donorName: donor.name,
         isAnonymous: formData.get("isAnonymous") === 'true',
-        status: "Pending verification",
+        status: "Pending verification" as Donation["status"],
         transactionId: transactionId,
         donationDate: donationDate,
         paymentApp: formData.get("paymentApp") as string | undefined,
@@ -97,10 +97,6 @@ export async function handleAddDonation(
     
     const includeTip = formData.get("includeTip") === 'true';
     const tipAmount = includeTip ? parseFloat(formData.get("tipAmount") as string) : 0;
-
-    const primaryAmount = parseFloat(formData.get("amount") as string);
-    const totalAmount = primaryAmount + pledgeAmount + tipAmount;
-
 
     // Create Pledge Donation if applicable
     if (pledgeAmount > 0) {
@@ -125,6 +121,7 @@ export async function handleAddDonation(
     }
 
     // Create Primary Donation
+    const primaryAmount = parseFloat(formData.get("amount") as string);
     const primaryDonation = await createDonation({
         ...baseDonationData,
         amount: primaryAmount,
@@ -190,7 +187,16 @@ export async function scanProof(formData: FormData): Promise<{success: boolean, 
 
             const extractedDetails = await extractDonationDetails({ photoDataUri: dataUri });
             
-            return { success: true, details: extractedDetails }; // Success, exit the loop
+            // On success, try to find a matching donor
+            let foundDonor: User | null = null;
+            if (extractedDetails.senderUpiId) foundDonor = await getUserByUpiId(extractedDetails.senderUpiId);
+            if (!foundDonor && extractedDetails.donorPhone) {
+                 const phone = extractedDetails.donorPhone.replace(/\D/g,'').slice(-10);
+                 foundDonor = await getUserByUpiId(phone);
+            }
+            if (!foundDonor && extractedDetails.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(extractedDetails.senderAccountNumber);
+
+            return { success: true, details: { ...extractedDetails, donorId: foundDonor?.id } };
 
         } catch (e) {
             lastError = e instanceof Error ? e.message : "An unknown error occurred";

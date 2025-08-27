@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser } from "./actions";
 import { useState, useEffect, Suspense, useCallback } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X } from "lucide-react";
+import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
@@ -155,12 +155,18 @@ function AddUserFormContent() {
   const [aadhaarState, setAadhaarState] = useState<AvailabilityState>(initialAvailabilityState);
   const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
   const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
+  const [scannedRawText, setScannedRawText] = useState<string | null>(null);
 
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
     if (adminId) {
       getUser(adminId).then(setCurrentAdmin);
     }
+    const rawTextParam = searchParams.get('rawText');
+    if (rawTextParam) {
+        setScannedRawText(decodeURIComponent(rawTextParam));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const form = useForm<AddUserFormValues>({
@@ -342,6 +348,16 @@ function AddUserFormContent() {
 
   return (
     <>
+    {scannedRawText && (
+        <div className="mb-6 space-y-2">
+            <Label htmlFor="rawTextOutput" className="flex items-center gap-2 font-semibold text-base">
+                <Text className="h-5 w-5 text-primary"/>
+                Extracted Text from Screenshot
+            </Label>
+            <Textarea id="rawTextOutput" readOnly value={scannedRawText} rows={8} className="text-xs font-mono bg-muted" />
+            <FormDescription>Review the text extracted from the screenshot to help fill out the form accurately.</FormDescription>
+        </div>
+    )}
     <Form {...form}>
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
         
