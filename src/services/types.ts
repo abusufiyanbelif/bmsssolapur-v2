@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -430,4 +429,3 @@ export interface ActivityLog {
     details: Record<string, any>;
     timestamp: Timestamp | Date;
 }
-

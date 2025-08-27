@@ -1,3 +1,4 @@
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -26,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard, Save } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard, Save, Banknote } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
@@ -46,6 +47,7 @@ import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -65,6 +67,10 @@ const payNowFormSchema = z.object({
   leadId: z.string().optional(),
   campaignId: z.string().optional(),
   includePledge: z.boolean().default(false),
+  // Bank Transfer Fields
+  utrNumber: z.string().optional(),
+  senderBankName: z.string().optional(),
+  senderIfscCode: z.string().optional(),
 }).refine(data => {
     if (!data.isAnonymous) {
         return !!data.donorName && data.donorName.length > 0;
@@ -73,6 +79,14 @@ const payNowFormSchema = z.object({
 }, {
     message: "Donor name is required for non-anonymous donations.",
     path: ["donorName"],
+}).refine(data => {
+    if (data.paymentMethod === 'Bank Transfer') {
+        return !!data.utrNumber && data.utrNumber.length > 0;
+    }
+    return true;
+}, {
+    message: "UTR Number is required for Bank Transfers.",
+    path: ["utrNumber"],
 });
 
 export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
@@ -185,7 +199,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         },
     });
 
-    const { watch, setValue, getValues } = form;
+    const { watch, setValue, getValues, control } = form;
 
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
@@ -569,6 +583,38 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                         />
                     )}
                     
+                    {paymentMethod === 'Bank Transfer' && (
+                        <div className="space-y-6 pt-4 border-t">
+                             <Alert>
+                                <Banknote className="h-4 w-4" />
+                                <AlertTitle>Bank Transfer Details</AlertTitle>
+                                <AlertDescription>
+                                    Please transfer your donation to the account below and enter the UTR number to help us verify your payment.
+                                </AlertDescription>
+                             </Alert>
+                             <div className="p-4 border rounded-lg bg-muted/50 space-y-2 text-sm">
+                                <p><strong>Account Name:</strong> {organization?.bankAccountName}</p>
+                                <p><strong>Account Number:</strong> {organization?.bankAccountNumber}</p>
+                                <p><strong>IFSC Code:</strong> {organization?.bankIfscCode}</p>
+                             </div>
+                             <FormField
+                                control={control}
+                                name="utrNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>UTR Number</FormLabel>
+                                        <FormControl><Input placeholder="Enter the transaction reference number" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Your Bank Name</FormLabel><FormControl><Input placeholder="e.g., State Bank of India" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={control} name="senderIfscCode" render={({ field }) => (<FormItem><FormLabel>Your Branch IFSC Code</FormLabel><FormControl><Input placeholder="e.g., SBIN0001234" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                        </div>
+                    )}
+                    
                     <FormField
                     control={form.control}
                     name="notes"
@@ -588,7 +634,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                     />
                     
                     <div className="flex flex-col gap-4">
-                        {paymentMethod === 'Online (UPI/Card)' && (
+                        {paymentMethod === 'Online (UPI/Card)' && razorpayKeyId && (
                            <>
                                 <Button 
                                     type="button" 
@@ -616,7 +662,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                                 </Button>
                             </>
                         )}
-                         {(paymentMethod === 'Cash' || paymentMethod === 'Bank Transfer' || paymentMethod === 'Other') && (
+                         {(paymentMethod !== 'Online (UPI/Card)' || !razorpayKeyId) && (
                             <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
                                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
                                 Submit Donation Record

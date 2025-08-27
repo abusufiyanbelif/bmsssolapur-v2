@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -736,7 +737,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             {(paymentMethod === 'Cash' || paymentMethod === 'Other') && (
                 <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertTitle>Manual Entry</Alert</AlertTitle>
+                    <AlertTitle>Manual Entry</AlertTitle>
                     <AlertDescription>
                         You are recording a {paymentMethod.toLowerCase()} donation. Please ensure all details are accurate.
                     </AlertDescription>
@@ -1217,6 +1218,10 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                             />
                         )}
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="senderBankName" render={({field}) => (<FormItem><FormLabel>Sender's Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="senderIfscCode" render={({field}) => (<FormItem><FormLabel>Sender's Bank IFSC</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
                 </div>
              )}
 
@@ -1294,5 +1299,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-    

@@ -22,6 +22,9 @@ interface DonationFormData {
     notes?: string;
     leadId?: string;
     campaignId?: string;
+    utrNumber?: string;
+    senderBankName?: string;
+    senderIfscCode?: string;
 }
 
 /**
@@ -45,11 +48,14 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
         amount: formData.amount,
         type: formData.purpose === 'Zakat' ? 'Zakat' : formData.purpose === 'Fitr' ? 'Fitr' : 'Sadaqah', // Simple mapping
         purpose: formData.purpose,
-        status: "Pending verification", // Initial status
+        status: "Pending", // Standardized status
         notes: `Donation initiated via online payment. User notes: ${formData.notes || 'N/A'}`,
         leadId: formData.leadId || undefined,
         campaignId: formData.campaignId || undefined,
         donationDate: Timestamp.now(), // Tentative date
+        utrNumber: formData.utrNumber,
+        senderBankName: formData.senderBankName,
+        senderIfscCode: formData.senderIfscCode,
     };
     
     const newDonation = await createDonation(

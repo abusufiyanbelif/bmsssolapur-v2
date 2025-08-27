@@ -6,7 +6,7 @@ import { deleteLead as deleteLeadService, getLead, updateLead } from "@/services
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/services/activity-log-service";
 import { getUser, getUserByUserId } from "@/services/user-service";
-import { FundTransfer, LeadStatus, LeadVerificationStatus, User, Donation, Allocation } from "@/services/types";
+import { FundTransfer, LeadStatus, LeadVerificationStatus, User, Donation, Allocation, PaymentMethod } from "@/services/types";
 import { arrayUnion, increment, writeBatch, doc, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { getDonation, updateDonation } from "@/services/donation-service";
@@ -160,8 +160,9 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const scannedTransactionId = formData.get("transactionId") as string | undefined;
         const recipientType = formData.get("recipientType") as 'Beneficiary' | 'Referral';
         const customRecipientId = formData.get("recipientId") as string | undefined;
+        const paymentMethod = formData.get("paymentMethod") as PaymentMethod | undefined;
 
-        if (!adminUserId || isNaN(amount) || (!proofFile && (formData.get("paymentMethod") === "Bank Transfer" || formData.get("paymentMethod") === "Online (UPI/Card)")) ) {
+        if (!adminUserId || isNaN(amount) || (!proofFile && (paymentMethod === "Bank Transfer" || paymentMethod === "Online (UPI/Card)")) ) {
             return { success: false, error: "Missing required fields for fund transfer (Admin, Amount, Proof for online methods)." };
         }
 
@@ -187,7 +188,12 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const timestamp = Date.now();
         const adminKey = adminUser.userKey || 'ADMIN';
         const recipientKey = recipientUser.userKey || 'RECP';
-        const transferId = scannedTransactionId || `TXN_By${adminKey}_To${recipientKey}_${timestamp}`;
+        let paymentSuffix = '_OTH';
+        if (paymentMethod === 'Bank Transfer') paymentSuffix = '_BNK';
+        if (paymentMethod === 'Cash') paymentSuffix = '_CSH';
+        if (paymentMethod === 'Online (UPI/Card)') paymentSuffix = '_ONL';
+        
+        const transferId = scannedTransactionId || `TXN_By${adminKey}_To${recipientKey}_${timestamp}${paymentSuffix}`;
         // --- End ID Generation ---
 
         let proofUrl = '';
@@ -221,7 +227,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             recipientBankName: formData.get("recipientBankName") as string | undefined,
             recipientIfscCode: formData.get("recipientIfscCode") as string | undefined,
             paymentApp: formData.get("paymentApp") as string | undefined,
-            paymentMethod: formData.get("paymentMethod") as string | undefined,
+            paymentMethod: paymentMethod,
             status: formData.get("status") as string | undefined,
         };
 
@@ -322,4 +328,3 @@ export async function handleAllocateDonationsToLead(leadId: string, donationIds:
         return { success: false, error: `Failed to allocate donations: ${error}` };
     }
 }
-
