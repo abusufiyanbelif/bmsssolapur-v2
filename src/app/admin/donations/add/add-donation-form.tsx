@@ -521,8 +521,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
             }
         }
         
-        const screenshotDataUrl = await dataUrlToFile(localFiles[0].previewUrl, localFiles[0].file.name);
-        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl: screenshotDataUrl }));
+        const dataUrl = localFiles[0].previewUrl;
+        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
 
         if (foundDonor) {
             toast({ variant: 'success', title: 'Donor Found!', description: `Redirecting to donation form for ${foundDonor.name}.` });
