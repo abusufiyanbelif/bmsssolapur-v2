@@ -1,3 +1,4 @@
+
 // src/app/admin/transfers/page.tsx
 "use client";
 
@@ -16,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, FilterX, ChevronLeft, ChevronRight, Eye, Search, ArrowUpDown, Banknote, FileUp, Download } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, FilterX, ChevronLeft, ChevronRight, Eye, Search, ArrowUpDown, Banknote, FileUp, Download, Trash2, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -27,6 +28,8 @@ import type { FundTransfer } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { handleBulkDeleteTransfers } from "./actions";
 
 
 interface EnrichedTransfer extends FundTransfer {
@@ -46,6 +49,7 @@ function AllTransfersPageContent() {
     const [error, setError] = useState<string | null>(null);
     const [selectedTransfers, setSelectedTransfers] = useState<string[]>([]);
     const isMobile = useIsMobile();
+    const { toast } = useToast();
 
     // Input states
     const [searchInput, setSearchInput] = useState('');
@@ -96,6 +100,15 @@ function AllTransfersPageContent() {
     useEffect(() => {
         fetchData();
     }, []);
+    
+    const onBulkDeleteSuccess = () => {
+        toast({
+            title: "Transfers Deleted",
+            description: `${selectedTransfers.length} transfer(s) have been successfully removed.`,
+        });
+        setSelectedTransfers([]);
+        fetchData();
+    };
 
     const handleSearch = () => {
         setCurrentPage(1);
@@ -388,6 +401,41 @@ function AllTransfersPageContent() {
 
         return (
             <>
+                {selectedTransfers.length > 0 && (
+                    <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                         <p className="text-sm font-medium">
+                            {selectedTransfers.length} item(s) selected.
+                        </p>
+                        {isMobile && (
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    if (selectedTransfers.length === paginatedTransfers.length) {
+                                        const pageIds = paginatedTransfers.map(d => d.uniqueId);
+                                        setSelectedTransfers(prev => prev.filter(id => !pageIds.includes(id)));
+                                    } else {
+                                        const pageIds = paginatedTransfers.map(d => d.uniqueId);
+                                        setSelectedTransfers(prev => [...new Set([...prev, ...pageIds])]);
+                                    }
+                                }}
+                            >
+                                <Check className="mr-2 h-4 w-4"/>
+                                {selectedTransfers.length === paginatedTransfers.length ? 'Deselect All' : 'Select All'}
+                            </Button>
+                        )}
+                         <DeleteConfirmationDialog
+                            itemType={`${selectedTransfers.length} transfer(s)`}
+                            itemName="the selected items"
+                            onDelete={() => handleBulkDeleteTransfers(selectedTransfers)}
+                            onSuccess={onBulkDeleteSuccess}
+                        >
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected
+                            </Button>
+                        </DeleteConfirmationDialog>
+                    </div>
+                )}
                 {isMobile ? renderMobileCards() : renderDesktopTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
