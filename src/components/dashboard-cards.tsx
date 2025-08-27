@@ -116,6 +116,7 @@ const donationTypeIcons: Record<DonationType, React.ElementType> = {
     'Fitr': Wheat,
     'Lillah': Building,
     'Kaffarah': Shield,
+    'Interest': DollarSign,
     'Split': DollarSign,
     'Any': DollarSign,
 }
