@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -143,6 +142,8 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
 
   const selectedLead = leads.find(l => l.id === selectedLeadId);
 
+  const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
+
   const clearForm = () => {
     reset(initialFormValues);
     setFile(null);
@@ -276,38 +277,41 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     setIsExtractingText(false);
   };
 
-  async function onSubmit(values: AddTransferFormValues) {
+   const onFormSubmit = async (data: AddTransferFormValues) => {
     if (!adminUserId) {
-      toast({ variant: "destructive", title: "Error", description: "Could not identify administrator." });
+      toast({ variant: "destructive", title: "Authentication Error", description: "Could not identify the logged-in administrator. Please log out and back in." });
       return;
     }
+
     setIsSubmitting(true);
-    
     const formData = new FormData();
-    formData.append("adminUserId", adminUserId);
-    Object.entries(values).forEach(([key, value]) => {
-        if (value instanceof Date) {
-            formData.append(key, value.toISOString());
-        } else if(key === 'proof' && value instanceof File) {
-             formData.append('proof', value);
-        } else if (value) {
-            formData.append(key, String(value));
+    for (const key in data) {
+        const value = data[key as keyof typeof data];
+        if (value) {
+            if(key === 'proof' && value instanceof File) {
+                formData.append('proof', value);
+            } else if (value instanceof Date) {
+                formData.append(key, value.toISOString());
+            } else {
+                formData.append(key, String(value));
+            }
         }
-    });
+    }
+    formData.append("adminUserId", adminUserId);
+    if(file) formData.append("proof", file);
 
     const result = await handleAddTransfer(formData);
-
     setIsSubmitting(false);
 
     if (result.success) {
-      toast({ variant: "success", title: "Transfer Recorded", description: `Successfully recorded transfer for lead.` });
+      toast({ variant: "success", title: "Transfer Recorded", description: "The fund transfer has been successfully recorded." });
       router.push("/admin/transfers");
     } else {
-      toast({ variant: "destructive", title: "Error", description: result.error || "An unknown error occurred." });
+      toast({ variant: "destructive", title: "Submission Failed", description: result.error || "An unknown error occurred." });
     }
-  }
-
-    const transactionIdLabel = useMemo(() => {
+  };
+  
+  const transactionIdLabel = useMemo(() => {
         switch (paymentApp) {
             case 'PhonePe': return 'Transaction ID';
             case 'Paytm': return 'UPI Ref. No';
@@ -318,7 +322,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+      <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8 max-w-2xl">
         <FormField
           control={control}
           name="leadId"
@@ -607,3 +611,4 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
+
