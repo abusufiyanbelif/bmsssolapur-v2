@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -34,7 +33,7 @@ import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
 import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
 import { scanProof } from '@/app/admin/donations/add/actions';
-import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType } from '@/services/types';
+import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType, PaymentMethod } from '@/services/types';
 import { getUser, updateUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -50,9 +49,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
+const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
+
 
 // Schema for paying now
 const payNowFormSchema = z.object({
+  paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
   purpose: z.enum(donationPurposes, { required_error: "Please select a purpose."}),
   amount: z.coerce.number().min(10, "Donation amount must be at least ₹10."),
   donorName: z.string().optional(),
@@ -179,6 +181,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         isAnonymous: false,
         purpose: 'Sadaqah',
         includePledge: false,
+        paymentMethod: 'Online (UPI/Card)',
         },
     });
 
@@ -187,6 +190,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
     const includePledge = watch("includePledge");
+    const paymentMethod = watch("paymentMethod");
 
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
@@ -386,8 +390,17 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         const result = await handleCreatePendingDonation({ ...values, userId: user.id, donorName: user.name });
 
         if (result.success) {
-            setDonationData(values);
-            setIsQrDialogOpen(true);
+            if (values.paymentMethod === 'Online (UPI/Card)') {
+                setDonationData(values);
+                setIsQrDialogOpen(true);
+            } else {
+                toast({
+                    variant: "success",
+                    title: "Donation Recorded",
+                    description: "Thank you! Please complete your donation via the chosen method. Our team will verify it soon.",
+                });
+                router.push('/my-donations');
+            }
         } else {
              toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to prepare donation.' });
         }
@@ -442,6 +455,29 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                             )}
                         />
                     )}
+                    
+                    <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Payment Method</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a payment method" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {paymentMethods.map(method => (
+                                        <SelectItem key={method} value={method}>{method}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                      <div className="space-y-2">
                          <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
@@ -552,27 +588,40 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                     />
                     
                     <div className="flex flex-col gap-4">
-                        <Button 
-                            type="button" 
-                            onClick={form.handleSubmit(handlePayWithRazorpay)}
-                            disabled={!isRazorpayLoaded || isSubmitting}
-                            className="w-full" 
-                            size="lg"
-                        >
-                             {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                            Pay with Razorpay (Card, UPI, etc.)
-                        </Button>
-                        <Button 
-                            type={!user ? "button" : "submit"} 
-                            onClick={!user ? handleLoginRedirect : undefined}
-                            disabled={isSubmitting}
-                            className="w-full" 
-                            size="lg"
-                            variant="secondary"
-                        >
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                            {user ? 'Pay via Manual UPI / QR Code' : 'Login to Pay'}
-                        </Button>
+                        {paymentMethod === 'Online (UPI/Card)' && (
+                           <>
+                                <Button 
+                                    type="button" 
+                                    onClick={form.handleSubmit(handlePayWithRazorpay)}
+                                    disabled={!isRazorpayLoaded || isSubmitting}
+                                    className="w-full" 
+                                    size="lg"
+                                >
+                                    {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                                    Pay with Razorpay
+                                </Button>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                                </div>
+                                 <Button 
+                                    type={!user ? "button" : "submit"} 
+                                    onClick={!user ? handleLoginRedirect : undefined}
+                                    disabled={isSubmitting}
+                                    className="w-full" 
+                                    size="lg"
+                                    variant="secondary"
+                                >
+                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
+                                    {user ? 'Pay via Manual UPI / QR Code' : 'Login to Pay'}
+                                </Button>
+                            </>
+                        )}
+                         {(paymentMethod === 'Cash' || paymentMethod === 'Bank Transfer' || paymentMethod === 'Other') && (
+                            <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
+                                Submit Donation Record
+                            </Button>
+                         )}
                     </div>
                 </form>
             </Form>
