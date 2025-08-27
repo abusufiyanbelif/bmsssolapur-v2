@@ -61,7 +61,7 @@ const adminUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR13", name: "AnonymousBoth User", userId: "anonymous.user.both", firstName: "AnonymousBoth", lastName: "User", email: "anonymous.both@example.com", phone: "3333333333", password: "admin", roles: ["Beneficiary", "Donor"], isAnonymousAsBeneficiary: true, isAnonymousAsDonor: true, isActive: true, gender: 'Other', source: 'Seeded' },
     
     // Hardcoded Donor user
-    { userKey: "USR14", name: "Donor User", userId: "donor.user", firstName: "Donor", middleName: "", lastName: "User", email: "donor@example.com", phone: "1111111111", password: "admin", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['abusufiyan.belief5@okicici'], source: 'Seeded' },
+    { userKey: "USR14", name: "Seeded Test Donor", userId: "seeded.donor", firstName: "Seeded", middleName: "Test", lastName: "Donor", email: "donor@example.com", phone: "1111111111", password: "admin", roles: ["Donor"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['seeded.donor@okicici'], source: 'Seeded' },
 
     // Hardcoded Beneficiary user
     { userKey: "USR15", name: "Beneficiary User", userId: "beneficiary.user", firstName: "Beneficiary", middleName: "", lastName: "User", fatherName: "Father User", email: "beneficiary@example.com", phone: "2222222222", password: "admin", roles: ["Beneficiary"], privileges: [], groups: [], isActive: true, gender: 'Other', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
@@ -482,9 +482,9 @@ const seedGeneralLeads = async (adminUser: User): Promise<SeedResult> => {
 };
 
 const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
-    const donor = await getUserByUserId("donor.user");
+    const donor = await getUserByUserId("seeded.donor");
     if (!donor || !donor.id) {
-        console.log("Test donor 'donor.user' not found, skipping test donation seed.");
+        console.log("Test donor 'seeded.donor' not found, skipping test donation seed.");
         return { name: "Seeded Test Donor", status: "Skipped (already exists)" };
     }
 
@@ -505,7 +505,7 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
 
     await createDonation({
         donorId: donor.id,
-        donorName: "Seeded Test Donor",
+        donorName: donor.name,
         amount: 4000,
         type: 'Sadaqah',
         purpose: 'To Organization Use',
