@@ -1,5 +1,6 @@
 
 
+
 "use server";
 
 import { createDonation, getDonationByTransactionId } from "@/services/donation-service";
@@ -58,31 +59,41 @@ export async function handleAddDonation(
 
     const screenshotFiles = formData.getAll("paymentScreenshots") as File[];
     const screenshotDataUrl = formData.get("paymentScreenshotDataUrl") as string | undefined;
+    const leadId = formData.get("leadId") as string | undefined;
 
-    let paymentScreenshotUrls: string[] = [];
-    if (screenshotDataUrl) {
-        const file = await dataUrlToFile(screenshotDataUrl, 'manual-screenshot.png');
-        const url = await uploadFile(file, 'donation-proofs/');
-        paymentScreenshotUrls.push(url);
-    } else if (screenshotFiles && screenshotFiles.length > 0) {
-        const uploadPromises = screenshotFiles.map(file => uploadFile(file, 'donation-proofs/'));
-        paymentScreenshotUrls = await Promise.all(uploadPromises);
-    }
+    // This function will create the donation record first to get an ID
+    // Then it will upload the file to a path that includes this new ID
+    const createDonationWithProof = async (donationData: Omit<Donation, 'id' | 'createdAt' | 'paymentScreenshotUrls'>, fileToUpload?: File) => {
+        const createdDonation = await createDonation(donationData, adminUserId, adminUser.name, adminUser.email);
+        
+        if (fileToUpload) {
+            let uploadPath = `donations/${createdDonation.id}/proofs/`;
+            if (createdDonation.leadId) {
+                 uploadPath = `leads/${createdDonation.leadId}/donations/${createdDonation.id}/`;
+            }
+            const url = await uploadFile(fileToUpload, uploadPath);
+            // Update the donation with the screenshot URL
+            await updateDonation(createdDonation.id!, { paymentScreenshotUrls: [url] });
+            return { ...createdDonation, paymentScreenshotUrls: [url] };
+        }
+        return createdDonation;
+    };
     
     const donationDateStr = formData.get("donationDate") as string;
     const donationDate = donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now();
     
-    const baseDonationData = {
+    const baseDonationData: Omit<Donation, 'id' | 'createdAt' | 'paymentScreenshotUrls'> = {
         donorId: donor.id!,
         donorName: donor.name,
         isAnonymous: formData.get("isAnonymous") === 'true',
-        status: "Pending verification" as Donation["status"],
+        status: "Pending verification",
         transactionId: transactionId,
         donationDate: donationDate,
         paymentApp: formData.get("paymentApp") as string | undefined,
         paymentMethod: formData.get("paymentMethod") as PaymentMethod | undefined,
-        paymentScreenshotUrls: paymentScreenshotUrls,
     };
+    
+    const fileForUpload = screenshotDataUrl ? await dataUrlToFile(screenshotDataUrl, 'scanned-screenshot.png') : (screenshotFiles.length > 0 ? screenshotFiles[0] : undefined);
     
     const includePledge = formData.get("includePledge") === 'true';
     const pledgeAmount = includePledge ? donor.monthlyPledgeAmount || 0 : 0;
@@ -92,39 +103,40 @@ export async function handleAddDonation(
 
     // Create Pledge Donation if applicable
     if (pledgeAmount > 0) {
-      await createDonation({
+      await createDonationWithProof({
         ...baseDonationData,
         amount: pledgeAmount,
         type: 'Sadaqah', // Pledges are Sadaqah
         purpose: 'Monthly Pledge',
         notes: `Monthly pledge fulfillment as part of transaction ID: ${transactionId}`,
-      }, adminUser.id!, adminUser.name, adminUser.email);
+      }, fileForUpload); // Upload the same proof for this record
     }
     
     // Create Tip Donation if applicable
     if (tipAmount > 0) {
-        await createDonation({
+        await createDonationWithProof({
             ...baseDonationData,
             amount: tipAmount,
             type: 'Sadaqah', // Tips are Sadaqah
             purpose: 'To Organization Use',
             notes: `Support for organization as part of transaction ID: ${transactionId}`,
-        }, adminUser.id!, adminUser.name, adminUser.email);
+        }, fileForUpload); // And for this one
     }
 
     // Create Primary Donation
     const primaryAmount = parseFloat(formData.get("amount") as string);
-    const primaryDonation = await createDonation({
+    const primaryDonationData = {
         ...baseDonationData,
         amount: primaryAmount,
         type: formData.get("type") as DonationType,
         purpose: formData.get("purpose") as DonationPurpose, // Now required
         category: formData.get("category") as string | undefined,
         notes: formData.get("notes") as string | undefined,
-        leadId: formData.get("linkToLead") === 'true' ? formData.get("leadId") as string | undefined : undefined,
+        leadId: formData.get("linkToLead") === 'true' ? leadId : undefined,
         campaignId: formData.get("linkToCampaign") === 'true' ? formData.get("campaignId") as string | undefined : undefined,
-    }, adminUser.id!, adminUser.name, adminUser.email);
+    };
 
+    const primaryDonation = await createDonationWithProof(primaryDonationData, fileForUpload);
 
     revalidatePath("/admin/donations");
 

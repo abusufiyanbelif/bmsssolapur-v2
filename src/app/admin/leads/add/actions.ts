@@ -1,5 +1,6 @@
 
 
+
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId } from "@/services/lead-service";
@@ -132,11 +133,7 @@ export async function handleAddLead(
         }
     }
       
-    let verificationDocumentUrl: string | undefined;
-    if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
-        verificationDocumentUrl = await uploadFile(rawFormData.verificationDocument, 'verification-documents/');
-    }
-    
+    // Create lead first to get its ID for the file path
     const newLeadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
@@ -159,7 +156,6 @@ export async function handleAddLead(
         verifiers: approvalProcessDisabled ? [{ verifierId: adminUser.id!, verifierName: adminUser.name, verifiedAt: Timestamp.now(), notes: 'Auto-verified (approval process disabled).' }] : [],
         donations: [],
         caseDetails: rawFormData.caseDetails,
-        verificationDocumentUrl,
         adminAddedBy: { id: adminUser.id!, name: adminUser.name },
         referredByUserId: rawFormData.referredByUserId || undefined,
         referredByUserName: rawFormData.referredByUserName || undefined,
@@ -170,6 +166,15 @@ export async function handleAddLead(
     };
 
     const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });
+    
+    // Now upload file with the new lead's ID
+    if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
+        const uploadPath = `leads/${newLead.id}/documents/`;
+        const verificationDocumentUrl = await uploadFile(rawFormData.verificationDocument, uploadPath);
+        // Update the lead with the document URL
+        await updateLead(newLead.id!, { verificationDocumentUrl });
+        newLead.verificationDocumentUrl = verificationDocumentUrl;
+    }
     
     revalidatePath("/admin/leads");
     revalidatePath("/admin/leads/add");

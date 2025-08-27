@@ -1,5 +1,6 @@
 
 
+
 "use server";
 
 import { deleteLead as deleteLeadService, getLead, updateLead } from "@/services/lead-service";
@@ -119,7 +120,8 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
             return { success: false, error: "Admin user or lead not found." };
         }
 
-        const verificationDocumentUrl = await uploadFile(documentFile, 'verification-documents/');
+        const uploadPath = `leads/${leadId}/documents/`;
+        const verificationDocumentUrl = await uploadFile(documentFile, uploadPath);
 
         await updateLead(leadId, { verificationDocumentUrl });
 
@@ -155,6 +157,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const amount = amountStr ? parseFloat(amountStr) : 0;
         
         const proofFile = formData.get("proof") as File | undefined;
+        const transactionId = formData.get("transactionId") as string | undefined;
 
         if (!adminUserId || isNaN(amount) || !proofFile) {
             return { success: false, error: "Missing required fields for fund transfer (Admin, Amount, Proof)." };
@@ -169,7 +172,9 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             return { success: false, error: "Admin user or lead not found." };
         }
         
-        const proofUrl = await uploadFile(proofFile, 'transfer-proofs/');
+        const transferId = transactionId || `transfer_${Date.now()}`;
+        const uploadPath = `leads/${leadId}/transfers/${transferId}/`;
+        const proofUrl = await uploadFile(proofFile, uploadPath);
 
         const newTransfer: FundTransfer = {
             transferredByUserId: adminUserId,
@@ -178,7 +183,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             transferredAt: new Date() as any,
             proofUrl: proofUrl,
             notes: formData.get("notes") as string | undefined,
-            transactionId: formData.get("transactionId") as string | undefined,
+            transactionId: transactionId,
             utrNumber: formData.get("utrNumber") as string | undefined,
             googlePayTransactionId: formData.get("googlePayTransactionId") as string | undefined,
             phonePeTransactionId: formData.get("phonePeTransactionId") as string | undefined,

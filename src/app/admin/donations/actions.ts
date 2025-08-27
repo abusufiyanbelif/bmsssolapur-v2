@@ -132,9 +132,19 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
         if (!screenshotFile || screenshotFile.size === 0) {
             return { success: false, error: "No file was uploaded." };
         }
+        
+        const donation = await getDonation(donationId);
+        if(!donation) return { success: false, error: "Donation record not found." };
 
-        const paymentScreenshotUrl = await uploadFile(screenshotFile, 'donation-proofs/');
+        let uploadPath = `donations/${donationId}/proofs/`;
+        // If the donation is linked to a lead, use the structured path
+        if (donation.leadId) {
+            uploadPath = `leads/${donation.leadId}/donations/${donationId}/`;
+        }
 
+        const paymentScreenshotUrl = await uploadFile(screenshotFile, uploadPath);
+
+        // Use arrayUnion to add to existing proofs without overwriting
         await updateDonation(donationId, { paymentScreenshotUrls: [paymentScreenshotUrl] }, adminUser, 'Proof Uploaded');
         
         revalidatePath("/admin/donations");

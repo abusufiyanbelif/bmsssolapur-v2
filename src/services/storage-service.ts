@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Service for interacting with Cloud Storage for Firebase.
@@ -17,7 +18,7 @@ const storage = isConfigValid ? getStorage(app) : null;
  * Uploads a file to a specified path in Cloud Storage for Firebase.
  *
  * @param file The file object to upload.
- * @param path The destination path in the storage bucket (e.g., 'donation-proofs/').
+ * @param path The destination path in the storage bucket (e.g., 'leads/{leadId}/documents/').
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
 export const uploadFile = async (file: File, path: string): Promise<string> => {
@@ -32,10 +33,14 @@ export const uploadFile = async (file: File, path: string): Promise<string> => {
   }
 
   try {
-    // Create a unique filename to prevent overwrites
+    // Create a unique filename to prevent overwrites, but keep the original extension
     const fileExtension = file.name.split('.').pop();
     const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-    const storageRef = ref(storage, `${path}${uniqueFileName}`);
+    
+    // Ensure the path ends with a slash
+    const finalPath = path.endsWith('/') ? path : `${path}/`;
+    
+    const storageRef = ref(storage, `${finalPath}${uniqueFileName}`);
 
     // Upload the file
     const snapshot = await uploadBytes(storageRef, file);
