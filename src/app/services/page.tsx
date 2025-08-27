@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -20,10 +21,12 @@ import {
   Palette,
   Bot,
   Cloud,
+  ExternalLink,
 } from "lucide-react";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
+import { Button } from "@/components/ui/button";
 
 export default async function ServicesPage() {
   // Fetch data to calculate usage metrics
@@ -174,6 +177,69 @@ export default async function ServicesPage() {
           ))}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Data & Logs Location</CardTitle>
+          <CardDescription>
+            Your application's data and logs are securely managed by Google Cloud and Firebase. Here’s where to find them.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Database /> Firestore Database</CardTitle>
+                </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                        All your application data (Users, Leads, Donations, etc.) is stored in Firestore. You can browse, edit, and manage this data directly in the Firebase Console.
+                    </p>
+                </CardContent>
+                <CardFooter>
+                    <Button asChild variant="outline" className="w-full">
+                        <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">
+                            Go to Firebase Console <ExternalLink className="ml-2 h-4 w-4" />
+                        </a>
+                    </Button>
+                </CardFooter>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Server /> Application Logs</CardTitle>
+                </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                        Server-side logs from Firebase Hosting and Genkit AI flows are centralized in Google Cloud Logging. Use these logs to debug issues and monitor activity.
+                    </p>
+                </CardContent>
+                 <CardFooter>
+                    <Button asChild variant="outline" className="w-full">
+                        <a href="https://console.cloud.google.com/logs" target="_blank" rel="noopener noreferrer">
+                            Go to Cloud Logging <ExternalLink className="ml-2 h-4 w-4" />
+                        </a>
+                    </Button>
+                </CardFooter>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Cloud /> File Storage</CardTitle>
+                </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                       Any files uploaded by users, such as donation proofs or verification documents, are stored securely in Cloud Storage for Firebase.
+                    </p>
+                </CardContent>
+                 <CardFooter>
+                    <Button asChild variant="outline" className="w-full">
+                        <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">
+                            Go to Firebase Storage <ExternalLink className="ml-2 h-4 w-4" />
+                        </a>
+                    </Button>
+                </CardFooter>
+            </Card>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
