@@ -11,7 +11,7 @@ export default async function AddUserPage() {
                 <CardHeader>
                     <CardTitle>User Details</CardTitle>
                     <CardDescription>
-                        Fill in the form below to create a new user account. If you scanned a screenshot for a new donor, their details may be pre-filled.
+                        Fill in the form below to create a new user account. If you were redirected from a donation scan, some details may be pre-filled.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

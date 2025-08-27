@@ -29,7 +29,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle } from "lucide-react";
 import type { User, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose } from "@/services/types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -448,15 +447,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDonor]);
 
-  // Handle auto-updating the amount when pledge is checked
-  useEffect(() => {
-      if (includePledge && selectedDonor?.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount) {
-          setValue('totalTransactionAmount', selectedDonor.monthlyPledgeAmount);
-          setValue('notes', 'Monthly pledged donation.');
-      }
-  }, [includePledge, selectedDonor, setValue]);
-
-   const handleExtractText = async () => {
+  const handleExtractText = async () => {
     if (localFiles.length === 0) {
       toast({ variant: 'destructive', title: 'No File', description: 'Please select a file first.' });
       return;
@@ -496,135 +487,67 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
 
   const handleScan = async () => {
     if (localFiles.length === 0) {
-      toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
-      return;
+        toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
+        return;
     }
 
     setIsScanning(true);
     scanAbortController.current = new AbortController();
-    
     const formData = new FormData();
     formData.append('proofFile', localFiles[0].file);
-    
+
     try {
-      const scanResult = await scanProof(formData);
-      
-      if (scanAbortController.current?.signal.aborted) return;
-      
-      if (!scanResult || !scanResult.success || !scanResult.details) {
-        throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
-      }
-      
-      const details = scanResult.details;
-      toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been populated. Please review.' });
-      
-      // Populate form with all extracted details first
-      for (const [key, value] of Object.entries(details)) {
-        if (value !== undefined && value !== null) {
-            if (key === 'amount') {
-                setValue('totalTransactionAmount', value as number, { shouldDirty: true });
-            } else if (key === 'date' && typeof value === 'string') {
-                setValue('donationDate', new Date(value), { shouldDirty: true });
-            } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
-                setValue('paymentApp', value as any, { shouldDirty: true });
-                setValue('paymentMethod', 'Online (UPI/Card)', { shouldDirty: true });
-            } else {
-                setValue(key as any, value, { shouldDirty: true });
+        const scanResult = await scanProof(formData);
+        
+        if (scanAbortController.current?.signal.aborted) return;
+        
+        if (!scanResult || !scanResult.success || !scanResult.details) {
+            throw new Error(scanResult?.error || "AI scan did not return any data. The image might be unreadable.");
+        }
+        
+        toast({ variant: 'success', title: 'Scan Complete', description: 'Searching for matching donor...' });
+        const details = scanResult.details;
+
+        // Try to find a donor with the extracted details
+        let foundDonor: User | null = null;
+        if (details.senderUpiId) foundDonor = await getUserByUpiId(details.senderUpiId);
+        if (!foundDonor && details.donorPhone) foundDonor = await getUserByPhone(details.donorPhone);
+        if (!foundDonor && details.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(details.senderAccountNumber);
+        
+        const queryParams = new URLSearchParams();
+         for (const [key, value] of Object.entries(details)) {
+            if (value !== undefined && value !== null) {
+                 queryParams.set(key, String(value));
             }
         }
-      }
-      
-      // Find DONOR
-      let foundDonor: User | null = null;
-      if (details.senderUpiId) foundDonor = await getUserByUpiId(details.senderUpiId);
-      if (!foundDonor && details.donorPhone) foundDonor = await getUserByPhone(details.donorPhone);
-      if (!foundDonor && details.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(details.senderAccountNumber);
+        
+        const screenshotDataUrl = await dataUrlToFile(localFiles[0].previewUrl, localFiles[0].file.name);
+        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl: screenshotDataUrl }));
 
-      if (foundDonor) {
-          setSelectedDonor(foundDonor);
-          setValue('donorId', foundDonor.id!, { shouldDirty: true });
-          toast({
-              variant: 'success',
-              title: 'Donor Found!',
-              description: `Automatically selected existing donor: ${foundDonor.name}`,
-              icon: <UserIcon />,
-          });
-          // Populate fields from profile, prioritizing profile data unless scan data is more specific.
-          setValue('senderName', details.senderName || foundDonor.name);
-          setValue('donorPhone', details.donorPhone || foundDonor.phone);
-          
-           if (details.senderUpiId) {
-             setValue('donorUpiId', details.senderUpiId);
-             setValue('donorBankAccount', '');
-          } else if (foundDonor.upiIds && foundDonor.upiIds.length > 0) {
-            setValue('donorUpiId', foundDonor.upiIds[0]);
-            setValue('donorBankAccount', ''); 
-          } else if (foundDonor.bankAccountNumber) {
-              setValue('donorUpiId', '');
-              setValue('donorBankAccount', details.senderAccountNumber || foundDonor.bankAccountNumber);
-          }
-      }
-      
-      // Find RECIPIENT
-      let foundRecipient: User | null = null;
-      if (details.recipientId) { // This implies the AI identified a user
-          foundRecipient = users.find(u => u.id === details.recipientId) || null;
-      }
-      if (!foundRecipient && details.recipientUpiId) foundRecipient = await getUserByUpiId(details.recipientUpiId);
-      if (!foundRecipient && details.recipientPhone) foundRecipient = await getUserByPhone(details.recipientPhone);
-      if (!foundRecipient && details.recipientAccountNumber) foundRecipient = await getUserByBankAccountNumber(details.recipientAccountNumber);
-      
-      if (foundRecipient) {
-            setSelectedRecipient(foundRecipient);
-            setValue('recipientId', foundRecipient.id!);
-            setValue('recipientName', details.recipientName || foundRecipient.name);
-            setValue('recipientPhone', details.recipientPhone || foundRecipient.phone);
-            
-            let suitableRole: 'Organization Member' | 'Beneficiary' | 'Referral' | undefined;
-            if (foundRecipient.roles.includes('Admin') || foundRecipient.roles.includes('Super Admin')) {
-                suitableRole = 'Organization Member';
-            } else if (foundRecipient.roles.includes('Beneficiary')) {
-                suitableRole = 'Beneficiary';
-            } else if (foundRecipient.roles.includes('Referral')) {
-                suitableRole = 'Referral';
-            }
-            
-            if (suitableRole) {
-                setValue('recipientRole', suitableRole, { shouldDirty: true });
-                toast({
-                    variant: 'success',
-                    title: 'Recipient Found!',
-                    description: `Automatically selected: ${foundRecipient.name} as ${suitableRole}`,
-                    icon: <UserIcon />,
-                });
-            }
-            // Recipient account details
-            if (details.recipientUpiId) {
-                setValue('recipientUpiId', details.recipientUpiId);
-                setValue('recipientAccountNumber', '');
-            } else if (foundRecipient.upiIds && foundRecipient.upiIds.length > 0) {
-                setValue('recipientUpiId', foundRecipient.upiIds[0]);
-                setValue('recipientAccountNumber', '');
-            } else if (foundRecipient.bankAccountNumber) {
-                setValue('recipientUpiId', '');
-                setValue('recipientAccountNumber', details.recipientAccountNumber || foundRecipient.bankAccountNumber);
-            }
-      }
+        if (foundDonor) {
+            toast({ variant: 'success', title: 'Donor Found!', description: `Redirecting to donation form for ${foundDonor.name}.` });
+            queryParams.set('donorId', foundDonor.id!);
+            router.push(`/admin/donations/add?${queryParams.toString()}`);
+        } else {
+            toast({ variant: 'destructive', title: 'Donor Not Found', description: 'Redirecting to create a new user profile.' });
+            const newUserName = details.googlePaySenderName || details.phonePeSenderName || details.paytmSenderName || details.senderName;
+            if(newUserName) queryParams.set('name', newUserName);
+            if(details.senderUpiId) queryParams.set('upiId', details.senderUpiId);
+            if(details.donorPhone) queryParams.set('phone', details.donorPhone);
+            router.push(`/admin/user-management/add?${queryParams.toString()}`);
+        }
 
-      if (details.rawText) {
-        setRawText(details.rawText);
-      }
-      
-    } catch(err) {
-       if ((err as Error).name !== 'AbortError') {
-          const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
-          toast({ variant: 'destructive', title: 'Scan Failed', description: error });
-       }
+    } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+            const error = err instanceof Error ? err.message : "An unknown error occurred during scanning.";
+            toast({ variant: 'destructive', title: 'Scan Failed', description: error });
+        }
     } finally {
-      setIsScanning(false);
-      scanAbortController.current = null;
+        setIsScanning(false);
+        scanAbortController.current = null;
     }
-  };
+};
+
 
   const removeFile = (index: number) => {
     const updatedFiles = localFiles.filter((_, i) => i !== index);
@@ -940,6 +863,30 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </div>
                 )
             )}
+             <FormField
+                control={form.control}
+                name="includePledge"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                        <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={!selectedDonor?.monthlyPledgeEnabled}
+                        />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                        <FormLabel>
+                           Fulfill Monthly Pledge
+                           {selectedDonor?.monthlyPledgeAmount && ` of ₹${selectedDonor.monthlyPledgeAmount.toLocaleString()}`}
+                        </FormLabel>
+                        <FormDescription>
+                           This will record a separate donation fulfilling the monthly pledge. The total amount will be adjusted.
+                        </FormDescription>
+                        </div>
+                    </FormItem>
+                )}
+            />
             
             <FormField
                 control={form.control}
@@ -990,30 +937,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
             )}
             
-            {selectedDonor?.monthlyPledgeEnabled && (
-                <FormField
-                    control={form.control}
-                    name="includePledge"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                        <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                        <FormLabel>
-                            Include Monthly Pledge of ₹{selectedDonor.monthlyPledgeAmount?.toLocaleString()}
-                        </FormLabel>
-                        <FormDescription>
-                            This will record a separate donation fulfilling the monthly pledge. The total amount will be adjusted.
-                        </FormDescription>
-                        </div>
-                    </FormItem>
-                    )}
-                />
-            )}
 
 
             <FormField
@@ -1029,7 +952,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </FormItem>
             )}
             />
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                     control={form.control}
                     name="type"
@@ -1565,4 +1488,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-

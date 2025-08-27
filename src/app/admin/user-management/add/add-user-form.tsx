@@ -18,14 +18,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddUser, checkAvailability } from "./actions";
+import { handleAddUser } from "./actions";
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
-import { getUser } from "@/services/user-service";
-import { useSearchParams } from 'next/navigation';
+import { getUser, checkAvailability } from "@/services/user-service";
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -143,6 +143,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
 function AddUserFormContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
 
@@ -223,21 +224,21 @@ function AddUserFormContent() {
 
 
   useEffect(() => {
-    const senderName = searchParams.get('senderName') || searchParams.get('googlePaySenderName') || searchParams.get('phonePeSenderName') || searchParams.get('paytmSenderName');
-    const donorPhone = searchParams.get('donorPhone');
-    const senderUpiId = searchParams.get('senderUpiId');
-    const bankAccountNumber = searchParams.get('senderAccountNumber');
+    const prefillFromScan = () => {
+        const nameParam = searchParams.get('name');
+        const phoneParam = searchParams.get('phone');
+        const upiIdParam = searchParams.get('upiId');
 
-    if (senderName) {
-        const nameParts = senderName.split(' ');
-        form.setValue('firstName', nameParts[0] || '');
-        form.setValue('lastName', nameParts.slice(1).join(' ') || '');
+        if (nameParam) {
+            const nameParts = nameParam.split(' ');
+            setValue('firstName', nameParts[0] || '');
+            setValue('lastName', nameParts.slice(1).join(' ') || '');
+        }
+        if(phoneParam) setValue('phone', phoneParam);
+        if(upiIdParam) setValue('upiIds', [{value: upiIdParam}]);
     }
-    if(donorPhone) form.setValue('phone', donorPhone);
-    if(bankAccountNumber) form.setValue('bankAccountNumber', bankAccountNumber);
-    if(senderUpiId) form.setValue('upiIds', [{value: senderUpiId}]);
-    
-  }, [searchParams, form]);
+    prefillFromScan();
+  }, [searchParams, setValue]);
 
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
@@ -288,8 +289,6 @@ function AddUserFormContent() {
 
     const result = await handleAddUser(formData);
 
-    setIsSubmitting(false);
-
     if (result.success && result.user) {
       toast({
         variant: "success",
@@ -297,20 +296,29 @@ function AddUserFormContent() {
         description: `Successfully created user ${result.user.name}.`,
         icon: <CheckCircle />,
       });
-      form.reset();
-      setUserIdState(initialAvailabilityState);
-      setEmailState(initialAvailabilityState);
-      setPhoneState(initialAvailabilityState);
-      setPanState(initialAvailabilityState);
-      setAadhaarState(initialAvailabilityState);
-      setBankAccountState(initialAvailabilityState);
-      setUpiIdStates({});
+      // If we came from a donation scan, redirect back with the new donorId
+      const searchParamString = searchParams.toString();
+      if(searchParamString) {
+          const newParams = new URLSearchParams(searchParamString);
+          newParams.set('donorId', result.user.id!);
+          router.push(`/admin/donations/add?${newParams.toString()}`);
+      } else {
+        form.reset();
+        setUserIdState(initialAvailabilityState);
+        setEmailState(initialAvailabilityState);
+        setPhoneState(initialAvailabilityState);
+        setPanState(initialAvailabilityState);
+        setAadhaarState(initialAvailabilityState);
+        setBankAccountState(initialAvailabilityState);
+        setUpiIdStates({});
+      }
     } else {
       toast({
         variant: "destructive",
         title: "Error",
         description: result.error || "An unknown error occurred.",
       });
+      setIsSubmitting(false);
     }
   }
 
