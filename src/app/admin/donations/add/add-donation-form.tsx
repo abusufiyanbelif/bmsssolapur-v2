@@ -863,7 +863,8 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                     </div>
                 )
             )}
-             <FormField
+            
+            <FormField
                 control={form.control}
                 name="includePledge"
                 render={({ field }) => (
@@ -937,7 +938,145 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
             )}
             
-
+            <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="text-base font-semibold">Linkage (Optional)</h3>
+                <FormField
+                    control={form.control}
+                    name="linkToCampaign"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 bg-background">
+                            <FormLabel className="flex items-center gap-2 font-normal"><Megaphone className="h-4 w-4"/> Link to Campaign</FormLabel>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={(checked) => { field.onChange(checked); if(checked) setValue('linkToLead', false); }} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+                {linkToCampaign && (
+                    <FormField
+                        control={form.control}
+                        name="campaignId"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <Popover open={campaignPopoverOpen} onOpenChange={setCampaignPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        disabled={!!linkedLeadId}
+                                        className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                                        >
+                                        {field.value
+                                            ? campaigns.find(c => c.id === field.value)?.name
+                                            : "Select a campaign"}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search campaign..." />
+                                    <CommandList>
+                                        <CommandEmpty>No active campaigns found.</CommandEmpty>
+                                        <CommandGroup>
+                                        {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
+                                            <CommandItem
+                                                value={campaign.name}
+                                                key={campaign.id}
+                                                onSelect={() => {
+                                                    field.onChange(campaign.id!);
+                                                    setCampaignPopoverOpen(false);
+                                                    setValue('leadId', undefined); // Clear linked lead if campaign is selected
+                                                }}
+                                            >
+                                            <Check className={cn("mr-2 h-4 w-4", campaign.id === field.value ? "opacity-100" : "opacity-0")} />
+                                            {campaign.name} ({campaign.status})
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                )}
+                 <FormField
+                    control={form.control}
+                    name="linkToLead"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 bg-background">
+                            <FormLabel className="flex items-center gap-2 font-normal"><FileHeart className="h-4 w-4"/> Link to Lead</FormLabel>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={(checked) => { field.onChange(checked); if(checked) setValue('linkToCampaign', false); }} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+                 {linkToLead && (
+                    <FormField
+                    control={form.control}
+                    name="leadId"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                disabled={!!linkedCampaignId && linkedCampaignId !== 'none'}
+                                className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                                >
+                                {field.value
+                                    ? leads.find(
+                                        (lead) => lead.id === field.value
+                                    )?.name
+                                    : "Select a lead"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search lead by name or ID..." />
+                                <CommandList>
+                                    <CommandEmpty>No open leads found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {(leads || []).map((lead) => (
+                                        <CommandItem
+                                        value={`${lead.name} ${lead.id}`}
+                                        key={lead.id}
+                                        onSelect={() => {
+                                            field.onChange(lead.id!);
+                                            setLeadPopoverOpen(false);
+                                        }}
+                                        >
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            lead.id === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                        />
+                                        {lead.name} (Req: ₹{lead.helpRequested})
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                 )}
+            </div>
 
             <FormField
             control={form.control}
@@ -1273,147 +1412,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
              )}
 
-            <h3 className="text-lg font-semibold border-b pb-2">Categorization</h3>
-             
-            <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="text-base font-semibold">Linkage (Optional)</h3>
-                <FormField
-                    control={form.control}
-                    name="linkToCampaign"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 bg-background">
-                            <FormLabel className="flex items-center gap-2 font-normal"><Megaphone className="h-4 w-4"/> Link to Campaign</FormLabel>
-                            <FormControl>
-                                <Switch checked={field.value} onCheckedChange={(checked) => { field.onChange(checked); if(checked) setValue('linkToLead', false); }} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-                {linkToCampaign && (
-                    <FormField
-                        control={form.control}
-                        name="campaignId"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <Popover open={campaignPopoverOpen} onOpenChange={setCampaignPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        disabled={!!linkedLeadId}
-                                        className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                                        >
-                                        {field.value
-                                            ? campaigns.find(c => c.id === field.value)?.name
-                                            : "Select a campaign"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search campaign..." />
-                                    <CommandList>
-                                        <CommandEmpty>No active campaigns found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
-                                            <CommandItem
-                                                value={campaign.name}
-                                                key={campaign.id}
-                                                onSelect={() => {
-                                                    field.onChange(campaign.id!);
-                                                    setCampaignPopoverOpen(false);
-                                                    setValue('leadId', undefined); // Clear linked lead if campaign is selected
-                                                }}
-                                            >
-                                            <Check className={cn("mr-2 h-4 w-4", campaign.id === field.value ? "opacity-100" : "opacity-0")} />
-                                            {campaign.name} ({campaign.status})
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                )}
-                 <FormField
-                    control={form.control}
-                    name="linkToLead"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 bg-background">
-                            <FormLabel className="flex items-center gap-2 font-normal"><FileHeart className="h-4 w-4"/> Link to Lead</FormLabel>
-                            <FormControl>
-                                <Switch checked={field.value} onCheckedChange={(checked) => { field.onChange(checked); if(checked) setValue('linkToCampaign', false); }} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-                 {linkToLead && (
-                    <FormField
-                    control={form.control}
-                    name="leadId"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant="outline"
-                                role="combobox"
-                                disabled={!!linkedCampaignId && linkedCampaignId !== 'none'}
-                                className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                                >
-                                {field.value
-                                    ? leads.find(
-                                        (lead) => lead.id === field.value
-                                    )?.name
-                                    : "Select a lead"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                                <CommandInput placeholder="Search lead by name or ID..." />
-                                <CommandList>
-                                    <CommandEmpty>No open leads found.</CommandEmpty>
-                                    <CommandGroup>
-                                    {(leads || []).map((lead) => (
-                                        <CommandItem
-                                        value={`${lead.name} ${lead.id}`}
-                                        key={lead.id}
-                                        onSelect={() => {
-                                            field.onChange(lead.id!);
-                                            setLeadPopoverOpen(false);
-                                        }}
-                                        >
-                                        <Check
-                                            className={cn(
-                                            "mr-2 h-4 w-4",
-                                            lead.id === field.value
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                        />
-                                        {lead.name} (Req: ₹{lead.helpRequested})
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                 )}
-            </div>
           
             <FormField
               control={form.control}
