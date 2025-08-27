@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -312,13 +313,14 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   };
   
   const transactionIdLabel = useMemo(() => {
+        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
         switch (paymentApp) {
             case 'PhonePe': return 'Transaction ID';
             case 'Paytm': return 'UPI Ref. No';
             case 'Google Pay': return 'UPI Transaction ID';
             default: return 'Primary Transaction ID';
         }
-    }, [paymentApp]);
+    }, [paymentApp, paymentMethod]);
   
   return (
     <Form {...form}>
@@ -418,7 +420,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             )}
         />
 
-        {(paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer') && (
+        {showOnlineFields && (
             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
             <h3 className="font-semibold text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Payment Proof & Scanning</h3>
             <FormField
@@ -452,6 +454,16 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 </div>
             </div>
         )}
+        
+         {paymentMethod === 'Cash' || paymentMethod === 'Other' ? (
+            <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Manual Entry</AlertTitle>
+                <AlertDescription>
+                    You are recording a {paymentMethod.toLowerCase()} transfer.
+                </AlertDescription>
+            </Alert>
+        ) : null}
 
         {rawText && (
             <div className="space-y-2">
@@ -564,10 +576,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                             <FormField control={control} name="paymentApp" render={({ field }) => (<FormItem><FormLabel>Payment App</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Select payment app" /></SelectTrigger></FormControl><SelectContent>{paymentApps.map(app => (<SelectItem key={app} value={app}>{app}</SelectItem>))}</SelectContent></Select></FormItem>)} />
                             <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         </div>
-                        <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        {paymentApp === 'PhonePe' && (
-                            <FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        )}
+                        <FormField control={control} name={paymentMethod === 'Bank Transfer' ? 'utrNumber' : 'transactionId'} render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         
                         <h4 className="font-semibold border-b pb-1">Sender & Recipient Details</h4>
                         <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
@@ -611,4 +620,3 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
-

@@ -649,7 +649,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
 
-            {showOnlineFields && (
+            {paymentMethod === 'Online (UPI/Card)' && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         <ImageIcon className="h-5 w-5"/>
@@ -725,57 +725,14 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 </div>
             )}
             
-            {paymentMethod === 'Other' && (
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                    <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <FileText className="h-5 w-5"/>
-                        Upload Proof(s)
-                    </h3>
-                    <FormField
-                        control={form.control}
-                        name="paymentScreenshots"
-                        render={() => (
-                        <FormItem>
-                            <FormLabel>Attach Documents</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    multiple
-                                />
-                            </FormControl>
-                            <FormDescription>Upload one or more documents like paid bills or receipts.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    {localFiles.length > 0 && (
-                        <div className="space-y-4">
-                            <p className="text-sm font-medium">Uploaded Files:</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {localFiles.map((fp, index) => (
-                                    <div key={index} className="p-2 border rounded-md bg-background space-y-2 group relative">
-                                        <div className="flex flex-col items-center justify-center h-full bg-background rounded-md p-2">
-                                            <FileText className="h-8 w-8 text-primary" />
-                                            <p className="text-xs text-center break-all mt-2">{fp.file.name}</p>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="destructive"
-                                            size="icon"
-                                            className="h-7 w-7 rounded-full absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => removeFile(index)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
+            {(paymentMethod === 'Cash' || paymentMethod === 'Other') && (
+                <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Manual Entry</AlertTitle>
+                    <AlertDescription>
+                        You are recording a {paymentMethod.toLowerCase()} donation. Please ensure all details are accurate.
+                    </AlertDescription>
+                </Alert>
             )}
 
 
@@ -1221,7 +1178,21 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 </FormItem>
                             )}
                         />
-                        {paymentApp !== 'PhonePe' && (
+                        {paymentMethod === 'Bank Transfer' ? (
+                             <FormField
+                                control={form.control}
+                                name="utrNumber"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>UTR Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} placeholder="Enter UTR number" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        ) : paymentApp !== 'PhonePe' && (
                              <FormField
                                 control={form.control}
                                 name="transactionId"
