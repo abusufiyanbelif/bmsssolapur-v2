@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, FilterX, ChevronLeft, ChevronRight, Eye, Search, ArrowUpDown, Banknote, FileUp } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, FilterX, ChevronLeft, ChevronRight, Eye, Search, ArrowUpDown, Banknote, FileUp, Download } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -26,12 +26,14 @@ import { Label } from "@/components/ui/label";
 import type { FundTransfer } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 interface EnrichedTransfer extends FundTransfer {
   leadId: string;
   leadName: string; // Beneficiary name
   beneficiaryId: string;
+  uniqueId: string; // A unique identifier for the transfer itself
 }
 
 type SortableColumn = 'transferredAt' | 'amount' | 'leadName' | 'transferredByUserName';
@@ -43,6 +45,7 @@ function AllTransfersPageContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedTransfers, setSelectedTransfers] = useState<string[]>([]);
+    const isMobile = useIsMobile();
 
     // Input states
     const [searchInput, setSearchInput] = useState('');
@@ -68,12 +71,13 @@ function AllTransfersPageContent() {
             
             fetchedLeads.forEach(lead => {
                 if (lead.fundTransfers && lead.fundTransfers.length > 0) {
-                    lead.fundTransfers.forEach(transfer => {
+                    lead.fundTransfers.forEach((transfer, index) => {
                         transfers.push({
                             ...transfer,
                             leadId: lead.id!,
                             leadName: lead.name,
-                            beneficiaryId: lead.beneficiaryId
+                            beneficiaryId: lead.beneficiaryId,
+                            uniqueId: `${lead.id!}_${index}` // Create a unique key for selection
                         });
                     });
                 }
@@ -130,9 +134,9 @@ function AllTransfersPageContent() {
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
             }
-             else if (aValue > bValue) {
+             else if (String(aValue) > String(bValue)) {
                 comparison = 1;
-            } else if (aValue < bValue) {
+            } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
             }
             
@@ -163,11 +167,24 @@ function AllTransfersPageContent() {
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
 
-    const renderTable = () => (
+    const renderDesktopTable = () => (
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Sr. No.</TableHead>
+                    <TableHead padding="checkbox">
+                        <Checkbox
+                            checked={paginatedTransfers.length > 0 && selectedTransfers.length === paginatedTransfers.length}
+                            onCheckedChange={(checked) => {
+                                const currentPageIds = paginatedTransfers.map(t => t.uniqueId);
+                                if (checked) {
+                                    setSelectedTransfers(prev => [...new Set([...prev, ...currentPageIds])]);
+                                } else {
+                                    setSelectedTransfers(prev => prev.filter(id => !currentPageIds.includes(id)));
+                                }
+                            }}
+                            aria-label="Select all on current page"
+                        />
+                    </TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('transferredAt')}>
                             Date {renderSortIcon('transferredAt')}
@@ -195,20 +212,33 @@ function AllTransfersPageContent() {
             <TableBody>
                 {paginatedTransfers.map((transfer, index) => {
                     return (
-                        <TableRow key={transfer.transactionId + index}>
-                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                        <TableRow key={transfer.uniqueId} data-state={selectedTransfers.includes(transfer.uniqueId) && 'selected'}>
+                            <TableCell padding="checkbox">
+                                <Checkbox
+                                    checked={selectedTransfers.includes(transfer.uniqueId)}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedTransfers(prev => 
+                                            checked ? [...prev, transfer.uniqueId] : prev.filter(id => id !== transfer.uniqueId)
+                                        );
+                                    }}
+                                    aria-label="Select row"
+                                />
+                            </TableCell>
                             <TableCell>{format(transfer.transferredAt, "dd MMM yyyy, p")}</TableCell>
                             <TableCell>
                                 <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">
                                     {transfer.leadName}
                                 </Link>
+                                <div className="text-xs text-muted-foreground">{transfer.leadId}</div>
                             </TableCell>
                             <TableCell>₹{transfer.amount.toLocaleString()}</TableCell>
                             <TableCell className="font-mono text-xs">{transfer.transactionId || 'N/A'}</TableCell>
                             <TableCell>{transfer.transferredByUserName}</TableCell>
                             <TableCell className="text-right">
                                 <Button asChild variant="outline" size="sm">
-                                    <Link href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">View Proof</Link>
+                                    <a href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">
+                                        <Download className="mr-2 h-3 w-3" />View Proof
+                                    </a>
                                 </Button>
                             </TableCell>
                         </TableRow>
@@ -218,10 +248,55 @@ function AllTransfersPageContent() {
         </Table>
     );
 
+    const renderMobileCards = () => (
+        <div className="space-y-4">
+            {paginatedTransfers.map((transfer) => (
+                <Card key={transfer.uniqueId} data-state={selectedTransfers.includes(transfer.uniqueId) && 'selected'}>
+                    <div className="p-4 flex gap-4 items-start">
+                        <Checkbox
+                            className="mt-1.5 flex-shrink-0"
+                            checked={selectedTransfers.includes(transfer.uniqueId)}
+                            onCheckedChange={(checked) => {
+                                setSelectedTransfers(prev => 
+                                    checked ? [...prev, transfer.uniqueId] : prev.filter(id => id !== transfer.uniqueId)
+                                );
+                            }}
+                            aria-label="Select card"
+                        />
+                        <div className="flex-grow space-y-3">
+                            <CardHeader className="p-0">
+                                <div className="flex justify-between items-start">
+                                    <CardTitle className="text-lg">
+                                        ₹{transfer.amount.toLocaleString()}
+                                    </CardTitle>
+                                    <Button asChild variant="outline" size="sm" className="-mt-2">
+                                        <a href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">View Proof</a>
+                                    </Button>
+                                </div>
+                                <CardDescription>
+                                    To: <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">{transfer.leadName}</Link>
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0 space-y-2 text-sm">
+                                <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{format(transfer.transferredAt, "dd MMM yyyy, p")}</span></div>
+                                <div className="flex justify-between"><span className="text-muted-foreground">By</span><span>{transfer.transferredByUserName}</span></div>
+                                <div className="flex justify-between items-center"><span className="text-muted-foreground">Txn ID</span><span className="font-mono text-xs">{transfer.transactionId || 'N/A'}</span></div>
+                            </CardContent>
+                        </div>
+                    </div>
+                </Card>
+            ))}
+        </div>
+    );
+
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
-                Showing {paginatedTransfers.length} of {filteredTransfers.length} transfers.
+                 {selectedTransfers.length > 0 ? (
+                    `${selectedTransfers.length} of ${filteredTransfers.length} row(s) selected.`
+                ) : (
+                    `Showing ${paginatedTransfers.length} of ${filteredTransfers.length} transfers.`
+                )}
             </div>
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2">
@@ -313,7 +388,7 @@ function AllTransfersPageContent() {
 
         return (
             <>
-                {renderTable()}
+                {isMobile ? renderMobileCards() : renderDesktopTable()}
                 {totalPages > 1 && renderPaginationControls()}
             </>
         )
