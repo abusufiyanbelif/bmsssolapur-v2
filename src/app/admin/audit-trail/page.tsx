@@ -15,12 +15,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllActivityLogs, type ActivityLog } from "@/services/activity-log-service";
 import { format, formatDistanceToNow } from "date-fns";
-import { Loader2, AlertCircle, FilterX, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Loader2, AlertCircle, FilterX, ChevronLeft, ChevronRight, Search, ArrowUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 type SortableColumn = 'timestamp' | 'userName' | 'activity';
