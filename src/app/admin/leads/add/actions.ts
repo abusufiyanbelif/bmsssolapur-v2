@@ -9,6 +9,7 @@ import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, Ext
 import { Timestamp } from "firebase/firestore";
 import { getAppSettings } from "@/services/app-settings-service";
 import { extractLeadDetailsFromText } from "@/ai/flows/extract-lead-details-from-text-flow";
+import { uploadFile } from "@/services/storage-service";
 
 interface FormState {
     success: boolean;
@@ -25,14 +26,6 @@ const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
     'Loan': 'Lillah', // Loans are a form of Lillah
     'Other': 'Sadaqah',
 };
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. This function is a placeholder.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received file for verification: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/600x400.png?text=verification-doc`;
-}
 
 export async function handleAddLead(
   formData: FormData
@@ -141,7 +134,7 @@ export async function handleAddLead(
       
     let verificationDocumentUrl: string | undefined;
     if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
-        verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
+        verificationDocumentUrl = await uploadFile(rawFormData.verificationDocument, 'verification-documents/');
     }
     
     const newLeadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>> = {

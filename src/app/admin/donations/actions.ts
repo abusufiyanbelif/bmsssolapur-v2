@@ -9,6 +9,7 @@ import { writeBatch, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { DonationStatus } from "@/services/types";
 import { logActivity } from "@/services/activity-log-service";
+import { uploadFile } from "@/services/storage-service";
 
 export async function handleDeleteDonation(donationId: string, adminUserId: string) {
     try {
@@ -120,16 +121,6 @@ export async function handleAllocateDonation(
     }
 }
 
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. For this prototype, we'll just acknowledge the file was received.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received file: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/600x400.png?text=screenshot-placeholder`;
-}
-
-
 export async function handleUploadDonationProof(donationId: string, formData: FormData) {
     try {
         const adminUserId = formData.get("adminUserId") as string | undefined;
@@ -142,7 +133,7 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
             return { success: false, error: "No file was uploaded." };
         }
 
-        const paymentScreenshotUrl = await handleFileUpload(screenshotFile);
+        const paymentScreenshotUrl = await uploadFile(screenshotFile, 'donation-proofs/');
 
         await updateDonation(donationId, { paymentScreenshotUrls: [paymentScreenshotUrl] }, adminUser, 'Proof Uploaded');
         

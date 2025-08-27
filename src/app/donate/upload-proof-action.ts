@@ -8,18 +8,11 @@ import { getUser } from "@/services/user-service";
 import type { Donation } from "@/services/types";
 import { scanProof } from "@/app/admin/donations/add/actions";
 import { isConfigValid } from "@/services/firebase";
+import { uploadFile } from "@/services/storage-service";
 
 interface FormState {
     success: boolean;
     error?: string;
-}
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. This function is a placeholder.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received proof file: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/600x400.png?text=proof-placeholder`;
 }
 
 // Function to normalize names for comparison (e.g., "John F. Doe" vs "John Doe")
@@ -76,7 +69,7 @@ export async function handleRecordPastDonation(formData: FormData, userId?: stri
              throw new Error(`Scan failed: Could not extract Amount or Transaction ID. Please try a clearer image.`);
         }
 
-        const paymentScreenshotUrl = await handleFileUpload(screenshotFile);
+        const paymentScreenshotUrl = await uploadFile(screenshotFile, 'donation-proofs/');
         
         const newDonationData: Omit<Donation, 'id' | 'createdAt'> = {
             donorId: userId,

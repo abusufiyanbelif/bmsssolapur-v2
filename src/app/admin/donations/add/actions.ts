@@ -8,19 +8,12 @@ import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import type { ExtractDonationDetailsInput } from "@/ai/schemas";
+import { uploadFile } from "@/services/storage-service";
 
 interface FormState {
     success: boolean;
     error?: string;
     donation?: Donation;
-}
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. This function is a placeholder.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received file: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/600x400.png?text=screenshot-placeholder`;
 }
 
 // Helper to convert Base64 Data URL back to a File object
@@ -69,12 +62,11 @@ export async function handleAddDonation(
     let paymentScreenshotUrls: string[] = [];
     if (screenshotDataUrl) {
         const file = await dataUrlToFile(screenshotDataUrl, 'manual-screenshot.png');
-        const url = await handleFileUpload(file);
+        const url = await uploadFile(file, 'donation-proofs/');
         paymentScreenshotUrls.push(url);
     } else if (screenshotFiles && screenshotFiles.length > 0) {
-        paymentScreenshotUrls = await Promise.all(
-            screenshotFiles.map(file => handleFileUpload(file))
-        );
+        const uploadPromises = screenshotFiles.map(file => uploadFile(file, 'donation-proofs/'));
+        paymentScreenshotUrls = await Promise.all(uploadPromises);
     }
     
     const donationDateStr = formData.get("donationDate") as string;

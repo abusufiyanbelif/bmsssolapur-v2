@@ -6,19 +6,12 @@ import { createLead } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, DonationType } from "@/services/types";
+import { uploadFile } from "@/services/storage-service";
 
 interface FormState {
     success: boolean;
     error?: string;
     lead?: Lead;
-}
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. For this prototype, we'll just acknowledge the file was received.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received file for verification: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/600x400.png?text=verification-doc`;
 }
 
 const categoryToPurposeMap: Record<string, 'Education' | 'Medical' | 'Relief Fund' | 'Deen'> = {
@@ -54,7 +47,7 @@ export async function handleRequestHelp(
       
     let verificationDocumentUrl = "";
     if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
-        verificationDocumentUrl = await handleFileUpload(rawFormData.verificationDocument);
+        verificationDocumentUrl = await uploadFile(rawFormData.verificationDocument, 'verification-documents/');
     }
     
     const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'donations' | 'campaignName' | 'otherCategoryDetail'> = {

@@ -10,14 +10,7 @@ import { FundTransfer, LeadStatus, LeadVerificationStatus, User, Donation, Alloc
 import { arrayUnion, increment, writeBatch, doc, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { getDonation, updateDonation } from "@/services/donation-service";
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. This function is a placeholder.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received verification document: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/600x400.png?text=verification-doc-placeholder`;
-}
+import { uploadFile } from "@/services/storage-service";
 
 export async function handleDeleteLead(leadId: string, adminUserId: string) {
     try {
@@ -126,7 +119,7 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
             return { success: false, error: "Admin user or lead not found." };
         }
 
-        const verificationDocumentUrl = await handleFileUpload(documentFile);
+        const verificationDocumentUrl = await uploadFile(documentFile, 'verification-documents/');
 
         await updateLead(leadId, { verificationDocumentUrl });
 
@@ -176,7 +169,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             return { success: false, error: "Admin user or lead not found." };
         }
         
-        const proofUrl = await handleFileUpload(proofFile);
+        const proofUrl = await uploadFile(proofFile, 'transfer-proofs/');
 
         const newTransfer: FundTransfer = {
             transferredByUserId: adminUserId,
