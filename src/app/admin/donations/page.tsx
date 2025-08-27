@@ -1,4 +1,5 @@
 
+
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -41,7 +42,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/comp
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Partially Allocated", "Allocated", "Failed/Incomplete"];
-const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Split", "Any"];
+const typeOptions: (DonationType | 'all')[] = ["all", "Zakat", "Sadaqah", "Fitr", "Lillah", "Kaffarah", "Interest", "Split", "Any"];
 const purposeOptions: (DonationPurpose | 'all')[] = ["all", "Education", "Medical", "Deen", "Loan", "Relief Fund", "To Organization Use", "Loan Repayment", "Other"];
 
 type SortableColumn = 'id' | 'donorName' | 'amount' | 'donationDate' | 'type' | 'status';

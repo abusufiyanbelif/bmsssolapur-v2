@@ -52,7 +52,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { getUserByPhone } from "@/services/user-service";
 
 
-const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
+const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest', 'Any'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
 
@@ -240,7 +240,7 @@ Purpose: (Education, Medical, Relief Fund, Deen, Loan, Other)
 Category: (e.g., School Fees, Hospital Bill, Ration Kit)
 Amount Requested: 
 Due Date: (DD-MM-YYYY)
-Acceptable Donation Types: (Zakat, Sadaqah, Fitr, Lillah, Kaffarah)
+Acceptable Donation Types: (Zakat, Sadaqah, Fitr, Lillah, Kaffarah, Interest)
 Case Details: (The detailed story or reason for the request)
 
 --- BENEFICIARY DETAILS ---
@@ -1165,4 +1165,12 @@ Referral Phone:
         </AlertDialog>
     </>
   );
+}
+
+export function AddLeadForm(props: AddLeadFormProps) {
+    return (
+        <Suspense fallback={<div>Loading form...</div>}>
+            <AddLeadFormContent {...props} />
+        </Suspense>
+    )
 }

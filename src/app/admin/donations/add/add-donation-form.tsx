@@ -45,7 +45,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
-const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'] as const;
+const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
 const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
@@ -627,7 +627,6 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
   }
 
   const isFormInvalid = transactionIdState.isAvailable === false;
-  const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
 
 
   return (
@@ -658,7 +657,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
 
-            {showOnlineFields && (
+            {paymentMethod === 'Online (UPI/Card)' && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         <ImageIcon className="h-5 w-5"/>
@@ -1150,8 +1149,29 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 />
             </div>
         
-            {showOnlineFields && (
+            {paymentMethod === 'Bank Transfer' ? (
                 <div className="space-y-4">
+                    <h4 className="font-semibold text-lg border-b pb-2">Bank Transfer Details</h4>
+                    <FormField
+                        control={form.control}
+                        name="utrNumber"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>UTR Number</FormLabel>
+                            <FormControl>
+                                <Input {...field} placeholder="Enter UTR number" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="senderBankName" render={({field}) => (<FormItem><FormLabel>Sender's Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="senderIfscCode" render={({field}) => (<FormItem><FormLabel>Sender's Bank IFSC</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                </div>
+            ) : paymentMethod === 'Online (UPI/Card)' ? (
+                 <div className="space-y-4">
                     <h4 className="font-semibold text-lg border-b pb-2">Online Transaction Details</h4>
                      
                      <FormField
@@ -1187,43 +1207,23 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                                 </FormItem>
                             )}
                         />
-                        {paymentMethod === 'Bank Transfer' ? (
-                             <FormField
-                                control={form.control}
-                                name="utrNumber"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>UTR Number</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder="Enter UTR number" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        ) : (
-                             <FormField
-                                control={form.control}
-                                name="transactionId"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Primary Transaction ID</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Enter primary Transaction ID" {...field} />
-                                    </FormControl>
-                                        <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField control={form.control} name="senderBankName" render={({field}) => (<FormItem><FormLabel>Sender's Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="senderIfscCode" render={({field}) => (<FormItem><FormLabel>Sender's Bank IFSC</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField
+                            control={form.control}
+                            name="transactionId"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Primary Transaction ID</FormLabel>
+                                <FormControl>
+                                <Input placeholder="Enter primary Transaction ID" {...field} />
+                                </FormControl>
+                                    <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
                     </div>
                 </div>
-             )}
+            ) : null}
 
           
             <FormField
