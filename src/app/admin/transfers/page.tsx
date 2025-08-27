@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, FilterX, ChevronLeft, ChevronRight, Eye, Search, ArrowUpDown, Banknote, FileUp, Download, Trash2, Check } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, FilterX, ChevronLeft, ChevronRight, Eye, Search, ArrowUpDown, Banknote, FileUp, Download, Trash2, Check, MoreHorizontal } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -30,6 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkDeleteTransfers } from "./actions";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 interface EnrichedTransfer extends FundTransfer {
@@ -179,6 +180,29 @@ function AllTransfersPageContent() {
         if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
+    
+    const renderActions = (transfer: EnrichedTransfer) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                    <Link href={`/admin/leads/${transfer.leadId}`}>
+                        <Eye className="mr-2 h-4 w-4" /> View Lead
+                    </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                    <a href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">
+                         <Download className="mr-2 h-4 w-4" /> View Proof
+                    </a>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
 
     const renderDesktopTable = () => (
         <Table>
@@ -248,11 +272,7 @@ function AllTransfersPageContent() {
                             <TableCell className="font-mono text-xs">{transfer.transactionId || 'N/A'}</TableCell>
                             <TableCell>{transfer.transferredByUserName}</TableCell>
                             <TableCell className="text-right">
-                                <Button asChild variant="outline" size="sm">
-                                    <a href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">
-                                        <Download className="mr-2 h-3 w-3" />View Proof
-                                    </a>
-                                </Button>
+                                {renderActions(transfer)}
                             </TableCell>
                         </TableRow>
                     );
@@ -282,9 +302,9 @@ function AllTransfersPageContent() {
                                     <CardTitle className="text-lg">
                                         ₹{transfer.amount.toLocaleString()}
                                     </CardTitle>
-                                    <Button asChild variant="outline" size="sm" className="-mt-2">
-                                        <a href={transfer.proofUrl} target="_blank" rel="noopener noreferrer">View Proof</a>
-                                    </Button>
+                                     <div className="-mt-2 -mr-2">
+                                        {renderActions(transfer)}
+                                    </div>
                                 </div>
                                 <CardDescription>
                                     To: <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">{transfer.leadName}</Link>
@@ -304,7 +324,7 @@ function AllTransfersPageContent() {
 
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
-            <div className="text-sm text-muted-foreground">
+                 <div className="text-sm text-muted-foreground">
                  {selectedTransfers.length > 0 ? (
                     `${selectedTransfers.length} of ${filteredTransfers.length} row(s) selected.`
                 ) : (
