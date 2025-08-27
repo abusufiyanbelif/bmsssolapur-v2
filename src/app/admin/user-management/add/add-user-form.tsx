@@ -305,10 +305,13 @@ function AddUserFormContent() {
       });
       // If we came from a donation scan, redirect back with the new donorId
       const searchParamString = searchParams.toString();
-      if(searchParamString) {
+      const redirectUrlParam = searchParams.get('redirect_url');
+      
+      if (redirectUrlParam) {
           const newParams = new URLSearchParams(searchParamString);
           newParams.set('donorId', result.user.id!);
-          router.push(`/admin/donations/add?${newParams.toString()}`);
+          newParams.delete('redirect_url'); // Clean up the redirect param itself
+          router.push(`${redirectUrlParam}?${newParams.toString()}`);
       } else {
         form.reset();
         setUserIdState(initialAvailabilityState);

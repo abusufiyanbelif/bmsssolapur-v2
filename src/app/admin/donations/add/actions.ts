@@ -3,9 +3,9 @@
 "use server";
 
 import { createDonation, getDonationByTransactionId } from "@/services/donation-service";
-import { getUser, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
+import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput } from "@/services/types";
+import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import type { ExtractDonationDetailsInput } from "@/ai/schemas";
 
@@ -168,7 +168,14 @@ export async function checkTransactionId(transactionId: string): Promise<Availab
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
-export async function scanProof(formData: FormData): Promise<{success: boolean, details?: ExtractDonationDetailsOutput, error?: string}> {
+interface ScanResult {
+    success: boolean;
+    details?: ExtractDonationDetailsOutput;
+    error?: string;
+    donorFound?: boolean;
+}
+
+export async function scanProof(formData: FormData): Promise<ScanResult> {
     let lastError: string = "An unknown error occurred";
     const proofFile = formData.get("proofFile") as File | null;
 
@@ -192,17 +199,20 @@ export async function scanProof(formData: FormData): Promise<{success: boolean, 
             if (extractedDetails.senderUpiId) foundDonor = await getUserByUpiId(extractedDetails.senderUpiId);
             if (!foundDonor && extractedDetails.donorPhone) {
                  const phone = extractedDetails.donorPhone.replace(/\D/g,'').slice(-10);
-                 foundDonor = await getUserByUpiId(phone);
+                 foundDonor = await getUserByPhone(phone);
             }
             if (!foundDonor && extractedDetails.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(extractedDetails.senderAccountNumber);
 
-            return { success: true, details: { ...extractedDetails, donorId: foundDonor?.id } };
+            return { 
+                success: true, 
+                details: { ...extractedDetails, donorId: foundDonor?.id },
+                donorFound: !!foundDonor,
+            };
 
         } catch (e) {
             lastError = e instanceof Error ? e.message : "An unknown error occurred";
             console.error(`Attempt ${attempt} failed:`, lastError);
 
-            // If it's a 503 error, wait and retry. Otherwise, fail immediately.
             if (lastError.includes('503 Service Unavailable') && attempt < MAX_RETRIES) {
                 console.log(`Service unavailable, retrying in ${RETRY_DELAY_MS * attempt / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * attempt)); // Exponential backoff
@@ -210,13 +220,11 @@ export async function scanProof(formData: FormData): Promise<{success: boolean, 
                 return { success: false, error: 'Scan was cancelled by the user.' };
             }
             else {
-                // For non-503 errors or if it's the last retry, break the loop and return the error.
                 break;
             }
         }
     }
     
-    // If all retries fail
     console.error("All retry attempts failed for scanning transfer proof.");
     return { success: false, error: `After ${MAX_RETRIES} attempts, the service is still unavailable. Please try again later. Last error: ${lastError}` };
 }
@@ -237,6 +245,6 @@ export async function getRawTextFromImage(formData: FormData): Promise<{success:
         return { success: true, text: result.rawText };
     } catch (e) {
         const error = e instanceof Error ? e.message : "Failed to extract text from image.";
-        return { success: false, error: error };
+        return { success: false, error };
     }
 }
