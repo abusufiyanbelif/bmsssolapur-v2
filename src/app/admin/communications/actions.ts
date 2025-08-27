@@ -4,7 +4,8 @@
 import { getLead } from "@/services/lead-service";
 import type { Lead } from "@/services/types";
 import { format } from "date-fns";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { ai } from "@/ai/genkit";
+import { googleAI } from "@genkit-ai/googleai";
 
 interface ActionResult {
     success: boolean;
@@ -55,12 +56,7 @@ export async function generateAppealMessage(
 ): Promise<ActionResult> {
     
     try {
-        const [quoteResult, leadsResult] = await Promise.all([
-            getInspirationalQuotes(1),
-            getLeadsToProcess(appealType, data)
-        ]);
-
-        const { leads, error } = leadsResult;
+        const { leads, error } = await getLeadsToProcess(appealType, data);
         if (error) {
             return { success: false, error };
         }
@@ -68,9 +64,6 @@ export async function generateAppealMessage(
         if (leads.length === 0) {
             return { success: false, error: "No leads found to generate an appeal message." };
         }
-
-        const quoteText = quoteResult.length > 0 ? `_"${quoteResult[0].text}"_\n- ${quoteResult[0].source}\n\n` : '';
-
 
         let messageBody = `*Priority wise leads & required amt:*\n`;
         let totalRequired = 0;
@@ -84,14 +77,45 @@ export async function generateAppealMessage(
                 messageBody += leadLine;
             }
         });
-
-        messageBody += `\n*Required target amt: ₹${totalRequired.toLocaleString('en-IN')}*`;
-
+        
         const appBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://baitul-mal-connect.web.app';
         const ctaLink = `${appBaseUrl}/public-leads`;
-        messageBody += `\n\n*View details and contribute here:*\n${ctaLink}`;
 
-        const fullMessage = `${quoteText}${introMessage}\n\n${messageBody}\n\n${outroMessage}`;
+        const llmResponse = await ai.generate({
+            model: googleAI.model('gemini-1.5-flash-latest'),
+            prompt: `
+                You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
+                
+                Follow these instructions precisely:
+                1.  Start the message with an inspirational quote about charity from Islamic teachings. The quote should be formatted like this: _"The text of the quote"_\n- The Source (e.g., Quran 2:261 or Sahih al-Bukhari)
+                2.  After the quote, add two newlines.
+                3.  Insert the provided introduction message.
+                4.  After the introduction, add two newlines.
+                5.  Insert the provided list of leads.
+                6.  Calculate the total required amount from the leads and add a line: *Required target amt: ₹[TOTAL_AMOUNT]*
+                7.  After the total amount, add two newlines.
+                8.  Insert the call-to-action link to view details.
+                9.  After the link, add two newlines.
+                10. Insert the provided concluding message.
+
+                ---
+                **Introduction Message:**
+                ${introMessage}
+                ---
+                **List of Leads:**
+                ${messageBody}
+                ---
+                **Call-to-Action Link:**
+                *View details and contribute here:*
+                ${ctaLink}
+                ---
+                **Concluding Message:**
+                ${outroMessage}
+                ---
+            `,
+        });
+
+        const fullMessage = llmResponse.text;
         
         return { success: true, message: fullMessage };
 
