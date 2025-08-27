@@ -1,5 +1,4 @@
 
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -52,12 +51,12 @@ import { Separator } from "@/components/ui/separator";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
-const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
+const allPaymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 
 
 // Schema for paying now
 const payNowFormSchema = z.object({
-  paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
+  paymentMethod: z.enum(allPaymentMethods, { required_error: "Please select a payment method." }),
   purpose: z.enum(donationPurposes, { required_error: "Please select a purpose."}),
   amount: z.coerce.number().min(10, "Donation amount must be at least ₹10."),
   donorName: z.string().optional(),
@@ -188,15 +187,21 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
     const [donationData, setDonationData] = useState<PayNowFormValues | null>(null);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     
-
+    const availablePaymentMethods = useMemo(() => {
+        if (!onlinePaymentsEnabled) {
+            return allPaymentMethods.filter(m => m !== 'Online (UPI/Card)');
+        }
+        return allPaymentMethods;
+    }, [onlinePaymentsEnabled]);
+    
     const form = useForm<PayNowFormValues>({
         resolver: zodResolver(payNowFormSchema),
         defaultValues: {
-        amount: 100,
-        isAnonymous: false,
-        purpose: 'Sadaqah',
-        includePledge: false,
-        paymentMethod: onlinePaymentsEnabled ? 'Online (UPI/Card)' : 'Bank Transfer',
+            amount: 100,
+            isAnonymous: false,
+            purpose: 'Sadaqah',
+            includePledge: false,
+            paymentMethod: onlinePaymentsEnabled ? 'Online (UPI/Card)' : 'Bank Transfer',
         },
     });
 
@@ -484,8 +489,8 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    {paymentMethods.map(method => (
-                                        (onlinePaymentsEnabled || method !== 'Online (UPI/Card)') && <SelectItem key={method} value={method}>{method}</SelectItem>
+                                    {availablePaymentMethods.map(method => (
+                                        <SelectItem key={method} value={method}>{method}</SelectItem>
                                     ))}
                                     </SelectContent>
                                 </Select>
@@ -663,7 +668,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                                 </Button>
                             </>
                         )}
-                         {(!onlinePaymentsEnabled || paymentMethod !== 'Online (UPI/Card)' || !razorpayKeyId) && (
+                         {(!onlinePaymentsEnabled || paymentMethod !== 'Online (UPI/Card)') && (
                             <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
                                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
                                 Submit Donation Record
