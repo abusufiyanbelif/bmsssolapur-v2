@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAppSettings } from "@/services/app-settings-service";
 import { PaymentGatewayForm } from "./payment-gateway-form";
@@ -17,11 +18,11 @@ export default async function PaymentGatewaySettingsPage() {
                         Manage Payment Gateways
                     </CardTitle>
                     <CardDescription>
-                        Configure credentials and enable or disable live payment gateways like Razorpay and PhonePe.
+                        Use the master switch to enable or disable all online payment methods. When enabled, you can configure individual gateways below.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <PaymentGatewayForm settings={settings.paymentGateway} />
+                   <PaymentGatewayForm settings={settings.paymentGateway} features={settings.features} />
                 </CardContent>
             </Card>
         </div>

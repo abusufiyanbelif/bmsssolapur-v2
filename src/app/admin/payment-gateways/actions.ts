@@ -18,6 +18,10 @@ export async function handleUpdateGatewaySettings(
     const currentSettings = await getAppSettings();
     
     const updates: Partial<AppSettings> = {
+      features: {
+          ...(currentSettings.features || {}),
+          onlinePaymentsEnabled: formData.get("onlinePaymentsEnabled") === 'on',
+      },
       paymentGateway: {
         razorpay: {
             enabled: formData.get("razorpay.enabled") === 'on',
