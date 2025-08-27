@@ -74,7 +74,7 @@ This document tracks the features and changes requested for the project.
 
 ### Donation Management
 
-- **Statuses**: "Pending verification", "Verified", "Failed/Incomplete", "Allocated"
+- **Statuses**: "Pending", "Verified", "Failed/Incomplete", "Allocated"
 - **Categories**: 'Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah'
 - **Purposes**: 'Education', 'Deen', 'Hospital', 'Loan and Relief Fund', 'To Organization Use'
 

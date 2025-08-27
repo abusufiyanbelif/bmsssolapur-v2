@@ -144,7 +144,7 @@ export default function AuditTrailPage() {
             case 'Donation Verified (Razorpay)': return `Verified donation of ₹${details.amount} from ${details.donorName} via Razorpay.`;
             case 'Donation Allocated': return `Allocated ₹${details.amount} to ${details.allocations?.length} lead(s).`;
             case 'Lead Created': return `Created lead for ${details.leadName}.`;
-            case 'Status Changed': return `Status from "${details.from}" to "${details.to}".`;
+            case 'Status Changed': return `Status changed from "${details.from}" to "${details.to}".`;
             default: return JSON.stringify(details);
         }
     };
