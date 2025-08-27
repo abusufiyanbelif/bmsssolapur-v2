@@ -178,16 +178,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         referralSummary: { visibleTo: ['Referral', 'Admin', 'Super Admin'] },
     },
     analyticsDashboard: {
-        mainMetrics: { visibleTo: ['Super Admin'] },
-        fundsInHand: { visibleTo: ['Super Admin', 'Finance Admin'] },
-        donationsChart: { visibleTo: ['Super Admin', 'Finance Admin'] },
-        leadBreakdown: { visibleTo: ['Super Admin'] },
-        beneficiaryBreakdown: { visibleTo: ['Super Admin'] },
-        campaignBreakdown: { visibleTo: ['Super Admin'] },
-        donationTypeBreakdown: { visibleTo: ['Super Admin', 'Finance Admin'] },
-        topDonors: { visibleTo: ['Super Admin', 'Finance Admin'] },
-        topDonations: { visibleTo: ['Super Admin', 'Finance Admin'] },
-        recentCampaigns: { visibleTo: ['Super Admin'] },
+        financialPerformance: { visibleTo: ['Super Admin'] },
     }
 };
 

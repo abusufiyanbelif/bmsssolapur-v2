@@ -59,7 +59,13 @@ const allNavItems: NavItem[] = [
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
-    { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
+    { 
+        href: "/request-help", 
+        label: "Request Help", 
+        icon: FilePlus2, 
+        allowedRoles: ["Beneficiary"],
+        featureFlag: (settings) => settings.leadConfiguration?.allowBeneficiaryRequests ?? true,
+    },
     
     // Referral
     { href: "/referral/my-beneficiaries", label: "My Referrals", icon: Users, allowedRoles: ["Referral"] },

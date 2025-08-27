@@ -83,9 +83,9 @@ export interface User {
 }
 
 // Donation-related types
-export type DonationStatus = 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Partially Allocated' | 'Allocated';
+export type DonationStatus = 'Pending' | 'Pending verification' | 'Verified' | 'Failed/Incomplete' | 'Partially Allocated' | 'Allocated';
 export type DonationType = 'Zakat' | 'Sadaqah' | 'Fitr' | 'Lillah' | 'Kaffarah' | 'Interest' | 'Split' | 'Any';
-export type DonationPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Loan' | 'To Organization Use' | 'Loan Repayment' | 'Other';
+export type DonationPurpose = 'Education' | 'Medical' | 'Relief Fund' | 'Deen' | 'Loan' | 'To Organization Use' | 'Loan Repayment' | 'Monthly Pledge' | 'Other';
 export type PaymentMethod = 'Online (UPI/Card)' | 'Bank Transfer' | 'Cash' | 'Other';
 
 export interface Allocation {
