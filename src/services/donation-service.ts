@@ -44,9 +44,16 @@ export const createDonation = async (
 ) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    const donorUser = await getUser(donation.donorId);
+    const [donorUser, adminUser] = await Promise.all([
+        getUser(donation.donorId),
+        getUser(adminUserId),
+    ]);
+
     if (!donorUser) {
         throw new Error(`Donor user with ID "${donation.donorId}" could not be found.`);
+    }
+    if (!adminUser) {
+        throw new Error(`Admin user with ID "${adminUserId}" could not be found.`);
     }
     if (!donorUser.userKey) {
         throw new Error(`The selected donor ("${donation.donorName}") does not have a valid UserKey. Please ensure the user profile is complete.`);
@@ -57,7 +64,18 @@ export const createDonation = async (
     const donationNumber = countSnapshot.data().count + 1;
     
     const dateString = format(new Date(), 'ddMMyyyy');
-    const customDonationId = `${donationNumber}_${donorUser.userKey}_${dateString}`;
+    
+    let customDonationId = '';
+    const isSelfDonation = adminUser.id === donorUser.id;
+
+    if (isSelfDonation) {
+        customDonationId = `D${donationNumber}_${donorUser.userKey}_${dateString}`;
+    } else {
+        if (!adminUser.userKey) {
+             throw new Error(`The admin user ("${adminUser.name}") does not have a valid UserKey.`);
+        }
+        customDonationId = `D${donationNumber}_${donorUser.userKey}_By${adminUser.userKey}_${dateString}`;
+    }
     
     const donationRef = doc(db, DONATIONS_COLLECTION, customDonationId);
     
