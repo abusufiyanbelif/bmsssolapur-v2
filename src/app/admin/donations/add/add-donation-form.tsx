@@ -77,6 +77,7 @@ const formSchema = z.object({
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes, { required_error: "Please select a purpose." }),
   category: z.string().optional(),
+  status: z.enum(["Pending", "Verified"]).default("Pending"),
   transactionId: z.string().optional(),
   utrNumber: z.string().optional(),
   googlePayTransactionId: z.string().optional(),
@@ -187,6 +188,7 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     paymentMethod: 'Online (UPI/Card)',
     purpose: 'To Organization Use',
     category: undefined,
+    status: 'Pending',
     transactionId: '',
     utrNumber: '',
     googlePayTransactionId: '',
@@ -647,7 +649,7 @@ function AddDonationFormContent({ users, leads, campaigns }: AddDonationFormProp
                 )}
             />
 
-            {(paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer') && (
+            {showOnlineFields && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         <ImageIcon className="h-5 w-5"/>

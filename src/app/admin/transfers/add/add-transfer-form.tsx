@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,7 +55,7 @@ const formSchema = z.object({
   transactionDate: z.date(),
   transactionId: z.string().optional(),
   utrNumber: z.string().optional(),
-  proof: z.any().refine(file => file instanceof File && file.size > 0, 'A proof file is required.').optional(),
+  proof: z.any().optional(),
   notes: z.string().optional(),
   paymentApp: z.enum(paymentApps).optional(),
   // Participant details
@@ -67,6 +68,15 @@ const formSchema = z.object({
   recipientAccountNumber: z.string().optional(),
   recipientUpiId: z.string().optional(),
   status: z.string().optional(),
+}).refine(data => {
+    // If payment method is Online or Bank Transfer, a proof is required.
+    if (['Online (UPI/Card)', 'Bank Transfer'].includes(data.paymentMethod)) {
+        return !!data.proof;
+    }
+    return true;
+}, {
+    message: "A proof file is required for this payment method.",
+    path: ["proof"],
 });
 
 type AddTransferFormValues = z.infer<typeof formSchema>;
@@ -544,23 +554,27 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                     <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="Enter amount transferred" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={control} name="paymentApp" render={({ field }) => (<FormItem><FormLabel>Payment App</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Select payment app" /></SelectTrigger></FormControl><SelectContent>{paymentApps.map(app => (<SelectItem key={app} value={app}>{app}</SelectItem>))}</SelectContent></Select></FormItem>)} />
-                    <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                </div>
-                <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                {paymentApp === 'PhonePe' && (
-                    <FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                )}
-                
-                <h4 className="font-semibold border-b pb-1">Sender & Recipient Details</h4>
-                <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="senderPhone" render={({ field }) => (<FormItem><FormLabel>Sender Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                 {showOnlineFields && (
+                     <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={control} name="paymentApp" render={({ field }) => (<FormItem><FormLabel>Payment App</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Select payment app" /></SelectTrigger></FormControl><SelectContent>{paymentApps.map(app => (<SelectItem key={app} value={app}>{app}</SelectItem>))}</SelectContent></Select></FormItem>)} />
+                            <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        </div>
+                        <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        {paymentApp === 'PhonePe' && (
+                            <FormField control={control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        )}
+                        
+                        <h4 className="font-semibold border-b pb-1">Sender & Recipient Details</h4>
+                        <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="senderPhone" render={({ field }) => (<FormItem><FormLabel>Sender Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                    </>
+                 )}
             </CardContent>
         </Card>
 
