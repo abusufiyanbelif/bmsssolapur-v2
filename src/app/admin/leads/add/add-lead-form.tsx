@@ -3,7 +3,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -52,7 +52,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { getUserByPhone } from "@/services/user-service";
 
 
-const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest', 'Any'];
+const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
 
@@ -129,7 +129,7 @@ interface AddLeadFormProps {
   settings: AppSettings;
 }
 
-export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
+function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
