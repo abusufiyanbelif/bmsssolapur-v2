@@ -11,6 +11,8 @@ import {
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
+import { AppSettings, getAppSettings } from "@/services/app-settings-service";
+import { useEffect, useState } from "react";
 
 type NavSubItem = {
     href?: string;
@@ -18,6 +20,7 @@ type NavSubItem = {
     icon?: React.ElementType;
     subItems?: NavSubItem[]; // For nested collapsibles
     allowedRoles?: string[];
+    featureFlag?: (settings: AppSettings) => boolean;
 };
 
 type NavItem = {
@@ -26,6 +29,7 @@ type NavItem = {
   icon: React.ElementType;
   allowedRoles: string[]; 
   subItems?: NavSubItem[];
+  featureFlag?: (settings: AppSettings) => boolean;
 };
 
 // A single source of truth for all navigation items
@@ -170,7 +174,12 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Super Admin"],
         subItems: [
             { href: "/admin/settings", label: "General Settings" },
-            { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard },
+            { 
+                href: "/admin/payment-gateways", 
+                label: "Payment Gateways", 
+                icon: CreditCard,
+                featureFlag: (settings) => settings.features?.onlinePaymentsEnabled ?? false
+            },
             { href: "/admin/settings/notifications", label: "Notification Settings", icon: BellRing },
             { href: "/admin/seed", label: "Seed Database", icon: Database },
             { href: "/services", label: "Services Summary", icon: Server },
@@ -209,7 +218,7 @@ const NavLink = ({ item, isActive, onClick, paddingLeft }: { item: NavItem | Nav
     );
 };
 
-const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRoleSwitchRequired }: { item: NavItem | NavSubItem, pathname: string, level?: number, userRoles: string[], activeRole: string, onRoleSwitchRequired: (requiredRole: string) => void }) => {
+const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRoleSwitchRequired, settings }: { item: NavItem | NavSubItem, pathname: string, level?: number, userRoles: string[], activeRole: string, onRoleSwitchRequired: (requiredRole: string) => void, settings: AppSettings | null }) => {
     const Icon = item.icon;
     const isAnySubItemActive = item.subItems?.some(sub => sub.href && pathname.startsWith(sub.href)) || 
                                item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href))) ||
@@ -217,10 +226,11 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
 
     const paddingLeft = level > 0 ? `pl-${level * 4}` : '';
     
-    // Filter sub-items based on the active role
+    // Filter sub-items based on the active role and feature flags
     const visibleSubItems = item.subItems?.filter(subItem => {
-        if (!subItem.allowedRoles) return true; // if no roles specified, it's visible to all parent roles
-        return subItem.allowedRoles.includes(activeRole);
+        const roleAllowed = !subItem.allowedRoles || subItem.allowedRoles.includes(activeRole);
+        const featureEnabled = !subItem.featureFlag || (settings && subItem.featureFlag(settings));
+        return roleAllowed && featureEnabled;
     }) || [];
 
     if(visibleSubItems.length === 0) return null;
@@ -248,7 +258,7 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
             <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
                 {visibleSubItems.map(subItem => {
                     if (subItem.subItems) {
-                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />
+                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} settings={settings} />
                     }
                     const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
                     return <NavLink key={subItem.href} item={subItem} isActive={isSubActive} />
@@ -261,12 +271,16 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
 
 export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     const pathname = usePathname();
+    const [settings, setSettings] = useState<AppSettings | null>(null);
+
+    useEffect(() => {
+        getAppSettings().then(setSettings);
+    }, []);
     
     const visibleNavItems = allNavItems.filter(item => {
-        if ('allowedRoles' in item) {
-            return item.allowedRoles.includes(activeRole);
-        }
-        return true;
+        const roleAllowed = item.allowedRoles.includes(activeRole);
+        const featureEnabled = !item.featureFlag || (settings && item.featureFlag(settings));
+        return roleAllowed && featureEnabled;
     });
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
@@ -288,7 +302,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
                  if (item.subItems) {
-                    return <NavCollapsible key={key} item={item} pathname={pathname} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />;
+                    return <NavCollapsible key={key} item={item} pathname={pathname} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} settings={settings} />;
                 }
                 const isActive = (item.href === '/' && pathname === '/') || 
                                  (item.href && item.href !== '/' && pathname.startsWith(item.href));

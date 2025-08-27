@@ -129,6 +129,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     features: {
         directPaymentToBeneficiary: { enabled: false },
+        onlinePaymentsEnabled: true,
     },
     paymentMethods: {
         bankTransfer: { enabled: true },

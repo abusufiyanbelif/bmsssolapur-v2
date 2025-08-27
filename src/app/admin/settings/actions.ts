@@ -23,6 +23,7 @@ export async function handleUpdateAppSettings(
       },
       features: {
         directPaymentToBeneficiary: { enabled: formData.get("feature.directPayment") === 'on' },
+        onlinePaymentsEnabled: formData.get("feature.onlinePayments") === 'on',
       },
       paymentMethods: {
         bankTransfer: { enabled: formData.get("payment.bankTransfer") === 'on' },

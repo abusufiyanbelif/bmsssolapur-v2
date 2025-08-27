@@ -1,4 +1,5 @@
 
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -34,7 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
 import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
 import { scanProof } from '@/app/admin/donations/add/actions';
-import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType, PaymentMethod } from '@/services/types';
+import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType, PaymentMethod, AppSettings } from '@/services/types';
 import { getUser, updateUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -178,7 +179,7 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
     );
 }
 
-function PayNowForm({ user, targetLead, targetCampaignId, organization, openLeads, activeCampaigns, razorpayKeyId }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string }) {
+function PayNowForm({ user, targetLead, targetCampaignId, organization, openLeads, activeCampaigns, razorpayKeyId, onlinePaymentsEnabled }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string, onlinePaymentsEnabled: boolean }) {
     const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -195,7 +196,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         isAnonymous: false,
         purpose: 'Sadaqah',
         includePledge: false,
-        paymentMethod: 'Online (UPI/Card)',
+        paymentMethod: onlinePaymentsEnabled ? 'Online (UPI/Card)' : 'Bank Transfer',
         },
     });
 
@@ -484,7 +485,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                                     </FormControl>
                                     <SelectContent>
                                     {paymentMethods.map(method => (
-                                        <SelectItem key={method} value={method}>{method}</SelectItem>
+                                        (onlinePaymentsEnabled || method !== 'Online (UPI/Card)') && <SelectItem key={method} value={method}>{method}</SelectItem>
                                     ))}
                                     </SelectContent>
                                 </Select>
@@ -634,7 +635,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                     />
                     
                     <div className="flex flex-col gap-4">
-                        {paymentMethod === 'Online (UPI/Card)' && razorpayKeyId && (
+                        {onlinePaymentsEnabled && paymentMethod === 'Online (UPI/Card)' && razorpayKeyId && (
                            <>
                                 <Button 
                                     type="button" 
@@ -662,7 +663,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                                 </Button>
                             </>
                         )}
-                         {(paymentMethod !== 'Online (UPI/Card)' || !razorpayKeyId) && (
+                         {(!onlinePaymentsEnabled || paymentMethod !== 'Online (UPI/Card)' || !razorpayKeyId) && (
                             <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
                                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
                                 Submit Donation Record
@@ -814,7 +815,7 @@ function DonatePageContent() {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [openLeads, setOpenLeads] = useState<Lead[]>([]);
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [donationMethod, setDonationMethod] = useState<'payNow' | 'uploadProof'>('payNow');
@@ -874,7 +875,8 @@ function DonatePageContent() {
     return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
   }
   
-  const razorpayEnabled = settings?.paymentGateway?.razorpay?.enabled;
+  const onlinePaymentsEnabled = settings?.features?.onlinePaymentsEnabled ?? false;
+  const razorpayEnabled = settings?.paymentGateway?.razorpay?.enabled && onlinePaymentsEnabled;
   const razorpayKey = razorpayEnabled ? (settings.paymentGateway.razorpay.mode === 'live' ? settings.paymentGateway.razorpay.live.keyId : settings.paymentGateway.razorpay.test.keyId) : undefined;
 
 
@@ -910,7 +912,7 @@ function DonatePageContent() {
                 </div>
 
                 {donationMethod === 'payNow' ? (
-                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} openLeads={openLeads} activeCampaigns={activeCampaigns} razorpayKeyId={razorpayKey} />
+                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} openLeads={openLeads} activeCampaigns={activeCampaigns} razorpayKeyId={razorpayKey} onlinePaymentsEnabled={onlinePaymentsEnabled} />
                 ) : (
                    <UploadProofSection user={user} />
                 )}
