@@ -485,7 +485,7 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
     const donor = await getUserByUserId("donor.user");
     if (!donor || !donor.id) {
         console.log("Test donor 'donor.user' not found, skipping test donation seed.");
-        return { name: "Test Donation 4k", status: "Skipped (already exists)" };
+        return { name: "Seeded Test Donor", status: "Skipped (already exists)" };
     }
 
     const donationsCollection = collection(db, 'donations');
@@ -497,7 +497,7 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
     );
     const existing = await getDocs(q);
     if (!existing.empty) {
-        return { name: "Test Donation 4k", status: "Skipped (already exists)" };
+        return { name: "Seeded Test Donor", status: "Skipped (already exists)" };
     }
 
     const randomDonationDate = getRandomDate(new Date('2021-01-01'), new Date());
@@ -505,7 +505,7 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
 
     await createDonation({
         donorId: donor.id,
-        donorName: donor.name,
+        donorName: "Seeded Test Donor",
         amount: 4000,
         type: 'Sadaqah',
         purpose: 'To Organization Use',
@@ -517,7 +517,7 @@ const seedTestDonation = async (adminUser: User): Promise<SeedItemResult> => {
         transactionId: `TEST-DONATION-4K-${Date.now()}`
     }, adminUser.id!, adminUser.name, adminUser.email);
     
-    return { name: "Test Donation 4k", status: 'Created' };
+    return { name: "Seeded Test Donor", status: 'Created' };
 }
 
 export const seedDatabase = async (): Promise<SeedResult> => {
