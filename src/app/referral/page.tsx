@@ -162,7 +162,7 @@ export default function ReferralDashboardPage() {
                             <CardDescription>A quick view of your most recently added beneficiaries.</CardDescription>
                          </div>
                          <Button asChild>
-                            <Link href="/referral/add-beneficiary"><PlusCircle className="mr-2 h-4 w-4" />Add Beneficiary</Link>
+                            <Link href="/admin/user-management/add?role=Beneficiary"><PlusCircle className="mr-2 h-4 w-4" />Add Beneficiary</Link>
                          </Button>
                     </div>
                 </CardHeader>
@@ -186,7 +186,7 @@ export default function ReferralDashboardPage() {
                          <div className="text-center py-10">
                             <p className="text-muted-foreground">You have not referred any beneficiaries yet.</p>
                              <Button asChild className="mt-4">
-                                <Link href="/referral/add-beneficiary">Add Your First Beneficiary</Link>
+                                <Link href="/admin/user-management/add?role=Beneficiary">Add Your First Beneficiary</Link>
                             </Button>
                         </div>
                     )}
