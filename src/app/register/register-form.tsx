@@ -21,6 +21,7 @@ const formSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   bankAccountName: z.string().optional(),
+  bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
   upiPhone: z.string().optional(),
@@ -60,6 +61,7 @@ export function RegisterForm() {
     formData.append("phone", values.phone);
     formData.append("password", values.password);
     if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
+    if(values.bankName) formData.append("bankName", values.bankName);
     if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
     if(values.bankIfscCode) formData.append("bankIfscCode", values.bankIfscCode);
     if(values.upiPhone) formData.append("upiPhone", values.upiPhone);
@@ -202,6 +204,19 @@ export function RegisterForm() {
                 )}
             />
         </div>
+        <FormField
+            control={form.control}
+            name="bankName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Bank Name</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter bank name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
@@ -263,3 +278,4 @@ export function RegisterForm() {
     </Form>
   );
 }
+

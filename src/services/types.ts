@@ -38,7 +38,6 @@ export interface User {
   middleName?: string;
   lastName: string;
   fatherName?: string;
-  fatherContact?: string;
   email?: string;
   phone: string;
   password?: string;
@@ -65,6 +64,7 @@ export interface User {
   aadhaarNumber?: string; 
   panNumber?: string; 
   bankAccountName?: string;
+  bankName?: string;
   bankAccountNumber?: string;
   bankIfscCode?: string;
   upiPhone?: string;
@@ -123,6 +123,8 @@ export interface Donation {
   donorPhone?: string;
   donorBankAccount?: string;
   senderName?: string;
+  senderBankName?: string;
+  senderIfscCode?: string;
   phonePeSenderName?: string;
   googlePaySenderName?: string;
   paytmSenderName?: string;
@@ -135,6 +137,8 @@ export interface Donation {
   recipientPhone?: string;
   recipientUpiId?: string;
   recipientAccountNumber?: string;
+  recipientBankName?: string;
+  recipientIfscCode?: string;
   paymentMethod?: PaymentMethod;
   createdAt: Timestamp | Date;
   verifiedAt?: Timestamp | Date;
@@ -184,6 +188,8 @@ export interface FundTransfer {
     googlePaySenderName?: string;
     paytmSenderName?: string;
     senderAccountNumber?: string;
+    senderBankName?: string;
+    senderIfscCode?: string;
     senderUpiId?: string;
     recipientName?: string; // General recipient name
     phonePeRecipientName?: string;
@@ -192,6 +198,8 @@ export interface FundTransfer {
     recipientPhone?: string;
     recipientUpiId?: string;
     recipientAccountNumber?: string;
+    recipientBankName?: string;
+    recipientIfscCode?: string;
     paymentApp?: string;
     paymentMethod?: string;
     status?: string;
@@ -422,3 +430,4 @@ export interface ActivityLog {
     details: Record<string, any>;
     timestamp: Timestamp | Date;
 }
+

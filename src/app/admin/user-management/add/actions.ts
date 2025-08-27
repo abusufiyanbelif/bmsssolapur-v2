@@ -43,6 +43,7 @@ export async function handleAddUser(
       panNumber: formData.get("panNumber") as string | undefined,
       aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
       bankAccountName: formData.get("bankAccountName") as string | undefined,
+      bankName: formData.get("bankName") as string | undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
       bankIfscCode: formData.get("bankIfscCode") as string | undefined,
       upiPhone: formData.get("upiPhone") as string | undefined,
@@ -90,6 +91,7 @@ export async function handleAddUser(
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
         bankAccountName: rawFormData.bankAccountName || '',
+        bankName: rawFormData.bankName || '',
         bankAccountNumber: rawFormData.bankAccountNumber || '',
         bankIfscCode: rawFormData.bankIfscCode || '',
         upiPhone: rawFormData.upiPhone || '',
@@ -119,3 +121,4 @@ export async function handleAddUser(
     };
   }
 }
+

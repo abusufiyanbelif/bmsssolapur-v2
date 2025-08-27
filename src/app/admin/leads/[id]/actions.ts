@@ -161,8 +161,8 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const recipientType = formData.get("recipientType") as 'Beneficiary' | 'Referral';
         const customRecipientId = formData.get("recipientId") as string | undefined;
 
-        if (!adminUserId || isNaN(amount) || !proofFile) {
-            return { success: false, error: "Missing required fields for fund transfer (Admin, Amount, Proof)." };
+        if (!adminUserId || isNaN(amount) || (!proofFile && (formData.get("paymentMethod") === "Bank Transfer" || formData.get("paymentMethod") === "Online (UPI/Card)")) ) {
+            return { success: false, error: "Missing required fields for fund transfer (Admin, Amount, Proof for online methods)." };
         }
 
         const [adminUser, lead] = await Promise.all([
@@ -190,8 +190,11 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         const transferId = scannedTransactionId || `TXN_By${adminKey}_To${recipientKey}_${timestamp}`;
         // --- End ID Generation ---
 
-        const uploadPath = `leads/${leadId}/transfers/${transferId}/`;
-        const proofUrl = await uploadFile(proofFile, uploadPath);
+        let proofUrl = '';
+        if (proofFile) {
+            const uploadPath = `leads/${leadId}/transfers/${transferId}/`;
+            proofUrl = await uploadFile(proofFile, uploadPath);
+        }
 
         const newTransfer: FundTransfer = {
             transferredByUserId: adminUserId,
@@ -208,11 +211,15 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             senderName: formData.get("senderName") as string | undefined,
             senderPhone: formData.get("senderPhone") as string | undefined,
             senderAccountNumber: formData.get("senderAccountNumber") as string | undefined,
+            senderBankName: formData.get("senderBankName") as string | undefined,
+            senderIfscCode: formData.get("senderIfscCode") as string | undefined,
             senderUpiId: formData.get("senderUpiId") as string | undefined,
             recipientName: formData.get("recipientName") as string | undefined,
             recipientPhone: formData.get("recipientPhone") as string | undefined,
             recipientUpiId: formData.get("recipientUpiId") as string | undefined,
             recipientAccountNumber: formData.get("recipientAccountNumber") as string | undefined,
+            recipientBankName: formData.get("recipientBankName") as string | undefined,
+            recipientIfscCode: formData.get("recipientIfscCode") as string | undefined,
             paymentApp: formData.get("paymentApp") as string | undefined,
             paymentMethod: formData.get("paymentMethod") as string | undefined,
             status: formData.get("status") as string | undefined,
@@ -315,3 +322,4 @@ export async function handleAllocateDonationsToLead(leadId: string, donationIds:
         return { success: false, error: `Failed to allocate donations: ${error}` };
     }
 }
+

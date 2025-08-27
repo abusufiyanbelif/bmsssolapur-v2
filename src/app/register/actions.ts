@@ -38,17 +38,18 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
 
 
   try {
-    const newUser: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> = {
+    const newUserData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> = {
       name: `${firstName} ${lastName}`.trim(),
       firstName,
       lastName,
       email: email || undefined,
       phone,
       password,
-      roles: ["Donor"], // Default role for new registrations
-      isActive: true,
+      roles: ['Donor'], // Default role for new registrations
+      isActive: true, // New users are active by default
       gender: 'Other',
       bankAccountName: formData.get("bankAccountName") as string || undefined,
+      bankName: formData.get("bankName") as string || undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string || undefined,
       bankIfscCode: formData.get("bankIfscCode") as string || undefined,
       upiPhone: formData.get("upiPhone") as string || undefined,
@@ -64,3 +65,4 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
     return { success: false, error: `Registration failed: ${error}` };
   }
 }
+

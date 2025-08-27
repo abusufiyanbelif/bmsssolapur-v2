@@ -58,7 +58,6 @@ export async function handleUpdateUser(
       middleName: formData.get("middleName") as string,
       lastName: formData.get("lastName") as string,
       fatherName: formData.get("fatherName") as string,
-      fatherContact: formData.get("fatherContact") as string,
       phone: formData.get("phone") as string,
       roles: formData.getAll("roles") as UserRole[],
       isActive: formData.get("isActive") === 'on',
@@ -77,6 +76,7 @@ export async function handleUpdateUser(
       panNumber: formData.get("panNumber") as string | undefined,
       aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
       bankAccountName: formData.get("bankAccountName") as string | undefined,
+      bankName: formData.get("bankName") as string | undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
       bankIfscCode: formData.get("bankIfscCode") as string | undefined,
       upiPhone: formData.get("upiPhone") as string | undefined,
@@ -112,7 +112,6 @@ export async function handleUpdateUser(
         middleName: rawFormData.middleName,
         lastName: rawFormData.lastName,
         fatherName: rawFormData.fatherName,
-        fatherContact: rawFormData.fatherContact,
         phone: rawFormData.phone,
         roles: finalRoles,
         isActive: rawFormData.isActive,
@@ -136,6 +135,7 @@ export async function handleUpdateUser(
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
         bankAccountName: rawFormData.bankAccountName || '',
+        bankName: rawFormData.bankName || '',
         bankAccountNumber: rawFormData.bankAccountNumber || '',
         bankIfscCode: rawFormData.bankIfscCode || '',
         upiPhone: rawFormData.upiPhone || '',
@@ -206,3 +206,4 @@ export async function handleSetPassword(formData: FormData): Promise<FormState> 
     };
   }
 }
+

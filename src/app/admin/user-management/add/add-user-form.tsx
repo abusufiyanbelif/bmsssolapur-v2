@@ -18,9 +18,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddUser } from "./actions";
+import { handleAddUser, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, Suspense, useCallback } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text } from "lucide-react";
+import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole } from "@/services/types";
@@ -29,6 +29,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getUserByPhone } from "@/services/user-service";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
@@ -81,6 +83,7 @@ const formSchema = z.object({
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
   bankAccountName: z.string().optional(),
+  bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
   upiPhone: z.string().optional(),
@@ -832,6 +835,19 @@ function AddUserFormContent() {
                     </FormItem>
                 )}
             />
+             <FormField
+                control={form.control}
+                name="bankName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Bank Name (Optional)</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter bank name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -913,3 +929,4 @@ export function AddUserForm() {
         </Suspense>
     )
 }
+

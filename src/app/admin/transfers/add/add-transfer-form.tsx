@@ -62,10 +62,14 @@ const formSchema = z.object({
   senderName: z.string().optional(),
   senderPhone: z.string().optional(),
   senderAccountNumber: z.string().optional(),
+  senderBankName: z.string().optional(),
+  senderIfscCode: z.string().optional(),
   senderUpiId: z.string().optional(),
   recipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
   recipientAccountNumber: z.string().optional(),
+  recipientBankName: z.string().optional(),
+  recipientIfscCode: z.string().optional(),
   recipientUpiId: z.string().optional(),
   status: z.string().optional(),
 }).refine(data => {
@@ -97,10 +101,14 @@ const initialFormValues: Partial<AddTransferFormValues> = {
   senderName: '',
   senderPhone: '',
   senderAccountNumber: '',
+  senderBankName: '',
+  senderIfscCode: '',
   senderUpiId: '',
   recipientName: '',
   recipientPhone: '',
   recipientAccountNumber: '',
+  recipientBankName: '',
+  recipientIfscCode: '',
   recipientUpiId: '',
   status: '',
 };
@@ -209,7 +217,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
       toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
       return;
     }
-
+    
     setIsScanning(true);
     const formData = new FormData();
     formData.append('proofFile', file);
@@ -448,7 +456,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                     <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
                         {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />} Scan & Auto-Fill
                     </Button>
-                    <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
+                     <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
                         {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />} Get Raw Text
                     </Button>
                 </div>
@@ -580,12 +588,19 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                         
                         <h4 className="font-semibold border-b pb-1">Sender & Recipient Details</h4>
                         <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <FormField control={control} name="senderPhone" render={({ field }) => (<FormItem><FormLabel>Sender Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Sender Bank Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={control} name="senderIfscCode" render={({ field }) => (<FormItem><FormLabel>Sender IFSC</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        </div>
+                         <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <FormField control={control} name="recipientPhone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="recipientBankName" render={({ field }) => (<FormItem><FormLabel>Recipient Bank Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={control} name="recipientIfscCode" render={({ field }) => (<FormItem><FormLabel>Recipient IFSC</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        </div>
                         <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                     </>
                  )}
             </CardContent>
@@ -620,3 +635,4 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
+
