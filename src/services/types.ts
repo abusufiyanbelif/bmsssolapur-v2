@@ -429,5 +429,5 @@ export interface ActivityLog {
     role: UserRole;
     activity: string;
     details: Record<string, any>;
-    timestamp: Timestamp | Date;
+    timestamp: Date;
 }

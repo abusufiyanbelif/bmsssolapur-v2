@@ -176,8 +176,8 @@ export default function AuditTrailPage() {
                     return (
                         <TableRow key={log.id}>
                             <TableCell>
-                                <p className="font-medium">{format(new Date(log.timestamp), "dd MMM yyyy, p")}</p>
-                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}</p>
+                                <p className="font-medium">{format(log.timestamp, "dd MMM yyyy, p")}</p>
+                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(log.timestamp, { addSuffix: true })}</p>
                             </TableCell>
                             <TableCell>
                                 <p className="font-semibold">{log.userName}</p>
