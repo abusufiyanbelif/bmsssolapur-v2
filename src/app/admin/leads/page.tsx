@@ -1,5 +1,3 @@
-
-
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -374,7 +372,7 @@ Purpose: (Education, Medical, Relief Fund, Deen, Loan, Other)
 Category: (e.g., School Fees, Hospital Bill, Ration Kit)
 Amount Requested: 
 Due Date: (DD-MM-YYYY)
-Acceptable Donation Types: (Zakat, Sadaqah, Fitr, Lillah, Kaffarah)
+Acceptable Donation Types: (Zakat, Sadaqah, Fitr, Lillah, Kaffarah, Interest)
 Case Details: (The detailed story or reason for the request)
 
 --- BENEFICIARY DETAILS ---
@@ -632,7 +630,7 @@ Referral Phone:
                                  <div className="flex justify-between"><span className="text-muted-foreground">Created</span><span>{lead.dateCreated ? format(lead.dateCreated, "dd MMM yyyy") : 'N/A'}</span></div>
                             </CardContent>
                         </Link>
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 -mr-2 -mt-2">
                            {renderActions(lead)}
                         </div>
                     </div>
@@ -931,5 +929,4 @@ function LeadsPage() {
     )
 }
 
-export { LeadsPageContent };
 export default LeadsPage;
