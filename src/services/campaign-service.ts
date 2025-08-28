@@ -18,9 +18,9 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Campaign } from './types';
+import type { Campaign, CampaignStatus } from './types';
 
-export type { Campaign };
+export type { Campaign, CampaignStatus };
 
 const CAMPAIGNS_COLLECTION = 'campaigns';
 

@@ -248,6 +248,8 @@ export interface Lead {
     source?: 'Seeded' | 'Manual Entry';
 }
 
+export type CampaignStatus = 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
+
 export interface Campaign {
     id: string;
     name: string;
@@ -255,7 +257,7 @@ export interface Campaign {
     goal: number;
     startDate: Timestamp | Date;
     endDate: Timestamp | Date;
-    status: 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
+    status: CampaignStatus;
     acceptableDonationTypes?: DonationType[];
     createdAt: Timestamp | Date;
     updatedAt: Timestamp | Date;
