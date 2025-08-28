@@ -1,4 +1,3 @@
-
 // src/app/admin/beneficiaries/page.tsx
 "use client";
 
@@ -276,7 +275,7 @@ function BeneficiariesPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>
+                    <TableCell>
                         <Checkbox
                             checked={paginatedBeneficiaries.length > 0 && selectedUsers.length === paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
@@ -289,7 +288,7 @@ function BeneficiariesPageContent() {
                             }}
                             aria-label="Select all on current page"
                         />
-                    </TableHead>
+                    </TableCell>
                     <TableHead>User Key</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
@@ -347,9 +346,20 @@ function BeneficiariesPageContent() {
                                         </Tooltip>
                                     </TooltipProvider>
                                 )}
+                                {user.isAnonymousAsBeneficiary && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>This user is anonymous</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
                              </div>
                              {user.fatherName && <p className="text-xs text-muted-foreground">s/o {user.fatherName}</p>}
-                             {user.isAnonymousAsBeneficiary && <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
                         </TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{user.userId}</div>

@@ -1,4 +1,3 @@
-
 // src/app/admin/donors/page.tsx
 "use client";
 
@@ -32,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -247,7 +247,7 @@ function DonorsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>
+                    <TableCell>
                         <Checkbox
                             checked={paginatedDonors.length > 0 && selectedUsers.length === paginatedDonors.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
@@ -260,7 +260,7 @@ function DonorsPageContent() {
                             }}
                             aria-label="Select all on current page"
                         />
-                    </TableHead>
+                    </TableCell>
                     <TableHead>User Key</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
@@ -303,7 +303,18 @@ function DonorsPageContent() {
                             <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
                                 {user.name}
                             </Link>
-                             {user.isAnonymousAsDonor && <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" title="This user is anonymous" />}
+                             {user.isAnonymousAsDonor && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This user is anonymous</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                             )}
                         </TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{user.userId}</div>
@@ -566,7 +577,7 @@ function DonorsPageContent() {
                         </Button>
                         <Button variant="outline" onClick={resetFilters} className="w-full">
                             <FilterX className="mr-2 h-4 w-4" />
-                            Clear
+                            Clear Filters
                         </Button>
                     </div>
                 </div>
