@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -59,10 +58,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
         if (storedUserId) {
-            // First, try fetching by document ID, which is the most common case.
+            // First, try fetching by document ID. If that fails, try by custom userId.
             let fetchedUser = await getUser(storedUserId);
             
-            // If that fails, it might be a custom userId ('admin', 'abusufiyan.belif'), so try fetching by that field.
             if (!fetchedUser) {
                 fetchedUser = await getUserByUserId(storedUserId);
             }
