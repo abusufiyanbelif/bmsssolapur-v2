@@ -1,3 +1,4 @@
+
 // src/app/admin/audit-trail/page.tsx
 "use client";
 
