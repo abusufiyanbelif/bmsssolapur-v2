@@ -184,7 +184,9 @@ function BeneficiariesPageContent() {
             const bValue = b[sortColumn];
 
             let comparison = 0;
-            if (aValue > bValue) {
+            if (aValue instanceof Date && bValue instanceof Date) {
+                 comparison = aValue.getTime() - bValue.getTime();
+            } else if (aValue > bValue) {
                 comparison = 1;
             } else if (aValue < bValue) {
                 comparison = -1;
@@ -389,7 +391,7 @@ function BeneficiariesPageContent() {
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(user.createdAt as Date, "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                              {renderActions(user)}
                         </TableCell>

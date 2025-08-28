@@ -1,4 +1,3 @@
-
 // src/app/admin/referrals/page.tsx
 "use client";
 
@@ -312,7 +311,7 @@ function ReferralsPageContent() {
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(user.createdAt as Date, "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                            {renderActions(user)}
                         </TableCell>
