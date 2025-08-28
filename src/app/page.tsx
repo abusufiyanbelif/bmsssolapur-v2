@@ -11,7 +11,6 @@ import {
     TopDonationsCard
 } from "./admin/dashboard-cards";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
-import { DonationsChart } from "./admin/donations-chart";
 import { getAllDonations } from "@/services/donation-service";
 import { PublicHomePage } from "./home/public-home-page";
 import { getAllUsers } from "@/services/user-service";
@@ -57,29 +56,7 @@ const TableSkeleton = () => (
 )
 
 
-export default async function Page() {
-    // Fetch all data required for the server-rendered part of the page
-    const [allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
-        getAllDonations(),
-        getAllUsers(),
-        getAllLeads(),
-        getAllCampaigns()
-    ]);
-    
-    // Enrich top donations with anonymous donor ID for public view
-    const usersById = new Map(allUsers.map(u => [u.id, u]));
-    const topDonationsData = allDonations
-      .filter(d => d.status === 'Verified' || d.status === 'Allocated')
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5)
-      .map(donation => {
-          const donor = usersById.get(donation.donorId);
-          return {
-              ...donation,
-              anonymousDonorId: donor?.anonymousDonorId,
-          }
-      });
-
+export default function Page() {
     return (
         <div className="flex-1 space-y-8">
             <PublicHomePage />
@@ -92,20 +69,17 @@ export default async function Page() {
                 <Suspense fallback={<CardSkeleton />}>
                     <FundsInHandCard isPublicView={true} />
                 </Suspense>
+                <Suspense fallback={<CardSkeleton />}>
+                     <BeneficiaryBreakdownCard />
+                </Suspense>
+                 <Suspense fallback={<CardSkeleton />}>
+                     <DonationTypeCard />
+                </Suspense>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <Suspense fallback={<CardSkeleton />}>
-                        <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} isPublicView={true} />
-                    </Suspense>
-                    <Suspense fallback={<CardSkeleton />}>
-                        <DonationTypeCard donations={allDonations} isPublicView={true} />
-                    </Suspense>
-                </div>
-            
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                     <div className="col-span-full lg:col-span-4">
                          <Suspense fallback={<TableSkeleton />}>
-                            <TopDonationsCard donations={topDonationsData} isPublicView={true} />
+                            <TopDonationsCard isPublicView={true} />
                         </Suspense>
                     </div>
                     <div className="col-span-full lg:col-span-3">
@@ -116,7 +90,7 @@ export default async function Page() {
                 </div>
 
                 <Suspense fallback={<CardSkeleton />}>
-                    <CampaignBreakdownCard allCampaigns={allCampaigns} />
+                    <CampaignBreakdownCard />
                 </Suspense>
             </div>
         </div>

@@ -94,8 +94,7 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
 
 // This is now a Server Component, fetching all necessary data for its children.
 export default async function DashboardPage() {
-  const [settings, allDonations, allUsers, allLeads, allCampaigns, quotes] = await Promise.all([
-      getAppSettings(),
+  const [allDonations, allUsers, allLeads, allCampaigns, quotes] = await Promise.all([
       getAllDonations(),
       getAllUsers(),
       getAllLeads(),

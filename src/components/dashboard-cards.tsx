@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,30 +22,51 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
-export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?: boolean }) => {
-    const [allDonations, allLeads, allUsers] = await Promise.all([
-        getAllDonations(),
-        getAllLeads(),
-        getAllUsers(),
-    ]);
+export const MainMetricsCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
+    const [stats, setStats] = useState({
+        totalRaised: 0,
+        totalDistributed: 0,
+        beneficiariesHelpedCount: 0,
+        casesClosed: 0,
+        casesPending: 0,
+        casesPublished: 0,
+    });
+    const [loading, setLoading] = useState(true);
 
-    const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
-    const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
-    
-    const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.caseAction === 'Closed' || l.caseAction === 'Complete').map(l => l.beneficiaryId));
-    const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
-  
-    const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
-    const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
-    const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [allDonations, allLeads, allUsers] = await Promise.all([
+                    getAllDonations(),
+                    getAllLeads(),
+                    getAllUsers(),
+                ]);
+
+                const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+                const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+                const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.caseAction === 'Closed' || l.caseAction === 'Complete').map(l => l.beneficiaryId));
+                const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
+                const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
+                const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
+                const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
+                
+                setStats({ totalRaised, totalDistributed, beneficiariesHelpedCount, casesClosed, casesPending, casesPublished });
+            } catch (error) {
+                console.error("Failed to fetch main metrics", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     const mainMetrics = [
-        { id: "totalRaised", title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
-        { id: "totalDistributed", title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
-        { id: "casesClosed", title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
-        { id: "casesPending", title: "Pending Leads", value: casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
-        { id: "openLeads", title: "Open Leads", value: casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/public-leads" },
-        { id: "beneficiariesHelped", title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
+        { id: "totalRaised", title: "Total Verified Funds", value: `₹${stats.totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
+        { id: "totalDistributed", title: "Total Distributed", value: `₹${stats.totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
+        { id: "casesClosed", title: "Cases Closed", value: stats.casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
+        { id: "casesPending", title: "Pending Leads", value: stats.casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
+        { id: "openLeads", title: "Open Leads", value: stats.casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/public-leads" },
+        { id: "beneficiariesHelped", title: "Beneficiaries Helped", value: stats.beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
     
     const CardWrapper = ({ children, href, isClickable }: { children: React.ReactNode, href: string, isClickable: boolean }) => {
@@ -53,6 +75,21 @@ export const MainMetricsCard = async ({ isPublicView = false }: { isPublicView?:
         }
         return <Link href={href}>{children}</Link>;
     };
+
+    if (loading) {
+        return (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                {[...Array(6)].map((_, i) => (
+                    <Card key={i}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                           <Skeleton className="h-5 w-3/4" />
+                        </CardHeader>
+                        <CardContent><Skeleton className="h-8 w-1/2" /></CardContent>
+                    </Card>
+                ))}
+            </div>
+        )
+    }
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -193,22 +230,42 @@ export const OrganizationFundsCard = () => {
 }
 
 
-export const MonthlyContributorsCard = async () => {
-    const [allDonations, allUsers] = await Promise.all([getAllDonations(), getAllUsers()]);
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
-    const donationsThisMonth = allDonations.filter(d => {
-        const donationDate = (d.createdAt as any).toDate ? (d.createdAt as any).toDate() : d.createdAt;
-        return donationDate >= startOfMonth && donationDate <= endOfMonth && (d.status === 'Verified' || d.status === 'Allocated');
-    });
+export const MonthlyContributorsCard = () => {
+    const [stats, setStats] = useState({ contributedThisMonthCount: 0, monthlyContributorsCount: 0 });
+    const [loading, setLoading] = useState(true);
 
-    const donorsThisMonthIds = new Set(donationsThisMonth.map(d => d.donorId));
-    
-    const monthlyContributors = allUsers.filter(u => u.monthlyPledgeEnabled && u.monthlyPledgeAmount && u.monthlyPledgeAmount > 0);
-    const monthlyContributorsCount = monthlyContributors.length;
-    const contributedThisMonthCount = monthlyContributors.filter(p => donorsThisMonthIds.has(p.id!)).length;
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [allDonations, allUsers] = await Promise.all([getAllDonations(), getAllUsers()]);
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                
+                const donationsThisMonth = allDonations.filter(d => {
+                    const donationDate = (d.createdAt as any).toDate ? (d.createdAt as any).toDate() : d.createdAt;
+                    return donationDate >= startOfMonth && donationDate <= endOfMonth && (d.status === 'Verified' || d.status === 'Allocated');
+                });
+
+                const donorsThisMonthIds = new Set(donationsThisMonth.map(d => d.donorId));
+                
+                const monthlyContributors = allUsers.filter(u => u.monthlyPledgeEnabled && u.monthlyPledgeAmount && u.monthlyPledgeAmount > 0);
+                const monthlyContributorsCount = monthlyContributors.length;
+                const contributedThisMonthCount = monthlyContributors.filter(p => donorsThisMonthIds.has(p.id!)).length;
+
+                setStats({ contributedThisMonthCount, monthlyContributorsCount });
+            } catch (e) {
+                console.error("Failed to fetch monthly contributor stats", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return <Card><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+    }
 
     return (
         <Link href="/admin/donors">
@@ -218,7 +275,7 @@ export const MonthlyContributorsCard = async () => {
                 <Repeat className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{contributedThisMonthCount} / {monthlyContributorsCount}</div>
+                    <div className="text-2xl font-bold">{stats.contributedThisMonthCount} / {stats.monthlyContributorsCount}</div>
                     <p className="text-xs text-muted-foreground">Contributed this month vs. total pledged.</p>
                 </CardContent>
             </Card>
@@ -226,10 +283,29 @@ export const MonthlyContributorsCard = async () => {
     )
 }
 
-export const MonthlyPledgeCard = async () => {
-    const allUsers = await getAllUsers();
-    const monthlyContributors = allUsers.filter(u => u.monthlyPledgeEnabled && u.monthlyPledgeAmount && u.monthlyPledgeAmount > 0);
-    const totalMonthlyPledge = monthlyContributors.reduce((sum, user) => sum + (user.monthlyPledgeAmount || 0), 0);
+export const MonthlyPledgeCard = () => {
+    const [totalPledge, setTotalPledge] = useState(0);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const allUsers = await getAllUsers();
+                const monthlyContributors = allUsers.filter(u => u.monthlyPledgeEnabled && u.monthlyPledgeAmount && u.monthlyPledgeAmount > 0);
+                const totalMonthlyPledge = monthlyContributors.reduce((sum, user) => sum + (user.monthlyPledgeAmount || 0), 0);
+                setTotalPledge(totalMonthlyPledge);
+            } catch(e) {
+                console.error("Failed to fetch monthly pledge stats", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+    }
 
     return (
          <Link href="/admin/donors">
@@ -239,7 +315,7 @@ export const MonthlyPledgeCard = async () => {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₹{totalMonthlyPledge.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">₹{totalPledge.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Total amount pledged per month.</p>
                 </CardContent>
             </Card>
@@ -247,26 +323,45 @@ export const MonthlyPledgeCard = async () => {
     )
 }
 
-export const PendingLeadsCard = async () => {
-    const allLeads = await getAllLeads();
-    const pendingVerificationLeads = allLeads
-        .filter(lead => lead.verifiedStatus === 'Pending')
-        .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
+export const PendingLeadsCard = () => {
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const allLeads = await getAllLeads();
+                const pendingVerificationLeads = allLeads
+                    .filter(lead => lead.verifiedStatus === 'Pending')
+                    .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
+                setLeads(pendingVerificationLeads);
+            } catch (e) {
+                console.error("Failed to fetch pending leads", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
     
+    if (loading) {
+        return <Card><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+    }
+
     return (
         <AccordionItem value="pending-leads">
             <AccordionTrigger className="text-base font-semibold">
                 <div className="flex items-center gap-2 text-destructive">
                      <AlertTriangle />
                     Action: Pending Lead Verifications
-                    <Badge variant="destructive">{pendingVerificationLeads.length}</Badge>
+                    <Badge variant="destructive">{leads.length}</Badge>
                 </div>
             </AccordionTrigger>
             <AccordionContent>
                 <CardContent>
-                    {pendingVerificationLeads.length > 0 ? (
+                    {leads.length > 0 ? (
                         <div className="space-y-4">
-                            {pendingVerificationLeads.slice(0, 3).map(lead => (
+                            {leads.slice(0, 3).map(lead => (
                                 <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
                                     <div>
                                         <p className="font-semibold">{lead.name}</p>
@@ -284,9 +379,9 @@ export const PendingLeadsCard = async () => {
                                     </Button>
                                 </div>
                             ))}
-                            {pendingVerificationLeads.length > 3 && (
+                            {leads.length > 3 && (
                                 <Button asChild variant="secondary" className="w-full">
-                                    <Link href="/admin/leads?verification=Pending">View All {pendingVerificationLeads.length} Pending Leads</Link>
+                                    <Link href="/admin/leads?verification=Pending">View All {leads.length} Pending Leads</Link>
                                 </Button>
                             )}
                         </div>
@@ -303,11 +398,31 @@ export const PendingLeadsCard = async () => {
     )
 }
 
-export const PendingDonationsCard = async () => {
-    const allDonations = await getAllDonations();
-    const pendingVerificationDonations = allDonations
-        .filter(donation => donation.status === 'Pending verification')
-        .sort((a, b) => (b.createdAt as any) - (a.createdAt as any));
+export const PendingDonationsCard = () => {
+    const [donations, setDonations] = useState<Donation[]>([]);
+    const [loading, setLoading] = useState(true);
+
+     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const allDonations = await getAllDonations();
+                const pendingVerificationDonations = allDonations
+                    .filter(donation => donation.status === 'Pending verification')
+                    .sort((a, b) => (b.createdAt as any) - (a.createdAt as any));
+                setDonations(pendingVerificationDonations);
+            } catch (e) {
+                console.error("Failed to fetch pending donations", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return <Card><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+    }
+
 
     return (
         <AccordionItem value="pending-donations">
@@ -315,14 +430,14 @@ export const PendingDonationsCard = async () => {
                 <div className="flex items-center gap-2 text-destructive">
                     <AlertTriangle />
                     Action: Pending Donation Verifications
-                    <Badge variant="destructive">{pendingVerificationDonations.length}</Badge>
+                    <Badge variant="destructive">{donations.length}</Badge>
                 </div>
             </AccordionTrigger>
             <AccordionContent>
                 <CardContent>
-                    {pendingVerificationDonations.length > 0 ? (
+                    {donations.length > 0 ? (
                         <div className="space-y-4">
-                            {pendingVerificationDonations.slice(0, 3).map(donation => (
+                            {donations.slice(0, 3).map(donation => (
                                 <div key={donation.id} className="flex items-center justify-between rounded-lg border p-4">
                                     <div>
                                         <p className="font-semibold">{donation.donorName}</p>
@@ -340,9 +455,9 @@ export const PendingDonationsCard = async () => {
                                     </Button>
                                 </div>
                             ))}
-                             {pendingVerificationDonations.length > 3 && (
+                             {donations.length > 3 && (
                                 <Button asChild variant="secondary" className="w-full">
-                                    <Link href="/admin/donations?status=Pending+verification">View All {pendingVerificationDonations.length} Pending Donations</Link>
+                                    <Link href="/admin/donations?status=Pending+verification">View All {donations.length} Pending Donations</Link>
                                 </Button>
                             )}
                         </div>
@@ -359,11 +474,30 @@ export const PendingDonationsCard = async () => {
     )
 }
 
-export const LeadsReadyToPublishCard = async () => {
-    const allLeads = await getAllLeads();
-    const readyToPublishLeads = allLeads
-        .filter(lead => lead.verifiedStatus === 'Verified' && lead.caseAction === 'Ready For Help')
-        .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
+export const LeadsReadyToPublishCard = () => {
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [loading, setLoading] = useState(true);
+
+     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const allLeads = await getAllLeads();
+                const readyToPublishLeads = allLeads
+                    .filter(lead => lead.verifiedStatus === 'Verified' && lead.caseAction === 'Ready For Help')
+                    .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
+                setLeads(readyToPublishLeads);
+            } catch (e) {
+                console.error("Failed to fetch leads ready for publishing", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return <Card><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+    }
 
     return (
         <AccordionItem value="ready-to-publish">
@@ -371,14 +505,14 @@ export const LeadsReadyToPublishCard = async () => {
                 <div className="flex items-center gap-2 text-blue-600">
                     <UploadCloud />
                     Action: Leads Ready for Publishing
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">{readyToPublishLeads.length}</Badge>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">{leads.length}</Badge>
                 </div>
             </AccordionTrigger>
             <AccordionContent>
                 <CardContent>
-                    {readyToPublishLeads.length > 0 ? (
+                    {leads.length > 0 ? (
                         <div className="space-y-4">
-                            {readyToPublishLeads.slice(0, 3).map(lead => (
+                            {leads.slice(0, 3).map(lead => (
                                 <div key={lead.id} className="flex items-center justify-between rounded-lg border p-4">
                                     <div>
                                         <p className="font-semibold">{lead.name}</p>
@@ -393,9 +527,9 @@ export const LeadsReadyToPublishCard = async () => {
                                     </Button>
                                 </div>
                             ))}
-                             {readyToPublishLeads.length > 3 && (
+                             {leads.length > 3 && (
                                 <Button asChild variant="secondary" className="w-full">
-                                    <Link href="/admin/leads?caseAction=Ready+For+Help">View All {readyToPublishLeads.length} Ready Leads</Link>
+                                    <Link href="/admin/leads?caseAction=Ready+For+Help">View All {leads.length} Ready Leads</Link>
                                 </Button>
                             )}
                         </div>
@@ -503,8 +637,25 @@ export const TopDonorsCard = () => {
 };
 
 
-export const RecentCampaignsCard = async () => {
-    const [allCampaigns, allLeads] = await Promise.all([getAllCampaigns(), getAllLeads()]);
+export const RecentCampaignsCard = () => {
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [allCampaigns, allLeads] = await Promise.all([getAllCampaigns(), getAllLeads()]);
+                setCampaigns(allCampaigns);
+                setLeads(allLeads);
+            } catch(e) {
+                console.error("Failed to fetch recent campaigns", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
      const campaignStatusColors: Record<string, string> = {
         "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -512,6 +663,10 @@ export const RecentCampaignsCard = async () => {
         "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
         "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
     };
+
+    if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-48 w-full" /></CardContent></Card>
+    }
 
     return (
         <Card>
@@ -525,7 +680,7 @@ export const RecentCampaignsCard = async () => {
             </CardDescription>
         </CardHeader>
         <CardContent>
-            {allCampaigns.length > 0 ? (
+            {campaigns.length > 0 ? (
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -536,8 +691,8 @@ export const RecentCampaignsCard = async () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {allCampaigns.slice(0, 5).map((campaign) => {
-                            const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
+                        {campaigns.slice(0, 5).map((campaign) => {
+                            const linkedLeads = leads.filter(lead => lead.campaignId === campaign.id);
                             const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
                             const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
                             return (
@@ -629,18 +784,42 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
 
 type TopDonation = Donation & { anonymousDonorId?: string };
 
-export const TopDonationsCard = ({ donations: allDonations, isPublicView = false }: { donations: TopDonation[], isPublicView?: boolean }) => {
+export const TopDonationsCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
+    const [donations, setDonations] = useState<TopDonation[]>([]);
+    const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
-    const topDonations = useMemo(() => {
-        return allDonations
-            .filter(d => d.status === 'Verified' || d.status === 'Allocated')
-            .sort((a, b) => b.amount - a.amount);
-    }, [allDonations]);
+     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                 const [allDonations, allUsers] = await Promise.all([
+                    getAllDonations(),
+                    getAllUsers(),
+                ]);
+                 const usersById = new Map(allUsers.map(u => [u.id, u]));
+                const topDonationsData = allDonations
+                .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+                .sort((a, b) => b.amount - a.amount)
+                .map(donation => {
+                    const donor = usersById.get(donation.donorId);
+                    return {
+                        ...donation,
+                        anonymousDonorId: donor?.anonymousDonorId,
+                    }
+                });
+                setDonations(topDonationsData);
+            } catch(e) {
+                console.error("Failed to fetch top donations", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
-    const totalPages = Math.ceil(topDonations.length / itemsPerPage);
-    const paginatedDonations = topDonations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.ceil(donations.length / itemsPerPage);
+    const paginatedDonations = donations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const CardRow = ({ children, donationId }: { children: React.ReactNode, donationId: string }) => {
         if (isPublicView) {
@@ -654,6 +833,10 @@ export const TopDonationsCard = ({ donations: allDonations, isPublicView = false
             </Link>
         )
     };
+    
+    if(loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-96 w-full" /></CardContent></Card>
+    }
 
     return (
         <Card>
@@ -662,14 +845,14 @@ export const TopDonationsCard = ({ donations: allDonations, isPublicView = false
                 <CardDescription>The largest recent contributions to our cause.</CardDescription>
             </CardHeader>
             <CardContent>
-                {topDonations.length > 0 ? (
+                {donations.length > 0 ? (
                     <ScrollArea className="h-80 pr-4">
                         <div className="space-y-4">
                             {paginatedDonations.map((donation, index) => {
                                 let displayName: string;
                                 let avatarText: string;
 
-                                if (isPublicView) {
+                                if (isPublicView && donation.isAnonymous) {
                                     displayName = donation.anonymousDonorId || `Anonymous Donor #${index + 1}`;
                                     avatarText = `D${index + 1}`;
                                 } else {
@@ -719,30 +902,35 @@ export const TopDonationsCard = ({ donations: allDonations, isPublicView = false
 };
 
 
-export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true, isPublicView = false }: { allUsers: User[], allLeads: Lead[], isAdmin?: boolean, isPublicView?: boolean }) => {
-    const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
-    const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
-  
-    const familiesHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
-    const adultsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
-    const kidsHelpedCount = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
-    const widowsHelpedCount = helpedBeneficiaries.filter(u => u.isWidow).length;
+export const BeneficiaryBreakdownCard = () => {
+    const [stats, setStats] = useState({ families: 0, adults: 0, kids: 0, widows: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [allUsers, allLeads] = await Promise.all([getAllUsers(), getAllLeads()]);
+                const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.status === 'Closed' || l.status === 'Complete').map(l => l.beneficiaryId));
+                const helpedBeneficiaries = allUsers.filter(u => helpedBeneficiaryIds.has(u.id!));
+            
+                const families = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Family').length;
+                const adults = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Adult').length;
+                const kids = helpedBeneficiaries.filter(u => u.beneficiaryType === 'Kid').length;
+                const widows = helpedBeneficiaries.filter(u => u.isWidow).length;
+                setStats({ families, adults, kids, widows });
+            } catch(e) {
+                console.error("Failed to fetch beneficiary breakdown", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
     
-    const Wrapper = ({ children, type }: { children: React.ReactNode, type: string }) => {
-        if (isPublicView) {
-            return <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 h-full">{children}</div>;
-        }
-        
-        const queryParam = type === 'Widow' ? 'isWidow=true' : `type=${type}`;
-        return (
-            <Link href={`/admin/beneficiaries?${queryParam}`}>
-                <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
-                    {children}
-                </div>
-            </Link>
-        )
-    };
-  
+    if (loading) {
+        return <Card><CardContent className="p-4"><Skeleton className="h-40 w-full" /></CardContent></Card>
+    }
+
     return (
         <Card className="lg:col-span-2">
             <CardHeader>
@@ -755,37 +943,65 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin = true, i
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                 <Wrapper type="Family">
-                    <HomeIcon className="h-8 w-8 text-primary" />
-                    <p className="font-bold text-2xl">{familiesHelpedCount}</p>
-                    <p className="text-sm text-muted-foreground">Families</p>
-                </Wrapper>
-                <Wrapper type="Adult">
-                    <PersonStanding className="h-8 w-8 text-primary" />
-                    <p className="font-bold text-2xl">{adultsHelpedCount}</p>
-                    <p className="text-sm text-muted-foreground">Adults</p>
-                </Wrapper>
-                <Wrapper type="Kid">
-                    <Baby className="h-8 w-8 text-primary" />
-                    <p className="font-bold text-2xl">{kidsHelpedCount}</p>
-                    <p className="text-sm text-muted-foreground">Kids</p>
-                </Wrapper>
-                <Wrapper type="Widow">
-                    <HeartHandshake className="h-8 w-8 text-primary" />
-                    <p className="font-bold text-2xl">{widowsHelpedCount}</p>
-                    <p className="text-sm text-muted-foreground">Widows</p>
-                </Wrapper>
+                 <Link href={`/admin/beneficiaries?type=Family`}>
+                    <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
+                        <HomeIcon className="h-8 w-8 text-primary" />
+                        <p className="font-bold text-2xl">{stats.families}</p>
+                        <p className="text-sm text-muted-foreground">Families</p>
+                    </div>
+                </Link>
+                <Link href={`/admin/beneficiaries?type=Adult`}>
+                    <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
+                        <PersonStanding className="h-8 w-8 text-primary" />
+                        <p className="font-bold text-2xl">{stats.adults}</p>
+                        <p className="text-sm text-muted-foreground">Adults</p>
+                    </div>
+                </Link>
+                <Link href={`/admin/beneficiaries?type=Kid`}>
+                    <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
+                        <Baby className="h-8 w-8 text-primary" />
+                        <p className="font-bold text-2xl">{stats.kids}</p>
+                        <p className="text-sm text-muted-foreground">Kids</p>
+                    </div>
+                </Link>
+                <Link href={`/admin/beneficiaries?isWidow=true`}>
+                     <div className="p-4 border rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-muted transition-colors h-full">
+                        <HeartHandshake className="h-8 w-8 text-primary" />
+                        <p className="font-bold text-2xl">{stats.widows}</p>
+                        <p className="text-sm text-muted-foreground">Widows</p>
+                    </div>
+                </Link>
             </CardContent>
         </Card>
     );
 };
 
 
-export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns: Campaign[] }) => {
-    const completedCampaignsCount = allCampaigns.filter(c => c.status === 'Completed').length;
-    const activeCampaignsCount = allCampaigns.filter(c => c.status === 'Active').length;
-    const upcomingCampaignsCount = allCampaigns.filter(c => c.status === 'Upcoming').length;
-    
+export const CampaignBreakdownCard = () => {
+    const [stats, setStats] = useState({ completed: 0, active: 0, upcoming: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const allCampaigns = await getAllCampaigns();
+                const completed = allCampaigns.filter(c => c.status === 'Completed').length;
+                const active = allCampaigns.filter(c => c.status === 'Active').length;
+                const upcoming = allCampaigns.filter(c => c.status === 'Upcoming').length;
+                setStats({ completed, active, upcoming });
+            } catch(e) {
+                console.error("Failed to fetch campaign breakdown", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-40 w-full" /></CardContent></Card>
+    }
+
     return (
         <Card>
             <CardHeader>
@@ -801,19 +1017,19 @@ export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns: Campaign
                 <Link href="/admin/campaigns?status=Completed">
                     <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
                         <span className="font-medium">Completed</span>
-                        <Badge variant="secondary">{completedCampaignsCount}</Badge>
+                        <Badge variant="secondary">{stats.completed}</Badge>
                     </div>
                 </Link>
                 <Link href="/admin/campaigns?status=Active">
                     <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
                         <span className="font-medium">Active</span>
-                        <Badge variant="secondary">{activeCampaignsCount}</Badge>
+                        <Badge variant="secondary">{stats.active}</Badge>
                     </div>
                 </Link>
                 <Link href="/admin/campaigns?status=Upcoming">
                     <div className="p-3 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
                         <span className="font-medium">Upcoming</span>
-                        <Badge variant="secondary">{upcomingCampaignsCount}</Badge>
+                        <Badge variant="secondary">{stats.upcoming}</Badge>
                     </div>
                 </Link>
             </CardContent>
@@ -832,18 +1048,38 @@ const donationTypeIcons: Record<DonationType, React.ElementType> = {
     'Any': DollarSign,
 }
 
-export const DonationTypeCard = ({ donations, isPublicView = false }: { donations: Donation[], isPublicView?: boolean }) => {
-     const donationTypeBreakdown = donations
-        .filter(d => d.status === 'Verified' || d.status === 'Allocated')
-        .reduce((acc, donation) => {
-        const type = donation.type;
-        if (!acc[type]) {
-            acc[type] = { total: 0, count: 0 };
-        }
-        acc[type].total += donation.amount;
-        acc[type].count += 1;
-        return acc;
-        }, {} as Record<DonationType, { total: number, count: number }>);
+export const DonationTypeCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
+    const [breakdown, setBreakdown] = useState<Record<DonationType, { total: number, count: number }>>({} as any);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+         const fetchData = async () => {
+            try {
+                const donations = await getAllDonations();
+                 const donationTypeBreakdown = donations
+                    .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+                    .reduce((acc, donation) => {
+                    const type = donation.type;
+                    if (!acc[type]) {
+                        acc[type] = { total: 0, count: 0 };
+                    }
+                    acc[type].total += donation.amount;
+                    acc[type].count += 1;
+                    return acc;
+                    }, {} as Record<DonationType, { total: number, count: number }>);
+                setBreakdown(donationTypeBreakdown);
+            } catch(e) {
+                console.error("Failed to fetch donation type breakdown", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+     if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-60 w-full" /></CardContent></Card>
+    }
         
     return (
         <Card>
@@ -857,7 +1093,7 @@ export const DonationTypeCard = ({ donations, isPublicView = false }: { donation
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
-                 {Object.entries(donationTypeBreakdown).map(([type, data]) => {
+                 {Object.entries(breakdown).map(([type, data]) => {
                     const Icon = donationTypeIcons[type as DonationType] || DollarSign;
                     const content = (
                         <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors">
@@ -920,7 +1156,7 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
                     <CardTitle>My Referrals Summary</CardTitle>
                     <CardDescription>An overview of the beneficiaries you've introduced to the organization.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="p-4 border rounded-lg"><p className="text-sm font-medium">Beneficiaries Referred</p><p className="text-2xl font-bold">{myReferredBeneficiariesCount}</p></div>
                     <div className="p-4 border rounded-lg"><p className="text-sm font-medium">Total Leads Created</p><p className="text-2xl font-bold">{myStats?.leadCount || 0}</p></div>
                     <div className="p-4 border rounded-lg"><p className="text-sm font-medium">Total Aid Requested</p><p className="text-2xl font-bold">₹{(myStats?.totalRequested || 0).toLocaleString()}</p></div>
