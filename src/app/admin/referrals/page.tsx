@@ -236,7 +236,7 @@ function ReferralsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead padding="checkbox">
+                    <TableHead>
                         <Checkbox
                             checked={paginatedReferrals.length > 0 && selectedUsers.length === paginatedReferrals.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
@@ -275,7 +275,7 @@ function ReferralsPageContent() {
                     const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
                     return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
-                        <TableCell padding="checkbox">
+                        <TableCell>
                             <Checkbox
                                 checked={selectedUsers.includes(user.id!)}
                                 onCheckedChange={(checked) => {

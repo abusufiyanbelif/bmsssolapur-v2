@@ -247,7 +247,7 @@ function DonorsPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead padding="checkbox">
+                    <TableHead>
                         <Checkbox
                             checked={paginatedDonors.length > 0 && selectedUsers.length === paginatedDonors.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
@@ -286,7 +286,7 @@ function DonorsPageContent() {
                     const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
                     return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
-                        <TableCell padding="checkbox">
+                        <TableCell>
                             <Checkbox
                                 checked={selectedUsers.includes(user.id!)}
                                 onCheckedChange={(checked) => {

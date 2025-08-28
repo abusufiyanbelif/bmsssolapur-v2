@@ -276,7 +276,7 @@ function BeneficiariesPageContent() {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead padding="checkbox">
+                    <TableHead>
                         <Checkbox
                             checked={paginatedBeneficiaries.length > 0 && selectedUsers.length === paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
@@ -317,7 +317,7 @@ function BeneficiariesPageContent() {
                      const isMissingDocs = !user.aadhaarNumber && !user.panNumber;
                      return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
-                         <TableCell padding="checkbox">
+                         <TableCell>
                             <Checkbox
                                 checked={selectedUsers.includes(user.id!)}
                                 onCheckedChange={(checked) => {
