@@ -31,7 +31,7 @@ export async function generateAppealMessage(
         } else {
             const allLeads = await getAllLeads();
             const openLeads = allLeads.filter(lead => 
-                lead.verifiedStatus === 'Verified' && 
+                lead.caseVerification === 'Verified' && 
                 (lead.caseAction === 'Publish' || lead.caseAction === 'Ready For Help' || lead.caseAction === 'Partial')
             );
 
