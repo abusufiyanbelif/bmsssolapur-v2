@@ -14,10 +14,13 @@ import {
     TopDonorsCard,
     RecentCampaignsCard,
     LeadBreakdownCard,
-    TopDonationsCard
+    TopDonationsCard,
+    BeneficiaryBreakdownCard, 
+    CampaignBreakdownCard,
+    DonationTypeCard,
+    ReferralSummaryCard
 } from "./dashboard-cards";
 import { AppSettings, getAppSettings } from "@/services/app-settings-service";
-import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard, ReferralSummaryCard } from "@/components/dashboard-cards";
 import { DonationsChart } from "./donations-chart";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllUsers } from "@/services/user-service";
@@ -147,7 +150,7 @@ export default async function DashboardPage() {
               <Suspense fallback={<ChartSkeleton />}><DonationsChart donations={allDonations} /></Suspense>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                   <div className="col-span-full lg:col-span-4">
-                      <Suspense fallback={<TableSkeleton />}><TopDonationsCard donations={allDonations} /></Suspense>
+                      <Suspense fallback={<TableSkeleton />}><TopDonationsCard /></Suspense>
                   </div>
                   <div className="col-span-full lg:col-span-3">
                       <Suspense fallback={<CardSkeleton />}><TopDonorsCard /></Suspense>

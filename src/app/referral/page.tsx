@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,7 +13,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { User, Lead, Quote } from "@/services/types";
 import { getReferredBeneficiaries, getUser } from "@/services/user-service";
 import { getRandomQuotes } from "@/services/quotes-service";
-import { ReferralSummaryCard } from "@/components/dashboard-cards";
+import { ReferralSummaryCard } from "@/app/admin/dashboard-cards";
 
 function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
     if (loading) {
