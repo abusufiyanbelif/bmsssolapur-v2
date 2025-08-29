@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card } from "@/components/ui/card";
@@ -46,10 +47,10 @@ export function PublicDashboardCards({ allDonations, allUsers, allLeads, allCamp
                 <FundsInHandCard isPublicView={true} />
             </Suspense>
             <Suspense fallback={<CardSkeleton />}>
-                <BeneficiaryBreakdownCard />
+                <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
             </Suspense>
             <Suspense fallback={<CardSkeleton />}>
-                <DonationTypeCard isPublicView={true} />
+                <DonationTypeCard donations={allDonations} isPublicView={true} />
             </Suspense>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -66,7 +67,7 @@ export function PublicDashboardCards({ allDonations, allUsers, allLeads, allCamp
             </div>
 
             <Suspense fallback={<CardSkeleton />}>
-                <CampaignBreakdownCard />
+                <CampaignBreakdownCard allCampaigns={allCampaigns} />
             </Suspense>
         </div>
     );

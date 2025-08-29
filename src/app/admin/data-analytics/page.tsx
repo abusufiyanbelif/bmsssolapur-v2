@@ -14,7 +14,7 @@ import { DonationsChart } from "../donations-chart";
 import { DataGrowthChart } from "./data-growth-chart";
 import { Accordion, AccordionItem, AccordionContent, AccordionTrigger } from "@/components/ui/accordion";
 import { HandCoins, TrendingUp, Users as UsersIcon, BarChart3, LineChart, Info } from "lucide-react";
-import { LeadBreakdownCard, CampaignBreakdownCard } from "../dashboard-cards";
+import { LeadBreakdownCard, CampaignBreakdownCard } from "@/app/admin/dashboard-cards";
 
 
 const CardSkeleton = () => (

@@ -20,6 +20,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 export const MainMetricsCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
@@ -728,7 +729,7 @@ export const RecentCampaignsCard = () => {
     )
 }
 
-const leadPurposeIcons: Record<LeadPurpose, React.ElementType> = {
+const leadPurposeIcons: Record<string, React.ElementType> = {
     'Education': HandHeart,
     'Medical': HeartHandshake,
     'Relief Fund': HomeIcon,
@@ -746,7 +747,7 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
         acc[purpose].count += 1;
         acc[purpose].requested += lead.helpRequested;
         return acc;
-    }, {} as Record<LeadPurpose, { count: number, requested: number }>);
+    }, {} as Record<string, { count: number, requested: number }>);
         
     return (
         <Card className="col-span-3">
@@ -761,7 +762,7 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                  {Object.entries(leadPurposeBreakdown).map(([purpose, data]) => {
-                    const Icon = leadPurposeIcons[purpose as LeadPurpose] || FileText;
+                    const Icon = leadPurposeIcons[purpose] || FileText;
                     return (
                         <Link href={`/admin/leads?purpose=${purpose}`} key={purpose}>
                             <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors">
@@ -898,3 +899,285 @@ export const TopDonationsCard = ({ isPublicView = false }: { isPublicView?: bool
         </Card>
     );
 };
+
+export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin }: { allUsers?: User[], allLeads?: Lead[], isAdmin?: boolean }) => {
+    const [users, setUsers] = useState<User[]>([]);
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (allUsers && allLeads) {
+            setUsers(allUsers);
+            setLeads(allLeads);
+            setLoading(false);
+        } else {
+            const fetchData = async () => {
+                try {
+                    const [fetchedUsers, fetchedLeads] = await Promise.all([getAllUsers(), getAllLeads()]);
+                    setUsers(fetchedUsers);
+                    setLeads(fetchedLeads);
+                } catch (e) {
+                    console.error("Failed to fetch beneficiary breakdown data", e);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchData();
+        }
+    }, [allUsers, allLeads]);
+
+    const beneficiaryStats = useMemo(() => {
+        const helpedBeneficiaryIds = new Set(leads.filter(l => l.helpGiven > 0).map(l => l.beneficiaryId));
+        const allBeneficiaries = users.filter(u => u.roles.includes('Beneficiary'));
+
+        const stats = allBeneficiaries.reduce((acc, user) => {
+            if (!helpedBeneficiaryIds.has(user.id!)) return acc;
+            
+            if (user.isWidow) acc.widows++;
+            if (user.beneficiaryType === 'Kid') acc.kids++;
+            if (user.beneficiaryType === 'Adult') acc.adults++;
+            if (user.beneficiaryType === 'Family') acc.families++;
+            
+            return acc;
+        }, { kids: 0, adults: 0, widows: 0, families: 0 });
+
+        return stats;
+    }, [users, leads]);
+
+    const beneficiaryTypes = [
+        { label: "Kids", value: beneficiaryStats.kids, icon: Baby, href: "/admin/beneficiaries?type=Kid" },
+        { label: "Adults", value: beneficiaryStats.adults, icon: PersonStanding, href: "/admin/beneficiaries?type=Adult" },
+        { label: "Families", value: beneficiaryStats.families, icon: HomeIcon, href: "/admin/beneficiaries?type=Family" },
+        { label: "Widows", value: beneficiaryStats.widows, icon: HeartHandshake, href: "/admin/beneficiaries?isWidow=true" },
+    ];
+    
+    if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-48 w-full" /></CardContent></Card>
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <Users /> Beneficiaries Helped
+                </CardTitle>
+                 <CardDescription>Breakdown of unique beneficiaries who have received aid.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4">
+                {beneficiaryTypes.map(item => {
+                    const CardItem = () => (
+                        <div className="p-4 border rounded-lg flex items-center gap-4 hover:bg-muted transition-colors h-full">
+                            <item.icon className="h-8 w-8 text-primary flex-shrink-0" />
+                            <div>
+                                <p className="text-2xl font-bold">{item.value}</p>
+                                <p className="text-sm text-muted-foreground">{item.label}</p>
+                            </div>
+                        </div>
+                    );
+                    return isAdmin ? <Link href={item.href} key={item.label}><CardItem /></Link> : <CardItem key={item.label} />;
+                })}
+            </CardContent>
+        </Card>
+    );
+};
+
+export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns?: Campaign[] }) => {
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if(allCampaigns) {
+            setCampaigns(allCampaigns);
+            setLoading(false);
+        } else {
+             const fetchData = async () => {
+                try {
+                    const fetchedCampaigns = await getAllCampaigns();
+                    setCampaigns(fetchedCampaigns);
+                } catch (e) { console.error("Failed to fetch campaign breakdown data", e); }
+                finally { setLoading(false); }
+            };
+            fetchData();
+        }
+    }, [allCampaigns]);
+
+     const campaignStats = useMemo(() => {
+        return campaigns.reduce((acc, campaign) => {
+            if (campaign.status === 'Active') acc.active++;
+            if (campaign.status === 'Completed') acc.completed++;
+            if (campaign.status === 'Upcoming') acc.upcoming++;
+            return acc;
+        }, { active: 0, completed: 0, upcoming: 0 });
+    }, [campaigns]);
+
+    const campaignTypes = [
+        { label: "Active", value: campaignStats.active, href: "/admin/campaigns?status=Active" },
+        { label: "Completed", value: campaignStats.completed, href: "/admin/campaigns?status=Completed" },
+        { label: "Upcoming", value: campaignStats.upcoming, href: "/admin/campaigns?status=Upcoming" },
+    ];
+    
+     if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-32 w-full" /></CardContent></Card>
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <Megaphone /> Campaigns Overview
+                </CardTitle>
+                 <CardDescription>A summary of our fundraising campaigns.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-3 gap-4">
+                 {campaignTypes.map(item => (
+                    <Link href={item.href} key={item.label}>
+                        <div className="p-4 border rounded-lg text-center hover:bg-muted transition-colors h-full">
+                            <p className="text-3xl font-bold">{item.value}</p>
+                            <p className="text-sm text-muted-foreground">{item.label}</p>
+                        </div>
+                    </Link>
+                ))}
+            </CardContent>
+        </Card>
+    )
+}
+
+const donationTypeIcons: Record<DonationType, React.ElementType> = {
+    Zakat: Wheat,
+    Sadaqah: Gift,
+    Fitr: Wheat,
+    Lillah: Building,
+    Kaffarah: Shield,
+    Interest: Banknote,
+    Split: DollarSign,
+    Any: DollarSign,
+};
+
+export const DonationTypeCard = ({ donations: allDonations, isPublicView = false }: { donations?: Donation[], isPublicView?: boolean }) => {
+    const [donations, setDonations] = useState<Donation[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if(allDonations) {
+            setDonations(allDonations);
+            setLoading(false);
+        } else {
+             const fetchData = async () => {
+                try {
+                    const fetchedDonations = await getAllDonations();
+                    setDonations(fetchedDonations);
+                } catch (e) { console.error("Failed to fetch donation type data", e); }
+                finally { setLoading(false); }
+            };
+            fetchData();
+        }
+    }, [allDonations]);
+
+    const donationTypeBreakdown = useMemo(() => {
+        return donations
+            .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+            .reduce((acc, donation) => {
+                const type = donation.type || 'Other';
+                if (!acc[type]) {
+                    acc[type] = 0;
+                }
+                acc[type] += donation.amount;
+                return acc;
+            }, {} as Record<string, number>);
+    }, [donations]);
+
+    if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-48 w-full" /></CardContent></Card>
+    }
+
+    return (
+        <Card className="col-span-3">
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <HandHeart /> Donation Types Received
+                </CardTitle>
+                <CardDescription>Total amounts received per donation category.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(donationTypeBreakdown).map(([type, amount]) => {
+                    const Icon = donationTypeIcons[type as DonationType] || DollarSign;
+                    const CardItem = () => (
+                         <div className="p-4 border rounded-lg flex items-start gap-4 hover:bg-muted transition-colors h-full">
+                            <Icon className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                            <div>
+                                <p className="font-semibold text-lg">{type}</p>
+                                <p className="text-2xl font-bold text-foreground">₹{amount.toLocaleString()}</p>
+                            </div>
+                        </div>
+                    );
+                    return isPublicView ? <CardItem key={type} /> : <Link href={`/admin/donations?type=${type}`} key={type}><CardItem /></Link>
+                })}
+            </CardContent>
+        </Card>
+    );
+};
+
+export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUsers?: User[], allLeads?: Lead[], currentUser?: User }) => {
+    const [stats, setStats] = useState({ referredCount: 0, totalRequested: 0, totalReceived: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+         const fetchData = async () => {
+            try {
+                const users = allUsers || await getAllUsers();
+                const leads = allLeads || await getAllLeads();
+                
+                let beneficiaries;
+                if(currentUser && currentUser.roles.includes('Referral')) {
+                    beneficiaries = users.filter(u => u.referredByUserId === currentUser.id);
+                } else {
+                    beneficiaries = users.filter(u => u.referredByUserId); // All referred users
+                }
+                
+                const beneficiaryIds = new Set(beneficiaries.map(b => b.id));
+                const relevantLeads = leads.filter(l => beneficiaryIds.has(l.beneficiaryId));
+                
+                const totalRequested = relevantLeads.reduce((sum, l) => sum + l.helpRequested, 0);
+                const totalReceived = relevantLeads.reduce((sum, l) => sum + l.helpGiven, 0);
+
+                setStats({
+                    referredCount: beneficiaryIds.size,
+                    totalRequested,
+                    totalReceived
+                });
+
+            } catch (e) { console.error("Failed to fetch referral data", e); }
+            finally { setLoading(false); }
+        };
+        fetchData();
+    }, [allUsers, allLeads, currentUser]);
+    
+    if (loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-32 w-full" /></CardContent></Card>
+    }
+
+    return (
+         <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <Users /> Referral Impact
+                </CardTitle>
+                <CardDescription>Summary of all beneficiaries referred to the organization.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-3 gap-4 text-center">
+                 <div className="p-4 border rounded-lg">
+                    <p className="text-3xl font-bold">{stats.referredCount}</p>
+                    <p className="text-sm text-muted-foreground">Beneficiaries Referred</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                    <p className="text-3xl font-bold">₹{stats.totalRequested.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">Total Aid Requested</p>
+                </div>
+                 <div className="p-4 border rounded-lg">
+                    <p className="text-3xl font-bold text-primary">₹{stats.totalReceived.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">Total Aid Received</p>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}

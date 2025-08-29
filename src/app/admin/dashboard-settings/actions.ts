@@ -16,20 +16,23 @@ export async function handleUpdateDashboardSettings(
 ): Promise<FormState> {
   
   try {
-    const newSettings = { ...currentSettings };
+    const newSettings: AppSettings['dashboard'] = { ...currentSettings };
     
-    for (const key in newSettings) {
+    const keys = new Set([...Object.keys(newSettings || {}), ...Array.from(formData.keys()).map(k => k.split('-')[0])]);
+    
+    keys.forEach(key => {
         const cardKey = key as keyof typeof newSettings;
         const visibleTo = formData.getAll(`${cardKey}-roles`);
-        if (newSettings[cardKey]) {
-            newSettings[cardKey]!.visibleTo = visibleTo as any;
-        } else {
-             // Handle new keys that might not be in currentSettings yet
-            (newSettings as any)[cardKey] = { visibleTo: visibleTo as any };
+        
+        // Ensure the property exists before assigning to it
+        if (!newSettings[cardKey]) {
+            (newSettings as any)[cardKey] = {};
         }
-    }
+        
+        newSettings[cardKey]!.visibleTo = (visibleTo as any) || [];
+    });
     
-    await updateAppSettings({ dashboard: newSettings });
+    await updateAppSettings({ dashboard: newSettings as AppSettings['dashboard'] });
     
     revalidatePath("/admin/dashboard-settings");
     revalidatePath("/admin");
