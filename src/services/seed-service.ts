@@ -306,7 +306,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     batch.set(campaignRef, { ...campaignData, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now(), source: 'Seeded' });
     campaignResults.push({ name: campaignData.name, status: 'Created' });
 
-    const verifierAdmin = await getUserByPhone("7887646583");
+    const verifierAdmin = await getUserByUserId("abusufiyan.belif");
     const moosaShaikh = await getUserByPhone("8421708907");
     if (!verifierAdmin || !moosaShaikh) throw new Error("Required admin users for seeding not found.");
 
