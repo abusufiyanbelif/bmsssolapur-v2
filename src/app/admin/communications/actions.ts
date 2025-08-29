@@ -29,7 +29,7 @@ async function getLeadsToProcess(appealType: AppealType, data: { leadIds?: strin
         const { getAllLeads } = await import('@/services/lead-service');
         const allLeads = await getAllLeads();
         const openLeads = allLeads.filter(lead => 
-            lead.verifiedStatus === 'Verified' && 
+            lead.caseVerification === 'Verified' && 
             (lead.caseAction === 'Publish' || lead.caseAction === 'Ready For Help' || lead.caseAction === 'Partial')
         );
 

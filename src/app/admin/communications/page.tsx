@@ -10,12 +10,12 @@ export default async function CommunicationsPage() {
     
     // Filter for leads that are verified and open for funding for public appeals
     const openLeadsForAppeal = allLeads.filter(lead => 
-        lead.verifiedStatus === 'Verified' && 
+        lead.caseVerification === 'Verified' && 
         (lead.caseAction === 'Publish' || lead.caseAction === 'Ready For Help' || lead.caseAction === 'Partial')
     );
 
     // Filter for leads that are awaiting verification for admin actions
-    const pendingVerificationLeads = allLeads.filter(lead => lead.verifiedStatus === 'Pending');
+    const pendingVerificationLeads = allLeads.filter(lead => lead.caseVerification === 'Pending');
 
     return (
         <div className="flex-1 space-y-4">
