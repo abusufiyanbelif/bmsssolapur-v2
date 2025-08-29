@@ -35,14 +35,23 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
     const campaignId = campaignData.id || campaignData.name.toLowerCase().replace(/\s+/g, '-');
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
     
-    const newCampaign: Campaign = {
+    const newCampaignData = {
       ...campaignData,
       id: campaignRef.id,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
-    await setDoc(campaignRef, newCampaign);
-    return newCampaign;
+    
+    await setDoc(campaignRef, newCampaignData);
+    
+    // We fetch the document again to get the server-generated timestamps as Date objects
+    const newDoc = await getDoc(campaignRef);
+    return { 
+        ...newDoc.data(),
+        createdAt: (newDoc.data()?.createdAt as Timestamp).toDate(),
+        updatedAt: (newDoc.data()?.updatedAt as Timestamp).toDate(),
+    } as Campaign;
+
   } catch (error) {
     console.error('Error creating campaign: ', error);
     throw new Error('Failed to create campaign.');

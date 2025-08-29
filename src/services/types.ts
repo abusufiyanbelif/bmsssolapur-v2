@@ -77,8 +77,8 @@ export interface User {
   enableMonthlyDonationReminder?: boolean;
   monthlyPledgeEnabled?: boolean;
   monthlyPledgeAmount?: number;
-  createdAt: Timestamp | Date;
-  updatedAt?: Timestamp | Date;
+  createdAt: Date;
+  updatedAt?: Date;
   source?: 'Seeded' | 'Manual Entry';
 }
 
@@ -91,7 +91,7 @@ export type PaymentMethod = 'Online (UPI/Card)' | 'Bank Transfer' | 'Cash' | 'Ot
 export interface Allocation {
   leadId: string;
   amount: number;
-  allocatedAt: Timestamp | Date;
+  allocatedAt: Date;
   allocatedByUserId: string;
   allocatedByUserName: string;
 }
@@ -115,7 +115,7 @@ export interface Donation {
   googlePayTransactionId?: string;
   phonePeTransactionId?: string;
   paytmUpiReferenceNo?: string;
-  donationDate: Timestamp | Date;
+  donationDate: Date;
   paymentApp?: string;
   senderPaymentApp?: string;
   recipientPaymentApp?: string;
@@ -140,8 +140,8 @@ export interface Donation {
   recipientBankName?: string;
   recipientIfscCode?: string;
   paymentMethod?: PaymentMethod;
-  createdAt: Timestamp | Date;
-  verifiedAt?: Timestamp | Date;
+  createdAt: Date;
+  verifiedAt?: Date;
   allocations?: Allocation[];
   notes?: string;
   rawText?: string;
@@ -158,7 +158,7 @@ export type LeadPriority = 'Urgent' | 'High' | 'Medium' | 'Low';
 export interface Verifier {
     verifierId: string;
     verifierName: string;
-    verifiedAt: Timestamp | Date;
+    verifiedAt: Date;
     notes?: string;
 }
 
@@ -167,14 +167,14 @@ export interface LeadDonationAllocation {
     amount: number;
     allocatedByUserId: string;
     allocatedByUserName: string;
-    allocatedAt: Timestamp | Date;
+    allocatedAt: Date;
 }
 
 export interface FundTransfer {
     transferredByUserId: string;
     transferredByUserName: string;
     amount: number;
-    transferredAt: Timestamp | Date;
+    transferredAt: Date;
     proofUrl: string;
     notes?: string;
     transactionId?: string;
@@ -236,15 +236,15 @@ export interface Lead {
     }
     referredByUserId?: string;
     referredByUserName?: string;
-    dateCreated: Timestamp | Date;
-    dueDate?: Timestamp | Date;
-    verificationDueDate?: Timestamp | Date;
-    closedAt?: Timestamp | Date;
-    verifiedAt?: Timestamp | Date; // Date of the latest verification
-    lastAllocatedAt?: Timestamp | Date; // Date of the latest donation allocation
+    dateCreated: Date;
+    dueDate?: Date;
+    verificationDueDate?: Date;
+    closedAt?: Date;
+    verifiedAt?: Date; // Date of the latest verification
+    lastAllocatedAt?: Date; // Date of the latest donation allocation
     isLoan: boolean;
-    createdAt: Timestamp | Date;
-    updatedAt?: Timestamp | Date;
+    createdAt: Date;
+    updatedAt?: Date;
     source?: 'Seeded' | 'Manual Entry';
 }
 
@@ -255,12 +255,12 @@ export interface Campaign {
     name: string;
     description: string;
     goal: number;
-    startDate: Timestamp | Date;
-    endDate: Timestamp | Date;
+    startDate: Date;
+    endDate: Date;
     status: CampaignStatus;
     acceptableDonationTypes?: DonationType[];
-    createdAt: Timestamp | Date;
-    updatedAt: Timestamp | Date;
+    createdAt: Date;
+    updatedAt: Date;
     source?: 'Seeded' | 'Manual Entry';
 }
 
