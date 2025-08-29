@@ -13,7 +13,7 @@ export default async function AddCampaignPage() {
 
     // Filter for leads that can be assigned to a campaign
     const assignableLeads = allLeads.filter(lead => 
-        (lead.status === 'Ready For Help' || lead.status === 'Pending') && !lead.campaignId
+        (lead.caseStatus === 'Ready For Help' || lead.caseStatus === 'Pending') && !lead.campaignId
     );
 
     // Filter for donations that can be assigned

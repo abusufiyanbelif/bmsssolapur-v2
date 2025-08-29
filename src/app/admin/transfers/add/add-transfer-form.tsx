@@ -38,7 +38,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddTransfer } from "./actions";
-import { scanProof, getRawTextFromImage } from '@/app/admin/donations/add/actions';
+import { scanProof } from '@/app/admin/donations/add/actions';
+import { getRawTextFromImage } from '@/ai/flows/extract-raw-text-flow';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
@@ -219,6 +220,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     }
     
     setIsScanning(true);
+    
     const formData = new FormData();
     formData.append('proofFile', file);
     
@@ -277,14 +279,23 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     setIsExtractingText(true);
     const formData = new FormData();
     formData.append('imageFile', file);
-    const result = await getRawTextFromImage(formData);
-    if(result.success && result.text) {
-        setRawText(result.text);
+    const result = await getRawTextFromImage({photoDataUri: await fileToDataUrl(file)});
+    if(result.success && result.rawText) {
+        setRawText(result.rawText);
     } else {
          toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text.' });
     }
     setIsExtractingText(false);
   };
+  
+    const fileToDataUrl = async (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
 
    const onFormSubmit = async (data: AddTransferFormValues) => {
     if (!adminUserId) {
@@ -635,4 +646,3 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
-
