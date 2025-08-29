@@ -1,5 +1,4 @@
 
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +46,7 @@ export const MainMetricsCard = ({ isPublicView = false }: { isPublicView?: boole
                 const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.caseAction === 'Closed' || l.caseAction === 'Complete').map(l => l.beneficiaryId));
                 const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
                 const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
-                const casesPending = allLeads.filter(l => l.status === 'Pending' || l.status === 'Partial').length;
+                const casesPending = allLeads.filter(l => l.caseStatus === 'Pending' || l.caseStatus === 'Partial').length;
                 const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
                 
                 setStats({ totalRaised, totalDistributed, beneficiariesHelpedCount, casesClosed, casesPending, casesPublished });
@@ -784,18 +783,42 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
 
 type TopDonation = Donation & { anonymousDonorId?: string };
 
-export const TopDonationsCard = ({ donations: allDonations, isPublicView = false }: { donations: TopDonation[], isPublicView?: boolean }) => {
+export const TopDonationsCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
+    const [donations, setDonations] = useState<TopDonation[]>([]);
+    const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
-    const topDonations = useMemo(() => {
-        return allDonations
-            .filter(d => d.status === 'Verified' || d.status === 'Allocated')
-            .sort((a, b) => b.amount - a.amount);
-    }, [allDonations]);
+     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                 const [allDonations, allUsers] = await Promise.all([
+                    getAllDonations(),
+                    getAllUsers(),
+                ]);
+                 const usersById = new Map(allUsers.map(u => [u.id, u]));
+                const topDonationsData = allDonations
+                .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+                .sort((a, b) => b.amount - a.amount)
+                .map(donation => {
+                    const donor = usersById.get(donation.donorId);
+                    return {
+                        ...donation,
+                        anonymousDonorId: donor?.anonymousDonorId,
+                    }
+                });
+                setDonations(topDonationsData);
+            } catch(e) {
+                console.error("Failed to fetch top donations", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
-    const totalPages = Math.ceil(topDonations.length / itemsPerPage);
-    const paginatedDonations = topDonations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.ceil(donations.length / itemsPerPage);
+    const paginatedDonations = donations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const CardRow = ({ children, donationId }: { children: React.ReactNode, donationId: string }) => {
         if (isPublicView) {
@@ -809,6 +832,10 @@ export const TopDonationsCard = ({ donations: allDonations, isPublicView = false
             </Link>
         )
     };
+    
+    if(loading) {
+         return <Card><CardContent className="p-4"><Skeleton className="h-96 w-full" /></CardContent></Card>
+    }
 
     return (
         <Card>
@@ -817,14 +844,14 @@ export const TopDonationsCard = ({ donations: allDonations, isPublicView = false
                 <CardDescription>The largest recent contributions to our cause.</CardDescription>
             </CardHeader>
             <CardContent>
-                {topDonations.length > 0 ? (
+                {donations.length > 0 ? (
                     <ScrollArea className="h-80 pr-4">
                         <div className="space-y-4">
                             {paginatedDonations.map((donation, index) => {
                                 let displayName: string;
                                 let avatarText: string;
 
-                                if (isPublicView) {
+                                if (isPublicView && donation.isAnonymous) {
                                     displayName = donation.anonymousDonorId || `Anonymous Donor #${index + 1}`;
                                     avatarText = `D${index + 1}`;
                                 } else {
