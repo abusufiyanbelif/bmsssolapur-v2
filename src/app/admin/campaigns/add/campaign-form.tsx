@@ -103,6 +103,7 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
       ...values,
       startDate: values.dates.from,
       endDate: values.dates.to,
+      acceptableDonationTypes: values.acceptableDonationTypes as DonationType[],
     });
     setIsSubmitting(false);
 
