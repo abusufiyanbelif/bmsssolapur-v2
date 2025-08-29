@@ -483,7 +483,7 @@ export const LeadsReadyToPublishCard = () => {
             try {
                 const allLeads = await getAllLeads();
                 const readyToPublishLeads = allLeads
-                    .filter(lead => lead.verifiedStatus === 'Verified' && lead.caseAction === 'Ready For Help')
+                    .filter(lead => lead.caseVerification === 'Verified' && lead.caseAction === 'Ready For Help')
                     .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
                 setLeads(readyToPublishLeads);
             } catch (e) {
