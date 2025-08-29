@@ -760,17 +760,18 @@ function DonationsPageContent() {
                             <Button
                                 variant="outline"
                                 onClick={() => {
-                                    if (selectedDonations.length === paginatedDonations.length) {
-                                        const pageIds = paginatedDonations.map(d => d.id!);
+                                    const pageIds = paginatedDonations.map(d => d.id!);
+                                    const allSelectedOnPage = pageIds.every(id => selectedDonations.includes(id));
+
+                                    if (allSelectedOnPage) {
                                         setSelectedDonations(prev => prev.filter(id => !pageIds.includes(id)));
                                     } else {
-                                        const pageIds = paginatedDonations.map(d => d.id!);
                                         setSelectedDonations(prev => [...new Set([...prev, ...pageIds])]);
                                     }
                                 }}
                             >
                                 <Check className="mr-2 h-4 w-4"/>
-                                {selectedDonations.length === paginatedDonations.length ? 'Deselect All' : 'Select All'}
+                                { paginatedDonations.every(d => selectedDonations.includes(d.id!)) ? 'Deselect All' : 'Select All on Page'}
                             </Button>
                         )}
                          <DeleteConfirmationDialog
