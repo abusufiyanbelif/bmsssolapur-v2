@@ -1,5 +1,6 @@
 
 
+
 "use server";
 
 import { createUser } from "@/services/user-service";
@@ -100,7 +101,7 @@ export async function handleAddUser(
         groups: [],
     };
 
-    const newUser = await createUser({...newUserData, createdAt: Timestamp.now()});
+    const newUser = await createUser(newUserData);
     
     revalidatePath("/admin/user-management");
     revalidatePath("/admin/beneficiaries");
@@ -121,4 +122,3 @@ export async function handleAddUser(
     };
   }
 }
-

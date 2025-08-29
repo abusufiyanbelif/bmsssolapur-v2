@@ -83,7 +83,10 @@ function CampaignsPageContent() {
         return campaigns.map(campaign => {
             const linkedLeads = leads.filter(lead => lead.campaignId === campaign.id);
             const statusCounts = linkedLeads.reduce((acc, lead) => {
-                acc[lead.status] = (acc[lead.status] || 0) + 1;
+                const status = lead.caseStatus;
+                if (status === 'Pending' || status === 'Partial' || status === 'Closed') {
+                    acc[status] = (acc[status] || 0) + 1;
+                }
                 return acc;
             }, { Pending: 0, Partial: 0, Closed: 0 });
 
