@@ -49,7 +49,7 @@ export function LinkedLeadsCard({ leads }: LinkedLeadsCardProps) {
                                 <TableCell>₹{lead.helpRequested.toLocaleString()}</TableCell>
                                 <TableCell className="font-semibold">₹{lead.helpGiven.toLocaleString()}</TableCell>
                                 <TableCell>
-                                    <Badge variant={lead.status === 'Closed' ? 'default' : 'outline'}>{lead.status}</Badge>
+                                    <Badge variant={lead.caseStatus === 'Closed' ? 'default' : 'outline'}>{lead.caseStatus}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button asChild variant="ghost" size="icon">
