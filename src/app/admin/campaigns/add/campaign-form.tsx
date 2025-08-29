@@ -99,7 +99,11 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
 
   async function onSubmit(values: CampaignFormValues) {
     setIsSubmitting(true);
-    const result = await handleCreateCampaign(values);
+    const result = await handleCreateCampaign({
+      ...values,
+      startDate: values.dates.from,
+      endDate: values.dates.to,
+    });
     setIsSubmitting(false);
 
     if (result.success) {
