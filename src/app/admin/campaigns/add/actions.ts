@@ -36,8 +36,8 @@ export async function handleCreateCampaign(formData: CampaignFormData): Promise<
         name: formData.name,
         description: formData.description,
         goal: formData.goal,
-        startDate: Timestamp.fromDate(formData.startDate),
-        endDate: Timestamp.fromDate(formData.endDate),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         status: formData.status,
         acceptableDonationTypes: formData.acceptableDonationTypes,
     });
