@@ -5,7 +5,6 @@
 import { updateCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
 import { CampaignStatus, DonationType } from "@/services/types";
-import { Timestamp } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -28,8 +27,8 @@ export async function handleUpdateCampaign(campaignId: string, formData: Campaig
         name: formData.name,
         description: formData.description,
         goal: formData.goal,
-        startDate: Timestamp.fromDate(formData.startDate),
-        endDate: Timestamp.fromDate(formData.endDate),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         status: formData.status,
         acceptableDonationTypes: formData.acceptableDonationTypes,
     });
