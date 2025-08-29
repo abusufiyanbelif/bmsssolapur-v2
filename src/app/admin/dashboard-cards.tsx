@@ -734,8 +734,6 @@ const leadPurposeIcons: Record<LeadPurpose, React.ElementType> = {
     'Relief Fund': HomeIcon,
     'Deen': Building,
     'Loan': DollarSign,
-    'To Organization Use': Building,
-    'Monthly Pledge': Repeat,
     'Other': FileText,
 };
 
