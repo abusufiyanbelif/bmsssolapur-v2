@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -331,7 +332,7 @@ export const PendingLeadsCard = () => {
             try {
                 const allLeads = await getAllLeads();
                 const pendingVerificationLeads = allLeads
-                    .filter(lead => lead.verifiedStatus === 'Pending')
+                    .filter(lead => lead.caseVerification === 'Pending')
                     .sort((a, b) => (a.dateCreated as any) - (b.dateCreated as any));
                 setLeads(pendingVerificationLeads);
             } catch (e) {
