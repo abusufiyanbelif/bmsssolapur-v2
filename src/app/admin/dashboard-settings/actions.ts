@@ -4,7 +4,7 @@
 
 import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
-import type { DashboardSettings } from "@/services/types";
+import type { DashboardSettings, UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -20,26 +20,38 @@ const dashboardCardKeys: (keyof DashboardSettings)[] = [
 ];
 
 export async function handleUpdateDashboardSettings(
-  currentSettings: AppSettings['dashboard'],
-  formData: FormData
+  currentSettings: AppSettings['dashboard']
 ): Promise<FormState> {
   
   try {
-    // Properly initialize newSettings to conform to DashboardSettings type
-    const newSettings: DashboardSettings = {} as DashboardSettings;
-    for (const key of dashboardCardKeys) {
-        newSettings[key] = { visibleTo: [] };
-    }
+    const newSettings: DashboardSettings = {
+        mainMetrics: { visibleTo: [] },
+        fundsInHand: { visibleTo: [] },
+        monthlyContributors: { visibleTo: [] },
+        monthlyPledge: { visibleTo: [] },
+        pendingLeads: { visibleTo: [] },
+        pendingDonations: { visibleTo: [] },
+        leadsReadyToPublish: { visibleTo: [] },
+        beneficiaryBreakdown: { visibleTo: [] },
+        campaignBreakdown: { visibleTo: [] },
+        leadBreakdown: { visibleTo: [] },
+        donationsChart: { visibleTo: [] },
+        topDonors: { visibleTo: [] },
+        recentCampaigns: { visibleTo: [] },
+        donationTypeBreakdown: { visibleTo: [] },
+        donorContributionSummary: { visibleTo: [] },
+        donorImpactSummary: { visibleTo: [] },
+        beneficiarySummary: { visibleTo: [] },
+        referralSummary: { visibleTo: [] },
+    };
 
     // Process form data to populate the new settings object
-    const formKeys = Array.from(formData.keys()).map(k => k.split('-')[0]);
-    const allKeys = new Set([...dashboardCardKeys, ...formKeys]);
+    const formKeys = new Set(Object.keys(currentSettings || {}));
     
-    allKeys.forEach(key => {
+    formKeys.forEach(key => {
         const cardKey = key as keyof DashboardSettings;
         if (dashboardCardKeys.includes(cardKey)) {
-            const visibleTo = formData.getAll(`${cardKey}-roles`);
-            newSettings[cardKey] = { visibleTo: (visibleTo as any[]) || [] };
+             newSettings[cardKey] = { visibleTo: currentSettings?.[cardKey]?.visibleTo || [] };
         }
     });
     
@@ -58,4 +70,3 @@ export async function handleUpdateDashboardSettings(
     };
   }
 }
-

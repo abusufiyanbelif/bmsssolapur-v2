@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -101,6 +100,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   
   try {
+    // Generate a new Firestore document reference with a unique ID
     const userRef = doc(collection(db, USERS_COLLECTION));
     
     // Standardize phone number
@@ -131,7 +131,6 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     if (idExists) {
         throw new Error(`User ID "${finalUserId}" is already taken.`);
     }
-
 
     // Generate a new userKey.
     const usersCollection = collection(db, USERS_COLLECTION);
@@ -559,7 +558,7 @@ export const getAllUsers = async (): Promise<User[]> => {
       return [];
     }
     try {
-        const usersQuery = query(collection(db, USERS_COLLECTION));
+        const usersQuery = query(collection(db, USERS_COLLECTION), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(usersQuery);
         const users: User[] = [];
         querySnapshot.forEach((doc) => {
@@ -575,6 +574,9 @@ export const getAllUsers = async (): Promise<User[]> => {
         return users;
     } catch (error) {
         console.error("Error getting all users: ", error);
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a descending index on 'createdAt' for the 'users' collection.");
+        }
         throw new Error('Failed to get all users.');
     }
 }

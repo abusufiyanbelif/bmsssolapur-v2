@@ -87,6 +87,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       isLoan: leadData.isLoan || false,
+      source: 'Manual Entry'
     };
     
     // Remove undefined fields to prevent Firestore errors
@@ -338,7 +339,7 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION),
             where("beneficiaryId", "==", beneficiaryId),
-            where("status", "in", ["Pending", "Partial"])
+            where("caseStatus", "in", ["Pending", "Partial", "Open"])
         );
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];

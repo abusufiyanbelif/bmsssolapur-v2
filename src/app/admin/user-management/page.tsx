@@ -161,9 +161,9 @@ export default function UserManagementPage() {
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (aValue > bValue) {
+            } else if (String(aValue) > String(bValue)) {
                 comparison = 1;
-            } else if (aValue < bValue) {
+            } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
             }
 
@@ -254,7 +254,7 @@ export default function UserManagementPage() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                             checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
+                             checked={paginatedUsers.length > 0 && paginatedUsers.every(u => selectedUsers.includes(u.id!) || u.roles.includes('Super Admin') || u.id === currentUserId)}
                              onCheckedChange={(checked) => {
                                 const pageUserIds = paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {

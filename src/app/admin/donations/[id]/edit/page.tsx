@@ -9,6 +9,9 @@ import { getDonationActivity } from "@/services/activity-log-service";
 import { LinkedLeads } from "../linked-leads";
 import { AuditTrail } from "../audit-trail";
 import { getAllLeads } from "@/services/lead-service";
+import { getAllCampaigns } from "@/services/campaign-service";
+import { AddDonationForm } from "@/app/admin/donations/add/add-donation-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function EditDonationPage({ params }: { params: { id: string } }) {
     const donation = await getDonation(decodeURIComponent(params.id));
@@ -18,15 +21,17 @@ export default async function EditDonationPage({ params }: { params: { id: strin
     }
     
     // Fetch associated data
-    const [donor, activityLogs, allLeads] = await Promise.all([
+    const [donor, activityLogs, allLeads, allCampaigns, allUsers] = await Promise.all([
         getUser(donation.donorId),
         getDonationActivity(donation.id!),
-        getAllLeads()
+        getAllLeads(),
+        getAllCampaigns(),
+        getAllUsers(),
     ]);
 
-    // In a real app, you would have a form here to edit the donation.
-    // For now, we will just display the details.
-    
+    const linkableLeads = allLeads.filter(l => l.caseStatus !== 'Closed' && l.caseStatus !== 'Cancelled');
+    const linkableCampaigns = allCampaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled');
+
     return (
         <div className="flex-1 space-y-6">
              <Link href="/admin/donations" className="flex items-center text-sm text-muted-foreground hover:text-primary">
@@ -36,10 +41,20 @@ export default async function EditDonationPage({ params }: { params: { id: strin
             
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Placeholder for EditDonationForm */}
-                    <pre className="p-4 bg-muted rounded-lg text-sm">
-                        {JSON.stringify({donation, donor}, null, 2)}
-                    </pre>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Edit Donation</CardTitle>
+                            <CardDescription>Update the details for this donation record.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <AddDonationForm 
+                                users={allUsers} 
+                                leads={linkableLeads} 
+                                campaigns={linkableCampaigns} 
+                                existingDonation={donation}
+                            />
+                        </CardContent>
+                    </Card>
                     <LinkedLeads donation={donation} leads={allLeads} />
                 </div>
                  <div className="lg:col-span-1">
