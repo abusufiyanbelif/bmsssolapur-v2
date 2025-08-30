@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -534,8 +533,8 @@ export const seedDatabase = async (): Promise<SeedResult> => {
         console.log("Seeding core admin users...");
         results.userResults.push(...await seedUsers(adminUsersToSeed));
         
-        const superAdmin = await getUserByUserId("admin");
-        if (!superAdmin) throw new Error("Super admin user not found after seeding.");
+        const superAdmin = await getUserByUserId("abusufiyan.belif");
+        if (!superAdmin) throw new Error("Super admin user 'abusufiyan.belif' not found after seeding.");
 
         results.donationResults.push(await seedTestDonation(superAdmin));
 
