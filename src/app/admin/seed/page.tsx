@@ -1,137 +1,142 @@
 
+// src/app/admin/seed/page.tsx
+'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw } from "lucide-react";
-import { seedDatabase } from "@/services/seed-service";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText } from "lucide-react";
+import { seedInitialUsersAndQuotes, seedCoreTeam, seedOrganizationProfile, seedSampleData } from "@/services/seed-service";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
-export default async function SeedPage() {
-    const { userResults, orgStatus, quotesStatus, leadResults, donationResults, error } = await seedDatabase();
+type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
+type SeedResult = {
+    message: string;
+    details?: string[];
+};
 
-    const wasSuccessful = !error;
+export default function SeedPage() {
+    const [initialSeedStatus, setInitialSeedStatus] = useState<SeedStatus>('idle');
+    const [initialSeedResult, setInitialSeedResult] = useState<SeedResult | null>(null);
+
+    const [coreTeamStatus, setCoreTeamStatus] = useState<SeedStatus>('idle');
+    const [coreTeamResult, setCoreTeamResult] = useState<SeedResult | null>(null);
+
+    const [orgProfileStatus, setOrgProfileStatus] = useState<SeedStatus>('idle');
+    const [orgProfileResult, setOrgProfileResult] = useState<SeedResult | null>(null);
+    
+    const [sampleDataStatus, setSampleDataStatus] = useState<SeedStatus>('idle');
+    const [sampleDataResult, setSampleDataResult] = useState<SeedResult | null>(null);
+
+    const handleSeed = async (
+        action: () => Promise<SeedResult>,
+        setStatus: React.Dispatch<React.SetStateAction<SeedStatus>>,
+        setResult: React.Dispatch<React.SetStateAction<SeedResult | null>>
+    ) => {
+        setStatus('loading');
+        setResult(null);
+        try {
+            const result = await action();
+            setResult(result);
+            setStatus('success');
+        } catch (e) {
+            const error = e instanceof Error ? e.message : "An unknown error occurred.";
+            setResult({ message: 'Seeding Failed', details: [error] });
+            setStatus('error');
+        }
+    };
+    
+    const ResultAlert = ({ status, result }: { status: SeedStatus, result: SeedResult | null }) => {
+        if (status === 'idle' || status === 'loading') return null;
+        const isSuccess = status === 'success';
+
+        return (
+            <Alert variant={isSuccess ? 'default' : 'destructive'} className={isSuccess ? "border-green-300 bg-green-50 text-green-800" : ""}>
+                {isSuccess ? <CheckCircle className="h-4 w-4 !text-green-600" /> : <AlertCircle className="h-4 w-4" />}
+                <AlertTitle>{result?.message}</AlertTitle>
+                {result?.details && result.details.length > 0 && (
+                    <AlertDescription>
+                        <ul className="list-disc pl-5 mt-2 text-xs">
+                            {result.details.map((detail, i) => <li key={i}>{detail}</li>)}
+                        </ul>
+                    </AlertDescription>
+                )}
+            </Alert>
+        )
+    };
 
     return (
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-6">
              <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Database Seeding</h2>
              <Card>
                 <CardHeader>
-                    <CardTitle>Seeding Result</CardTitle>
+                    <CardTitle>Seed Initial Data</CardTitle>
                     <CardDescription>
-                       The database seeding process has been executed. See the results below.
+                       Use these actions to populate your Firestore database with initial data. It's recommended to run the "Initial Users & Quotes" seed first.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    {!wasSuccessful ? (
-                         <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Seeding Failed</AlertTitle>
-                            <AlertDescription>
-                                An error occurred during the seeding process:
-                                <p className="font-mono text-xs bg-red-900/20 p-2 rounded-md mt-2">{error}</p>
-                            </AlertDescription>
-                        </Alert>
-                    ) : (
-                        <div className="space-y-6">
-                            <Alert variant="default" className="border-green-300 bg-green-50 text-green-800">
-                                <CheckCircle className="h-4 w-4 !text-green-600" />
-                                <AlertTitle>Seeding Complete</AlertTitle>
-                                <AlertDescription>
-                                    The initial data has been loaded into the database.
-                                </AlertDescription>
-                            </Alert>
-                            
-                             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-xl flex items-center gap-2">
-                                            <Database className="h-5 w-5" />
-                                            Organization
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm">{orgStatus}</p>
-                                    </CardContent>
-                                </Card>
-                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-xl flex items-center gap-2">
-                                            <Quote className="h-5 w-5" />
-                                            Quotes
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm">{quotesStatus}</p>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-xl flex items-center gap-2">
-                                            <HandCoins className="h-5 w-5" />
-                                            Donations
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm">{donationResults.filter(r => r.status === 'Created').length} donations created.</p>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-xl flex items-center gap-2">
-                                            <Users className="h-5 w-5" />
-                                            Leads
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm">{leadResults.filter(r => r.status === 'Created').length} leads created.</p>
-                                    </CardContent>
-                                </Card>
+                <CardContent className="space-y-8">
+                    {/* Initial Seed */}
+                    <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><Database className="h-5 w-5 text-primary" />Initial Users & Quotes</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Creates the Super Admin user and populates inspirational quotes. Run this first.</p>
                              </div>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-xl flex items-center gap-2">
-                                        <UserCheck className="h-5 w-5" />
-                                        User Seeding Details
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                     <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Status</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {userResults.map((result, i) => (
-                                                <TableRow key={i}>
-                                                    <TableCell className="font-medium">{result.name}</TableCell>
-                                                    <TableCell>
-                                                        {result.status === "Created" ? (
-                                                            <Badge variant="default" className="bg-green-100 text-green-800">Created</Badge>
-                                                        ) : result.status === 'Updated' ? (
-                                                            <Badge variant="default" className="bg-blue-100 text-blue-800"><RefreshCcw className="mr-1 h-3 w-3"/>Updated</Badge>
-                                                        ) : (
-                                                            <Badge variant="secondary">{result.status}</Badge>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            </Card>
+                             <Button onClick={() => handleSeed(seedInitialUsersAndQuotes, setInitialSeedStatus, setInitialSeedResult)} disabled={initialSeedStatus === 'loading'}>
+                                {initialSeedStatus === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                Seed Initial Data
+                             </Button>
                         </div>
-                    )}
+                        <ResultAlert status={initialSeedStatus} result={initialSeedResult} />
+                    </div>
+
+                    {/* Organization Profile */}
+                     <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Organization Profile</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Creates the public-facing profile for your organization.</p>
+                             </div>
+                             <Button onClick={() => handleSeed(seedOrganizationProfile, setOrgProfileStatus, setOrgProfileResult)} disabled={orgProfileStatus === 'loading'}>
+                                {orgProfileStatus === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                Seed Organization
+                             </Button>
+                        </div>
+                        <ResultAlert status={orgProfileStatus} result={orgProfileResult} />
+                    </div>
+                    
+                     {/* Core Team */}
+                     <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" />Core Team Members</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds the accounts for Founders, Co-Founders, and other Admins.</p>
+                             </div>
+                             <Button onClick={() => handleSeed(seedCoreTeam, setCoreTeamStatus, setCoreTeamResult)} disabled={coreTeamStatus === 'loading'}>
+                                {coreTeamStatus === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                Seed Core Team
+                             </Button>
+                        </div>
+                        <ResultAlert status={coreTeamStatus} result={coreTeamResult} />
+                    </div>
+
+                    {/* Sample Data */}
+                     <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Sample Campaigns & Leads</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Creates sample campaigns, beneficiaries, leads, and donations for demonstration.</p>
+                             </div>
+                             <Button onClick={() => handleSeed(seedSampleData, setSampleDataStatus, setSampleDataResult)} disabled={sampleDataStatus === 'loading'}>
+                                {sampleDataStatus === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                Seed Sample Data
+                             </Button>
+                        </div>
+                        <ResultAlert status={sampleDataStatus} result={sampleDataResult} />
+                    </div>
                 </CardContent>
              </Card>
         </div>
