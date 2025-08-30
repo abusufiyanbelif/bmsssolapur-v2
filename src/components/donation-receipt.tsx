@@ -69,7 +69,7 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
                             <tbody>
                                 <tr className="border-b">
                                     <td className="p-3">
-                                        <p className="font-medium">Donation for the purpose of "{donation.purpose || donation.type}"</p>
+                                        <p className="font-medium">Donation for the purpose of &quot;{donation.purpose || donation.type}&quot;</p>
                                         <p className="text-xs text-gray-500">Category: {donation.type}</p>
                                     </td>
                                     <td className="p-3 text-right font-medium">₹{donation.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>

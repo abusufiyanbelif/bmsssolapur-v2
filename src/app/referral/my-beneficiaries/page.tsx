@@ -1,4 +1,5 @@
 
+// src/app/referral/my-beneficiaries/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -79,7 +80,7 @@ export default function MyBeneficiariesPage() {
         if (error) return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>;
         if (beneficiaries.length === 0) return (
             <div className="text-center py-10">
-                <p className="text-muted-foreground">You haven't referred any beneficiaries yet.</p>
+                <p className="text-muted-foreground">You haven&apos;t referred any beneficiaries yet.</p>
                 <Button asChild className="mt-4"><Link href="/referral/add-beneficiary">Add First Beneficiary</Link></Button>
             </div>
         );

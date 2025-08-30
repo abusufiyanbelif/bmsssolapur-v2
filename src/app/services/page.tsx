@@ -1,4 +1,5 @@
 
+
 import {
   Card,
   CardContent,
@@ -182,7 +183,7 @@ export default async function ServicesPage() {
         <CardHeader>
           <CardTitle>Data & Logs Location</CardTitle>
           <CardDescription>
-            Your application's data and logs are securely managed by Google Cloud and Firebase. Here’s where to find them.
+            Your application&apos;s data and logs are securely managed by Google Cloud and Firebase. Here’s where to find them.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

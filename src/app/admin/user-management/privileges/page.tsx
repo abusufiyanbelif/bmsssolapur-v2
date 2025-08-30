@@ -280,7 +280,7 @@ export default function UserPrivilegesPage() {
                         ))}
                     </TableBody>
                 </Table>
-                {totalPages > 1 && renderPaginationControls()}
+                 {totalPages > 1 && renderPaginationControls()}
                  {filteredPrivileges.length === 0 && (
                     <div className="text-center py-10">
                         <p className="text-muted-foreground">No privileges match your current filters.</p>

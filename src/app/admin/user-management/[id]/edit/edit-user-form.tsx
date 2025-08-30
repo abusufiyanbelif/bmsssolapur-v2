@@ -100,7 +100,7 @@ function SetPasswordSection({ userId }: { userId: string }) {
                         <AlertDialogHeader>
                         <AlertDialogTitle>Set a New Password</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action will change the user's password immediately. They will lose access with their old password.
+                            This action will change the user&apos;s password immediately. They will lose access with their old password.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="py-4">
@@ -365,7 +365,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <FormControl>
                                 <Input {...field} disabled />
                             </FormControl>
-                             <FormDescription>The user's custom ID cannot be changed.</FormDescription>
+                             <FormDescription>The user&apos;s custom ID cannot be changed.</FormDescription>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -416,7 +416,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         name="fatherName"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Father's Name (Optional)</FormLabel>
+                            <FormLabel>Father&apos;s Name (Optional)</FormLabel>
                             <FormControl>
                                 <Input placeholder="Enter father's name" {...field} disabled={!isEditing} />
                             </FormControl>
@@ -776,19 +776,63 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     </div>
                      <FormField
                         control={form.control}
-                        name="bankAccountNumber"
+                        name="bankAccountName"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Bank Account Number (Optional)</FormLabel>
+                            <FormLabel>Full Name as per Bank Account</FormLabel>
                             <FormControl>
-                                <Input placeholder="Enter bank account number" {...field} disabled={!isEditing} />
+                                <Input placeholder="Enter full name" {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
                     />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField
+                            control={form.control}
+                            name="bankAccountNumber"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Bank Account Number (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter bank account number" {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="bankIfscCode"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>IFSC Code (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter IFSC code" {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                     
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <FormField
+                            control={form.control}
+                            name="upiPhone"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>UPI Phone Number (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} disabled={!isEditing} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                     <div className="space-y-4">
                         <FormLabel>UPI IDs</FormLabel>
                         <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
                         {fields.map((field, index) => (

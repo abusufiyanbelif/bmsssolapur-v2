@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,7 +76,7 @@ export default function QuotesPage() {
                             <TableBody>
                                 {quotes.map((quote, index) => (
                                     <TableRow key={index}>
-                                        <TableCell className="font-medium italic">"{quote.text}"</TableCell>
+                                        <TableCell className="font-medium italic">&quot;{quote.text}&quot;</TableCell>
                                         <TableCell>{quote.category}</TableCell>
                                         <TableCell>{quote.source}</TableCell>
                                     </TableRow>
@@ -88,5 +89,3 @@ export default function QuotesPage() {
         </div>
     );
 }
-
-    
