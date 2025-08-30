@@ -131,7 +131,7 @@ export function UserActivityFeed({ userId }: ActivityFeedProps) {
                 <History />
                 User Profile Audit Trail
             </CardTitle>
-            <CardDescription>A log of all changes made to this user's profile. (Visible to Super Admins only)</CardDescription>
+            <CardDescription>A log of all changes made to this user&apos;s profile. (Visible to Super Admins only)</CardDescription>
         </CardHeader>
         <CardContent>
            {renderContent()}

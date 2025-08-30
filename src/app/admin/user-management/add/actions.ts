@@ -1,12 +1,11 @@
 
 
-
 "use server";
 
 import { createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import { Timestamp } from "firebase/firestore";
 import type { User, UserRole } from "@/services/types";
+import { Timestamp } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -25,6 +24,7 @@ export async function handleAddUser(
       fatherName: formData.get("fatherName") as string | undefined,
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
+      password: formData.get("password") as string | undefined,
       roles: formData.getAll("roles") as UserRole[],
       isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
       isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',

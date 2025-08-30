@@ -170,7 +170,7 @@ export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAlloc
                     <DialogDescription>
                         Select one or more leads to allocate this donation of <span className="font-bold">₹{donation.amount.toLocaleString()}</span> from <span className="font-bold">{donation.donorName}</span>.
                          {campaignForDonation && (
-                            <span className="block mt-1">This donation is part of the <span className="font-semibold text-primary">"{campaignForDonation.name}"</span> campaign.</span>
+                            <span className="block mt-1">This donation is part of the <span className="font-semibold text-primary">&quot;{campaignForDonation.name}&quot;</span> campaign.</span>
                         )}
                     </DialogDescription>
                 </DialogHeader>

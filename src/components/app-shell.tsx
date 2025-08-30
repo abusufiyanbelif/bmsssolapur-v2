@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -201,14 +202,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const transfersNotificationCount = 0; // Placeholder for now
 
     const HeaderTitle = () => (
-        <a href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
+        <Link href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
             <Logo className="h-14 w-14" />
              <div className="flex flex-col leading-tight">
                 <span className="font-bold font-headline text-primary text-sm">Baitul Mal</span>
                 <span className="font-bold font-headline text-accent text-sm">Samajik Sanstha</span>
                  <span className="font-bold font-headline text-primary text-xs">(Solapur)</span>
             </div>
-        </a>
+        </Link>
     );
 
     return (

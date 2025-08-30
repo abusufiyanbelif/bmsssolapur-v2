@@ -9,7 +9,7 @@ import { Download, Loader2, AlertCircle, ChevronLeft, ChevronRight, HandHeart, S
 import { getDonationsByUserId } from "@/services/donation-service";
 import { getUser, updateUser } from "@/services/user-service";
 import { cn } from "@/lib/utils";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +51,7 @@ export default function MyDonationsPage() {
     }
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
       if (!userId) return;
       try {
         setLoading(true);
@@ -71,13 +71,13 @@ export default function MyDonationsPage() {
       } finally {
         setLoading(false);
       }
-    };
+    }, [userId]);
 
   useEffect(() => {
     if (userId) {
         fetchData();
     }
-  }, [userId]);
+  }, [userId, fetchData]);
   
     const paginatedDonations = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;

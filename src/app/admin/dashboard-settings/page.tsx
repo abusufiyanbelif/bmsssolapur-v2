@@ -28,7 +28,7 @@ export default async function DashboardSettingsPage() {
                 <CardHeader>
                     <CardTitle>Dashboard Card Visibility</CardTitle>
                     <CardDescription>
-                       Click "Edit Settings" to configure which cards are visible on each user role's dashboard. Use the filter to check visibility for a specific role.
+                       Click &quot;Edit Settings&quot; to configure which cards are visible on each user role&apos;s dashboard. Use the filter to check visibility for a specific role.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

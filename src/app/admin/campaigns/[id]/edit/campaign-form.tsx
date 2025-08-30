@@ -127,7 +127,7 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
                 <div>
                     <CardTitle>Edit Campaign</CardTitle>
                     <CardDescription>
-                        Update the details for the "{campaign.name}" campaign.
+                        Update the details for the &quot;{campaign.name}&quot; campaign.
                     </CardDescription>
                 </div>
                  {!isEditing && (

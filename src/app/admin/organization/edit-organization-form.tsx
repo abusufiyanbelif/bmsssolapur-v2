@@ -134,7 +134,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                 <div>
                     <CardTitle>Manage Organization Details</CardTitle>
                     <CardDescription>
-                        Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
+                        Update your organization&apos;s public information, contact details, and payment settings. These details will be visible on the public-facing pages.
                     </CardDescription>
                 </div>
                  {!isEditing && (

@@ -4,6 +4,7 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Organization } from '@/services/types';
+import Image from 'next/image';
 
 interface LetterheadProps {
     organization: Organization;
@@ -14,19 +15,25 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         return (
             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative">
                 {/* Use a real img tag for the watermark for better html2canvas compatibility */}
-                <img 
+                <Image 
                     src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
                     alt="Watermark"
-                    className="absolute inset-0 w-full h-full object-contain opacity-5 z-0"
+                    layout="fill"
+                    objectFit="contain"
+                    className="absolute inset-0 opacity-5 z-0"
+                    data-ai-hint="logo"
                 />
                 <div className="relative z-10">
                     <header className="flex justify-between items-start pb-4 border-b-2 border-gray-800">
                         <div className="flex items-center gap-6">
                              {/* Use a standard img tag for the logo to ensure it's captured by html2canvas */}
-                            <img
+                            <Image
                                 src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
                                 alt="Organization Logo"
-                                className="h-32 w-32 object-contain"
+                                width={128}
+                                height={128}
+                                className="object-contain"
+                                data-ai-hint="logo"
                             />
                             <div>
                                 <h1 className="text-4xl font-bold tracking-wider">

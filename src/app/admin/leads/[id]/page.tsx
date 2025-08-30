@@ -127,7 +127,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                          <CardContent className="space-y-4">
                             {lead.headline && (
                                 <blockquote className="mt-2 border-l-2 pl-6 italic">
-                                    "{lead.headline}"
+                                    &quot;{lead.headline}&quot;
                                 </blockquote>
                             )}
                              {lead.story && (
@@ -317,7 +317,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                 Allocated Donations ({validAllocatedDonations.length})
                             </CardTitle>
                              <CardDescription>
-                               Donations from the organization's funds that have been applied to this specific case.
+                               Donations from the organization&apos;s funds that have been applied to this specific case.
                             </CardDescription>
                         </CardHeader>
                          <CardContent>

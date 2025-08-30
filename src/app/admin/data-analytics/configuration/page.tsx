@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAppSettings } from "@/services/app-settings-service";
 import { AnalyticsDashboardSettingsForm } from "./analytics-dashboard-settings-form";
@@ -27,7 +28,7 @@ export default async function DataAnalyticsConfigurationPage() {
                 <CardHeader>
                     <CardTitle>Dashboard Card Visibility</CardTitle>
                     <CardDescription>
-                       Click "Edit Settings" to configure which analytics sections are visible on the dashboard for each admin role.
+                       Click &quot;Edit Settings&quot; to configure which analytics sections are visible on the dashboard for each admin role.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

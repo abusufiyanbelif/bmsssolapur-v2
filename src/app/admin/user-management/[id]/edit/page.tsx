@@ -1,4 +1,5 @@
 
+
 import { getUser } from "@/services/user-service";
 import { notFound } from "next/navigation";
 import { EditUserForm } from "./edit-user-form";
@@ -25,7 +26,7 @@ export default async function EditUserPage({ params }: { params: { id: string } 
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Editing User Account</AlertTitle>
                 <AlertDescription>
-                   You are editing a user's record. Changes made here will affect their access and information across the app.
+                   You are editing a user&apos;s record. Changes made here will affect their access and information across the app.
                 </AlertDescription>
             </Alert>
             

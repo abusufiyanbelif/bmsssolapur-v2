@@ -193,7 +193,7 @@ export default function UserPrivilegesPage() {
                     Manage Privileges
                 </CardTitle>
                 <CardDescription>
-                    Define granular permissions for individual actions within the application. This is a read-only view of the system's intended privilege structure.
+                    Define granular permissions for individual actions within the application. This is a read-only view of the system&apos;s intended privilege structure.
                 </CardDescription>
             </CardHeader>
             <CardContent>

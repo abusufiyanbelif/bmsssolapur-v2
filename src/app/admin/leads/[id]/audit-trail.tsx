@@ -77,7 +77,7 @@ export function AuditTrail({ lead, activityLogs }: AuditTrailProps) {
                     title = <>Lead Verified by <span className="font-semibold">{item.user}</span></>;
                 } else {
                     icon = <FileUp className="h-5 w-5 text-gray-600" />;
-                    title = <>Status changed from "{from}" to "{to}" by <span className="font-semibold">{item.user}</span></>;
+                    title = <>Status changed from &quot;{from}&quot; to &quot;{to}&quot; by <span className="font-semibold">{item.user}</span></>;
                 }
                 break;
             default:
@@ -94,7 +94,7 @@ export function AuditTrail({ lead, activityLogs }: AuditTrailProps) {
                 <div className="text-sm">
                     <p>{title}</p>
                     <p className="text-xs text-muted-foreground">{format(item.timestamp, 'PPP p')}</p>
-                    {item.notes && <p className="text-xs italic text-muted-foreground mt-1">"{item.notes}"</p>}
+                    {item.notes && <p className="text-xs italic text-muted-foreground mt-1">&quot;{item.notes}&quot;</p>}
                 </div>
             </div>
         )

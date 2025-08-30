@@ -68,7 +68,7 @@ export function DeleteConfirmationDialog({
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the {itemType}{" "}
-            <span className="font-semibold text-foreground">"{itemName}"</span> from the database.
+            <span className="font-semibold text-foreground">&quot;{itemName}&quot;</span> from the database.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

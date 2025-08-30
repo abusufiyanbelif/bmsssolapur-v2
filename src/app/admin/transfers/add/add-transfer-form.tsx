@@ -42,6 +42,8 @@ import { scanProof } from '@/app/admin/donations/add/actions';
 import { getRawTextFromImage } from '@/ai/flows/extract-raw-text-flow';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
@@ -280,8 +282,8 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     const formData = new FormData();
     formData.append('imageFile', file);
     const result = await getRawTextFromImage({photoDataUri: await fileToDataUrl(file)});
-    if(result.success && result.rawText) {
-        setRawText(result.rawText);
+    if(result.success && result.text) {
+        setRawText(result.text);
     } else {
          toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text.' });
     }

@@ -643,7 +643,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     Mark this Donation as Anonymous
                   </FormLabel>
                   <FormDescription>
-                    If checked, the donor's name will be hidden from public view for this specific donation.
+                    If checked, the donor&apos;s name will be hidden from public view for this specific donation.
                   </FormDescription>
                 </div>
               </FormItem>

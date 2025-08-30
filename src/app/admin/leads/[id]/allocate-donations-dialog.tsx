@@ -110,9 +110,9 @@ export function AllocateDonationsDialog({ lead, allDonations }: AllocateDonation
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Allocate Donations to "{lead.name}"</DialogTitle>
+                    <DialogTitle>Allocate Donations to &quot;{lead.name}&quot;</DialogTitle>
                     <DialogDescription>
-                        Select one or more available donations to fund this lead. The system will pull funds until the lead's requirement of <span className="font-bold">₹{neededAmount.toLocaleString()}</span> is met.
+                        Select one or more available donations to fund this lead. The system will pull funds until the lead&apos;s requirement of <span className="font-bold">₹{neededAmount.toLocaleString()}</span> is met.
                     </DialogDescription>
                 </DialogHeader>
                 
