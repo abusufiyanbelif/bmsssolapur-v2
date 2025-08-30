@@ -135,7 +135,7 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
                 leadId: lead.id!,
                 leadName: lead.name,
                 fileName: documentFile.name,
-                leadStatus: lead.verifiedStatus,
+                leadStatus: lead.caseVerification,
             },
         });
         
@@ -178,7 +178,10 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         let recipientId = lead.beneficiaryId;
         if (recipientType === 'Referral' && customRecipientId) {
             recipientId = customRecipientId;
+        } else if (recipientType === 'Referral' && !customRecipientId && lead.referredByUserId) {
+            recipientId = lead.referredByUserId;
         }
+
         const recipientUser = await getUser(recipientId);
         if (!recipientUser) {
              return { success: false, error: "Recipient user could not be found." };
@@ -229,6 +232,9 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             paymentApp: formData.get("paymentApp") as string | undefined,
             paymentMethod: paymentMethod,
             status: formData.get("status") as string | undefined,
+            phonePeSenderName: formData.get("phonePeSenderName") as string | undefined,
+            googlePaySenderName: formData.get("googlePaySenderName") as string | undefined,
+            paytmSenderName: formData.get("paytmSenderName") as string | undefined,
         };
 
         await updateLead(leadId, {

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getLead } from "@/services/lead-service";
@@ -73,7 +74,7 @@ export async function generateAppealMessage(
                 const requiredAmount = lead.helpRequested - lead.helpGiven;
                 totalRequired += requiredAmount;
                 
-                const leadLine = `${index + 1}. ${lead.purpose} (${lead.id}) - Required amt.: ₹${requiredAmount.toLocaleString('en-IN')}\n`;
+                const leadLine = `${index + 1}. ${lead.purpose} (${lead.category}) - Required amt.: ₹${requiredAmount.toLocaleString('en-IN')}\n`;
                 messageBody += leadLine;
             }
         });

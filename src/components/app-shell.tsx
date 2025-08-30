@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -87,8 +88,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         getAllLeads(),
                         getAllDonations()
                     ]);
-                    setPendingLeads(allLeads.filter(l => l.verifiedStatus === 'Pending'));
-                    setReadyToPublishLeads(allLeads.filter(l => l.status === 'Ready For Help'));
+                    setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
+                    setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
                     setPendingDonations(allDonations.filter(d => d.status === 'Pending verification'));
                 }
 
@@ -279,7 +280,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     {donationsNotificationCount > 0 ? (
                                         pendingDonations.slice(0, 5).map(donation => (
                                             <DropdownMenuItem key={donation.id} asChild>
-                                                 <Link href={`/admin/donations/${donation.id}/edit`} className="flex flex-col items-start w-full">
+                                                 <Link href={`/admin/donations/${donation.id!}/edit`} className="flex flex-col items-start w-full">
                                                     <p className="font-semibold text-destructive">Verify: ₹{donation.amount.toLocaleString()} from {donation.donorName}</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         Received {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
