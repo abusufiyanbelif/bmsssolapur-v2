@@ -168,7 +168,6 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
         throw new Error("Firebase is not configured. Cannot seed users.");
     }
     const results: string[] = [];
-    const batch = writeBatch(db);
 
     for (const userData of users) {
         if (userData.roles.includes('Super Admin') || userData.userId === 'admin') {
@@ -180,7 +179,6 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
         if (!existingUser && userData.email) existingUser = await getUserByEmail(userData.email);
 
         if (existingUser) {
-            const userRef = doc(db, USERS_COLLECTION, existingUser.id!);
             const updatedRoles = [...new Set([...(existingUser.roles || []), ...userData.roles])];
             const updatedGroups = [...new Set([...(existingUser.groups || []), ...(userData.groups || [])])];
             
@@ -188,10 +186,9 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
                 ...userData, 
                 roles: updatedRoles, 
                 groups: updatedGroups,
-                updatedAt: serverTimestamp()
             };
-            delete (updatePayload as any).password;
-            batch.update(userRef, updatePayload);
+            delete (updatePayload as any).password; // Don't overwrite existing passwords
+            await updateUser(existingUser.id!, updatePayload);
             results.push(`${userData.name} updated.`);
         } else {
             try {
@@ -203,7 +200,6 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
             }
         }
     }
-    await batch.commit();
     return results;
 };
 
@@ -240,24 +236,22 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
         if (!beneficiary) continue;
 
         const leadId = `GEN_${beneficiary.userKey}_${Date.now()}`;
-        const existingLead = await getLead(leadId);
-        if (existingLead) {
+        const existingLead = await getDoc(doc(db, 'leads', leadId));
+        if (existingLead.exists()) {
             leadResults.push(`General Lead for ${beneficiary.name} skipped.`);
             continue;
         }
         
-        const leadStatus: Lead['status'] = leadInfo.isFunded ? 'Closed' : 'Ready For Help';
-        const leadAction: LeadAction = leadInfo.isFunded ? 'Closed' : 'Publish';
+        const caseAction: LeadAction = leadInfo.isFunded ? 'Closed' : 'Publish';
 
         const newLeadData: Partial<Lead> = {
             id: leadId, name: beneficiary.name, beneficiaryId: beneficiary.id!,
             purpose: leadInfo.purpose as any, category: leadInfo.category, donationType: leadInfo.donationType as any,
             helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
-            status: leadStatus,
-            caseAction: leadAction,
+            caseAction: caseAction,
             isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details,
-            verifiedStatus: 'Verified', verifiers: [verifier],
+            caseVerification: 'Verified', verifiers: [verifier],
             dateCreated: Timestamp.now(), adminAddedBy: { id: adminUser.id!, name: adminUser.name },
             source: 'Seeded'
         };
@@ -342,18 +336,19 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
         if (!beneficiary) continue;
 
         const leadId = `${campaignRef.id}_${beneficiary.userKey}`;
-        const existingLead = await getLead(leadId);
-        if (existingLead) {
+        const existingLead = await getDoc(doc(db, 'leads', leadId));
+        if (existingLead.exists()) {
             results.push(`Lead for ${beneficiary.name} in ${campaignData.name} skipped.`);
             continue;
         }
         
         const leadRef = doc(db, 'leads', leadId);
-        const leadStatus: Lead['status'] = leadInfo.isFunded ? 'Closed' : 'Ready For Help';
-        let leadAction: LeadAction = leadStatus;
+        let leadAction: LeadAction = 'Pending';
         if(campaignData.status === 'Upcoming') {
             leadAction = 'Pending';
-        } else if (!leadInfo.isFunded) {
+        } else if (leadInfo.isFunded) {
+            leadAction = 'Closed';
+        } else {
             leadAction = 'Publish';
         }
 
@@ -362,8 +357,8 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
             campaignId: campaignRef.id, campaignName: campaignData.name,
             purpose: leadInfo.purpose, category: leadInfo.category, donationType: leadInfo.donationType,
             helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
-            status: leadStatus, caseAction: leadAction, isLoan: leadInfo.isLoan || false,
-            caseDetails: leadInfo.details, verifiedStatus: 'Verified', verifiers: [verifierToUse],
+            caseAction: leadAction, isLoan: leadInfo.isLoan || false,
+            caseDetails: leadInfo.details, caseVerification: 'Verified', verifiers: [verifierToUse],
             dateCreated: Timestamp.now(), adminAddedBy: { id: verifierAdmin.id, name: verifierAdmin.name },
             source: 'Seeded'
         };
@@ -469,5 +464,3 @@ export const seedSampleData = async (): Promise<SeedResult> => {
         details: details
     };
 }
-
-    
