@@ -207,6 +207,16 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
     return results;
 };
 
+const seedOrganization = async (): Promise<string> => {
+    const existingOrg = await getCurrentOrganization();
+    if (existingOrg) {
+        return "Organization profile already exists. Skipped.";
+    }
+    await createOrganization(organizationToSeed);
+    return "Organization profile created successfully.";
+}
+
+
 const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
     const leadResults: string[] = [];
     
@@ -459,3 +469,5 @@ export const seedSampleData = async (): Promise<SeedResult> => {
         details: details
     };
 }
+
+    
