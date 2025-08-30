@@ -4,11 +4,16 @@
 
 import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
+import { AnalyticsDashboardSettings } from "@/services/types";
 
 interface FormState {
     success: boolean;
     error?: string;
 }
+
+const analyticsDashboardCardKeys: (keyof AnalyticsDashboardSettings)[] = [
+    'financialPerformance',
+];
 
 export async function handleUpdateAnalyticsDashboardSettings(
   currentSettings: AppSettings['analyticsDashboard'],
@@ -16,17 +21,14 @@ export async function handleUpdateAnalyticsDashboardSettings(
 ): Promise<FormState> {
   
   try {
-    const newSettings: AppSettings['analyticsDashboard'] = { ...currentSettings };
-    
-    // This assumes all keys for the analytics dashboard are present in the form.
-    const keys = new Set([...Object.keys(newSettings || {}), ...Array.from(formData.keys()).map(k => k.split('-')[0])]);
-    
-    keys.forEach(key => {
-        const cardKey = key as keyof typeof newSettings;
-        const visibleTo = formData.getAll(`${cardKey}-roles`);
-        
-        if (newSettings) {
-            newSettings[cardKey] = { visibleTo: visibleTo as any };
+    const newSettings: AnalyticsDashboardSettings = {
+        financialPerformance: { visibleTo: [] }
+    };
+
+    analyticsDashboardCardKeys.forEach(key => {
+        const visibleTo = formData.getAll(`${key}-roles`);
+        if (newSettings[key]) {
+            newSettings[key] = { visibleTo: (visibleTo as any[]) || [] };
         }
     });
     

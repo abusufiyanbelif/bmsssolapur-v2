@@ -44,7 +44,7 @@ interface DashboardSettingsFormProps {
 
 const allAppRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin", "Donor", "Beneficiary", "Referral"];
 
-const cardDefinitions: { id: keyof DashboardSettings, label: string, description: string }[] = [
+const cardDefinitions: { id: string, label: string, description: string }[] = [
     { id: 'mainMetrics', label: 'Main Metrics', description: 'Overall stats like Total Raised, Distributed, etc. (Excludes Funds in Hand)' },
     { id: 'fundsInHand', label: 'Funds in Hand Card', description: 'A separate, prominent card showing available funds.' },
     { id: 'monthlyContributors', label: 'Monthly Contributors', description: 'Card showing the status of monthly pledged donations.' },
@@ -80,7 +80,7 @@ export function DashboardSettingsForm({ settings }: DashboardSettingsFormProps) 
       cards: cardDefinitions.map(card => ({
         id: card.id,
         label: card.label,
-        roles: settings?.[card.id]?.visibleTo || [],
+        roles: settings?.[card.id as keyof DashboardSettings]?.visibleTo || [],
       }))
     },
   });
@@ -93,7 +93,7 @@ export function DashboardSettingsForm({ settings }: DashboardSettingsFormProps) 
          cards: cardDefinitions.map(card => ({
             id: card.id,
             label: card.label,
-            roles: settings?.[card.id]?.visibleTo || [],
+            roles: settings?.[card.id as keyof DashboardSettings]?.visibleTo || [],
         }))
     });
     setIsEditing(false);

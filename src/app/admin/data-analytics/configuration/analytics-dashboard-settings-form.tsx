@@ -24,7 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 const allAppRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin"];
 
-const cardDefinitions: { id: keyof AnalyticsDashboardSettings, label: string, description: string }[] = [
+const cardDefinitions: { id: string, label: string, description: string }[] = [
     { id: 'financialPerformance', label: 'Financial Performance Section', description: 'Controls visibility for the entire group of cards including Raised vs. Goal, YTD Donations, etc.' },
 ];
 
@@ -51,7 +51,7 @@ export function AnalyticsDashboardSettingsForm({ settings }: AnalyticsDashboardS
     defaultValues: {
       cards: cardDefinitions.map(card => ({
         id: card.id,
-        roles: settings?.[card.id]?.visibleTo || [],
+        roles: settings?.[card.id as keyof AnalyticsDashboardSettings]?.visibleTo || [],
       }))
     },
   });
@@ -62,7 +62,7 @@ export function AnalyticsDashboardSettingsForm({ settings }: AnalyticsDashboardS
     reset({
       cards: cardDefinitions.map(card => ({
         id: card.id,
-        roles: settings?.[card.id]?.visibleTo || [],
+        roles: settings?.[card.id as keyof AnalyticsDashboardSettings]?.visibleTo || [],
       }))
     });
     setIsEditing(false);
