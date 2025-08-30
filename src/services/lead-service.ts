@@ -23,7 +23,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType, FundTransfer } from './types';
+import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType, FundTransfer, LeadAction } from './types';
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
 import { format } from 'date-fns';
@@ -44,8 +44,9 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     if (!beneficiary.userKey) throw new Error("Beneficiary does not have a UserKey. Cannot create lead.");
 
     const leadsCollection = collection(db, LEADS_COLLECTION);
-    const countSnapshot = await getCountFromServer(leadsCollection);
-    const leadNumber = countSnapshot.data().count + 1;
+    const q = query(leadsCollection, where("beneficiaryId", "==", beneficiary.id!));
+    const beneficiaryLeadsSnapshot = await getDocs(q);
+    const leadNumber = beneficiaryLeadsSnapshot.size + 1;
 
     const dateString = format(new Date(), 'ddMMyyyy');
     const customLeadId = `${beneficiary.userKey}_${leadNumber}_${dateString}`;
@@ -70,8 +71,9 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
       priority: leadData.priority || 'Medium',
       helpRequested: leadData.helpRequested!,
       helpGiven: 0,
-      status: 'Pending',
-      verifiedStatus: 'Pending',
+      caseStatus: 'Pending',
+      caseAction: 'Pending',
+      caseVerification: 'Pending',
       verifiers: [],
       donations: [],
       caseDetails: leadData.caseDetails,
@@ -192,19 +194,19 @@ export const updateLeadStatus = async (id: string, newStatus: LeadStatus, adminU
         userEmail: adminUser.email,
         role: "Admin",
         activity: `Lead Status Changed`,
-        details: { leadId: id, leadName: lead.name, from: lead.status, to: newStatus }
+        details: { leadId: id, leadName: lead.name, from: lead.caseStatus, to: newStatus }
     });
 
-    return updateLead(id, { status: newStatus });
+    return updateLead(id, { caseStatus: newStatus });
 };
 
 export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVerificationStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
     const lead = await getLead(id);
     if (!lead) throw new Error("Lead not found for verification status update.");
     
-    const updates: Partial<Lead> = { verifiedStatus: newStatus };
+    const updates: Partial<Lead> = { caseVerification: newStatus };
     if (newStatus === 'Verified') {
-        updates.status = 'Ready For Help';
+        updates.caseAction = 'Ready For Help';
     }
     
     await logActivity({
@@ -213,7 +215,7 @@ export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVe
         userEmail: adminUser.email,
         role: "Admin",
         activity: `Lead Verification Changed`,
-        details: { leadId: id, leadName: lead.name, from: lead.verifiedStatus, to: newStatus }
+        details: { leadId: id, leadName: lead.name, from: lead.caseVerification, to: newStatus }
     });
     
     return updateLead(id, updates);
@@ -352,4 +354,3 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         throw new Error('Failed to get open beneficiary leads.');
     }
 }
-

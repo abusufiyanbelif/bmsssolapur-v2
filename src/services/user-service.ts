@@ -126,11 +126,12 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     let finalUserId = userData.userId;
     if (!finalUserId) {
         finalUserId = `${userData.firstName?.toLowerCase() || 'user'}.${userData.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
-        const idExists = await getUserByUserId(finalUserId);
-        if (idExists) {
-           finalUserId = `${finalUserId}${Date.now().toString().slice(-4)}`;
-        }
     }
+    const idExists = await getUserByUserId(finalUserId);
+    if (idExists) {
+        throw new Error(`User ID "${finalUserId}" is already taken.`);
+    }
+
 
     // Generate a new userKey.
     const usersCollection = collection(db, USERS_COLLECTION);

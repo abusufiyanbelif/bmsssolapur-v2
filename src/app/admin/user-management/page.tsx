@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -255,7 +254,7 @@ export default function UserManagementPage() {
                 <TableRow>
                     <TableHead padding="checkbox">
                         <Checkbox
-                             checked={selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0}
+                             checked={selectedUsers.length > 0 && selectedUsers.length === paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                              onCheckedChange={(checked) => {
                                 const pageUserIds = paginatedUsers.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {

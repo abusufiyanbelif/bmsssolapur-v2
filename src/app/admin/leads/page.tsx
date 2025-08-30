@@ -599,7 +599,7 @@ Referral Phone:
             const StatusIcon = statusIcons[lead.caseStatus];
             return (
                 <Card key={lead.id} className={cn("flex flex-col", selectedLeads.includes(lead.id!) && "ring-2 ring-primary")}>
-                    <div className="p-4 flex gap-4">
+                    <div className="p-4 flex gap-4 items-start">
                         <Checkbox
                             className="mt-1.5 flex-shrink-0"
                             checked={selectedLeads.includes(lead.id!)}
