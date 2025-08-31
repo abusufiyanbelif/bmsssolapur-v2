@@ -30,6 +30,27 @@ export type { User, UserRole };
 export { updateLead } from './lead-service';
 
 
+// Hardcoded Super Admin User for dev purposes
+const hardcodedSuperAdmin: User = {
+    id: 'ADMIN_USER_ID', // A static, predictable ID
+    userKey: "USR01",
+    name: "admin",
+    userId: "admin",
+    firstName: "Admin",
+    lastName: "User",
+    fatherName: "System",
+    email: "admin@example.com",
+    phone: "9999999999",
+    password: "admin",
+    roles: ["Super Admin"],
+    privileges: ["all"],
+    isActive: true,
+    gender: 'Other',
+    source: 'Seeded',
+    createdAt: new Date('2024-01-01'),
+};
+
+
 // Helper to remove duplicates from an array
 const getUnique = <T>(arr: T[] = []): T[] => {
     if (!Array.isArray(arr)) return [];
@@ -71,6 +92,10 @@ const generateNextAnonymousId = async (prefix: string, field: keyof User): Promi
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (!isConfigValid || !userId) {
         return null;
+    }
+     // Hardcoded check for the default admin user
+    if (userId === hardcodedSuperAdmin.userId) {
+        return hardcodedSuperAdmin;
     }
     try {
         const q = query(collection(db, USERS_COLLECTION), where("userId", "==", userId), limit(1));
@@ -232,6 +257,10 @@ export const getUser = async (id: string): Promise<User | null> => {
   if (!isConfigValid || !id) {
     return null;
   }
+   // Hardcoded check for the default admin user
+  if (id === hardcodedSuperAdmin.id || id === hardcodedSuperAdmin.userId) {
+        return hardcodedSuperAdmin;
+  }
   try {
     const userDoc = await getDoc(doc(db, USERS_COLLECTION, id));
     if (userDoc.exists()) {
@@ -257,6 +286,9 @@ export const getUser = async (id: string): Promise<User | null> => {
 export const getUserByName = async (name: string): Promise<User | null> => {
     if (!isConfigValid || !name) {
         return null;
+    }
+     if (name === hardcodedSuperAdmin.name) {
+        return hardcodedSuperAdmin;
     }
     try {
         const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
@@ -284,6 +316,9 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
     if (!isConfigValid || !userKey) {
         return null;
     }
+     if (userKey === hardcodedSuperAdmin.userKey) {
+        return hardcodedSuperAdmin;
+    }
     try {
         const q = query(collection(db, USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
         const snapshot = await getDocs(q);
@@ -306,6 +341,9 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
 export const getUserByFullName = async (name: string): Promise<User | null> => {
     if (!isConfigValid || !name) {
         return null;
+    }
+     if (name === hardcodedSuperAdmin.name) {
+        return hardcodedSuperAdmin;
     }
     try {
         const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
@@ -333,6 +371,10 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
   }
   const standardizedPhone = phone?.replace(/\D/g, '').slice(-10);
   if (!standardizedPhone || standardizedPhone.length !== 10) return null;
+  
+   if (standardizedPhone === hardcodedSuperAdmin.phone) {
+        return hardcodedSuperAdmin;
+    }
 
   try {
     const q = query(collection(db, USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
@@ -360,6 +402,9 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
   if (!isConfigValid || !email) {
     return null;
   }
+   if (email === hardcodedSuperAdmin.email) {
+        return hardcodedSuperAdmin;
+    }
   try {
     const q = query(collection(db, USERS_COLLECTION), where("email", "==", email), limit(1));
     const querySnapshot = await getDocs(q);

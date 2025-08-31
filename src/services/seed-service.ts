@@ -177,12 +177,14 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
         let existingUser: User | null = null;
         if (userData.phone) existingUser = await getUserByPhone(userData.phone);
         if (!existingUser && userData.email) existingUser = await getUserByEmail(userData.email);
+        if (!existingUser && userData.userId) existingUser = await getUserByUserId(userData.userId);
+
 
         if (existingUser) {
             const updatedRoles = [...new Set([...(existingUser.roles || []), ...userData.roles])];
             const updatedGroups = [...new Set([...(existingUser.groups || []), ...(userData.groups || [])])];
             
-            const updatePayload = { 
+            const updatePayload: Partial<User> = { 
                 ...userData, 
                 roles: updatedRoles, 
                 groups: updatedGroups,
@@ -405,7 +407,10 @@ function getRandomDate(start: Date, end: Date): Date {
 // --- EXPORTED SEEDING FUNCTIONS ---
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    const userResults = await seedUsers(initialUsersToSeed);
+    // This now only seeds the initial user if it doesn't exist in Firestore.
+    // The hardcoded logic in user-service ensures 'admin' is always available in the app.
+    const adminUser = await getUserByUserId('admin');
+    const userResults = await seedUsers([initialUsersToSeed[0]]);
     const quotesStatus = await seedQuotesService();
     return {
         message: 'Initial Seeding Complete',
