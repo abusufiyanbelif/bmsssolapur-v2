@@ -1,9 +1,8 @@
 
 
-
 "use server";
 
-import { createLead, getOpenLeadsByBeneficiaryId } from "@/services/lead-service";
+import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
 import { getUser, createUser, checkAvailability } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput } from "@/services/types";
@@ -73,6 +72,11 @@ export async function handleAddLead(
         getUser(adminUserId),
         getAppSettings()
     ]);
+    
+    if (!adminUser) {
+        return { success: false, error: "Admin user not found for logging." };
+    }
+
     const approvalProcessDisabled = settings.leadConfiguration?.approvalProcessDisabled || false;
     const userHasOverride = adminUser?.groups?.some(g => ['Founder', 'Co-Founder', 'Finance'].includes(g));
 
@@ -81,9 +85,6 @@ export async function handleAddLead(
     }
 
     let beneficiaryUser: User | null = null;
-    if (!adminUser) {
-        return { success: false, error: "Admin user not found for logging." };
-    }
     
     if (rawFormData.beneficiaryType === 'new') {
         const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail } = rawFormData;

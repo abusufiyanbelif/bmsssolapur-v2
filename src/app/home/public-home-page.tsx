@@ -1,5 +1,6 @@
 
-"use client";
+
+'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                 <div className="space-y-6">
                     {quotes.map((quote, index) => (
                         <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
-                            <p>"{quote.text}"</p>
+                            <p>&quot;{quote.text}&quot;</p>
                             <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
                         </blockquote>
                     ))}

@@ -66,20 +66,20 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         notFound();
     }
     
-    const [beneficiary, allocatedDonations, activityLogs, allUsers, allDonations] = await Promise.all([
+    const [beneficiary, activityLogs, allUsers, allDonations] = await Promise.all([
         getUser(lead.beneficiaryId),
-        Promise.all(
-            (lead.donations || []).map(async (alloc) => {
-                const donation = await getDonation(alloc.donationId);
-                return donation ? { ...donation, amountAllocated: alloc.amount, allocatedByUserName: alloc.allocatedByUserName, allocatedAt: alloc.allocatedAt } : null;
-            })
-        ),
         getUserActivity(lead.beneficiaryId), // Fetching activity for the beneficiary
         getAllUsers(), // Fetch all users to identify approvers
         getAllDonations(),
     ]);
+
+    const allocatedDonations = (await Promise.all(
+        (lead.donations || []).map(async (alloc) => {
+            const donation = await getDonation(alloc.donationId);
+            return donation ? { ...donation, amountAllocated: alloc.amount, allocatedByUserName: alloc.allocatedByUserName, allocatedAt: alloc.allocatedAt } : null;
+        })
+    )).filter(d => d !== null) as AllocatedDonation[];
     
-    const validAllocatedDonations = allocatedDonations.filter(d => d !== null) as AllocatedDonation[];
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
     const caseAction = lead.caseAction || 'Pending';
     const StatusIcon = statusIcons[caseAction];
@@ -88,7 +88,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const dueDate = lead.dueDate;
     const closedDate = lead.closedAt;
 
-    const leadSpecificActivity = activityLogs.filter(log => log.details.leadId === lead.id || log.details.linkedLeadId === lead.id);
+    const leadSpecificActivity = activityLogs.filter(log => log.details.leadId === lead.id || log.details.linkedLeadId === lead.id || log.details.changes?.leadId === lead.id);
 
 
     return (
@@ -314,14 +314,14 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <HandHeart />
-                                Allocated Donations ({validAllocatedDonations.length})
+                                Allocated Donations ({allocatedDonations.length})
                             </CardTitle>
                              <CardDescription>
                                Donations from the organization&apos;s funds that have been applied to this specific case.
                             </CardDescription>
                         </CardHeader>
                          <CardContent>
-                             {validAllocatedDonations.length > 0 ? (
+                             {allocatedDonations.length > 0 ? (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -332,7 +332,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {validAllocatedDonations.map(donation => (
+                                        {allocatedDonations.map(donation => (
                                             <TableRow key={donation.id}>
                                                 <TableCell>{format(donation.allocatedAt, 'dd MMM yyyy, p')}</TableCell>
                                                 <TableCell>{donation.allocatedByUserName || 'N/A'}</TableCell>

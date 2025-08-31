@@ -202,9 +202,6 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         groups: userData.groups || [],
         referredByUserId: userData.referredByUserId,
         referredByUserName: userData.referredByUserName,
-        enableMonthlyDonationReminder: userData.enableMonthlyDonationReminder || false,
-        monthlyPledgeEnabled: userData.monthlyPledgeEnabled || false,
-        monthlyPledgeAmount: userData.monthlyPledgeAmount || 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         source: userData.source || 'Manual Entry',
@@ -519,7 +516,7 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
         Object.keys(finalUpdates).forEach(key => {
             const typedKey = key as keyof User;
             if (finalUpdates[typedKey] === undefined) {
-                delete finalUpdates[typedKey];
+                delete (finalUpdates as any)[typedKey];
             }
         });
 

@@ -54,7 +54,11 @@ const extractDonationDetailsFlow = ai.defineFlow(
         let missingFields = [];
         if (!structuredOutput.amount) missingFields.push("Amount");
         if (!structuredOutput.transactionId && !structuredOutput.utrNumber) missingFields.push("Transaction ID or UTR");
-        throw new Error(`Scan failed: Could not extract required fields (${missingFields.join(', ')}). Please try a clearer image or enter details manually.`);
+        
+        // Return a more user-friendly error
+        if (missingFields.length > 0) {
+            throw new Error(`Scan failed: Could not extract required fields (${missingFields.join(', ')}). Please try a clearer image or enter details manually.`);
+        }
     }
 
     // Step 3: Enrich data by checking if the recipient is an organization member.
