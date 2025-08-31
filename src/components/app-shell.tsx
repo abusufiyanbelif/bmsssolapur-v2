@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
 import { performPermissionCheck } from "@/services/firebase";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 
 
 const PermissionErrorState = ({ error }: { error: string }) => (
