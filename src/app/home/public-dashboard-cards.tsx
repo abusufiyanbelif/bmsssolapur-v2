@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card } from "@/components/ui/card";
@@ -7,7 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MainMetricsCard, TopDonorsCard, RecentCampaignsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
 import { Suspense, useEffect, useState } from "react";
 import type { Donation, User, Lead, Campaign, PublicStats } from "@/services/types";
-import { getPublicStats } from "@/services/public-data-service";
+import { getPublicStats, getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
+import { getAllDonations, getAllLeads, getAllUsers, getAllCampaigns as getAllCampaignsPrivate } from "@/services/deprecated-fetches";
 
 
 const CardSkeleton = () => (
@@ -30,17 +30,42 @@ const TableSkeleton = () => (
 );
 
 
-interface PublicDashboardCardsProps {
-    allDonations: Donation[];
-    allUsers: User[];
-    allLeads: Lead[];
-    allCampaigns: Campaign[];
-}
-
-export function PublicDashboardCards({ allDonations, allUsers, allLeads, allCampaigns }: PublicDashboardCardsProps) {
+export function PublicDashboardCards() {
     
-    // Note: The props are being kept for potential future use or for components that might
-    // still need them, but the main logic now relies on the fetched publicStats.
+    // We now fetch the data directly inside this client component.
+    const [allDonations, setAllDonations] = useState<Donation[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [allLeads, setAllLeads] = useState<Lead[]>([]);
+    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            const [donations, users, leads, campaigns] = await Promise.all([
+                getAllDonations(),
+                getAllUsers(),
+                getAllLeads(),
+                getAllCampaignsPrivate()
+            ]);
+            setAllDonations(donations);
+            setAllUsers(users);
+            setAllLeads(leads);
+            setAllCampaigns(campaigns);
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
+    
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
+                <CardSkeleton />
+                <TableSkeleton />
+            </div>
+        );
+    }
     
     return (
         <div className="space-y-4">
