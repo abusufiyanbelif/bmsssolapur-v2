@@ -21,9 +21,14 @@ export default function CampaignsPage() {
                 setLoading(true);
                 setError(null);
                 const fetchedCampaigns = await getAllCampaigns();
-                setCampaigns(fetchedCampaigns);
+                if (fetchedCampaigns) {
+                    setCampaigns(fetchedCampaigns);
+                } else {
+                    setError("The campaigns list could not be retrieved from the server.");
+                }
             } catch (e) {
-                setError("Failed to load campaign data. Please try again later.");
+                const errorMessage = e instanceof Error ? e.message : "An unknown server error occurred.";
+                setError(`Failed to load campaign data: ${errorMessage}`);
                 console.error(e);
             } finally {
                 setLoading(false);
@@ -52,7 +57,7 @@ export default function CampaignsPage() {
                     ) : error ? (
                          <Alert variant="destructive" className="my-4">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Error</AlertTitle>
+                            <AlertTitle>Error Loading Campaigns</AlertTitle>
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     ) : (

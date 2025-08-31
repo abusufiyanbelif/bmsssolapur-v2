@@ -53,6 +53,7 @@ const MAX_DONATION_THRESHOLD = 50000;
 
 
 const statusColors: Record<DonationStatus, string> = {
+    "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Verified": "bg-green-500/20 text-green-700 border-green-500/30",
     "Partially Allocated": "bg-orange-500/20 text-orange-700 border-orange-500/30",
@@ -103,19 +104,29 @@ function DonationsPageContent() {
     const fetchData = async () => {
         try {
             setLoading(true);
+            setError(null);
             const [fetchedDonations, fetchedUsers, fetchedLeads, fetchedCampaigns] = await Promise.all([
                 getAllDonations(),
                 getAllUsers(),
                 getAllLeads(),
                 getAllCampaigns(),
             ]);
-            setDonations(fetchedDonations);
-            setAllUsers(fetchedUsers);
-            setAllLeads(fetchedLeads);
-            setAllCampaigns(fetchedCampaigns);
-            setError(null);
+
+            if (fetchedDonations) setDonations(fetchedDonations);
+            else setError("Failed to load donations.");
+            
+            if (fetchedUsers) setAllUsers(fetchedUsers);
+            else setError(prev => prev ? `${prev} Failed to load users.` : "Failed to load users.");
+
+            if (fetchedLeads) setAllLeads(fetchedLeads);
+             else setError(prev => prev ? `${prev} Failed to load leads.` : "Failed to load leads.");
+
+            if (fetchedCampaigns) setAllCampaigns(fetchedCampaigns);
+             else setError(prev => prev ? `${prev} Failed to load campaigns.` : "Failed to load campaigns.");
+
         } catch (e) {
-            setError("Failed to fetch donations. Please try again later.");
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+            setError(`Failed to fetch data for Donations page: ${errorMessage}`);
             console.error(e);
         } finally {
             setLoading(false);
@@ -167,6 +178,7 @@ function DonationsPageContent() {
 
 
     const filteredDonations = useMemo(() => {
+        if (!donations) return [];
         let filtered = donations.filter(donation => {
             const statusMatch = appliedFilters.status === 'all' || donation.status === appliedFilters.status;
             const typeMatch = appliedFilters.type === 'all' || donation.type === appliedFilters.type;
@@ -274,6 +286,7 @@ function DonationsPageContent() {
     };
 
     const leadsById = useMemo(() => {
+        if (!allLeads) return {};
         return allLeads.reduce((acc, lead) => {
             acc[lead.id] = lead;
             return acc;
@@ -717,7 +730,7 @@ function DonationsPageContent() {
             return (
                 <Alert variant="destructive" className="my-4">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
+                    <AlertTitle>Error Loading Donations Page</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             );

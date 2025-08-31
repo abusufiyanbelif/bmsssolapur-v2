@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
 
 const statusColors: Record<DonationStatus, string> = {
+    "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Verified": "bg-green-500/20 text-green-700 border-green-500/30",
     "Failed/Incomplete": "bg-red-500/20 text-red-700 border-red-500/30",
@@ -60,10 +61,25 @@ export default function MyDonationsPage() {
           getUser(userId)
         ]);
         
-        userDonations.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
-        setDonations(userDonations);
-        setUser(fetchedUser);
-        setError(null);
+        if (userDonations) {
+            userDonations.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
+            setDonations(userDonations);
+        } else {
+            setError("Could not retrieve your donation history.");
+        }
+
+        if (fetchedUser) {
+            setUser(fetchedUser);
+        } else {
+             setError("Could not retrieve your user profile.");
+        }
+        
+        if (!userDonations || !fetchedUser) {
+            setError(prev => prev || "An error occurred while loading your data.");
+        } else {
+            setError(null);
+        }
+
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
         setError(`Failed to fetch donation history: ${errorMessage}`);

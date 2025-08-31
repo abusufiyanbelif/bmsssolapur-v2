@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -88,7 +89,13 @@ export default function BoardManagementPage() {
     const fetchBoardMembers = async () => {
         try {
             setLoading(true);
+            setError(null);
             const allUsers = await getAllUsers();
+            if (!allUsers) {
+                setError("Failed to load user data for the board management page.");
+                return;
+            }
+
             const categorizedMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [] };
 
             allUsers.forEach(user => {
@@ -109,7 +116,8 @@ export default function BoardManagementPage() {
             });
             setBoardMembers(categorizedMembers);
         } catch (e) {
-            setError("Failed to fetch board members.");
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+            setError(`Failed to fetch board members: ${errorMessage}`);
             console.error(e);
         } finally {
             setLoading(false);
@@ -139,7 +147,7 @@ export default function BoardManagementPage() {
             return (
                 <Alert variant="destructive" className="my-4">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
+                    <AlertTitle>Error Loading Board Members</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             );

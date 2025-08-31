@@ -24,6 +24,7 @@ export default function BeneficiaryDashboardPage() {
     useEffect(() => {
         const fetchInitialData = async () => {
             setLoading(true);
+            setError(null);
             const storedUserId = localStorage.getItem('userId');
             if (!storedUserId) {
                 setError("No user session found. Please log in.");
@@ -34,7 +35,7 @@ export default function BeneficiaryDashboardPage() {
             try {
                 const fetchedUser = await getUser(storedUserId);
                 if (!fetchedUser || !fetchedUser.roles.includes('Beneficiary')) {
-                    setError("You do not have permission to view this page.");
+                    setError("You do not have permission to view the Beneficiary Dashboard.");
                     setLoading(false);
                     return;
                 }
@@ -45,12 +46,19 @@ export default function BeneficiaryDashboardPage() {
                     getRandomQuotes(3),
                     getAppSettings(),
                 ]);
-                setCases(beneficiaryCases);
-                setQuotes(randomQuotes);
-                setSettings(appSettings);
+                
+                if (beneficiaryCases) setCases(beneficiaryCases);
+                else setError("Could not load your cases.");
+
+                if (randomQuotes) setQuotes(randomQuotes);
+                else setError(prev => prev ? `${prev} Could not load quotes.` : "Could not load quotes.");
+                
+                if (appSettings) setSettings(appSettings);
+                else setError(prev => prev ? `${prev} Could not load app settings.` : "Could not load app settings.");
 
             } catch (e) {
-                setError("Failed to load dashboard data.");
+                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+                setError(`Failed to load dashboard data: ${errorMessage}`);
                 console.error(e);
             } finally {
                 setLoading(false);
@@ -68,14 +76,20 @@ export default function BeneficiaryDashboardPage() {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
+        <AlertTitle>Error Loading Dashboard</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
   
   if (!user || !settings) {
-      return null;
+      return (
+         <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Initialization Failed</AlertTitle>
+            <AlertDescription>Could not initialize user session or app settings. Please try again later.</AlertDescription>
+        </Alert>
+      );
   }
 
   return (

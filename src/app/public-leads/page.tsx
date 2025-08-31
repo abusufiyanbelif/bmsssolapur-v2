@@ -112,9 +112,14 @@ export default function PublicLeadsPage() {
                 setLoading(true);
                 setError(null);
                 const fetchedLeads = await getOpenGeneralLeads();
-                setLeads(fetchedLeads);
+                if (fetchedLeads) {
+                    setLeads(fetchedLeads);
+                } else {
+                    setError("The list of general cases could not be retrieved from the server.");
+                }
             } catch (e) {
-                setError("Failed to load general cases. Please try again later.");
+                const errorMessage = e instanceof Error ? e.message : "An unknown server error occurred.";
+                setError(`Failed to load general cases: ${errorMessage}`);
                 console.error(e);
             } finally {
                 setLoading(false);
@@ -143,7 +148,7 @@ export default function PublicLeadsPage() {
                     ) : error ? (
                          <Alert variant="destructive" className="my-4">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Error</AlertTitle>
+                            <AlertTitle>Error Loading Cases</AlertTitle>
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     ) : (

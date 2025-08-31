@@ -67,13 +67,17 @@ export function PublicHomePage() {
       const fetchData = async () => {
           setLeadsLoading(true);
           const fetchedLeads = await getOpenGeneralLeads();
-          setLeads(fetchedLeads as EnrichedLead[]);
+          if(fetchedLeads) {
+            setLeads(fetchedLeads as EnrichedLead[]);
+          }
           setLeadsLoading(false);
       };
       const fetchQuotes = async () => {
           setQuotesLoading(true);
           const fetchedQuotes = await getRandomQuotes(3);
-          setQuotes(fetchedQuotes);
+          if(fetchedQuotes) {
+            setQuotes(fetchedQuotes);
+          }
           setQuotesLoading(false);
       }
       fetchData();
@@ -115,7 +119,7 @@ export function PublicHomePage() {
           <CardContent>
               {leadsLoading ? (
                   <div className="flex justify-center items-center h-40"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>
-              ) : leads.length > 0 ? (
+              ) : leads && leads.length > 0 ? (
                   <div className="space-y-4">
                       {leads.slice(0, 3).map(lead => {
                           const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
@@ -146,7 +150,7 @@ export function PublicHomePage() {
                   </div>
               )}
           </CardContent>
-          {leads.length > 0 && (
+          {leads && leads.length > 0 && (
               <CardFooter>
                   <Button asChild variant="secondary" className="w-full">
                       <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>

@@ -1,13 +1,11 @@
 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin } from "lucide-react";
+import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User, Organization } from "@/services/types";
-import Link from "next/link";
 import { QrCodeDialog } from "@/app/organization/qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
 import { getPublicOrganization } from "@/services/public-data-service";
@@ -26,23 +24,26 @@ export default async function OrganizationPage() {
     let error = null;
 
     try {
+        // These can fail if Firebase isn't configured, so we wrap them.
         const [org, allUsers] = await Promise.all([
-            getPublicOrganization(), // Fetch from public data
+            getPublicOrganization(),
             getAllUsers(),
         ]);
         organization = org;
         
-        allUsers.forEach(user => {
-            (user.groups || []).forEach(group => {
-                const category = groupMapping[group];
-                if (category) {
-                    if (!boardMembers[category]) {
-                        boardMembers[category] = [];
+        if (allUsers) {
+            allUsers.forEach(user => {
+                (user.groups || []).forEach(group => {
+                    const category = groupMapping[group];
+                    if (category) {
+                        if (!boardMembers[category]) {
+                            boardMembers[category] = [];
+                        }
+                        boardMembers[category].push(user);
                     }
-                    boardMembers[category].push(user);
-                }
+                });
             });
-        });
+        }
 
     } catch(e) {
         error = e instanceof Error ? e.message : "An unknown error occurred while fetching organization details.";
@@ -54,7 +55,7 @@ export default async function OrganizationPage() {
             <div className="flex-1 space-y-4">
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
+                    <AlertTitle>Error Loading Page</AlertTitle>
                     <AlertDescription>
                        {error}
                        <p className="text-xs mt-2">This is likely due to a missing or invalid Firebase configuration. Please ensure your environment variables are set correctly.</p>
@@ -69,9 +70,9 @@ export default async function OrganizationPage() {
              <div className="flex-1 space-y-4">
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>No Organization Found</AlertTitle>
+                    <AlertTitle>Organization Details Not Available</AlertTitle>
                     <AlertDescription>
-                        No organization details have been configured in the database yet. This could also be due to missing Firebase credentials.
+                        The organization's profile has not been set up yet, or there was a problem retrieving it. Please check back later.
                     </AlertDescription>
                 </Alert>
             </div>

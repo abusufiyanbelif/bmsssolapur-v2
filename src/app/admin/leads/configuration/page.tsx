@@ -36,10 +36,14 @@ export default function LeadConfigurationPage() {
                 getAllUsers(),
             ]);
             setSettings(fetchedSettings);
-            setAllUsers(fetchedUsers);
+            if(fetchedUsers) {
+                setAllUsers(fetchedUsers);
+            } else {
+                setError("Failed to load user data for approvers list.");
+            }
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-            setError(`Failed to load configuration data. Error: ${errorMessage}`);
+            setError(`Failed to load configuration data: ${errorMessage}`);
             console.error(e);
         } finally {
             setLoading(false);
@@ -50,18 +54,17 @@ export default function LeadConfigurationPage() {
         fetchData();
     }, []);
 
-    const handleConfigUpdate = (newConfig: Partial<AppSettings['leadConfiguration']>) => {
+    const handleConfigUpdate = async (newConfig: Partial<AppSettings['leadConfiguration']>) => {
         if (!settings?.leadConfiguration) return;
         const updatedLeadConfig = { ...settings.leadConfiguration, ...newConfig };
 
-        handleUpdateLeadConfiguration(updatedLeadConfig).then(result => {
-            if (result.success) {
-                toast({ variant: 'success', title: 'Setting Updated', description: 'Lead configuration has been saved.' });
-                fetchData(); // Refresh all data from server
-            } else {
-                toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
-            }
-        });
+        const result = await handleUpdateLeadConfiguration(updatedLeadConfig);
+        if (result.success) {
+            toast({ variant: 'success', title: 'Setting Updated', description: 'Lead configuration has been saved.' });
+            fetchData(); // Refresh all data from server
+        } else {
+            toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
+        }
     }
 
     if (loading) {
@@ -72,7 +75,7 @@ export default function LeadConfigurationPage() {
         return (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>Error Loading Page</AlertTitle>
                 <AlertDescription>{error || "Could not load settings."}</AlertDescription>
             </Alert>
         );
