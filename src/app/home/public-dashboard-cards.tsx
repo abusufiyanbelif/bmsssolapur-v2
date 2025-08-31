@@ -5,8 +5,9 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainMetricsCard, FundsInHandCard, TopDonorsCard, RecentCampaignsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
-import { Suspense } from "react";
-import type { Donation, User, Lead, Campaign } from "@/services/types";
+import { Suspense, useEffect, useState } from "react";
+import type { Donation, User, Lead, Campaign, PublicStats } from "@/services/types";
+import { getPublicStats } from "@/services/public-data-service";
 
 
 const CardSkeleton = () => (
@@ -37,14 +38,27 @@ interface PublicDashboardCardsProps {
 }
 
 export function PublicDashboardCards({ allDonations, allUsers, allLeads, allCampaigns }: PublicDashboardCardsProps) {
+    const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getPublicStats().then(stats => {
+            setPublicStats(stats);
+            setLoading(false);
+        }).catch(err => {
+            console.error("Failed to load public stats:", err);
+            setLoading(false);
+        });
+    }, []);
+
     return (
         <div className="space-y-4">
             <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
-                <MainMetricsCard isPublicView={true} />
+                <MainMetricsCard isPublicView={true} stats={publicStats} loading={loading} />
             </Suspense>
             
             <Suspense fallback={<CardSkeleton />}>
-                <FundsInHandCard isPublicView={true} />
+                <FundsInHandCard isPublicView={true} stats={publicStats} loading={loading} />
             </Suspense>
             <Suspense fallback={<CardSkeleton />}>
                 <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />

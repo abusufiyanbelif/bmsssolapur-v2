@@ -15,6 +15,8 @@ import {
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { Organization } from './types';
+import { updatePublicOrganization } from './public-data-service';
+
 
 // Re-export types for backward compatibility
 export type { Organization };
@@ -53,6 +55,10 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
       updatedAt: new Date(),
     };
     await setDoc(orgRef, newOrganization);
+
+    // Sync with public collection
+    await updatePublicOrganization(newOrganization);
+
     return newOrganization;
   } catch (error) {
     console.error('Error creating organization: ', error);
@@ -105,6 +111,12 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
         ...updates,
         updatedAt: new Date(),
     });
+
+    // After updating, get the full document and sync it to the public collection
+    const updatedOrg = await getOrganization(id);
+    if (updatedOrg) {
+        await updatePublicOrganization(updatedOrg);
+    }
   } catch (error) {
     console.error("Error updating organization: ", error);
     throw new Error('Failed to update organization.');

@@ -1,16 +1,16 @@
 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCurrentOrganization } from "@/services/organization-service";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { User } from "@/services/types";
+import type { User, Organization } from "@/services/types";
 import Link from "next/link";
 import { QrCodeDialog } from "@/app/organization/qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
+import { getPublicOrganization } from "@/services/public-data-service";
 
 const groupMapping: Record<string, string> = {
     'Founder': 'founder',
@@ -21,13 +21,13 @@ const groupMapping: Record<string, string> = {
 
 
 export default async function OrganizationPage() {
-    let organization;
+    let organization: Organization | null = null;
     let boardMembers: Record<string, User[]> = { founder: [], cofounder: [], finance: [], members: [] };
     let error = null;
 
     try {
         const [org, allUsers] = await Promise.all([
-            getCurrentOrganization(),
+            getPublicOrganization(), // Fetch from public data
             getAllUsers(),
         ]);
         organization = org;

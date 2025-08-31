@@ -209,6 +209,7 @@ export interface Lead {
     id: string; // Now a custom-generated string
     name: string; // Beneficiary name for easy access
     beneficiaryId: string;
+    beneficiary?: User;
     campaignId?: string;
     campaignName?: string;
     headline?: string;
@@ -432,4 +433,13 @@ export interface ActivityLog {
     activity: string;
     details: Record<string, any>;
     timestamp: Date;
+}
+
+export interface PublicStats {
+    totalRaised: number;
+    totalDistributed: number;
+    beneficiariesHelped: number;
+    casesClosed: number;
+    openCases: number;
+    fundsInHand: number;
 }

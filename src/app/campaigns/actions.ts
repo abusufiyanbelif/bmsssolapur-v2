@@ -8,6 +8,8 @@ import { db, isConfigValid } from "@/services/firebase";
 import { getUser } from "@/services/user-service";
 import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-service";
 import { getAllLeads } from "@/services/lead-service";
+import { getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
+
 
 export interface EnrichedLead extends Lead {
     beneficiary?: User;
@@ -17,49 +19,12 @@ export interface EnrichedLead extends Lead {
  * Fetches leads that are verified and public.
  * These are the general leads that should be displayed for donations.
  */
-export async function getOpenGeneralLeads(): Promise<EnrichedLead[]> {
+export async function getOpenGeneralLeads(): Promise<Lead[]> {
     if (!isConfigValid) {
         console.warn("Firebase is not configured. Skipping fetching open leads.");
         return [];
     }
-    try {
-        const leadsCollection = collection(db, 'leads');
-        
-        // This query fetches all open/verified leads that are meant for public viewing.
-        const q = query(
-            leadsCollection, 
-            where("verifiedStatus", "==", "Verified"),
-            where("caseAction", "==", "Publish")
-        );
-        
-        const querySnapshot = await getDocs(q);
-
-        const leads: Lead[] = [];
-        querySnapshot.forEach((doc) => {
-            const leadData = doc.data() as Omit<Lead, 'id'>;
-            // Additional filter for leads that do NOT have a campaignId
-            if (!leadData.campaignId) {
-                leads.push({ id: doc.id, ...leadData });
-            }
-        });
-        
-        leads.sort((a, b) => b.dateCreated.toMillis() - a.dateCreated.toMillis());
-
-        const enrichedLeads = await Promise.all(
-            leads.map(async (lead) => {
-                const beneficiary = await getUser(lead.beneficiaryId);
-                return { ...lead, beneficiary };
-            })
-        );
-
-        return enrichedLeads;
-    } catch (error) {
-        console.error("Error fetching open general leads: ", error);
-        if (error instanceof Error && error.message.includes('index')) {
-            console.error("Firestore composite index missing. Please create one on 'leads' for 'verifiedStatus' (asc) and 'caseAction' (asc).");
-        }
-        return [];
-    }
+    return getPublicLeads();
 }
 
 
@@ -73,25 +38,16 @@ export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: num
         return [];
     }
     try {
-        const [allCampaigns, allLeads] = await Promise.all([
-            getAllCampaignsService(),
-            getAllLeads()
-        ]);
+        const publicCampaigns = await getPublicCampaigns();
         
-        // Calculate stats for each campaign
-        const enrichedCampaigns = allCampaigns.map(campaign => {
-            const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
-            const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
-            const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
-            
-            return {
-                ...campaign,
-                raisedAmount,
-                fundingProgress
-            };
-        });
-
-        return enrichedCampaigns;
+        // The public campaigns already have the stats pre-calculated.
+        return publicCampaigns.map(c => ({
+            ...c,
+            // Ensure fields from the original Campaign type exist if needed elsewhere, even if empty
+            acceptableDonationTypes: c.acceptableDonationTypes || [],
+            createdAt: c.createdAt || new Date(),
+            updatedAt: c.updatedAt || new Date(),
+        }));
     } catch (error) {
         console.error("Error fetching all campaigns with stats: ", error);
         return [];

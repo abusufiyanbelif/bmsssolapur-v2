@@ -67,7 +67,7 @@ export function PublicHomePage() {
       const fetchData = async () => {
           setLeadsLoading(true);
           const fetchedLeads = await getOpenGeneralLeads();
-          setLeads(fetchedLeads);
+          setLeads(fetchedLeads as EnrichedLead[]);
           setLeadsLoading(false);
       };
       const fetchQuotes = async () => {

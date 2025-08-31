@@ -27,6 +27,7 @@ import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verif
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
 import { format } from 'date-fns';
+import { updatePublicLead } from './public-data-service';
 
 
 // Re-export types for backward compatibility
@@ -99,6 +100,12 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     });
 
     await setDoc(leadRef, newLead);
+
+    // Sync with public collection if applicable
+    if (newLead.caseAction === 'Publish') {
+        await updatePublicLead(newLead as Lead);
+    }
+    
     return newLead as Lead;
   } catch (error) {
     console.error('Error creating lead: ', error);
@@ -151,6 +158,13 @@ export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 
     }
 
     await updateDoc(leadRef, finalUpdates);
+
+    // After updating, get the full document and sync it to the public collection
+    const updatedLead = await getLead(id);
+    if(updatedLead) {
+        await updatePublicLead(updatedLead);
+    }
+
   } catch (error) {
     console.error("Error updating lead: ", error);
     throw new Error('Failed to update lead.');
@@ -178,6 +192,9 @@ export const deleteLead = async (id: string, adminUser: Pick<User, 'id' | 'name'
                 amount: leadToDelete.helpRequested,
             },
         });
+        
+        // Sync deletion with public collection
+        await updatePublicLead({ ...leadToDelete, caseAction: 'Cancelled' }); // Treat as cancelled for public view
     } catch (error) {
         console.error("Error deleting lead: ", error);
         throw new Error('Failed to delete lead.');
