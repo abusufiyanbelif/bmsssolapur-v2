@@ -4,7 +4,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft } from "lucide-react";
+import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
@@ -27,12 +27,48 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
+import { performPermissionCheck } from "@/services/firebase";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+
+
+const PermissionErrorState = ({ error }: { error: string }) => (
+    <div className="flex flex-col flex-1 items-center justify-center h-full p-4 bg-background">
+        <Card className="w-full max-w-2xl text-center shadow-2xl border-destructive">
+            <CardHeader>
+                <div className="mx-auto bg-destructive text-destructive-foreground rounded-full p-3 w-fit">
+                    <Shield className="h-8 w-8" />
+                </div>
+                <CardTitle className="text-destructive text-2xl pt-4">Action Required: Insufficient Permissions</CardTitle>
+                <CardDescription className="text-base text-center pt-2">
+                    The application cannot connect to the database. This is usually because the server environment does not have the correct IAM permissions.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <p>To fix this, you need to grant the <strong className="text-primary">&quot;Cloud Datastore User&quot;</strong> role to the correct service account in your Google Cloud project.</p>
+                <div className="p-4 rounded-lg bg-muted text-left text-sm">
+                    <p className="font-semibold">Follow these steps:</p>
+                    <ol className="list-decimal list-inside space-y-2 mt-2">
+                        <li>Go to the <strong className="text-primary">IAM & Admin</strong> page in your Google Cloud Console.</li>
+                        <li>Find the service account with the name <strong className="text-primary">&quot;Firebase App Hosting compute engine default service account&quot;</strong>.</li>
+                        <li>Click the pencil icon to edit its permissions.</li>
+                        <li>Click <strong className="text-primary">&quot;Add another role&quot;</strong> and search for <strong className="text-primary">&quot;Cloud Datastore User&quot;</strong>.</li>
+                        <li>Select the role and click <strong className="text-primary">&quot;Save&quot;</strong>.</li>
+                    </ol>
+                </div>
+                 <p className="text-xs text-muted-foreground pt-2">
+                    The specific error message was: <code className="bg-muted px-1 py-0.5 rounded">{error}</code>
+                </p>
+            </CardContent>
+        </Card>
+    </div>
+);
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
     const [isSessionReady, setIsSessionReady] = useState(false);
+    const [permissionError, setPermissionError] = useState<string | null>(null);
     const [pendingLeads, setPendingLeads] = useState<LeadType[]>([]);
     const [readyToPublishLeads, setReadyToPublishLeads] = useState<LeadType[]>([]);
     const [pendingDonations, setPendingDonations] = useState<DonationType[]>([]);
@@ -56,6 +92,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
     
     const checkUserSession = async () => {
+        // Step 1: Perform the permission check first.
+        const permissionResult = await performPermissionCheck();
+        if (!permissionResult.success && permissionResult.error === 'permission-denied') {
+            setPermissionError('The service account needs the "Cloud Datastore User" IAM role.');
+            setIsSessionReady(true);
+            return; // Stop further execution
+        }
+        if (!permissionResult.success) {
+            setPermissionError(permissionResult.error || 'An unknown connection error occurred.');
+            setIsSessionReady(true);
+            return;
+        }
+
+
         const storedUserId = localStorage.getItem('userId');
         const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
@@ -191,6 +241,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <p className="mt-4 text-muted-foreground">Initializing your session...</p>
         </div>
     )
+
+    if (permissionError) {
+        return <PermissionErrorState error={permissionError} />;
+    }
 
     if (!user || !isSessionReady) {
         return <LoadingState />
