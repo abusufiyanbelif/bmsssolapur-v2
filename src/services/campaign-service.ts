@@ -146,9 +146,27 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
     console.error("Error getting all campaigns: ", error);
     // Gracefully handle missing index error without crashing
     if (error instanceof Error && error.message.includes('index')) {
-        console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'campaigns' collection.");
+        console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'campaigns' collection. Retrying without ordering.");
+        // Retry without ordering if index is missing
+        try {
+            const campaignsQuery = query(collection(db, CAMPAIGNS_COLLECTION));
+            const querySnapshot = await getDocs(campaignsQuery);
+            const campaigns: Campaign[] = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                campaigns.push({
+                    id: doc.id, ...data, startDate: (data.startDate as Timestamp).toDate(),
+                    endDate: (data.endDate as Timestamp).toDate(), createdAt: (data.createdAt as Timestamp).toDate(),
+                    updatedAt: (data.updatedAt as Timestamp).toDate(),
+                } as Campaign);
+            });
+            return campaigns;
+        } catch (retryError) {
+             console.error("Retry failed for getAllCampaigns:", retryError);
+             return [];
+        }
     }
-    return []; // Return empty array on error instead of throwing
+    return []; // Return empty array on other errors
   }
 };
 

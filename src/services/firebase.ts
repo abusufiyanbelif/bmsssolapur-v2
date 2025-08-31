@@ -3,15 +3,20 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
-import { config } from '@/lib/config';
+import { config as appConfig } from '@/lib/config';
+import dotenv from 'dotenv';
+
+// Ensure dotenv is configured for server-side execution
+dotenv.config();
+
 
 const firebaseConfig = {
-  apiKey: config.firebase.apiKey,
-  authDomain: config.firebase.authDomain,
-  projectId: config.firebase.projectId,
-  storageBucket: config.firebase.storageBucket,
-  messagingSenderId: config.firebase.messagingSenderId,
-  appId: config.firebase.appId,
+  apiKey: appConfig.firebase.apiKey,
+  authDomain: appConfig.firebase.authDomain,
+  projectId: appConfig.firebase.projectId,
+  storageBucket: appConfig.firebase.storageBucket,
+  messagingSenderId: appConfig.firebase.messagingSenderId,
+  appId: appConfig.firebase.appId,
 };
 
 // A simple check to see if the config values are placeholders
