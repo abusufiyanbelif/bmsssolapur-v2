@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -68,12 +69,10 @@ const generateNextAnonymousId = async (prefix: string, field: keyof User): Promi
 
 // Function to get a user by their custom userId field
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
-    if (!isConfigValid) {
-        console.warn("Firebase not configured. Skipping user fetch by userId.");
+    if (!isConfigValid || !userId) {
         return null;
     }
     try {
-        if (!userId) return null;
         const q = query(collection(db, USERS_COLLECTION), where("userId", "==", userId), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
@@ -90,7 +89,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
         return null;
     } catch (error) {
         console.error(`Error getting user by userId: ${userId}`, error);
-        throw new Error(`Failed to get user by userId. This could be due to a missing Firestore index on the 'userId' field in the 'users' collection.`);
+        return null;
     }
 };
 
@@ -233,8 +232,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 
 // Function to get a user by ID
 export const getUser = async (id: string): Promise<User | null> => {
-  if (!isConfigValid) {
-    console.warn("Firebase not configured. Skipping user fetch.");
+  if (!isConfigValid || !id) {
     return null;
   }
   try {
@@ -254,40 +252,41 @@ export const getUser = async (id: string): Promise<User | null> => {
     return null;
   } catch (error) {
     console.error(`Error getting user with ID ${id}:`, error);
-    throw new Error(`Failed to get user with ID ${id}.`);
+    return null;
   }
 };
 
 // Function to get a user by name (for the special 'admin' case)
 export const getUserByName = async (name: string): Promise<User | null> => {
-  if (!isConfigValid) {
-    console.warn("Firebase not configured. Skipping user fetch by name.");
-    return null;
-  }
-  try {
-    const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0];
-      const data = userDoc.data();
-      return {
-        id: userDoc.id,
-        ...data,
-        roles: getUnique(data.roles),
-        createdAt: (data.createdAt as Timestamp)?.toDate(),
-        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
-      } as User;
+    if (!isConfigValid || !name) {
+        return null;
     }
-    return null;
-  } catch (error) {
-    console.error(`Error getting user by name: ${name}`, error);
-    throw new Error(`Failed to get user by name. This could be due to a missing Firestore index on the 'name' field in the 'users' collection.`);
-  }
+    try {
+        const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const data = userDoc.data();
+        return {
+            id: userDoc.id,
+            ...data,
+            roles: getUnique(data.roles),
+            createdAt: (data.createdAt as Timestamp)?.toDate(),
+            updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        } as User;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error getting user by name: ${name}`, error);
+        return null;
+    }
 }
 
 // Function to get a user by userKey
 export const getUserByUserKey = async (userKey: string): Promise<User | null> => {
-    if (!isConfigValid) return null;
+    if (!isConfigValid || !userKey) {
+        return null;
+    }
     try {
         const q = query(collection(db, USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
         const snapshot = await getDocs(q);
@@ -308,7 +307,9 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
 
 // Function to get a user by full name
 export const getUserByFullName = async (name: string): Promise<User | null> => {
-    if (!isConfigValid) return null;
+    if (!isConfigValid || !name) {
+        return null;
+    }
     try {
         const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
         const snapshot = await getDocs(q);
@@ -331,11 +332,10 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
 // Function to get a user by phone number
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
   if (!isConfigValid) {
-    console.warn("Firebase not configured. Skipping user fetch by phone.");
     return null;
   }
-  const standardizedPhone = phone.replace(/\D/g, '').slice(-10);
-  if (standardizedPhone.length !== 10) return null;
+  const standardizedPhone = phone?.replace(/\D/g, '').slice(-10);
+  if (!standardizedPhone || standardizedPhone.length !== 10) return null;
 
   try {
     const q = query(collection(db, USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
@@ -354,24 +354,16 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
     return null;
   } catch (error) {
     console.error('Error getting user by phone: ', error);
-    // This could be due to a missing index. Log a helpful message.
-    if (error instanceof Error && error.message.includes('index')) {
-        const detailedError = `Firestore query error. This likely indicates a missing index. Please create a single-field index on 'phone' in the 'users' collection.`;
-        console.error(detailedError);
-        throw new Error(detailedError);
-    }
-    throw new Error('Failed to get user by phone.');
+    return null;
   }
 }
 
 // Function to get a user by email
 export const getUserByEmail = async (email: string): Promise<User | null> => {
-  if (!isConfigValid) {
-    console.warn("Firebase not configured. Skipping user fetch by email.");
+  if (!isConfigValid || !email) {
     return null;
   }
   try {
-    if (!email) return null;
     const q = query(collection(db, USERS_COLLECTION), where("email", "==", email), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -388,7 +380,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     return null;
   } catch (error) {
     console.error('Error getting user by email: ', error);
-    throw new Error('Failed to get user by email.');
+    return null;
   }
 }
 
@@ -412,23 +404,16 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
     return null;
   } catch (error) {
     console.error('Error getting user by UPI ID: ', error);
-     if (error instanceof Error && error.message.includes('index')) {
-        const detailedError = `Firestore query error. This indicates a missing index. Please create an array-contains index in Firestore on the 'users' collection for the 'upiIds' field.`;
-        console.error(detailedError);
-        return null; // Return null to prevent crash
-    }
-    return null; // Return null on any other error
+    return null;
   }
 }
 
 // Function to get a user by Bank Account Number
 export const getUserByBankAccountNumber = async (accountNumber: string): Promise<User | null> => {
-  if (!isConfigValid) {
-    console.warn("Firebase not configured. Skipping user fetch by bank account.");
+  if (!isConfigValid || !accountNumber) {
     return null;
   }
   try {
-    if (!accountNumber) return null;
     const q = query(collection(db, USERS_COLLECTION), where("bankAccountNumber", "==", accountNumber), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -445,12 +430,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
     return null;
   } catch (error) {
     console.error('Error getting user by bank account number: ', error);
-    if (error instanceof Error && error.message.includes('index')) {
-        const detailedError = `Firestore query error. This indicates a missing index. Please create a single-field index in Firestore on the 'users' collection for 'bankAccountNumber' (ascending).`;
-        console.error(detailedError);
-        throw new Error(detailedError);
-    }
-    throw new Error('Failed to get user by bank account number.');
+    return null;
   }
 }
 
@@ -462,7 +442,14 @@ export const getUserByPan = async (pan: string): Promise<User | null> => {
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
-      return { id: doc.id, ...doc.data() } as User;
+      const data = doc.data();
+      return { 
+        id: doc.id,
+        ...data,
+        roles: getUnique(data.roles),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
     }
     return null;
   } catch (e) {
@@ -479,7 +466,14 @@ export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> =>
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
-      return { id: doc.id, ...doc.data() } as User;
+      const data = doc.data();
+      return { 
+        id: doc.id,
+        ...data,
+        roles: getUnique(data.roles),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+      } as User;
     }
     return null;
   } catch (e) {
@@ -577,7 +571,7 @@ export const getAllUsers = async (): Promise<User[]> => {
         if (error instanceof Error && error.message.includes('index')) {
              console.error("Firestore index missing. Please create a descending index on 'createdAt' for the 'users' collection.");
         }
-        throw new Error('Failed to get all users.');
+        return []; // Return empty array on error
     }
 }
 
@@ -607,7 +601,7 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
         return users;
     } catch (error) {
         console.error('Error getting referred beneficiaries: ', error);
-        throw new Error('Failed to get referred beneficiaries.');
+        return [];
     }
 }
 
