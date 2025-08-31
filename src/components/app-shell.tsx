@@ -91,79 +91,76 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
     
-    const checkUserSession = async () => {
-        // Step 1: Perform the permission check first.
-        const permissionResult = await performPermissionCheck();
-        if (!permissionResult.success && permissionResult.error === 'permission-denied') {
-            setPermissionError('The service account needs the "Cloud Datastore User" IAM role.');
-            setIsSessionReady(true);
-            return; // Stop further execution
-        }
-        if (!permissionResult.success) {
-            setPermissionError(permissionResult.error || 'An unknown connection error occurred.');
-            setIsSessionReady(true);
-            return;
-        }
-
-
-        const storedUserId = localStorage.getItem('userId');
-        const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
-
-        if (storedUserId) {
-            // First, try fetching by document ID. If that fails, try by custom userId.
-            let fetchedUser = await getUser(storedUserId);
-            
-            if (!fetchedUser) {
-                fetchedUser = await getUserByUserId(storedUserId);
+    useEffect(() => {
+        const initializeSession = async () => {
+            // Step 1: Perform the permission check first.
+            const permissionResult = await performPermissionCheck();
+            if (!permissionResult.success && permissionResult.error === 'permission-denied') {
+                setPermissionError('The service account needs the "Cloud Datastore User" IAM role.');
+                setIsSessionReady(true);
+                return; // Stop further execution
+            }
+            if (!permissionResult.success) {
+                setPermissionError(permissionResult.error || 'An unknown connection error occurred.');
+                setIsSessionReady(true);
+                return;
             }
 
-            if (fetchedUser) {
-                const savedRole = localStorage.getItem('activeRole');
-                const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
+            const storedUserId = localStorage.getItem('userId');
+            const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
+
+            if (storedUserId) {
+                let fetchedUser = await getUser(storedUserId);
                 
-                if (localStorage.getItem('activeRole') !== activeRole) {
-                     localStorage.setItem('activeRole', activeRole);
-                }
-                
-                 const userData = {
-                    ...fetchedUser,
-                    isLoggedIn: true,
-                    activeRole: activeRole,
-                    initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
-                    avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
-                };
-                setUser(userData);
-                
-                if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
-                    const [allLeads, allDonations] = await Promise.all([
-                        getAllLeads(),
-                        getAllDonations()
-                    ]);
-                    setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
-                    setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
-                    setPendingDonations(allDonations.filter(d => d.status === 'Pending verification'));
+                if (!fetchedUser) {
+                    fetchedUser = await getUserByUserId(storedUserId);
                 }
 
-                if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
-                    setIsRoleSwitcherOpen(true);
-                    localStorage.removeItem('showRoleSwitcher'); 
+                if (fetchedUser) {
+                    const savedRole = localStorage.getItem('activeRole');
+                    const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
+                    
+                    if (localStorage.getItem('activeRole') !== activeRole) {
+                        localStorage.setItem('activeRole', activeRole);
+                    }
+                    
+                    const userData = {
+                        ...fetchedUser,
+                        isLoggedIn: true,
+                        activeRole: activeRole,
+                        initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
+                        avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
+                    };
+                    setUser(userData);
+                    
+                    if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
+                        const [allLeads, allDonations] = await Promise.all([
+                            getAllLeads(),
+                            getAllDonations()
+                        ]);
+                        setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
+                        setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
+                        setPendingDonations(allDonations.filter(d => d.status === 'Pending verification'));
+                    }
+
+                    if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
+                        setIsRoleSwitcherOpen(true);
+                        localStorage.removeItem('showRoleSwitcher'); 
+                    }
+                } else {
+                    handleLogout(false); // Don't redirect if user is just invalid
                 }
             } else {
-                handleLogout(false); // Don't redirect if user is just invalid
+                setUser(guestUser);
             }
-        } else {
-            setUser(guestUser);
-        }
-        setIsSessionReady(true);
-    };
+            setIsSessionReady(true);
+        };
 
-    useEffect(() => {
-        checkUserSession();
-        
-        // Listen for custom event that signals a login has occurred
+        initializeSession();
+
         const handleLoginSuccess = () => {
             setIsSessionReady(false); // Force re-initialization
-            checkUserSession();
+            initializeSession();
         };
 
         window.addEventListener('loginSuccess', handleLoginSuccess);
