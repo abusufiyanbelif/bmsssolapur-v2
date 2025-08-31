@@ -1,4 +1,3 @@
-
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
@@ -15,45 +14,32 @@ runConfig:
   # to your backend's service account.
   # https://firebase.google.com/docs/app-hosting/configure#secrets
   secrets:
+    # Firebase SDK configuration
     - secret: NEXT_PUBLIC_FIREBASE_API_KEY
     - secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     - secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     - secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     - secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     - secret: NEXT_PUBLIC_FIREBASE_APP_ID
+
+    # Generative AI (Genkit)
+    - secret: GEMINI_API_KEY
+    
+    # Twilio for OTP via SMS
     - secret: TWILIO_ACCOUNT_SID
     - secret: TWILIO_AUTH_TOKEN
     - secret: TWILIO_VERIFY_SID
+
+    # Nodemailer for Email
     - secret: SMTP_HOST
     - secret: SMTP_PORT
     - secret: SMTP_SECURE
     - secret: SMTP_USER
     - secret: SMTP_PASS
     - secret: EMAIL_FROM
+    
+    # Razorpay (as we have implemented its logic)
     - secret: RAZORPAY_TEST_KEY_ID
     - secret: RAZORPAY_TEST_KEY_SECRET
     - secret: RAZORPAY_LIVE_KEY_ID
     - secret: RAZORPAY_LIVE_KEY_SECRET
-    - secret: PHONEPE_TEST_MERCHANT_ID
-    - secret: PHONEPE_TEST_SALT_KEY
-    - secret: PHONEPE_TEST_SALT_INDEX
-    - secret: PHONEPE_LIVE_MERCHANT_ID
-    - secret: PHONEPE_LIVE_SALT_KEY
-    - secret: PHONEPE_LIVE_SALT_INDEX
-    - secret: PAYTM_TEST_MERCHANT_ID
-    - secret: PAYTM_TEST_MERCHANT_KEY
-    - secret: PAYTM_LIVE_MERCHANT_ID
-    - secret: PAYTM_LIVE_MERCHANT_KEY
-    - secret: CASHFREE_TEST_APP_ID
-    - secret: CASHFREE_TEST_SECRET_KEY
-    - secret: CASHFREE_LIVE_APP_ID
-    - secret: CASHFREE_LIVE_SECRET_KEY
-    - secret: INSTAMOJO_TEST_API_KEY
-    - secret: INSTAMOJO_TEST_AUTH_TOKEN
-    - secret: INSTAMOJO_LIVE_API_KEY
-    - secret: INSTAMOJO_LIVE_AUTH_TOKEN
-    - secret: STRIPE_TEST_PUBLISHABLE_KEY
-    - secret: STRIPE_TEST_SECRET_KEY
-    - secret: STRIPE_LIVE_PUBLISHABLE_KEY
-    - secret: STRIPE_LIVE_SECRET_KEY
-
