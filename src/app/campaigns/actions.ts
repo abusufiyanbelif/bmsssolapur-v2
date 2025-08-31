@@ -34,6 +34,7 @@ export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: num
         return [];
     }
     try {
+        // This now correctly fetches from the public, sanitized collection.
         const publicCampaigns = await getPublicCampaigns();
         
         return publicCampaigns.map(c => ({

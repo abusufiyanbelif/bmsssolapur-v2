@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -7,7 +8,7 @@ import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megap
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
-import { getAllCampaigns } from "@/services/campaign-service";
+import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-service";
 import { format, formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -644,7 +645,7 @@ export const RecentCampaignsCard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [allCampaigns, allLeads] = await Promise.all([getAllCampaigns(), getAllLeads()]);
+                const [allCampaigns, allLeads] = await Promise.all([getAllCampaignsService(), getAllLeads()]);
                 setCampaigns(allCampaigns);
                 setLeads(allLeads);
             } catch(e) {
@@ -990,7 +991,7 @@ export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns?: Campaig
         } else {
              const fetchData = async () => {
                 try {
-                    const fetchedCampaigns = await getAllCampaigns();
+                    const fetchedCampaigns = await getAllCampaignsService();
                     setCampaigns(fetchedCampaigns);
                 } catch (e) { console.error("Failed to fetch campaign breakdown data", e); }
                 finally { setLoading(false); }

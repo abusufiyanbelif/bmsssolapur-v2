@@ -1,14 +1,18 @@
 
+
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MainMetricsCard, TopDonorsCard, RecentCampaignsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
+import { MainMetricsCard, TopDonorsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
 import { Suspense, useEffect, useState } from "react";
 import type { Donation, User, Lead, Campaign, PublicStats } from "@/services/types";
-import { getPublicStats, getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
-import { getAllDonations, getAllLeads, getAllUsers, getAllCampaigns as getAllCampaignsPrivate } from "@/services/deprecated-fetches";
-
+import { getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
+import { getAllDonations as getAllDonationsPrivate } from "@/services/donation-service";
+import { getAllUsers as getAllUsersPrivate } from "@/services/user-service";
+import { getAllLeads as getAllLeadsPrivate } from "@/services/lead-service";
+import { getAllCampaigns as getAllCampaignsService } from "@/app/campaigns/actions"; // Use the corrected public action
+import { RecentCampaignsCard } from "@/app/admin/dashboard-cards";
 
 const CardSkeleton = () => (
     <Card>
@@ -31,22 +35,20 @@ const TableSkeleton = () => (
 
 
 export function PublicDashboardCards() {
-    
-    // We now fetch the data directly inside this client component.
     const [allDonations, setAllDonations] = useState<Donation[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [allLeads, setAllLeads] = useState<Lead[]>([]);
-    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+    const [allCampaigns, setAllCampaigns] = useState<(Campaign & { raisedAmount: number, fundingProgress: number })[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             const [donations, users, leads, campaigns] = await Promise.all([
-                getAllDonations(),
-                getAllUsers(),
-                getAllLeads(),
-                getAllCampaignsPrivate()
+                getAllDonationsPrivate(),
+                getAllUsersPrivate(),
+                getAllLeadsPrivate(),
+                getAllCampaignsService()
             ]);
             setAllDonations(donations);
             setAllUsers(users);
@@ -93,7 +95,7 @@ export function PublicDashboardCards() {
                 </div>
             </div>
 
-            <Suspense fallback={<CardSkeleton />}>
+             <Suspense fallback={<CardSkeleton />}>
                 <CampaignBreakdownCard allCampaigns={allCampaigns} />
             </Suspense>
         </div>

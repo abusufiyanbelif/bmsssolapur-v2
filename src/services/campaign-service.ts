@@ -184,7 +184,8 @@ export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign,
 export const deleteCampaign = async (id: string): Promise<void> => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    await deleteDoc(doc(db, CAMPAIGIGNS_COLLECTION, id));
+    const campaignRef = doc(db, CAMPAIGNS_COLLECTION, id);
+    await deleteDoc(campaignRef);
     // Also delete from public collection
     await updatePublicCampaign({ id, status: 'Cancelled' } as any);
   } catch (error) {
