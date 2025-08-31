@@ -112,7 +112,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         return quotes;
     } catch (error) {
         console.error("Error getting all quotes: ", error);
-        throw new Error('Failed to get all quotes.');
+        return [];
     }
 }
 
