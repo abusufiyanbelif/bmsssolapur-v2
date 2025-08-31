@@ -46,10 +46,15 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
     
     // We fetch the document again to get the server-generated timestamps as Date objects
     const newDoc = await getDoc(campaignRef);
+    const data = newDoc.data();
+    if (!data) {
+        throw new Error('Failed to create campaign, document not found after creation.');
+    }
     return { 
-        ...newDoc.data(),
-        createdAt: (newDoc.data()?.createdAt as Timestamp).toDate(),
-        updatedAt: (newDoc.data()?.updatedAt as Timestamp).toDate(),
+        ...data,
+        id: newDoc.id,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
     } as Campaign;
 
   } catch (error) {
@@ -64,7 +69,7 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
  * @returns The campaign object or null if not found.
  */
 export const getCampaign = async (id: string): Promise<Campaign | null> => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
+  if (!isConfigValid || !id) return null;
   try {
     const campaignDoc = await getDoc(doc(db, CAMPAIGNS_COLLECTION, id));
     if (campaignDoc.exists()) {
@@ -82,8 +87,8 @@ export const getCampaign = async (id: string): Promise<Campaign | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting campaign: ', error);
-    throw new Error('Failed to get campaign.');
+    console.error(`Error getting campaign with id ${id}: `, error);
+    return null;
   }
 };
 
@@ -116,7 +121,11 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
     return campaigns;
   } catch (error) {
     console.error("Error getting all campaigns: ", error);
-    throw new Error('Failed to get all campaigns.');
+    // Gracefully handle missing index error without crashing
+    if (error instanceof Error && error.message.includes('index')) {
+        console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'campaigns' collection.");
+    }
+    return []; // Return empty array on error instead of throwing
   }
 };
 
