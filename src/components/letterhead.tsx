@@ -1,5 +1,4 @@
 
-"use client";
 
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
@@ -14,7 +13,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
     ({ organization }, ref) => {
         return (
             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative">
-                {/* Use a real img tag for the watermark for better html2canvas compatibility */}
                 <Image 
                     src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
                     alt="Watermark"
@@ -26,7 +24,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                 <div className="relative z-10">
                     <header className="flex justify-between items-start pb-4 border-b-2 border-gray-800">
                         <div className="flex items-center gap-6">
-                             {/* Use a standard img tag for the logo to ensure it's captured by html2canvas */}
                             <Image
                                 src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
                                 alt="Organization Logo"

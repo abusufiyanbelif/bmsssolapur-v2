@@ -1,13 +1,10 @@
 
 
-"use client";
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon } from "lucide-react";
 import { EnrichedLead, getOpenGeneralLeads } from "@/app/campaigns/actions";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { Quote } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
@@ -47,7 +44,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                 <div className="space-y-6">
                     {quotes.map((quote, index) => (
                         <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
-                            <p>&quot;{quote.text}&quot;</p>
+                            <p>"{quote.text}"</p>
                             <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
                         </blockquote>
                     ))}
