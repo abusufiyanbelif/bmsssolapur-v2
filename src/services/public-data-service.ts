@@ -15,7 +15,8 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Lead, Organization, Campaign, PublicStats } from './types';
+import type { Lead, Organization, Campaign, PublicStats, User } from './types';
+import { getUser } from './user-service';
 
 const PUBLIC_LEADS_COLLECTION = 'publicLeads';
 const PUBLIC_CAMPAIGNS_COLLECTION = 'publicCampaigns';
@@ -35,6 +36,8 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
     await deleteDoc(publicLeadRef).catch(() => {}); // Ignore errors if doc doesn't exist
     return;
   }
+  
+  const beneficiary = await getUser(lead.beneficiaryId);
 
   // Sanitize the lead data for public consumption
   const publicLeadData = {
@@ -49,8 +52,8 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
     helpGiven: lead.helpGiven,
     dateCreated: lead.dateCreated,
     dueDate: lead.dueDate,
-    isAnonymous: lead.beneficiary?.isAnonymousAsBeneficiary,
-    anonymousId: lead.beneficiary?.anonymousBeneficiaryId,
+    isAnonymous: beneficiary?.isAnonymousAsBeneficiary,
+    anonymousId: beneficiary?.anonymousBeneficiaryId,
   };
   await setDoc(publicLeadRef, publicLeadData, { merge: true });
 };
@@ -75,9 +78,20 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
     try {
         const q = query(collection(db, PUBLIC_LEADS_COLLECTION), orderBy("dateCreated", "desc"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => doc.data() as Lead);
+        const leads = snapshot.docs.map(doc => doc.data() as Lead);
+        
+        // Enrich with beneficiary info
+        const enrichedLeads = await Promise.all(leads.map(async (lead) => {
+            const beneficiary = await getUser(lead.beneficiaryId);
+            return { ...lead, beneficiary };
+        }));
+
+        return enrichedLeads;
     } catch (e) {
         console.error("Error fetching public leads:", e);
+        if (e instanceof Error && e.message.includes('index')) {
+            console.error("Firestore index missing. Please create a descending index on 'dateCreated' for the 'publicLeads' collection.");
+        }
         return [];
     }
 };
@@ -116,11 +130,17 @@ export const getPublicStats = async (): Promise<PublicStats | null> => {
 
 /**
  * Updates a public-facing campaign document.
- * @param campaign - The full campaign object.
+ * @param campaign - The full campaign object with calculated stats.
  */
 export const updatePublicCampaign = async (campaign: Campaign & { raisedAmount: number; fundingProgress: number; }): Promise<void> => {
     if (!isConfigValid) return;
-    const publicCampaignRef = doc(db, PUBLIC_CAMPAIGNS_COLLECTION, campaign.id);
+    const publicCampaignRef = doc(db, PUBLIC_CAMPAIGNS_COLLECTION, campaign.id!);
+
+     if (campaign.status === 'Cancelled') {
+        await deleteDoc(publicCampaignRef).catch(() => {});
+        return;
+    }
+
     await setDoc(publicCampaignRef, campaign, { merge: true });
 };
 
@@ -136,6 +156,9 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         return snapshot.docs.map(doc => doc.data() as (Campaign & { raisedAmount: number, fundingProgress: number }));
     } catch (e) {
         console.error("Error fetching public campaigns:", e);
+        if (e instanceof Error && e.message.includes('index')) {
+            console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'publicCampaigns' collection.");
+        }
         return [];
     }
 };

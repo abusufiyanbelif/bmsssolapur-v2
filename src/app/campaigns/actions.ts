@@ -3,11 +3,7 @@
 "use server";
 
 import type { Lead, User, Campaign } from "@/services/types";
-import { query, collection, where, getDocs, orderBy, limit } from "firebase/firestore";
-import { db, isConfigValid } from "@/services/firebase";
-import { getUser } from "@/services/user-service";
-import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-service";
-import { getAllLeads } from "@/services/lead-service";
+import { isConfigValid } from "@/services/firebase";
 import { getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
 
 
@@ -40,7 +36,6 @@ export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: num
     try {
         const publicCampaigns = await getPublicCampaigns();
         
-        // The public campaigns already have the stats pre-calculated.
         return publicCampaigns.map(c => ({
             ...c,
             // Ensure fields from the original Campaign type exist if needed elsewhere, even if empty

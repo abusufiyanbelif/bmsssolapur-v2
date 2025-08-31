@@ -103,7 +103,8 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     // Sync with public collection if applicable
     if (newLead.caseAction === 'Publish') {
-        await updatePublicLead(newLead as Lead);
+        const fullLead = await getLead(newLead.id!);
+        if (fullLead) await updatePublicLead(fullLead);
     }
     
     return newLead as Lead;
@@ -115,15 +116,17 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
 // Function to get a lead by ID
 export const getLead = async (id: string): Promise<Lead | null> => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
+  if (!isConfigValid || !id) return null;
   try {
     const leadDoc = await getDoc(doc(db, LEADS_COLLECTION, id));
     if (leadDoc.exists()) {
       const data = leadDoc.data();
+      const beneficiary = await getUser(data.beneficiaryId);
       // Manually convert Timestamps to Dates for client-side compatibility
       return { 
         id: leadDoc.id, 
         ...data,
+        beneficiary: beneficiary || undefined,
         dateCreated: data.dateCreated ? (data.dateCreated as Timestamp).toDate() : new Date(),
         createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
@@ -137,8 +140,8 @@ export const getLead = async (id: string): Promise<Lead | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting lead: ', error);
-    throw new Error('Failed to get lead.');
+    console.error(`Error getting lead with ID ${id}:`, error);
+    return null;
   }
 };
 
@@ -289,7 +292,7 @@ export const getAllLeads = async (): Promise<Lead[]> => {
 
 // Function to get all leads for a specific beneficiary
 export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Lead[]> => {
-    if (!isConfigValid) return [];
+    if (!isConfigValid || !beneficiaryId) return [];
     try {
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION), 
@@ -313,9 +316,9 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
          if (error instanceof Error && error.message.includes('requires an index')) {
             const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'beneficiaryId' in the 'leads' collection. Full error: ${error.message}`;
             console.error(detailedError);
-            throw new Error(detailedError);
+            return []; // Return empty array to prevent crash
         }
-        throw new Error('Failed to get beneficiary leads.');
+        return []; // Return empty array on other errors
     }
 }
 
@@ -351,7 +354,7 @@ export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> 
 
 // Function to get open leads for a specific beneficiary
 export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Lead[]> => {
-    if (!isConfigValid) return [];
+    if (!isConfigValid || !beneficiaryId) return [];
     try {
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION),
@@ -369,6 +372,6 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         if (error instanceof Error && error.message.includes('index')) {
             console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'beneficiaryId' (ascending) and 'status' (ascending).");
         }
-        throw new Error('Failed to get open beneficiary leads.');
+        return [];
     }
 }

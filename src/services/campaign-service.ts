@@ -18,11 +18,26 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
-import type { Campaign, CampaignStatus } from './types';
+import type { Campaign, CampaignStatus, Lead } from './types';
+import { updatePublicCampaign } from './public-data-service';
+import { getLeadsByCampaignId } from './lead-service';
 
 export type { Campaign, CampaignStatus };
 
 const CAMPAIGNS_COLLECTION = 'campaigns';
+
+
+async function enrichCampaignWithStats(campaign: Campaign): Promise<Campaign & { raisedAmount: number; fundingProgress: number; }> {
+    const linkedLeads = await getLeadsByCampaignId(campaign.id!);
+    const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+    const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+    
+    return {
+        ...campaign,
+        raisedAmount,
+        fundingProgress,
+    };
+}
 
 /**
  * Creates a new campaign.
@@ -50,12 +65,20 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
     if (!data) {
         throw new Error('Failed to create campaign, document not found after creation.');
     }
-    return { 
+    const finalCampaign = { 
         ...data,
         id: newDoc.id,
         createdAt: (data.createdAt as Timestamp).toDate(),
         updatedAt: (data.updatedAt as Timestamp).toDate(),
+        startDate: (data.startDate as Timestamp).toDate(),
+        endDate: (data.endDate as Timestamp).toDate(),
     } as Campaign;
+
+    // Sync with public collection
+    const enrichedCampaign = await enrichCampaignWithStats(finalCampaign);
+    await updatePublicCampaign(enrichedCampaign);
+
+    return finalCampaign;
 
   } catch (error) {
     console.error('Error creating campaign: ', error);
@@ -142,6 +165,12 @@ export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign,
       ...updates,
       updatedAt: serverTimestamp(),
     });
+
+    const updatedCampaign = await getCampaign(id);
+    if(updatedCampaign) {
+      const enrichedCampaign = await enrichCampaignWithStats(updatedCampaign);
+      await updatePublicCampaign(enrichedCampaign);
+    }
   } catch (error) {
     console.error("Error updating campaign: ", error);
     throw new Error('Failed to update campaign.');
@@ -155,7 +184,9 @@ export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign,
 export const deleteCampaign = async (id: string): Promise<void> => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    await deleteDoc(doc(db, CAMPAIGNS_COLLECTION, id));
+    await deleteDoc(doc(db, CAMPAIGIGNS_COLLECTION, id));
+    // Also delete from public collection
+    await updatePublicCampaign({ id, status: 'Cancelled' } as any);
   } catch (error) {
     console.error("Error deleting campaign: ", error);
     throw new Error('Failed to delete campaign.');

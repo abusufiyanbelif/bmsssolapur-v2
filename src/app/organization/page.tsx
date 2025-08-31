@@ -33,7 +33,7 @@ export default async function OrganizationPage() {
         organization = org;
         
         allUsers.forEach(user => {
-            user.groups?.forEach(group => {
+            (user.groups || []).forEach(group => {
                 const category = groupMapping[group];
                 if (category) {
                     if (!boardMembers[category]) {

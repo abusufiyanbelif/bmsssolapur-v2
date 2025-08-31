@@ -68,7 +68,7 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 
 // Function to get an organization by ID
 export const getOrganization = async (id: string): Promise<Organization | null> => {
-  if (!isConfigValid) throw new Error("Firebase is not configured.");
+  if (!isConfigValid || !id) return null;
   try {
     const orgDoc = await getDoc(doc(db, ORGANIZATIONS_COLLECTION, id));
     if (orgDoc.exists()) {
@@ -76,8 +76,8 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
     }
     return null;
   } catch (error) {
-    console.error('Error getting organization: ', error);
-    throw new Error('Failed to get organization.');
+    console.error(`Error getting organization with ID ${id}:`, error);
+    return null;
   }
 };
 
@@ -97,7 +97,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         return null;
     } catch (error) {
         console.error('Error getting current organization: ', error);
-        throw new Error('Failed to get current organization.');
+        return null;
     }
 }
 
