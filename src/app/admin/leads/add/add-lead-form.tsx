@@ -711,11 +711,11 @@ Referral Phone:
                         {selectedReferralDetails && (
                             <div className="space-y-3 pt-2">
                                 <div className="space-y-1">
-                                    <Label>Referral's Bank Account</Label>
+                                    <Label>Referral&apos;s Bank Account</Label>
                                     <Input value={selectedReferralDetails.bankAccountNumber || 'Not Available'} readOnly disabled />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label>Referral's UPI IDs</Label>
+                                    <Label>Referral&apos;s UPI IDs</Label>
                                     {selectedReferralDetails.upiIds && selectedReferralDetails.upiIds.length > 0 ? (
                                         selectedReferralDetails.upiIds.map((upi, i) => (
                                             <Input key={i} value={upi} readOnly disabled />
@@ -859,7 +859,7 @@ Referral Phone:
                         name="otherPurposeDetail"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Please specify "Other" purpose</FormLabel>
+                            <FormLabel>Please specify &quot;Other&quot; purpose</FormLabel>
                             <FormControl>
                                 <Input placeholder="e.g., House Repair" {...field} />
                             </FormControl>
@@ -875,7 +875,7 @@ Referral Phone:
                         name="otherCategoryDetail"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Please specify "Other" category details</FormLabel>
+                            <FormLabel>Please specify &quot;Other&quot; category details</FormLabel>
                             <FormControl>
                                 <Input placeholder="e.g., Specific textbook name" {...field} />
                             </FormControl>
@@ -1088,7 +1088,7 @@ Referral Phone:
                                 Is this a repayable loan?
                                 </FormLabel>
                                 <FormDescription>
-                                This is automatically selected if the purpose is "Loan".
+                                This is automatically selected if the purpose is &quot;Loan&quot;.
                                 </FormDescription>
                             </div>
                             </FormItem>

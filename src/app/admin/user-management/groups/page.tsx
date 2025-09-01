@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,7 +104,7 @@ export default function UserGroupsPage() {
                     Manage User Groups
                 </CardTitle>
                 <CardDescription>
-                    Organize users into groups or teams (e.g., Founders, Finance Team). This is a read-only view of suggested groups based on your application's structure.
+                    Organize users into groups or teams (e.g., Founders, Finance Team). This is a read-only view of suggested groups based on your application&apos;s structure.
                 </CardDescription>
             </CardHeader>
             <CardContent>

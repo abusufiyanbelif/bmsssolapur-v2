@@ -1,4 +1,5 @@
 
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -128,7 +129,7 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
     return (
          <Card>
             <CardHeader>
-                <CardTitle>Notification & Pledge Settings</CardTitle>
+                <CardTitle>Notification &amp; Pledge Settings</CardTitle>
                 <CardDescription>Manage your recurring donation commitment and related notification settings.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -895,7 +896,7 @@ function DonatePageContent() {
             <CardHeader>
                 <CardTitle>Your Generosity Matters</CardTitle>
                 <CardDescription>
-                    Please choose how you'd like to proceed with your donation. Your support is greatly appreciated.
+                    Please choose how you&apos;d like to proceed with your donation. Your support is greatly appreciated.
                 </CardDescription>
             </CardHeader>
             <CardContent>

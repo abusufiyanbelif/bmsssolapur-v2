@@ -113,7 +113,7 @@ export function LeadWorkflowForm({ settings, onUpdate }: LeadWorkflowFormProps) 
                                 <div className="mb-4">
                                     <FormLabel className="text-base font-semibold">Allowed Next Statuses</FormLabel>
                                     <FormDescription>
-                                        Select all the statuses that a lead can transition to from "{currentStatus}".
+                                        Select all the statuses that a lead can transition to from &quot;{currentStatus}&quot;.
                                     </FormDescription>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

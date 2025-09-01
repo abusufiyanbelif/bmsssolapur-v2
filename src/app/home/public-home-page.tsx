@@ -20,7 +20,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <QuoteIcon className="text-primary" />
-                        Wisdom & Reflection
+                        Wisdom &amp; Reflection
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -39,7 +39,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <QuoteIcon className="text-primary" />
-                    Wisdom & Reflection
+                    Wisdom &amp; Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>

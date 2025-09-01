@@ -72,7 +72,7 @@ export default async function OrganizationPage() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Organization Details Not Available</AlertTitle>
                     <AlertDescription>
-                        The organization's profile has not been set up yet, or there was a problem retrieving it. Please check back later.
+                        The organization&apos;s profile has not been set up yet, or there was a problem retrieving it. Please check back later.
                     </AlertDescription>
                 </Alert>
             </div>

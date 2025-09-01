@@ -41,7 +41,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <QuoteIcon className="text-primary" />
-                        Wisdom & Reflection
+                        Wisdom &amp; Reflection
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -60,14 +60,14 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <QuoteIcon className="text-primary" />
-                    Wisdom & Reflection
+                    Wisdom &amp; Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
                     {quotes.map((quote, index) => (
                         <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
-                            <p>"{quote.text}"</p>
+                            <p>&quot;{quote.text}&quot;</p>
                             <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
                         </blockquote>
                     ))}

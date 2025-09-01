@@ -104,7 +104,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
                                 <FormLabel className="text-base">Allow Beneficiaries to Request Help</FormLabel>
-                                <FormDescription>If enabled, beneficiaries will see a "Request Help" button. Disable this to temporarily stop new requests.</FormDescription>
+                                <FormDescription>If enabled, beneficiaries will see a &quot;Request Help&quot; button. Disable this to temporarily stop new requests.</FormDescription>
                             </div>
                             <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                         </FormItem>
@@ -191,7 +191,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
         <Card>
              <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Manage Lead Purposes & Categories</CardTitle>
+                    <CardTitle>Manage Lead Purposes &amp; Categories</CardTitle>
                     <CardDescription>
                         Add, edit, or delete the purposes and their sub-categories for new leads.
                     </CardDescription>
@@ -231,7 +231,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                             <AccordionContent>
                             <div className="p-4 border bg-muted/50 rounded-lg space-y-4">
                                     <div className="flex justify-between items-center">
-                                        <h4 className="font-semibold text-sm">Sub-Categories for "{purpose.name}"</h4>
+                                        <h4 className="font-semibold text-sm">Sub-Categories for &quot;{purpose.name}&quot;</h4>
                                         <AddCategoryDialog purposeId={purpose.id} />
                                     </div>
                                     {purpose.categories && purpose.categories.length > 0 ? (
@@ -251,7 +251,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-center text-xs text-muted-foreground py-2">No sub-categories defined. Click "Add Category" to create one.</p>
+                                        <p className="text-center text-xs text-muted-foreground py-2">No sub-categories defined. Click &quot;Add Category&quot; to create one.</p>
                                     )}
                             </div>
                             </AccordionContent>
@@ -260,7 +260,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                     </Accordion>
                 </ScrollArea>
                  {getValues('purposes')?.length === 0 && (
-                     <p className="text-sm text-muted-foreground text-center py-4">No purposes defined. Click "Create Purpose" to add one.</p>
+                     <p className="text-sm text-muted-foreground text-center py-4">No purposes defined. Click &quot;Create Purpose&quot; to add one.</p>
                 )}
             </CardContent>
         </Card>

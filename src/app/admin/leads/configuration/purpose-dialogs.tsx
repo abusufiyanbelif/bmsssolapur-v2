@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -135,7 +136,7 @@ export function DeletePurposeDialog({ purposeToDelete, allPurposes }: DeletePurp
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to delete "{purposeToDelete.name}"?</AlertDialogTitle>
+                    <AlertDialogTitle>Are you sure you want to delete &quot;{purposeToDelete.name}&quot;?</AlertDialogTitle>
                     <AlertDialogDescription>
                         This action cannot be undone. All existing leads with this purpose must be reassigned to a new purpose.
                     </AlertDialogDescription>
@@ -161,7 +162,7 @@ export function DeletePurposeDialog({ purposeToDelete, allPurposes }: DeletePurp
                         className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                     >
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Delete & Reassign
+                        Delete &amp; Reassign
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -270,7 +271,7 @@ export function DeleteCategoryDialog({ purposeId, categoryToDelete, allCategorie
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to delete "{categoryToDelete.name}"?</AlertDialogTitle>
+                    <AlertDialogTitle>Are you sure you want to delete &quot;{categoryToDelete.name}&quot;?</AlertDialogTitle>
                     <AlertDialogDescription>
                         All existing leads with this category must be reassigned to a new category within the same purpose.
                     </AlertDialogDescription>
@@ -296,7 +297,7 @@ export function DeleteCategoryDialog({ purposeId, categoryToDelete, allCategorie
                         className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                     >
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Delete & Reassign
+                        Delete &amp; Reassign
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

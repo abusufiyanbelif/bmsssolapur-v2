@@ -1,4 +1,5 @@
 
+
 // src/app/admin/seed/page.tsx
 'use client';
 
@@ -74,7 +75,7 @@ export default function SeedPage() {
                 <CardHeader>
                     <CardTitle>Seed Initial Data</CardTitle>
                     <CardDescription>
-                       Use these actions to populate your Firestore database with initial data. It's recommended to run the "Initial Users & Quotes" seed first.
+                       Use these actions to populate your Firestore database with initial data. It&apos;s recommended to run the &quot;Initial Users &amp; Quotes&quot; seed first.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
@@ -82,7 +83,7 @@ export default function SeedPage() {
                     <div className="p-4 border rounded-lg space-y-4">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
-                                <h3 className="font-semibold flex items-center gap-2"><Database className="h-5 w-5 text-primary" />Initial Users & Quotes</h3>
+                                <h3 className="font-semibold flex items-center gap-2"><Database className="h-5 w-5 text-primary" />Initial Users &amp; Quotes</h3>
                                 <p className="text-sm text-muted-foreground mt-1">Creates the Super Admin user and populates inspirational quotes. Run this first.</p>
                              </div>
                              <Button onClick={() => handleSeed(seedInitialUsersAndQuotes, setInitialSeedStatus, setInitialSeedResult)} disabled={initialSeedStatus === 'loading'}>
@@ -127,7 +128,7 @@ export default function SeedPage() {
                      <div className="p-4 border rounded-lg space-y-4">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
-                                <h3 className="font-semibold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Sample Campaigns & Leads</h3>
+                                <h3 className="font-semibold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Sample Campaigns &amp; Leads</h3>
                                 <p className="text-sm text-muted-foreground mt-1">Creates sample campaigns, beneficiaries, leads, and donations for demonstration.</p>
                              </div>
                              <Button onClick={() => handleSeed(seedSampleData, setSampleDataStatus, setSampleDataResult)} disabled={sampleDataStatus === 'loading'}>

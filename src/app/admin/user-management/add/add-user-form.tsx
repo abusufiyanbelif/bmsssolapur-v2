@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddUser, handleExtractLeadDetailsFromText } from "./actions";
+import { handleAddUser } from "./actions";
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,6 +64,7 @@ const formSchema = z.object({
   fatherName: z.string().optional(),
   email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
+  password: z.string().optional(),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
@@ -402,7 +403,7 @@ function AddUserFormContent() {
             name="fatherName"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Father's Name (Optional)</FormLabel>
+                <FormLabel>Father&apos;s Name (Optional)</FormLabel>
                 <FormControl>
                     <Input placeholder="Enter father's name" {...field} />
                 </FormControl>
@@ -579,7 +580,7 @@ function AddUserFormContent() {
         </div>
 
 
-        <h3 className="text-lg font-semibold border-b pb-2">Family & Occupation</h3>
+        <h3 className="text-lg font-semibold border-b pb-2">Family &amp; Occupation</h3>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
@@ -635,7 +636,7 @@ function AddUserFormContent() {
         )}
 
 
-        <h3 className="text-lg font-semibold border-b pb-2">Account Settings & Roles</h3>
+        <h3 className="text-lg font-semibold border-b pb-2">Account Settings &amp; Roles</h3>
         <FormField
           control={form.control}
           name="roles"
@@ -763,7 +764,7 @@ function AddUserFormContent() {
             />
         )}
 
-        <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
+        <h3 className="text-lg font-semibold border-b pb-2">Verification &amp; Payment Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
             control={form.control}
@@ -929,4 +930,3 @@ export function AddUserForm() {
         </Suspense>
     )
 }
-

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -195,7 +196,7 @@ export function LoginForm() {
         <CardFooter className="flex-col gap-4 pt-6">
             <Separator />
             <div className="text-center text-sm text-muted-foreground">
-                <p>Don't have an account?</p>
+                <p>Don&apos;t have an account?</p>
                 <Button variant="link" asChild className="text-accent text-base">
                     <Link href="/register">
                          Register Now

@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddApproverForm } from "./add-approver-form";
 import { getAllUsers } from "@/services/user-service";
@@ -18,7 +19,7 @@ export default async function AddApproverPage() {
                 <CardHeader>
                     <CardTitle>Add Lead Approver</CardTitle>
                     <CardDescription>
-                       Select a user to add to the 'Lead Approver' group. Only users with an Admin role are shown.
+                       Select a user to add to the &apos;Lead Approver&apos; group. Only users with an Admin role are shown.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
