@@ -1,4 +1,3 @@
-
 // src/app/admin/audit-trail/page.tsx
 "use client";
 
@@ -14,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllActivityLogs, type ActivityLog } from "@/services/activity-log-service";
+import { ActivityLog } from "@/services/activity-log-service";
 import { format, formatDistanceToNow } from "date-fns";
 import { Loader2, AlertCircle, FilterX, ChevronLeft, ChevronRight, Search, ArrowUpDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -28,11 +27,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type SortableColumn = 'timestamp' | 'userName' | 'activity';
 type SortDirection = 'asc' | 'desc';
 
+interface AuditTrailPageClientProps {
+    initialLogs: ActivityLog[];
+    error?: string;
+}
 
-export default function AuditTrailPage() {
-    const [logs, setLogs] = useState<ActivityLog[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+export default function AuditTrailPage({ initialLogs, error: initialError }: AuditTrailPageClientProps) {
+    const [logs, setLogs] = useState<ActivityLog[]>(initialLogs);
+    const [loading, setLoading] = useState(false); // Initially false as we have initial data
+    const [error, setError] = useState<string | null>(initialError || null);
 
     // Input states
     const [searchInput, setSearchInput] = useState('');
@@ -49,25 +53,6 @@ export default function AuditTrailPage() {
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(25);
-
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            const fetchedLogs = await getAllActivityLogs();
-            setLogs(fetchedLogs);
-            setError(null);
-        } catch (e) {
-            setError("Failed to fetch activity logs. Please try again later.");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-    useEffect(() => {
-        fetchData();
-    }, []);
 
     const handleSearch = () => {
         setCurrentPage(1);
@@ -177,8 +162,8 @@ export default function AuditTrailPage() {
                     return (
                         <TableRow key={log.id}>
                             <TableCell>
-                                <p className="font-medium">{format(log.timestamp, "dd MMM yyyy, p")}</p>
-                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(log.timestamp, { addSuffix: true })}</p>
+                                <p className="font-medium">{format(new Date(log.timestamp), "dd MMM yyyy, p")}</p>
+                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}</p>
                             </TableCell>
                             <TableCell>
                                 <p className="font-semibold">{log.userName}</p>

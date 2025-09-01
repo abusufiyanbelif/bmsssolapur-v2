@@ -19,8 +19,8 @@ import {
 } from 'firebase/firestore';
 import { db, isConfigValid } from './firebase';
 import type { Campaign, CampaignStatus, Lead } from './types';
-import { updatePublicCampaign } from './public-data-service';
 import { getLeadsByCampaignId } from './lead-service';
+import { updatePublicCampaign } from './public-data-service';
 
 export type { Campaign, CampaignStatus };
 
@@ -74,9 +74,7 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
         endDate: (data.endDate as Timestamp).toDate(),
     } as Campaign;
 
-    // Sync with public collection
-    const enrichedCampaign = await enrichCampaignWithStats(finalCampaign);
-    await updatePublicCampaign(enrichedCampaign);
+    // The responsibility to update the public campaign is now on the server action that calls this.
 
     return finalCampaign;
 
@@ -183,12 +181,7 @@ export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign,
       ...updates,
       updatedAt: serverTimestamp(),
     });
-
-    const updatedCampaign = await getCampaign(id);
-    if(updatedCampaign) {
-      const enrichedCampaign = await enrichCampaignWithStats(updatedCampaign);
-      await updatePublicCampaign(enrichedCampaign);
-    }
+    // The responsibility to update the public campaign is now on the server action that calls this.
   } catch (error) {
     console.error("Error updating campaign: ", error);
     throw new Error('Failed to update campaign.');
@@ -204,10 +197,14 @@ export const deleteCampaign = async (id: string): Promise<void> => {
   try {
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, id);
     await deleteDoc(campaignRef);
-    // Also delete from public collection
-    await updatePublicCampaign({ id, status: 'Cancelled' } as any);
+    // The responsibility to update the public campaign is now on the server action that calls this.
   } catch (error) {
     console.error("Error deleting campaign: ", error);
     throw new Error('Failed to delete campaign.');
   }
 };
+
+// This function is still needed for public-facing components that need to read campaign stats.
+export const enrichCampaignWithPublicStats = async (campaign: Campaign): Promise<Campaign & { raisedAmount: number; fundingProgress: number; }> => {
+    return enrichCampaignWithStats(campaign);
+}

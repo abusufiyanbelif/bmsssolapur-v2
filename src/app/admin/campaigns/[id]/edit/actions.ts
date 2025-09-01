@@ -2,9 +2,11 @@
 
 "use server";
 
-import { updateCampaign } from "@/services/campaign-service";
+import { updateCampaign, getCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
 import { CampaignStatus, DonationType } from "@/services/types";
+import { updatePublicCampaign, enrichCampaignWithPublicStats } from "@/services/public-data-service";
+
 
 interface FormState {
     success: boolean;
@@ -32,6 +34,12 @@ export async function handleUpdateCampaign(campaignId: string, formData: Campaig
         status: formData.status,
         acceptableDonationTypes: formData.acceptableDonationTypes,
     });
+    
+    const updatedCampaign = await getCampaign(campaignId);
+    if(updatedCampaign) {
+      const enrichedCampaign = await enrichCampaignWithPublicStats(updatedCampaign);
+      await updatePublicCampaign(enrichedCampaign);
+    }
     
     revalidatePath("/admin/campaigns");
     revalidatePath(`/admin/campaigns/${campaignId}/edit`);

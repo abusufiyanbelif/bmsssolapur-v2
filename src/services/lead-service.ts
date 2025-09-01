@@ -27,7 +27,6 @@ import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verif
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
 import { format } from 'date-fns';
-import { updatePublicLead } from './public-data-service';
 
 
 // Re-export types for backward compatibility
@@ -101,11 +100,6 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     await setDoc(leadRef, newLead);
 
-    const fullLead = await getLead(newLead.id!);
-    if (fullLead && fullLead.caseAction === 'Publish') {
-        await updatePublicLead(fullLead);
-    }
-    
     return newLead as Lead;
   } catch (error) {
     console.error('Error creating lead: ', error);
@@ -189,8 +183,6 @@ export const deleteLead = async (id: string, adminUser: Pick<User, 'id' | 'name'
             },
         });
         
-        // Sync deletion with public collection
-        await updatePublicLead({ ...leadToDelete, caseAction: 'Cancelled' }); // Treat as cancelled for public view
     } catch (error) {
         console.error("Error deleting lead: ", error);
         throw new Error('Failed to delete lead.');
@@ -212,8 +204,6 @@ export const updateLeadStatus = async (id: string, newStatus: LeadStatus, adminU
     });
 
     await updateLead(id, { caseStatus: newStatus });
-    const updatedLead = await getLead(id);
-    if (updatedLead) await updatePublicLead(updatedLead);
 };
 
 export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVerificationStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
@@ -235,8 +225,6 @@ export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVe
     });
     
     await updateLead(id, updates);
-    const updatedLead = await getLead(id);
-    if (updatedLead) await updatePublicLead(updatedLead);
 };
 
 

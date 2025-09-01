@@ -78,7 +78,7 @@ export async function handleUpdateDonation(
 
     const donationDateStr = formData.get("donationDate") as string;
     const donationDate = donationDateStr
-      ? Timestamp.fromDate(new Date(donationDateStr))
+      ? new Date(donationDateStr)
       : originalDonation.donationDate;
 
     const updates: Partial<Donation> = {

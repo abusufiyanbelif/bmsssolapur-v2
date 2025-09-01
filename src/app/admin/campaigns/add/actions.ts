@@ -2,12 +2,14 @@
 
 "use server";
 
-import { createCampaign } from "@/services/campaign-service";
+import { createCampaign, getCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
 import { CampaignStatus, DonationType, Lead, Donation } from "@/services/types";
 import { Timestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { doc } from "firebase/firestore";
+import { updatePublicCampaign, enrichCampaignWithPublicStats } from '@/services/public-data-service';
+
 
 interface FormState {
     success: boolean;
@@ -63,6 +65,13 @@ export async function handleCreateCampaign(formData: CampaignFormData): Promise<
         });
 
         await batch.commit();
+    }
+    
+    // Enrich and update the public campaign document
+    const campaignForPublic = await getCampaign(newCampaign.id!);
+    if (campaignForPublic) {
+        const enriched = await enrichCampaignWithPublicStats(campaignForPublic);
+        await updatePublicCampaign(enriched);
     }
     
     revalidatePath("/admin/campaigns");
