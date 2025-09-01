@@ -8,11 +8,12 @@ import { MainMetricsCard, TopDonorsCard, TopDonationsCard, BeneficiaryBreakdownC
 import { Suspense, useEffect, useState } from "react";
 import type { Donation, User, Lead, Campaign, PublicStats } from "@/services/types";
 import { getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
-import { getAllDonations as getAllDonationsPrivate } from "@/services/deprecated-fetches";
-import { getAllUsers as getAllUsersPrivate } from "@/services/deprecated-fetches";
-import { getAllLeads as getAllLeadsPrivate } from "@/services/deprecated-fetches";
 import { getAllCampaigns as getAllCampaignsService } from "@/app/campaigns/actions"; // Use the corrected public action
 import { RecentCampaignsCard } from "@/app/admin/dashboard-cards";
+import { getAllDonations } from "@/services/donation-service";
+import { getAllUsers } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
+
 
 const CardSkeleton = () => (
     <Card>
@@ -45,9 +46,9 @@ export function PublicDashboardCards() {
         const fetchData = async () => {
             setLoading(true);
             const [donations, users, leads, campaigns] = await Promise.all([
-                getAllDonationsPrivate(),
-                getAllUsersPrivate(),
-                getAllLeadsPrivate(),
+                getAllDonations(),
+                getAllUsers(),
+                getAllLeads(),
                 getAllCampaignsService()
             ]);
             setAllDonations(donations);
