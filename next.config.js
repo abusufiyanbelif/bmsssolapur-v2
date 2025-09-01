@@ -2,6 +2,15 @@
 // This is a comment to force a rebuild and clear the cache.
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ["firebase-admin"],
+  },
+  webpack: (config, { isServer }) => {
+    config.experiments = { ...config.experiments, asyncWebAssembly: true };
+    config.output.webassemblyModuleFilename =
+      (isServer ? "../" : "") + "static/wasm/webassembly.wasm";
+    return config;
+  },
   images: {
     remotePatterns: [
       {
