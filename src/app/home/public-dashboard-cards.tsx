@@ -8,9 +8,9 @@ import { MainMetricsCard, TopDonorsCard, TopDonationsCard, BeneficiaryBreakdownC
 import { Suspense, useEffect, useState } from "react";
 import type { Donation, User, Lead, Campaign, PublicStats } from "@/services/types";
 import { getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
-import { getAllDonations as getAllDonationsPrivate } from "@/services/donation-service";
-import { getAllUsers as getAllUsersPrivate } from "@/services/user-service";
-import { getAllLeads as getAllLeadsPrivate } from "@/services/lead-service";
+import { getAllDonations as getAllDonationsPrivate } from "@/services/deprecated-fetches";
+import { getAllUsers as getAllUsersPrivate } from "@/services/deprecated-fetches";
+import { getAllLeads as getAllLeadsPrivate } from "@/services/deprecated-fetches";
 import { getAllCampaigns as getAllCampaignsService } from "@/app/campaigns/actions"; // Use the corrected public action
 import { RecentCampaignsCard } from "@/app/admin/dashboard-cards";
 

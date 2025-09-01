@@ -4,7 +4,7 @@
  * @fileOverview Service for managing global application settings in Firestore.
  */
 
-import { adminDb } from './firebase';
+import { adminDb } from './firebase-admin';
 import type { AppSettings, UserRole, LeadStatus, DashboardSettings, LeadPurpose, PurposeCategory } from './types';
 import { Timestamp } from 'firebase-admin/firestore';
 

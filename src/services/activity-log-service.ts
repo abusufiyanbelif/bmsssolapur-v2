@@ -5,7 +5,7 @@
  */
 
 import { Timestamp } from 'firebase-admin/firestore';
-import { adminDb } from './firebase';
+import { adminDb } from './firebase-admin';
 import type { ActivityLog } from './types';
 
 // Re-export type

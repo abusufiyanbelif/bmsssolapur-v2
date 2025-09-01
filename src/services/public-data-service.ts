@@ -4,7 +4,7 @@
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */
 
-import { adminDb } from './firebase';
+import { adminDb } from './firebase-admin';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
 

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -21,12 +22,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
 import type { User as UserType, Lead as LeadType, Donation as DonationType } from "@/services/types";
-import { getUser, getUserByUserId } from "@/services/user-service";
+import { getUser, getUserByUserId, performPermissionCheck } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
-import { performPermissionCheck } from "@/services/firebase";
+import { AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 

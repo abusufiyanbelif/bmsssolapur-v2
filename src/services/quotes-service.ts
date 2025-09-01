@@ -4,7 +4,7 @@
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
 
-import { adminDb } from './firebase';
+import { adminDb } from './firebase-admin';
 import type { Quote } from './types';
 import { WriteBatch } from 'firebase-admin/firestore';
 
