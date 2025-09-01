@@ -135,7 +135,7 @@ export const getLead = async (id: string): Promise<Lead | null> => {
         verificationDueDate: data.verificationDueDate ? (data.verificationDueDate as any).toDate() : undefined,
         verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
         donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
-        fundTransfers: (data.fundTransfers || []).map((t: any) => ({...t, transferredAt: (t.transferredAt as Timestamp).toDate() })),
+        fundTransfers: (data.fundTransfers || []).map((t: FundTransfer) => ({...t, transferredAt: (t.transferredAt as Timestamp).toDate() })),
       } as Lead;
     }
     return null;
@@ -161,12 +161,6 @@ export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 
     }
 
     await updateDoc(leadRef, finalUpdates);
-
-    // After updating, get the full document and sync it to the public collection
-    const updatedLead = await getLead(id);
-    if(updatedLead) {
-        await updatePublicLead(updatedLead);
-    }
 
   } catch (error) {
     console.error("Error updating lead: ", error);

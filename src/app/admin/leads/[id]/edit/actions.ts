@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/lead-service";
@@ -7,6 +8,7 @@ import { Timestamp, arrayUnion } from "firebase/firestore";
 import type { User, Verifier } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { logActivity } from "@/services/activity-log-service";
+import { updatePublicLead } from "@/services/public-data-service";
 
 
 interface FormState {
@@ -126,6 +128,11 @@ export async function handleUpdateLead(
                 changes: changes
             }
         });
+    }
+
+    const updatedLead = await getLead(leadId);
+    if (updatedLead) {
+        await updatePublicLead(updatedLead);
     }
 
     revalidatePath("/admin/leads");

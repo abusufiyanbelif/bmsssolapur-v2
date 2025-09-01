@@ -22,7 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
 import type { User as UserType, Lead as LeadType, Donation as DonationType } from "@/services/types";
-import { getUser, getUserByUserId, performPermissionCheck } from "@/services/user-service";
+import { getUser, getUserByUserId } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
@@ -94,19 +94,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     useEffect(() => {
         const initializeSession = async () => {
-            // Step 1: Perform the permission check first.
-            const permissionResult = await performPermissionCheck();
-            if (!permissionResult.success && permissionResult.error === 'permission-denied') {
-                setPermissionError('The service account needs the "Cloud Datastore User" IAM role.');
-                setIsSessionReady(true);
-                return; // Stop further execution
-            }
-            if (!permissionResult.success) {
-                setPermissionError(permissionResult.error || 'An unknown connection error occurred.');
-                setIsSessionReady(true);
-                return;
-            }
-
             const storedUserId = localStorage.getItem('userId');
             const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 

@@ -11,7 +11,6 @@ import type { Quote } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
-import { getRandomQuotes } from "@/services/quotes-service";
 
 function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
     if (loading) {
@@ -20,7 +19,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <QuoteIcon className="text-primary" />
-                        Wisdom &amp; Reflection
+                        Wisdom & Reflection
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -39,7 +38,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <QuoteIcon className="text-primary" />
-                    Wisdom &amp; Reflection
+                    Wisdom & Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -56,12 +55,10 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
     );
 }
 
-export function PublicHomePage() {
+export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
   const router = useRouter();
   const [leads, setLeads] = useState<EnrichedLead[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(true);
-  const [quotesLoading, setQuotesLoading] = useState(true);
   
   useEffect(() => {
       const fetchData = async () => {
@@ -72,16 +69,7 @@ export function PublicHomePage() {
           }
           setLeadsLoading(false);
       };
-      const fetchQuotes = async () => {
-          setQuotesLoading(true);
-          const fetchedQuotes = await getRandomQuotes(3);
-          if(fetchedQuotes) {
-            setQuotes(fetchedQuotes);
-          }
-          setQuotesLoading(false);
-      }
       fetchData();
-      fetchQuotes();
   }, []);
 
   const handleDonateClick = () => {
@@ -108,7 +96,7 @@ export function PublicHomePage() {
         </CardContent>
       </Card>
       
-      <InspirationalQuotes quotes={quotes} loading={quotesLoading} />
+      <InspirationalQuotes quotes={quotes} loading={false} />
 
       {/* Open Cases */}
       <Card>
