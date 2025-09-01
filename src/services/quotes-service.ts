@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -102,7 +101,8 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         return quotes;
     } catch (error) {
         console.error("Error getting all quotes: ", error);
-        return [];
+        // Re-throw the error so the caller can handle it, e.g., by using a fallback.
+        throw error;
     }
 }
 
@@ -116,7 +116,7 @@ export const getRandomQuotes = async (count: number): Promise<Quote[]> => {
     try {
         let allQuotes: Quote[] = await getAllQuotes();
         
-        // If DB is empty or not configured, use the hardcoded list
+        // If DB is empty, use the hardcoded list
         if (allQuotes.length === 0) {
             allQuotes = ALL_QUOTES.map((q, i) => ({...q, id: `quote-${i}`}));
         }
