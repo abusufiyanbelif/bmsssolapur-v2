@@ -22,7 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
 import type { User as UserType, Lead as LeadType, Donation as DonationType } from "@/services/types";
-import { getUser, getUserByUserId } from "@/services/user-service";
+import { getUser } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
@@ -30,6 +30,7 @@ import { Logo } from "./logo";
 import { AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { performPermissionCheck } from "@/services/firebase";
 
 
 const PermissionErrorState = ({ error }: { error: string }) => (
@@ -94,15 +95,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     useEffect(() => {
         const initializeSession = async () => {
+            const permissionResult = await performPermissionCheck();
+            if (!permissionResult.success) {
+                if(permissionResult.error === 'permission-denied'){
+                    setPermissionError("permission-denied");
+                } else {
+                    setPermissionError(permissionResult.error || "An unknown error occurred.");
+                }
+                setIsSessionReady(true);
+                return;
+            }
+
             const storedUserId = localStorage.getItem('userId');
             const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
             if (storedUserId) {
                 let fetchedUser = await getUser(storedUserId);
-                
-                if (!fetchedUser) {
-                    fetchedUser = await getUserByUserId(storedUserId);
-                }
 
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');

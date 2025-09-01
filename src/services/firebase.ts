@@ -5,7 +5,6 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { config as appConfig } from '@/lib/config';
-import { adminDb } from './firebase-admin';
 
 // --- Client-side Firebase SDK Initialization ---
 
@@ -35,11 +34,12 @@ const storage = isConfigValid ? getStorage(clientApp) : null;
 /**
  * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
  * to check if the current environment has the necessary permissions.
- * This function should be called from the server, typically in a root component.
+ * This function is designed to be called from a server-side context (e.g., a server action or API route).
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 export const performPermissionCheck = async (): Promise<{success: boolean, error?: string}> => {
     try {
+        const { adminDb } = await import('./firebase-admin');
         const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
         await nonExistentDocRef.get();
         return { success: true };
