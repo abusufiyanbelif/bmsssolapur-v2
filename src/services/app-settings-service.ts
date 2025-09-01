@@ -4,17 +4,9 @@
  * @fileOverview Service for managing global application settings in Firestore.
  */
 
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { adminDb } from './firebase';
 import type { AppSettings, UserRole, LeadStatus, DashboardSettings, LeadPurpose, PurposeCategory } from './types';
-import { set } from 'react-hook-form';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Re-export type for backward compatibility
 export type { AppSettings };
@@ -213,15 +205,11 @@ const mergeDeep = (target: any, source: any) => {
  * @returns The application settings object.
  */
 export const getAppSettings = async (): Promise<AppSettings> => {
-  if (!isConfigValid) {
-    console.warn("Firebase not configured. Returning default app settings.");
-    return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings } as AppSettings;
-  }
   try {
-    const settingsDocRef = doc(db, SETTINGS_COLLECTION, MAIN_SETTINGS_DOC_ID);
-    const settingsDoc = await getDoc(settingsDocRef);
+    const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
+    const settingsDoc = await settingsDocRef.get();
     
-    if (settingsDoc.exists()) {
+    if (settingsDoc.exists) {
       const data = settingsDoc.data();
       // Deep merge with defaults to handle nested objects and new settings
       const mergedSettings = mergeDeep({ ...defaultSettings }, data);
@@ -231,9 +219,9 @@ export const getAppSettings = async (): Promise<AppSettings> => {
       console.log("No settings document found. Creating one with default values.");
       const newSettings = {
         ...defaultSettings,
-        updatedAt: serverTimestamp(),
+        updatedAt: Timestamp.now(),
       };
-      await setDoc(settingsDocRef, newSettings);
+      await settingsDocRef.set(newSettings);
       return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings } as AppSettings; // Return without timestamp for immediate use
     }
   } catch (error) {
@@ -247,12 +235,11 @@ export const getAppSettings = async (): Promise<AppSettings> => {
  * @param updates A partial object of the settings to update.
  */
 export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'| 'updatedAt'>>): Promise<void> => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    const settingsDocRef = doc(db, SETTINGS_COLLECTION, MAIN_SETTINGS_DOC_ID);
-    await updateDoc(settingsDocRef, {
+    const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
+    await settingsDocRef.update({
       ...updates,
-      updatedAt: serverTimestamp(),
+      updatedAt: Timestamp.now(),
     });
   } catch (error) {
     console.error("Error updating app settings: ", error);

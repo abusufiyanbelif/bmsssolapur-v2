@@ -4,17 +4,7 @@
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */
 
-import {
-  doc,
-  setDoc,
-  getDoc,
-  deleteDoc,
-  collection,
-  getDocs,
-  query,
-  orderBy
-} from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { adminDb } from './firebase';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
 
@@ -28,12 +18,11 @@ const PUBLIC_DATA_COLLECTION = 'publicData';
  * @param lead - The full lead object from the private collection.
  */
 export const updatePublicLead = async (lead: Lead): Promise<void> => {
-  if (!isConfigValid) return;
-  const publicLeadRef = doc(db, PUBLIC_LEADS_COLLECTION, lead.id);
+  const publicLeadRef = adminDb.collection(PUBLIC_LEADS_COLLECTION).doc(lead.id);
 
   if (lead.caseAction !== 'Publish') {
     // If the lead is no longer public, delete its public record
-    await deleteDoc(publicLeadRef).catch(() => {}); // Ignore errors if doc doesn't exist
+    await publicLeadRef.delete().catch(() => {}); // Ignore errors if doc doesn't exist
     return;
   }
   
@@ -55,7 +44,7 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
     isAnonymous: beneficiary?.isAnonymousAsBeneficiary,
     anonymousId: beneficiary?.anonymousBeneficiaryId,
   };
-  await setDoc(publicLeadRef, publicLeadData, { merge: true });
+  await publicLeadRef.set(publicLeadData, { merge: true });
 };
 
 /**
@@ -63,9 +52,8 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
  * @param org - The full organization object.
  */
 export const updatePublicOrganization = async (org: Organization): Promise<void> => {
-  if (!isConfigValid) return;
-  const publicOrgRef = doc(db, PUBLIC_DATA_COLLECTION, 'organization');
-  await setDoc(publicOrgRef, org);
+  const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
+  await publicOrgRef.set(org);
 };
 
 
@@ -74,10 +62,9 @@ export const updatePublicOrganization = async (org: Organization): Promise<void>
  * @returns An array of sanitized public lead objects.
  */
 export const getPublicLeads = async (): Promise<Lead[]> => {
-    if (!isConfigValid) return [];
     try {
-        const q = query(collection(db, PUBLIC_LEADS_COLLECTION), orderBy("dateCreated", "desc"));
-        const snapshot = await getDocs(q);
+        const q = adminDb.collection(PUBLIC_LEADS_COLLECTION).orderBy("dateCreated", "desc");
+        const snapshot = await q.get();
         const leads = snapshot.docs.map(doc => doc.data() as Lead);
         
         // Enrich with beneficiary info
@@ -101,10 +88,9 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
  * @returns The public organization object or null if not found.
  */
 export const getPublicOrganization = async (): Promise<Organization | null> => {
-    if (!isConfigValid) return null;
-    const publicOrgRef = doc(db, PUBLIC_DATA_COLLECTION, 'organization');
-    const docSnap = await getDoc(publicOrgRef);
-    return docSnap.exists() ? (docSnap.data() as Organization) : null;
+    const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
+    const docSnap = await publicOrgRef.get();
+    return docSnap.exists ? (docSnap.data() as Organization) : null;
 };
 
 /**
@@ -112,9 +98,8 @@ export const getPublicOrganization = async (): Promise<Organization | null> => {
  * @param stats - The stats object to save.
  */
 export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
-    if (!isConfigValid) return;
-    const publicStatsRef = doc(db, PUBLIC_DATA_COLLECTION, 'stats');
-    await setDoc(publicStatsRef, stats, { merge: true });
+    const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
+    await publicStatsRef.set(stats, { merge: true });
 };
 
 /**
@@ -122,9 +107,8 @@ export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
  * @returns The public stats object or null.
  */
 export const getPublicStats = async (): Promise<PublicStats | null> => {
-    if (!isConfigValid) return null;
-    const publicStatsRef = doc(db, PUBLIC_DATA_COLLECTION, 'stats');
-    const docSnap = await getDoc(publicStatsRef);
+    const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
+    const docSnap = await publicStatsRef.get();
     return docSnap.exists() ? (docSnap.data() as PublicStats) : null;
 };
 
@@ -133,15 +117,14 @@ export const getPublicStats = async (): Promise<PublicStats | null> => {
  * @param campaign - The full campaign object with calculated stats.
  */
 export const updatePublicCampaign = async (campaign: Campaign & { raisedAmount: number; fundingProgress: number; }): Promise<void> => {
-    if (!isConfigValid) return;
-    const publicCampaignRef = doc(db, PUBLIC_CAMPAIGNS_COLLECTION, campaign.id!);
+    const publicCampaignRef = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).doc(campaign.id!);
 
      if (campaign.status === 'Cancelled') {
-        await deleteDoc(publicCampaignRef).catch(() => {});
+        await publicCampaignRef.delete().catch(() => {});
         return;
     }
 
-    await setDoc(publicCampaignRef, campaign, { merge: true });
+    await publicCampaignRef.set(campaign, { merge: true });
 };
 
 /**
@@ -149,10 +132,9 @@ export const updatePublicCampaign = async (campaign: Campaign & { raisedAmount: 
  * @returns An array of public campaign objects.
  */
 export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> => {
-    if (!isConfigValid) return [];
     try {
-        const q = query(collection(db, PUBLIC_CAMPAIGNS_COLLECTION), orderBy("startDate", "desc"));
-        const snapshot = await getDocs(q);
+        const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
+        const snapshot = await q.get();
         return snapshot.docs.map(doc => doc.data() as (Campaign & { raisedAmount: number, fundingProgress: number }));
     } catch (e) {
         console.error("Error fetching public campaigns:", e);

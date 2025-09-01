@@ -1,9 +1,15 @@
 
-// src/services/firebase.ts
-import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore, getDoc, doc } from "firebase/firestore";
-import { getAuth, Auth } from "firebase/auth";
+'use server';
+
+import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import * as admin from 'firebase-admin';
+import { getFirestore as getAdminFirestore, Firestore as AdminFirestore } from 'firebase-admin/firestore';
 import { config as appConfig } from '@/lib/config';
+
+// --- Client-side Firebase SDK Initialization ---
 
 const firebaseConfig = {
   apiKey: appConfig.firebase.apiKey,
@@ -14,61 +20,70 @@ const firebaseConfig = {
   appId: appConfig.firebase.appId,
 };
 
-// A simple check to see if the config values are placeholders
 const isConfigPotentiallyValid = (config: typeof firebaseConfig) => {
-  if (!config.apiKey || config.apiKey.includes("YOUR_")) return false;
-  if (!config.projectId || config.projectId.includes("YOUR_")) return false;
-  return true;
-}
+  return config.apiKey && config.projectId;
+};
 
-// Check if all required firebase config values are present and not placeholders
 export const isConfigValid = isConfigPotentiallyValid(firebaseConfig);
 
-let app: FirebaseApp;
-
-// This is the standard pattern for initializing Firebase in a Next.js app.
-// It ensures that we don't try to re-initialize the app on every hot-reload.
+let clientApp: FirebaseApp;
 if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
+  clientApp = initializeApp(firebaseConfig);
 } else {
-    app = getApp();
+  clientApp = getApp();
 }
 
-const db: Firestore = getFirestore(app);
-const auth: Auth = getAuth(app);
+const auth: Auth = getAuth(clientApp);
+const db: Firestore = getFirestore(clientApp);
+const storage = isConfigValid ? getStorage(clientApp) : null;
 
+// --- Server-side Firebase Admin SDK Initialization ---
+
+const hasAdminBeenInitialized = () => {
+    return admin.apps.length > 0;
+};
+
+let adminDb: AdminFirestore;
+
+if (!hasAdminBeenInitialized()) {
+    try {
+        admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+        });
+        console.log('Firebase Admin SDK initialized successfully.');
+    } catch(e) {
+        console.error("Firebase Admin SDK initialization error:", e);
+    }
+}
+
+adminDb = getAdminFirestore();
 
 /**
- * Performs a lightweight, low-cost read operation against Firestore to check
- * if the current environment has the necessary permissions. This is used as an
- * upfront check to provide a better error message than the generic "Failed to fetch".
- * It tries to read a non-existent document, which is a very cheap operation.
+ * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
+ * to check if the current environment has the necessary permissions.
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 export const performPermissionCheck = async (): Promise<{success: boolean, error?: string}> => {
     if (!isConfigValid) {
-        return { success: false, error: 'Firebase is not configured in your environment variables.' };
+        return { success: false, error: 'Firebase client config is missing or incomplete.' };
     }
     try {
-        // Attempt to get a non-existent document in a non-existent collection.
-        // This is a very low-cost operation and will fail immediately if rules are not set up.
-        const nonExistentDocRef = doc(db, "permission-check", "heartbeat");
-        await getDoc(nonExistentDocRef);
+        const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
+        await nonExistentDocRef.get();
         return { success: true };
     } catch (e) {
         if (e instanceof Error) {
-            if (e.message.includes("Missing or insufficient permissions")) {
-                return { success: false, error: "permission-denied" };
+            if (e.message.includes("Could not load the default credentials")) {
+                 return { success: false, error: 'permission-denied' };
             }
              if (e.message.includes("offline")) {
                 return { success: false, error: "The client is offline." };
             }
         }
-        // For other errors, we can let them bubble up or handle them differently
         console.error("An unexpected error occurred during permission check:", e);
         return { success: false, error: "An unexpected error occurred during the initial permission check." };
     }
 };
 
-
-export { app, db, auth };
+// Export both client and admin instances
+export { clientApp as app, auth, db, adminDb, storage };

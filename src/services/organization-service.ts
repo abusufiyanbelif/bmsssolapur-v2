@@ -2,18 +2,7 @@
  * @fileOverview Service for managing organization data in Firestore.
  */
 
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  query,
-  getDocs,
-  where,
-  limit,
-} from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { adminDb } from './firebase';
 import type { Organization } from './types';
 import { updatePublicOrganization } from './public-data-service';
 
@@ -25,13 +14,12 @@ const ORGANIZATIONS_COLLECTION = 'organizations';
 
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
-    if (!isConfigValid) return false;
-    const nameQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("name", "==", name), limit(1));
-    const regQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("registrationNumber", "==", registrationNumber), limit(1));
+    const nameQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).where("name", "==", name).limit(1);
+    const regQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).where("registrationNumber", "==", registrationNumber).limit(1);
 
     const [nameSnapshot, regSnapshot] = await Promise.all([
-        getDocs(nameQuery),
-        getDocs(regQuery)
+        nameQuery.get(),
+        regQuery.get()
     ]);
 
     return !nameSnapshot.empty || !regSnapshot.empty;
@@ -40,21 +28,20 @@ const checkDuplicates = async (name: string, registrationNumber: string): Promis
 
 // Function to create an organization
 export const createOrganization = async (orgData: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>) => {
-  if (!isConfigValid) throw new Error("Firebase is not configured.");
   try {
     const isDuplicate = await checkDuplicates(orgData.name, orgData.registrationNumber);
     if (isDuplicate) {
         throw new Error("An organization with the same name or registration number already exists.");
     }
 
-    const orgRef = doc(collection(db, ORGANIZATIONS_COLLECTION));
+    const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc();
     const newOrganization: Organization = {
       ...orgData,
       id: orgRef.id,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    await setDoc(orgRef, newOrganization);
+    await orgRef.set(newOrganization);
 
     // Sync with public collection
     await updatePublicOrganization(newOrganization);
@@ -68,10 +55,9 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 
 // Function to get an organization by ID
 export const getOrganization = async (id: string): Promise<Organization | null> => {
-  if (!isConfigValid || !id) return null;
   try {
-    const orgDoc = await getDoc(doc(db, ORGANIZATIONS_COLLECTION, id));
-    if (orgDoc.exists()) {
+    const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
+    if (orgDoc.exists) {
       return { id: orgDoc.id, ...orgDoc.data() } as Organization;
     }
     return null;
@@ -83,13 +69,9 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
 
 // For now, we will assume one organization for simplicity. This can be expanded later.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
-    if (!isConfigValid) {
-        console.warn("Firebase not configured, skipping organization fetch.");
-        return null;
-    }
     try {
-        const orgQuery = query(collection(db, ORGANIZATIONS_COLLECTION), limit(1));
-        const querySnapshot = await getDocs(orgQuery);
+        const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
+        const querySnapshot = await orgQuery.get();
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
             return { id: doc.id, ...doc.data() } as Organization;
@@ -104,10 +86,9 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
 
 // Function to update an organization
 export const updateOrganization = async (id: string, updates: Partial<Omit<Organization, 'id' | 'createdAt'>>) => {
-  if (!isConfigValid) throw new Error("Firebase is not configured.");
   try {
-    const orgRef = doc(db, ORGANIZATIONS_COLLECTION, id);
-    await updateDoc(orgRef, {
+    const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id);
+    await orgRef.update({
         ...updates,
         updatedAt: new Date(),
     });

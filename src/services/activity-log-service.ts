@@ -1,12 +1,11 @@
 
-
 'use server';
 /**
  * @fileOverview Service for logging user activities.
  */
 
-import { collection, addDoc, query, where, getDocs, serverTimestamp, orderBy, Timestamp, FieldValue } from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { Timestamp } from 'firebase-admin/firestore';
+import { adminDb } from './firebase';
 import type { ActivityLog } from './types';
 
 // Re-export type
@@ -20,16 +19,12 @@ const ACTIVITY_LOG_COLLECTION = 'activityLog';
  * @param logData The data to be logged.
  */
 export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>): Promise<void> => {
-    if (!isConfigValid) {
-        console.log("Firebase not configured. Skipping activity log.");
-        return;
-    }
   try {
-    const logWithTimestamp: Omit<ActivityLog, 'id'> = {
+    const logWithTimestamp = {
       ...logData,
-      timestamp: serverTimestamp(), // Use server timestamp for consistency
+      timestamp: Timestamp.now(), // Use server timestamp for consistency
     };
-    await addDoc(collection(db, ACTIVITY_LOG_COLLECTION), logWithTimestamp);
+    await adminDb.collection(ACTIVITY_LOG_COLLECTION).add(logWithTimestamp);
   } catch (error) {
     console.error(`Error logging activity for user ${logData.userId}:`, error);
     // We don't throw an error here because logging is a non-critical,
@@ -43,16 +38,9 @@ export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>
  * @returns An array of all activity log objects.
  */
 export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
-    if (!isConfigValid) {
-        console.log("Firebase not configured. Skipping activity fetch.");
-        return [];
-    }
     try {
-        const q = query(
-            collection(db, ACTIVITY_LOG_COLLECTION),
-            orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
+        const q = adminDb.collection(ACTIVITY_LOG_COLLECTION).orderBy("timestamp", "desc");
+        const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -80,17 +68,11 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
  * @returns An array of activity log objects.
  */
 export const getUserActivity = async (userId: string): Promise<ActivityLog[]> => {
-    if (!isConfigValid) {
-        console.log("Firebase not configured. Skipping activity fetch.");
-        return [];
-    }
     try {
-        const q = query(
-            collection(db, ACTIVITY_LOG_COLLECTION),
-            where("userId", "==", userId),
-            orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
+        const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
+            .where("userId", "==", userId)
+            .orderBy("timestamp", "desc");
+        const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -121,17 +103,11 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
  * @returns An array of activity log objects.
  */
 export const getTargetUserActivity = async (targetUserId: string): Promise<ActivityLog[]> => {
-    if (!isConfigValid) {
-        console.log("Firebase not configured. Skipping activity fetch.");
-        return [];
-    }
     try {
-        const q = query(
-            collection(db, ACTIVITY_LOG_COLLECTION),
-            where("details.targetUserId", "==", targetUserId),
-            orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
+        const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
+            .where("details.targetUserId", "==", targetUserId)
+            .orderBy("timestamp", "desc");
+        const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -159,17 +135,11 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
  * @returns An array of activity log objects.
  */
 export const getDonationActivity = async (donationId: string): Promise<ActivityLog[]> => {
-    if (!isConfigValid) {
-        console.log("Firebase not configured. Skipping activity fetch.");
-        return [];
-    }
     try {
-        const q = query(
-            collection(db, ACTIVITY_LOG_COLLECTION),
-            where("details.donationId", "==", donationId),
-            orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
+        const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
+            .where("details.donationId", "==", donationId)
+            .orderBy("timestamp", "desc");
+        const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -196,17 +166,11 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
  * @returns An array of activity log objects.
  */
 export const getCampaignActivity = async (campaignId: string): Promise<ActivityLog[]> => {
-    if (!isConfigValid) {
-        console.log("Firebase not configured. Skipping activity fetch.");
-        return [];
-    }
     try {
-        const q = query(
-            collection(db, ACTIVITY_LOG_COLLECTION),
-            where("details.linkedCampaignId", "==", campaignId),
-            orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
+        const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
+            .where("details.linkedCampaignId", "==", campaignId)
+            .orderBy("timestamp", "desc");
+        const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();

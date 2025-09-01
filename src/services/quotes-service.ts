@@ -1,18 +1,12 @@
 
+
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
 
-import {
-  collection,
-  doc,
-  getDocs,
-  writeBatch,
-  query,
-  limit,
-} from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { adminDb } from './firebase';
 import type { Quote } from './types';
+import { WriteBatch } from 'firebase-admin/firestore';
 
 // Re-export type for backward compatibility
 export type { Quote };
@@ -64,12 +58,9 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
  * @returns A status message.
  */
 export const seedInitialQuotes = async (): Promise<string> => {
-  if (!isConfigValid) {
-    return "Firebase not configured. Skipped quote seeding.";
-  }
   
-  const quotesCollection = collection(db, QUOTES_COLLECTION);
-  const snapshot = await getDocs(query(quotesCollection, limit(1)));
+  const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
+  const snapshot = await quotesCollection.limit(1).get();
 
   if (!snapshot.empty) {
     const msg = "Quotes collection is not empty. Skipped seeding.";
@@ -79,9 +70,9 @@ export const seedInitialQuotes = async (): Promise<string> => {
 
   console.log("Quotes collection is empty. Seeding initial quotes from hardcoded list...");
   try {
-    const batch = writeBatch(db);
+    const batch: WriteBatch = adminDb.batch();
     ALL_QUOTES.forEach((quote) => {
-      const quoteRef = doc(quotesCollection);
+      const quoteRef = quotesCollection.doc();
       batch.set(quoteRef, quote);
     });
 
@@ -101,10 +92,9 @@ export const seedInitialQuotes = async (): Promise<string> => {
  * @returns An array of all quote objects.
  */
 export const getAllQuotes = async (): Promise<Quote[]> => {
-    if (!isConfigValid) return [];
     try {
-        const quotesQuery = query(collection(db, QUOTES_COLLECTION));
-        const querySnapshot = await getDocs(quotesQuery);
+        const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
+        const querySnapshot = await quotesQuery.get();
         const quotes: Quote[] = [];
         querySnapshot.forEach((doc) => {
             quotes.push({ id: doc.id, ...doc.data() } as Quote);
@@ -124,10 +114,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
  */
 export const getRandomQuotes = async (count: number): Promise<Quote[]> => {
     try {
-        let allQuotes: Quote[] = [];
-        if (isConfigValid) {
-            allQuotes = await getAllQuotes();
-        }
+        let allQuotes: Quote[] = await getAllQuotes();
         
         // If DB is empty or not configured, use the hardcoded list
         if (allQuotes.length === 0) {
