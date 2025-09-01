@@ -6,6 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PublicHomePage } from "./home/public-home-page";
 import { PublicDashboardCards } from "./home/public-dashboard-cards";
 import { getRandomQuotes, Quote } from "@/services/quotes-service";
+import { getAllDonations } from "@/services/donation-service";
+import { getAllUsers } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
+import { getPublicCampaigns } from "@/services/public-data-service";
 
 
 const CardSkeleton = () => (
@@ -22,7 +26,13 @@ const CardSkeleton = () => (
 
 
 export default async function Page() {
-    const quotes = await getRandomQuotes(3);
+    const [quotes, allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
+        getRandomQuotes(3),
+        getAllDonations(),
+        getAllUsers(),
+        getAllLeads(),
+        getPublicCampaigns()
+    ]);
 
     return (
         <div className="flex-1 space-y-8">
@@ -30,7 +40,12 @@ export default async function Page() {
 
             <div className="space-y-4">
                  <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
-                    <PublicDashboardCards />
+                    <PublicDashboardCards 
+                        allDonations={allDonations}
+                        allUsers={allUsers}
+                        allLeads={allLeads}
+                        allCampaigns={allCampaigns}
+                    />
                 </Suspense>
             </div>
         </div>

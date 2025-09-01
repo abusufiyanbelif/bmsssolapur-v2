@@ -360,3 +360,5 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         return [];
     }
 }
+
+    

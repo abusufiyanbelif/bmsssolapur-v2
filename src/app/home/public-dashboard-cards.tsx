@@ -1,18 +1,12 @@
 
-
-"use client";
+'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainMetricsCard, TopDonorsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
-import { Suspense, useEffect, useState } from "react";
-import type { Donation, User, Lead, Campaign, PublicStats } from "@/services/types";
-import { getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
-import { getAllCampaigns as getAllCampaignsService } from "@/app/campaigns/actions"; // Use the corrected public action
+import { Suspense } from "react";
+import type { Donation, User, Lead, Campaign } from "@/services/types";
 import { RecentCampaignsCard } from "@/app/admin/dashboard-cards";
-import { getAllDonations } from "@/services/donation-service";
-import { getAllUsers } from "@/services/user-service";
-import { getAllLeads } from "@/services/lead-service";
 
 
 const CardSkeleton = () => (
@@ -34,46 +28,19 @@ const TableSkeleton = () => (
     </Card>
 );
 
+interface PublicDashboardCardsProps {
+    allDonations: Donation[];
+    allUsers: User[];
+    allLeads: Lead[];
+    allCampaigns: Campaign[];
+}
 
-export function PublicDashboardCards() {
-    const [allDonations, setAllDonations] = useState<Donation[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
-    const [allLeads, setAllLeads] = useState<Lead[]>([]);
-    const [allCampaigns, setAllCampaigns] = useState<(Campaign & { raisedAmount: number, fundingProgress: number })[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            const [donations, users, leads, campaigns] = await Promise.all([
-                getAllDonations(),
-                getAllUsers(),
-                getAllLeads(),
-                getAllCampaignsService()
-            ]);
-            setAllDonations(donations);
-            setAllUsers(users);
-            setAllLeads(leads);
-            setAllCampaigns(campaigns);
-            setLoading(false);
-        };
-        fetchData();
-    }, []);
-    
-    if (loading) {
-        return (
-            <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
-                <CardSkeleton />
-                <TableSkeleton />
-            </div>
-        );
-    }
+export function PublicDashboardCards({ allDonations, allUsers, allLeads, allCampaigns }: PublicDashboardCardsProps) {
     
     return (
         <div className="space-y-4">
             <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
-                <MainMetricsCard isPublicView={true} />
+                <MainMetricsCard allDonations={allDonations} allLeads={allLeads} />
             </Suspense>
             
             <Suspense fallback={<CardSkeleton />}>
@@ -86,12 +53,12 @@ export function PublicDashboardCards() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <div className="col-span-full lg:col-span-4">
                     <Suspense fallback={<TableSkeleton />}>
-                        <TopDonationsCard isPublicView={true} />
+                        <TopDonationsCard allDonations={allDonations} isPublicView={true} />
                     </Suspense>
                 </div>
                 <div className="col-span-full lg:col-span-3">
                     <Suspense fallback={<TableSkeleton />}>
-                        <RecentCampaignsCard />
+                        <RecentCampaignsCard allCampaigns={allCampaigns} allLeads={allLeads} />
                     </Suspense>
                 </div>
             </div>

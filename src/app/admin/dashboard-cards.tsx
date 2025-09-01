@@ -20,32 +20,25 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 
-export const MainMetricsCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
-    const [stats, setStats] = useState({
-        totalRaised: 0,
-        totalDistributed: 0,
-        beneficiariesHelpedCount: 0,
-        casesClosed: 0,
-        casesPending: 0,
-        casesPublished: 0,
-    });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // These will now be handled by a server action or passed as props if this component remains client-side
-                // For now, we'll simulate the fetch but this is where the error originates.
-                // To fix, this component should receive data as props.
-            } catch (error) {
-                console.error("Failed to fetch main metrics", error);
-            } finally {
-                setLoading(false);
-            }
+export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonations: Donation[], allLeads: Lead[] }) => {
+    
+    const stats = useMemo(() => {
+        const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+        const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+        const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.helpGiven > 0).map(l => l.beneficiaryId));
+        const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
+        const casesPending = allLeads.filter(l => l.caseStatus === 'Pending' || l.caseStatus === 'Open' || l.caseStatus === 'Partial').length;
+        const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
+        
+        return {
+            totalRaised,
+            totalDistributed,
+            beneficiariesHelpedCount: helpedBeneficiaryIds.size,
+            casesClosed,
+            casesPending,
+            casesPublished,
         };
-        // fetchData();
-        setLoading(false); // Assume data is passed or handled differently
-    }, []);
+    }, [allDonations, allLeads]);
 
     const mainMetrics = [
         { id: "totalRaised", title: "Total Verified Funds", value: `₹${stats.totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
@@ -63,87 +56,32 @@ export const MainMetricsCard = ({ isPublicView = false }: { isPublicView?: boole
         return <Link href={href}>{children}</Link>;
     };
 
-    if (loading) {
-        return (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                {[...Array(6)].map((_, i) => (
-                    <Card key={i}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                           <Skeleton className="h-5 w-3/4" />
-                        </CardHeader>
-                        <CardContent><Skeleton className="h-8 w-1/2" /></CardContent>
-                    </Card>
-                ))}
-            </div>
-        )
-    }
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {mainMetrics.map((metric) => {
-                if (isPublicView && metric.id === 'casesPending') {
-                    return null; // Skip rendering pending cases card on public view
-                }
-                const isClickable = !isPublicView || metric.id === 'openLeads'; // Open Leads is always clickable
-                return (
-                    <CardWrapper href={metric.href} key={metric.title} isClickable={isClickable}>
-                        <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-                            <metric.icon className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                            <div className="text-2xl font-bold">{metric.value}</div>
-                            </CardContent>
-                        </Card>
-                    </CardWrapper>
-                )
-            })}
+            {mainMetrics.map((metric) => (
+                <CardWrapper href={metric.href} key={metric.title} isClickable={true}>
+                    <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <metric.icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                        <div className="text-2xl font-bold">{metric.value}</div>
+                        </CardContent>
+                    </Card>
+                </CardWrapper>
+            ))}
         </div>
     )
 }
 
-export const FundsInHandCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
-    const [stats, setStats] = useState({ pendingToDisburse: 0 });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (isPublicView) {
-                setLoading(false);
-                return;
-            }
-            try {
-                 // This direct fetch is problematic on the client.
-            } catch (error) {
-                console.error("Failed to fetch funds in hand stats", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-         setLoading(false);
-    }, [isPublicView]);
-    
-    if (isPublicView) {
-        return null;
-    }
-    
-    if (loading) {
-        return (
-             <Card className="h-full bg-primary/10">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
-                    <Banknote className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-8 w-3/4 mb-1" />
-                    <Skeleton className="h-4 w-1/2" />
-                </CardContent>
-            </Card>
-        );
-    }
-
+export const FundsInHandCard = ({ allDonations = [], allLeads = [] }: { allDonations: Donation[], allLeads: Lead[] }) => {
+     const stats = useMemo(() => {
+        const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
+        const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
+        return { pendingToDisburse: Math.max(0, totalRaised - totalDistributed) };
+    }, [allDonations, allLeads]);
 
     return (
         <Link href="/admin/donations">
@@ -161,38 +99,12 @@ export const FundsInHandCard = ({ isPublicView = false }: { isPublicView?: boole
     )
 }
 
-export const OrganizationFundsCard = () => {
-    const [stats, setStats] = useState({ orgFunds: 0 });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch (error) {
-                console.error("Failed to fetch organization funds stats", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-        setLoading(false);
-    }, []);
-    
-    if (loading) {
-        return (
-             <Card className="h-full bg-accent/10">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Organization Support Funds</CardTitle>
-                    <Building className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-8 w-3/4 mb-1" />
-                    <Skeleton className="h-4 w-1/2" />
-                </CardContent>
-            </Card>
-        );
-    }
+export const OrganizationFundsCard = ({ allDonations = [] }: { allDonations: Donation[] }) => {
+    const orgFunds = useMemo(() => {
+        return allDonations
+            .filter(d => (d.status === 'Verified' || d.status === 'Allocated') && d.purpose === 'To Organization Use')
+            .reduce((sum, d) => sum + d.amount, 0);
+    }, [allDonations]);
 
     return (
         <Link href="/admin/donations?purpose=To+Organization+Use">
@@ -202,7 +114,7 @@ export const OrganizationFundsCard = () => {
                     <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₹{stats.orgFunds.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">₹{orgFunds.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Funds from pledges and direct support.</p>
                 </CardContent>
             </Card>
@@ -211,27 +123,14 @@ export const OrganizationFundsCard = () => {
 }
 
 
-export const MonthlyContributorsCard = () => {
-    const [stats, setStats] = useState({ contributedThisMonthCount: 0, monthlyContributorsCount: 0 });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch (e) {
-                console.error("Failed to fetch monthly contributor stats", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-         setLoading(false);
-    }, []);
-
-    if (loading) {
-        return <Card><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
-    }
+export const MonthlyContributorsCard = ({ allUsers = [] }: { allUsers: User[] }) => {
+    const stats = useMemo(() => {
+        // This logic will need to be updated when contributions are tracked monthly.
+        // For now, it's a placeholder.
+        const monthlyContributorsCount = allUsers.filter(u => u.monthlyPledgeEnabled).length;
+        const contributedThisMonthCount = 0; // Placeholder
+        return { monthlyContributorsCount, contributedThisMonthCount };
+    }, [allUsers]);
 
     return (
         <Link href="/admin/donors">
@@ -249,27 +148,15 @@ export const MonthlyContributorsCard = () => {
     )
 }
 
-export const MonthlyPledgeCard = () => {
-    const [totalPledge, setTotalPledge] = useState(0);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch(e) {
-                console.error("Failed to fetch monthly pledge stats", e);
-            } finally {
-                setLoading(false);
+export const MonthlyPledgeCard = ({ allUsers = [] }: { allUsers: User[] }) => {
+    const totalPledge = useMemo(() => {
+        return allUsers.reduce((sum, user) => {
+            if(user.monthlyPledgeEnabled && user.monthlyPledgeAmount) {
+                return sum + user.monthlyPledgeAmount;
             }
-        };
-        // fetchData();
-        setLoading(false);
-    }, []);
-
-    if (loading) {
-         return <Card><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
-    }
+            return sum;
+        }, 0);
+    }, [allUsers]);
 
     return (
          <Link href="/admin/donors">
@@ -287,27 +174,8 @@ export const MonthlyPledgeCard = () => {
     )
 }
 
-export const PendingLeadsCard = () => {
-    const [leads, setLeads] = useState<Lead[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch (e) {
-                console.error("Failed to fetch pending leads", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-        setLoading(false);
-    }, []);
-    
-    if (loading) {
-        return <Card><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
-    }
+export const PendingLeadsCard = ({ allLeads = [] }: { allLeads: Lead[] }) => {
+    const leads = useMemo(() => allLeads.filter(l => l.caseVerification === 'Pending'), [allLeads]);
 
     return (
         <AccordionItem value="pending-leads">
@@ -359,28 +227,8 @@ export const PendingLeadsCard = () => {
     )
 }
 
-export const PendingDonationsCard = () => {
-    const [donations, setDonations] = useState<Donation[]>([]);
-    const [loading, setLoading] = useState(true);
-
-     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch (e) {
-                console.error("Failed to fetch pending donations", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-        setLoading(false);
-    }, []);
-
-    if (loading) {
-        return <Card><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
-    }
-
+export const PendingDonationsCard = ({ allDonations = [] }: { allDonations: Donation[] }) => {
+    const donations = useMemo(() => allDonations.filter(d => d.status === 'Pending verification'), [allDonations]);
 
     return (
         <AccordionItem value="pending-donations">
@@ -432,27 +280,8 @@ export const PendingDonationsCard = () => {
     )
 }
 
-export const LeadsReadyToPublishCard = () => {
-    const [leads, setLeads] = useState<Lead[]>([]);
-    const [loading, setLoading] = useState(true);
-
-     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch (e) {
-                console.error("Failed to fetch leads ready for publishing", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-        setLoading(false);
-    }, []);
-
-    if (loading) {
-        return <Card><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
-    }
+export const LeadsReadyToPublishCard = ({ allLeads = [] }: { allLeads: Lead[] }) => {
+    const leads = useMemo(() => allLeads.filter(l => l.caseAction === 'Ready For Help'), [allLeads]);
 
     return (
         <AccordionItem value="ready-to-publish">
@@ -501,27 +330,24 @@ export const LeadsReadyToPublishCard = () => {
     )
 }
 
-export const TopDonorsCard = () => {
-    const [donors, setDonors] = useState<{ name: string; total: number; count: number; id: string; }[]>([]);
-    const [loading, setLoading] = useState(true);
+export const TopDonorsCard = ({ allDonations = [] }: { allDonations: Donation[] }) => {
+    const donors = useMemo(() => {
+        const donorData = allDonations.reduce((acc, d) => {
+            if (d.status === 'Verified' || d.status === 'Allocated') {
+                if (!acc[d.donorId]) {
+                    acc[d.donorId] = { name: d.donorName, total: 0, count: 0, id: d.donorId };
+                }
+                acc[d.donorId].total += d.amount;
+                acc[d.donorId].count += 1;
+            }
+            return acc;
+        }, {} as Record<string, { name: string; total: number; count: number; id: string; }>);
+
+        return Object.values(donorData).sort((a, b) => b.total - a.total);
+    }, [allDonations]);
+
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
-
-    useEffect(() => {
-        const fetchDonors = async () => {
-            setLoading(true);
-            try {
-                // This direct fetch is problematic on the client.
-            } catch (error) {
-                console.error("Failed to fetch top donors", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchDonors();
-        setLoading(false);
-    }, []);
-
     const totalPages = Math.ceil(donors.length / itemsPerPage);
     const paginatedDonors = donors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -532,11 +358,7 @@ export const TopDonorsCard = () => {
                 <CardDescription>Our most generous supporters. Thank you for your contributions!</CardDescription>
             </CardHeader>
             <CardContent>
-                {loading ? (
-                    <div className="space-y-4">
-                        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-                    </div>
-                ) : donors.length > 0 ? (
+                {donors.length > 0 ? (
                     <ScrollArea className="h-80 pr-4">
                         <div className="space-y-4">
                             {paginatedDonors.map(donor => (
@@ -578,25 +400,8 @@ export const TopDonorsCard = () => {
 };
 
 
-export const RecentCampaignsCard = () => {
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-    const [leads, setLeads] = useState<Lead[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch(e) {
-                console.error("Failed to fetch recent campaigns", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-        setLoading(false);
-    }, []);
-
+export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allCampaigns: Campaign[], allLeads: Lead[] }) => {
+    
      const campaignStatusColors: Record<string, string> = {
         "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
         "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
@@ -604,23 +409,20 @@ export const RecentCampaignsCard = () => {
         "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
     };
 
-    if (loading) {
-         return <Card><CardContent className="p-4"><Skeleton className="h-48 w-full" /></CardContent></Card>
-    }
 
     return (
         <Card>
         <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="text-primary"/>
-                Active & Recent Campaigns
+                Active &amp; Recent Campaigns
             </CardTitle>
             <CardDescription>
                 An overview of our fundraising campaigns.
             </CardDescription>
         </CardHeader>
         <CardContent>
-            {campaigns.length > 0 ? (
+            {allCampaigns.length > 0 ? (
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -631,8 +433,8 @@ export const RecentCampaignsCard = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {campaigns.slice(0, 5).map((campaign) => {
-                            const linkedLeads = leads.filter(lead => lead.campaignId === campaign.id);
+                        {allCampaigns.slice(0, 5).map((campaign) => {
+                            const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
                             const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
                             const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
                             return (
@@ -722,26 +524,15 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
 
 type TopDonation = Donation & { anonymousDonorId?: string };
 
-export const TopDonationsCard = ({ isPublicView = false }: { isPublicView?: boolean }) => {
-    const [donations, setDonations] = useState<TopDonation[]>([]);
-    const [loading, setLoading] = useState(true);
+export const TopDonationsCard = ({ allDonations = [], isPublicView = false }: { allDonations: Donation[], isPublicView?: boolean }) => {
+    const donations = useMemo(() => {
+        return [...allDonations]
+            .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+            .sort((a,b) => b.amount - a.amount);
+    }, [allDonations]);
+
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
-
-     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // This direct fetch is problematic on the client.
-            } catch(e) {
-                console.error("Failed to fetch top donations", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        // fetchData();
-        setLoading(false);
-    }, []);
-
     const totalPages = Math.ceil(donations.length / itemsPerPage);
     const paginatedDonations = donations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -758,9 +549,6 @@ export const TopDonationsCard = ({ isPublicView = false }: { isPublicView?: bool
         )
     };
     
-    if(loading) {
-         return <Card><CardContent className="p-4"><Skeleton className="h-96 w-full" /></CardContent></Card>
-    }
 
     return (
         <Card>
@@ -825,25 +613,11 @@ export const TopDonationsCard = ({ isPublicView = false }: { isPublicView?: bool
     );
 };
 
-export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin }: { allUsers?: User[], allLeads?: Lead[], isAdmin?: boolean }) => {
-    const [users, setUsers] = useState<User[]>([]);
-    const [leads, setLeads] = useState<Lead[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (allUsers && allLeads) {
-            setUsers(allUsers);
-            setLeads(allLeads);
-            setLoading(false);
-        } else {
-            // This component should receive data as props.
-             setLoading(false);
-        }
-    }, [allUsers, allLeads]);
+export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin }: { allUsers: User[], allLeads: Lead[], isAdmin?: boolean }) => {
 
     const beneficiaryStats = useMemo(() => {
-        const helpedBeneficiaryIds = new Set(leads.filter(l => l.helpGiven > 0).map(l => l.beneficiaryId));
-        const allBeneficiaries = users.filter(u => u.roles.includes('Beneficiary'));
+        const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.helpGiven > 0).map(l => l.beneficiaryId));
+        const allBeneficiaries = allUsers.filter(u => u.roles.includes('Beneficiary'));
 
         const stats = allBeneficiaries.reduce((acc, user) => {
             if (!helpedBeneficiaryIds.has(user.id!)) return acc;
@@ -857,7 +631,7 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin }: { allU
         }, { kids: 0, adults: 0, widows: 0, families: 0 });
 
         return stats;
-    }, [users, leads]);
+    }, [allUsers, allLeads]);
 
     const beneficiaryTypes = [
         { label: "Kids", value: beneficiaryStats.kids, icon: Baby, href: "/admin/beneficiaries?type=Kid" },
@@ -866,10 +640,6 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin }: { allU
         { label: "Widows", value: beneficiaryStats.widows, icon: HeartHandshake, href: "/admin/beneficiaries?isWidow=true" },
     ];
     
-    if (loading) {
-         return <Card><CardContent className="p-4"><Skeleton className="h-48 w-full" /></CardContent></Card>
-    }
-
     return (
         <Card>
             <CardHeader>
@@ -896,38 +666,22 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin }: { allU
     );
 };
 
-export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns?: Campaign[] }) => {
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if(allCampaigns) {
-            setCampaigns(allCampaigns);
-            setLoading(false);
-        } else {
-             // This component should receive data as props.
-             setLoading(false);
-        }
-    }, [allCampaigns]);
+export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns: Campaign[] }) => {
 
      const campaignStats = useMemo(() => {
-        return campaigns.reduce((acc, campaign) => {
+        return allCampaigns.reduce((acc, campaign) => {
             if (campaign.status === 'Active') acc.active++;
             if (campaign.status === 'Completed') acc.completed++;
             if (campaign.status === 'Upcoming') acc.upcoming++;
             return acc;
         }, { active: 0, completed: 0, upcoming: 0 });
-    }, [campaigns]);
+    }, [allCampaigns]);
 
     const campaignTypes = [
         { label: "Active", value: campaignStats.active, href: "/admin/campaigns?status=Active" },
         { label: "Completed", value: campaignStats.completed, href: "/admin/campaigns?status=Completed" },
         { label: "Upcoming", value: campaignStats.upcoming, href: "/admin/campaigns?status=Upcoming" },
     ];
-    
-     if (loading) {
-         return <Card><CardContent className="p-4"><Skeleton className="h-32 w-full" /></CardContent></Card>
-    }
 
     return (
         <Card>
@@ -962,22 +716,10 @@ const donationTypeIcons: Record<DonationType, React.ElementType> = {
     Any: DollarSign,
 };
 
-export const DonationTypeCard = ({ donations: allDonations, isPublicView = false }: { donations?: Donation[], isPublicView?: boolean }) => {
-    const [donations, setDonations] = useState<Donation[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if(allDonations) {
-            setDonations(allDonations);
-            setLoading(false);
-        } else {
-             // This component should receive data as props.
-             setLoading(false);
-        }
-    }, [allDonations]);
+export const DonationTypeCard = ({ donations: allDonations, isPublicView = false }: { donations: Donation[], isPublicView?: boolean }) => {
 
     const donationTypeBreakdown = useMemo(() => {
-        return donations
+        return allDonations
             .filter(d => d.status === 'Verified' || d.status === 'Allocated')
             .reduce((acc, donation) => {
                 const type = donation.type || 'Other';
@@ -987,11 +729,7 @@ export const DonationTypeCard = ({ donations: allDonations, isPublicView = false
                 acc[type] += donation.amount;
                 return acc;
             }, {} as Record<string, number>);
-    }, [donations]);
-
-    if (loading) {
-         return <Card><CardContent className="p-4"><Skeleton className="h-48 w-full" /></CardContent></Card>
-    }
+    }, [allDonations]);
 
     return (
         <Card className="col-span-3">
@@ -1020,46 +758,28 @@ export const DonationTypeCard = ({ donations: allDonations, isPublicView = false
     );
 };
 
-export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUsers?: User[], allLeads?: Lead[], currentUser?: User }) => {
-    const [stats, setStats] = useState({ referredCount: 0, totalRequested: 0, totalReceived: 0 });
-    const [loading, setLoading] = useState(true);
+export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUsers: User[], allLeads: Lead[], currentUser: User }) => {
+    const stats = useMemo(() => {
+        let beneficiaries;
+        if(currentUser && currentUser.roles.includes('Referral')) {
+            beneficiaries = allUsers.filter(u => u.referredByUserId === currentUser.id);
+        } else {
+            beneficiaries = allUsers.filter(u => u.referredByUserId); // All referred users
+        }
+        
+        const beneficiaryIds = new Set(beneficiaries.map(b => b.id));
+        const relevantLeads = allLeads.filter(l => l.beneficiaryId && beneficiaryIds.has(l.beneficiaryId));
+        
+        const totalRequested = relevantLeads.reduce((sum, l) => sum + l.helpRequested, 0);
+        const totalReceived = relevantLeads.reduce((sum, l) => sum + l.helpGiven, 0);
 
-    useEffect(() => {
-         const fetchData = async () => {
-            try {
-                 // This direct fetch is problematic on the client.
-                const users = allUsers || [];
-                const leads = allLeads || [];
-                
-                let beneficiaries;
-                if(currentUser && currentUser.roles.includes('Referral')) {
-                    beneficiaries = users.filter(u => u.referredByUserId === currentUser.id);
-                } else {
-                    beneficiaries = users.filter(u => u.referredByUserId); // All referred users
-                }
-                
-                const beneficiaryIds = new Set(beneficiaries.map(b => b.id));
-                const relevantLeads = leads.filter(l => beneficiaryIds.has(l.beneficiaryId));
-                
-                const totalRequested = relevantLeads.reduce((sum, l) => sum + l.helpRequested, 0);
-                const totalReceived = relevantLeads.reduce((sum, l) => sum + l.helpGiven, 0);
-
-                setStats({
-                    referredCount: beneficiaryIds.size,
-                    totalRequested,
-                    totalReceived
-                });
-
-            } catch (e) { console.error("Failed to fetch referral data", e); }
-            finally { setLoading(false); }
+        return {
+            referredCount: beneficiaryIds.size,
+            totalRequested,
+            totalReceived
         };
-        fetchData();
     }, [allUsers, allLeads, currentUser]);
     
-    if (loading) {
-         return <Card><CardContent className="p-4"><Skeleton className="h-32 w-full" /></CardContent></Card>
-    }
-
     return (
          <Card>
             <CardHeader>
@@ -1085,3 +805,5 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
+
+    
