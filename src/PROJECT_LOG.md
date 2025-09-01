@@ -5,16 +5,17 @@ This document tracks the features and changes requested for the project.
 ## Guiding Principles
 
 - **Interactive Dashboards**: All dashboard cards and metrics should be clickable links that navigate the user to a relevant, pre-filtered view of the underlying data. This makes the dashboard an interactive entry point for data exploration and management, not just a static display.
-- **Robust Error Handling & User Feedback**: The system must provide clear, specific, and actionable feedback for errors.
+- **Robust Error Handling & User Feedback**: The system must provide clear, specific, and actionable feedback for all operations.
     - **No Generic Errors**: Avoid vague messages like "An error occurred." Instead, propagate and display the specific error message from the server (e.g., "Duplicate transaction ID found").
     - **UI Feedback**: Invalid form fields should be clearly highlighted (e.g., red border/label) with an inline message explaining the requirement.
-    - **Actionable Guidance**: When possible, errors should guide the user toward a solution (e.g., "A user with this email already exists. Please try logging in.").
+    - **Actionable Guidance**: Errors should guide the user toward a solution (e.g., "A user with this email already exists. Please try logging in.").
     - **Developer-Friendly Logging**: Server-side logs must contain sufficient context to facilitate Root Cause Analysis (RCA) and debugging.
 - **URL Encoding for Dynamic Routes**: To prevent 404 errors, any dynamic segment in a URL (e.g., `[id]`) must be properly encoded if the ID might contain special characters (such as `_`, `/`, `?`). When creating a `Link` component for a path like `/items/[id]/edit`, the `href` must be constructed as `` `/items/${encodeURIComponent(item.id)}/edit` ``. This is a critical step for ensuring routing reliability.
 - **Secure Data Access Model**: The application employs a two-collection strategy to enforce security and privacy.
     - **Private Collections (`users`, `leads`, `donations`)**: These contain sensitive data and are protected by Firestore Security Rules, allowing access only to authenticated users with specific roles (e.g., an admin, or a user accessing their own data).
     - **Public Collections (`publicLeads`, `publicCampaigns`)**: These contain sanitized, non-sensitive subsets of data intended for public display. Security rules on these collections permit read-only access for all users, including unauthenticated guests.
     - **Server-Side Logic**: Server-side functions are responsible for populating the public collections based on the status of items in the private collections (e.g., a lead is copied to `publicLeads` only when its status is set to "Publish").
+- **Infrastructure Permissions**: The application's backend, running on Firebase App Hosting, requires specific IAM (Identity and Access Management) roles to connect to Google Cloud services. The root cause of "Insufficient Permissions" errors is that the App Hosting service account (`firebase-app-hosting-compute@...`) is missing the **`Cloud Datastore User`** role, which is required for it to read from and write to Firestore.
 
 ---
 
