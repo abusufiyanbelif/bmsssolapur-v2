@@ -1,6 +1,22 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  devSwitches: {
+    appServerTracing: true,
+  },
+  experimental: {
+    allowedDevOrigins: [
+        "https://*.google.com",
+        "https://*.cloud.google.com",
+        "https://*.firebase.google.com",
+        "https://*.corp.google.com",
+        "https://*.cloud.goog",
+        "https://*.cloudworkstations.dev",
+        "https://*.firebase.dev",
+        "https://*.web.app",
+        "https://*.firebaseapp.com",
+    ]
+  },
   images: {
     remotePatterns: [
       {
