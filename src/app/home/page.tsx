@@ -15,8 +15,8 @@ import { DonorDashboardContent } from "../donor/donor-dashboard-content";
 import { Loader2 } from "lucide-react";
 import { getUser } from "@/services/user-service";
 import { BeneficiaryDashboardContent } from "../beneficiary/beneficiary-dashboard-content";
-import { ReferralDashboardPage } from "../referral/page";
-import { AdminDashboardPage } from "../admin/page";
+import ReferralDashboardPage from "../referral/page";
+import AdminDashboardPage from "../admin/page";
 import { useRouter } from 'next/navigation';
 
 
