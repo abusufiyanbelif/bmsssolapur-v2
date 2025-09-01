@@ -101,10 +101,9 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     await setDoc(leadRef, newLead);
 
-    // Sync with public collection if applicable
-    if (newLead.caseAction === 'Publish') {
-        const fullLead = await getLead(newLead.id!);
-        if (fullLead) await updatePublicLead(fullLead);
+    const fullLead = await getLead(newLead.id!);
+    if (fullLead && fullLead.caseAction === 'Publish') {
+        await updatePublicLead(fullLead);
     }
     
     return newLead as Lead;
@@ -212,7 +211,9 @@ export const updateLeadStatus = async (id: string, newStatus: LeadStatus, adminU
         details: { leadId: id, leadName: lead.name, from: lead.caseStatus, to: newStatus }
     });
 
-    return updateLead(id, { caseStatus: newStatus });
+    await updateLead(id, { caseStatus: newStatus });
+    const updatedLead = await getLead(id);
+    if (updatedLead) await updatePublicLead(updatedLead);
 };
 
 export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVerificationStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
@@ -233,7 +234,9 @@ export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVe
         details: { leadId: id, leadName: lead.name, from: lead.caseVerification, to: newStatus }
     });
     
-    return updateLead(id, updates);
+    await updateLead(id, updates);
+    const updatedLead = await getLead(id);
+    if (updatedLead) await updatePublicLead(updatedLead);
 };
 
 
