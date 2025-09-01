@@ -20,7 +20,7 @@ import {
   getCountFromServer,
   orderBy,
 } from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { db } from './firebase';
 import { adminDb } from './firebase-admin';
 import type { User, UserRole } from './types';
 
@@ -91,7 +91,7 @@ const generateNextAnonymousId = async (prefix: string, field: keyof User): Promi
 
 // Function to get a user by their custom userId field
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
-    if (!isConfigValid || !userId) {
+    if (!userId) {
         return null;
     }
      // Hardcoded check for the default admin user
@@ -122,7 +122,6 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 
 // Function to create or update a user
 export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>) => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   
   try {
     // Generate a new Firestore document reference with a unique ID
@@ -255,7 +254,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 
 // Function to get a user by ID
 export const getUser = async (id: string): Promise<User | null> => {
-  if (!isConfigValid || !id) {
+  if (!id) {
     return null;
   }
    // Hardcoded check for the default admin user
@@ -285,7 +284,7 @@ export const getUser = async (id: string): Promise<User | null> => {
 
 // Function to get a user by name (for the special 'admin' case)
 export const getUserByName = async (name: string): Promise<User | null> => {
-    if (!isConfigValid || !name) {
+    if (!name) {
         return null;
     }
      if (name === hardcodedSuperAdmin.name) {
@@ -314,7 +313,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
 
 // Function to get a user by userKey
 export const getUserByUserKey = async (userKey: string): Promise<User | null> => {
-    if (!isConfigValid || !userKey) {
+    if (!userKey) {
         return null;
     }
      if (userKey === hardcodedSuperAdmin.userKey) {
@@ -340,7 +339,7 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
 
 // Function to get a user by full name
 export const getUserByFullName = async (name: string): Promise<User | null> => {
-    if (!isConfigValid || !name) {
+    if (!name) {
         return null;
     }
      if (name === hardcodedSuperAdmin.name) {
@@ -367,9 +366,6 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
 
 // Function to get a user by phone number
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
-  if (!isConfigValid) {
-    return null;
-  }
   const standardizedPhone = phone?.replace(/\D/g, '').slice(-10);
   if (!standardizedPhone || standardizedPhone.length !== 10) return null;
   
@@ -400,7 +396,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
 
 // Function to get a user by email
 export const getUserByEmail = async (email: string): Promise<User | null> => {
-  if (!isConfigValid || !email) {
+  if (!email) {
     return null;
   }
    if (email === hardcodedSuperAdmin.email) {
@@ -429,7 +425,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 
 // Function to get a user by UPI ID
 export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
-  if (!isConfigValid || !upiId) return null;
+  if (!upiId) return null;
   try {
     const q = query(collection(db, USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
     const querySnapshot = await getDocs(q);
@@ -453,7 +449,7 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
 
 // Function to get a user by Bank Account Number
 export const getUserByBankAccountNumber = async (accountNumber: string): Promise<User | null> => {
-  if (!isConfigValid || !accountNumber) {
+  if (!accountNumber) {
     return null;
   }
   try {
@@ -479,7 +475,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
 
 // Function to get a user by PAN Number
 export const getUserByPan = async (pan: string): Promise<User | null> => {
-  if (!isConfigValid || !pan) return null;
+  if (!pan) return null;
   try {
     const q = query(collection(db, USERS_COLLECTION), where("panNumber", "==", pan.toUpperCase()), limit(1));
     const snapshot = await getDocs(q);
@@ -503,7 +499,7 @@ export const getUserByPan = async (pan: string): Promise<User | null> => {
 
 // Function to get a user by Aadhaar Number
 export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> => {
-  if (!isConfigValid || !aadhaar) return null;
+  if (!aadhaar) return null;
   try {
     const q = query(collection(db, USERS_COLLECTION), where("aadhaarNumber", "==", aadhaar), limit(1));
     const snapshot = await getDocs(q);
@@ -528,7 +524,6 @@ export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> =>
 
 // Function to update a user
 export const updateUser = async (id: string, updates: Partial<User>) => {
-    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
         
@@ -578,7 +573,6 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
 
 // Function to delete a user
 export const deleteUser = async (id: string) => {
-    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const userRef = doc(db, USERS_COLLECTION, id);
         await deleteDoc(userRef);

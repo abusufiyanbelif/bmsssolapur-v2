@@ -30,7 +30,33 @@ import { Logo } from "./logo";
 import { AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { performPermissionCheck } from "@/services/firebase";
+import { adminDb } from "@/services/firebase-admin";
+
+/**
+ * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
+ * to check if the current environment has the necessary permissions.
+ * This function is designed to be called from a server-side context (e.g., a server action or API route).
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function performPermissionCheck(): Promise<{success: boolean, error?: string}> {
+    'use server';
+    try {
+        const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
+        await nonExistentDocRef.get();
+        return { success: true };
+    } catch (e) {
+        if (e instanceof Error) {
+            if (e.message.includes("Could not load the default credentials")) {
+                 return { success: false, error: 'permission-denied' };
+            }
+             if (e.message.includes("offline")) {
+                return { success: false, error: "The client is offline." };
+            }
+        }
+        console.error("An unexpected error occurred during permission check:", e);
+        return { success: false, error: "An unexpected error occurred during the initial permission check." };
+    }
+};
 
 
 const PermissionErrorState = ({ error }: { error: string }) => (
