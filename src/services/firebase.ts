@@ -4,11 +4,6 @@ import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore, getDoc, doc } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
 import { config as appConfig } from '@/lib/config';
-import dotenv from 'dotenv';
-
-// Load environment variables. This is crucial for server-side execution.
-dotenv.config();
-
 
 const firebaseConfig = {
   apiKey: appConfig.firebase.apiKey,
