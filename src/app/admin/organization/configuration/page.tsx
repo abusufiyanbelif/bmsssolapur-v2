@@ -13,7 +13,7 @@ export default function OrganizationConfigurationPage() {
                         Organization Settings
                     </CardTitle>
                     <CardDescription>
-                        Configure settings related to your organization&apos;s profile, campaigns, and donation handling.
+                        Configure settings related to your organization's profile, campaigns, and donation handling.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
