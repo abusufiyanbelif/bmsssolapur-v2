@@ -6,7 +6,7 @@ import { getAuth, Auth } from "firebase/auth";
 import { config as appConfig } from '@/lib/config';
 import dotenv from 'dotenv';
 
-// Ensure dotenv is configured for server-side execution
+// Load environment variables. This is crucial for server-side execution.
 dotenv.config();
 
 
@@ -30,39 +30,17 @@ const isConfigPotentiallyValid = (config: typeof firebaseConfig) => {
 export const isConfigValid = isConfigPotentiallyValid(firebaseConfig);
 
 let app: FirebaseApp;
-let db: Firestore;
-let auth: Auth;
 
-if (typeof window === 'undefined') {
-  // Server-side initialization
-  try {
-    // Attempt to initialize with service account credentials if available
-    // In a real production environment, you would use environment variables
-    // that are securely set by the hosting provider (like Firebase App Hosting)
-    const serviceAccount = {
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    };
-    
-    // Check if the essential service account keys are present
-    if (serviceAccount.projectId && serviceAccount.clientEmail && serviceAccount.privateKey) {
-        app = !getApps().length ? initializeApp({ ...firebaseConfig, serviceAccountId: serviceAccount.clientEmail }) : getApp();
-    } else {
-        // Fallback to default initialization if service account keys are missing
-        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    }
-  } catch (e) {
-      console.warn("Could not initialize Firebase Admin SDK. Falling back to default initialization. Error:", e);
-      app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  }
+// This is the standard pattern for initializing Firebase in a Next.js app.
+// It ensures that we don't try to re-initialize the app on every hot-reload.
+if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
 } else {
-  // Client-side initialization
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    app = getApp();
 }
 
-db = getFirestore(app);
-auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const auth: Auth = getAuth(app);
 
 
 /**
