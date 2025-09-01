@@ -33,17 +33,36 @@ let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth;
 
-if (isConfigValid) {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    db = getFirestore(app);
-    auth = getAuth(app);
+if (typeof window === 'undefined') {
+  // Server-side initialization
+  try {
+    // Attempt to initialize with service account credentials if available
+    // In a real production environment, you would use environment variables
+    // that are securely set by the hosting provider (like Firebase App Hosting)
+    const serviceAccount = {
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    };
+    
+    // Check if the essential service account keys are present
+    if (serviceAccount.projectId && serviceAccount.clientEmail && serviceAccount.privateKey) {
+        app = !getApps().length ? initializeApp({ ...firebaseConfig, serviceAccountId: serviceAccount.clientEmail }) : getApp();
+    } else {
+        // Fallback to default initialization if service account keys are missing
+        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    }
+  } catch (e) {
+      console.warn("Could not initialize Firebase Admin SDK. Falling back to default initialization. Error:", e);
+      app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  }
 } else {
-    console.warn("Firebase configuration is missing, incomplete, or contains placeholder values. Firebase services will not be initialized.");
-    // Provide dummy objects to prevent app from crashing when firebase is not configured
-    app = {} as FirebaseApp;
-    db = {} as Firestore;
-    auth = {} as Auth;
+  // Client-side initialization
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 }
+
+db = getFirestore(app);
+auth = getAuth(app);
 
 
 /**

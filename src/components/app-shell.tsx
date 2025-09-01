@@ -156,14 +156,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             setIsSessionReady(true);
         };
 
-        initializeSession();
-
         const handleLoginSuccess = () => {
             setIsSessionReady(false); // Force re-initialization
             initializeSession();
         };
 
         window.addEventListener('loginSuccess', handleLoginSuccess);
+
+        // Call the initialization function
+        initializeSession();
 
         return () => {
             window.removeEventListener('loginSuccess', handleLoginSuccess);
