@@ -11,6 +11,10 @@ This document tracks the features and changes requested for the project.
     - **Actionable Guidance**: When possible, errors should guide the user toward a solution (e.g., "A user with this email already exists. Please try logging in.").
     - **Developer-Friendly Logging**: Server-side logs must contain sufficient context to facilitate Root Cause Analysis (RCA) and debugging.
 - **URL Encoding for Dynamic Routes**: To prevent 404 errors, any dynamic segment in a URL (e.g., `[id]`) must be properly encoded if the ID might contain special characters (such as `_`, `/`, `?`). When creating a `Link` component for a path like `/items/[id]/edit`, the `href` must be constructed as `` `/items/${encodeURIComponent(item.id)}/edit` ``. This is a critical step for ensuring routing reliability.
+- **Secure Data Access Model**: The application employs a two-collection strategy to enforce security and privacy.
+    - **Private Collections (`users`, `leads`, `donations`)**: These contain sensitive data and are protected by Firestore Security Rules, allowing access only to authenticated users with specific roles (e.g., an admin, or a user accessing their own data).
+    - **Public Collections (`publicLeads`, `publicCampaigns`)**: These contain sanitized, non-sensitive subsets of data intended for public display. Security rules on these collections permit read-only access for all users, including unauthenticated guests.
+    - **Server-Side Logic**: Server-side functions are responsible for populating the public collections based on the status of items in the private collections (e.g., a lead is copied to `publicLeads` only when its status is set to "Publish").
 
 ---
 
