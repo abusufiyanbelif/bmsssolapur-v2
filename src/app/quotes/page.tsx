@@ -20,8 +20,12 @@ export default function QuotesPage() {
             setLoading(true);
             setError(null);
             const fetchedQuotes = await getAllQuotes();
-            // Sort by number after fetching
-            fetchedQuotes.sort((a, b) => a.number - b.number);
+            // Sort by category, then by number
+            fetchedQuotes.sort((a, b) => {
+                if (a.category < b.category) return -1;
+                if (a.category > b.category) return 1;
+                return a.number - b.number;
+            });
             setQuotes(fetchedQuotes);
         } catch (e) {
             console.error("Failed to fetch quotes from database.", e);

@@ -290,7 +290,6 @@ export interface Quote {
     text: string;
     source: string;
     category: "Quran" | "Hadith" | "Scholar";
-    categoryTypeNumber: number;
 }
 
 interface PaymentGatewayCredentials {
