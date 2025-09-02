@@ -1,10 +1,55 @@
 
+'use client';
+
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
-import Image from 'next/image';
 import { Logo } from './logo';
+import { getCurrentOrganization } from '@/services/organization-service';
+import type { Organization } from '@/services/types';
+import { useEffect, useState } from 'react';
+import { Skeleton } from './ui/skeleton';
 
 export function Footer() {
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    getCurrentOrganization().then(org => {
+      setOrganization(org);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+      return (
+          <footer className="border-t bg-card text-card-foreground">
+              <div className="container mx-auto px-4 lg:px-6 py-12">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+                        <div className="space-y-4 lg:col-span-2">
+                             <Skeleton className="h-24 w-full" />
+                             <Skeleton className="h-6 w-3/4" />
+                        </div>
+                        <div className="space-y-4">
+                            <Skeleton className="h-8 w-1/2" />
+                            <Skeleton className="h-6 w-full" />
+                            <Skeleton className="h-6 w-full" />
+                        </div>
+                        <div className="space-y-4">
+                            <Skeleton className="h-8 w-1/2" />
+                            <Skeleton className="h-16 w-full" />
+                        </div>
+                   </div>
+              </div>
+          </footer>
+      )
+  }
+  
+  if (!organization || !organization.footer) {
+      return <footer className="border-t bg-card text-card-foreground"><div className="container p-4 text-center text-sm text-muted-foreground">Footer data not configured.</div></footer>;
+  }
+  
+  const { footer } = organization;
+
   return (
     <footer className="border-t bg-card text-card-foreground">
       <div className="container mx-auto px-4 lg:px-6 py-12">
@@ -15,88 +60,80 @@ export function Footer() {
              <div className="flex items-center gap-3">
                 <Logo className="h-24 w-24" />
                 <h3 className="text-xl font-bold font-headline text-foreground">
-                    <span className="text-primary font-bold">Baitul Mal</span><br/>
-                    <span className="text-accent font-bold">Samajik Sanstha</span><br/>
-                    <span className="text-primary font-bold">(Solapur)</span>
+                    <span className="text-primary font-bold">{footer.organizationInfo.titleLine1}</span><br/>
+                    <span className="text-accent font-bold">{footer.organizationInfo.titleLine2}</span><br/>
+                    <span className="text-primary font-bold">{footer.organizationInfo.titleLine3}</span>
                 </h3>
              </div>
             <p className="text-sm text-muted-foreground max-w-lg">
-              Baitul Mal Samajik Sanstha (Solapur) provides life-saving and life-enriching humanitarian aid to underserved populations in the Solapur region, regardless of faith or nationality.
+                {footer.organizationInfo.description}
             </p>
              <p className="text-xs text-muted-foreground">
-              Registered under the Societies Registration Act, 1860. All donations are tax-deductible under section 80G.
+                {footer.organizationInfo.taxInfo}
             </p>
             <p className="text-xs text-muted-foreground font-mono">
-              Reg No: (Solapur)/0000373/2025
+                {footer.organizationInfo.registrationInfo}
             </p>
           </div>
 
           {/* Column 2: Contact Us & Socials */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold font-headline text-primary">Contact Us</h4>
+            <h4 className="text-lg font-semibold font-headline text-primary">{footer.contactUs.title}</h4>
             <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-3">
                     <MapPin className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-                    <p className="text-muted-foreground">
-                        123 Muslim Peth, <br/>
-                        (Solapur), Maharashtra 413001 <br/>
-                        India
+                    <p className="text-muted-foreground whitespace-pre-line">
+                        {footer.contactUs.address}
                     </p>
                 </div>
                  <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-primary" />
-                     <a href="mailto:info@baitulmalsolapur.org" className="text-muted-foreground hover:text-primary">info@baitulmalsolapur.org</a>
+                     <a href={`mailto:${footer.contactUs.email}`} className="text-muted-foreground hover:text-primary">{footer.contactUs.email}</a>
                 </div>
             </div>
              <div className="space-y-3 pt-4">
-                <h5 className="font-semibold text-primary text-sm">Key Contacts</h5>
-                 <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <div className="text-sm">
-                        <span className="text-muted-foreground">Maaz Shaikh: </span>
-                        <a href="tel:+919372145889" className="font-medium text-foreground hover:text-primary">9372145889</a>
+                <h5 className="font-semibold text-primary text-sm">{footer.keyContacts.title}</h5>
+                 {footer.keyContacts.contacts.map((contact, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                        <Phone className="h-4 w-4 text-primary" />
+                        <div className="text-sm">
+                            <span className="text-muted-foreground">{contact.name}: </span>
+                            <a href={`tel:+91${contact.phone}`} className="font-medium text-foreground hover:text-primary">{contact.phone}</a>
+                        </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-primary" />
-                     <div className="text-sm">
-                        <span className="text-muted-foreground">Abu Rehan Bedrekar: </span>
-                        <a href="tel:+917276224160" className="font-medium text-foreground hover:text-primary">7276224160</a>
-                    </div>
-                </div>
-                 <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <div className="text-sm">
-                        <span className="text-muted-foreground">Moosa Shaikh: </span>
-                        <a href="tel:+918421708907" className="font-medium text-foreground hover:text-primary">8421708907</a>
-                    </div>
-                </div>
+                 ))}
              </div>
              <div className="space-y-2 text-sm pt-4">
-                <h4 className="font-semibold text-primary text-sm">Connect With Us</h4>
+                <h4 className="font-semibold text-primary text-sm">{footer.connectWithUs.title}</h4>
                 <ul className="flex items-center gap-4">
-                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Facebook /></a></li>
-                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Instagram /></a></li>
-                    <li><a href="#" className="flex items-center gap-2 text-muted-foreground hover:text-primary"><Twitter /></a></li>
+                     {footer.connectWithUs.socialLinks.map((social, i) => (
+                        <li key={i}>
+                            <a href={social.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+                                {social.platform === 'Facebook' && <Facebook />}
+                                {social.platform === 'Instagram' && <Instagram />}
+                                {social.platform === 'Twitter' && <Twitter />}
+                            </a>
+                        </li>
+                     ))}
                 </ul>
              </div>
           </div>
           
           {/* Column 3: Our Commitment */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold font-headline text-primary">Our Commitment</h4>
+            <h4 className="text-lg font-semibold font-headline text-primary">{footer.ourCommitment.title}</h4>
             <p className="text-sm text-muted-foreground">
-               We are dedicated to complete transparency and accountability in all our endeavors. Our work is guided by core principles that ensure your contributions directly and meaningfully impact those in need.
+                {footer.ourCommitment.text}
             </p>
-            <Link href="/organization#principles" className="text-sm font-semibold text-primary hover:underline">
-                Read Our Principles →
+            <Link href={footer.ourCommitment.linkUrl} className="text-sm font-semibold text-primary hover:underline">
+                {footer.ourCommitment.linkText}
             </Link>
           </div>
 
         </div>
         
         <div className="mt-12 text-center text-xs text-muted-foreground border-t pt-8">
-          <p>&copy; {new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.</p>
+          <p>{footer.copyright.text}</p>
         </div>
       </div>
     </footer>

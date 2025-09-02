@@ -4,7 +4,7 @@
 
 import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs, where, Timestamp } from 'firebase/firestore';
 import { db } from './firebase'; // Use client-side SDK
-import type { Organization } from './types';
+import type { Organization, OrganizationFooter } from './types';
 import { updatePublicOrganization } from './public-data-service';
 
 
@@ -65,8 +65,8 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
       return { 
         id: orgDoc.id, 
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
+        updatedAt: (data.updatedAt as Timestamp)?.toDate(),
        } as Organization;
     }
     return null;
@@ -87,8 +87,8 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
             return { 
                 id: doc.id, 
                 ...data,
-                createdAt: (data.createdAt as Timestamp).toDate(),
-                updatedAt: (data.updatedAt as Timestamp).toDate(),
+                createdAt: (data.createdAt as Timestamp)?.toDate(),
+                updatedAt: (data.updatedAt as Timestamp)?.toDate(),
             } as Organization;
         }
         return null;
@@ -119,4 +119,17 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
     console.error("Error updating organization: ", error);
     throw new Error('Failed to update organization.');
   }
+};
+
+export const updateOrganizationFooter = async (id: string, footerData: OrganizationFooter) => {
+    try {
+        const orgRef = doc(db, ORGANIZATIONS_COLLECTION, id);
+        await updateDoc(orgRef, {
+            footer: footerData,
+            updatedAt: new Date(),
+        });
+    } catch (error) {
+        console.error("Error updating organization footer: ", error);
+        throw new Error('Failed to update organization footer.');
+    }
 };

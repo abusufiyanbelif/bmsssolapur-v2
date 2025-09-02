@@ -265,6 +265,39 @@ export interface Campaign {
     source?: 'Seeded' | 'Manual Entry';
 }
 
+export interface OrganizationFooter {
+    organizationInfo: {
+        titleLine1: string;
+        titleLine2: string;
+        titleLine3: string;
+        description: string;
+        registrationInfo: string;
+        taxInfo: string;
+    };
+    contactUs: {
+        title: string;
+        address: string;
+        email: string;
+    };
+    keyContacts: {
+        title: string;
+        contacts: { name: string; phone: string }[];
+    };
+    connectWithUs: {
+        title: string;
+        socialLinks: { platform: 'Facebook' | 'Instagram' | 'Twitter'; url: string }[];
+    };
+    ourCommitment: {
+        title: string;
+        text: string;
+        linkText: string;
+        linkUrl: string;
+    };
+    copyright: {
+        text: string;
+    };
+}
+
 export interface Organization {
     id: string;
     name: string;
@@ -280,6 +313,7 @@ export interface Organization {
     bankIfscCode?: string;
     upiId?: string;
     qrCodeUrl?: string;
+    footer?: OrganizationFooter;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -290,6 +324,7 @@ export interface Quote {
     text: string;
     source: string;
     category: "Quran" | "Hadith" | "Scholar";
+    categoryTypeNumber: number;
 }
 
 interface PaymentGatewayCredentials {

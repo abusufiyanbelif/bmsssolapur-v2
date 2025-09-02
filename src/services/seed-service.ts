@@ -4,7 +4,7 @@
  */
 
 import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers, updateUser, getUser, getUserByUserId } from './user-service';
-import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
+import { createOrganization, Organization, getCurrentOrganization, OrganizationFooter } from './organization-service';
 import { seedInitialQuotes as seedQuotesService } from './quotes-service';
 import { db } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
@@ -58,6 +58,46 @@ const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR10", name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
 ];
 
+const defaultFooterContent: OrganizationFooter = {
+    organizationInfo: {
+        titleLine1: 'Baitul Mal',
+        titleLine2: 'Samajik Sanstha',
+        titleLine3: '(Solapur)',
+        description: 'Baitul Mal Samajik Sanstha (Solapur) provides life-saving and life-enriching humanitarian aid to underserved populations in the Solapur region, regardless of faith or nationality.',
+        registrationInfo: 'Reg No: (Solapur)/0000373/2025',
+        taxInfo: 'Registered under the Societies Registration Act, 1860. All donations are tax-deductible under section 80G.',
+    },
+    contactUs: {
+        title: 'Contact Us',
+        address: '123 Muslim Peth, \n(Solapur), Maharashtra 413001 \nIndia',
+        email: 'info@baitulmalsolapur.org',
+    },
+    keyContacts: {
+        title: 'Key Contacts',
+        contacts: [
+            { name: 'Maaz Shaikh', phone: '9372145889' },
+            { name: 'Abu Rehan Bedrekar', phone: '7276224160' },
+            { name: 'Moosa Shaikh', phone: '8421708907' },
+        ],
+    },
+    connectWithUs: {
+        title: 'Connect With Us',
+        socialLinks: [
+            { platform: 'Facebook', url: '#' },
+            { platform: 'Instagram', url: '#' },
+            { platform: 'Twitter', url: '#' },
+        ],
+    },
+    ourCommitment: {
+        title: 'Our Commitment',
+        text: 'We are dedicated to complete transparency and accountability in all our endeavors. Our work is guided by core principles that ensure your contributions directly and meaningfully impact those in need.',
+        linkText: 'Read Our Principles →',
+        linkUrl: '/organization#principles',
+    },
+    copyright: {
+        text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.`,
+    },
+};
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "BAITULMAL SAMAJIK SANSTHA SOLAPUR",
@@ -73,6 +113,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     bankIfscCode: "BKID0000707",
     upiId: "maaz9145@okhdfcbank",
     qrCodeUrl: "https://assets.dev.braze.com/ui/qr_codes/braze_to_the_qr_code_future.png",
+    footer: defaultFooterContent,
 };
 
 
