@@ -23,7 +23,7 @@ import {
   serverTimestamp,
   limit
 } from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { db } from './firebase';
 import { logActivity } from './activity-log-service';
 import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation, Lead, Allocation } from './types';
 import { getUser } from './user-service';
@@ -43,7 +43,6 @@ export const createDonation = async (
     adminUserName: string,
     adminUserEmail: string | undefined,
 ) => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const [donorUser, adminUser] = await Promise.all([
         getUser(donation.donorId),
@@ -122,7 +121,6 @@ export const createDonation = async (
 
 // Function to get a donation by ID
 export const getDonation = async (id: string): Promise<Donation | null> => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
     if (donationDoc.exists()) {
@@ -155,7 +153,6 @@ export const updateDonation = async (
     adminUser?: Pick<User, 'id' | 'name' | 'email'>,
     customActivity?: string
 ) => {
-    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const donationRef = doc(db, DONATIONS_COLLECTION, id);
         
@@ -220,7 +217,6 @@ export const updateDonation = async (
 
 // Function to delete a donation
 export const deleteDonation = async (id: string, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
-    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const donationToDelete = await getDonation(id);
         if (!donationToDelete) throw new Error("Donation to delete not found.");
@@ -248,10 +244,6 @@ export const deleteDonation = async (id: string, adminUser: Pick<User, 'id' | 'n
 
 // Function to get all donations
 export const getAllDonations = async (): Promise<Donation[]> => {
-    if (!isConfigValid) {
-      console.warn("Firebase not configured. Returning empty array for donations.");
-      return [];
-    }
     try {
         const donationsQuery = query(collection(db, DONATIONS_COLLECTION), orderBy("donationDate", "desc"));
         const querySnapshot = await getDocs(donationsQuery);
@@ -284,7 +276,6 @@ export const getAllDonations = async (): Promise<Donation[]> => {
 
 // Function to get all donations for a specific user
 export const getDonationsByUserId = async (userId: string): Promise<Donation[]> => {
-    if (!isConfigValid) return [];
     try {
         const donationsQuery = query(
             collection(db, DONATIONS_COLLECTION), 
@@ -319,7 +310,6 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
 
 // Function to get donations by campaignId
 export const getDonationsByCampaignId = async (campaignId: string): Promise<Donation[]> => {
-    if (!isConfigValid) return [];
     try {
         const donationsQuery = query(
             collection(db, DONATIONS_COLLECTION), 
@@ -351,7 +341,7 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
 };
 
 export const getDonationByTransactionId = async (transactionId: string): Promise<Donation | null> => {
-  if (!isConfigValid || !transactionId) return null;
+  if (!transactionId) return null;
   try {
     const q = query(collection(db, DONATIONS_COLLECTION), where("transactionId", "==", transactionId), limit(1));
     const querySnapshot = await getDocs(q);
@@ -405,7 +395,6 @@ export const allocateDonationToLeads = async (
   allocations: { leadId: string; amount: number }[],
   adminUser: User
 ) => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
 
   const batch = writeBatch(db);
   const now = Timestamp.now();

@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  */

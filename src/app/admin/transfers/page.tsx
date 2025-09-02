@@ -15,7 +15,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllLeads, type Lead } from "@/services/lead-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, FilterX, ChevronLeft, ChevronRight, Eye, Search, ArrowUpDown, Banknote, FileUp, Download, Trash2, Check, MoreHorizontal } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -31,6 +30,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkDeleteTransfers } from "./actions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { getAllLeads, Lead } from "@/services/lead-service";
 
 
 interface EnrichedTransfer extends FundTransfer {
@@ -44,10 +44,10 @@ type SortableColumn = 'transferredAt' | 'amount' | 'leadName' | 'transferredByUs
 type SortDirection = 'asc' | 'desc';
 
 
-function AllTransfersPageContent() {
-    const [allTransfers, setAllTransfers] = useState<EnrichedTransfer[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+function AllTransfersPageContent({ initialTransfers, error: initialError }: { initialTransfers: EnrichedTransfer[], error?: string }) {
+    const [allTransfers, setAllTransfers] = useState<EnrichedTransfer[]>(initialTransfers);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(initialError || null);
     const [selectedTransfers, setSelectedTransfers] = useState<string[]>([]);
     const isMobile = useIsMobile();
     const { toast } = useToast();
@@ -98,10 +98,6 @@ function AllTransfersPageContent() {
         }
     };
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-    
     const onBulkDeleteSuccess = () => {
         toast({
             title: "Transfers Deleted",
@@ -249,7 +245,7 @@ function AllTransfersPageContent() {
             <TableBody>
                 {paginatedTransfers.map((transfer, index) => {
                     return (
-                        <TableRow key={transfer.uniqueId} data-state={selectedTransfers.includes(transfer.uniqueId) && 'selected'}>
+                        <TableRow key={transfer.uniqueId} data-state={selectedTransfers.includes(transfer.uniqueId) ? 'selected' : ''}>
                             <TableCell padding="checkbox">
                                 <Checkbox
                                     checked={selectedTransfers.includes(transfer.uniqueId)}
@@ -509,10 +505,27 @@ function AllTransfersPageContent() {
   )
 }
 
-export default function AllTransfersPage() {
+export default async function AllTransfersPage() {
+    // This server component fetches the initial data
+    const leads = await getAllLeads();
+    const initialTransfers: EnrichedTransfer[] = [];
+    leads.forEach(lead => {
+        if (lead.fundTransfers && lead.fundTransfers.length > 0) {
+            lead.fundTransfers.forEach((transfer, index) => {
+                initialTransfers.push({
+                    ...transfer,
+                    leadId: lead.id!,
+                    leadName: lead.name,
+                    beneficiaryId: lead.beneficiaryId,
+                    uniqueId: `${lead.id!}_${index}`
+                });
+            });
+        }
+    });
+
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <AllTransfersPageContent />
+            <AllTransfersPageContent initialTransfers={initialTransfers} />
         </Suspense>
     )
 }

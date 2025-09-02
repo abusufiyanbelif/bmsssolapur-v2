@@ -19,7 +19,7 @@ import {
   getCountFromServer,
   orderBy,
 } from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { db } from './firebase';
 import { adminDb } from './firebase-admin';
 import type { User, UserRole } from './types';
 
@@ -583,10 +583,6 @@ export const deleteUser = async (id: string) => {
 
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
-    if (!isConfigValid) {
-      console.warn("Firebase not configured. Skipping fetching all users.");
-      return [];
-    }
     try {
         const usersQuery = query(collection(db, USERS_COLLECTION), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(usersQuery);
@@ -613,10 +609,6 @@ export const getAllUsers = async (): Promise<User[]> => {
 
 
 export const getReferredBeneficiaries = async (referrerId: string): Promise<User[]> => {
-    if (!isConfigValid) {
-        console.warn("Firebase not configured. Skipping user fetch.");
-        return [];
-    }
     try {
         const q = query(
             collection(db, USERS_COLLECTION), 

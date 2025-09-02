@@ -14,7 +14,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -33,6 +32,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getAllUsers } from "@/services/user-service";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -44,10 +44,10 @@ const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-function DonorsPageContent() {
-    const [donors, setDonors] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+function DonorsPageContent({ initialDonors, error: initialError }: { initialDonors: User[], error?: string }) {
+    const [donors, setDonors] = useState<User[]>(initialDonors);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
@@ -100,7 +100,6 @@ function DonorsPageContent() {
 
 
     useEffect(() => {
-        fetchUsers();
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
     }, []);
@@ -157,9 +156,9 @@ function DonorsPageContent() {
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (aValue > bValue) {
+            } else if (String(aValue) > String(bValue)) {
                 comparison = 1;
-            } else if (aValue < bValue) {
+            } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
             }
 
@@ -589,11 +588,13 @@ function DonorsPageContent() {
   )
 }
 
+export default async function DonorsPage() {
+    const allUsers = await getAllUsers();
+    const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
 
-export default function DonorsPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <DonorsPageContent />
+            <DonorsPageContent initialDonors={initialDonors} />
         </Suspense>
     )
 }

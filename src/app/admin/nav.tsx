@@ -101,6 +101,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/campaigns/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
 

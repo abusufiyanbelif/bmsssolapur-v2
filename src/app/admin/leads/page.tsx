@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/page.tsx
 "use client";
 
@@ -14,8 +15,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button";
-import { getAllLeads, type Lead, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
-import { getAllUsers, getUser, type User } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, ShieldCheck, ShieldAlert, ShieldX, FilterX, ChevronLeft, ChevronRight, Eye, Search, HeartHandshake, Baby, PersonStanding, Home, ArrowUpDown, Ban, MoreHorizontal, Clock, CheckCircle, Package, Edit, UploadCloud, DownloadCloud, AlertTriangle, ChevronsUpDown, Check, Trash2, Share2, Clipboard } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -27,13 +26,15 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
-import type { LeadPriority, LeadPurpose, LeadVerificationStatus, LeadStatus, LeadAction, AppSettings } from "@/services/types";
+import type { LeadPriority, LeadPurpose, LeadVerificationStatus, LeadStatus, LeadAction, AppSettings, User, Lead } from "@/services/types";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/actions";
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getAllLeads, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
+import { getAllUsers, getUser } from "@/services/user-service";
 import { getAppSettings } from "@/services/app-settings-service";
 
 
@@ -107,18 +108,18 @@ interface EnrichedLead extends Lead {
 }
 
 
-function LeadsPageContent() {
+function LeadsPageContent({ initialLeads, initialUsers, initialSettings, error: initialError }: { initialLeads: EnrichedLead[], initialUsers: User[], initialSettings: AppSettings | null, error?: string }) {
     const searchParams = useSearchParams();
     const statusFromUrl = searchParams.get('status');
     const verificationFromUrl = searchParams.get('verification');
     const typeFromUrl = searchParams.get('beneficiaryType');
     const purposeFromUrl = searchParams.get('purpose');
 
-    const [leads, setLeads] = useState<EnrichedLead[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
-    const [settings, setSettings] = useState<AppSettings | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [leads, setLeads] = useState<EnrichedLead[]>(initialLeads);
+    const [users, setUsers] = useState<User[]>(initialUsers);
+    const [settings, setSettings] = useState<AppSettings | null>(initialSettings);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -156,7 +157,6 @@ function LeadsPageContent() {
             .map(p => p.name) || [];
     }, [settings]);
 
-
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -178,7 +178,6 @@ function LeadsPageContent() {
     };
 
     useEffect(() => {
-        fetchData();
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
     }, []);
@@ -599,7 +598,7 @@ Referral Phone:
             const StatusIcon = statusIcons[lead.caseStatus];
             return (
                 <Card key={lead.id} className={cn("flex flex-col", selectedLeads.includes(lead.id!) && "ring-2 ring-primary")}>
-                    <div className="p-4 flex gap-4 items-start">
+                     <div className="p-4 flex gap-4 items-start">
                         <Checkbox
                             className="mt-1.5 flex-shrink-0"
                             checked={selectedLeads.includes(lead.id!)}
@@ -611,7 +610,11 @@ Referral Phone:
                         <Link href={`/admin/leads/${lead.id}`} className="flex-grow space-y-3">
                             <CardHeader className="p-0">
                                 <div className="flex justify-between items-start">
-                                    <CardTitle className="text-lg">{lead.name}</CardTitle>
+                                    <CardTitle className="text-lg">
+                                        <div className="flex items-center gap-2">
+                                            {lead.name}
+                                        </div>
+                                    </CardTitle>
                                     <div className="flex flex-col items-end gap-2">
                                         <Badge variant="outline" className={cn("capitalize", statusColors[lead.caseStatus])}>
                                             {StatusIcon && <StatusIcon className="mr-1 h-3 w-3" />}
@@ -623,7 +626,9 @@ Referral Phone:
                                         </Badge>
                                     </div>
                                 </div>
-                                <CardDescription>Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span></CardDescription>
+                                <CardDescription>
+                                    Req: <span className="font-semibold">₹{lead.helpRequested.toLocaleString()}</span>
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 space-y-3 text-sm">
                                  <div className="flex justify-between"><span className="text-muted-foreground">ID</span><span className="font-mono text-xs">{lead.id}</span></div>
@@ -921,12 +926,16 @@ Referral Phone:
   )
 }
 
-function LeadsPage() {
+export default async function LeadsPage() {
+    const [allLeads, allUsers, settings] = await Promise.all([
+        getAllLeads(),
+        getAllUsers(),
+        getAppSettings(),
+    ]);
+
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <LeadsPageContent />
+            <LeadsPageContent initialLeads={allLeads} initialUsers={allUsers} initialSettings={settings} />
         </Suspense>
     )
 }
-
-export default LeadsPage;

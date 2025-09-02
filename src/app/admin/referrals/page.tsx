@@ -1,3 +1,4 @@
+
 // src/app/admin/referrals/page.tsx
 "use client";
 
@@ -13,7 +14,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -30,6 +30,7 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getAllUsers } from "@/services/user-service";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -38,10 +39,10 @@ const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-function ReferralsPageContent() {
-    const [referrals, setReferrals] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+function ReferralsPageContent({ initialReferrals, error: initialError }: { initialReferrals: User[], error?: string }) {
+    const [referrals, setReferrals] = useState<User[]>(initialReferrals);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
@@ -91,7 +92,6 @@ function ReferralsPageContent() {
 
 
     useEffect(() => {
-        fetchUsers();
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
     }, []);
@@ -145,9 +145,9 @@ function ReferralsPageContent() {
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (aValue > bValue) {
+            } else if (String(aValue) > String(bValue)) {
                 comparison = 1;
-            } else if (aValue < bValue) {
+            } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
             }
 
@@ -539,7 +539,7 @@ function ReferralsPageContent() {
                         </Button>
                         <Button variant="outline" onClick={resetFilters} className="w-full">
                             <FilterX className="mr-2 h-4 w-4" />
-                            Clear
+                            Clear Filters
                         </Button>
                     </div>
                 </div>
@@ -550,11 +550,13 @@ function ReferralsPageContent() {
   )
 }
 
+export default async function ReferralsPage() {
+     const allUsers = await getAllUsers();
+    const initialReferrals = allUsers.filter(u => u.roles.includes('Referral'));
 
-export default function ReferralsPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <ReferralsPageContent />
+            <ReferralsPageContent initialReferrals={initialReferrals} />
         </Suspense>
     )
 }

@@ -1,5 +1,4 @@
 
-
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
@@ -17,18 +16,17 @@ const firebaseConfig = {
   appId: appConfig.firebase.appId,
 };
 
-export const isConfigValid = !!(firebaseConfig.apiKey && firebaseConfig.projectId);
-
 let clientApp: FirebaseApp;
-if (isConfigValid && !getApps().length) {
+// Check if Firebase has already been initialized
+if (!getApps().length) {
   clientApp = initializeApp(firebaseConfig);
 } else {
-  clientApp = getApps()[0];
+  clientApp = getApp();
 }
 
 const auth: Auth = getAuth(clientApp);
 const db: Firestore = getFirestore(clientApp);
-const storage = isConfigValid ? getStorage(clientApp) : null;
+const storage = getStorage(clientApp);
 
 
 export { clientApp as app, auth, db, storage };

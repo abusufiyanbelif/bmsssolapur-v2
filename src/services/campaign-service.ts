@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Campaign service for interacting with Firestore.
  */
@@ -17,7 +16,7 @@ import {
   serverTimestamp,
   orderBy
 } from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { db } from './firebase';
 import type { Campaign, CampaignStatus, Lead } from './types';
 import { getLeadsByCampaignId } from './lead-service';
 import { updatePublicCampaign } from './public-data-service';
@@ -45,7 +44,6 @@ async function enrichCampaignWithStats(campaign: Campaign): Promise<Campaign & {
  * @returns The newly created campaign object.
  */
 export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 'updatedAt'>): Promise<Campaign> => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const campaignId = campaignData.id || campaignData.name.toLowerCase().replace(/\s+/g, '-');
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
@@ -90,7 +88,7 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
  * @returns The campaign object or null if not found.
  */
 export const getCampaign = async (id: string): Promise<Campaign | null> => {
-  if (!isConfigValid || !id) return null;
+  if (!id) return null;
   try {
     const campaignDoc = await getDoc(doc(db, CAMPAIGNS_COLLECTION, id));
     if (campaignDoc.exists()) {
@@ -118,10 +116,6 @@ export const getCampaign = async (id: string): Promise<Campaign | null> => {
  * @returns An array of campaign objects.
  */
 export const getAllCampaigns = async (): Promise<Campaign[]> => {
-  if (!isConfigValid) {
-    console.warn("Firebase not configured. Returning empty array for campaigns.");
-    return [];
-  }
   try {
     const campaignsQuery = query(collection(db, CAMPAIGNS_COLLECTION), orderBy("startDate", "desc"));
     const querySnapshot = await getDocs(campaignsQuery);
@@ -174,7 +168,6 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
  * @param updates - An object with the fields to update.
  */
 export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign, 'id' | 'createdAt'>>): Promise<void> => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, id);
     await updateDoc(campaignRef, {
@@ -193,7 +186,6 @@ export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign,
  * @param id - The ID of the campaign to delete.
  */
 export const deleteCampaign = async (id: string): Promise<void> => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, id);
     await deleteDoc(campaignRef);
