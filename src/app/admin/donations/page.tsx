@@ -61,17 +61,25 @@ const statusColors: Record<DonationStatus, string> = {
     "Failed/Incomplete": "bg-red-500/20 text-red-700 border-red-500/30",
 };
 
-function DonationsPageContent() {
+interface DonationsPageContentProps {
+  initialDonations: Donation[];
+  initialUsers: User[];
+  initialLeads: Lead[];
+  initialCampaigns: Campaign[];
+  error?: string;
+}
+
+function DonationsPageContent({ initialDonations, initialUsers, initialLeads, initialCampaigns, error: initialError }: DonationsPageContentProps) {
     const searchParams = useSearchParams();
     const statusFromUrl = searchParams.get('status');
     const typeFromUrl = searchParams.get('type');
 
-    const [donations, setDonations] = useState<Donation[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
-    const [allLeads, setAllLeads] = useState<Lead[]>([]);
-    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [donations, setDonations] = useState<Donation[]>(initialDonations);
+    const [allUsers, setAllUsers] = useState<User[]>(initialUsers);
+    const [allLeads, setAllLeads] = useState<Lead[]>(initialLeads);
+    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>(initialCampaigns);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(initialError || null);
     const [selectedDonations, setSelectedDonations] = useState<string[]>([]);
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const [adminUserId, setAdminUserId] = useState<string | null>(null);
@@ -135,7 +143,6 @@ function DonationsPageContent() {
 
 
     useEffect(() => {
-        fetchData();
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
     }, []);
@@ -890,10 +897,44 @@ function DonationsPageContent() {
   )
 }
 
+function DonationsPageDataLoader() {
+  const [data, setData] = useState<{
+    donations: Donation[];
+    users: User[];
+    leads: Lead[];
+    campaigns: Campaign[];
+    error?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [donations, users, leads, campaigns] = await Promise.all([
+          getAllDonations(),
+          getAllUsers(),
+          getAllLeads(),
+          getAllCampaigns()
+        ]);
+        setData({ donations, users, leads, campaigns });
+      } catch (e) {
+        setData({ donations: [], users: [], leads: [], campaigns: [], error: "Failed to load initial data." });
+        console.error(e);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (!data) {
+    return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  return <DonationsPageContent initialDonations={data.donations} initialUsers={data.users} initialLeads={data.leads} initialCampaigns={data.campaigns} error={data.error} />;
+}
+
 export default function DonationsPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <DonationsPageContent />
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <DonationsPageDataLoader />
         </Suspense>
     )
 }
