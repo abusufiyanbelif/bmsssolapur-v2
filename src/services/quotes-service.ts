@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -45,6 +46,17 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
     { number: 13, text: "Charity extinguishes sins just as water extinguishes fire.", source: "Al-Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
     { number: 14, text: "Whoever relieves a believer’s distress of the distressful aspects of this world, Allah will rescue him from a difficulty of the difficulties of the Hereafter.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
     { number: 15, text: "The best charity is to satisfy a hungry person.", source: "Prophet Muhammad (ﷺ), Bayhaqi", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 16, text: "A man giving a dirham in his lifetime is better than giving one hundred dirhams when he is dying.", source: "Sunan Abi Dawud", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 17, text: "The best charity is giving water to drink.", source: "Ahmad", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 18, text: "Smiling in the face of your brother is charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 19, text: "Every Muslim has to give in charity. The people asked, 'O Allah's Messenger! If someone has nothing to give, what will he do?' He said, 'He should work with his hands and benefit himself and also give in charity (from what he earns).'", source: "Sahih al-Bukhari 1445", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 20, text: "The most beloved deed to Allah is the most regular and constant even if it were little.", source: "Sahih al-Bukhari", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 21, text: "Visit the sick, feed the hungry, and free the captive.", source: "Sahih al-Bukhari", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 22, text: "There is a reward for kindness to every living thing.", source: "Sahih al-Bukhari", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 23, text: "He is not a believer who eats his fill while his neighbor beside him is hungry.", source: "Bayhaqi", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 24, text: "Allah said, 'O son of Adam! Spend, and I shall spend on you.'", source: "Sahih al-Bukhari 5352", category: "Hadith", categoryTypeNumber: 2 },
+    { number: 25, text: "Let he who has a spare mount lend it to him who has none, and let he who has a surplus of provisions give it to him who has none.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
+
 
     // Scholars
     { number: 1, text: "A man's true wealth is the good he does in this world.", source: "Imam Ali (RA)", category: "Scholar", categoryTypeNumber: 3 },
