@@ -1,14 +1,12 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
 import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign, Baby, PersonStanding, HomeIcon, HeartHandshake, Eye } from "lucide-react";
-import { getDonationsByUserId } from "@/services/donation-service";
+import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import type { User, Donation, Lead, Quote, LeadPurpose, DonationType, Campaign, AppSettings } from "@/services/types";
@@ -61,12 +59,14 @@ interface DonorDashboardContentProps {
     user: User;
     donations: Donation[];
     allLeads: Lead[];
+    allDonations: Donation[];
+    allCampaigns: Campaign[];
     quotes: Quote[];
     settings: AppSettings;
 }
 
 
-export function DonorDashboardContent({ user, donations, allLeads, quotes, settings }: DonorDashboardContentProps) {
+export function DonorDashboardContent({ user, donations, allLeads, allDonations, allCampaigns, quotes, settings }: DonorDashboardContentProps) {
   const isMobile = useIsMobile();
   const router = useRouter();
 
@@ -132,6 +132,10 @@ export function DonorDashboardContent({ user, donations, allLeads, quotes, setti
         
         <InspirationalQuotes quotes={quotes} />
 
+        {dashboardSettings?.mainMetrics?.visibleTo.includes('Donor') && (
+            <MainMetricsCard allDonations={allDonations} allLeads={allLeads} />
+        )}
+        
         {dashboardSettings?.donorContributionSummary?.visibleTo.includes('Donor') && (
             <Card>
                 <CardHeader>

@@ -11,6 +11,8 @@ import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { PublicDashboardCards } from "./public-dashboard-cards";
+import { getPublicDashboardData } from "./actions";
 
 function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
     const [quotes, setQuotes] = useState<Quote[]>(initialQuotes);
