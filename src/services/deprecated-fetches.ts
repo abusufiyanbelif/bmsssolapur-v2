@@ -7,5 +7,3 @@
 
 // This file is intentionally left empty to break any invalid import chains.
 // All data fetching should now be done in Server Components or Server Actions.
-
-    

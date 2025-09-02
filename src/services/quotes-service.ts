@@ -106,31 +106,3 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         throw error;
     }
 }
-
-
-/**
- * Fetches a specified number of random quotes.
- * @param count The number of random quotes to fetch.
- * @returns An array of random quote objects.
- */
-export const getRandomQuotes = async (count: number): Promise<Quote[]> => {
-    let allQuotes: Quote[] = [];
-    try {
-        // Try to fetch from the database
-        allQuotes = await getAllQuotes();
-        
-        // If the database is empty, fall back to the hardcoded list
-        if (allQuotes.length === 0) {
-            console.log("Database empty or unavailable, using hardcoded quotes.");
-            allQuotes = ALL_QUOTES.map((q, i) => ({...q, id: `quote-${i}`}));
-        }
-    } catch (error) {
-        // If any error occurs (e.g., connection failure), log it and fall back
-        console.error("Error getting random quotes, falling back to hardcoded list: ", error);
-        allQuotes = ALL_QUOTES.map((q, i) => ({...q, id: `quote-fallback-${i}`}));
-    }
-    
-    // Shuffle and return the requested number of quotes from the chosen list
-    const shuffled = allQuotes.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-}

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -24,9 +23,10 @@ import { getAllCampaigns } from "@/services/campaign-service";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
 import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
 import { getAppSettings } from "@/services/app-settings-service";
-import { getRandomQuotes } from "@/services/quotes-service";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 const statusColors: Record<Donation['status'], string> = {
+    "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Pending verification": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
     "Verified": "bg-green-500/20 text-green-700 border-green-500/30",
     "Failed/Incomplete": "bg-red-500/20 text-red-700 border-red-500/30",
@@ -60,7 +60,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <QuoteIcon className="text-primary" />
-                    Wisdom &amp; Reflection
+                    Wisdom & Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -108,7 +108,7 @@ export function DonorDashboardContent() {
                   getOpenGeneralLeads(),
                   getAllLeads(),
                   getAppSettings(),
-                  getRandomQuotes(3),
+                  getInspirationalQuotes(3),
               ]);
 
               if (!fetchedUser || !fetchedUser.roles.includes('Donor')) {

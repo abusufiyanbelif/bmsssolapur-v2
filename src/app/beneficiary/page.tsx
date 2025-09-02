@@ -6,12 +6,12 @@ import { Suspense, useEffect, useState } from "react";
 import { DonorDashboardContent } from '../donor/donor-dashboard-content';
 import { Loader2, AlertCircle } from "lucide-react";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
-import { getRandomQuotes } from "@/services/quotes-service";
 import { getUser, User } from "@/services/user-service";
 import type { Lead, Quote, AppSettings } from "@/services/types";
 import { BeneficiaryDashboardContent } from './beneficiary-dashboard-content';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getAppSettings } from "@/services/app-settings-service";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 export default function BeneficiaryDashboardPage() {
     const [user, setUser] = useState<User | null>(null);
@@ -43,7 +43,7 @@ export default function BeneficiaryDashboardPage() {
 
                 const [beneficiaryCases, randomQuotes, appSettings] = await Promise.all([
                     getLeadsByBeneficiaryId(storedUserId),
-                    getRandomQuotes(3),
+                    getInspirationalQuotes(3),
                     getAppSettings(),
                 ]);
                 
