@@ -2,7 +2,7 @@
  * @fileOverview Service for managing organization data in Firestore.
  */
 
-import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs, where, Timestamp } from 'firebase/firestore';
 import { db } from './firebase'; // Use client-side SDK
 import type { Organization } from './types';
 import { updatePublicOrganization } from './public-data-service';
@@ -61,7 +61,13 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
   try {
     const orgDoc = await getDoc(doc(db, ORGANIZATIONS_COLLECTION, id));
     if (orgDoc.exists()) {
-      return { id: orgDoc.id, ...orgDoc.data() } as Organization;
+      const data = orgDoc.data();
+      return { 
+        id: orgDoc.id, 
+        ...data,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
+       } as Organization;
     }
     return null;
   } catch (error) {
@@ -77,7 +83,13 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         const querySnapshot = await getDocs(orgQuery);
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
-            return { id: doc.id, ...doc.data() } as Organization;
+            const data = doc.data();
+            return { 
+                id: doc.id, 
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                updatedAt: (data.updatedAt as Timestamp).toDate(),
+            } as Organization;
         }
         return null;
     } catch (error) {
