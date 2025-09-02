@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -169,6 +168,19 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
     for (const userData of users) {
         if (userData.roles.includes('Super Admin') || userData.userId === 'admin') {
             userData.isActive = true;
+            
+            // Special handling for the hardcoded admin user
+            const adminUserRef = doc(db, USERS_COLLECTION, 'ADMIN_USER_ID');
+            const adminUserDoc = await getDoc(adminUserRef);
+
+            if (!adminUserDoc.exists()) {
+                await setDoc(adminUserRef, { ...userData, id: 'ADMIN_USER_ID', createdAt: Timestamp.now() });
+                results.push(`${userData.name} created.`);
+            } else {
+                await updateDoc(adminUserRef, { ...userData, updatedAt: serverTimestamp() });
+                results.push(`${userData.name} updated.`);
+            }
+            continue; // Skip the rest of the loop for the admin user
         }
 
         let existingUser: User | null = null;
