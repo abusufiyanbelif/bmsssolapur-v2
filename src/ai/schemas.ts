@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -77,15 +78,12 @@ export type ValidateConfigurationOutput = z.infer<typeof ValidateConfigurationOu
 
 // Schema for Quotes
 export const QuoteSchema = z.object({
+  id: z.string().describe('The unique ID of the quote.'),
   text: z.string().describe('The text of the quote.'),
   source: z.string().describe('The source of the quote (e.g., Quran 2:261, Sahih al-Bukhari, Imam Al-Ghazali).'),
+  category: z.string().describe('The category of the quote (e.g., Quran, Hadith).'),
 });
 export type Quote = z.infer<typeof QuoteSchema>;
-
-export const QuotesOutputSchema = z.object({
-  quotes: z.array(QuoteSchema).describe('An array of inspirational quotes.'),
-});
-export type QuotesOutput = z.infer<typeof QuotesOutputSchema>;
 
 
 // Schema for extracting donation details from an image
@@ -136,6 +134,9 @@ export const ExtractDonationDetailsOutputSchema = z.object({
   recipientAccountNumber: z.string().optional().describe("The recipient's bank account number, even if partial (e.g., 'To account ...5678')."),
   status: z.string().optional().describe('The status of the transaction (e.g., Successful, Completed, Received).'),
   notes: z.string().optional().describe('Any user-added comments, remarks, or descriptions found in the payment details. Also labeled as "Message".'),
+  
+  // These fields are for internal use and should not be extracted by the AI
+  donorId: z.string().optional().describe("The internal user ID of the donor, if found in the system."),
   recipientId: z.string().optional().describe("The internal user ID of the recipient, if found in the system."),
   recipientRole: z.enum(['Beneficiary', 'Referral', 'Organization Member']).optional().describe("The role of the recipient, if found in the system."),
 });

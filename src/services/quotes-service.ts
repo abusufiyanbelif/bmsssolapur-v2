@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -23,7 +22,7 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
     { text: "So fear Allah as much as you are able; and listen and obey and spend in charity; that is better for yourselves. And whosoever is saved from his own covetousness, then they are the successful ones.", source: "Quran 64:16", category: "Quran" },
 
     // Hadith
-    { text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Sahih al-Bukhari 1422", category: "Hadith" },
+    { text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith" },
     { text: "Protect yourself from hellfire even by giving a piece of a date as charity.", source: "Sahih al-Bukhari 1417", category: "Hadith" },
     { text: "Charity does not decrease wealth.", source: "Sahih Muslim 2588", category: "Hadith" },
     { text: "When a man dies, his deeds come to an end except for three things: Sadaqah Jariyah (ceaseless charity); a knowledge which is beneficial, or a virtuous descendant who prays for him.", source: "Sahih Muslim 1631", category: "Hadith" },

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -7,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign, Baby, PersonStanding, HomeIcon, HeartHandshake, Eye } from "lucide-react";
-import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
-import { getAllLeads } from "@/services/lead-service";
+import { getDonationsByUserId } from "@/services/donation-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import type { User, Donation, Lead, Quote, LeadPurpose, DonationType, Campaign, AppSettings } from "@/services/types";
@@ -17,13 +17,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAllUsers, getUser } from "@/services/user-service";
-import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
-import { getAllCampaigns } from "@/services/campaign-service";
-import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/components/dashboard-cards";
+import { EnrichedLead } from "@/app/campaigns/actions";
+import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
 import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
-import { getAppSettings } from "@/services/app-settings-service";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 const statusColors: Record<Donation['status'], string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -34,23 +30,7 @@ const statusColors: Record<Donation['status'], string> = {
     "Allocated": "bg-blue-500/20 text-blue-700 border-blue-500/30",
 };
 
-function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
-    if (loading) {
-        return (
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <QuoteIcon className="text-primary" />
-                        Wisdom &amp; Reflection
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
-                </CardContent>
-            </Card>
-        )
-    }
-
+function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     if (quotes.length === 0) {
         return null;
     }
@@ -77,61 +57,18 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
     );
 }
 
+interface DonorDashboardContentProps {
+    user: User;
+    donations: Donation[];
+    allLeads: Lead[];
+    quotes: Quote[];
+    settings: AppSettings;
+}
 
-export function DonorDashboardContent() {
-  const [user, setUser] = useState<User | null>(null);
-  const [donations, setDonations] = useState<Donation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [openLeads, setOpenLeads] = useState<EnrichedLead[]>([]);
-  const [allLeads, setAllLeads] = useState<Lead[]>([]);
-  const [settings, setSettings] = useState<AppSettings | null>(null);
-  
+
+export function DonorDashboardContent({ user, donations, allLeads, quotes, settings }: DonorDashboardContentProps) {
   const isMobile = useIsMobile();
   const router = useRouter();
-
-  useEffect(() => {
-      const fetchInitialData = async () => {
-          setLoading(true);
-          const storedUserId = localStorage.getItem('userId');
-          if (!storedUserId) {
-              setError("No user session found. Please log in.");
-              setLoading(false);
-              return;
-          }
-          
-          try {
-              const [fetchedUser, donorDonations, availableLeads, fetchedAllLeads, fetchedSettings, fetchedQuotes] = await Promise.all([
-                  getUser(storedUserId),
-                  getDonationsByUserId(storedUserId),
-                  getOpenGeneralLeads(),
-                  getAllLeads(),
-                  getAppSettings(),
-                  getInspirationalQuotes(3),
-              ]);
-
-              if (!fetchedUser || !fetchedUser.roles.includes('Donor')) {
-                  setError("You do not have permission to view this page.");
-                  setLoading(false);
-                  return;
-              }
-              setUser(fetchedUser);
-              setDonations(donorDonations);
-              setOpenLeads(availableLeads);
-              setAllLeads(fetchedAllLeads);
-              setSettings(fetchedSettings);
-              setQuotes(fetchedQuotes);
-          } catch (e) {
-              setError("Failed to load dashboard data.");
-              console.error(e);
-          } finally {
-              setLoading(false);
-          }
-      };
-
-      fetchInitialData();
-  }, []);
 
     // Donor specific stats
     const { myTotalDonated, myDonationCount, leadsHelpedCount, beneficiariesHelpedCount: myBeneficiariesHelpedCount, campaignsSupportedCount } = useMemo(() => {
@@ -176,12 +113,7 @@ export function DonorDashboardContent() {
         { id: 'donorImpactSummary', title: "Campaigns Supported", value: campaignsSupportedCount, icon: Megaphone, description: "The number of special campaigns you've contributed to." },
     ];
 
-
-  if (loading) {
-    return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-  }
-  
-  if (error || !user || !settings) {
+  if (!user || !settings) {
     return null;
   }
   
@@ -198,13 +130,7 @@ export function DonorDashboardContent() {
             </p>
         </div>
         
-        <InspirationalQuotes quotes={quotes} loading={loading} />
-
-        <div className="space-y-4">
-            <Suspense fallback={<div>Loading...</div>}>
-                <MainMetricsCard isPublicView={true} />
-            </Suspense>
-        </div>
+        <InspirationalQuotes quotes={quotes} />
 
         {dashboardSettings?.donorContributionSummary?.visibleTo.includes('Donor') && (
             <Card>
@@ -265,7 +191,7 @@ export function DonorDashboardContent() {
                         <TableBody>
                             {donations.slice(0, 5).map((d) => (
                                 <TableRow key={d.id}>
-                                    <TableCell>{format((d.donationDate), 'dd MMM yyyy')}</TableCell>
+                                    <TableCell>{format((d.donationDate as Date), 'dd MMM yyyy')}</TableCell>
                                     <TableCell className="font-semibold">₹{d.amount.toLocaleString()}</TableCell>
                                     <TableCell> <Badge variant="outline" className={cn("capitalize", statusColors[d.status])}>{d.status}</Badge></TableCell>
                                 </TableRow>

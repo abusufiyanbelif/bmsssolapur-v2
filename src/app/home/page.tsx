@@ -1,19 +1,13 @@
 
+
 'use client';
 
 import { Suspense, useEffect, useState } from "react";
 import { PublicHomePage } from "./public-home-page";
 import { Loader2 } from "lucide-react";
-import { getUser } from "@/services/user-service";
-import { useRouter } from 'next/navigation';
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import type { Quote } from "@/services/types";
-
-// Dynamically import dashboards to avoid bundling everything on every page
-const DonorDashboardPage = () => import('@/app/donor/page').then(mod => mod.default);
-const BeneficiaryDashboardPage = () => import('@/app/beneficiary/page').then(mod => mod.default);
-const ReferralDashboardPage = () => import('@/app/referral/page').then(mod => mod.default);
-const AdminDashboardPage = () => import('@/app/admin/page').then(mod => mod.default);
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { useRouter } from 'next/navigation';
 
 
 const LoadingState = () => (
@@ -51,18 +45,19 @@ export default function Page() {
     // The components themselves will handle their data fetching.
     switch (activeRole) {
         case 'Donor':
-            return <Suspense fallback={<LoadingState/>}><DonorDashboardPage /></Suspense>;
+             router.push('/donor');
+             return <LoadingState />;
         case 'Beneficiary':
-            return <Suspense fallback={<LoadingState/>}><BeneficiaryDashboardPage /></Suspense>;
+             router.push('/beneficiary');
+             return <LoadingState />;
         case 'Referral':
-            return <Suspense fallback={<LoadingState/>}><ReferralDashboardPage /></Suspense>;
+             router.push('/referral');
+             return <LoadingState />;
         case 'Admin':
         case 'Super Admin':
         case 'Finance Admin':
-            // The AdminDashboard is a Server Component, so it's handled by Next's routing.
-            // We can redirect to it.
              router.push('/admin');
-             return <LoadingState />; // Show loader while redirecting
+             return <LoadingState />;
         case 'Guest':
         default:
             return <PublicHomePage quotes={quotes} />;

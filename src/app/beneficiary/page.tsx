@@ -1,95 +1,41 @@
 
 
-'use client';
-
-import { Suspense, useEffect, useState } from "react";
-import { DonorDashboardContent } from '../donor/donor-dashboard-content';
+import { Suspense } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
-import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { getUser, User } from "@/services/user-service";
 import type { Lead, Quote, AppSettings } from "@/services/types";
 import { BeneficiaryDashboardContent } from './beneficiary-dashboard-content';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getAppSettings } from "@/services/app-settings-service";
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 
-export default function BeneficiaryDashboardPage() {
-    const [user, setUser] = useState<User | null>(null);
-    const [cases, setCases] = useState<Lead[]>([]);
-    const [quotes, setQuotes] = useState<Quote[]>([]);
-    const [settings, setSettings] = useState<AppSettings | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            setLoading(true);
-            setError(null);
-            const storedUserId = localStorage.getItem('userId');
-            if (!storedUserId) {
-                setError("No user session found. Please log in.");
-                setLoading(false);
-                return;
-            }
-            
-            try {
-                const fetchedUser = await getUser(storedUserId);
-                if (!fetchedUser || !fetchedUser.roles.includes('Beneficiary')) {
-                    setError("You do not have permission to view the Beneficiary Dashboard.");
-                    setLoading(false);
-                    return;
-                }
-                setUser(fetchedUser);
-
-                const [beneficiaryCases, randomQuotes, appSettings] = await Promise.all([
-                    getLeadsByBeneficiaryId(storedUserId),
-                    getInspirationalQuotes(3),
-                    getAppSettings(),
-                ]);
-                
-                if (beneficiaryCases) setCases(beneficiaryCases);
-                else setError("Could not load your cases.");
-
-                if (randomQuotes) setQuotes(randomQuotes);
-                else setError(prev => prev ? `${prev} Could not load quotes.` : "Could not load quotes.");
-                
-                if (appSettings) setSettings(appSettings);
-                else setError(prev => prev ? `${prev} Could not load app settings.` : "Could not load app settings.");
-
-            } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-                setError(`Failed to load dashboard data: ${errorMessage}`);
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchInitialData();
-    }, []);
-
-  if (loading) {
-    return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-  }
-
-  if (error) {
+async function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
+  if (!userId) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error Loading Dashboard</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertTitle>Access Denied</AlertTitle>
+        <AlertDescription>You must be logged in to view the Beneficiary Dashboard.</AlertDescription>
       </Alert>
     );
   }
-  
-  if (!user || !settings) {
-      return (
-         <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Initialization Failed</AlertTitle>
-            <AlertDescription>Could not initialize user session or app settings. Please try again later.</AlertDescription>
-        </Alert>
-      );
+
+  const [user, cases, quotes, settings] = await Promise.all([
+    getUser(userId),
+    getLeadsByBeneficiaryId(userId),
+    getInspirationalQuotes(3),
+    getAppSettings(),
+  ]);
+
+  if (!user || !user.roles.includes('Beneficiary')) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Access Denied</AlertTitle>
+        <AlertDescription>You do not have permission to view this page.</AlertDescription>
+      </Alert>
+    );
   }
 
   return (
@@ -105,4 +51,26 @@ export default function BeneficiaryDashboardPage() {
       <BeneficiaryDashboardContent cases={cases} quotes={quotes} settings={settings} />
     </div>
   );
+}
+
+
+export default function BeneficiaryDashboardPage() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    setUserId(storedUserId);
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+     return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+  }
+
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>}>
+        <BeneficiaryPageLoader userId={userId} />
+    </Suspense>
+  )
 }
