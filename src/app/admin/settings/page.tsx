@@ -1,6 +1,7 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAppSettings } from "@/services/app-settings-service";
+import { getAppSettings } from "./actions";
 import { AppSettingsForm } from "./app-settings-form";
 
 export default async function AppSettingsPage() {

@@ -19,8 +19,12 @@ export async function handleUpdateLeadConfiguration(
 ): Promise<FormState> {
   
   try {
+    const currentSettings = await getAppSettings();
     const updates = {
-      leadConfiguration: settings
+      leadConfiguration: {
+        ...currentSettings.leadConfiguration,
+        ...settings,
+      }
     };
 
     await updateAppSettings(updates);

@@ -2,9 +2,8 @@
 
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Settings, Users, ShieldCheck, PlusCircle, UserCheck, User, Loader2, AlertCircle, Workflow, LockOpen } from "lucide-react";
-import { getAppSettings } from "@/services/app-settings-service";
 import { getAllUsers, type User as UserType } from "@/services/user-service";
 import { LeadConfigForm } from "./lead-config-form";
 import { Button } from "@/components/ui/button";
@@ -12,12 +11,11 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { ApproversList } from "./approvers-list";
 import { useState, useEffect } from "react";
-import { AppSettings, UserRole } from "@/services/types";
+import { AppSettings } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { handleUpdateLeadConfiguration } from "./actions";
 import { useToast } from "@/hooks/use-toast";
+import { getAppSettings } from "@/app/admin/settings/actions"; // Corrected import
 
 
 export default function LeadConfigurationPage() {

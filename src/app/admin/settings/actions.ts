@@ -2,13 +2,19 @@
 
 "use server";
 
-import { updateAppSettings as updateSettingsService, AppSettings } from "@/services/app-settings-service";
+import { updateAppSettings as updateSettingsService, AppSettings, getAppSettings as getSettingsService } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
 
 interface FormState {
     success: boolean;
     error?: string;
 }
+
+// New function to be safely called from server components
+export async function getAppSettings(): Promise<AppSettings> {
+    return getSettingsService();
+}
+
 
 export async function handleUpdateAppSettings(
   formData: FormData

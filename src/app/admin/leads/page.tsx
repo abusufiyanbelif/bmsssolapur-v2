@@ -33,8 +33,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/actions";
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
-import { getAllLeads, updateLeadStatus, updateLeadVerificationStatus } from "@/services/lead-service";
-import { getAllUsers, getUser } from "@/services/user-service";
+import { updateLeadStatus, updateLeadVerificationStatus, getAllLeads } from "@/services/lead-service";
+import { getUser, getAllUsers } from "@/services/user-service";
 import { getAppSettings } from "@/services/app-settings-service";
 
 
@@ -160,14 +160,14 @@ function LeadsPageContent({ initialLeads, initialUsers, initialSettings, error: 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [fetchedLeads, fetchedUsers, fetchedSettings] = await Promise.all([
+            const { getAllLeads } = await import('@/services/lead-service');
+            const { getAllUsers } = await import('@/services/user-service');
+            const [fetchedLeads, fetchedUsers] = await Promise.all([
                 getAllLeads(),
                 getAllUsers(),
-                getAppSettings(),
             ]);
             setLeads(fetchedLeads);
             setUsers(fetchedUsers);
-            setSettings(fetchedSettings);
             setError(null);
         } catch (e) {
             setError("Failed to fetch data. Please try again later.");
@@ -927,15 +927,31 @@ Referral Phone:
 }
 
 export default async function LeadsPage() {
-    const [allLeads, allUsers, settings] = await Promise.all([
-        getAllLeads(),
-        getAllUsers(),
-        getAppSettings(),
-    ]);
-
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <LeadsPageContent initialLeads={allLeads} initialUsers={allUsers} initialSettings={settings} />
-        </Suspense>
-    )
+    try {
+        const [allLeads, allUsers, settings] = await Promise.all([
+            getAllLeads(),
+            getAllUsers(),
+            getAppSettings(),
+        ]);
+        return (
+            <Suspense fallback={<div>Loading...</div>}>
+                <LeadsPageContent
+                    initialLeads={JSON.parse(JSON.stringify(allLeads))}
+                    initialUsers={JSON.parse(JSON.stringify(allUsers))}
+                    initialSettings={JSON.parse(JSON.stringify(settings))}
+                />
+            </Suspense>
+        );
+    } catch (error) {
+        return (
+            <Suspense fallback={<div>Loading...</div>}>
+                <LeadsPageContent
+                    initialLeads={[]}
+                    initialUsers={[]}
+                    initialSettings={null}
+                    error="Failed to load initial data for leads page."
+                />
+            </Suspense>
+        )
+    }
 }
