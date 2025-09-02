@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview User service for interacting with Firestore.
  */
