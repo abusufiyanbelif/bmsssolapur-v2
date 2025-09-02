@@ -15,7 +15,7 @@ import { AppSettings } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { handleUpdateLeadConfiguration } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { getAppSettings } from "@/app/admin/settings/actions"; // Corrected import
+import { getAppSettings } from "@/app/admin/settings/actions"; 
 
 
 export default function LeadConfigurationPage() {

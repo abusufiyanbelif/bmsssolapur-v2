@@ -41,9 +41,8 @@ import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import { QrCodeDialog } from "@/components/qr-code-dialog";
-import { getAppSettings } from "@/services/app-settings-service";
+import { getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
 import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-service";
-import { getCurrentOrganization } from "@/services/organization-service";
 import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
@@ -896,7 +895,7 @@ function DonatePageContent() {
             <CardHeader>
                 <CardTitle>Your Generosity Matters</CardTitle>
                 <CardDescription>
-                    Please choose how you&apos;d like to proceed with your donation. Your support is greatly appreciated.
+                    Please choose how you'd like to proceed with your donation. Your support is greatly appreciated.
                 </CardDescription>
             </CardHeader>
             <CardContent>
