@@ -35,7 +35,7 @@ import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/action
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { updateLeadStatus, updateLeadVerificationStatus, getAllLeads } from "@/services/lead-service";
 import { getUser, getAllUsers } from "@/services/user-service";
-import { getAppSettings } from "@/services/app-settings-service";
+import { getAppSettings } from "@/app/admin/settings/actions";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
@@ -224,7 +224,8 @@ function LeadsPageContent({ initialLeads, initialUsers, initialSettings, error: 
             const beneficiary = usersById[lead.beneficiaryId];
             const nameMatch = appliedFilters.name === '' || 
                               lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
-                              lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase());
+                              lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
+                              lead.beneficiaryId?.toLowerCase().includes(appliedFilters.name.toLowerCase());
             const statusMatch = appliedFilters.status === 'all' || lead.caseStatus === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.caseVerification === appliedFilters.verification;
             const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
@@ -932,37 +933,14 @@ Referral Phone:
   )
 }
 
-export default function LeadsPage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <LeadsPageDataLoader />
-        </Suspense>
-    )
+function LeadsPageDataLoader() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LeadsPage />
+    </Suspense>
+  )
 }
 
-// Create a new Server Component to fetch the data
-async function LeadsPageDataLoader() {
-    try {
-        const [allLeads, allUsers, settings] = await Promise.all([
-            getAllLeads(),
-            getAllUsers(),
-            getAppSettings(),
-        ]);
-        return (
-            <LeadsPageContent
-                initialLeads={JSON.parse(JSON.stringify(allLeads))}
-                initialUsers={JSON.parse(JSON.stringify(allUsers))}
-                initialSettings={JSON.parse(JSON.stringify(settings))}
-            />
-        );
-    } catch (error) {
-        return (
-            <LeadsPageContent
-                initialLeads={[]}
-                initialUsers={[]}
-                initialSettings={null}
-                error="Failed to load initial data for leads page."
-            />
-        )
-    }
+export default function LeadsPage() {
+    return <LeadsPageDataLoader />;
 }

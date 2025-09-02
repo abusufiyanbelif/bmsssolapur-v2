@@ -232,6 +232,7 @@ export const getAppSettings = async (): Promise<AppSettings> => {
 
 /**
  * Updates the global application settings.
+ * This is a server-only function.
  * @param updates A partial object of the settings to update.
  */
 export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'| 'updatedAt'>>) => {
