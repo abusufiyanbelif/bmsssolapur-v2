@@ -25,48 +25,12 @@ const CardSkeleton = () => (
 
 
 export default function Page() {
-    const [allDonations, setAllDonations] = useState<Donation[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
-    const [allLeads, setAllLeads] = useState<Lead[]>([]);
-    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            const result = await getPublicDashboardData();
-            
-            if (result && !result.error) {
-                setAllDonations(result.donations || []);
-                setAllUsers(result.users || []);
-                setAllLeads(result.leads || []);
-                setAllCampaigns(result.campaigns || []);
-            } else {
-                console.error("Failed to fetch public dashboard data", result?.error);
-            }
-
-            setLoading(false);
-        };
-        fetchData();
-    }, []);
-
     // Quotes are now fetched client-side in PublicHomePage
     const initialQuotes: Quote[] = [];
 
     return (
         <div className="flex-1 space-y-8">
             <PublicHomePage quotes={initialQuotes} />
-
-            <div className="space-y-4">
-                 <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
-                    <PublicDashboardCards 
-                        allDonations={allDonations}
-                        allUsers={allUsers}
-                        allLeads={allLeads}
-                        allCampaigns={allCampaigns}
-                    />
-                </Suspense>
-            </div>
         </div>
     );
 }
