@@ -30,6 +30,7 @@ const formSchema = z.object({
 
   // Features
   featureDirectPayment: z.boolean().default(false),
+  onlinePaymentsEnabled: z.boolean().default(false),
 
   // Payment Methods
   paymentBankTransfer: z.boolean().default(true),
@@ -55,6 +56,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
       loginOtp: settings.loginMethods.otp.enabled,
       loginGoogle: settings.loginMethods.google.enabled,
       featureDirectPayment: settings.features.directPaymentToBeneficiary.enabled,
+      onlinePaymentsEnabled: settings.features.onlinePaymentsEnabled,
       paymentBankTransfer: settings.paymentMethods?.bankTransfer.enabled ?? true,
       paymentCash: settings.paymentMethods?.cash.enabled ?? true,
       paymentUpi: settings.paymentMethods?.upi.enabled ?? true,
@@ -73,6 +75,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
     if(values.loginGoogle) formData.append("login.google", "on");
     
     if(values.featureDirectPayment) formData.append("feature.directPayment", "on");
+    if(values.onlinePaymentsEnabled) formData.append("feature.onlinePayments", "on");
     
     if(values.paymentBankTransfer) formData.append("payment.bankTransfer", "on");
     if(values.paymentCash) formData.append("payment.cash", "on");
@@ -230,6 +233,21 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
                 <CardDescription>Enable or disable specific features within the application.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="onlinePaymentsEnabled"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">Online Payment Gateways</FormLabel>
+                                <FormDescription>This is a master switch for all online payment gateways (e.g., Razorpay).</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="featureDirectPayment"

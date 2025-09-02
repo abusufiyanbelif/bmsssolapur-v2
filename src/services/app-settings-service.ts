@@ -6,7 +6,7 @@
 
 import { adminDb } from './firebase-admin';
 import type { AppSettings, UserRole, LeadStatus, DashboardSettings, LeadPurpose, PurposeCategory } from './types';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 // Re-export type for backward compatibility
 export type { AppSettings };
@@ -234,16 +234,16 @@ export const getAppSettings = async (): Promise<AppSettings> => {
  * Updates the global application settings.
  * @param updates A partial object of the settings to update.
  */
-export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'| 'updatedAt'>>): Promise<void> => {
+export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'| 'updatedAt'>>) => {
   try {
     const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
-    await settingsDocRef.update({
-      ...updates,
-      updatedAt: Timestamp.now(),
-    });
+    const updateWithTimestamp: Partial<AppSettings> & { updatedAt: FieldValue } = {
+        ...updates,
+        updatedAt: Timestamp.now(),
+    };
+    await settingsDocRef.update(updateWithTimestamp);
   } catch (error) {
     console.error("Error updating app settings: ", error);
     throw new Error('Failed to update app settings.');
   }
 };
-

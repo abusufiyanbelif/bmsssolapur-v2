@@ -2,7 +2,7 @@
 
 "use server";
 
-import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
+import { updateAppSettings as updateSettingsService, AppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
 
 interface FormState {
@@ -33,7 +33,7 @@ export async function handleUpdateAppSettings(
       },
     };
 
-    await updateAppSettings(updates);
+    await updateSettingsService(updates);
     
     revalidatePath("/admin/settings");
 
