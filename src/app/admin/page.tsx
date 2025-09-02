@@ -30,8 +30,8 @@ import { getAllLeads, Lead } from "@/services/lead-service";
 import { getAllCampaigns, Campaign } from "@/services/campaign-service";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { BarChart3, CheckCheck, HandCoins, Megaphone, FileText, Users, HandHeart, Quote as QuoteIcon, Loader2 } from "lucide-react";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import type { Quote } from "@/services/types";
+import { getQuotes } from "@/app/home/actions";
 
 
 const CardSkeleton = () => (
@@ -81,7 +81,7 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <QuoteIcon className="text-primary" />
-                    Wisdom &amp; Reflection
+                    Wisdom & Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -114,7 +114,7 @@ export default function DashboardPage() {
                 getAllUsers(),
                 getAllLeads(),
                 getAllCampaigns(),
-                getInspirationalQuotes(3),
+                getQuotes(3),
             ]);
             setAllDonations(donations);
             setAllUsers(users);

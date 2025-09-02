@@ -9,8 +9,9 @@ import { getUser, User } from "@/services/user-service";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAppSettings } from "@/services/app-settings-service";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getAllCampaigns } from "@/services/campaign-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getQuotes } from "@/app/home/actions";
 
 async function DonorPageLoader({ userId }: { userId: string | null }) {
     if (!userId) {
@@ -23,11 +24,13 @@ async function DonorPageLoader({ userId }: { userId: string | null }) {
         );
     }
     
-    const [user, donations, allLeads, quotes, settings] = await Promise.all([
+    const [user, donations, allLeads, allDonations, allCampaigns, quotes, settings] = await Promise.all([
         getUser(userId),
         getDonationsByUserId(userId),
         getAllLeads(),
-        getInspirationalQuotes(3),
+        getAllDonations(),
+        getAllCampaigns(),
+        getQuotes(3),
         getAppSettings(),
     ]);
 
@@ -41,7 +44,7 @@ async function DonorPageLoader({ userId }: { userId: string | null }) {
         );
     }
     
-    return <DonorDashboardContent user={user} donations={donations} allLeads={allLeads} quotes={quotes} settings={settings} />
+    return <DonorDashboardContent user={user} donations={donations} allLeads={allLeads} allDonations={allDonations} allCampaigns={allCampaigns} quotes={quotes} settings={settings} />
 }
 
 function DonorPageWithAuth() {

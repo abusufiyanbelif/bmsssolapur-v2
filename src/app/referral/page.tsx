@@ -12,8 +12,8 @@ import { format } from "date-fns";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { User, Lead, Quote } from "@/services/types";
 import { getReferredBeneficiaries, getUser } from "@/services/user-service";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { ReferralSummaryCard } from "@/app/admin/dashboard-cards";
+import { getQuotes } from "@/app/home/actions";
 
 function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
     if (loading) {
@@ -80,7 +80,7 @@ export default function ReferralDashboardPage() {
                 const [fetchedUser, fetchedBeneficiaries, randomQuotes] = await Promise.all([
                     getUser(storedUserId),
                     getReferredBeneficiaries(storedUserId),
-                    getInspirationalQuotes(3)
+                    getQuotes(3)
                 ]);
 
                 if (!fetchedUser || !fetchedUser.roles.includes('Referral')) {

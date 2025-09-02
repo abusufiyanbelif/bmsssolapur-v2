@@ -8,8 +8,8 @@ import type { Lead, Quote, AppSettings } from "@/services/types";
 import { BeneficiaryDashboardContent } from './beneficiary-dashboard-content';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getAppSettings } from "@/services/app-settings-service";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
+import { getQuotes } from "@/app/home/actions";
 
 async function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
   if (!userId) {
@@ -25,7 +25,7 @@ async function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
   const [user, cases, quotes, settings] = await Promise.all([
     getUser(userId),
     getLeadsByBeneficiaryId(userId),
-    getInspirationalQuotes(3),
+    getQuotes(3),
     getAppSettings(),
   ]);
 

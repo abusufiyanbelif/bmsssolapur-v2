@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EnrichedLead } from "@/app/campaigns/actions";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
 import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
+import { getQuotes } from "@/app/home/actions";
+import { getAllLeads } from "@/services/lead-service";
 
 const statusColors: Record<Donation['status'], string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -27,33 +29,6 @@ const statusColors: Record<Donation['status'], string> = {
     "Partially Allocated": "bg-orange-500/20 text-orange-700 border-orange-500/30",
     "Allocated": "bg-blue-500/20 text-blue-700 border-blue-500/30",
 };
-
-function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
-    if (quotes.length === 0) {
-        return null;
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
-                    Wisdom & Reflection
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-6">
-                    {quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
-                            <p>&quot;{quote.text}&quot;</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
-                        </blockquote>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
 
 interface DonorDashboardContentProps {
     user: User;
@@ -218,3 +193,31 @@ export function DonorDashboardContent({ user, donations, allLeads, allDonations,
     </div>
   )
 }
+
+function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
+    if (quotes.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <QuoteIcon className="text-primary" />
+                    Wisdom & Reflection
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                    {quotes.map((quote, index) => (
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                            <p>&quot;{quote.text}&quot;</p>
+                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                        </blockquote>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+

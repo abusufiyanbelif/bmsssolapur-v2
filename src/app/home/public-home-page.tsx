@@ -10,9 +10,8 @@ import type { Quote } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { PublicDashboardCards } from "./public-dashboard-cards";
-import { getPublicDashboardData } from "./actions";
+import { getPublicDashboardData, getQuotes } from "./actions";
 
 function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
     const [quotes, setQuotes] = useState<Quote[]>(initialQuotes);
@@ -21,7 +20,7 @@ function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
     useEffect(() => {
         const fetchQuotes = async () => {
             try {
-                const fetchedQuotes = await getInspirationalQuotes(3);
+                const fetchedQuotes = await getQuotes(3);
                 setQuotes(fetchedQuotes);
             } catch (err) {
                 console.error("Failed to fetch quotes on client:", err);

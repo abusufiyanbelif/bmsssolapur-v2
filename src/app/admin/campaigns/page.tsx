@@ -20,8 +20,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { getQuotes } from "@/app/home/actions";
+import type { Quote } from "@/services/types";
 
 
 const statusColors: Record<CampaignStatus, string> = {
@@ -128,7 +129,7 @@ function CampaignsPageContent() {
         let message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\n*Progress:*\n- Raised: ₹${campaign.raisedAmount.toLocaleString()}\n- Beneficiaries Helped: ${campaign.beneficiaryCount}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
         
         try {
-            const quotes = await getInspirationalQuotes(1);
+            const quotes = await getQuotes(1);
             if (quotes.length > 0) {
                 const quoteText = `_"${quotes[0].text}"_\n- ${quotes[0].source}\n\n`;
                 message = quoteText + message;
