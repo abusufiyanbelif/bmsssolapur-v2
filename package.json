@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:db": "tsx src/scripts/test-db.ts"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.15.5",
