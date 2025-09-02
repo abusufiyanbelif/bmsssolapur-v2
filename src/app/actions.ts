@@ -25,8 +25,11 @@ export async function performPermissionCheck(): Promise<{success: boolean, error
              if (e.message.includes("offline")) {
                 return { success: false, error: "The client is offline." };
             }
+             // Return the specific error message for other cases.
+            return { success: false, error: e.message };
         }
         console.error("An unexpected error occurred during permission check:", e);
         return { success: false, error: "An unexpected error occurred during the initial permission check." };
     }
 };
+

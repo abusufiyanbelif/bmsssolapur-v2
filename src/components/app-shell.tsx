@@ -31,37 +31,52 @@ import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { performPermissionCheck } from "@/app/actions";
 
-const PermissionErrorState = ({ error }: { error: string }) => (
-    <div className="flex flex-col flex-1 items-center justify-center h-full p-4 bg-background">
-        <Card className="w-full max-w-2xl text-center shadow-2xl border-destructive">
-            <CardHeader>
-                <div className="mx-auto bg-destructive text-destructive-foreground rounded-full p-3 w-fit">
-                    <Shield className="h-8 w-8" />
-                </div>
-                <CardTitle className="text-destructive text-2xl pt-4">Action Required: Insufficient Permissions</CardTitle>
-                <CardDescription className="text-base text-center pt-2">
-                    The application cannot connect to the database. This is usually because the server environment does not have the correct IAM permissions.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <p>To fix this, you need to grant the <strong className="text-primary">&quot;Cloud Datastore User&quot;</strong> role to the correct service account in your Google Cloud project.</p>
-                <div className="p-4 rounded-lg bg-muted text-left text-sm">
-                    <p className="font-semibold">Follow these steps:</p>
-                    <ol className="list-decimal list-inside space-y-2 mt-2">
-                        <li>Go to the <strong className="text-primary">IAM & Admin</strong> page in your Google Cloud Console.</li>
-                        <li>Find the service account with the name <strong className="text-primary">&quot;Firebase App Hosting compute engine default service account&quot;</strong>.</li>
-                        <li>Click the pencil icon to edit its permissions.</li>
-                        <li>Click <strong className="text-primary">&quot;Add another role&quot;</strong> and search for <strong className="text-primary">&quot;Cloud Datastore User&quot;</strong>.</li>
-                        <li>Select the role and click <strong className="text-primary">&quot;Save&quot;</strong>.</li>
-                    </ol>
-                </div>
-                 <p className="text-xs text-muted-foreground pt-2">
-                    The specific error message was: <code className="bg-muted px-1 py-0.5 rounded">{error}</code>
-                </p>
-            </CardContent>
-        </Card>
-    </div>
-);
+const PermissionErrorState = ({ error }: { error: string }) => {
+    const isPermissionDenied = error === 'permission-denied';
+
+    return (
+        <div className="flex flex-col flex-1 items-center justify-center h-full p-4 bg-background">
+            <Card className="w-full max-w-2xl text-center shadow-2xl border-destructive">
+                <CardHeader>
+                    <div className="mx-auto bg-destructive text-destructive-foreground rounded-full p-3 w-fit">
+                        <Shield className="h-8 w-8" />
+                    </div>
+                    <CardTitle className="text-destructive text-2xl pt-4">
+                        {isPermissionDenied ? "Action Required: Insufficient Permissions" : "Connection Error"}
+                    </CardTitle>
+                    <CardDescription className="text-base text-center pt-2">
+                        {isPermissionDenied
+                            ? "The application cannot connect to the database. This is usually because the server environment does not have the correct IAM permissions."
+                            : "The application could not establish a connection to the backend database."
+                        }
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {isPermissionDenied ? (
+                        <>
+                            <p>To fix this, you need to grant the <strong className="text-primary">&quot;Cloud Datastore User&quot;</strong> role to the correct service account in your Google Cloud project.</p>
+                            <div className="p-4 rounded-lg bg-muted text-left text-sm">
+                                <p className="font-semibold">Follow these steps:</p>
+                                <ol className="list-decimal list-inside space-y-2 mt-2">
+                                    <li>Go to the <strong className="text-primary">IAM & Admin</strong> page in your Google Cloud Console.</li>
+                                    <li>Find the service account with the name <strong className="text-primary">&quot;Firebase App Hosting compute engine default service account&quot;</strong>.</li>
+                                    <li>Click the pencil icon to edit its permissions.</li>
+                                    <li>Click <strong className="text-primary">&quot;Add another role&quot;</strong> and search for <strong className="text-primary">&quot;Cloud Datastore User&quot;</strong>.</li>
+                                    <li>Select the role and click <strong className="text-primary">&quot;Save&quot;</strong>.</li>
+                                </ol>
+                            </div>
+                        </>
+                    ) : (
+                        <p>Please check your internet connection and the server logs for more details.</p>
+                    )}
+                    <p className="text-xs text-muted-foreground pt-2">
+                        The specific error message was: <code className="bg-muted px-1 py-0.5 rounded">{error}</code>
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+};
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -94,12 +109,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const initializeSession = async () => {
             const permissionResult = await performPermissionCheck();
-            if (!permissionResult.success) {
-                if(permissionResult.error === 'permission-denied'){
-                    setPermissionError("permission-denied");
-                } else {
-                    setPermissionError(permissionResult.error || "An unknown error occurred.");
-                }
+            if (!permissionResult.success && permissionResult.error) {
+                setPermissionError(permissionResult.error);
                 setIsSessionReady(true);
                 return;
             }
