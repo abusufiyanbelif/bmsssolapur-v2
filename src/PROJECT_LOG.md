@@ -1,3 +1,4 @@
+
 # Project Log - Baitul Mal Samajik Sanstha (Solapur)
 
 This document tracks the features and changes requested for the project.

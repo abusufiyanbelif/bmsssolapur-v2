@@ -18,12 +18,8 @@ export async function performPermissionCheck(): Promise<{success: boolean, error
     } catch (e) {
         if (e instanceof Error) {
             // Specifically check for the default credentials error message.
-            if (e.message.includes("Could not load the default credentials")) {
+            if (e.message.includes("Could not load the default credentials") || e.message.includes("Could not refresh access token")) {
                  return { success: false, error: 'permission-denied' };
-            }
-            // Check for network errors (e.g., running offline).
-             if (e.message.includes("offline")) {
-                return { success: false, error: "The client is offline." };
             }
              // Return the specific error message for other cases.
             return { success: false, error: e.message };
@@ -32,4 +28,5 @@ export async function performPermissionCheck(): Promise<{success: boolean, error
         return { success: false, error: "An unexpected error occurred during the initial permission check." };
     }
 };
+
 
