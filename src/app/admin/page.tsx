@@ -30,7 +30,8 @@ import { getAllLeads, Lead } from "@/services/lead-service";
 import { getAllCampaigns, Campaign } from "@/services/campaign-service";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { BarChart3, CheckCheck, HandCoins, Megaphone, FileText, Users, HandHeart, Quote as QuoteIcon, Loader2 } from "lucide-react";
-import { getRandomQuotes, Quote } from "@/services/quotes-service";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import type { Quote } from "@/services/types";
 
 
 const CardSkeleton = () => (
@@ -113,7 +114,7 @@ export default function DashboardPage() {
                 getAllUsers(),
                 getAllLeads(),
                 getAllCampaigns(),
-                getRandomQuotes(3),
+                getInspirationalQuotes(3),
             ]);
             setAllDonations(donations);
             setAllUsers(users);

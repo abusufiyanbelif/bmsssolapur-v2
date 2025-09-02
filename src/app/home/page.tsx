@@ -7,7 +7,8 @@ import { PublicHomePage } from "./public-home-page";
 import { Loader2 } from "lucide-react";
 import { getUser } from "@/services/user-service";
 import { useRouter } from 'next/navigation';
-import { getRandomQuotes, Quote } from "@/services/quotes-service";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import type { Quote } from "@/services/types";
 
 // Dynamically import dashboards to avoid bundling everything on every page
 const DonorDashboardPage = () => import('@/app/donor/page').then(mod => mod.default);
@@ -39,7 +40,7 @@ export default function Page() {
             setActiveRole(role);
         }
         
-        getRandomQuotes(3).then(setQuotes);
+        getInspirationalQuotes(3).then(setQuotes);
         setLoading(false);
     }, []);
 
@@ -68,5 +69,3 @@ export default function Page() {
             return <PublicHomePage quotes={quotes} />;
     }
 }
-
-    

@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -20,7 +19,7 @@ import {
   getCountFromServer,
   orderBy,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, isConfigValid } from './firebase';
 import { adminDb } from './firebase-admin';
 import type { User, UserRole } from './types';
 
