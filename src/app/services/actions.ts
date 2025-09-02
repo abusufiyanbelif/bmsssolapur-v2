@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { adminDb } from '@/services/firebase-admin';
@@ -24,7 +25,7 @@ export async function checkDatabaseConnection(): Promise<{success: boolean, erro
         if (e instanceof Error) {
             // Specifically check for the default credentials error message.
             if (e.message.includes("Could not refresh access token")) {
-                 return { success: false, error: `Authentication failed: ${e.message}. This usually indicates a permissions issue with the service account.` };
+                 return { success: false, error: 'permission-denied' };
             }
              // Return the specific error message for other cases.
             return { success: false, error: e.message };
@@ -74,3 +75,4 @@ export async function testGeminiConnection(): Promise<{success: boolean, error?:
         return { success: false, error: "An unknown error occurred while testing Gemini." };
     }
 }
+

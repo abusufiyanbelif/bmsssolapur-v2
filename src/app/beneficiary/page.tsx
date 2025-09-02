@@ -1,6 +1,7 @@
 
+'use client';
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { getUser, User } from "@/services/user-service";
 import type { Lead, Quote, AppSettings } from "@/services/types";
@@ -54,7 +55,7 @@ async function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
 }
 
 
-export default function BeneficiaryDashboardPage() {
+function BeneficiaryPageWithAuth() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,4 +74,8 @@ export default function BeneficiaryDashboardPage() {
         <BeneficiaryPageLoader userId={userId} />
     </Suspense>
   )
+}
+
+export default function BeneficiaryDashboardPage() {
+    return <BeneficiaryPageWithAuth />;
 }

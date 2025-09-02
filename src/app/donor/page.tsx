@@ -1,6 +1,8 @@
 
 
-import { Suspense } from "react";
+'use client';
+
+import { Suspense, useEffect, useState } from "react";
 import { DonorDashboardContent } from './donor-dashboard-content';
 import { Loader2, AlertCircle } from "lucide-react";
 import { getUser, User } from "@/services/user-service";
@@ -9,7 +11,6 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAppSettings } from "@/services/app-settings-service";
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
 
 async function DonorPageLoader({ userId }: { userId: string | null }) {
     if (!userId) {
@@ -43,7 +44,7 @@ async function DonorPageLoader({ userId }: { userId: string | null }) {
     return <DonorDashboardContent user={user} donations={donations} allLeads={allLeads} quotes={quotes} settings={settings} />
 }
 
-export default function DonorDashboardPage() {
+function DonorPageWithAuth() {
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -56,10 +57,14 @@ export default function DonorDashboardPage() {
     if (loading) {
         return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
     }
-
+    
     return (
         <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>}>
             <DonorPageLoader userId={userId} />
         </Suspense>
     );
+}
+
+export default function DonorDashboardPage() {
+    return <DonorPageWithAuth />;
 }
