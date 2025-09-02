@@ -1,15 +1,13 @@
 
+'use client';
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PublicHomePage } from "./home/public-home-page";
 import { PublicDashboardCards } from "./home/public-dashboard-cards";
-import { Quote } from "@/services/quotes-service";
-import { getAllDonations } from "@/services/donation-service";
-import { getAllUsers } from "@/services/user-service";
-import { getAllLeads } from "@/services/lead-service";
-import { getPublicCampaigns } from "@/services/public-data-service";
+import { Quote, Donation, User, Lead, Campaign } from "@/services/types";
+import { getPublicDashboardData } from "./home/actions";
 
 
 const CardSkeleton = () => (
@@ -25,13 +23,31 @@ const CardSkeleton = () => (
 );
 
 
-export default async function Page() {
-    const [allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
-        getAllDonations(),
-        getAllUsers(),
-        getAllLeads(),
-        getPublicCampaigns()
-    ]);
+export default function Page() {
+    const [allDonations, setAllDonations] = useState<Donation[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [allLeads, setAllLeads] = useState<Lead[]>([]);
+    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            const result = await getPublicDashboardData();
+            
+            if (result && !result.error) {
+                setAllDonations(result.donations || []);
+                setAllUsers(result.users || []);
+                setAllLeads(result.leads || []);
+                setAllCampaigns(result.campaigns || []);
+            } else {
+                console.error("Failed to fetch public dashboard data", result?.error);
+            }
+
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
 
     // Quotes are now fetched client-side in PublicHomePage
     const initialQuotes: Quote[] = [];

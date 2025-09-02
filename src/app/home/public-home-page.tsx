@@ -22,6 +22,9 @@ function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
             getInspirationalQuotes(3).then(fetchedQuotes => {
                 setQuotes(fetchedQuotes);
                 setLoading(false);
+            }).catch(err => {
+                console.error("Failed to fetch quotes on client:", err);
+                setLoading(false);
             });
         }
     }, [initialQuotes]);
