@@ -404,10 +404,7 @@ function getRandomDate(start: Date, end: Date): Date {
 // --- EXPORTED SEEDING FUNCTIONS ---
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    // This now only seeds the initial user if it doesn't exist in Firestore.
-    // The hardcoded logic in user-service ensures 'admin' is always available in the app.
-    const adminUser = await getUserByUserId('admin');
-    const userResults = await seedUsers([initialUsersToSeed[0]]);
+    const userResults = await seedUsers(initialUsersToSeed);
     const quotesStatus = await seedQuotesService();
     return {
         message: 'Initial Seeding Complete',
