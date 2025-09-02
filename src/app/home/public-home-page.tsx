@@ -19,14 +19,19 @@ function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
     const [loading, setLoading] = useState(initialQuotes.length === 0);
 
     useEffect(() => {
-        if (initialQuotes.length === 0) {
-            getInspirationalQuotes(3).then(fetchedQuotes => {
+        const fetchQuotes = async () => {
+            try {
+                const fetchedQuotes = await getInspirationalQuotes(3);
                 setQuotes(fetchedQuotes);
-                setLoading(false);
-            }).catch(err => {
+            } catch (err) {
                 console.error("Failed to fetch quotes on client:", err);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        if (initialQuotes.length === 0) {
+            fetchQuotes();
         }
     }, [initialQuotes]);
 
