@@ -1,4 +1,5 @@
 
+"use client";
 
 import {
   Card,
@@ -23,28 +24,65 @@ import {
   Bot,
   Cloud,
   ExternalLink,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { checkDatabaseConnection } from "./actions";
 
-export default async function ServicesPage() {
-  // Fetch data to calculate usage metrics
-  const [allUsers, allLeads, allDonations] = await Promise.all([
-    getAllUsers(),
-    getAllLeads(),
-    getAllDonations(),
-  ]);
 
-  const scannedDonations = allDonations.filter(d => d.source?.includes('Scan')).length;
+export default function ServicesPage() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [donations, setDonations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dbStatus, setDbStatus] = useState<{ status: 'idle' | 'loading' | 'success' | 'error', message: string }>({ status: 'idle', message: '' });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [fetchedUsers, fetchedLeads, fetchedDonations] = await Promise.all([
+          getAllUsers(),
+          getAllLeads(),
+          getAllDonations(),
+        ]);
+        setUsers(fetchedUsers);
+        setLeads(fetchedLeads);
+        setDonations(fetchedDonations);
+      } catch (e) {
+        console.error("Failed to fetch initial data for services page", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleTestConnection = async () => {
+    setDbStatus({ status: 'loading', message: '' });
+    const result = await checkDatabaseConnection();
+    if (result.success) {
+      setDbStatus({ status: 'success', message: 'Successfully connected to the database and read data.' });
+    } else {
+      setDbStatus({ status: 'error', message: result.error || 'An unknown error occurred.' });
+    }
+  };
+
+  const scannedDonations = donations.filter(d => d.source?.includes('Scan')).length;
   
   const services = [
     {
       name: "Firebase Authentication",
       description: "Manages user sign-up, login, and sessions.",
       icon: Fingerprint,
-      metric: allUsers.length.toLocaleString(),
+      metric: users.length.toLocaleString(),
       metricLabel: "Total Users",
     },
     {
@@ -52,10 +90,12 @@ export default async function ServicesPage() {
       description: "Stores all application data like users, leads, and donations.",
       icon: Database,
       metrics: [
-        { label: "Users", value: allUsers.length.toLocaleString(), icon: Users },
-        { label: "Leads", value: allLeads.length.toLocaleString(), icon: FileText },
-        { label: "Donations", value: allDonations.length.toLocaleString(), icon: HandHeart },
+        { label: "Users", value: users.length.toLocaleString(), icon: Users },
+        { label: "Leads", value: leads.length.toLocaleString(), icon: FileText },
+        { label: "Donations", value: donations.length.toLocaleString(), icon: HandHeart },
       ],
+      action: handleTestConnection,
+      status: dbStatus,
     },
     {
       name: "Gemini LLM",
@@ -151,21 +191,42 @@ export default async function ServicesPage() {
                     <CardTitle className="text-lg">{service.name}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow space-y-4">
                 <p className="text-sm text-muted-foreground">{service.description}</p>
+                 {service.status && service.status.status !== 'idle' && (
+                  <div className={`p-3 rounded-md text-sm ${service.status.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-destructive/10 text-destructive'}`}>
+                    <div className="flex items-center gap-2 font-semibold">
+                      {service.status.status === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                      <p>{service.status.status === 'success' ? 'Connection Successful' : 'Connection Failed'}</p>
+                    </div>
+                    <p className="text-xs mt-1 pl-1">{service.status.message}</p>
+                  </div>
+                 )}
               </CardContent>
               <CardFooter className="bg-muted/50 p-4">
-                {service.metrics ? (
+                {service.action ? (
+                    <Button onClick={service.action} disabled={dbStatus.status === 'loading'} className="w-full">
+                      {dbStatus.status === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                      Test Connection
+                    </Button>
+                ) : service.metrics ? (
                     <div className="w-full space-y-2">
-                        {service.metrics.map(metric => (
-                             <div key={metric.label} className="flex justify-between items-center text-sm">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <metric.icon className="h-4 w-4" />
-                                    <span>{metric.label}</span>
-                                </div>
-                                <span className="font-semibold">{metric.value}</span>
-                            </div>
-                        ))}
+                        {loading ? (
+                          <div className="space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                          </div>
+                        ) : (
+                          service.metrics.map(metric => (
+                              <div key={metric.label} className="flex justify-between items-center text-sm">
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                      <metric.icon className="h-4 w-4" />
+                                      <span>{metric.label}</span>
+                                  </div>
+                                  <span className="font-semibold">{metric.value}</span>
+                              </div>
+                          ))
+                        )}
                     </div>
                 ) : (
                     <div className="flex justify-between items-center w-full">
