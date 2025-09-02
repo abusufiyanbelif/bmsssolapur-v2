@@ -2,7 +2,7 @@
  * @fileOverview Service for managing organization data in Firestore.
  */
 
-import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs, where } from 'firebase/firestore';
 import { db } from './firebase'; // Use client-side SDK
 import type { Organization } from './types';
 import { updatePublicOrganization } from './public-data-service';
