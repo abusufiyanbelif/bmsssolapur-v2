@@ -35,14 +35,15 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       const { jsPDF } = await import('jspdf');
 
       const canvas = await html2canvas(letterheadRef.current, {
-          scale: 2,
+          scale: 3, // Increase scale for better resolution
           useCORS: true,
           logging: false,
+          backgroundColor: '#ffffff', // Ensure a solid background
       });
       
       const imgData = canvas.toDataURL('image/png');
       
-      // Standard A4 dimensions in points (pt), then converted to px for jspdf
+      // Standard A4 dimensions in points (pt)
       const A4_WIDTH_PT = 595.28;
       const A4_HEIGHT_PT = 841.89;
 
@@ -52,19 +53,12 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
         format: 'a4'
       });
       
-      const canvasAspectRatio = canvas.width / canvas.height;
-      const a4AspectRatio = A4_WIDTH_PT / A4_HEIGHT_PT;
+      // Scale image to fit A4 page width
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = A4_WIDTH_PT;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      let pdfWidth = A4_WIDTH_PT;
-      let pdfHeight = A4_HEIGHT_PT;
-      
-      if (canvasAspectRatio > a4AspectRatio) {
-        pdfHeight = pdfWidth / canvasAspectRatio;
-      } else {
-        pdfWidth = pdfHeight * canvasAspectRatio;
-      }
-
-      pdf.addImage(imgData, 'PNG', 0, 0, A4_WIDTH_PT, A4_HEIGHT_PT);
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
       const pdfDataUri = pdf.output('datauristring');
       const link = document.createElement('a');

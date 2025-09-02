@@ -38,9 +38,10 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
       const { jsPDF } = await import('jspdf');
 
       const canvas = await html2canvas(receiptRef.current, { 
-          scale: 2,
+          scale: 3, // Increase scale for better resolution
           useCORS: true,
           logging: false,
+          backgroundColor: '#ffffff', // Ensure a solid background for canvas
       });
       const imgData = canvas.toDataURL('image/png');
       
@@ -53,7 +54,12 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
         format: 'a4'
       });
       
-      pdf.addImage(imgData, 'PNG', 0, 0, A4_WIDTH_PT, A4_HEIGHT_PT);
+      // Scale image to fit A4 page width
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = A4_WIDTH_PT;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
       const pdfDataUri = pdf.output('datauristring');
 
