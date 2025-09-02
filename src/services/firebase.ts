@@ -28,5 +28,11 @@ const auth: Auth = getAuth(clientApp);
 const db: Firestore = getFirestore(clientApp);
 const storage = getStorage(clientApp);
 
+const isConfigValid = !!(
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId &&
+  firebaseConfig.appId
+);
 
-export { clientApp as app, auth, db, storage };
+export { clientApp as app, auth, db, storage, isConfigValid };

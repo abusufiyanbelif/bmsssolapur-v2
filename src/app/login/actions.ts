@@ -2,7 +2,7 @@
 'use server';
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db, isConfigValid } from '@/services/firebase';
+import { db } from '@/services/firebase';
 import { User, getUserByPhone, getUserByEmail, createUser, getUserByName, getUser, getUserByUserId } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
@@ -16,9 +16,6 @@ interface LoginState {
 }
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
-    if (!isConfigValid) {
-        return { success: false, error: "Firebase is not configured. Cannot process login." };
-    }
     const identifier = formData.get("identifier") as string;
     const password = formData.get("password") as string;
 
@@ -86,10 +83,6 @@ interface OtpState {
 }
 
 export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
-    if (!isConfigValid) {
-        return { success: false, error: "Firebase is not configured. Cannot send OTP." };
-    }
-    
     try {
         // Basic validation: Check if user exists with the 10-digit number before sending OTP
         const user = await getUserByPhone(phoneNumber); 
@@ -114,9 +107,6 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
 
 
 export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
-    if (!isConfigValid) {
-        return { success: false, error: "Firebase is not configured. Cannot verify OTP." };
-    }
     const phoneNumber = formData.get("phone") as string;
     const code = formData.get("otp") as string;
     
@@ -175,10 +165,6 @@ export async function handleGoogleLogin(firebaseUser: {
   displayName: string | null;
   phoneNumber: string | null;
 }): Promise<OAuthLoginState> {
-  if (!isConfigValid) {
-    return { success: false, error: 'Firebase is not configured.' };
-  }
-
   if (!firebaseUser.email) {
     return { success: false, error: 'Google account must have an email.' };
   }
