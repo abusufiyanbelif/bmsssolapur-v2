@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -20,6 +19,11 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
     { text: "The parable of those who spend their substance in the way of Allah is that of a grain of corn: it groweth seven ears, and each ear Hath a hundred grains. Allah giveth manifold increase to whom He pleaseth.", source: "Quran 2:261", category: "Quran" },
     { text: "And spend of your substance in the cause of Allah, and make not your own hands contribute to your destruction; but do good; for Allah loveth those who do good.", source: "Quran 2:195", category: "Quran" },
     { text: "So fear Allah as much as you are able; and listen and obey and spend in charity; that is better for yourselves. And whosoever is saved from his own covetousness, then they are the successful ones.", source: "Quran 64:16", category: "Quran" },
+    { text: "Zakat expenditures are only for the poor and for the needy and for those employed to collect [zakat] and for bringing hearts together [for Islam] and for freeing captives [or slaves] and for those in debt and for the cause of Allah and for the [stranded] traveler - an obligation [imposed] by Allah. And Allah is Knowing and Wise.", source: "Quran 9:60", category: "Quran" },
+    { text: "And in their wealth there is a known right for the beggar and the deprived.", source: "Quran 70:24-25", category: "Quran" },
+    { text: "If you disclose your charitable expenditures, they are good; but if you conceal them and give them to the poor, it is better for you, and He will remove from you some of your misdeeds. And Allah, with what you do, is [fully] Acquainted.", source: "Quran 2:271", category: "Quran" },
+    { text: "And whatever you spend of good, it is for yourselves. And you do not spend except seeking the countenance of Allah. And whatever you spend of good, it will be fully repaid to you, and you will not be wronged.", source: "Quran 2:272", category: "Quran" },
+    { text: "And cooperate in righteousness and piety, but do not cooperate in sin and aggression. And fear Allah; indeed, Allah is severe in penalty.", source: "Quran 5:2", category: "Quran" },
 
     // Hadith
     { text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith" },
@@ -31,14 +35,16 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
     { text: "Every act of goodness is charity.", source: "Sahih Muslim 1005", category: "Hadith" },
     { text: "A man's giving in charity does not diminish his wealth.", source: "Tirmidhi", category: "Hadith" },
     { text: "The best charity is that which is practiced by a wealthy person. And start giving first to your dependents.", source: "Sahih al-Bukhari 1426", category: "Hadith" },
+    { text: "Give charity without delay, for it stands in the way of calamity.", source: "Al-Tirmidhi", category: "Hadith" },
+    { text: "The best of people are those who are most beneficial to people.", source: "Prophet Muhammad (ﷺ), Musnad Ahmed", category: "Hadith" },
+    { text: "Allah is in the aid of His servant as long as the servant is in the aid of his brother.", source: "Sahih Muslim", category: "Hadith" },
+    { text: "Wealth is not diminished by charity. And a forgiving servant is not increased by Allah except in honor. And no one humbles himself for the sake of Allah but that Allah will raise his status.", source: "Sahih Muslim", category: "Hadith" },
 
     // Scholars
-    { text: "The best of people are those who are most beneficial to people.", source: "Prophet Muhammad (ﷺ)", category: "Scholar" },
     { text: "A man's true wealth is the good he does in this world.", source: "Imam Ali (RA)", category: "Scholar" },
     { text: "Do not feel ashamed if the amount of charity is small, because to refuse the needy is an act of greater shame.", source: "Imam Ali (RA)", category: "Scholar" },
     { text: "The wealth of a miser is as useless as a pebble.", source: "Umar ibn al-Khattab (RA)", category: "Scholar" },
     { text: "Generosity is not in giving me that which I need more than you, but it is in giving me that which you need more than I.", source: "Khalil Gibran", category: "Scholar" },
-    { text: "Give charity without delay, for it stands in the way of calamity.", source: "Al-Tirmidhi", category: "Scholar" },
     { text: "Do not withhold your money from the poor, for if you do, Allah will withhold His blessings from you.", source: "Ibn Qayyim Al-Jawziyya", category: "Scholar" },
     { text: "The life of this world is nothing but a provision, and the Hereafter is the final destination.", source: "Hasan al-Basri", category: "Scholar" },
     { text: "The most beloved of deeds to Allah are the most consistent of them, even if they are few.", source: "Prophet Muhammad (ﷺ)", category: "Scholar" },
