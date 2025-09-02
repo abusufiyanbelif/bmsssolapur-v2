@@ -11,8 +11,22 @@ import type { Quote } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
-function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
+    const [quotes, setQuotes] = useState<Quote[]>(initialQuotes);
+    const [loading, setLoading] = useState(initialQuotes.length === 0);
+
+    useEffect(() => {
+        if (initialQuotes.length === 0) {
+            getInspirationalQuotes(3).then(fetchedQuotes => {
+                setQuotes(fetchedQuotes);
+                setLoading(false);
+            });
+        }
+    }, [initialQuotes]);
+
+
     if (loading) {
         return (
              <Card>
@@ -96,7 +110,7 @@ export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
         </CardContent>
       </Card>
       
-      <InspirationalQuotes quotes={quotes} loading={false} />
+      <InspirationalQuotes quotes={quotes} />
 
       {/* Open Cases */}
       <Card>

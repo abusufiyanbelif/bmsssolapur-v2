@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PublicHomePage } from "./home/public-home-page";
 import { PublicDashboardCards } from "./home/public-dashboard-cards";
-import { getRandomQuotes, Quote } from "@/services/quotes-service";
+import { Quote } from "@/services/quotes-service";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
@@ -26,17 +26,19 @@ const CardSkeleton = () => (
 
 
 export default async function Page() {
-    const [quotes, allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
-        getRandomQuotes(3),
+    const [allDonations, allUsers, allLeads, allCampaigns] = await Promise.all([
         getAllDonations(),
         getAllUsers(),
         getAllLeads(),
         getPublicCampaigns()
     ]);
 
+    // Quotes are now fetched client-side in PublicHomePage
+    const initialQuotes: Quote[] = [];
+
     return (
         <div className="flex-1 space-y-8">
-            <PublicHomePage quotes={quotes} />
+            <PublicHomePage quotes={initialQuotes} />
 
             <div className="space-y-4">
                  <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
