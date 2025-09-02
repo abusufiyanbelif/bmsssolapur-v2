@@ -246,3 +246,4 @@ export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'|
     throw new Error('Failed to update app settings.');
   }
 };
+
