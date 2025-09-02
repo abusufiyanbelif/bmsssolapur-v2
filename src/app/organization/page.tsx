@@ -9,6 +9,7 @@ import type { User, Organization } from "@/services/types";
 import { QrCodeDialog } from "@/app/organization/qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
 import { getPublicOrganization } from "@/services/public-data-service";
+import { getCurrentOrganization } from "../admin/settings/actions";
 
 const groupMapping: Record<string, string> = {
     'Founder': 'founder',
@@ -26,7 +27,7 @@ export default async function OrganizationPage() {
     try {
         // These can fail if Firebase isn't configured, so we wrap them.
         const [org, allUsers] = await Promise.all([
-            getPublicOrganization(),
+            getCurrentOrganization(),
             getAllUsers(),
         ]);
         organization = org;

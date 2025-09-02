@@ -4,6 +4,7 @@
 
 import { updateAppSettings as updateSettingsService, AppSettings, getAppSettings as getSettingsService } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
+import { getCurrentOrganization as getOrgService } from "@/services/organization-service";
 
 interface FormState {
     success: boolean;
@@ -52,4 +53,8 @@ export async function handleUpdateAppSettings(
       error: error,
     };
   }
+}
+
+export async function getCurrentOrganization() {
+    return getOrgService();
 }

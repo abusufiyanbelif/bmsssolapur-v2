@@ -4,10 +4,10 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { Logo } from './logo';
-import { getCurrentOrganization } from '@/services/organization-service';
 import type { Organization } from '@/services/types';
 import { useEffect, useState } from 'react';
 import { Skeleton } from './ui/skeleton';
+import { getCurrentOrganization } from '@/app/admin/settings/actions';
 
 export function Footer() {
   const [organization, setOrganization] = useState<Organization | null>(null);
