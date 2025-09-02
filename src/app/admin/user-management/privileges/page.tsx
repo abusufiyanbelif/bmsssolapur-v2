@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KeySquare, Shield, UserCog, HandHeart, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit, ArrowUpDown } from "lucide-react";
+import { KeySquare, Shield, UserCog, HandHeart, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit, ArrowUpDown, Banknote } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -32,7 +31,7 @@ type Privilege = {
 const allRoles: Record<string, Role> = {
     'Super Admin': { name: 'Super Admin', icon: Shield },
     'Admin': { name: 'Admin', icon: UserCog },
-    'Finance Admin': { name: 'Finance Admin', icon: HandHeart },
+    'Finance Admin': { name: 'Finance Admin', icon: Banknote },
     'Donor': { name: 'Donor', icon: Users },
     'Beneficiary': { name: 'Beneficiary', icon: User },
     'Referral': { name: 'Referral', icon: User },
@@ -194,7 +193,7 @@ export default function UserPrivilegesPage() {
                     Manage Privileges
                 </CardTitle>
                 <CardDescription>
-                    Define granular permissions for individual actions within the application. This is a read-only view of the system&apos;s intended privilege structure.
+                    Define granular permissions for individual actions within the application. This is a read-only view of the system's intended privilege structure.
                 </CardDescription>
             </CardHeader>
             <CardContent>

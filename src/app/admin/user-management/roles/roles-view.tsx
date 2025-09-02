@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, UserCog, HandHeart, Users, User, ChevronLeft, ChevronRight, KeySquare, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, Database, Share2, BrainCircuit, Building, Megaphone, UserCheck, Search, Eye, ArrowLeft, Home, FilePlus2 } from "lucide-react";
+import { Shield, UserCog, HandHeart, Users, User, ChevronLeft, ChevronRight, KeySquare, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, Database, Share2, BrainCircuit, Building, Megaphone, UserCheck, Search, Eye, ArrowLeft, Home, FilePlus2, Banknote } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { User as UserType } from "@/services/types";
 import { getAllUsers } from "@/services/user-service";
@@ -31,7 +31,7 @@ type Role = {
 const allRoles: Role[] = [
   { name: "Super Admin", description: "Has unrestricted access to all system functionalities, including user management and app settings.", icon: Shield },
   { name: "Admin", description: "Can manage day-to-day operations like handling leads, beneficiaries, and basic user data.", icon: UserCog },
-  { name: "Finance Admin", description: "Specifically manages financial records, including verifying and allocating donations.", icon: HandHeart },
+  { name: "Finance Admin", description: "Specifically manages financial records, including verifying and allocating donations.", icon: Banknote },
   { name: "Donor", description: "A registered user who can donate, view their donation history, and manage their profile.", icon: Users },
   { name: "Beneficiary", description: "A registered user who can request help, view their case history, and manage their profile.", icon: User },
   { name: "Referral", description: "A user who can refer potential beneficiaries to the organization.", icon: User },
@@ -54,9 +54,9 @@ const allPrivileges: Privilege[] = [
     { name: "canDeleteDonors", description: "Allows permanently deleting donor profiles.", icon: Trash2, roles: [{ name: 'Super Admin', description: '', icon: Shield }] },
     { name: "canManageLeads", description: "Allows creating, editing, and managing all help requests (leads).", icon: FileText, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Admin', description: '', icon: UserCog }] },
     { name: "canVerifyLeads", description: "Allows verifying or rejecting the authenticity of a lead.", icon: CheckSquare, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Admin', description: '', icon: UserCog }] },
-    { name: "canManageDonations", description: "Allows recording, editing, and managing all donation records.", icon: HandHeart, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Finance Admin', description: '', icon: HandHeart }] },
-    { name: "canVerifyDonations", description: "Allows changing a donation's status (e.g., from 'Pending' to 'Verified').", icon: DollarSign, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Finance Admin', description: '', icon: HandHeart }] },
-    { name: "canViewFinancials", description: "Allows viewing financial reports, dashboards, and analytics.", icon: BarChart2, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Finance Admin', description: '', icon: HandHeart }] },
+    { name: "canManageDonations", description: "Allows recording, editing, and managing all donation records.", icon: HandHeart, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Finance Admin', description: '', icon: Banknote }] },
+    { name: "canVerifyDonations", description: "Allows changing a donation's status (e.g., from 'Pending' to 'Verified').", icon: DollarSign, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Finance Admin', description: '', icon: Banknote }] },
+    { name: "canViewFinancials", description: "Allows viewing financial reports, dashboards, and analytics.", icon: BarChart2, roles: [{ name: 'Super Admin', description: '', icon: Shield }, { name: 'Finance Admin', description: '', icon: Banknote }] },
     { name: "canExportData", description: "Allows exporting data from the system, like donation or user lists.", icon: Download, roles: [{ name: 'Super Admin', description: '', icon: Shield }] },
     { name: "canManageSettings", description: "Allows changing global application settings, like login methods or feature flags.", icon: Settings, roles: [{ name: 'Super Admin', description: '', icon: Shield }] },
     { name: "canSeedDatabase", description: "Allows running the database seeder to populate initial data. This is a destructive action.", icon: Database, roles: [{ name: 'Super Admin', description: '', icon: Shield }] },
