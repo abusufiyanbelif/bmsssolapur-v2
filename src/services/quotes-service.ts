@@ -74,6 +74,11 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
     { number: 13, text: "The most beloved of deeds to Allah are the most consistent of them, even if they are few.", source: "Prophet Muhammad (ﷺ)", category: "Scholar", categoryTypeNumber: 3 },
     { number: 14, text: "The life of this world is nothing but a provision, and the Hereafter is the final destination.", source: "Hasan al-Basri", category: "Scholar", categoryTypeNumber: 3 },
     { number: 15, text: "Whoever is not grateful to people is not grateful to Allah.", source: "Prophet Muhammad (ﷺ), Abu Dawud", category: "Scholar", categoryTypeNumber: 3 },
+    { number: 16, text: "Give the gift of knowledge, it is the highest of all charities.", source: "Imam Ali (RA)", category: "Scholar", categoryTypeNumber: 3 },
+    { number: 17, text: "Do not look down upon any good deed, even if it be only meeting your brother with a cheerful face.", source: "Prophet Muhammad (ﷺ)", category: "Scholar", categoryTypeNumber: 3 },
+    { number: 18, text: "The best way to find yourself is to lose yourself in the service of others.", source: "Mahatma Gandhi", category: "Scholar", categoryTypeNumber: 3 },
+    { number: 19, text: "Your wealth is not yours, but it is a trust from Allah, so spend it in His way.", source: "Uthman ibn Affan (RA)", category: "Scholar", categoryTypeNumber: 3 },
+    { number: 20, text: "The best among you are those who have the best manners and character.", source: "Prophet Muhammad (ﷺ)", category: "Scholar", categoryTypeNumber: 3 }
 ];
 
 
