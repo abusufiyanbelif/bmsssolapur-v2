@@ -7,7 +7,7 @@
 import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers, updateUser, getUser, getUserByUserId } from './user-service';
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes as seedQuotesService } from './quotes-service';
-import { db, isConfigValid } from './firebase';
+import { db } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction } from './types';
 import { createLead, getLead } from './lead-service';
@@ -164,9 +164,6 @@ export type SeedResult = {
 };
 
 const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<string[]> => {
-    if (!isConfigValid) {
-        throw new Error("Firebase is not configured. Cannot seed users.");
-    }
     const results: string[] = [];
 
     for (const userData of users) {
