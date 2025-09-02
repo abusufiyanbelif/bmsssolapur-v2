@@ -20,6 +20,8 @@ export default function QuotesPage() {
             setLoading(true);
             setError(null);
             const fetchedQuotes = await getAllQuotes();
+            // Sort by number after fetching
+            fetchedQuotes.sort((a, b) => a.number - b.number);
             setQuotes(fetchedQuotes);
         } catch (e) {
             console.error("Failed to fetch quotes from database.", e);
@@ -68,7 +70,8 @@ export default function QuotesPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[70%]">Quote</TableHead>
+                                    <TableHead className="w-[80px]">No.</TableHead>
+                                    <TableHead className="w-[60%]">Quote</TableHead>
                                     <TableHead>Category</TableHead>
                                     <TableHead>Source</TableHead>
                                 </TableRow>
@@ -76,6 +79,7 @@ export default function QuotesPage() {
                             <TableBody>
                                 {quotes.map((quote, index) => (
                                     <TableRow key={index}>
+                                        <TableCell>{quote.number}</TableCell>
                                         <TableCell className="font-medium italic">&quot;{quote.text}&quot;</TableCell>
                                         <TableCell>{quote.category}</TableCell>
                                         <TableCell>{quote.source}</TableCell>

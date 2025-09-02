@@ -286,9 +286,11 @@ export interface Organization {
 
 export interface Quote {
     id: string;
+    number: number;
     text: string;
     source: string;
     category: "Quran" | "Hadith" | "Scholar";
+    categoryTypeNumber: number;
 }
 
 interface PaymentGatewayCredentials {
