@@ -34,25 +34,27 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
     setIsGenerating(true);
 
     try {
-      // Dynamically import libraries only on the client-side
       const { default: html2canvas } = await import('html2canvas');
-      const { default: jsPDF } = await import('jspdf');
+      const { jsPDF } = await import('jspdf');
 
-      const canvas = await html2canvas(receiptRef.current, { scale: 2 });
+      const canvas = await html2canvas(receiptRef.current, { 
+          scale: 2,
+          useCORS: true,
+          logging: false,
+      });
       const imgData = canvas.toDataURL('image/png');
       
+      const A4_WIDTH_PT = 595.28;
+      const A4_HEIGHT_PT = 841.89;
+
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'px',
+        unit: 'pt',
         format: 'a4'
       });
       
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, A4_WIDTH_PT, A4_HEIGHT_PT);
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      
-      // Use data URI for mobile-friendly download
       const pdfDataUri = pdf.output('datauristring');
 
       const link = document.createElement('a');
