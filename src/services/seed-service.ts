@@ -7,7 +7,7 @@ import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers
 import { createOrganization, Organization, getCurrentOrganization } from './organization-service';
 import { seedInitialQuotes as seedQuotesService } from './quotes-service';
 import { db } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
@@ -166,21 +166,18 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
     const results: string[] = [];
 
     for (const userData of users) {
-        if (userData.roles.includes('Super Admin') || userData.userId === 'admin') {
-            userData.isActive = true;
-            
-            // Special handling for the hardcoded admin user
+        if (userData.userId === 'admin') {
             const adminUserRef = doc(db, USERS_COLLECTION, 'ADMIN_USER_ID');
             const adminUserDoc = await getDoc(adminUserRef);
 
             if (!adminUserDoc.exists()) {
-                await setDoc(adminUserRef, { ...userData, id: 'ADMIN_USER_ID', createdAt: Timestamp.now() });
+                await setDoc(adminUserRef, { ...userData, id: 'ADMIN_USER_ID', createdAt: Timestamp.now(), source: 'Seeded' });
                 results.push(`${userData.name} created.`);
             } else {
                 await updateDoc(adminUserRef, { ...userData, updatedAt: serverTimestamp() });
                 results.push(`${userData.name} updated.`);
             }
-            continue; // Skip the rest of the loop for the admin user
+            continue;
         }
 
         let existingUser: User | null = null;
@@ -412,6 +409,26 @@ function getRandomDate(start: Date, end: Date): Date {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
+// Helper to delete all documents in a collection
+async function deleteCollection(collectionPath: string): Promise<number> {
+    const collectionRef = collection(db, collectionPath);
+    const q = query(collectionRef, limit(100)); // Limit to avoid memory issues
+    
+    let deletedCount = 0;
+    let snapshot = await getDocs(q);
+
+    while (snapshot.size > 0) {
+        const batch = writeBatch(db);
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        deletedCount += snapshot.size;
+        snapshot = await getDocs(q);
+    }
+    return deletedCount;
+}
+
 
 // --- EXPORTED SEEDING FUNCTIONS ---
 
@@ -475,3 +492,97 @@ export const seedSampleData = async (): Promise<SeedResult> => {
         details: details
     };
 }
+
+
+// --- ERASE FUNCTIONS ---
+
+export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
+    const details: string[] = [];
+    const batch = writeBatch(db);
+
+    // Delete admin user
+    const adminUserRef = doc(db, USERS_COLLECTION, 'ADMIN_USER_ID');
+    batch.delete(adminUserRef);
+    details.push('Admin user scheduled for deletion.');
+
+    // Delete quotes
+    const quotesDeleted = await deleteCollection('inspirationalQuotes');
+    details.push(`Deleted ${quotesDeleted} quotes.`);
+
+    await batch.commit();
+
+    return {
+        message: 'Initial Data Erased',
+        details: details
+    };
+};
+
+export const eraseCoreTeam = async (): Promise<SeedResult> => {
+    const phonesToDelete = coreTeamUsersToSeed.map(u => u.phone);
+    const usersToDeleteQuery = query(collection(db, USERS_COLLECTION), where("phone", "in", phonesToDelete));
+    const snapshot = await getDocs(usersToDeleteQuery);
+
+    if(snapshot.empty) {
+        return { message: "No core team members found to erase.", details: [] };
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    return {
+        message: `Erased ${snapshot.size} core team members.`,
+        details: snapshot.docs.map(d => `${d.data().name} (${d.data().phone}) deleted.`)
+    };
+};
+
+export const eraseOrganizationProfile = async (): Promise<SeedResult> => {
+    const org = await getCurrentOrganization();
+    if (!org) {
+        return { message: "No organization profile found to erase.", details: [] };
+    }
+    await deleteDoc(doc(db, 'organizations', org.id));
+    // Also delete public record
+    await deleteDoc(doc(db, 'publicData', 'organization'));
+    return {
+        message: 'Organization Profile Erased',
+        details: [`Deleted profile for "${org.name}".`]
+    };
+};
+
+export const eraseSampleData = async (): Promise<SeedResult> => {
+    const details: string[] = [];
+    const batch = writeBatch(db);
+    
+    // Find all seeded data
+    const seededUsersQuery = query(collection(db, USERS_COLLECTION), where("source", "==", "Seeded"));
+    const seededLeadsQuery = query(collection(db, 'leads'), where("source", "==", "Seeded"));
+    const seededDonationsQuery = query(collection(db, 'donations'), where("source", "==", "Seeded"));
+    const seededCampaignsQuery = query(collection(db, 'campaigns'), where("source", "==", "Seeded"));
+    
+    const [users, leads, donations, campaigns] = await Promise.all([
+        getDocs(seededUsersQuery),
+        getDocs(seededLeadsQuery),
+        getDocs(seededDonationsQuery),
+        getDocs(seededCampaignsQuery),
+    ]);
+
+    users.docs.forEach(doc => batch.delete(doc.ref));
+    details.push(`Deleted ${users.size} seeded users.`);
+    
+    leads.docs.forEach(doc => batch.delete(doc.ref));
+    details.push(`Deleted ${leads.size} seeded leads.`);
+    
+    donations.docs.forEach(doc => batch.delete(doc.ref));
+    details.push(`Deleted ${donations.size} seeded donations.`);
+
+    campaigns.docs.forEach(doc => batch.delete(doc.ref));
+    details.push(`Deleted ${campaigns.size} seeded campaigns.`);
+
+    await batch.commit();
+
+    return {
+        message: 'Sample Data Erased',
+        details: details,
+    };
+};

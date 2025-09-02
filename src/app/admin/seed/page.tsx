@@ -3,11 +3,11 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText } from "lucide-react";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { handleSeedAction } from "./actions";
+import { handleSeedAction, handleEraseAction } from "./actions";
 
 type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'sampleData';
@@ -23,6 +23,12 @@ export default function SeedPage() {
         organization: 'idle',
         sampleData: 'idle'
     });
+    const [eraseStatuses, setEraseStatuses] = useState<Record<SeedTask, SeedStatus>>({
+        initial: 'idle',
+        coreTeam: 'idle',
+        organization: 'idle',
+        sampleData: 'idle'
+    });
     const [results, setResults] = useState<Record<SeedTask, SeedResult | null>>({
         initial: null,
         coreTeam: null,
@@ -32,6 +38,7 @@ export default function SeedPage() {
 
     const handleSeed = async (task: SeedTask) => {
         setStatuses(prev => ({ ...prev, [task]: 'loading' }));
+        setEraseStatuses(prev => ({ ...prev, [task]: 'idle' })); // Reset erase status
         setResults(prev => ({ ...prev, [task]: null }));
 
         try {
@@ -50,8 +57,31 @@ export default function SeedPage() {
         }
     };
     
-    const ResultAlert = ({ status, result }: { status: SeedStatus, result: SeedResult | null }) => {
+    const handleErase = async (task: SeedTask) => {
+        setEraseStatuses(prev => ({ ...prev, [task]: 'loading' }));
+        setStatuses(prev => ({ ...prev, [task]: 'idle' })); // Reset seed status
+        setResults(prev => ({ ...prev, [task]: null }));
+
+        try {
+            const result = await handleEraseAction(task);
+            if (result.success && result.data) {
+                setResults(prev => ({ ...prev, [task]: result.data }));
+                setEraseStatuses(prev => ({ ...prev, [task]: 'success' }));
+            } else {
+                setResults(prev => ({ ...prev, [task]: { message: 'Erase Failed', details: [result.error || 'An unknown error occurred.'] } }));
+                setEraseStatuses(prev => ({ ...prev, [task]: 'error' }));
+            }
+        } catch (e) {
+            const error = e instanceof Error ? e.message : "An unexpected error occurred.";
+            setResults(prev => ({ ...prev, [task]: { message: 'Erase Failed', details: [error] } }));
+            setEraseStatuses(prev => ({ ...prev, [task]: 'error' }));
+        }
+    };
+    
+    const ResultAlert = ({ seedStatus, eraseStatus, result }: { seedStatus: SeedStatus, eraseStatus: SeedStatus, result: SeedResult | null }) => {
+        const status = seedStatus !== 'idle' ? seedStatus : eraseStatus;
         if (status === 'idle' || status === 'loading') return null;
+        
         const isSuccess = status === 'success';
 
         return (
@@ -76,7 +106,7 @@ export default function SeedPage() {
                 <CardHeader>
                     <CardTitle>Seed Initial Data</CardTitle>
                     <CardDescription>
-                       Use these actions to populate your Firestore database with initial data. It's recommended to run the &quot;Initial Users &amp; Quotes&quot; seed first.
+                       Use these actions to populate or clear your Firestore database. Run the &quot;Initial Users &amp; Quotes&quot; seed first.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
@@ -87,12 +117,18 @@ export default function SeedPage() {
                                 <h3 className="font-semibold flex items-center gap-2"><Database className="h-5 w-5 text-primary" />Initial Users &amp; Quotes</h3>
                                 <p className="text-sm text-muted-foreground mt-1">Creates the Super Admin user and populates inspirational quotes. Run this first.</p>
                              </div>
-                             <Button onClick={() => handleSeed('initial')} disabled={statuses.initial === 'loading'}>
-                                {statuses.initial === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                Seed Initial Data
-                             </Button>
+                             <div className="flex items-center gap-2">
+                                <Button variant="destructive" onClick={() => handleErase('initial')} disabled={eraseStatuses.initial === 'loading'}>
+                                    {eraseStatuses.initial === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase
+                                </Button>
+                                <Button onClick={() => handleSeed('initial')} disabled={statuses.initial === 'loading'}>
+                                    {statuses.initial === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Seed Initial Data
+                                </Button>
+                             </div>
                         </div>
-                        <ResultAlert status={statuses.initial} result={results.initial} />
+                        <ResultAlert seedStatus={statuses.initial} eraseStatus={eraseStatuses.initial} result={results.initial} />
                     </div>
 
                     {/* Organization Profile */}
@@ -102,12 +138,18 @@ export default function SeedPage() {
                                 <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Organization Profile</h3>
                                 <p className="text-sm text-muted-foreground mt-1">Creates the public-facing profile for your organization.</p>
                              </div>
-                             <Button onClick={() => handleSeed('organization')} disabled={statuses.organization === 'loading'}>
-                                {statuses.organization === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                Seed Organization
-                             </Button>
+                             <div className="flex items-center gap-2">
+                                <Button variant="destructive" onClick={() => handleErase('organization')} disabled={eraseStatuses.organization === 'loading'}>
+                                    {eraseStatuses.organization === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase
+                                </Button>
+                                <Button onClick={() => handleSeed('organization')} disabled={statuses.organization === 'loading'}>
+                                    {statuses.organization === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Seed Organization
+                                </Button>
+                            </div>
                         </div>
-                        <ResultAlert status={statuses.organization} result={results.organization} />
+                        <ResultAlert seedStatus={statuses.organization} eraseStatus={eraseStatuses.organization} result={results.organization} />
                     </div>
                     
                      {/* Core Team */}
@@ -117,12 +159,18 @@ export default function SeedPage() {
                                 <h3 className="font-semibold flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" />Core Team Members</h3>
                                 <p className="text-sm text-muted-foreground mt-1">Seeds the accounts for Founders, Co-Founders, and other Admins.</p>
                              </div>
-                             <Button onClick={() => handleSeed('coreTeam')} disabled={statuses.coreTeam === 'loading'}>
-                                {statuses.coreTeam === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                Seed Core Team
-                             </Button>
+                             <div className="flex items-center gap-2">
+                                 <Button variant="destructive" onClick={() => handleErase('coreTeam')} disabled={eraseStatuses.coreTeam === 'loading'}>
+                                    {eraseStatuses.coreTeam === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase
+                                </Button>
+                                <Button onClick={() => handleSeed('coreTeam')} disabled={statuses.coreTeam === 'loading'}>
+                                    {statuses.coreTeam === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Seed Core Team
+                                </Button>
+                            </div>
                         </div>
-                        <ResultAlert status={statuses.coreTeam} result={results.coreTeam} />
+                        <ResultAlert seedStatus={statuses.coreTeam} eraseStatus={eraseStatuses.coreTeam} result={results.coreTeam} />
                     </div>
 
                     {/* Sample Data */}
@@ -132,12 +180,18 @@ export default function SeedPage() {
                                 <h3 className="font-semibold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Sample Campaigns &amp; Leads</h3>
                                 <p className="text-sm text-muted-foreground mt-1">Creates sample campaigns, beneficiaries, leads, and donations for demonstration.</p>
                              </div>
-                             <Button onClick={() => handleSeed('sampleData')} disabled={statuses.sampleData === 'loading'}>
-                                {statuses.sampleData === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                Seed Sample Data
-                             </Button>
+                             <div className="flex items-center gap-2">
+                                 <Button variant="destructive" onClick={() => handleErase('sampleData')} disabled={eraseStatuses.sampleData === 'loading'}>
+                                    {eraseStatuses.sampleData === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase
+                                </Button>
+                                <Button onClick={() => handleSeed('sampleData')} disabled={statuses.sampleData === 'loading'}>
+                                    {statuses.sampleData === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Seed Sample Data
+                                </Button>
+                            </div>
                         </div>
-                        <ResultAlert status={statuses.sampleData} result={results.sampleData} />
+                        <ResultAlert seedStatus={statuses.sampleData} eraseStatus={eraseStatuses.sampleData} result={results.sampleData} />
                     </div>
                 </CardContent>
              </Card>
