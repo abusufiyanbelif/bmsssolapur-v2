@@ -107,8 +107,14 @@ interface EnrichedLead extends Lead {
     lastAllocatedAt?: Date;
 }
 
+interface LeadsPageContentProps {
+  initialLeads: EnrichedLead[];
+  initialUsers: User[];
+  initialSettings: AppSettings | null;
+  error?: string;
+}
 
-function LeadsPageContent({ initialLeads, initialUsers, initialSettings, error: initialError }: { initialLeads: EnrichedLead[], initialUsers: User[], initialSettings: AppSettings | null, error?: string }) {
+function LeadsPageContent({ initialLeads, initialUsers, initialSettings, error: initialError }: LeadsPageContentProps) {
     const searchParams = useSearchParams();
     const statusFromUrl = searchParams.get('status');
     const verificationFromUrl = searchParams.get('verification');
@@ -926,7 +932,16 @@ Referral Phone:
   )
 }
 
-export default async function LeadsPage() {
+export default function LeadsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <LeadsPageDataLoader />
+        </Suspense>
+    )
+}
+
+// Create a new Server Component to fetch the data
+async function LeadsPageDataLoader() {
     try {
         const [allLeads, allUsers, settings] = await Promise.all([
             getAllLeads(),
@@ -934,24 +949,20 @@ export default async function LeadsPage() {
             getAppSettings(),
         ]);
         return (
-            <Suspense fallback={<div>Loading...</div>}>
-                <LeadsPageContent
-                    initialLeads={JSON.parse(JSON.stringify(allLeads))}
-                    initialUsers={JSON.parse(JSON.stringify(allUsers))}
-                    initialSettings={JSON.parse(JSON.stringify(settings))}
-                />
-            </Suspense>
+            <LeadsPageContent
+                initialLeads={JSON.parse(JSON.stringify(allLeads))}
+                initialUsers={JSON.parse(JSON.stringify(allUsers))}
+                initialSettings={JSON.parse(JSON.stringify(settings))}
+            />
         );
     } catch (error) {
         return (
-            <Suspense fallback={<div>Loading...</div>}>
-                <LeadsPageContent
-                    initialLeads={[]}
-                    initialUsers={[]}
-                    initialSettings={null}
-                    error="Failed to load initial data for leads page."
-                />
-            </Suspense>
+            <LeadsPageContent
+                initialLeads={[]}
+                initialUsers={[]}
+                initialSettings={null}
+                error="Failed to load initial data for leads page."
+            />
         )
     }
 }
