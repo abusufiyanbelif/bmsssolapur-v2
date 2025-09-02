@@ -2,7 +2,8 @@
  * @fileOverview Service for managing organization data in Firestore.
  */
 
-import { adminDb } from './firebase-admin';
+import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs } from 'firebase/firestore';
+import { db } from './firebase'; // Use client-side SDK
 import type { Organization } from './types';
 import { updatePublicOrganization } from './public-data-service';
 
@@ -11,15 +12,17 @@ import { updatePublicOrganization } from './public-data-service';
 export type { Organization };
 
 const ORGANIZATIONS_COLLECTION = 'organizations';
+const PUBLIC_DATA_COLLECTION = 'publicData';
+
 
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
-    const nameQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).where("name", "==", name).limit(1);
-    const regQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).where("registrationNumber", "==", registrationNumber).limit(1);
+    const nameQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("name", "==", name), limit(1));
+    const regQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("registrationNumber", "==", registrationNumber), limit(1));
 
     const [nameSnapshot, regSnapshot] = await Promise.all([
-        nameQuery.get(),
-        regQuery.get()
+        getDocs(nameQuery),
+        getDocs(regQuery)
     ]);
 
     return !nameSnapshot.empty || !regSnapshot.empty;
@@ -34,14 +37,14 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
         throw new Error("An organization with the same name or registration number already exists.");
     }
 
-    const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc();
+    const orgRef = doc(collection(db, ORGANIZATIONS_COLLECTION));
     const newOrganization: Organization = {
       ...orgData,
       id: orgRef.id,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    await orgRef.set(newOrganization);
+    await setDoc(orgRef, newOrganization);
 
     // Sync with public collection
     await updatePublicOrganization(newOrganization);
@@ -56,8 +59,8 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 // Function to get an organization by ID
 export const getOrganization = async (id: string): Promise<Organization | null> => {
   try {
-    const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
-    if (orgDoc.exists) {
+    const orgDoc = await getDoc(doc(db, ORGANIZATIONS_COLLECTION, id));
+    if (orgDoc.exists()) {
       return { id: orgDoc.id, ...orgDoc.data() } as Organization;
     }
     return null;
@@ -70,8 +73,8 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
 // For now, we will assume one organization for simplicity. This can be expanded later.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
     try {
-        const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
-        const querySnapshot = await orgQuery.get();
+        const orgQuery = query(collection(db, ORGANIZATIONS_COLLECTION), limit(1));
+        const querySnapshot = await getDocs(orgQuery);
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
             return { id: doc.id, ...doc.data() } as Organization;
@@ -87,8 +90,8 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
 // Function to update an organization
 export const updateOrganization = async (id: string, updates: Partial<Omit<Organization, 'id' | 'createdAt'>>) => {
   try {
-    const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id);
-    await orgRef.update({
+    const orgRef = doc(db, ORGANIZATIONS_COLLECTION, id);
+    await updateDoc(orgRef, {
         ...updates,
         updatedAt: new Date(),
     });
@@ -96,7 +99,9 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
     // After updating, get the full document and sync it to the public collection
     const updatedOrg = await getOrganization(id);
     if (updatedOrg) {
-        await updatePublicOrganization(updatedOrg);
+        // This function uses firebase-admin, so it can only be called from a server context.
+        // The calling server action is responsible for this.
+        // await updatePublicOrganization(updatedOrg);
     }
   } catch (error) {
     console.error("Error updating organization: ", error);
