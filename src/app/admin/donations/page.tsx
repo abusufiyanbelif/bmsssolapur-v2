@@ -1,5 +1,3 @@
-
-
 // src/app/admin/donations/page.tsx
 "use client";
 
@@ -21,7 +19,7 @@ import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
 import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronDown, ChevronUp, Download, Check, AlertTriangle } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronUp, Download, Check, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -305,7 +303,7 @@ function DonationsPageContent({ initialDonations, initialUsers, initialLeads, in
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead padding="checkbox">
+                    <TableCell padding="checkbox">
                         <Checkbox
                             checked={paginatedDonations.length > 0 && selectedDonations.length === paginatedDonations.length}
                             onCheckedChange={(checked) => {
@@ -318,7 +316,7 @@ function DonationsPageContent({ initialDonations, initialUsers, initialLeads, in
                             }}
                             aria-label="Select all on current page"
                         />
-                    </TableHead>
+                    </TableCell>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('id')}>
@@ -378,7 +376,7 @@ function DonationsPageContent({ initialDonations, initialUsers, initialLeads, in
                         <TableCell>
                             {hasAllocations && (
                                 <Button variant="ghost" size="icon" onClick={() => toggleRow(donation.id!)} className="h-8 w-8">
-                                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                                 </Button>
                             )}
                         </TableCell>
@@ -430,7 +428,7 @@ function DonationsPageContent({ initialDonations, initialUsers, initialLeads, in
                         <TableCell>
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="capitalize">
+                                    <Button variant="ghost" className="capitalize h-auto p-1">
                                         <Badge variant="outline" className={cn("capitalize pointer-events-none", statusColors[donation.status])}>
                                             {donation.status}
                                         </Badge>
@@ -528,14 +526,9 @@ function DonationsPageContent({ initialDonations, initialUsers, initialLeads, in
                 return (
                     <Card key={donation.id} className={cn("flex flex-col", selectedDonations.includes(donation.id!) && "ring-2 ring-primary")}>
                          <div className="p-4 flex gap-4">
-                            <Checkbox
-                                className="mt-1.5 flex-shrink-0"
-                                checked={selectedDonations.includes(donation.id!)}
-                                onCheckedChange={checked => {
+                            <Checkbox className="mt-1.5 flex-shrink-0" checked={selectedDonations.includes(donation.id!)} onCheckedChange={checked => {
                                     setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!))
-                                }}
-                                aria-label="Select card"
-                            />
+                            }} aria-label="Select card" />
                             <Link href={`/admin/donations/${encodeURIComponent(donation.id!)}/edit`} className="flex-grow space-y-3">
                                 <CardHeader className="p-0">
                                     <div className="flex justify-between items-start">
@@ -897,44 +890,27 @@ function DonationsPageContent({ initialDonations, initialUsers, initialLeads, in
   )
 }
 
-function DonationsPageDataLoader() {
-  const [data, setData] = useState<{
-    donations: Donation[];
-    users: User[];
-    leads: Lead[];
-    campaigns: Campaign[];
-    error?: string;
-  } | null>(null);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
+// Wrapper component to handle data fetching on the server.
+async function DonationsPageDataLoader() {
+    try {
         const [donations, users, leads, campaigns] = await Promise.all([
-          getAllDonations(),
-          getAllUsers(),
-          getAllLeads(),
-          getAllCampaigns()
+            getAllDonations(),
+            getAllUsers(),
+            getAllLeads(),
+            getAllCampaigns()
         ]);
-        setData({ donations, users, leads, campaigns });
-      } catch (e) {
-        setData({ donations: [], users: [], leads: [], campaigns: [], error: "Failed to load initial data." });
-        console.error(e);
-      }
+        // The data is now fetched on the server and passed as props to the client component.
+        return <DonationsPageContent initialDonations={donations} initialUsers={users} initialLeads={leads} initialCampaigns={campaigns} />;
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        return <DonationsPageContent initialDonations={[]} initialUsers={[]} initialLeads={[]} initialCampaigns={[]} error={error} />;
     }
-    loadData();
-  }, []);
-
-  if (!data) {
-    return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  }
-
-  return <DonationsPageContent initialDonations={data.donations} initialUsers={data.users} initialLeads={data.leads} initialCampaigns={data.campaigns} error={data.error} />;
 }
 
-export default function DonationsPage() {
+export default function Page() {
     return (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+        <Suspense fallback={<div className="flex justify-center items-center h-full"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
             <DonationsPageDataLoader />
         </Suspense>
-    )
+    );
 }

@@ -7,6 +7,8 @@
 import { adminDb } from './firebase-admin';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
+import { getLeadsByCampaignId } from './lead-service';
+
 
 const PUBLIC_LEADS_COLLECTION = 'publicLeads';
 const PUBLIC_CAMPAIGNS_COLLECTION = 'publicCampaigns';
@@ -144,3 +146,20 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         return [];
     }
 };
+
+/**
+ * Enriches a campaign with its public-facing statistics.
+ * @param campaign The campaign object to enrich.
+ * @returns The enriched campaign object.
+ */
+export const enrichCampaignWithPublicStats = async (campaign: Campaign): Promise<Campaign & { raisedAmount: number; fundingProgress: number; }> => {
+    const linkedLeads = await getLeadsByCampaignId(campaign.id!);
+    const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+    const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+    
+    return {
+        ...campaign,
+        raisedAmount,
+        fundingProgress,
+    };
+}

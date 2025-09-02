@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,7 +39,6 @@ import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddTransfer } from "./actions";
 import { scanProof } from '@/app/admin/donations/add/actions';
-import { getRawTextFromImage } from '@/ai/flows/extract-raw-text-flow';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -279,25 +279,24 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     }
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append('imageFile', file);
-    const result = await getRawTextFromImage({photoDataUri: await fileToDataUrl(file)});
-    if(result.success && result.text) {
-        setRawText(result.text);
+    formData.append("imageFile", file);
+    
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    const mimeType = file.type;
+    const dataUri = `data:${mimeType};base64,${base64}`;
+    
+    const { extractRawText } = await import('@/ai/flows/extract-raw-text-flow');
+    const result = await extractRawText({ photoDataUri: dataUri });
+
+    if(result.rawText) {
+        setRawText(result.rawText);
     } else {
-         toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text.' });
+         toast({ variant: 'destructive', title: 'Extraction Failed', description: 'Could not extract text.' });
     }
     setIsExtractingText(false);
   };
   
-    const fileToDataUrl = async (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    };
-
    const onFormSubmit = async (data: AddTransferFormValues) => {
     if (!adminUserId) {
       toast({ variant: "destructive", title: "Authentication Error", description: "Could not identify the logged-in administrator. Please log out and back in." });

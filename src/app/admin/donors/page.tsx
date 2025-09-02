@@ -1,4 +1,3 @@
-
 // src/app/admin/donors/page.tsx
 "use client";
 
@@ -588,13 +587,21 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
   )
 }
 
-export default async function DonorsPage() {
+async function DonorsPageDataLoader() {
+  try {
     const allUsers = await getAllUsers();
     const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
+    return <DonorsPageContent initialDonors={initialDonors} />;
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return <DonorsPageContent initialDonors={[]} error={error} />;
+  }
+}
 
+export default function DonorsPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <DonorsPageContent initialDonors={initialDonors} />
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <DonorsPageDataLoader />
         </Suspense>
     )
 }

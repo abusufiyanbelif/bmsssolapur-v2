@@ -1,4 +1,3 @@
-
 // src/app/admin/referrals/page.tsx
 "use client";
 
@@ -550,13 +549,21 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
   )
 }
 
-export default async function ReferralsPage() {
-     const allUsers = await getAllUsers();
+async function ReferralsPageDataLoader() {
+  try {
+    const allUsers = await getAllUsers();
     const initialReferrals = allUsers.filter(u => u.roles.includes('Referral'));
+    return <ReferralsPageContent initialReferrals={initialReferrals} />;
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return <ReferralsPageContent initialReferrals={[]} error={error} />;
+  }
+}
 
+export default function ReferralsPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ReferralsPageContent initialReferrals={initialReferrals} />
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <ReferralsPageDataLoader />
         </Suspense>
     )
 }
