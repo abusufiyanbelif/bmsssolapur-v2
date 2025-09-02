@@ -27,10 +27,41 @@ const CardSkeleton = () => (
 export default function Page() {
     // Quotes are now fetched client-side in PublicHomePage
     const initialQuotes: Quote[] = [];
+    const [dashboardData, setDashboardData] = useState<{
+        donations: Donation[],
+        users: User[],
+        leads: Lead[],
+        campaigns: Campaign[]
+    } | null>(null);
+
+    useEffect(() => {
+        getPublicDashboardData().then(data => {
+            if (!data.error) {
+                setDashboardData(data as any);
+            }
+        });
+    }, []);
 
     return (
         <div className="flex-1 space-y-8">
             <PublicHomePage quotes={initialQuotes} />
+
+            {dashboardData ? (
+                <PublicDashboardCards
+                    allDonations={dashboardData.donations}
+                    allUsers={dashboardData.users}
+                    allLeads={dashboardData.leads}
+                    allCampaigns={dashboardData.campaigns}
+                />
+            ) : (
+                 <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
