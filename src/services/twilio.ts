@@ -59,3 +59,24 @@ export async function verifyOtp(phoneNumber: string, code: string): Promise<bool
         return false;
     }
 }
+
+/**
+ * Verifies the Twilio client configuration by trying to fetch the Verify service.
+ */
+export async function testTwilioConnection(): Promise<void> {
+    if (!accountSid || !authToken || !verifySid) {
+        throw new Error('Twilio credentials (Account SID, Auth Token, Verify SID) are not fully configured.');
+    }
+    try {
+        await client.verify.v2.services(verifySid).fetch();
+    } catch (error: any) {
+        console.error('Twilio connection verification failed:', error);
+        if (error.status === 401) {
+            throw new Error("Authentication failed. Please check your Twilio Account SID and Auth Token.");
+        }
+        if (error.status === 404) {
+            throw new Error(`The Verify Service with SID "${verifySid}" was not found.`);
+        }
+        throw new Error("Failed to connect to Twilio. Check credentials and network.");
+    }
+}

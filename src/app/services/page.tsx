@@ -34,15 +34,24 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { checkDatabaseConnection } from "./actions";
+import { checkDatabaseConnection, testTwilioConnection, testNodemailerConnection, testGeminiConnection } from "./actions";
 
+
+type StatusTuple = { status: 'idle' | 'loading' | 'success' | 'error', message: string };
+
+const initialStatus: StatusTuple = { status: 'idle', message: '' };
 
 export default function ServicesPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [donations, setDonations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dbStatus, setDbStatus] = useState<{ status: 'idle' | 'loading' | 'success' | 'error', message: string }>({ status: 'idle', message: '' });
+  
+  const [dbStatus, setDbStatus] = useState<StatusTuple>(initialStatus);
+  const [twilioStatus, setTwilioStatus] = useState<StatusTuple>(initialStatus);
+  const [nodemailerStatus, setNodemailerStatus] = useState<StatusTuple>(initialStatus);
+  const [geminiStatus, setGeminiStatus] = useState<StatusTuple>(initialStatus);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,13 +74,17 @@ export default function ServicesPage() {
     fetchData();
   }, []);
 
-  const handleTestConnection = async () => {
-    setDbStatus({ status: 'loading', message: '' });
-    const result = await checkDatabaseConnection();
+  const handleTestConnection = async (
+      action: () => Promise<{success: boolean, error?: string}>,
+      setStatus: React.Dispatch<React.SetStateAction<StatusTuple>>,
+      serviceName: string
+  ) => {
+    setStatus({ status: 'loading', message: '' });
+    const result = await action();
     if (result.success) {
-      setDbStatus({ status: 'success', message: 'Successfully connected to the database and read data.' });
+      setStatus({ status: 'success', message: `Successfully connected to ${serviceName}.` });
     } else {
-      setDbStatus({ status: 'error', message: result.error || 'An unknown error occurred.' });
+      setStatus({ status: 'error', message: result.error || 'An unknown error occurred.' });
     }
   };
 
@@ -94,7 +107,7 @@ export default function ServicesPage() {
         { label: "Leads", value: leads.length.toLocaleString(), icon: FileText },
         { label: "Donations", value: donations.length.toLocaleString(), icon: HandHeart },
       ],
-      action: handleTestConnection,
+      action: () => handleTestConnection(checkDatabaseConnection, setDbStatus, "the database"),
       status: dbStatus,
     },
     {
@@ -103,6 +116,8 @@ export default function ServicesPage() {
       icon: BrainCircuit,
       metric: scannedDonations.toLocaleString(),
       metricLabel: "Scanned Proofs",
+      action: () => handleTestConnection(testGeminiConnection, setGeminiStatus, "Gemini"),
+      status: geminiStatus,
     },
      {
       name: "Firebase Hosting",
@@ -117,6 +132,8 @@ export default function ServicesPage() {
       icon: MessageSquare,
       metric: "Configured",
       metricLabel: "Status",
+      action: () => handleTestConnection(testTwilioConnection, setTwilioStatus, "Twilio"),
+      status: twilioStatus,
     },
     {
       name: "Nodemailer",
@@ -124,6 +141,8 @@ export default function ServicesPage() {
       icon: Mail,
       metric: "Configured",
       metricLabel: "Status",
+      action: () => handleTestConnection(testNodemailerConnection, setNodemailerStatus, "Nodemailer"),
+      status: nodemailerStatus,
     },
   ];
 
@@ -196,8 +215,12 @@ export default function ServicesPage() {
                  {service.status && service.status.status !== 'idle' && (
                   <div className={`p-3 rounded-md text-sm ${service.status.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-destructive/10 text-destructive'}`}>
                     <div className="flex items-center gap-2 font-semibold">
-                      {service.status.status === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                      <p>{service.status.status === 'success' ? 'Connection Successful' : 'Connection Failed'}</p>
+                      {service.status.status === 'success' ? <CheckCircle className="h-4 w-4" /> : service.status.status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin"/> : <AlertCircle className="h-4 w-4" />}
+                      <p>
+                        {service.status.status === 'success' ? 'Connection Successful' :
+                         service.status.status === 'loading' ? 'Testing...' :
+                         'Connection Failed'}
+                      </p>
                     </div>
                     <p className="text-xs mt-1 pl-1">{service.status.message}</p>
                   </div>
@@ -205,8 +228,8 @@ export default function ServicesPage() {
               </CardContent>
               <CardFooter className="bg-muted/50 p-4">
                 {service.action ? (
-                    <Button onClick={service.action} disabled={dbStatus.status === 'loading'} className="w-full">
-                      {dbStatus.status === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                    <Button onClick={service.action} disabled={service.status.status === 'loading'} className="w-full">
+                      {service.status.status === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
                       Test Connection
                     </Button>
                 ) : service.metrics ? (

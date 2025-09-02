@@ -2,6 +2,11 @@
 'use server';
 
 import { adminDb } from '@/services/firebase-admin';
+import { testTwilioConnection as testTwilio } from '@/services/twilio';
+import { testNodemailerConnection as testNodemailer } from '@/services/email';
+import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
+
 
 /**
  * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
@@ -28,3 +33,44 @@ export async function checkDatabaseConnection(): Promise<{success: boolean, erro
         return { success: false, error: "An unexpected error occurred during the initial permission check." };
     }
 };
+
+
+export async function testTwilioConnection(): Promise<{success: boolean, error?: string}> {
+    try {
+        await testTwilio();
+        return { success: true };
+    } catch (e) {
+        if (e instanceof Error) {
+            return { success: false, error: e.message };
+        }
+        return { success: false, error: "An unknown error occurred while testing Twilio." };
+    }
+}
+
+export async function testNodemailerConnection(): Promise<{success: boolean, error?: string}> {
+    try {
+        await testNodemailer();
+        return { success: true };
+    } catch (e) {
+        if (e instanceof Error) {
+            return { success: false, error: e.message };
+        }
+        return { success: false, error: "An unknown error occurred while testing Nodemailer." };
+    }
+}
+
+export async function testGeminiConnection(): Promise<{success: boolean, error?: string}> {
+    try {
+        await ai.generate({
+            model: googleAI.model('gemini-1.5-flash-latest'),
+            prompt: 'Test prompt',
+            config: { temperature: 0 },
+        });
+        return { success: true };
+    } catch (e) {
+        if (e instanceof Error) {
+            return { success: false, error: e.message };
+        }
+        return { success: false, error: "An unknown error occurred while testing Gemini." };
+    }
+}

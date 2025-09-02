@@ -45,3 +45,26 @@ export async function sendEmail(to: string, subject: string, html: string) {
     throw new Error('Failed to send email.');
   }
 }
+
+
+/**
+ * Verifies the Nodemailer transporter configuration.
+ */
+export async function testNodemailerConnection(): Promise<void> {
+    try {
+        await transporter.verify();
+        console.log("Nodemailer connection verified successfully.");
+    } catch(error) {
+        console.error("Nodemailer connection verification failed:", error);
+        if (error instanceof Error) {
+            // Provide a more user-friendly error message for common issues
+            if (error.message.includes('Invalid login')) {
+                throw new Error("Authentication failed. Please check your SMTP username and password.");
+            }
+             if (error.message.includes('ETIMEDOUT')) {
+                throw new Error("Connection timed out. Please check your SMTP host and port, and ensure no firewalls are blocking the connection.");
+            }
+        }
+        throw new Error("Failed to connect to SMTP server. Check configuration and credentials.");
+    }
+}
