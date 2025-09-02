@@ -4,7 +4,7 @@
  * This service should only be called from server-side components or server actions.
  */
 
-import { adminDb } from './firebase-admin';
+import { getAdminDb } from './firebase-admin';
 import type { AppSettings, UserRole, LeadStatus, DashboardSettings, LeadPurpose, PurposeCategory } from './types';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
@@ -205,6 +205,7 @@ const mergeDeep = (target: any, source: any) => {
  * @returns The application settings object.
  */
 export const getAppSettings = async (): Promise<AppSettings> => {
+  const adminDb = getAdminDb();
   try {
     const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
     const settingsDoc = await settingsDocRef.get();
@@ -236,6 +237,7 @@ export const getAppSettings = async (): Promise<AppSettings> => {
  * @param updates A partial object of the settings to update.
  */
 export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'| 'updatedAt'>>) => {
+  const adminDb = getAdminDb();
   try {
     const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
     const updateWithTimestamp: Partial<AppSettings> & { updatedAt: FieldValue } = {

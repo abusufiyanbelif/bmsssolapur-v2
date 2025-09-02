@@ -1,8 +1,7 @@
 
-
 'use server';
 
-import { adminDb } from '@/services/firebase-admin';
+import { getAdminDb } from '@/services/firebase-admin';
 import { testTwilioConnection as testTwilio } from '@/services/twilio';
 import { testNodemailerConnection as testNodemailer } from '@/services/email';
 import { ai } from '@/ai/genkit';
@@ -16,6 +15,7 @@ import { googleAI } from '@genkit-ai/googleai';
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 export async function checkDatabaseConnection(): Promise<{success: boolean, error?: string}> {
+    const adminDb = getAdminDb();
     try {
         // Attempt to access a non-existent document. This is a lightweight operation.
         const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");

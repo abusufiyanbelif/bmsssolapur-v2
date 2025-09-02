@@ -1,7 +1,7 @@
 
 'use server';
 
-import { adminDb } from '@/services/firebase-admin';
+import { getAdminDb } from '@/services/firebase-admin';
 
 /**
  * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
@@ -11,6 +11,7 @@ import { adminDb } from '@/services/firebase-admin';
  */
 export async function performPermissionCheck(): Promise<{success: boolean, error?: string}> {
     try {
+        const adminDb = getAdminDb();
         // Attempt to access a non-existent document. This is a lightweight operation.
         const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
         await nonExistentDocRef.get();
@@ -28,5 +29,3 @@ export async function performPermissionCheck(): Promise<{success: boolean, error
         return { success: false, error: "An unexpected error occurred during the initial permission check." };
     }
 };
-
-

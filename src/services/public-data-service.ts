@@ -1,10 +1,9 @@
 
-
 /**
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */
 
-import { adminDb } from './firebase-admin';
+import { getAdminDb } from './firebase-admin';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
 import { getLeadsByCampaignId } from './lead-service';
@@ -20,6 +19,7 @@ const PUBLIC_DATA_COLLECTION = 'publicData';
  * @param lead - The full lead object from the private collection.
  */
 export const updatePublicLead = async (lead: Lead): Promise<void> => {
+  const adminDb = getAdminDb();
   const publicLeadRef = adminDb.collection(PUBLIC_LEADS_COLLECTION).doc(lead.id);
 
   if (lead.caseAction !== 'Publish') {
@@ -54,6 +54,7 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
  * @param org - The full organization object.
  */
 export const updatePublicOrganization = async (org: Organization): Promise<void> => {
+  const adminDb = getAdminDb();
   const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
   await publicOrgRef.set(org);
 };
@@ -64,6 +65,7 @@ export const updatePublicOrganization = async (org: Organization): Promise<void>
  * @returns An array of sanitized public lead objects.
  */
 export const getPublicLeads = async (): Promise<Lead[]> => {
+    const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(PUBLIC_LEADS_COLLECTION).orderBy("dateCreated", "desc");
         const snapshot = await q.get();
@@ -90,6 +92,7 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
  * @returns The public organization object or null if not found.
  */
 export const getPublicOrganization = async (): Promise<Organization | null> => {
+    const adminDb = getAdminDb();
     const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
     const docSnap = await publicOrgRef.get();
     return docSnap.exists ? (docSnap.data() as Organization) : null;
@@ -100,6 +103,7 @@ export const getPublicOrganization = async (): Promise<Organization | null> => {
  * @param stats - The stats object to save.
  */
 export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
+    const adminDb = getAdminDb();
     const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
     await publicStatsRef.set(stats, { merge: true });
 };
@@ -109,6 +113,7 @@ export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
  * @returns The public stats object or null.
  */
 export const getPublicStats = async (): Promise<PublicStats | null> => {
+    const adminDb = getAdminDb();
     const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
     const docSnap = await publicStatsRef.get();
     return docSnap.exists() ? (docSnap.data() as PublicStats) : null;
@@ -119,6 +124,7 @@ export const getPublicStats = async (): Promise<PublicStats | null> => {
  * @param campaign - The full campaign object with calculated stats.
  */
 export const updatePublicCampaign = async (campaign: Campaign & { raisedAmount: number; fundingProgress: number; }): Promise<void> => {
+    const adminDb = getAdminDb();
     const publicCampaignRef = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).doc(campaign.id!);
 
      if (campaign.status === 'Cancelled') {
@@ -134,6 +140,7 @@ export const updatePublicCampaign = async (campaign: Campaign & { raisedAmount: 
  * @returns An array of public campaign objects.
  */
 export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> => {
+    const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
         const snapshot = await q.get();

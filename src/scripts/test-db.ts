@@ -1,8 +1,9 @@
-import { adminDb } from '../services/firebase-admin';
+import { getAdminDb } from '../services/firebase-admin';
 
 async function testDatabaseConnection() {
   console.log('Attempting to connect to Firestore...');
   try {
+    const adminDb = getAdminDb();
     // This is a very lightweight operation that confirms the connection and permissions.
     const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
     await nonExistentDocRef.get();

@@ -5,7 +5,7 @@
  */
 
 import { Timestamp } from 'firebase-admin/firestore';
-import { adminDb } from './firebase-admin';
+import { getAdminDb } from './firebase-admin';
 import type { ActivityLog } from './types';
 
 // Re-export type
@@ -19,6 +19,7 @@ const ACTIVITY_LOG_COLLECTION = 'activityLog';
  * @param logData The data to be logged.
  */
 export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>): Promise<void> => {
+  const adminDb = getAdminDb();
   try {
     const logWithTimestamp = {
       ...logData,
@@ -38,6 +39,7 @@ export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>
  * @returns An array of all activity log objects.
  */
 export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
+    const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION).orderBy("timestamp", "desc");
         const querySnapshot = await q.get();
@@ -68,6 +70,7 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
  * @returns An array of activity log objects.
  */
 export const getUserActivity = async (userId: string): Promise<ActivityLog[]> => {
+    const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("userId", "==", userId)
@@ -103,6 +106,7 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
  * @returns An array of activity log objects.
  */
 export const getTargetUserActivity = async (targetUserId: string): Promise<ActivityLog[]> => {
+    const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("details.targetUserId", "==", targetUserId)
@@ -135,6 +139,7 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
  * @returns An array of activity log objects.
  */
 export const getDonationActivity = async (donationId: string): Promise<ActivityLog[]> => {
+    const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("details.donationId", "==", donationId)
@@ -166,6 +171,7 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
  * @returns An array of activity log objects.
  */
 export const getCampaignActivity = async (campaignId: string): Promise<ActivityLog[]> => {
+    const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("details.linkedCampaignId", "==", campaignId)

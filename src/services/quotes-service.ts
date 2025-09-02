@@ -3,7 +3,7 @@
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
 
-import { adminDb } from './firebase-admin';
+import { getAdminDb } from './firebase-admin';
 import type { Quote } from './types';
 import { WriteBatch } from 'firebase-admin/firestore';
 import { quranQuotes } from './quotes/quran';
@@ -27,7 +27,7 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
  * @returns A status message.
  */
 export const seedInitialQuotes = async (): Promise<string> => {
-  
+  const adminDb = getAdminDb();
   const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
   const snapshot = await quotesCollection.limit(1).get();
 
@@ -61,6 +61,7 @@ export const seedInitialQuotes = async (): Promise<string> => {
  * @returns An array of all quote objects.
  */
 export const getAllQuotes = async (): Promise<Quote[]> => {
+    const adminDb = getAdminDb();
     try {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
