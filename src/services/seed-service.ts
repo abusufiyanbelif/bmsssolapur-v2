@@ -256,7 +256,9 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
 const seedOrganization = async (): Promise<string> => {
     const existingOrg = await getCurrentOrganization();
     if (existingOrg) {
-        return "Organization profile already exists. Skipped.";
+        // If it exists, update it with the default footer content just in case it's missing
+        await updateDoc(doc(db, 'organizations', existingOrg.id), { footer: defaultFooterContent });
+        return "Organization profile updated with default footer.";
     }
     await createOrganization(organizationToSeed);
     return "Organization profile created successfully.";

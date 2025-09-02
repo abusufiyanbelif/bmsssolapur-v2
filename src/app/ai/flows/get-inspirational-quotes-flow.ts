@@ -31,9 +31,9 @@ const getInspirationalQuotesFlow = ai.defineFlow(
             // This fallback is not ideal as it doesn't have IDs, but it prevents a crash.
             // In a real app, you might have a static JSON file for this.
             allQuotes = [
-                { id: '1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith" },
-                { id: '2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith" },
-                { id: '3', number: 1, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran" },
+                { id: '1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+                { id: '2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
+                { id: '3', number: 3, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran", categoryTypeNumber: 1 },
             ];
         }
         
