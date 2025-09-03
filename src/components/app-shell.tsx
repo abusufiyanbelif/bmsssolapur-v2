@@ -2,7 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
@@ -301,13 +301,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col p-0">
-                            <div className="flex h-[72px] items-center border-b px-4 lg:px-6">
+                            <SheetHeader className="h-[72px] items-center border-b px-4 lg:px-6">
                                <HeaderTitle />
-                            </div>
+                               <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                               <SheetDescription className="sr-only">Navigation links for the application.</SheetDescription>
+                            </SheetHeader>
                            {isSessionReady && (
-                             <div className="flex-1 overflow-y-auto">
+                             <div className="flex-1 overflow-y-auto pt-4">
                                 <Nav 
-                                    userRoles={user.roles}
+                                    userRoles={user.roles} 
                                     activeRole={activeRole}
                                     onRoleSwitchRequired={handleOpenRoleSwitcher}
                                 />
