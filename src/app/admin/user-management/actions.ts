@@ -6,10 +6,36 @@ import { deleteUser, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
+import { logActivity } from "@/services/activity-log-service";
+import { getUser } from "@/services/user-service";
 
 export async function handleDeleteUser(userId: string) {
     try {
+        const userToDelete = await getUser(userId);
+        if (!userToDelete) {
+             throw new Error("User to delete not found.");
+        }
+        
         await deleteUser(userId);
+        
+        // This is a placeholder for the admin user performing the action.
+        // In a real app, you would get this from the session.
+        const adminUser = await getUser("ADMIN_USER_ID");
+        
+        if (adminUser) {
+             await logActivity({
+                userId: adminUser.id!,
+                userName: adminUser.name,
+                userEmail: adminUser.email,
+                role: 'Admin',
+                activity: 'User Deleted',
+                details: { 
+                    deletedUserId: userId, 
+                    deletedUserName: userToDelete.name,
+                },
+            });
+        }
+
         revalidatePath("/admin/user-management");
         revalidatePath("/admin/beneficiaries");
         revalidatePath("/admin/donors");

@@ -28,13 +28,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard, Save, Banknote } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard, Save, Banknote, Bot, Text } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { handleCreatePendingDonation } from './actions';
 import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
-import { scanProof } from '@/app/admin/donations/add/actions';
 import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType, PaymentMethod, AppSettings } from '@/services/types';
 import { getUser, updateUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
@@ -48,7 +47,8 @@ import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-
+import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
 const allPaymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
@@ -705,7 +705,6 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
      );
 }
 
-// Helper to convert file to Base64 Data URL
 const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -747,20 +746,13 @@ function UploadProofSection({ user }: { user: User | null }) {
 
         if (result.success && result.details) {
             const queryParams = new URLSearchParams();
-            Object.entries(result.details).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    queryParams.set(key, String(value));
-                }
-            });
-            
-             // The user is already logged in, so we know their ID
-            if (user?.id) {
-                queryParams.set('donorId', user.id);
+            if(result.details.rawText) {
+                queryParams.set('rawText', encodeURIComponent(result.details.rawText));
             }
             
             try {
                 const dataUrl = await fileToDataUrl(file);
-                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ dataUrl }));
+                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ details: result.details, dataUrl, rawText: result.details.rawText }));
             } catch (e) {
                  toast({ variant: 'destructive', title: "Error preparing screenshot" });
             }

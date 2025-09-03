@@ -20,7 +20,7 @@ export default async function AddLeadPage() {
                 <CardHeader>
                     <CardTitle>Lead Details</CardTitle>
                     <CardDescription>
-                        Fill in the form below to create a new help case (lead).
+                        Fill in the form below to create a new help case (lead). You can also paste details into the text box and use the AI to auto-fill the form.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -34,5 +34,3 @@ export default async function AddLeadPage() {
         </div>
     );
 }
-
-    

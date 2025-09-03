@@ -7,22 +7,15 @@ import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } f
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
-import type { ExtractDonationDetailsInput } from "@/ai/schemas";
 import { uploadFile } from "@/services/storage-service";
+import { extractDonationDetails as extractDetailsFlow } from "@/ai/flows/extract-donation-details-flow";
+import { extractRawText as extractRawTextFlow } from "@/ai/flows/extract-raw-text-flow";
 
 interface FormState {
     success: boolean;
     error?: string;
     donationId?: string;
 }
-
-// Helper to convert Base64 Data URL back to a File object
-const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: blob.type });
-};
-
 
 export async function handleAddDonation(
   formData: FormData
@@ -56,43 +49,36 @@ export async function handleAddDonation(
         }
     }
 
-    const screenshotFiles = formData.getAll("paymentScreenshots") as File[];
-    const screenshotDataUrl = formData.get("paymentScreenshotDataUrl") as string | undefined;
-    const leadId = formData.get("leadId") as string | undefined;
-
-    // This function will create the donation record first to get an ID
-    // Then it will upload the file to a path that includes this new ID
-    const createDonationWithProof = async (donationData: Omit<Donation, 'id' | 'createdAt' | 'paymentScreenshotUrls'>, fileToUpload?: File) => {
-        const createdDonation = await createDonation(donationData, adminUserId, adminUser.name, adminUser.email);
-        
-        if (fileToUpload) {
-            let uploadPath = `donations/${createdDonation.id}/proofs/`;
-            if (createdDonation.leadId) {
-                 uploadPath = `leads/${createdDonation.leadId}/donations/${createdDonation.id}/`;
-            }
-            const url = await uploadFile(fileToUpload, uploadPath);
-            // Update the donation with the screenshot URL
-            await updateDonation(createdDonation.id!, { paymentScreenshotUrls: [url] });
-            return { ...createdDonation, paymentScreenshotUrls: [url] };
-        }
-        return createdDonation;
-    };
+    const screenshotFile = formData.get("paymentScreenshot") as File | null;
     
     const donationDateStr = formData.get("donationDate") as string;
     const donationDate = donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now();
     
-    const baseDonationData: Omit<Donation, 'id' | 'createdAt' | 'paymentScreenshotUrls'> = {
-        donorId: donor.id!,
-        donorName: donor.name,
-        isAnonymous: formData.get("isAnonymous") === 'true',
-        status: "Pending verification",
-        transactionId: transactionId,
-        donationDate: donationDate,
-        paymentApp: formData.get("paymentApp") as string | undefined,
-        paymentMethod: formData.get("paymentMethod") as PaymentMethod | undefined,
+    const createDonationRecord = async (data: Partial<Donation>) => {
+        let proofUrl: string | undefined = undefined;
+        if(screenshotFile && screenshotFile.size > 0) {
+            const tempDonation = await createDonation({
+                ...data,
+                donorId: donor.id!,
+                donorName: donor.name,
+                status: "Pending verification",
+                donationDate: donationDate,
+            }, adminUserId, adminUser.name, adminUser.email);
+            
+            let uploadPath = `donations/${tempDonation.id}/proofs/`;
+            proofUrl = await uploadFile(screenshotFile, uploadPath);
+            await updateDonation(tempDonation.id!, { paymentScreenshotUrls: [proofUrl] });
+            return tempDonation;
+        } else {
+             return await createDonation({
+                ...data,
+                donorId: donor.id!,
+                donorName: donor.name,
+                status: "Pending verification",
+                donationDate: donationDate,
+            }, adminUserId, adminUser.name, adminUser.email);
+        }
     };
-    
-    const fileForUpload = screenshotDataUrl ? await dataUrlToFile(screenshotDataUrl, 'scanned-screenshot.png') : (screenshotFiles.length > 0 ? screenshotFiles[0] : undefined);
     
     const includePledge = formData.get("includePledge") === 'true';
     const pledgeAmount = includePledge ? donor.monthlyPledgeAmount || 0 : 0;
@@ -102,40 +88,38 @@ export async function handleAddDonation(
 
     // Create Pledge Donation if applicable
     if (pledgeAmount > 0) {
-      await createDonationWithProof({
-        ...baseDonationData,
+      await createDonationRecord({
         amount: pledgeAmount,
         type: 'Sadaqah', // Pledges are Sadaqah
         purpose: 'Monthly Pledge',
+        transactionId: transactionId,
         notes: `Monthly pledge fulfillment as part of transaction ID: ${transactionId}`,
-      }, fileForUpload); // Upload the same proof for this record
+      });
     }
     
     // Create Tip Donation if applicable
     if (tipAmount > 0) {
-        await createDonationWithProof({
-            ...baseDonationData,
+        await createDonationRecord({
             amount: tipAmount,
             type: 'Sadaqah', // Tips are Sadaqah
             purpose: 'To Organization Use',
+            transactionId: transactionId,
             notes: `Support for organization as part of transaction ID: ${transactionId}`,
-        }, fileForUpload); // And for this one
+        });
     }
 
     // Create Primary Donation
     const primaryAmount = parseFloat(formData.get("amount") as string);
-    const primaryDonationData = {
-        ...baseDonationData,
+    const primaryDonation = await createDonationRecord({
         amount: primaryAmount,
         type: formData.get("type") as DonationType,
         purpose: formData.get("purpose") as DonationPurpose, // Now required
-        category: formData.get("category") as string | undefined,
+        status: formData.get("status") as DonationStatus,
+        transactionId: transactionId,
+        paymentMethod: formData.get("paymentMethod") as PaymentMethod,
+        isAnonymous: formData.get("isAnonymous") === 'true',
         notes: formData.get("notes") as string | undefined,
-        leadId: formData.get("linkToLead") === 'true' ? leadId : undefined,
-        campaignId: formData.get("linkToCampaign") === 'true' ? formData.get("campaignId") as string | undefined : undefined,
-    };
-
-    const primaryDonation = await createDonationWithProof(primaryDonationData, fileForUpload);
+    });
 
     revalidatePath("/admin/donations");
 
@@ -168,9 +152,6 @@ export async function checkTransactionId(transactionId: string): Promise<Availab
 }
 
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
-
 interface ScanResult {
     success: boolean;
     details?: ExtractDonationDetailsOutput;
@@ -179,72 +160,44 @@ interface ScanResult {
 }
 
 export async function scanProof(formData: FormData): Promise<ScanResult> {
-    let lastError: string = "An unknown error occurred";
     const proofFile = formData.get("proofFile") as File | null;
 
     if (!proofFile) {
         return { success: false, error: "No file was provided for scanning." };
     }
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        try {
-            const { extractDonationDetails } = await import('@/ai/flows/extract-donation-details-flow');
-            
-            const arrayBuffer = await proofFile.arrayBuffer();
-            const base64 = Buffer.from(arrayBuffer).toString('base64');
-            const mimeType = proofFile.type;
-            const dataUri = `data:${mimeType};base64,${base64}`;
+    try {
+        const arrayBuffer = await proofFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = proofFile.type;
+        const dataUri = `data:${mimeType};base64,${base64}`;
 
-            const extractedDetails = await extractDonationDetails({ photoDataUri: dataUri });
-            
-            // On success, try to find a matching donor
-            let foundDonor: User | null = null;
-            if (extractedDetails.senderUpiId) foundDonor = await getUserByUpiId(extractedDetails.senderUpiId);
-            if (!foundDonor && extractedDetails.donorPhone) {
-                 const phone = extractedDetails.donorPhone.replace(/\D/g,'').slice(-10);
-                 foundDonor = await getUserByPhone(phone);
-            }
-            if (!foundDonor && extractedDetails.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(extractedDetails.senderAccountNumber);
-
-            return { 
-                success: true, 
-                details: { ...extractedDetails, donorId: foundDonor?.id },
-                donorFound: !!foundDonor,
-            };
-
-        } catch (e) {
-            lastError = e instanceof Error ? e.message : "An unknown error occurred";
-            console.error(`Attempt ${attempt} failed:`, lastError);
-
-            if (lastError.includes('503 Service Unavailable') && attempt < MAX_RETRIES) {
-                console.log(`Service unavailable, retrying in ${RETRY_DELAY_MS * attempt / 1000}s...`);
-                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * attempt)); // Exponential backoff
-            } else if ((e as Error).name === 'AbortError') {
-                return { success: false, error: 'Scan was cancelled by the user.' };
-            }
-            else {
-                break;
-            }
+        const extractedDetails = await extractDetailsFlow({ photoDataUri: dataUri });
+        
+        let foundDonor: User | null = null;
+        if (extractedDetails.senderUpiId) foundDonor = await getUserByUpiId(extractedDetails.senderUpiId);
+        if (!foundDonor && extractedDetails.donorPhone) {
+            const phone = extractedDetails.donorPhone.replace(/\D/g,'').slice(-10);
+            foundDonor = await getUserByPhone(phone);
         }
+        if (!foundDonor && extractedDetails.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(extractedDetails.senderAccountNumber);
+
+        return { 
+            success: true, 
+            details: { ...extractedDetails, donorId: foundDonor?.id },
+            donorFound: !!foundDonor,
+        };
+
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Scan failed:`, lastError);
+        return { success: false, error: `Scan failed: ${lastError}` };
     }
-    
-    console.error("All retry attempts failed for scanning transfer proof.");
-    return { success: false, error: `After ${MAX_RETRIES} attempts, the service is still unavailable. Please try again later. Last error: ${lastError}` };
 }
 
-export async function getRawTextFromImage(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
+export async function getRawTextFromImage(dataUri: string): Promise<{success: boolean, text?: string, error?: string}> {
     try {
-        const imageFile = formData.get("imageFile") as File | null;
-        if (!imageFile) {
-            return { success: false, error: "No image file found in form data." };
-        }
-        
-        const { extractRawText } = await import('@/ai/flows/extract-raw-text-flow');
-        const arrayBuffer = await imageFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = imageFile.type;
-        const dataUri = `data:${mimeType};base64,${base64}`;
-        const result = await extractRawText({ photoDataUri: dataUri });
+        const result = await extractRawTextFlow({ photoDataUri: dataUri });
         return { success: true, text: result.rawText };
     } catch (e) {
         const error = e instanceof Error ? e.message : "Failed to extract text from image.";

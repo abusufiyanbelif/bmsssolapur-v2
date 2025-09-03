@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -22,12 +23,9 @@ import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import type { ExtractDonationDetailsOutput } from '@/ai/schemas';
 
-interface ScanDonationDialogProps {
-  onScanComplete: (details: ExtractDonationDetailsOutput, dataUrl: string) => void;
-}
-
-export function ScanDonationDialog({ onScanComplete }: ScanDonationDialogProps) {
+export function ScanDonationDialog({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -47,6 +45,15 @@ export function ScanDonationDialog({ onScanComplete }: ScanDonationDialogProps) 
     }
   };
 
+  const fileToDataUrl = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
   const handleScan = async () => {
     if (!file) {
       toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot to scan.' });
@@ -62,19 +69,31 @@ export function ScanDonationDialog({ onScanComplete }: ScanDonationDialogProps) 
     setIsScanning(false);
     
     if (result.success && result.details) {
-        toast({ variant: 'success', title: 'Scan Successful!', description: 'The form has been pre-filled with the scanned data.' });
+        const details = result.details;
+        const dataUrl = await fileToDataUrl(file);
         
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const dataUrl = reader.result as string;
-            const detailsToStore = {
-                ...result.details,
-                rawText: undefined 
-            };
-            onScanComplete(detailsToStore, dataUrl);
-            setOpen(false); // Close the dialog
-        };
-        reader.readAsDataURL(file);
+        // Store details in sessionStorage to pass to the next page
+        const sessionData = {
+            details: details,
+            dataUrl: dataUrl,
+            rawText: details.rawText,
+        }
+        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify(sessionData));
+
+        if(result.donorFound) {
+            router.push('/admin/donations/add');
+        } else {
+            const queryParams = new URLSearchParams();
+            if(details.senderName) queryParams.set('name', details.senderName);
+            if(details.donorPhone) queryParams.set('phone', details.donorPhone.replace(/\D/g, '').slice(-10));
+            if(details.senderUpiId) queryParams.set('upiId', details.senderUpiId);
+            // Add a redirect URL so we come back to add the donation after creating the user
+            queryParams.set('redirect_url', '/admin/donations/add');
+            if(details.rawText) queryParams.set('rawText', encodeURIComponent(details.rawText));
+
+            router.push(`/admin/user-management/add?${queryParams.toString()}`);
+        }
+        setOpen(false); // Close the dialog
 
     } else {
          toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details from the image." });
@@ -91,16 +110,13 @@ export function ScanDonationDialog({ onScanComplete }: ScanDonationDialogProps) 
         }
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <ScanEye className="mr-2" />
-          Scan Screenshot
-        </Button>
+        {children}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Scan Payment Screenshot</DialogTitle>
           <DialogDescription>
-            Upload a payment proof image. The system will attempt to extract the details and pre-fill the form for you.
+            Upload a payment proof image. The system will attempt to extract the details and find the donor.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -137,7 +153,7 @@ export function ScanDonationDialog({ onScanComplete }: ScanDonationDialogProps) 
           </DialogClose>
           <Button onClick={handleScan} disabled={isScanning || !file}>
             {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
-            Scan and Fill Form
+            Scan and Continue
           </Button>
         </DialogFooter>
       </DialogContent>

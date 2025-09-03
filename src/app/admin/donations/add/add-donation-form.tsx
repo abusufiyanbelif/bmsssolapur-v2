@@ -38,80 +38,40 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, scanProof, getRawTextFromImage } from "./actions";
+import { handleAddDonation, checkTransactionId } from "./actions";
 import { handleUpdateDonation } from '../[id]/edit/actions';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
 const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
-const recipientRoles = ['Beneficiary', 'Referral', 'To Organization', 'Organization Member'] as const;
-
-const categoryOptions: Record<string, string[]> = {
-    'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
-    'Medical': ['Hospital Bill', 'Medication', 'Doctor Consultation', 'Surgical Procedure', 'Medical Tests', 'Medical Equipment', 'Other'],
-    'Relief Fund': ['Ration Kit', 'Financial Aid', 'Disaster Relief', 'Shelter Assistance', 'Utility Bill Payment', 'Other'],
-    'Deen': ['Masjid Maintenance', 'Madrasa Support', 'Da\'wah Activities', 'Other'],
-    'Loan': ['Business Loan', 'Emergency Loan', 'Education Loan', 'Personal Loan', 'Other'],
-};
-
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
   paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
-  recipientId: z.string().optional(),
-  recipientRole: z.enum(recipientRoles).optional(),
   
-  linkToCampaign: z.boolean().default(false),
-  linkToLead: z.boolean().default(false),
-  campaignId: z.string().optional(),
-  leadId: z.string().optional(),
-
   isAnonymous: z.boolean().default(false),
   totalTransactionAmount: z.coerce.number().min(1, "Total amount must be greater than 0."),
-  amount: z.coerce.number(), // This will hold the calculated primary donation amount
+  amount: z.coerce.number(),
   donationDate: z.date(),
   type: z.enum(donationTypes),
   purpose: z.enum(donationPurposes, { required_error: "Please select a purpose." }),
-  category: z.string().optional(),
   status: z.enum(['Pending verification', 'Verified', 'Partially Allocated', 'Allocated', 'Failed/Incomplete']).default("Pending verification"),
+  
   transactionId: z.string().optional(),
-  utrNumber: z.string().optional(),
-  googlePayTransactionId: z.string().optional(),
-  phonePeTransactionId: z.string().optional(),
-  paytmUpiReferenceNo: z.string().optional(),
-  paymentApp: z.enum(paymentApps).optional(),
-  senderPaymentApp: z.string().optional(),
-  recipientPaymentApp: z.string().optional(),
-  donorUpiId: z.string().optional(),
-  donorPhone: z.string().optional(),
-  donorBankAccount: z.string().optional(),
-  senderName: z.string().optional(),
-  senderBankName: z.string().optional(),
-  senderIfscCode: z.string().optional(),
-  phonePeSenderName: z.string().optional(),
-  googlePaySenderName: z.string().optional(),
-  paytmSenderName: z.string().optional(),
-  recipientName: z.string().optional(),
-  phonePeRecipientName: z.string().optional(),
-  googlePayRecipientName: z.string().optional(),
-  paytmRecipientName: z.string().optional(),
-  recipientPhone: z.string().optional(),
-  recipientUpiId: z.string().optional(),
-  recipientAccountNumber: z.string().optional(),
-  recipientBankName: z.string().optional(),
-  recipientIfscCode: z.string().optional(),
-  paymentScreenshots: z.any().optional(),
-  paymentScreenshotDataUrl: z.string().optional(),
+  
+  paymentScreenshot: z.any().optional(),
+
   includeTip: z.boolean().default(false),
   tipAmount: z.coerce.number().optional(),
   includePledge: z.boolean().default(false),
   notes: z.string().optional(),
+  
 }).refine(data => {
     if (data.includeTip) {
         return !!data.tipAmount && data.tipAmount > 0;
@@ -130,13 +90,14 @@ const formSchema = z.object({
     path: ["tipAmount"],
 }).refine(data => {
     if (['Online (UPI/Card)', 'Bank Transfer'].includes(data.paymentMethod)) {
-        return !!data.paymentScreenshotDataUrl;
+        return !!data.paymentScreenshot;
     }
     return true;
 }, {
     message: 'A payment screenshot is required for this payment method.',
-    path: ['paymentScreenshotDataUrl'],
+    path: ['paymentScreenshot'],
 });
+
 
 type AddDonationFormValues = z.infer<typeof formSchema>;
 
@@ -146,11 +107,6 @@ interface AddDonationFormProps {
   campaigns: Campaign[];
   currentUser?: User | null;
   existingDonation?: Donation;
-}
-
-interface FilePreview {
-    file: File;
-    previewUrl: string;
 }
 
 type AvailabilityState = {
@@ -164,101 +120,55 @@ const initialAvailabilityState: AvailabilityState = {
     isAvailable: null,
 };
 
-function AvailabilityFeedback({ state, fieldName }: { state: AvailabilityState, fieldName: string }) {
-    if (state.isChecking) {
-        return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>;
-    }
-    if (state.isAvailable === true) {
-        return <p className="text-sm text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-4 w-4" /> Available</p>;
-    }
-    if (state.isAvailable === false) {
-        return (
-            <div className="mt-2">
-                <p className="text-sm text-destructive flex items-center">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    This {fieldName} is already in use
-                    {state.existingDonationId && (
-                        <Link href={`/admin/donations/${state.existingDonationId}/edit`} className="ml-1 underline hover:no-underline">
-                            (View existing)
-                        </Link>
-                    )}.
-                </p>
-            </div>
-        );
-    }
-    return null;
-}
-
-const presetTipAmounts = [50, 100, 200];
-
 function AddDonationFormContent({ users, leads, campaigns, existingDonation }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
-  const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
-  const [campaignPopoverOpen, setCampaignPopoverOpen] = useState(false);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
   
   const [isScanning, setIsScanning] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [extractedRawText, setExtractedRawText] = useState<string | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
 
   const isEditing = !!existingDonation;
-
+  
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-        donorId: existingDonation?.donorId || '',
-        paymentMethod: existingDonation?.paymentMethod || 'Online (UPI/Card)',
-        recipientId: existingDonation?.recipientId || '',
-        recipientRole: existingDonation?.recipientRole || undefined,
-        linkToCampaign: !!existingDonation?.campaignId,
-        linkToLead: !!existingDonation?.leadId,
-        campaignId: existingDonation?.campaignId || undefined,
-        leadId: existingDonation?.leadId || undefined,
-        isAnonymous: existingDonation?.isAnonymous || false,
-        totalTransactionAmount: existingDonation?.amount || 0,
-        amount: existingDonation?.amount || 0,
-        donationDate: existingDonation?.donationDate ? new Date(existingDonation.donationDate) : new Date(),
-        type: existingDonation?.type || 'Sadaqah',
-        purpose: existingDonation?.purpose || 'To Organization Use',
-        category: existingDonation?.category || '',
-        status: existingDonation?.status || 'Pending verification',
-        transactionId: existingDonation?.transactionId || '',
-        utrNumber: existingDonation?.utrNumber || '',
-        googlePayTransactionId: existingDonation?.googlePayTransactionId || '',
-        phonePeTransactionId: existingDonation?.phonePeTransactionId || '',
-        paytmUpiReferenceNo: existingDonation?.paytmUpiReferenceNo || '',
-        paymentApp: (existingDonation?.paymentApp as any) || undefined,
-        senderPaymentApp: existingDonation?.senderPaymentApp || '',
-        recipientPaymentApp: existingDonation?.recipientPaymentApp || '',
-        donorUpiId: existingDonation?.donorUpiId || '',
-        donorPhone: existingDonation?.donorPhone || '',
-        donorBankAccount: existingDonation?.donorBankAccount || '',
-        senderName: existingDonation?.senderName || '',
-        phonePeSenderName: existingDonation?.phonePeSenderName || '',
-        googlePaySenderName: existingDonation?.googlePaySenderName || '',
-        paytmSenderName: existingDonation?.paytmSenderName || '',
-        recipientName: existingDonation?.recipientName || '',
-        phonePeRecipientName: existingDonation?.phonePeRecipientName || '',
-        googlePayRecipientName: existingDonation?.googlePayRecipientName || '',
-        paytmRecipientName: existingDonation?.paytmRecipientName || '',
-        recipientPhone: existingDonation?.recipientPhone || '',
-        recipientUpiId: existingDonation?.recipientUpiId || '',
-        recipientAccountNumber: existingDonation?.recipientAccountNumber || '',
-        paymentScreenshots: [],
-        paymentScreenshotDataUrl: existingDonation?.paymentScreenshotUrls?.[0] || '',
+    defaultValues: isEditing ? {
+        donorId: existingDonation?.donorId,
+        paymentMethod: existingDonation?.paymentMethod,
+        isAnonymous: existingDonation?.isAnonymous,
+        totalTransactionAmount: existingDonation?.amount,
+        amount: existingDonation?.amount,
+        donationDate: new Date(existingDonation.donationDate),
+        type: existingDonation?.type,
+        purpose: existingDonation?.purpose,
+        status: existingDonation?.status,
+        transactionId: existingDonation?.transactionId,
+        notes: existingDonation?.notes,
+        paymentScreenshot: existingDonation?.paymentScreenshotUrls?.[0] || null,
+    } : {
+        donorId: '',
+        paymentMethod: 'Online (UPI/Card)',
+        isAnonymous: false,
+        totalTransactionAmount: 0,
+        amount: 0,
+        donationDate: new Date(),
+        type: 'Sadaqah',
+        purpose: 'To Organization Use',
+        status: 'Pending verification',
+        transactionId: '',
+        notes: '',
         includeTip: false,
         tipAmount: 0,
         includePledge: false,
-        notes: existingDonation?.notes || '',
+        paymentScreenshot: null,
     },
   });
   
@@ -266,79 +176,14 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const includeTip = watch("includeTip");
   const totalTransactionAmount = watch("totalTransactionAmount");
   const tipAmount = watch("tipAmount");
-  const isAnonymous = watch("isAnonymous");
   const transactionId = watch('transactionId');
   const debouncedTransactionId = useDebounce(transactionId, 500);
-  const paymentScreenshotDataUrl = watch('paymentScreenshotDataUrl');
-
-  const linkToLead = watch("linkToLead");
-  const linkToCampaign = watch("linkToCampaign");
-  const linkedLeadId = watch("leadId");
-  const linkedCampaignId = watch("campaignId");
   const paymentMethod = watch("paymentMethod");
-  const paymentApp = watch("paymentApp");
   const includePledge = watch("includePledge");
   
   const showProofSection = useMemo(() => {
     return ['Online (UPI/Card)', 'Bank Transfer'].includes(paymentMethod);
   }, [paymentMethod]);
-
-  const selectedLead = useMemo(() => {
-    if (!linkedLeadId) return null;
-    return leads.find(l => l.id === linkedLeadId);
-  }, [linkedLeadId, leads]);
-  
-  const availableDonationTypes = useMemo(() => {
-    if (selectedLead && selectedLead.acceptableDonationTypes && selectedLead.acceptableDonationTypes.length > 0) {
-        if(selectedLead.acceptableDonationTypes.includes('Any')) return donationTypes;
-        return selectedLead.acceptableDonationTypes.filter(t => donationTypes.includes(t as any));
-    }
-    return donationTypes;
-  }, [selectedLead]);
-  
-  const transactionIdLabel = useMemo(() => {
-        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
-        switch (paymentApp) {
-            case 'PhonePe': return 'Transaction ID';
-            case 'Paytm': return 'UPI Ref. No';
-            case 'Google Pay': return 'UPI Transaction ID';
-            default: return 'Primary Transaction ID';
-        }
-    }, [paymentApp, paymentMethod]);
-
-
-  useEffect(() => {
-    const currentType = getValues('type');
-    if (selectedLead && !availableDonationTypes.includes(currentType)) {
-        setValue('type', availableDonationTypes[0] as (typeof donationTypes)[number], { shouldDirty: true });
-    }
-  }, [selectedLead, availableDonationTypes, setValue, getValues]);
-
-
-  useEffect(() => {
-    const total = totalTransactionAmount || 0;
-    const pledge = (includePledge && selectedDonor?.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount) ? selectedDonor.monthlyPledgeAmount : 0;
-    const tip = includeTip ? (tipAmount || 0) : 0;
-    const primaryAmount = Math.max(0, total - tip - pledge);
-    setValue('amount', primaryAmount, { shouldDirty: true, shouldValidate: true });
-  }, [totalTransactionAmount, tipAmount, includeTip, setValue, includePledge, selectedDonor]);
-
-
-  useEffect(() => {
-    const initializeUser = async () => {
-      const storedUserId = localStorage.getItem('userId');
-      setAdminUserId(storedUserId); // This is the user performing the action
-      if (storedUserId) {
-        const user = await getUser(storedUserId);
-        setCurrentUser(user);
-      }
-    };
-    initializeUser();
-  }, []);
-  
-  const donorUsers = users.filter(u => u.roles.includes('Donor'));
-  const isAdminView = currentUser?.roles.some(role => ['Admin', 'Super Admin', 'Finance Admin'].includes(role)) ?? false;
-
 
   const handleTxnIdCheck = useCallback(async (txnId: string) => {
     if (!txnId || (isEditing && txnId === existingDonation?.transactionId)) {
@@ -355,69 +200,29 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   }, [isEditing, existingDonation]);
 
   useEffect(() => {
-    if (paymentApp !== 'PhonePe') {
-        handleTxnIdCheck(debouncedTransactionId || '');
-    }
-  }, [debouncedTransactionId, handleTxnIdCheck, paymentApp]);
+    handleTxnIdCheck(debouncedTransactionId || '');
+  }, [debouncedTransactionId, handleTxnIdCheck]);
   
   useEffect(() => {
-    const prefillData = async () => {
-        if(isEditing) {
-            const donor = await getUser(existingDonation.donorId);
-            setSelectedDonor(donor);
-            if(existingDonation.paymentScreenshotUrls && existingDonation.paymentScreenshotUrls.length > 0) {
-                 setValue('paymentScreenshotDataUrl', existingDonation.paymentScreenshotUrls[0] || '', { shouldValidate: true });
-            }
-            if(existingDonation.rawText) {
-                setExtractedRawText(existingDonation.rawText);
-            }
-            return;
-        }
+    const total = totalTransactionAmount || 0;
+    const pledge = (includePledge && selectedDonor?.monthlyPledgeEnabled && selectedDonor.monthlyPledgeAmount) ? selectedDonor.monthlyPledgeAmount : 0;
+    const tip = includeTip ? (tipAmount || 0) : 0;
+    const primaryAmount = Math.max(0, total - tip - pledge);
+    setValue('amount', primaryAmount, { shouldDirty: true, shouldValidate: true });
+  }, [totalTransactionAmount, tipAmount, includeTip, setValue, includePledge, selectedDonor]);
 
-        const screenshotData = sessionStorage.getItem('manualDonationScreenshot');
-        if (screenshotData) {
-            try {
-                const { details, dataUrl, rawText } = JSON.parse(screenshotData);
-                
-                Object.entries(details).forEach(([key, value]) => {
-                    if(value) {
-                         if (key === 'date') {
-                             setValue('donationDate', new Date(value as string));
-                         } else if (key === 'amount') {
-                             setValue('totalTransactionAmount', value as number);
-                         } else {
-                             setValue(key as any, value);
-                         }
-                    }
-                });
-                
-                if (rawText) setExtractedRawText(rawText);
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    setAdminUserId(storedUserId);
+  }, []);
+  
+  const donorUsers = users.filter(u => u.roles.includes('Donor'));
 
-                if (details.donorId) {
-                    const foundUser = await getUser(details.donorId);
-                     if (foundUser) {
-                        setValue('donorId', foundUser.id!);
-                        setSelectedDonor(foundUser);
-                     }
-                }
-
-                if (dataUrl) {
-                    setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
-                    const file = await dataUrlToFile(dataUrl, 'scanned-screenshot.png');
-                    setFile(file);
-                }
-            } catch (error) {
-                console.error("Error processing session screenshot", error);
-                toast({ variant: 'destructive', title: "Error", description: "Could not load the screenshot data." });
-            } finally {
-                sessionStorage.removeItem('manualDonationScreenshot');
-            }
-        }
-    }
-    prefillData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
-
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        return new File([blob], filename, { type: blob.type });
+    };
 
   async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
@@ -431,8 +236,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       if (value !== undefined && value !== null) {
         if (value instanceof Date) {
           formData.append(key, value.toISOString());
-        } else if (Array.isArray(value)) {
-            // This will handle non-file arrays, like upiIds
+        } else if (key === 'paymentScreenshot' && value instanceof File) {
+            formData.append('paymentScreenshots', value);
         }
         else {
           formData.append(key, String(value));
@@ -441,7 +246,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     });
     
     formData.append('adminUserId', adminUserId);
-    formData.append('paymentScreenshotDataUrl', values.paymentScreenshotDataUrl || '');
 
 
     const result = isEditing 
@@ -467,69 +271,77 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       });
     }
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setValue('paymentScreenshot', file, { shouldValidate: true });
+      const preview = URL.createObjectURL(file);
+      setFilePreview(preview);
+    } else {
+      setValue('paymentScreenshot', null);
+      setFilePreview(null);
+    }
+  };
   
   const handleAutoFill = async () => {
-    if (!file) {
+    const proofFile = getValues('paymentScreenshot');
+    if (!proofFile) {
       toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot to scan.' });
       return;
     }
     setIsScanning(true);
-    const formData = new FormData();
-    formData.append("proofFile", file);
+    try {
+        const arrayBuffer = await proofFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const dataUri = `data:${proofFile.type};base64,${base64}`;
+        const result = await extractDonationDetails({ photoDataUri: dataUri });
 
-    const result = await scanProof(formData);
-
-    if (result.success && result.details) {
         toast({ variant: 'success', title: 'Scan Successful!', description: 'The form has been pre-filled with the scanned data.' });
-        Object.entries(result.details).forEach(([key, value]) => {
-            if (value) {
+        Object.entries(result).forEach(([key, value]) => {
+            if (value && key !== 'rawText') {
                 if (key === 'date') setValue('donationDate', new Date(value as string));
                 else if (key === 'amount') setValue('totalTransactionAmount', value as number);
                 else setValue(key as any, value);
             }
         });
-        if (result.details.rawText) setExtractedRawText(result.details.rawText);
-        trigger(); // Trigger validation on all fields
-    } else {
-        toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details from the image." });
+        if (result.rawText) setExtractedRawText(result.rawText);
+        trigger();
+    } catch (e) {
+        toast({ variant: 'destructive', title: 'Scan Failed', description: e instanceof Error ? e.message : "Could not extract details from the image." });
     }
     setIsScanning(false);
   };
   
-   const handleGetText = async () => {
-    if (!file) {
+  const handleGetText = async () => {
+    const proofFile = getValues('paymentScreenshot');
+    if (!proofFile) {
       toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
       return;
     }
     setIsExtractingText(true);
-    const formData = new FormData();
-    formData.append('imageFile', file);
-    const result = await getRawTextFromImage(formData);
-    if(result.success && result.text) {
-        setExtractedRawText(result.text);
-    } else {
-        toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
+    try {
+        const arrayBuffer = await proofFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const dataUri = `data:${proofFile.type};base64,${base64}`;
+        const result = await extractRawText({ photoDataUri: dataUri });
+        setExtractedRawText(result.rawText);
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Extraction Failed', description: e instanceof Error ? e.message : 'Could not extract text from the image.' });
     }
     setIsExtractingText(false);
   };
-
-  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        return new File([blob], filename, { type: blob.type });
-    };
-
+  
   const isFormInvalid = transactionIdState.isAvailable === false;
 
 
   return (
-    <>
-      <Form {...form}>
+    <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                  <FormField
                     control={form.control}
-                    name="paymentScreenshotDataUrl"
+                    name="paymentScreenshot"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Payment Proof</FormLabel>
@@ -538,20 +350,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                     type="file" 
                                     accept="image/*,application/pdf"
                                     ref={fileInputRef}
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            setFile(file);
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
-                                            };
-                                            reader.readAsDataURL(file);
-                                        } else {
-                                            setFile(null);
-                                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
-                                        }
-                                    }}
+                                    onChange={handleFileChange}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -559,9 +358,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     )}
                 />
                 
-                {paymentScreenshotDataUrl && (
+                {filePreview && (
                     <div className="flex flex-col items-center gap-4">
-                        <Image src={paymentScreenshotDataUrl} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                        <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
                         <div className="flex gap-2">
                            <Button type="button" variant="outline" size="sm" onClick={handleGetText} disabled={isExtractingText}>
                                 {isExtractingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
@@ -631,14 +430,14 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     </FormItem>
                 )}
                 />
-
+            
             <FormField
                 control={form.control}
                 name="paymentMethod"
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshotDataUrl'); }} value={field.value}>
+                        <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshot'); }} value={field.value}>
                             <FormControl>
                                 <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
                             </FormControl>
@@ -666,60 +465,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     </FormItem>
                 )}
                 />
-
-             {paymentMethod === 'Online (UPI/Card)' && (
-                <FormField
-                    control={form.control}
-                    name="paymentApp"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Payment App</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Select the app used for payment" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {paymentApps.map(app => <SelectItem key={app} value={app}>{app}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
-
-            <FormField
-                control={form.control}
-                name="transactionId"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>{transactionIdLabel}</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                         <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            {paymentApp === 'Google Pay' && (
-                 <>
-                    <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (<FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (<FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 </>
-            )}
-            {paymentApp === 'PhonePe' && (
-                 <>
-                    <FormField control={form.control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="phonePeSenderName" render={({ field }) => (<FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="phonePeRecipientName" render={({ field }) => (<FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                </>
-            )}
-            {paymentApp === 'Paytm' && (
-                 <>
-                    <FormField control={form.control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="paytmSenderName" render={({ field }) => (<FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="paytmRecipientName" render={({ field }) => (<FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                </>
-            )}
-
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                     control={form.control}
@@ -727,14 +473,14 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Primary Donation Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {availableDonationTypes.map(type => (
+                            {donationTypes.map(type => (
                                 <SelectItem key={type} value={type}>{type}</SelectItem>
                             ))}
                             </SelectContent>
@@ -749,7 +495,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Purpose</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a purpose" />
@@ -766,111 +512,13 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     )}
                 />
             </div>
-            
-             <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Status</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a status" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {Object.values(['Pending verification', 'Verified', 'Partially Allocated', 'Allocated', 'Failed/Incomplete']).map(s => (
-                                <SelectItem key={s} value={s}>{s}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            
-            <FormField
-                control={form.control}
-                name="donationDate"
-                render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Donation Date</FormLabel>
-                    <Popover>
-                    <PopoverTrigger asChild>
-                        <FormControl>
-                        <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                        >
-                            {field.value ? (
-                            format(field.value, "PPP")
-                            ) : (
-                            <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                        </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        />
-                    </PopoverContent>
-                    </Popover>
-                    <FormDescription>The date the transaction was made.</FormDescription>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
-                  <FormControl>
-                      <Textarea placeholder="Add any internal notes, or comments from the screenshot." {...field} />
-                  </FormControl>
-                      <FormDescription>These notes are for internal use only and not visible to the donor.</FormDescription>
-                  <FormMessage />
-                  </FormItem>
-              )}
-          />
-
-           <FormField
-            control={form.control}
-            name="isAnonymous"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    Mark this Donation as Anonymous
-                  </FormLabel>
-                  <FormDescription>
-                    If checked, the donor&apos;s name will be hidden from public view for this specific donation.
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <div className="flex gap-4">
-            <Button type="submit" disabled={isSubmitting || isFormInvalid}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditing ? 'Save Changes' : 'Add Donation'}
-            </Button>
-          </div>
+             <div className="flex gap-4">
+                <Button type="submit" disabled={isSubmitting || isFormInvalid}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isEditing ? 'Save Changes' : 'Add Donation'}
+                </Button>
+             </div>
         </form>
       </Form>
     </>

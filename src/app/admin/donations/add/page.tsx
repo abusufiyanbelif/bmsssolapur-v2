@@ -28,7 +28,7 @@ export default async function AddDonationPage() {
                 <CardHeader>
                     <CardTitle>Add Donation Manually</CardTitle>
                     <CardDescription>
-                        Fill in the form below to record a new donation. If you scanned a screenshot, some details may be pre-filled.
+                       Upload a payment proof to auto-fill details, or enter them manually below.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

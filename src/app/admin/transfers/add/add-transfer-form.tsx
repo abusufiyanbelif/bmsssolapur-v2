@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp, UploadCloud } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp, UploadCloud, Bot, Text } from "lucide-react";
 import type { User, Lead, PaymentMethod, Campaign, UserRole } from "@/services/types";
 import { getUser, getUserByPhone, getUserByUpiId } from "@/services/user-service";
 import { useRouter } from "next/navigation";
@@ -36,11 +36,11 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { handleAddTransfer } from "./actions";
-import { scanProof } from '@/app/admin/donations/add/actions';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
@@ -63,12 +63,18 @@ const formSchema = z.object({
   paytmUpiReferenceNo: z.string().optional(),
   // Participant details
   senderName: z.string().optional(),
+  phonePeSenderName: z.string().optional(),
+  googlePaySenderName: z.string().optional(),
+  paytmSenderName: z.string().optional(),
   senderPhone: z.string().optional(),
   senderAccountNumber: z.string().optional(),
   senderBankName: z.string().optional(),
   senderIfscCode: z.string().optional(),
   senderUpiId: z.string().optional(),
   recipientName: z.string().optional(),
+  phonePeRecipientName: z.string().optional(),
+  googlePayRecipientName: z.string().optional(),
+  paytmRecipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
   recipientAccountNumber: z.string().optional(),
   recipientBankName: z.string().optional(),
@@ -76,7 +82,6 @@ const formSchema = z.object({
   recipientUpiId: z.string().optional(),
   status: z.string().optional(),
 }).refine(data => {
-    // If payment method is Online or Bank Transfer, a proof is required.
     if (['Online (UPI/Card)', 'Bank Transfer'].includes(data.paymentMethod)) {
         return !!data.proof;
     }
@@ -233,37 +238,49 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     
     setIsScanning(true);
     
-    const formData = new FormData();
-    formData.append('proofFile', file);
-    
-    const result = await scanProof(formData);
-    
-    if (result.success && result.details) {
-      toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields populated. Please review.' });
-      
-      Object.entries(result.details).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          if (key === 'date' && typeof value === 'string') {
-            setValue('transactionDate', new Date(value));
-          } else if (key === 'amount') {
-            setValue('amount', value as number);
-          } else if (key === 'paymentApp' && typeof value === 'string' && ['Google Pay', 'PhonePe', 'Paytm'].includes(value)) {
-            setValue('paymentApp', value as any);
-          } else {
-            setValue(key as any, value);
-          }
-        }
-      });
-      if(result.details.rawText) setRawText(result.details.rawText);
-      setTransferMethod('record'); // Switch back to the form
-      trigger();
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const dataUri = `data:${file.type};base64,${base64}`;
+        const result = await extractDonationDetails({ photoDataUri: dataUri });
 
-    } else {
-      toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details." });
+        toast({ variant: 'success', title: 'Scan Successful!', description: 'Form fields populated. Please review.' });
+        
+        Object.entries(result).forEach(([key, value]) => {
+            if (value && key !== 'rawText') {
+                if (key === 'date') setValue('transactionDate', new Date(value as string));
+                else if (key === 'amount') setValue('amount', value as number);
+                else setValue(key as any, value);
+            }
+        });
+        if (result.rawText) setRawText(result.rawText);
+        setTransferMethod('record');
+        trigger();
+
+    } catch (e) {
+        toast({ variant: 'destructive', title: 'Scan Failed', description: e instanceof Error ? e.message : "Could not extract details." });
     }
     setIsScanning(false);
   };
   
+   const handleExtractText = async () => {
+    if (!file) {
+      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
+      return;
+    }
+    setIsExtractingText(true);
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const dataUri = `data:${file.type};base64,${base64}`;
+        const result = await extractRawText({ photoDataUri: dataUri });
+        setRawText(result.rawText);
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Extraction Failed', description: e instanceof Error ? e.message : 'Could not extract text from the image.' });
+    }
+    setIsExtractingText(false);
+  };
+
    const onFormSubmit = async (data: AddTransferFormValues) => {
     if (!adminUserId) {
       toast({ variant: "destructive", title: "Authentication Error", description: "Could not identify the logged-in administrator. Please log out and back in." });
@@ -297,7 +314,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
       toast({ variant: "destructive", title: "Submission Failed", description: result.error || "An unknown error occurred." });
     }
   };
-  
   
   return (
     <>
@@ -341,162 +357,158 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             {previewUrl && (
                 <div className="relative w-full h-96"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
             )}
-             <Button type="button" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
-                {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
-                Scan & Fill Form
-            </Button>
+             <div className="flex gap-2">
+                <Button type="button" variant="outline" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
+                    {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                    Get Raw Text
+                </Button>
+                <Button type="button" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
+                    {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                    Auto-fill Form
+                </Button>
+            </div>
+             {rawText && (
+                <div className="space-y-2">
+                    <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                    <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
+                </div>
+            )}
         </div>
     ) : (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8">
-          <FormField
-            control={control}
-            name="leadId"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Select Lead</FormLabel>
-                <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                      >
-                        {field.value ? leads.find(l => l.id === field.value)?.name : "Select a lead..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                      <CommandInput placeholder="Search lead..." />
-                      <CommandList>
-                        <CommandEmpty>No open leads found.</CommandEmpty>
-                        <CommandGroup>
-                          {leads.map((lead) => (
-                            <CommandItem
-                              value={`${lead.name} ${lead.id}`}
-                              key={lead.id}
-                              onSelect={() => { field.onChange(lead.id!); setLeadPopoverOpen(false); }}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", lead.id === field.value ? "opacity-100" : "opacity-0")} />
-                              <span>{lead.name} (Req: ₹{lead.helpRequested})</span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
+            <h3 className="text-lg font-semibold border-b pb-2">Recipient & Case Details</h3>
+            <FormField
+                control={control}
+                name="leadId"
+                render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Select Lead</FormLabel>
+                    <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                    <PopoverTrigger asChild>
+                        <FormControl>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                        >
+                            {field.value ? leads.find(l => l.id === field.value)?.name : "Select a lead..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                        </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                        <CommandInput placeholder="Search lead..." />
+                        <CommandList>
+                            <CommandEmpty>No open leads found.</CommandEmpty>
+                            <CommandGroup>
+                            {leads.map((lead) => (
+                                <CommandItem
+                                value={`${lead.name} ${lead.id}`}
+                                key={lead.id}
+                                onSelect={() => { field.onChange(lead.id!); setLeadPopoverOpen(false); }}
+                                >
+                                <Check className={cn("mr-2 h-4 w-4", lead.id === field.value ? "opacity-100" : "opacity-0")} />
+                                <span>{lead.name} (Req: ₹{lead.helpRequested})</span>
+                                </CommandItem>
+                            ))}
+                            </CommandGroup>
+                        </CommandList>
+                        </Command>
+                    </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+          
+            {selectedLead && (
+                 <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Case Summary: {selectedLead.purpose}</AlertTitle>
+                    <AlertDescription>
+                        <p>Requested: ₹{selectedLead.helpRequested.toLocaleString()}</p>
+                        <p>Received: ₹{selectedLead.helpGiven.toLocaleString()}</p>
+                        <p className="font-semibold text-destructive">Pending: ₹{(selectedLead.helpRequested - selectedLead.helpGiven).toLocaleString()}</p>
+                    </AlertDescription>
+                </Alert>
             )}
-          />
-          
-          <Card>
-              <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details (For Case)</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm space-y-2">
-                  {beneficiaryDetails ? (
-                      <>
-                          <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
-                          <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
-                      </>
-                  ) : (
-                      <p className="text-muted-foreground">Select a lead to see beneficiary details.</p>
-                  )}
-              </CardContent>
-          </Card>
-          
-          <Card>
-              <CardHeader>
-                  <CardTitle>Recipient & Transaction Details</CardTitle>
-                  <CardDescription>Details about who received the funds and the transaction itself.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                  <FormField
-                      control={form.control}
-                      name="recipientType"
-                      render={({ field }) => (
-                      <FormItem className="space-y-3">
-                          <FormLabel>Transfer funds directly to:</FormLabel>
-                          <FormControl>
-                          <RadioGroup
-                              onValueChange={(value: any) => {
-                                  field.onChange(value);
-                                  setValue('recipientId', undefined);
-                              }}
-                              value={field.value}
-                              className="flex flex-wrap gap-x-4 gap-y-2"
-                          >
-                              <FormItem className="flex items-center space-x-2">
-                                  <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
-                                  <FormLabel className="font-normal">Beneficiary</FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-2">
-                                  <FormControl><RadioGroupItem value="Referral" /></FormControl>
-                                  <FormLabel className="font-normal">Referral</FormLabel>
-                              </FormItem>
-                          </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                      </FormItem>
-                      )}
-                  />
-                  {recipientType === 'Referral' && (
-                      <FormField
-                          control={form.control}
-                          name="recipientId"
-                          render={({ field }) => (
-                              <FormItem className="flex flex-col">
-                              <FormLabel>Select Referral</FormLabel>
-                              <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
-                                  <PopoverTrigger asChild>
-                                  <FormControl>
-                                      <Button variant="outline" role="combobox" className={cn("w-full justify-between",!field.value && "text-muted-foreground")}>
-                                      {field.value ? users.find((user) => user.id === field.value)?.name : "Select a referral"}
-                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                      </Button>
-                                  </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                  <Command>
-                                      <CommandInput placeholder="Search referral..." />
-                                      <CommandList>
-                                          <CommandEmpty>No referrals found.</CommandEmpty>
-                                          <CommandGroup>
-                                              {potentialReferrals.map((user) => (
-                                                  <CommandItem
-                                                      value={user.name}
-                                                      key={user.id}
-                                                      onSelect={() => { field.onChange(user.id!); setReferralPopoverOpen(false); }}
-                                                  >
-                                                  <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                  {user.name} ({user.phone})
-                                                  </CommandItem>
-                                              ))}
-                                          </CommandGroup>
-                                      </CommandList>
-                                  </Command>
-                                  </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                              </FormItem>
-                          )}
-                      />
-                  )}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="Enter amount transferred" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                  </div>
-                   <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input placeholder={`Enter ${transactionIdLabel}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
-              </CardContent>
-          </Card>
-          
-          <div className="flex gap-4">
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base">Recipient Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="recipientType"
+                        render={({ field }) => (
+                        <FormItem className="space-y-3">
+                            <FormLabel>Transfer funds directly to:</FormLabel>
+                            <FormControl>
+                            <RadioGroup
+                                onValueChange={(value: any) => {
+                                    field.onChange(value);
+                                    setValue('recipientId', undefined);
+                                }}
+                                value={field.value}
+                                className="flex flex-wrap gap-x-4 gap-y-2"
+                            >
+                                <FormItem className="flex items-center space-x-2">
+                                    <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
+                                    <FormLabel className="font-normal">Beneficiary</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2">
+                                    <FormControl><RadioGroupItem value="Referral" disabled={!selectedLead?.referredByUserId} /></FormControl>
+                                    <FormLabel className="font-normal">Referral</FormLabel>
+                                </FormItem>
+                            </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     {recipientDetails && (
+                        <div className="p-4 border bg-muted/50 rounded-lg text-sm space-y-2">
+                            <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{recipientDetails.name}</span></div>
+                            <div className="flex justify-between"><span>Bank Name:</span><span className="font-semibold">{recipientDetails.bankAccountName}</span></div>
+                            <div className="flex justify-between"><span>Bank Account:</span><span className="font-semibold">{recipientDetails.bankAccountNumber}</span></div>
+                            <div className="flex justify-between"><span>IFSC:</span><span className="font-semibold">{recipientDetails.bankIfscCode}</span></div>
+                            <div className="flex justify-between"><span>UPI ID:</span><span className="font-semibold">{recipientDetails.upiIds?.[0]}</span></div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <h3 className="text-lg font-semibold border-b pb-2">Transaction Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="Enter amount transferred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+            </div>
+
+            <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input placeholder={`Enter ${transactionIdLabel}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
+            
+            <FormField
+                control={control}
+                name="proof"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Proof of Transfer</FormLabel>
+                        <FormControl>
+                            <Input 
+                                type="file" 
+                                accept="image/*,application/pdf"
+                                ref={fileInputRef}
+                                onChange={(e) => { field.onChange(e.target.files?.[0]); setFile(e.target.files?.[0] || null); }}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <div className="flex gap-4">
               <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
                   Record Transfer
