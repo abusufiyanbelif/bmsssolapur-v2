@@ -1,47 +1,23 @@
 
-'use client';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Loader2, AlertCircle } from "lucide-react";
-import { AppSettings } from "@/services/types";
-import { getAppSettings } from "@/app/admin/settings/actions";
-import { useState, useEffect } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Settings, AlertCircle } from "lucide-react";
+import { getAppSettings } from "@/services/app-settings-service";
 import { DonationConfigForm } from "./donation-config-form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export default function DonationConfigurationPage() {
-    const [settings, setSettings] = useState<AppSettings | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    
-    const fetchData = async () => {
-        try {
-            setError(null);
-            setLoading(true);
-            const fetchedSettings = await getAppSettings();
-            setSettings(fetchedSettings);
-        } catch(e) {
-            setError("Failed to load application settings.");
-        } finally {
-            setLoading(false);
-        }
-    };
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-    
-    if (loading) {
-        return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-    }
+export default async function DonationConfigurationPage() {
+    const settings = await getAppSettings();
 
-    if (error || !settings) {
+    if (!settings) {
         return (
-            <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Page</AlertTitle>
-                <AlertDescription>{error || "Could not load settings."}</AlertDescription>
-            </Alert>
+            <div className="flex-1 space-y-4">
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Page</AlertTitle>
+                    <AlertDescription>Could not load application settings from the database.</AlertDescription>
+                </Alert>
+            </div>
         );
     }
     
@@ -59,7 +35,7 @@ export default function DonationConfigurationPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <DonationConfigForm settings={settings.donationConfiguration} onUpdate={fetchData} />
+                    <DonationConfigForm settings={settings.donationConfiguration} />
                 </CardContent>
             </Card>
         </div>

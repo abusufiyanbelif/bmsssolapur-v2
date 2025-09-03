@@ -19,6 +19,7 @@ import { Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateDonationConfiguration } from "./actions";
 import type { AppSettings } from "@/services/types";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
     allowDonorSelfServiceDonations: z.boolean().default(true),
@@ -28,12 +29,12 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface DonationConfigFormProps {
     settings?: AppSettings['donationConfiguration'];
-    onUpdate: () => void;
 }
 
-export function DonationConfigForm({ settings, onUpdate }: DonationConfigFormProps) {
+export function DonationConfigForm({ settings }: DonationConfigFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
+    const router = useRouter();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -49,8 +50,8 @@ export function DonationConfigForm({ settings, onUpdate }: DonationConfigFormPro
         const result = await handleUpdateDonationConfiguration(values);
         if (result.success) {
             toast({ variant: 'success', title: 'Settings Updated', description: 'Donation configuration has been saved.' });
-            onUpdate();
-            form.reset(values);
+            form.reset(values); // Resets the dirty state
+            router.refresh(); // Refreshes the page to get new server-side props
         } else {
             toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
         }
