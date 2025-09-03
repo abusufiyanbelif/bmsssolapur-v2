@@ -66,7 +66,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
         if (querySnapshot.empty) {
-            console.log("Quotes collection is empty, seeding initial data.");
+            console.log("Quotes collection is empty, attempting to seed initial data.");
             await seedInitialQuotes();
             // Re-fetch after seeding
             const newSnapshot = await quotesQuery.get();

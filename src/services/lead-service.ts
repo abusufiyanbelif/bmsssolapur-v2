@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */

@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
@@ -70,5 +69,3 @@ export async function getOpenGeneralLeads(): Promise<Lead[]> {
         return [];
     }
 }
-
-    

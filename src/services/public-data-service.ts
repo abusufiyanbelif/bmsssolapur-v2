@@ -92,10 +92,15 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
  * @returns The public organization object or null if not found.
  */
 export const getPublicOrganization = async (): Promise<Organization | null> => {
-    const adminDb = getAdminDb();
-    const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
-    const docSnap = await publicOrgRef.get();
-    return docSnap.exists ? (docSnap.data() as Organization) : null;
+    try {
+        const adminDb = getAdminDb();
+        const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
+        const docSnap = await publicOrgRef.get();
+        return docSnap.exists ? (docSnap.data() as Organization) : null;
+    } catch(e) {
+        console.error("Error getting public organization:", e);
+        return null;
+    }
 };
 
 /**
