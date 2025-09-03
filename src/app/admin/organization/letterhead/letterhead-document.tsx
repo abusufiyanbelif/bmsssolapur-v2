@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Organization } from "@/services/types";
 import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface LetterheadDocumentProps {
   organization: Organization;
@@ -31,9 +33,6 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
     setIsGenerating(true);
 
     try {
-      const { default: html2canvas } = await import('html2canvas');
-      const { jsPDF } = await import('jspdf');
-
       const canvas = await html2canvas(letterheadRef.current, {
           scale: 3, // Increase scale for better resolution
           useCORS: true,
@@ -59,14 +58,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      
-      const pdfDataUri = pdf.output('datauristring');
-      const link = document.createElement('a');
-      link.href = pdfDataUri;
-      link.download = `Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      pdf.save(`Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`);
       
       toast({
           variant: 'success',
