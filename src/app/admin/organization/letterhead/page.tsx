@@ -1,5 +1,5 @@
 
-import { getCurrentOrganization } from "@/services/organization-service";
+import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { notFound } from "next/navigation";
 import { LetterheadDocument } from "./letterhead-document";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
