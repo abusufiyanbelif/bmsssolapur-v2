@@ -17,6 +17,8 @@ import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Donation, User } from "@/services/types";
 import { DonationReceipt } from "./donation-receipt";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface DonationReceiptDialogProps {
   donation: Donation;
@@ -34,19 +36,15 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
     setIsGenerating(true);
 
     try {
-      const { default: html2canvas } = await import('html2canvas');
-      const { jsPDF } = await import('jspdf');
-
       const canvas = await html2canvas(receiptRef.current, { 
           scale: 3, // Increase scale for better resolution
-          useCORS: true,
+          useCORS: true, // Allow loading cross-origin images
           logging: false,
           backgroundColor: '#ffffff', // Ensure a solid background for canvas
       });
       const imgData = canvas.toDataURL('image/png');
       
       const A4_WIDTH_PT = 595.28;
-      const A4_HEIGHT_PT = 841.89;
 
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -60,15 +58,7 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      
-      const pdfDataUri = pdf.output('datauristring');
-
-      const link = document.createElement('a');
-      link.href = pdfDataUri;
-      link.download = `Donation-Receipt-${donation.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      pdf.save(`Donation-Receipt-${donation.id}.pdf`);
 
       toast({
           variant: 'success',
