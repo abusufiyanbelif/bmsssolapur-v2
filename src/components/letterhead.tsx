@@ -28,21 +28,22 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                             <tbody>
                                 <tr>
                                     <td style={{ width: '128px', verticalAlign: 'top' }}>
-                                        <div className="relative w-32 h-32">
-                                            <img
-                                                src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
-                                                alt="Organization Logo"
-                                                crossOrigin="anonymous"
-                                                className="w-full h-full object-contain"
-                                                data-ai-hint="logo"
-                                            />
-                                        </div>
+                                         <div className="relative w-32 h-32">
+                                        <img
+                                            src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
+                                            alt="Organization Logo"
+                                            crossOrigin="anonymous"
+                                            className="w-full h-full object-contain"
+                                            data-ai-hint="logo"
+                                        />
+                                    </div>
                                     </td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-4xl font-bold tracking-wider" style={textStyle}>
-                                            <span className="text-primary">{organization.name.split(' ')[0]} {organization.name.split(' ')[1]}</span> <span className="text-accent">{organization.name.split(' ')[2]} {organization.name.split(' ')[3]}</span>
+                                            <span className="text-primary">BAITULMAL</span> <span className="text-accent">SAMAJIK</span> <span className="text-primary">SANSTHA</span>
                                         </h1>
-                                        <p className="text-lg font-bold text-primary" style={textStyle}>(Solapur)</p>
+                                        <h2 className="text-4xl font-bold tracking-wider text-accent" style={textStyle}>SOLAPUR</h2>
+                                        <p className="text-lg font-bold text-primary" style={textStyle}>({organization.city})</p>
                                         <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organization.address}</p>
                                         <p className="text-sm text-gray-600" style={textStyle}>Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
                                     </td>
