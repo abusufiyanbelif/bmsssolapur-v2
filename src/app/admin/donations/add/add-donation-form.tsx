@@ -290,6 +290,17 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     return donationTypes;
   }, [selectedLead]);
   
+  const transactionIdLabel = useMemo(() => {
+        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
+        switch (paymentApp) {
+            case 'PhonePe': return 'Transaction ID';
+            case 'Paytm': return 'UPI Ref. No';
+            case 'Google Pay': return 'UPI Transaction ID';
+            default: return 'Primary Transaction ID';
+        }
+    }, [paymentApp, paymentMethod]);
+
+
   useEffect(() => {
     const currentType = getValues('type');
     if (selectedLead && !availableDonationTypes.includes(currentType)) {
@@ -460,56 +471,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-                control={form.control}
-                name="donorId"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Donor</FormLabel>
-                    <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
-                            >
-                            {selectedDonor?.name || "Select a donor"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                            <CommandInput placeholder="Search donor..." />
-                            <CommandList>
-                                <CommandEmpty>No donors found.</CommandEmpty>
-                                <CommandGroup>
-                                {donorUsers.map((user) => (
-                                    <CommandItem
-                                    value={user.name}
-                                    key={user.id}
-                                    onSelect={async () => {
-                                        field.onChange(user.id!);
-                                        const donor = await getUser(user.id!);
-                                        setSelectedDonor(donor);
-                                        setDonorPopoverOpen(false);
-                                    }}
-                                    >
-                                    <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
-                                    {user.name} ({user.phone})
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-
              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                 <div className="flex items-center justify-between">
                     <FormLabel>Payment Proof</FormLabel>
@@ -567,6 +528,55 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     </div>
                 )}
              </div>
+            <FormField
+                control={form.control}
+                name="donorId"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Donor</FormLabel>
+                    <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
+                            >
+                            {selectedDonor?.name || "Select a donor"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="Search donor..." />
+                            <CommandList>
+                                <CommandEmpty>No donors found.</CommandEmpty>
+                                <CommandGroup>
+                                {donorUsers.map((user) => (
+                                    <CommandItem
+                                    value={user.name}
+                                    key={user.id}
+                                    onSelect={async () => {
+                                        field.onChange(user.id!);
+                                        const donor = await getUser(user.id!);
+                                        setSelectedDonor(donor);
+                                        setDonorPopoverOpen(false);
+                                    }}
+                                    >
+                                    <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                    {user.name} ({user.phone})
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
             
             <FormField
                 control={form.control}
@@ -602,6 +612,48 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     </FormItem>
                 )}
                 />
+
+             {paymentMethod === 'Online (UPI/Card)' && (
+                <FormField
+                    control={form.control}
+                    name="paymentApp"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Payment App</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select the app used for payment" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {paymentApps.map(app => <SelectItem key={app} value={app}>{app}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+
+            <FormField
+                control={form.control}
+                name="transactionId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>{transactionIdLabel}</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                         <AvailabilityFeedback state={transactionIdState} fieldName="Transaction ID" />
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            {paymentApp === 'Google Pay' && (
+                <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+            )}
+            {paymentApp === 'PhonePe' && (
+                <FormField control={form.control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+            )}
+            {paymentApp === 'Paytm' && (
+                 <FormField control={form.control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <FormField
                     control={form.control}

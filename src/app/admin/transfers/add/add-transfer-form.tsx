@@ -58,6 +58,9 @@ const formSchema = z.object({
   proof: z.any().optional(),
   notes: z.string().optional(),
   paymentApp: z.enum(paymentApps).optional(),
+  googlePayTransactionId: z.string().optional(),
+  phonePeTransactionId: z.string().optional(),
+  paytmUpiReferenceNo: z.string().optional(),
   // Participant details
   senderName: z.string().optional(),
   senderPhone: z.string().optional(),
@@ -95,6 +98,9 @@ const initialFormValues: Partial<AddTransferFormValues> = {
   recipientId: undefined,
   transactionId: '',
   utrNumber: '',
+  googlePayTransactionId: '',
+  phonePeTransactionId: '',
+  paytmUpiReferenceNo: '',
   paymentApp: undefined,
   proof: undefined,
   notes: '',
@@ -143,7 +149,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     defaultValues: initialFormValues,
   });
 
-  const { watch, setValue, reset, control, trigger } = form;
+  const { watch, setValue, reset, control, trigger, register, handleSubmit } = form;
   const paymentMethod = watch("paymentMethod");
   const selectedLeadId = watch("leadId");
   const paymentApp = watch("paymentApp");
@@ -151,6 +157,17 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   const selectedRecipientId = watch("recipientId");
 
   const selectedLead = leads.find(l => l.id === selectedLeadId);
+  
+   const transactionIdLabel = useMemo(() => {
+        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
+        switch (paymentApp) {
+            case 'PhonePe': return 'Transaction ID';
+            case 'Paytm': return 'UPI Ref. No';
+            case 'Google Pay': return 'UPI Transaction ID';
+            default: return 'Primary Transaction ID';
+        }
+    }, [paymentApp, paymentMethod]);
+
 
   const clearForm = () => {
     reset(initialFormValues);
@@ -281,15 +298,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     }
   };
   
-  const transactionIdLabel = useMemo(() => {
-        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
-        switch (paymentApp) {
-            case 'PhonePe': return 'Transaction ID';
-            case 'Paytm': return 'UPI Ref. No';
-            case 'Google Pay': return 'UPI Transaction ID';
-            default: return 'Primary Transaction ID';
-        }
-    }, [paymentApp, paymentMethod]);
   
   return (
     <>
@@ -484,6 +492,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                       <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="Enter amount transferred" {...field} /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                   </div>
+                   <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input placeholder={`Enter ${transactionIdLabel}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
               </CardContent>
           </Card>
           
