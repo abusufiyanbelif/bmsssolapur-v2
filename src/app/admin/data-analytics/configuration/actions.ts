@@ -4,7 +4,7 @@
 
 import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
-import { AnalyticsDashboardSettings } from "@/services/types";
+import { AnalyticsDashboardSettings, UserRole } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -12,27 +12,22 @@ interface FormState {
 }
 
 const analyticsDashboardCardKeys: (keyof AnalyticsDashboardSettings)[] = [
-    'financialPerformance',
+    'financialPerformance', 'systemHealth', 'dataGrowthChart', 'donationsChart', 'usersChart', 'leadBreakdown', 'campaignBreakdown'
 ];
 
 export async function handleUpdateAnalyticsDashboardSettings(
-  currentSettings: AppSettings['analyticsDashboard'],
   formData: FormData
 ): Promise<FormState> {
   
   try {
-    const newSettings: AnalyticsDashboardSettings = {
-        financialPerformance: { visibleTo: [] }
-    };
+    const newSettings: Partial<AnalyticsDashboardSettings> = {};
 
     analyticsDashboardCardKeys.forEach(key => {
-        const visibleTo = formData.getAll(`${key}-roles`);
-        if (newSettings[key]) {
-            newSettings[key] = { visibleTo: (visibleTo as any[]) || [] };
-        }
+        const visibleToRoles = formData.getAll(`${key}-roles`) as UserRole[];
+        newSettings[key] = { visibleTo: visibleToRoles };
     });
     
-    await updateAppSettings({ analyticsDashboard: newSettings });
+    await updateAppSettings({ analyticsDashboard: newSettings as AnalyticsDashboardSettings });
     
     revalidatePath("/admin/data-analytics/configuration");
     revalidatePath("/admin/data-analytics");

@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { updateAppSettings as updateSettingsService, AppSettings, getAppSettings as getSettingsService } from "@/services/app-settings-service";
@@ -50,4 +51,8 @@ export async function handleUpdateAppSettings(
 
 export async function getCurrentOrganization() {
     return getOrgService();
+}
+
+export async function getAppSettings() {
+    return getSettingsService();
 }

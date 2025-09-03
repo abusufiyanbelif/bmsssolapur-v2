@@ -15,38 +15,34 @@ export async function handleUpdateNotificationSettings(
 ): Promise<FormState> {
   
   try {
-    const smsEnabled = formData.get("sms.twilio.enabled") === 'true';
-    const whatsappEnabled = formData.get("whatsapp.twilio.enabled") === 'true';
-    const emailEnabled = formData.get("email.nodemailer.enabled") === 'true';
-
     const updates = {
       notificationSettings: {
         sms: {
-            provider: 'twilio',
+            provider: 'twilio' as const,
             twilio: {
-                accountSid: smsEnabled ? formData.get("sms.twilio.accountSid") as string : '',
-                authToken: smsEnabled ? formData.get("sms.twilio.authToken") as string : '',
-                verifySid: smsEnabled ? formData.get("sms.twilio.verifySid") as string : '',
-                fromNumber: smsEnabled ? formData.get("sms.twilio.fromNumber") as string : '',
+                accountSid: formData.get("sms.twilio.accountSid") as string || '',
+                authToken: formData.get("sms.twilio.authToken") as string || '',
+                verifySid: formData.get("sms.twilio.verifySid") as string || '',
+                fromNumber: formData.get("sms.twilio.fromNumber") as string || '',
             }
         },
         whatsapp: {
-             provider: 'twilio',
+             provider: 'twilio' as const,
              twilio: {
-                accountSid: whatsappEnabled ? formData.get("whatsapp.twilio.accountSid") as string : '',
-                authToken: whatsappEnabled ? formData.get("whatsapp.twilio.authToken") as string : '',
-                fromNumber: whatsappEnabled ? formData.get("whatsapp.twilio.fromNumber") as string : '',
+                accountSid: formData.get("whatsapp.twilio.accountSid") as string || '',
+                authToken: formData.get("whatsapp.twilio.authToken") as string || '',
+                fromNumber: formData.get("whatsapp.twilio.fromNumber") as string || '',
              }
         },
         email: {
-            provider: 'nodemailer',
+            provider: 'nodemailer' as const,
             nodemailer: {
-                host: emailEnabled ? formData.get("email.nodemailer.host") as string : '',
-                port: emailEnabled ? Number(formData.get("email.nodemailer.port")) : 587,
-                secure: emailEnabled ? formData.get("email.nodemailer.secure") === 'true' : true,
-                user: emailEnabled ? formData.get("email.nodemailer.user") as string : '',
-                pass: emailEnabled ? formData.get("email.nodemailer.pass") as string : '',
-                from: emailEnabled ? formData.get("email.nodemailer.from") as string : '',
+                host: formData.get("email.nodemailer.host") as string || '',
+                port: Number(formData.get("email.nodemailer.port")) || 587,
+                secure: formData.get("email.nodemailer.secure") === 'on',
+                user: formData.get("email.nodemailer.user") as string || '',
+                pass: formData.get("email.nodemailer.pass") as string || '',
+                from: formData.get("email.nodemailer.from") as string || '',
             }
         }
       }

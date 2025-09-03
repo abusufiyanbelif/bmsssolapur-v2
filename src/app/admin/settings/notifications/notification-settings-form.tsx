@@ -19,30 +19,26 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateNotificationSettings } from "./actions";
 import { useState } from "react";
 import { Loader2, Save } from "lucide-react";
-import { AppSettings } from "@/services/app-settings-service";
+import type { AppSettings } from "@/services/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 const formSchema = z.object({
   // Twilio SMS
-  "sms.twilio.enabled": z.boolean().default(false),
   "sms.twilio.accountSid": z.string().optional(),
   "sms.twilio.authToken": z.string().optional(),
   "sms.twilio.verifySid": z.string().optional(),
   "sms.twilio.fromNumber": z.string().optional(),
 
   // Twilio WhatsApp
-  "whatsapp.twilio.enabled": z.boolean().default(false),
   "whatsapp.twilio.accountSid": z.string().optional(),
   "whatsapp.twilio.authToken": z.string().optional(),
   "whatsapp.twilio.fromNumber": z.string().optional(),
   
   // Nodemailer
-  "email.nodemailer.enabled": z.boolean().default(false),
   "email.nodemailer.host": z.string().optional(),
   "email.nodemailer.port": z.coerce.number().optional(),
   "email.nodemailer.secure": z.boolean().default(true),
@@ -64,16 +60,13 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      "sms.twilio.enabled": settings?.sms.twilio?.accountSid ? true : false,
       "sms.twilio.accountSid": settings?.sms.twilio?.accountSid ?? '',
       "sms.twilio.authToken": settings?.sms.twilio?.authToken ?? '',
       "sms.twilio.verifySid": settings?.sms.twilio?.verifySid ?? '',
       "sms.twilio.fromNumber": settings?.sms.twilio?.fromNumber ?? '',
-      "whatsapp.twilio.enabled": settings?.whatsapp.twilio?.accountSid ? true : false,
       "whatsapp.twilio.accountSid": settings?.whatsapp.twilio?.accountSid ?? '',
       "whatsapp.twilio.authToken": settings?.whatsapp.twilio?.authToken ?? '',
       "whatsapp.twilio.fromNumber": settings?.whatsapp.twilio?.fromNumber ?? '',
-      "email.nodemailer.enabled": settings?.email.nodemailer?.host ? true : false,
       "email.nodemailer.host": settings?.email.nodemailer?.host ?? '',
       "email.nodemailer.port": settings?.email.nodemailer?.port ?? 587,
       "email.nodemailer.secure": settings?.email.nodemailer?.secure ?? true,
@@ -90,7 +83,11 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-            formData.append(key, String(value));
+            if (typeof value === 'boolean') {
+                 formData.append(key, value ? 'on' : '');
+            } else {
+                 formData.append(key, String(value));
+            }
         }
     });
     
@@ -124,7 +121,6 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                     </AccordionTrigger>
                     <AccordionContent className="p-6 pt-0">
                         <div className="space-y-6">
-                            <FormField control={form.control} name="sms.twilio.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Twilio for SMS</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField control={form.control} name="sms.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="sms.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
@@ -142,7 +138,6 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                     </AccordionTrigger>
                     <AccordionContent className="p-6 pt-0">
                         <div className="space-y-6">
-                            <FormField control={form.control} name="whatsapp.twilio.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Twilio for WhatsApp</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField control={form.control} name="whatsapp.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="whatsapp.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
@@ -159,7 +154,6 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                     </AccordionTrigger>
                     <AccordionContent className="p-6 pt-0">
                         <div className="space-y-6">
-                            <FormField control={form.control} name="email.nodemailer.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Nodemailer for Email</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField control={form.control} name="email.nodemailer.host" render={({field}) => ( <FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                 <FormField control={form.control} name="email.nodemailer.port" render={({field}) => ( <FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />

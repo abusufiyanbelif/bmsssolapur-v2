@@ -20,42 +20,18 @@ const dashboardCardKeys: (keyof DashboardSettings)[] = [
 ];
 
 export async function handleUpdateDashboardSettings(
-  currentSettings: AppSettings['dashboard']
+  formData: FormData
 ): Promise<FormState> {
   
   try {
-    const newSettings: DashboardSettings = {
-        mainMetrics: { visibleTo: [] },
-        fundsInHand: { visibleTo: [] },
-        monthlyContributors: { visibleTo: [] },
-        monthlyPledge: { visibleTo: [] },
-        pendingLeads: { visibleTo: [] },
-        pendingDonations: { visibleTo: [] },
-        leadsReadyToPublish: { visibleTo: [] },
-        beneficiaryBreakdown: { visibleTo: [] },
-        campaignBreakdown: { visibleTo: [] },
-        leadBreakdown: { visibleTo: [] },
-        donationsChart: { visibleTo: [] },
-        topDonors: { visibleTo: [] },
-        recentCampaigns: { visibleTo: [] },
-        donationTypeBreakdown: { visibleTo: [] },
-        donorContributionSummary: { visibleTo: [] },
-        donorImpactSummary: { visibleTo: [] },
-        beneficiarySummary: { visibleTo: [] },
-        referralSummary: { visibleTo: [] },
-    };
+    const newSettings: Partial<DashboardSettings> = {};
 
-    // Process form data to populate the new settings object
-    const formKeys = new Set(Object.keys(currentSettings || {}));
-    
-    formKeys.forEach(key => {
-        const cardKey = key as keyof DashboardSettings;
-        if (dashboardCardKeys.includes(cardKey)) {
-             newSettings[cardKey] = { visibleTo: currentSettings?.[cardKey]?.visibleTo || [] };
-        }
+    dashboardCardKeys.forEach(key => {
+        const visibleToRoles = formData.getAll(`${key}-roles`) as UserRole[];
+        newSettings[key] = { visibleTo: visibleToRoles };
     });
-    
-    await updateAppSettings({ dashboard: newSettings });
+
+    await updateAppSettings({ dashboard: newSettings as DashboardSettings });
     
     revalidatePath("/admin/dashboard-settings");
     revalidatePath("/admin");

@@ -24,8 +24,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 const allAppRoles: UserRole[] = ["Super Admin", "Admin", "Finance Admin"];
 
-const cardDefinitions: { id: string, label: string, description: string }[] = [
-    { id: 'financialPerformance', label: 'Financial Performance Section', description: 'Controls visibility for the entire group of cards including Raised vs. Goal, YTD Donations, etc.' },
+const cardDefinitions: { id: keyof AnalyticsDashboardSettings; label: string; description: string }[] = [
+    { id: 'financialPerformance', label: 'Financial Performance Section', description: 'Controls visibility for the group of cards including Raised vs. Goal, YTD Donations, etc.' },
+    { id: 'systemHealth', label: 'System & Data Health Section', description: 'Controls visibility for the group of cards including User Base Health, Data Storage, etc.' },
+    { id: 'dataGrowthChart', label: 'Data Growth Chart', description: 'Controls visibility for the chart showing new users, leads, and donations over time.' },
+    { id: 'donationsChart', label: 'Donation Insights Chart', description: 'Controls visibility for the chart showing monthly donation amounts.' },
+    { id: 'usersChart', label: 'User Growth Chart', description: 'Controls visibility for the chart showing new user registrations.' },
+    { id: 'leadBreakdown', label: 'Lead Breakdown Card', description: 'Controls visibility for the card showing leads by purpose.' },
+    { id: 'campaignBreakdown', label: 'Campaign Breakdown Card', description: 'Controls visibility for the card showing campaigns by status.' },
 ];
 
 const formSchema = z.object({
@@ -51,7 +57,7 @@ export function AnalyticsDashboardSettingsForm({ settings }: AnalyticsDashboardS
     defaultValues: {
       cards: cardDefinitions.map(card => ({
         id: card.id,
-        roles: settings?.[card.id as keyof AnalyticsDashboardSettings]?.visibleTo || [],
+        roles: settings?.[card.id]?.visibleTo || [],
       }))
     },
   });
@@ -62,7 +68,7 @@ export function AnalyticsDashboardSettingsForm({ settings }: AnalyticsDashboardS
     reset({
       cards: cardDefinitions.map(card => ({
         id: card.id,
-        roles: settings?.[card.id as keyof AnalyticsDashboardSettings]?.visibleTo || [],
+        roles: settings?.[card.id]?.visibleTo || [],
       }))
     });
     setIsEditing(false);
@@ -78,7 +84,7 @@ export function AnalyticsDashboardSettingsForm({ settings }: AnalyticsDashboardS
         });
     });
 
-    const result = await handleUpdateAnalyticsDashboardSettings(settings, formData);
+    const result = await handleUpdateAnalyticsDashboardSettings(formData);
     setIsSubmitting(false);
 
     if (result.success) {
