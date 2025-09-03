@@ -441,12 +441,13 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setIsSubmitting(false);
 
     if (result.success) {
-      toast({
-        title: isEditing ? "Donation Updated" : "Donation Added",
-        description: `Successfully ${isEditing ? 'updated' : 'added'} donation.`,
-      });
-       if(!isEditing) {
-        router.push('/admin/donations');
+      if (isEditing) {
+          toast({
+              title: "Donation Updated",
+              description: "Successfully updated donation record.",
+          });
+      } else if (result.donationId) {
+          router.push(`/admin/donations/add/success?id=${result.donationId}`);
       }
     } else {
       toast({

@@ -1,9 +1,8 @@
 
 
-
 "use server";
 
-import { createDonation, getDonationByTransactionId } from "@/services/donation-service";
+import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
 import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
@@ -14,7 +13,7 @@ import { uploadFile } from "@/services/storage-service";
 interface FormState {
     success: boolean;
     error?: string;
-    donation?: Donation;
+    donationId?: string;
 }
 
 // Helper to convert Base64 Data URL back to a File object
@@ -142,7 +141,7 @@ export async function handleAddDonation(
 
     return {
       success: true,
-      donation: primaryDonation,
+      donationId: primaryDonation.id,
     };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
