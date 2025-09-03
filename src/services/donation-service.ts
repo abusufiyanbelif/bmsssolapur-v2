@@ -26,12 +26,10 @@ import {
 import { db } from './firebase';
 import { logActivity } from './activity-log-service';
 import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation, Lead, Allocation } from './types';
-import { getUser } from './user-service';
 import { format } from 'date-fns';
 
 // Re-export types for backward compatibility if other services import from here
 export type { Donation, DonationStatus, DonationType, DonationPurpose };
-export { getUser };
 
 const DONATIONS_COLLECTION = 'donations';
 const LEADS_COLLECTION = 'leads';
@@ -45,17 +43,18 @@ export const createDonation = async (
 ) => {
   try {
     const [donorUser, adminUser] = await Promise.all([
-        getUser(donation.donorId),
-        getUser(adminUserId),
+        getDoc(doc(db, 'users', donation.donorId)),
+        getDoc(doc(db, 'users', adminUserId)),
     ]);
 
-    if (!donorUser) {
+    if (!donorUser.exists()) {
         throw new Error(`Donor user with ID "${donation.donorId}" could not be found.`);
     }
-    if (!adminUser) {
+    if (!adminUser.exists()) {
         throw new Error(`Admin user with ID "${adminUserId}" could not be found.`);
     }
-    if (!donorUser.userKey) {
+    const donorUserData = donorUser.data() as User;
+    if (!donorUserData.userKey) {
         throw new Error(`The selected donor ("${donation.donorName}") does not have a valid UserKey. Please ensure the user profile is complete.`);
     }
     
@@ -70,8 +69,8 @@ export const createDonation = async (
 
     // New Structured ID Logic
     const donationPrefix = `D${donationNumber}`;
-    const donorKeyPart = donorUser.userKey;
-    const adminKeyPart = isSelfDonation ? '' : `_By${adminUser.userKey || 'ADMIN'}`;
+    const donorKeyPart = donorUserData.userKey;
+    const adminKeyPart = isSelfDonation ? '' : `_By${(adminUser.data() as User).userKey || 'ADMIN'}`;
     
     customDonationId = `${donationPrefix}_${donorKeyPart}${adminKeyPart}_${dateString}`;
     
