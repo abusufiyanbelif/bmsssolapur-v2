@@ -447,6 +447,9 @@ export interface AppSettings {
         instamojo: GatewayConfig;
         stripe: GatewayConfig;
     };
+    donationConfiguration?: {
+        allowDonorSelfServiceDonations?: boolean;
+    };
     leadConfiguration?: {
         purposes: LeadPurpose[];
         workflow?: Record<LeadStatus, LeadStatus[]>;

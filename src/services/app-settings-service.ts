@@ -138,6 +138,9 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         instamojo: defaultGatewayConfig,
         stripe: defaultGatewayConfig,
     },
+    donationConfiguration: {
+        allowDonorSelfServiceDonations: true,
+    },
     leadConfiguration: {
         purposes: defaultLeadPurposes,
         approvalProcessDisabled: true,
