@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
 import { useSearchParams } from 'next/navigation'
 import {
   Table,
@@ -360,8 +361,8 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                     const isAmountAnomaly = donation.amount < MIN_DONATION_THRESHOLD || donation.amount > MAX_DONATION_THRESHOLD;
                     
                     return (
-                    <>
-                    <TableRow key={donation.id} data-state={selectedDonations.includes(donation.id!) ? 'selected' : ''}>
+                    <Fragment key={donation.id}>
+                    <TableRow data-state={selectedDonations.includes(donation.id!) ? 'selected' : ''}>
                         <TableCell padding="checkbox">
                             <Checkbox
                                 checked={selectedDonations.includes(donation.id!)}
@@ -511,7 +512,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                             </TableCell>
                         </TableRow>
                      )}
-                     </>
+                     </Fragment>
                 )})}
             </TableBody>
         </Table>
