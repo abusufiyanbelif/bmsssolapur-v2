@@ -1,11 +1,26 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAppSettings } from "./actions";
+import { getAppSettings } from "@/services/app-settings-service";
 import { AppSettingsForm } from "./app-settings-form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export default async function AppSettingsPage() {
     const settings = await getAppSettings();
+
+    if(!settings) {
+        return (
+             <div className="flex-1 space-y-4">
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Settings</AlertTitle>
+                    <AlertDescription>
+                        Could not load application settings from the database.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        )
+    }
 
     return (
         <div className="flex-1 space-y-4">
@@ -24,5 +39,3 @@ export default async function AppSettingsPage() {
         </div>
     );
 }
-
-    

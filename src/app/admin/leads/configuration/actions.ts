@@ -1,7 +1,7 @@
 
 "use server";
 
-import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
+import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
 import { updateUser, getAllUsers } from "@/services/user-service";
 import { arrayRemove, arrayUnion, writeBatch, doc } from "firebase/firestore";
@@ -19,7 +19,7 @@ export async function handleUpdateLeadConfiguration(
 ): Promise<FormState> {
   
   try {
-    const currentSettings = await getAppSettings();
+    const currentSettings = await (await import('@/services/app-settings-service')).getAppSettings();
     const updates = {
       leadConfiguration: {
         ...currentSettings.leadConfiguration,
@@ -46,7 +46,7 @@ export async function handleAddLeadPurpose(name: string): Promise<FormState> {
   if (!name) return { success: false, error: "Purpose name cannot be empty." };
   
   try {
-    const settings = await getAppSettings();
+    const settings = await (await import('@/services/app-settings-service')).getAppSettings();
     const currentPurposes = settings.leadConfiguration?.purposes || [];
 
     if (currentPurposes.some(p => p.name.toLowerCase() === name.toLowerCase())) {
@@ -76,7 +76,7 @@ export async function handleUpdateLeadPurpose(oldName: string, newName: string):
     if (!newName) return { success: false, error: "New purpose name cannot be empty." };
 
     try {
-        const settings = await getAppSettings();
+        const settings = await (await import('@/services/app-settings-service')).getAppSettings();
         const currentPurposes = settings.leadConfiguration?.purposes || [];
         const purposeIndex = currentPurposes.findIndex(p => p.name === oldName);
 
@@ -120,7 +120,7 @@ export async function handleDeleteLeadPurpose(purposeToDelete: string, newPurpos
     }
 
     try {
-        const settings = await getAppSettings();
+        const settings = await (await import('@/services/app-settings-service')).getAppSettings();
         let currentPurposes = settings.leadConfiguration?.purposes || [];
         
         const updatedPurposes = currentPurposes.filter(p => p.name !== purposeToDelete);
@@ -153,7 +153,7 @@ export async function handleAddCategory(purposeId: string, categoryName: string)
     if (!purposeId || !categoryName) return { success: false, error: "Purpose ID and category name are required." };
 
     try {
-        const settings = await getAppSettings();
+        const settings = await (await import('@/services/app-settings-service')).getAppSettings();
         const purposes = settings.leadConfiguration?.purposes || [];
         const purposeIndex = purposes.findIndex(p => p.id === purposeId);
         if (purposeIndex === -1) return { success: false, error: "Purpose not found." };
@@ -184,7 +184,7 @@ export async function handleUpdateCategory(purposeId: string, oldCategoryName: s
     if (!purposeId || !oldCategoryName || !newCategoryName) return { success: false, error: "All fields are required." };
 
     try {
-        const settings = await getAppSettings();
+        const settings = await (await import('@/services/app-settings-service')).getAppSettings();
         const purposes = settings.leadConfiguration?.purposes || [];
         const purposeIndex = purposes.findIndex(p => p.id === purposeId);
         if (purposeIndex === -1) return { success: false, error: "Purpose not found." };
@@ -228,7 +228,7 @@ export async function handleDeleteCategory(purposeId: string, categoryToDelete: 
     }
 
     try {
-        const settings = await getAppSettings();
+        const settings = await (await import('@/services/app-settings-service')).getAppSettings();
         const purposes = settings.leadConfiguration?.purposes || [];
         const purposeIndex = purposes.findIndex(p => p.id === purposeId);
         if (purposeIndex === -1) return { success: false, error: "Purpose not found." };

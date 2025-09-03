@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -15,7 +14,7 @@ import { AppSettings } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { handleUpdateLeadConfiguration } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { getAppSettings } from "@/app/admin/settings/actions"; 
+import { getAppSettings } from "@/services/app-settings-service"; 
 
 
 export default function LeadConfigurationPage() {
