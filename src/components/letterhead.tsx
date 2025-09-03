@@ -4,7 +4,6 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Organization } from '@/services/types';
-import Image from 'next/image';
 
 interface LetterheadProps {
     organization: Organization;
@@ -12,6 +11,8 @@ interface LetterheadProps {
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
     ({ organization }, ref) => {
+        const textStyle = { letterSpacing: '0.5px' };
+
         return (
             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative">
                  <div 
@@ -25,24 +26,23 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '128px' }}>
+                                    <td style={{ width: '128px', verticalAlign: 'top' }}>
                                         <div className="relative w-32 h-32">
-                                            <Image
+                                            <img
                                                 src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
                                                 alt="Organization Logo"
-                                                layout="fill"
-                                                objectFit="contain"
+                                                className="w-full h-full object-contain"
                                                 data-ai-hint="logo"
                                             />
                                         </div>
                                     </td>
-                                    <td>
-                                        <h1 className="text-4xl font-bold tracking-wider">
+                                    <td className="pl-4 align-top">
+                                        <h1 className="text-4xl font-bold tracking-wider" style={textStyle}>
                                             <span className="text-primary">{organization.name.split(' ')[0]} {organization.name.split(' ')[1]}</span> <span className="text-accent">{organization.name.split(' ')[2]} {organization.name.split(' ')[3]}</span>
                                         </h1>
-                                        <p className="text-lg font-bold text-primary">(Solapur)</p>
-                                        <p className="text-sm text-gray-600 mt-2">{organization.address}</p>
-                                        <p className="text-sm text-gray-600">Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
+                                        <p className="text-lg font-bold text-primary" style={textStyle}>(Solapur)</p>
+                                        <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organization.address}</p>
+                                        <p className="text-sm text-gray-600" style={textStyle}>Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -51,7 +51,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
                     <main className="flex-grow pt-8">
                         {/* The content of the letter will be placed here by the user */}
-                         <div className="space-y-4 text-gray-800 text-base leading-relaxed">
+                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
                             <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
                             <br />
                             <p>To,</p>
@@ -73,7 +73,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </div>
                     </main>
                     
-                    <footer className="mt-12 pt-4 border-t text-xs text-center text-gray-500">
+                    <footer className="mt-12 pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
                         <p>Reg No: {organization.registrationNumber} | PAN: {organization.panNumber}</p>
                         <p>{organization.website}</p>
                     </footer>
