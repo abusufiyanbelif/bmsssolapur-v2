@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { PublicDashboardCards } from "./public-dashboard-cards";
-import { getPublicDashboardData, getQuotes, getOpenGeneralLeads } from "./actions";
+import { getQuotes, getOpenGeneralLeads } from "./actions";
 
 function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
     const [quotes, setQuotes] = useState<Quote[]>(initialQuotes);
@@ -171,3 +171,5 @@ export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
     </div>
   );
 }
+
+    

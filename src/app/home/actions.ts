@@ -18,7 +18,7 @@ export async function getPublicDashboardData() {
         const [donations, users, leads, campaigns] = await Promise.all([
             getAllDonations(),
             getAllUsers(),
-            getAllLeads(),
+            getPublicLeads(), // Fetch public leads
             getPublicCampaigns()
         ]);
         // The data is automatically serialized when returned from a server action.
@@ -66,3 +66,5 @@ export async function getOpenGeneralLeads(): Promise<Lead[]> {
         return [];
     }
 }
+
+    

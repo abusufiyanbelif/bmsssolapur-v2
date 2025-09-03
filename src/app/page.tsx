@@ -1,14 +1,12 @@
 
 
-'use client';
-
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PublicHomePage } from "./home/public-home-page";
 import { PublicDashboardCards } from "./home/public-dashboard-cards";
 import { Quote, Donation, User, Lead, Campaign } from "@/services/types";
-import { getPublicDashboardData } from "./home/actions";
+import { getPublicDashboardData, getQuotes } from "./home/actions";
 
 
 const CardSkeleton = () => (
@@ -23,37 +21,35 @@ const CardSkeleton = () => (
     </Card>
 );
 
+async function PublicData() {
+    const data = await getPublicDashboardData();
 
-export default function Page() {
-    // Quotes are now fetched client-side in PublicHomePage
-    const initialQuotes: Quote[] = [];
-    const [dashboardData, setDashboardData] = useState<{
-        donations: Donation[],
-        users: User[],
-        leads: Lead[],
-        campaigns: Campaign[]
-    } | null>(null);
+    if (data.error) {
+        return (
+            <div className="text-destructive text-center p-4 border border-destructive/50 rounded-lg">
+                Error loading dashboard data: {data.error}
+            </div>
+        );
+    }
+    
+    return (
+        <PublicDashboardCards
+            allDonations={data.donations || []}
+            allUsers={data.users || []}
+            allLeads={data.leads || []}
+            allCampaigns={data.campaigns || []}
+        />
+    )
+}
 
-    useEffect(() => {
-        getPublicDashboardData().then(data => {
-            if (!data.error) {
-                setDashboardData(data as any);
-            }
-        });
-    }, []);
+
+export default async function Page() {
+    const initialQuotes: Quote[] = await getQuotes(3);
 
     return (
         <div className="flex-1 space-y-8">
             <PublicHomePage quotes={initialQuotes} />
-
-            {dashboardData ? (
-                <PublicDashboardCards
-                    allDonations={dashboardData.donations}
-                    allUsers={dashboardData.users}
-                    allLeads={dashboardData.leads}
-                    allCampaigns={dashboardData.campaigns}
-                />
-            ) : (
+            <Suspense fallback={
                  <div className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <CardSkeleton />
@@ -61,7 +57,11 @@ export default function Page() {
                         <CardSkeleton />
                     </div>
                 </div>
-            )}
+            }>
+                <PublicData />
+            </Suspense>
         </div>
     );
 }
+
+    
