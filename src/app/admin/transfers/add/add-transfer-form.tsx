@@ -1,11 +1,9 @@
 
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,8 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp } from "lucide-react";
+import { useState, useEffect, Suspense, useRef, useMemo } from "react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp, UploadCloud } from "lucide-react";
 import type { User, Lead, PaymentMethod, Campaign, UserRole } from "@/services/types";
 import { getUser, getUserByPhone, getUserByUpiId } from "@/services/user-service";
 import { useRouter } from "next/navigation";
@@ -136,6 +134,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [beneficiaryDetails, setBeneficiaryDetails] = useState<User | null>(null);
   const [recipientDetails, setRecipientDetails] = useState<User | null>(null);
+  const [transferMethod, setTransferMethod] = useState<'record' | 'scan'>('record');
   
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
 
@@ -152,8 +151,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   const selectedRecipientId = watch("recipientId");
 
   const selectedLead = leads.find(l => l.id === selectedLeadId);
-
-  const showOnlineFields = paymentMethod === 'Online (UPI/Card)' || paymentMethod === 'Bank Transfer';
 
   const clearForm = () => {
     reset(initialFormValues);
@@ -182,14 +179,12 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     }
   }, [file]);
   
-  // Set Beneficiary Details when a lead is selected
   useEffect(() => {
     const fetchBeneficiary = async () => {
       if (selectedLead?.beneficiaryId) {
         try {
             const beneficiary = await getUser(selectedLead.beneficiaryId);
             setBeneficiaryDetails(beneficiary);
-            // Default recipient type to beneficiary when a lead is picked
             setValue('recipientType', 'Beneficiary');
         } catch (e) {
             console.error("Failed to fetch beneficiary details", e);
@@ -202,7 +197,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     fetchBeneficiary();
   }, [selectedLead, setValue]);
 
-  // Set Recipient Details based on selection
   useEffect(() => {
       if (recipientType === 'Beneficiary') {
           setRecipientDetails(beneficiaryDetails);
@@ -230,7 +224,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     if (result.success && result.details) {
       toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields populated. Please review.' });
       
-      // Populate fields from scan
       Object.entries(result.details).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           if (key === 'date' && typeof value === 'string') {
@@ -245,56 +238,13 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
         }
       });
       if(result.details.rawText) setRawText(result.details.rawText);
-
-      // Auto-detect recipient user from scanned details
-      let foundRecipient: User | null = null;
-      if (result.details.recipientUpiId) foundRecipient = await getUserByUpiId(result.details.recipientUpiId);
-      if (!foundRecipient && result.details.recipientPhone) foundRecipient = await getUserByPhone(result.details.recipientPhone);
-
-      if (foundRecipient) {
-          toast({ variant: 'info', title: 'Recipient Detected!', description: `Automatically matched ${foundRecipient.name}.`});
-          if (foundRecipient.roles.includes('Referral')) {
-              setValue('recipientType', 'Referral');
-              setValue('recipientId', foundRecipient.id);
-          } else {
-              // Default to beneficiary if not a referral (even if they have other roles)
-              setValue('recipientType', 'Beneficiary');
-              setValue('recipientId', foundRecipient.id);
-          }
-      }
-      
-      // Explicitly trigger validation and re-render
+      setTransferMethod('record'); // Switch back to the form
       trigger();
 
     } else {
       toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details." });
     }
     setIsScanning(false);
-  };
-  
-  const handleExtractText = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file first.' });
-      return;
-    }
-    setIsExtractingText(true);
-    const formData = new FormData();
-    formData.append("imageFile", file);
-    
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    const mimeType = file.type;
-    const dataUri = `data:${mimeType};base64,${base64}`;
-    
-    const { extractRawText } = await import('@/ai/flows/extract-raw-text-flow');
-    const result = await extractRawText({ photoDataUri: dataUri });
-
-    if(result.rawText) {
-        setRawText(result.rawText);
-    } else {
-         toast({ variant: 'destructive', title: 'Extraction Failed', description: 'Could not extract text.' });
-    }
-    setIsExtractingText(false);
   };
   
    const onFormSubmit = async (data: AddTransferFormValues) => {
@@ -342,106 +292,26 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     }, [paymentApp, paymentMethod]);
   
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8 max-w-2xl">
-        <FormField
-          control={control}
-          name="leadId"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Select Lead</FormLabel>
-              <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                    >
-                      {field.value ? leads.find(l => l.id === field.value)?.name : "Select a lead..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search lead..." />
-                    <CommandList>
-                      <CommandEmpty>No open leads found.</CommandEmpty>
-                      <CommandGroup>
-                        {leads.map((lead) => (
-                          <CommandItem
-                            value={`${lead.name} ${lead.id}`}
-                            key={lead.id}
-                            onSelect={() => { field.onChange(lead.id!); setLeadPopoverOpen(false); }}
-                          >
-                            <Check className={cn("mr-2 h-4 w-4", lead.id === field.value ? "opacity-100" : "opacity-0")} />
-                            <span>{lead.name} (Req: ₹{lead.helpRequested})</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="campaignId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Link to Campaign (Optional)</FormLabel>
-              <Select
-                onValueChange={(value) => { field.onChange(value === 'none' ? '' : value) }}
-                value={field.value || 'none'}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a campaign" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {(campaigns || []).filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
-                    <SelectItem key={campaign.id} value={campaign.id!}>
-                      {campaign.name} ({campaign.status})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-            control={control}
-            name="paymentMethod"
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Payment Method</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select payment method" /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {paymentMethods.map(method => (
-                            <SelectItem key={method} value={method}>{method}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-            )}
-        />
+    <>
+       <div className="grid grid-cols-2 gap-4 mb-8">
+          <Button 
+              variant={transferMethod === 'record' ? 'default' : 'outline'}
+              onClick={() => setTransferMethod('record')}
+              className="h-16 text-base"
+          >
+              <FileUp className="mr-2"/> Record a Transfer
+          </Button>
+          <Button
+              variant={transferMethod === 'scan' ? 'default' : 'outline'}
+              onClick={() => setTransferMethod('scan')}
+              className="h-16 text-base"
+          >
+              <ScanEye className="mr-2"/> Scan Proof
+          </Button>
+      </div>
 
-        {showOnlineFields && (
-            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-            <h3 className="font-semibold text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Payment Proof & Scanning</h3>
+    {transferMethod === 'scan' ? (
+        <div className="space-y-6">
             <FormField
                 control={control}
                 name="proof"
@@ -459,183 +329,182 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                         <FormMessage />
                     </FormItem>
                 )}
-                />
-                {previewUrl && (
-                <div className="relative w-full h-64"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
-                )}
-                <div className="flex gap-2">
-                    <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
-                        {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />} Scan & Auto-Fill
-                    </Button>
-                     <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
-                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />} Get Raw Text
-                    </Button>
-                </div>
-            </div>
-        )}
-        
-         {paymentMethod === 'Cash' || paymentMethod === 'Other' ? (
-            <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>Manual Entry</AlertTitle>
-                <AlertDescription>
-                    You are recording a {paymentMethod.toLowerCase()} transfer.
-                </AlertDescription>
-            </Alert>
-        ) : null}
-
-        {rawText && (
-            <div className="space-y-2">
-                <FormLabel>Extracted Text</FormLabel>
-                <Textarea readOnly value={rawText} rows={10} className="text-xs font-mono" />
-            </div>
-        )}
-
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details (For Case)</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-2">
-                {beneficiaryDetails ? (
-                    <>
-                        <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
-                        <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
-                    </>
-                ) : (
-                    <p className="text-muted-foreground">Select a lead to see beneficiary details.</p>
-                )}
-            </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>Recipient & Transaction Details</CardTitle>
-                <CardDescription>Details about who received the funds and the transaction itself. Auto-fill by scanning proof.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="recipientType"
-                    render={({ field }) => (
-                    <FormItem className="space-y-3">
-                        <FormLabel>Transfer funds directly to:</FormLabel>
-                        <FormControl>
-                        <RadioGroup
-                            onValueChange={(value: any) => {
-                                field.onChange(value);
-                                setValue('recipientId', undefined);
-                            }}
-                            value={field.value}
-                            className="flex flex-wrap gap-x-4 gap-y-2"
-                        >
-                            <FormItem className="flex items-center space-x-2">
-                                <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
-                                <FormLabel className="font-normal">Beneficiary</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2">
-                                <FormControl><RadioGroupItem value="Referral" /></FormControl>
-                                <FormLabel className="font-normal">Referral</FormLabel>
-                            </FormItem>
-                        </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {recipientType === 'Referral' && (
-                    <FormField
-                        control={form.control}
-                        name="recipientId"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Select Referral</FormLabel>
-                            <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant="outline" role="combobox" className={cn("w-full justify-between",!field.value && "text-muted-foreground")}>
-                                    {field.value ? users.find((user) => user.id === field.value)?.name : "Select a referral"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search referral..." />
-                                    <CommandList>
-                                        <CommandEmpty>No referrals found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {potentialReferrals.map((user) => (
-                                                <CommandItem
-                                                    value={user.name}
-                                                    key={user.id}
-                                                    onSelect={() => { field.onChange(user.id!); setReferralPopoverOpen(false); }}
-                                                >
-                                                <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                {user.name} ({user.phone})
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="Enter amount transferred" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                </div>
-                 {showOnlineFields && (
-                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={control} name="paymentApp" render={({ field }) => (<FormItem><FormLabel>Payment App</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Select payment app" /></SelectTrigger></FormControl><SelectContent>{paymentApps.map(app => (<SelectItem key={app} value={app}>{app}</SelectItem>))}</SelectContent></Select></FormItem>)} />
-                            <FormField control={control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        </div>
-                        <FormField control={control} name={paymentMethod === 'Bank Transfer' ? 'utrNumber' : 'transactionId'} render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        
-                        <h4 className="font-semibold border-b pb-1">Sender & Recipient Details</h4>
-                        <FormField control={control} name="senderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <FormField control={control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Sender Bank Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={control} name="senderAccountNumber" render={({ field }) => (<FormItem><FormLabel>Sender Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={control} name="senderIfscCode" render={({ field }) => (<FormItem><FormLabel>Sender IFSC</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        </div>
-                         <FormField control={control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <FormField control={control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        <FormField control={control} name="recipientBankName" render={({ field }) => (<FormItem><FormLabel>Recipient Bank Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={control} name="recipientAccountNumber" render={({ field }) => (<FormItem><FormLabel>Recipient Account</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={control} name="recipientIfscCode" render={({ field }) => (<FormItem><FormLabel>Recipient IFSC</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        </div>
-                        <FormField control={control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                    </>
-                 )}
-            </CardContent>
-        </Card>
-
-        <h3 className="text-lg font-semibold border-b pb-2 pt-4">Additional Info</h3>
-        <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea placeholder="Any internal notes about this transfer?" {...field} /></FormControl></FormItem>)} />
-
-        <div className="flex gap-4">
-            <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
-                Record Transfer
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
-                <X className="mr-2 h-4 w-4" />
-                Cancel
-            </Button>
-             <Button type="button" variant="secondary" onClick={clearForm} disabled={isSubmitting}>
-                <XCircle className="mr-2 h-4 w-4" />
-                Clear Form
+            />
+            {previewUrl && (
+                <div className="relative w-full h-96"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
+            )}
+             <Button type="button" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
+                {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
+                Scan & Fill Form
             </Button>
         </div>
-      </form>
-    </Form>
+    ) : (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8">
+          <FormField
+            control={control}
+            name="leadId"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Select Lead</FormLabel>
+                <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                      >
+                        {field.value ? leads.find(l => l.id === field.value)?.name : "Select a lead..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search lead..." />
+                      <CommandList>
+                        <CommandEmpty>No open leads found.</CommandEmpty>
+                        <CommandGroup>
+                          {leads.map((lead) => (
+                            <CommandItem
+                              value={`${lead.name} ${lead.id}`}
+                              key={lead.id}
+                              onSelect={() => { field.onChange(lead.id!); setLeadPopoverOpen(false); }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", lead.id === field.value ? "opacity-100" : "opacity-0")} />
+                              <span>{lead.name} (Req: ₹{lead.helpRequested})</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <Card>
+              <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Beneficiary Details (For Case)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2">
+                  {beneficiaryDetails ? (
+                      <>
+                          <div className="flex justify-between"><span>Name:</span><span className="font-semibold">{beneficiaryDetails.name}</span></div>
+                          <div className="flex justify-between"><span>Phone:</span><span className="font-semibold">{beneficiaryDetails.phone}</span></div>
+                      </>
+                  ) : (
+                      <p className="text-muted-foreground">Select a lead to see beneficiary details.</p>
+                  )}
+              </CardContent>
+          </Card>
+          
+          <Card>
+              <CardHeader>
+                  <CardTitle>Recipient & Transaction Details</CardTitle>
+                  <CardDescription>Details about who received the funds and the transaction itself.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                  <FormField
+                      control={form.control}
+                      name="recipientType"
+                      render={({ field }) => (
+                      <FormItem className="space-y-3">
+                          <FormLabel>Transfer funds directly to:</FormLabel>
+                          <FormControl>
+                          <RadioGroup
+                              onValueChange={(value: any) => {
+                                  field.onChange(value);
+                                  setValue('recipientId', undefined);
+                              }}
+                              value={field.value}
+                              className="flex flex-wrap gap-x-4 gap-y-2"
+                          >
+                              <FormItem className="flex items-center space-x-2">
+                                  <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
+                                  <FormLabel className="font-normal">Beneficiary</FormLabel>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-2">
+                                  <FormControl><RadioGroupItem value="Referral" /></FormControl>
+                                  <FormLabel className="font-normal">Referral</FormLabel>
+                              </FormItem>
+                          </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+                  {recipientType === 'Referral' && (
+                      <FormField
+                          control={form.control}
+                          name="recipientId"
+                          render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                              <FormLabel>Select Referral</FormLabel>
+                              <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
+                                  <PopoverTrigger asChild>
+                                  <FormControl>
+                                      <Button variant="outline" role="combobox" className={cn("w-full justify-between",!field.value && "text-muted-foreground")}>
+                                      {field.value ? users.find((user) => user.id === field.value)?.name : "Select a referral"}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                  </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                  <Command>
+                                      <CommandInput placeholder="Search referral..." />
+                                      <CommandList>
+                                          <CommandEmpty>No referrals found.</CommandEmpty>
+                                          <CommandGroup>
+                                              {potentialReferrals.map((user) => (
+                                                  <CommandItem
+                                                      value={user.name}
+                                                      key={user.id}
+                                                      onSelect={() => { field.onChange(user.id!); setReferralPopoverOpen(false); }}
+                                                  >
+                                                  <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                  {user.name} ({user.phone})
+                                                  </CommandItem>
+                                              ))}
+                                          </CommandGroup>
+                                      </CommandList>
+                                  </Command>
+                                  </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="Enter amount transferred" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  </div>
+              </CardContent>
+          </Card>
+          
+          <div className="flex gap-4">
+              <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
+                  Record Transfer
+              </Button>
+              <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancel
+              </Button>
+              <Button type="button" variant="secondary" onClick={clearForm} disabled={isSubmitting}>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Clear Form
+              </Button>
+          </div>
+        </form>
+      </Form>
+    )}
+    </>
   );
 }
 
