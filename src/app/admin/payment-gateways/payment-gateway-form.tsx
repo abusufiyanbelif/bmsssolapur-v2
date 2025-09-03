@@ -43,7 +43,7 @@ const gatewaySchema = z.object({
 type GatewayFormValues = z.infer<typeof gatewaySchema>;
 
 interface GatewayFormProps {
-    gatewayName: 'razorpay' | 'phonepe' | 'paytm' | 'cashfree' | 'instamojo' | 'stripe';
+    gatewayName: keyof AppSettings['paymentGateway'];
     gatewayTitle: string;
     settings?: AppSettings['paymentGateway'][keyof AppSettings['paymentGateway']];
 }
@@ -148,16 +148,21 @@ export function PaymentGatewayForm({ settings, features }: PaymentGatewayFormPro
     const result = await handleUpdateGatewaySettings(formData);
     if (result.success) {
       toast({ variant: 'success', title: "Master Switch Updated", description: `Online payments are now ${onlinePaymentsEnabled ? 'enabled' : 'disabled'}.` });
-      setInitialOnlinePaymentsEnabled(onlinePaymentsEnabled); // Update initial state on successful save
+      setInitialOnlinePaymentsEnabled(onlinePaymentsEnabled);
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
-      setOnlinePaymentsEnabled(initialOnlinePaymentsEnabled); // Revert on failure
+      setOnlinePaymentsEnabled(initialOnlinePaymentsEnabled);
     }
     setIsMasterSwitchSubmitting(false);
   };
   
-  const gateways: {name: any; title: string; settings: any;}[] = [
+  const gateways: {name: keyof AppSettings['paymentGateway']; title: string; settings: any;}[] = [
     { name: 'razorpay', title: 'Razorpay', settings: settings?.razorpay },
+    { name: 'phonepe', title: 'PhonePe', settings: settings?.phonepe },
+    { name: 'paytm', title: 'Paytm', settings: settings?.paytm },
+    { name: 'cashfree', title: 'Cashfree', settings: settings?.cashfree },
+    { name: 'instamojo', title: 'Instamojo', settings: settings?.instamojo },
+    { name: 'stripe', title: 'Stripe', settings: settings?.stripe },
   ];
 
   return (

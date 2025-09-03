@@ -17,13 +17,11 @@ export async function handleUpdateGatewaySettings(
   try {
     const currentSettings = await getAppSettings();
     
-    // Determine which gateway is being updated based on a hidden input
-    const gatewayName = formData.get("gatewayName") as keyof AppSettings['paymentGateway'];
+    const gatewayName = formData.get("gatewayName") as keyof AppSettings['paymentGateway'] | null;
 
     let updates: Partial<AppSettings> = {};
 
     if (gatewayName) {
-        // Update a specific gateway
         updates.paymentGateway = {
             ...currentSettings.paymentGateway,
             [gatewayName]: {
@@ -40,7 +38,6 @@ export async function handleUpdateGatewaySettings(
             }
         };
     } else if (formData.has('onlinePaymentsEnabled')) {
-        // Update the master feature flag
         updates.features = {
           ...(currentSettings.features || {}),
           onlinePaymentsEnabled: formData.get("onlinePaymentsEnabled") === 'on',
@@ -65,14 +62,14 @@ export async function handleUpdateGatewaySettings(
   }
 }
 
-export async function handleTestGatewayConnection(gatewayName: 'razorpay'): Promise<{success: boolean, error?: string}> {
+export async function handleTestGatewayConnection(gatewayName: keyof AppSettings['paymentGateway']): Promise<{success: boolean, error?: string}> {
     try {
         if (gatewayName === 'razorpay') {
             await testRazorpayConnection();
             return { success: true };
         }
         // Add other gateway tests here
-        return { success: false, error: 'Unknown gateway for testing.' };
+        return { success: false, error: `Testing for ${gatewayName} is not yet implemented.` };
     } catch (e) {
         const error = e instanceof Error ? e.message : `An unknown error occurred while testing ${gatewayName}.`;
         console.error(`Error testing ${gatewayName} connection:`, error);
