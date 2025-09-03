@@ -1,10 +1,22 @@
 import { getAdminDb } from '../services/firebase-admin';
+import * as admin from 'firebase-admin';
 
 async function testDatabaseConnection() {
   console.log('Attempting to connect to Firestore...');
   try {
+    // Re-initialize for this script to impersonate a specific user
+    if (admin.apps.length) {
+      await Promise.all(admin.apps.map(app => app?.delete()));
+    }
+    
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+      projectId: 'baitul-mal-connect',
+      serviceAccountId: 'abusufiyan.belif@gmail.com',
+    });
+
     const adminDb = getAdminDb();
-    // This is a very lightweight operation that confirms the connection and permissions.
+    
     const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
     await nonExistentDocRef.get();
     
@@ -21,7 +33,6 @@ async function testDatabaseConnection() {
     console.log('2. The service account used by this environment lacks the "Cloud Datastore User" or "Firebase Admin" IAM role.');
     console.log('3. The Firebase project ID might be misconfigured.');
   } finally {
-      // Force exit the process, otherwise it may hang
       process.exit();
   }
 }
