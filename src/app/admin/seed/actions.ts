@@ -5,15 +5,17 @@ import {
     seedInitialUsersAndQuotes, 
     seedCoreTeam, 
     seedOrganizationProfile, 
+    seedPaymentGateways,
     seedSampleData,
     eraseInitialUsersAndQuotes,
     eraseCoreTeam,
     eraseOrganizationProfile,
+    erasePaymentGateways,
     eraseSampleData,
     type SeedResult
 } from "@/services/seed-service";
 
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'sampleData';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData';
 
 export async function handleSeedAction(task: SeedTask): Promise<{success: boolean; data?: SeedResult; error?: string}> {
     try {
@@ -27,6 +29,9 @@ export async function handleSeedAction(task: SeedTask): Promise<{success: boolea
                 break;
             case 'organization':
                 result = await seedOrganizationProfile();
+                break;
+            case 'paymentGateways':
+                result = await seedPaymentGateways();
                 break;
             case 'sampleData':
                 result = await seedSampleData();
@@ -55,6 +60,9 @@ export async function handleEraseAction(task: SeedTask): Promise<{success: boole
                 break;
             case 'organization':
                 result = await eraseOrganizationProfile();
+                break;
+            case 'paymentGateways':
+                result = await erasePaymentGateways();
                 break;
             case 'sampleData':
                 result = await eraseSampleData();

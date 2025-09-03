@@ -3,14 +3,14 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2 } from "lucide-react";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { handleSeedAction, handleEraseAction } from "./actions";
 
 type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'sampleData';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData';
 type SeedResult = {
     message: string;
     details?: string[];
@@ -21,18 +21,21 @@ export default function SeedPage() {
         initial: 'idle',
         coreTeam: 'idle',
         organization: 'idle',
+        paymentGateways: 'idle',
         sampleData: 'idle'
     });
     const [eraseStatuses, setEraseStatuses] = useState<Record<SeedTask, SeedStatus>>({
         initial: 'idle',
         coreTeam: 'idle',
         organization: 'idle',
+        paymentGateways: 'idle',
         sampleData: 'idle'
     });
     const [results, setResults] = useState<Record<SeedTask, SeedResult | null>>({
         initial: null,
         coreTeam: null,
         organization: null,
+        paymentGateways: null,
         sampleData: null,
     });
 
@@ -171,6 +174,27 @@ export default function SeedPage() {
                             </div>
                         </div>
                         <ResultAlert seedStatus={statuses.coreTeam} eraseStatus={eraseStatuses.coreTeam} result={results.coreTeam} />
+                    </div>
+                    
+                    {/* Payment Gateways */}
+                     <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" />Payment Gateways</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds placeholder credentials for the Razorpay payment gateway.</p>
+                             </div>
+                             <div className="flex items-center gap-2">
+                                 <Button variant="destructive" onClick={() => handleErase('paymentGateways')} disabled={eraseStatuses.paymentGateways === 'loading'}>
+                                    {eraseStatuses.paymentGateways === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase
+                                </Button>
+                                <Button onClick={() => handleSeed('paymentGateways')} disabled={statuses.paymentGateways === 'loading'}>
+                                    {statuses.paymentGateways === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Seed Gateways
+                                </Button>
+                            </div>
+                        </div>
+                        <ResultAlert seedStatus={statuses.paymentGateways} eraseStatus={eraseStatuses.paymentGateways} result={results.paymentGateways} />
                     </div>
 
                     {/* Sample Data */}

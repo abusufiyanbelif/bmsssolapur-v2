@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -9,10 +7,11 @@ import { createOrganization, Organization, getCurrentOrganization, OrganizationF
 import { seedInitialQuotes as seedQuotesService } from './quotes-service';
 import { db } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
-import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction } from './types';
+import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
 import { createDonation } from './donation-service';
+import { updateAppSettings } from './app-settings-service';
 
 const USERS_COLLECTION = 'users';
 
@@ -501,6 +500,39 @@ export const seedOrganizationProfile = async (): Promise<SeedResult> => {
     };
 };
 
+export const seedPaymentGateways = async (): Promise<SeedResult> => {
+    const updates: Partial<AppSettings> = {
+      paymentGateway: {
+        razorpay: {
+          enabled: true,
+          mode: 'test',
+          test: {
+            keyId: 'rzp_test_RKeVb4MhE2c8Gj',
+            keySecret: 'Rv71cokSCaJg4f3fQ6pY8l2g',
+          },
+          live: {
+            keyId: '',
+            keySecret: '',
+          },
+        },
+        phonepe: { enabled: false, mode: 'test', test: {}, live: {} },
+        paytm: { enabled: false, mode: 'test', test: {}, live: {} },
+        cashfree: { enabled: false, mode: 'test', test: {}, live: {} },
+        instamojo: { enabled: false, mode: 'test', test: {}, live: {} },
+        stripe: { enabled: false, mode: 'test', test: {}, live: {} },
+      },
+      features: {
+        onlinePaymentsEnabled: true,
+        directPaymentToBeneficiary: { enabled: false }
+      }
+    };
+    await updateAppSettings(updates);
+    return {
+        message: 'Payment Gateway Seeding Complete',
+        details: ["Razorpay test credentials have been saved and the gateway is enabled."]
+    };
+};
+
 export const seedSampleData = async (): Promise<SeedResult> => {
     let details: string[] = [];
 
@@ -594,6 +626,25 @@ export const eraseOrganizationProfile = async (): Promise<SeedResult> => {
     };
 };
 
+export const erasePaymentGateways = async (): Promise<SeedResult> => {
+    const updates = {
+        paymentGateway: {
+            razorpay: {
+                enabled: false,
+                mode: 'test',
+                test: { keyId: '', keySecret: '' },
+                live: { keyId: '', keySecret: '' }
+            }
+        },
+        features: { onlinePaymentsEnabled: false }
+    };
+    await updateAppSettings(updates);
+    return {
+        message: 'Payment Gateway Settings Erased',
+        details: ["Razorpay settings have been cleared and the gateway is disabled."]
+    };
+};
+
 export const eraseSampleData = async (): Promise<SeedResult> => {
     const details: string[] = [];
     const batch = writeBatch(db);
@@ -630,6 +681,3 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
         details: details,
     };
 };
-
-
-    
