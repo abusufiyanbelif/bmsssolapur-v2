@@ -91,7 +91,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/layout", label: "Layout Config", icon: Palette, allowedRoles: ["Admin", "Super Admin"] },
+            { href: "/admin/organization/layout", label: "Layout Config", icon: Palette, allowedRoles: ["Super Admin", "Admin"] },
             { href: "/admin/organization/expenses", label: "Operational Expenses", icon: Receipt, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
         ]
     },
@@ -242,7 +242,7 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
         return roleAllowed && featureEnabled;
     }) || [];
 
-    if(visibleSubItems.length === 0) return null;
+    if(visibleSubItems.length === 0 && !item.href) return null;
     
     const TriggerContent = (
         <div className={cn(
@@ -251,7 +251,9 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
         )}>
             {Icon && <Icon className="h-4 w-4" />}
             {item.label}
-            <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
+            {item.subItems && item.subItems.length > 0 && (
+                <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
+            )}
         </div>
     );
 
@@ -266,7 +268,7 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
             </CollapsibleTrigger>
             <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
                 {visibleSubItems.map(subItem => {
-                    if (subItem.subItems) {
+                    if (subItem.subItems && subItem.subItems.length > 0) {
                         return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} settings={settings} />
                     }
                     const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
