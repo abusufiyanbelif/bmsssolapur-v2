@@ -90,7 +90,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/layout", label: "Layout Config", icon: Palette, allowedRoles: ["Super Admin"] },
+            { href: "/admin/organization/layout", label: "Layout Config", icon: Palette, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/organization/expenses", label: "Operational Expenses", icon: Receipt, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
         ]
     },
