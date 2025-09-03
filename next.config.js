@@ -1,6 +1,6 @@
 
 
-// This is a comment to force a rebuild and clear the cache.
+// This is another comment to force a rebuild and clear the cache.
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   webpack: (config, { isServer }) => {
