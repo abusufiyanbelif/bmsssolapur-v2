@@ -8,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, Palette
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, Palette, Receipt
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -91,7 +91,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/layout", label: "Layout Settings", icon: Palette, allowedRoles: ["Admin", "Super Admin"] },
+            { href: "/admin/organization/layout", label: "Layout Settings", icon: Palette, allowedRoles: ["Super Admin"] },
             { href: "/admin/organization/expenses", label: "Operational Expenses", icon: Receipt, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
         ]
     },
@@ -328,4 +328,3 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     );
 }
 
-    
