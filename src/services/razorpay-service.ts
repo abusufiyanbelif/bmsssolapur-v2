@@ -104,3 +104,38 @@ export async function verifyRazorpayPayment(payload: VerificationPayload): Promi
          return { success: false, error: errorMessage };
      }
 }
+
+export async function testRazorpayConnection(): Promise<void> {
+    try {
+        const settings = await getAppSettings();
+        const razorpaySettings = settings.paymentGateway?.razorpay;
+
+        if (!razorpaySettings?.enabled) {
+            throw new Error("Razorpay gateway is not enabled.");
+        }
+        
+        const mode = razorpaySettings.mode;
+        const keyId = mode === 'live' ? razorpaySettings.live.keyId : razorpaySettings.test.keyId;
+        const keySecret = mode === 'live' ? razorpaySettings.live.keySecret : razorpaySettings.test.keySecret;
+
+        if (!keyId || !keySecret) {
+            throw new Error(`Razorpay ${mode} credentials are not configured.`);
+        }
+
+        const instance = new Razorpay({
+            key_id: keyId,
+            key_secret: keySecret,
+        });
+
+        // A simple, low-cost API call to verify credentials
+        await instance.orders.all({ count: 1 });
+
+    } catch (error) {
+        if (error instanceof Error && (error as any).statusCode === 401) {
+             throw new Error("Authentication failed. Please check your Razorpay Key ID and Key Secret.");
+        }
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        console.error("Error testing Razorpay connection:", errorMessage);
+        throw new Error(errorMessage);
+    }
+}

@@ -16,9 +16,9 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateGatewaySettings } from "./actions";
+import { handleUpdateGatewaySettings, handleTestGatewayConnection } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Wifi, WifiOff } from "lucide-react";
 import { AppSettings } from "@/services/app-settings-service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,35 +33,17 @@ const gatewaySchema = z.object({
   test: z.object({
     keyId: z.string().optional(),
     keySecret: z.string().optional(),
-    merchantId: z.string().optional(),
-    merchantKey: z.string().optional(),
-    saltKey: z.string().optional(),
-    saltIndex: z.coerce.number().optional(),
-    appId: z.string().optional(),
-    secretKey: z.string().optional(),
-    apiKey: z.string().optional(),
-    authToken: z.string().optional(),
-    publishableKey: z.string().optional(),
   }),
   live: z.object({
     keyId: z.string().optional(),
     keySecret: z.string().optional(),
-    merchantId: z.string().optional(),
-    merchantKey: z.string().optional(),
-    saltKey: z.string().optional(),
-    saltIndex: z.coerce.number().optional(),
-    appId: z.string().optional(),
-    secretKey: z.string().optional(),
-    apiKey: z.string().optional(),
-    authToken: z.string().optional(),
-    publishableKey: z.string().optional(),
   }),
 });
 
 type GatewayFormValues = z.infer<typeof gatewaySchema>;
 
 interface GatewayFormProps {
-    gatewayName: string;
+    gatewayName: 'razorpay' | 'phonepe' | 'paytm' | 'cashfree' | 'instamojo' | 'stripe';
     gatewayTitle: string;
     settings?: AppSettings['paymentGateway'][keyof AppSettings['paymentGateway']];
 }
@@ -69,6 +51,7 @@ interface GatewayFormProps {
 function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
 
     const form = useForm<GatewayFormValues>({
         resolver: zodResolver(gatewaySchema),
@@ -86,18 +69,29 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
         formData.append('gatewayName', gatewayName);
         formData.append(`${gatewayName}.enabled`, values.enabled ? 'on' : '');
         formData.append(`${gatewayName}.mode`, values.mode);
-        // Add all test and live keys
+        
         Object.entries(values.test).forEach(([key, value]) => value && formData.append(`${gatewayName}.test.${key}`, String(value)));
         Object.entries(values.live).forEach(([key, value]) => value && formData.append(`${gatewayName}.live.${key}`, String(value)));
         
         const result = await handleUpdateGatewaySettings(formData);
         if (result.success) {
-            toast({ title: "Settings Saved", description: `${gatewayTitle} settings have been updated.` });
+            toast({ variant: 'success', title: "Settings Saved", description: `${gatewayTitle} settings have been updated.` });
             form.reset(values);
         } else {
             toast({ variant: "destructive", title: "Error", description: result.error });
         }
         setIsSubmitting(false);
+    }
+
+    const onTestConnection = async () => {
+        setIsTesting(true);
+        const result = await handleTestGatewayConnection(gatewayName);
+        if (result.success) {
+            toast({ variant: 'success', title: "Connection Successful!", description: `Successfully connected to ${gatewayTitle}.` });
+        } else {
+            toast({ variant: 'destructive', title: "Connection Failed", description: result.error });
+        }
+        setIsTesting(false);
     }
     
     return (
@@ -119,12 +113,18 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
                         <FormField control={form.control} name="live.keySecret" render={({field}) => (<FormItem><FormLabel>Live Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                 </fieldset>
-                 {form.formState.isDirty && (
-                     <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Save {gatewayTitle} Settings
+                 <div className="flex gap-2">
+                    {form.formState.isDirty && (
+                         <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save {gatewayTitle} Settings
+                        </Button>
+                    )}
+                     <Button type="button" variant="outline" onClick={onTestConnection} disabled={isTesting}>
+                        {isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wifi className="mr-2 h-4 w-4" />}
+                        Test Connection
                     </Button>
-                )}
+                 </div>
             </form>
         </Form>
     );
@@ -138,6 +138,7 @@ interface PaymentGatewayFormProps {
 export function PaymentGatewayForm({ settings, features }: PaymentGatewayFormProps) {
   const { toast } = useToast();
   const [isMasterSwitchSubmitting, setIsMasterSwitchSubmitting] = useState(false);
+  const [initialOnlinePaymentsEnabled, setInitialOnlinePaymentsEnabled] = useState(features?.onlinePaymentsEnabled ?? true);
   const [onlinePaymentsEnabled, setOnlinePaymentsEnabled] = useState(features?.onlinePaymentsEnabled ?? true);
   
   const handleMasterSwitchSave = async () => {
@@ -146,20 +147,17 @@ export function PaymentGatewayForm({ settings, features }: PaymentGatewayFormPro
     formData.append('onlinePaymentsEnabled', onlinePaymentsEnabled ? 'on' : '');
     const result = await handleUpdateGatewaySettings(formData);
     if (result.success) {
-      toast({ title: "Master Switch Updated", description: `Online payments are now ${onlinePaymentsEnabled ? 'enabled' : 'disabled'}.` });
+      toast({ variant: 'success', title: "Master Switch Updated", description: `Online payments are now ${onlinePaymentsEnabled ? 'enabled' : 'disabled'}.` });
+      setInitialOnlinePaymentsEnabled(onlinePaymentsEnabled); // Update initial state on successful save
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
+      setOnlinePaymentsEnabled(initialOnlinePaymentsEnabled); // Revert on failure
     }
     setIsMasterSwitchSubmitting(false);
   };
   
-  const gateways: {name: string; title: string; settings: any;}[] = [
+  const gateways: {name: any; title: string; settings: any;}[] = [
     { name: 'razorpay', title: 'Razorpay', settings: settings?.razorpay },
-    { name: 'phonepe', title: 'PhonePe', settings: settings?.phonepe },
-    { name: 'paytm', title: 'Paytm', settings: settings?.paytm },
-    { name: 'cashfree', title: 'Cashfree', settings: settings?.cashfree },
-    { name: 'instamojo', title: 'Instamojo', settings: settings?.instamojo },
-    { name: 'stripe', title: 'Stripe', settings: settings?.stripe },
   ];
 
   return (
@@ -177,12 +175,14 @@ export function PaymentGatewayForm({ settings, features }: PaymentGatewayFormPro
                     <Switch checked={onlinePaymentsEnabled} onCheckedChange={setOnlinePaymentsEnabled} />
                 </div>
             </CardContent>
-            <CardFooter>
-                 <Button onClick={handleMasterSwitchSave} disabled={isMasterSwitchSubmitting}>
-                    {isMasterSwitchSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Master Switch
-                </Button>
-            </CardFooter>
+             {(onlinePaymentsEnabled !== initialOnlinePaymentsEnabled) && (
+                <CardFooter>
+                    <Button onClick={handleMasterSwitchSave} disabled={isMasterSwitchSubmitting}>
+                        {isMasterSwitchSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Master Switch
+                    </Button>
+                </CardFooter>
+             )}
         </Card>
         
         <fieldset disabled={!onlinePaymentsEnabled} className="space-y-6">

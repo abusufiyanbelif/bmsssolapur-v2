@@ -3,6 +3,7 @@
 
 import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
+import { testRazorpayConnection } from "@/services/razorpay-service";
 
 interface FormState {
     success: boolean;
@@ -31,28 +32,10 @@ export async function handleUpdateGatewaySettings(
                 test: {
                     keyId: formData.get(`${gatewayName}.test.keyId`) as string,
                     keySecret: formData.get(`${gatewayName}.test.keySecret`) as string,
-                    merchantId: formData.get(`${gatewayName}.test.merchantId`) as string,
-                    merchantKey: formData.get(`${gatewayName}.test.merchantKey`) as string,
-                    saltKey: formData.get(`${gatewayName}.test.saltKey`) as string,
-                    saltIndex: Number(formData.get(`${gatewayName}.test.saltIndex`) as string) || undefined,
-                    appId: formData.get(`${gatewayName}.test.appId`) as string,
-                    secretKey: formData.get(`${gatewayName}.test.secretKey`) as string,
-                    apiKey: formData.get(`${gatewayName}.test.apiKey`) as string,
-                    authToken: formData.get(`${gatewayName}.test.authToken`) as string,
-                    publishableKey: formData.get(`${gatewayName}.test.publishableKey`) as string,
                 },
                 live: {
                     keyId: formData.get(`${gatewayName}.live.keyId`) as string,
                     keySecret: formData.get(`${gatewayName}.live.keySecret`) as string,
-                    merchantId: formData.get(`${gatewayName}.live.merchantId`) as string,
-                    merchantKey: formData.get(`${gatewayName}.live.merchantKey`) as string,
-                    saltKey: formData.get(`${gatewayName}.live.saltKey`) as string,
-                    saltIndex: Number(formData.get(`${gatewayName}.live.saltIndex`) as string) || undefined,
-                    appId: formData.get(`${gatewayName}.live.appId`) as string,
-                    secretKey: formData.get(`${gatewayName}.live.secretKey`) as string,
-                    apiKey: formData.get(`${gatewayName}.live.apiKey`) as string,
-                    authToken: formData.get(`${gatewayName}.live.authToken`) as string,
-                    publishableKey: formData.get(`${gatewayName}.live.publishableKey`) as string,
                 },
             }
         };
@@ -80,4 +63,19 @@ export async function handleUpdateGatewaySettings(
       error: error,
     };
   }
+}
+
+export async function handleTestGatewayConnection(gatewayName: 'razorpay'): Promise<{success: boolean, error?: string}> {
+    try {
+        if (gatewayName === 'razorpay') {
+            await testRazorpayConnection();
+            return { success: true };
+        }
+        // Add other gateway tests here
+        return { success: false, error: 'Unknown gateway for testing.' };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : `An unknown error occurred while testing ${gatewayName}.`;
+        console.error(`Error testing ${gatewayName} connection:`, error);
+        return { success: false, error: error };
+    }
 }
