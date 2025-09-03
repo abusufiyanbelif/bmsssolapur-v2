@@ -128,14 +128,13 @@ const formSchema = z.object({
     message: "Support amount cannot be greater than or equal to the total amount.",
     path: ["tipAmount"],
 }).refine(data => {
-    // If payment method is Online or Bank Transfer, a screenshot is required unless one is already present
     if (['Online (UPI/Card)', 'Bank Transfer'].includes(data.paymentMethod)) {
-        return !!data.paymentScreenshots?.[0] || !!data.paymentScreenshotDataUrl;
+        return !!data.paymentScreenshotDataUrl;
     }
     return true;
 }, {
     message: 'A payment screenshot is required for this payment method.',
-    path: ['paymentScreenshots'],
+    path: ['paymentScreenshotDataUrl'],
 });
 
 type AddDonationFormValues = z.infer<typeof formSchema>;
@@ -367,31 +366,37 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
             return;
         }
 
-        const amountParam = searchParams.get('amount');
-        const transactionIdParam = searchParams.get('transactionId');
-        const donorIdParam = searchParams.get('donorId');
-        
-        if (amountParam) setValue('totalTransactionAmount', parseFloat(amountParam));
-        if (transactionIdParam) setValue('transactionId', transactionIdParam);
-        
-        if (donorIdParam) {
-            const foundUser = await getUser(donorIdParam);
-            if (foundUser && foundUser.roles.includes('Donor')) {
-                setValue('donorId', foundUser.id!);
-                setSelectedDonor(foundUser);
-            }
-        }
-        
         const screenshotData = sessionStorage.getItem('manualDonationScreenshot');
         if (screenshotData) {
             try {
-                const { dataUrl } = JSON.parse(screenshotData);
-                const file = await dataUrlToFile(dataUrl, 'scanned-screenshot.png');
-                setLocalFiles([{ file, previewUrl: dataUrl }]);
-                setValue('paymentScreenshotDataUrl', dataUrl);
+                const { details, dataUrl } = JSON.parse(screenshotData);
+                
+                Object.entries(details).forEach(([key, value]) => {
+                    if(value) {
+                         if (key === 'date') {
+                             setValue('donationDate', new Date(value as string));
+                         } else if (key === 'amount') {
+                             setValue('totalTransactionAmount', value as number);
+                         } else {
+                             setValue(key as any, value);
+                         }
+                    }
+                });
+
+                if (details.donorId) {
+                    const foundUser = await getUser(details.donorId);
+                     if (foundUser) setSelectedDonor(foundUser);
+                }
+
+                if (dataUrl) {
+                    const file = await dataUrlToFile(dataUrl, 'scanned-screenshot.png');
+                    setLocalFiles([{ file, previewUrl: dataUrl }]);
+                    setValue('paymentScreenshots', [file], { shouldValidate: true });
+                    setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
+                }
             } catch (error) {
                 console.error("Error processing session screenshot", error);
-                toast({ variant: 'destructive', title: "Error", description: "Could not load the screenshot for manual entry." });
+                toast({ variant: 'destructive', title: "Error", description: "Could not load the screenshot data." });
             } finally {
                 sessionStorage.removeItem('manualDonationScreenshot');
             }
@@ -399,7 +404,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     }
     prefillData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, setValue, toast, currentUser, isAdminView, isEditing]);
+  }, [isEditing]);
 
 
   async function onSubmit(values: AddDonationFormValues) {
@@ -426,6 +431,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     });
     
     formData.append('adminUserId', adminUserId);
+    formData.append('paymentScreenshotDataUrl', values.paymentScreenshotDataUrl || '');
+
 
     const result = isEditing 
         ? await handleUpdateDonation(existingDonation.id!, formData, adminUserId)
@@ -513,7 +520,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshots'); }} value={field.value}>
+                        <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshotDataUrl'); }} value={field.value}>
                             <FormControl>
                                 <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
                             </FormControl>
@@ -532,7 +539,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <FormField
                         control={form.control}
-                        name="paymentScreenshots"
+                        name="paymentScreenshotDataUrl"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Payment Proof</FormLabel>
@@ -541,17 +548,16 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                         type="file" 
                                         accept="image/*,application/pdf"
                                         ref={fileInputRef}
-                                        onChange={(e) => {
+                                        onChange={async (e) => {
                                             const file = e.target.files?.[0];
                                             if (file) {
-                                                const filePreview = { file, previewUrl: URL.createObjectURL(file) };
-                                                setLocalFiles([filePreview]);
-                                                field.onChange([file]);
-                                                setValue('paymentScreenshotDataUrl', filePreview.previewUrl);
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
+                                                };
+                                                reader.readAsDataURL(file);
                                             } else {
-                                                setLocalFiles([]);
-                                                field.onChange([]);
-                                                setValue('paymentScreenshotDataUrl', '');
+                                                setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
                                             }
                                         }}
                                     />
@@ -561,14 +567,12 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                         )}
                     />
                     
-                    {localFiles.length > 0 && (
+                    {watch('paymentScreenshotDataUrl') && (
                         <div className="flex flex-col items-center gap-2">
-                            <Image src={localFiles[0].previewUrl} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                            <Image src={watch('paymentScreenshotDataUrl')} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
                              <Button type="button" variant="ghost" size="sm" onClick={() => {
-                                setLocalFiles([]);
                                 if(fileInputRef.current) fileInputRef.current.value = "";
-                                setValue('paymentScreenshots', []);
-                                setValue('paymentScreenshotDataUrl', '');
+                                setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
                             }}>
                                 <Trash2 className="mr-2 h-4 w-4" /> Remove
                             </Button>
@@ -754,5 +758,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-    

@@ -37,6 +37,7 @@ import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
 import { AllocateToCampaignDialog } from './allocate-to-campaign-dialog';
 import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { ScanDonationDialog } from "./scan-donation-dialog";
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Partially Allocated", "Allocated", "Failed/Incomplete"];
@@ -813,6 +814,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Donation Management</h2>
              <div className="flex gap-2">
+                <ScanDonationDialog />
                 <Button asChild>
                     <Link href="/admin/donations/add">
                         <PlusCircle className="mr-2" />
