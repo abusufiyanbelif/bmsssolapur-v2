@@ -80,7 +80,7 @@ export type ValidateConfigurationOutput = z.infer<typeof ValidateConfigurationOu
 // Schema for Quotes
 export const QuoteSchema = z.object({
   id: z.string().describe('The unique ID of the quote.'),
-  number: z.number().describe('A sequential number for the quote.'),
+  number: z.number().describe('A sequential number for the quote within its category.'),
   text: z.string().describe('The text of the quote.'),
   source: z.string().describe('The source of the quote (e.g., Quran 2:261, Sahih al-Bukhari, Imam Al-Ghazali).'),
   category: z.string().describe('The category of the quote (e.g., Quran, Hadith).'),

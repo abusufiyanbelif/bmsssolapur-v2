@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect } from "lucide-react";
 import { handleFundTransfer } from "./actions";
@@ -25,9 +25,13 @@ import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
 import Image from "next/image";
-import { FormDescription } from "@/components/ui/form";
+import { FormDescription, FormField, FormControl, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
 import { scanProof, getRawTextFromImage } from '@/app/admin/donations/add/actions';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import type { PaymentMethod } from "@/services/types";
 
+
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 
 interface AddTransferDialogProps {
   leadId: string;
@@ -154,6 +158,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   };
   
   const paymentApp = watch("paymentApp");
+  const paymentMethod = watch("paymentMethod");
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -198,42 +203,61 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Label htmlFor="transactionId">Main Transaction ID</Label>
                     <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" />
                 </div>
-                {paymentApp === "Google Pay" && (
+                 <div className="space-y-2">
+                    <Label htmlFor="paymentMethod">Payment Method</Label>
+                     <Select onValueChange={(v) => setValue('paymentMethod', v)} defaultValue={getValues('paymentMethod')}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            {(['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'] as PaymentMethod[]).map(m => (
+                                <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                        </SelectContent>
+                     </Select>
+                </div>
+                {paymentMethod === 'Online (UPI/Card)' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="paymentApp">Payment App</Label>
+                        <Select onValueChange={(v) => setValue('paymentApp', v)} defaultValue={getValues('paymentApp')}>
+                           <SelectTrigger><SelectValue placeholder="Select UPI app..." /></SelectTrigger>
+                           <SelectContent>
+                               {paymentApps.map(app => <SelectItem key={app} value={app}>{app}</SelectItem>)}
+                           </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                 {paymentApp === 'Google Pay' && (
                     <div className="space-y-2">
                         <Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label>
                         <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} type="text" />
                     </div>
-                )}
+                 )}
                  {scannedDetails?.utrNumber && (
                     <div className="space-y-2">
                         <Label htmlFor="utrNumber">UTR Number</Label>
                         <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
                     </div>
                  )}
-                 <div className="space-y-2">
-                    <Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label>
-                    <Input id="phonePeTransactionId" {...register("phonePeTransactionId")} type="text" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label>
-                    <Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} type="text" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="paymentApp">Payment App</Label>
-                        <Input id="paymentApp" {...register("paymentApp")} type="text" placeholder="e.g., PhonePe" />
+                  {paymentApp === 'PhonePe' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label>
+                        <Input id="phonePeTransactionId" {...register("phonePeTransactionId")} type="text" />
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="paymentMethod">Payment Method</Label>
-                        <Input id="paymentMethod" {...register("paymentMethod")} type="text" placeholder="e.g., UPI" />
+                 )}
+                 {paymentApp === 'Paytm' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label>
+                        <Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} type="text" />
                     </div>
-                </div>
+                 )}
 
                 <h3 className="font-semibold text-lg border-b pb-2 pt-4">Participant Details</h3>
-                <div className="space-y-2">
+                 <div className="space-y-2">
                     <Label htmlFor="senderName">Sender Name</Label>
                     <Input id="senderName" {...register("senderName")} type="text" placeholder="As per bank records" />
                 </div>
+                 {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label><Input id="googlePaySenderName" {...register("googlePaySenderName")} /></div>}
+                 {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} /></div>}
+                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmSenderName">Paytm Sender Name</Label><Input id="paytmSenderName" {...register("paytmSenderName")} /></div>}
                 <div className="space-y-2">
                     <Label htmlFor="senderUpiId">Sender UPI ID</Label>
                     <Input id="senderUpiId" {...register("senderUpiId")} type="text" placeholder="e.g., sender@upi" />
@@ -246,6 +270,9 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Label htmlFor="recipientName">Recipient Name</Label>
                     <Input id="recipientName" {...register("recipientName")} type="text" placeholder="As per bank records" />
                 </div>
+                {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label><Input id="googlePayRecipientName" {...register("googlePayRecipientName")} /></div>}
+                {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label><Input id="phonePeRecipientName" {...register("phonePeRecipientName")} /></div>}
+                {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label><Input id="paytmRecipientName" {...register("paytmRecipientName")} /></div>}
                  <div className="space-y-2">
                     <Label htmlFor="recipientAccountNumber">Recipient Account Number</Label>
                     <Input id="recipientAccountNumber" {...register("recipientAccountNumber")} type="text" placeholder="e.g., XXXXXX5678" />

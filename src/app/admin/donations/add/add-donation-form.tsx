@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -471,63 +472,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center justify-between">
-                    <FormLabel>Payment Proof</FormLabel>
-                    <ScanDonationDialog
-                        onScanComplete={(details, dataUrl) => {
-                             Object.entries(details).forEach(([key, value]) => {
-                                if(value) {
-                                    if (key === 'date') setValue('donationDate', new Date(value as string));
-                                    else if (key === 'amount') setValue('totalTransactionAmount', value as number);
-                                    else setValue(key as any, value);
-                                }
-                            });
-                             setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
-                        }}
-                    />
-                </div>
-                 <FormField
-                    control={form.control}
-                    name="paymentScreenshotDataUrl"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormControl>
-                                <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    ref={fileInputRef}
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
-                                            };
-                                            reader.readAsDataURL(file);
-                                        } else {
-                                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
-                                        }
-                                    }}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                {watch('paymentScreenshotDataUrl') && (
-                    <div className="flex flex-col items-center gap-2">
-                        <Image src={watch('paymentScreenshotDataUrl')} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                            <Button type="button" variant="ghost" size="sm" onClick={() => {
-                            if(fileInputRef.current) fileInputRef.current.value = "";
-                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
-                        }}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove
-                        </Button>
-                    </div>
-                )}
-             </div>
             <FormField
                 control={form.control}
                 name="donorId"
@@ -578,6 +522,63 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 )}
                 />
             
+             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between">
+                    <FormLabel>Payment Proof</FormLabel>
+                    <ScanDonationDialog
+                        onScanComplete={(details, dataUrl) => {
+                                Object.entries(details).forEach(([key, value]) => {
+                                if(value) {
+                                    if (key === 'date') setValue('donationDate', new Date(value as string));
+                                    else if (key === 'amount') setValue('totalTransactionAmount', value as number);
+                                    else setValue(key as any, value);
+                                }
+                            });
+                                setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
+                        }}
+                    />
+                </div>
+                    <FormField
+                    control={form.control}
+                    name="paymentScreenshotDataUrl"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    ref={fileInputRef}
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
+                                            };
+                                            reader.readAsDataURL(file);
+                                        } else {
+                                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
+                                        }
+                                    }}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                {watch('paymentScreenshotDataUrl') && (
+                    <div className="flex flex-col items-center gap-2">
+                        <Image src={watch('paymentScreenshotDataUrl')} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                            <Button type="button" variant="ghost" size="sm" onClick={() => {
+                            if(fileInputRef.current) fileInputRef.current.value = "";
+                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
+                        }}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                        </Button>
+                    </div>
+                )}
+                </div>
             <FormField
                 control={form.control}
                 name="paymentMethod"
@@ -645,13 +646,25 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 )}
             />
             {paymentApp === 'Google Pay' && (
-                <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <>
+                    <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (<FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (<FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 </>
             )}
             {paymentApp === 'PhonePe' && (
-                <FormField control={form.control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <>
+                    <FormField control={form.control} name="phonePeTransactionId" render={({ field }) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="phonePeSenderName" render={({ field }) => (<FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="phonePeRecipientName" render={({ field }) => (<FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                </>
             )}
             {paymentApp === 'Paytm' && (
-                 <FormField control={form.control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <>
+                    <FormField control={form.control} name="paytmUpiReferenceNo" render={({ field }) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="paytmSenderName" render={({ field }) => (<FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="paytmRecipientName" render={({ field }) => (<FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                </>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
