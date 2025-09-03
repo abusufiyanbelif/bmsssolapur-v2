@@ -65,14 +65,29 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
     try {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
+        if (querySnapshot.empty) {
+            console.log("Quotes collection is empty, seeding initial data.");
+            await seedInitialQuotes();
+            // Re-fetch after seeding
+            const newSnapshot = await quotesQuery.get();
+             const quotes: Quote[] = [];
+            newSnapshot.forEach((doc) => {
+                quotes.push({ id: doc.id, ...doc.data() } as Quote);
+            });
+            return quotes;
+        }
         const quotes: Quote[] = [];
         querySnapshot.forEach((doc) => {
             quotes.push({ id: doc.id, ...doc.data() } as Quote);
         });
         return quotes;
     } catch (error) {
-        console.error("Error getting all quotes: ", error);
-        // Re-throw the error so the caller can handle it, e.g., by using a fallback.
-        throw error;
+        console.error("Error getting all quotes, falling back to hardcoded list: ", error);
+        // Fallback to a simple list if service fails
+        return [
+            { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+            { id: 'fb2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
+            { id: 'fb3', number: 3, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran", categoryTypeNumber: 1 },
+        ];
     }
 }
