@@ -1,11 +1,12 @@
 
+
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers, updateUser as updateUserService, type User } from "@/services/user-service";
 import { getPublicCampaigns, getPublicLeads } from "@/services/public-data-service";
-import { getInspirationalQuotes as getQuotesFlow } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getAllQuotes } from "@/services/quotes-service";
 import type { Quote, Lead } from '@/services/types';
 
 export interface EnrichedLead extends Lead {
@@ -39,11 +40,18 @@ export async function updateUser(userId: string, updates: Partial<User>) {
 
 export async function getQuotes(count: number = 3): Promise<Quote[]> {
     try {
-        const quotes = await getQuotesFlow({count});
-        return JSON.parse(JSON.stringify(quotes));
+        const allQuotes = await getAllQuotes();
+        const shuffled = allQuotes.sort(() => 0.5 - Math.random());
+        const selectedQuotes = shuffled.slice(0, count);
+        return JSON.parse(JSON.stringify(selectedQuotes));
     } catch (error) {
         console.error("Server action getQuotes failed:", error);
-        return [];
+        // Fallback to a simple list if service fails
+        return [
+            { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+            { id: 'fb2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
+            { id: 'fb3', number: 3, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran", categoryTypeNumber: 1 },
+        ];
     }
 }
 
