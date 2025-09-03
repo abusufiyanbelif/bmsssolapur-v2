@@ -336,191 +336,192 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
 
 
   return (
-    <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                 <FormField
-                    control={form.control}
-                    name="paymentScreenshot"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Payment Proof</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                {filePreview && (
-                    <div className="flex flex-col items-center gap-4">
-                        <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                        <div className="flex gap-2">
-                           <Button type="button" variant="outline" size="sm" onClick={handleGetText} disabled={isExtractingText}>
-                                {isExtractingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                                Get Text
-                            </Button>
-                            <Button type="button" size="sm" onClick={handleAutoFill} disabled={isScanning}>
-                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                Auto-fill Form
-                            </Button>
-                        </div>
-                    </div>
-                )}
-                 {extractedRawText && (
-                    <div className="space-y-2">
-                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                        <Textarea id="rawTextOutput" readOnly value={extractedRawText} rows={8} className="text-xs font-mono" />
-                    </div>
-                )}
-            </div>
+    <>
+      <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+               <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                   <FormField
+                      control={form.control}
+                      name="paymentScreenshot"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Payment Proof</FormLabel>
+                              <FormControl>
+                                  <Input 
+                                      type="file" 
+                                      accept="image/*,application/pdf"
+                                      ref={fileInputRef}
+                                      onChange={handleFileChange}
+                                  />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  
+                  {filePreview && (
+                      <div className="flex flex-col items-center gap-4">
+                          <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                          <div className="flex gap-2">
+                             <Button type="button" variant="outline" size="sm" onClick={handleGetText} disabled={isExtractingText}>
+                                  {isExtractingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                  Get Text
+                              </Button>
+                              <Button type="button" size="sm" onClick={handleAutoFill} disabled={isScanning}>
+                                  {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                  Auto-fill Form
+                              </Button>
+                          </div>
+                      </div>
+                  )}
+                   {extractedRawText && (
+                      <div className="space-y-2">
+                          <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                          <Textarea id="rawTextOutput" readOnly value={extractedRawText} rows={8} className="text-xs font-mono" />
+                      </div>
+                  )}
+              </div>
 
-            <FormField
-                control={form.control}
-                name="donorId"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Donor</FormLabel>
-                    <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
-                            >
-                            {selectedDonor?.name || "Select a donor"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                            <CommandInput placeholder="Search donor..." />
-                            <CommandList>
-                                <CommandEmpty>No donors found.</CommandEmpty>
-                                <CommandGroup>
-                                {donorUsers.map((user) => (
-                                    <CommandItem
-                                    value={user.name}
-                                    key={user.id}
-                                    onSelect={async () => {
-                                        field.onChange(user.id!);
-                                        const donor = await getUser(user.id!);
-                                        setSelectedDonor(donor);
-                                        setDonorPopoverOpen(false);
-                                    }}
-                                    >
-                                    <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
-                                    {user.name} ({user.phone})
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            
-            <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshot'); }} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {paymentMethods.map(method => (
-                                    <SelectItem key={method} value={method}>{method}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+              <FormField
+                  control={form.control}
+                  name="donorId"
+                  render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                      <FormLabel>Donor</FormLabel>
+                      <Popover open={donorPopoverOpen} onOpenChange={setDonorPopoverOpen}>
+                          <PopoverTrigger asChild>
+                          <FormControl>
+                              <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
+                              >
+                              {selectedDonor?.name || "Select a donor"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                          </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                              <CommandInput placeholder="Search donor..." />
+                              <CommandList>
+                                  <CommandEmpty>No donors found.</CommandEmpty>
+                                  <CommandGroup>
+                                  {donorUsers.map((user) => (
+                                      <CommandItem
+                                      value={user.name}
+                                      key={user.id}
+                                      onSelect={async () => {
+                                          field.onChange(user.id!);
+                                          const donor = await getUser(user.id!);
+                                          setSelectedDonor(donor);
+                                          setDonorPopoverOpen(false);
+                                      }}
+                                      >
+                                      <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                      {user.name} ({user.phone})
+                                      </CommandItem>
+                                  ))}
+                                  </CommandGroup>
+                              </CommandList>
+                          </Command>
+                          </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+              
+              <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Payment Method</FormLabel>
+                          <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshot'); }} value={field.value}>
+                              <FormControl>
+                                  <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {paymentMethods.map(method => (
+                                      <SelectItem key={method} value={method}>{method}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+              />
 
-            <FormField
-                control={form.control}
-                name="totalTransactionAmount"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Total Transaction Amount</FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="Enter full amount from receipt" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Primary Donation Category</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {donationTypes.map(type => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="purpose"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Purpose</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a purpose" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {donationPurposes.map(purpose => (
-                                <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
+              <FormField
+                  control={form.control}
+                  name="totalTransactionAmount"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Total Transaction Amount</FormLabel>
+                      <FormControl>
+                          <Input type="number" placeholder="Enter full amount from receipt" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Primary Donation Category</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                              {donationTypes.map(type => (
+                                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="purpose"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Purpose</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select a purpose" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                              {donationPurposes.map(purpose => (
+                                  <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+              </div>
 
-             <div className="flex gap-4">
-                <Button type="submit" disabled={isSubmitting || isFormInvalid}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isEditing ? 'Save Changes' : 'Add Donation'}
-                </Button>
-             </div>
-        </form>
-      </Form>
+               <div className="flex gap-4">
+                  <Button type="submit" disabled={isSubmitting || isFormInvalid}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {isEditing ? 'Save Changes' : 'Add Donation'}
+                  </Button>
+               </div>
+          </form>
+        </Form>
     </>
   );
 }
