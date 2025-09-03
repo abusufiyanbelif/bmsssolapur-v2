@@ -27,7 +27,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle } from "lucide-react";
+import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, Bot, Clipboard, Text } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose } from "@/services/types";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -44,7 +44,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ScanDonationDialog } from "../scan-donation-dialog";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
@@ -201,11 +200,16 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
   const [campaignPopoverOpen, setCampaignPopoverOpen] = useState(false);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
   
+  const [isScanning, setIsScanning] = useState(false);
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [extractedRawText, setExtractedRawText] = useState<string | null>(null);
+
   const isEditing = !!existingDonation;
 
   const form = useForm<AddDonationFormValues>({
@@ -265,6 +269,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const isAnonymous = watch("isAnonymous");
   const transactionId = watch('transactionId');
   const debouncedTransactionId = useDebounce(transactionId, 500);
+  const paymentScreenshotDataUrl = watch('paymentScreenshotDataUrl');
 
   const linkToLead = watch("linkToLead");
   const linkToCampaign = watch("linkToCampaign");
@@ -355,12 +360,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     }
   }, [debouncedTransactionId, handleTxnIdCheck, paymentApp]);
   
-  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        return new File([blob], filename, { type: blob.type });
-    };
-
   useEffect(() => {
     const prefillData = async () => {
         if(isEditing) {
@@ -370,7 +369,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                  setValue('paymentScreenshotDataUrl', existingDonation.paymentScreenshotUrls[0] || '', { shouldValidate: true });
             }
             if(existingDonation.rawText) {
-                // Not storing raw text anymore, but this is for backward compatibility
+                setExtractedRawText(existingDonation.rawText);
             }
             return;
         }
@@ -378,7 +377,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         const screenshotData = sessionStorage.getItem('manualDonationScreenshot');
         if (screenshotData) {
             try {
-                const { details, dataUrl } = JSON.parse(screenshotData);
+                const { details, dataUrl, rawText } = JSON.parse(screenshotData);
                 
                 Object.entries(details).forEach(([key, value]) => {
                     if(value) {
@@ -391,6 +390,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                          }
                     }
                 });
+                
+                if (rawText) setExtractedRawText(rawText);
 
                 if (details.donorId) {
                     const foundUser = await getUser(details.donorId);
@@ -402,6 +403,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
 
                 if (dataUrl) {
                     setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
+                    const file = await dataUrlToFile(dataUrl, 'scanned-screenshot.png');
+                    setFile(file);
                 }
             } catch (error) {
                 console.error("Error processing session screenshot", error);
@@ -464,6 +467,57 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       });
     }
   }
+  
+  const handleAutoFill = async () => {
+    if (!file) {
+      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot to scan.' });
+      return;
+    }
+    setIsScanning(true);
+    const formData = new FormData();
+    formData.append("proofFile", file);
+
+    const result = await scanProof(formData);
+
+    if (result.success && result.details) {
+        toast({ variant: 'success', title: 'Scan Successful!', description: 'The form has been pre-filled with the scanned data.' });
+        Object.entries(result.details).forEach(([key, value]) => {
+            if (value) {
+                if (key === 'date') setValue('donationDate', new Date(value as string));
+                else if (key === 'amount') setValue('totalTransactionAmount', value as number);
+                else setValue(key as any, value);
+            }
+        });
+        if (result.details.rawText) setExtractedRawText(result.details.rawText);
+        trigger(); // Trigger validation on all fields
+    } else {
+        toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details from the image." });
+    }
+    setIsScanning(false);
+  };
+  
+   const handleGetText = async () => {
+    if (!file) {
+      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
+      return;
+    }
+    setIsExtractingText(true);
+    const formData = new FormData();
+    formData.append('imageFile', file);
+    const result = await getRawTextFromImage(formData);
+    if(result.success && result.text) {
+        setExtractedRawText(result.text);
+    } else {
+        toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
+    }
+    setIsExtractingText(false);
+  };
+
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        return new File([blob], filename, { type: blob.type });
+    };
 
   const isFormInvalid = transactionIdState.isAvailable === false;
 
@@ -472,6 +526,62 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                 <FormField
+                    control={form.control}
+                    name="paymentScreenshotDataUrl"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Payment Proof</FormLabel>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    ref={fileInputRef}
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            setFile(file);
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
+                                            };
+                                            reader.readAsDataURL(file);
+                                        } else {
+                                            setFile(null);
+                                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
+                                        }
+                                    }}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                {paymentScreenshotDataUrl && (
+                    <div className="flex flex-col items-center gap-4">
+                        <Image src={paymentScreenshotDataUrl} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                        <div className="flex gap-2">
+                           <Button type="button" variant="outline" size="sm" onClick={handleGetText} disabled={isExtractingText}>
+                                {isExtractingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                Get Text
+                            </Button>
+                            <Button type="button" size="sm" onClick={handleAutoFill} disabled={isScanning}>
+                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                Auto-fill Form
+                            </Button>
+                        </div>
+                    </div>
+                )}
+                 {extractedRawText && (
+                    <div className="space-y-2">
+                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                        <Textarea id="rawTextOutput" readOnly value={extractedRawText} rows={8} className="text-xs font-mono" />
+                    </div>
+                )}
+            </div>
+
             <FormField
                 control={form.control}
                 name="donorId"
@@ -521,64 +631,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     </FormItem>
                 )}
                 />
-            
-             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center justify-between">
-                    <FormLabel>Payment Proof</FormLabel>
-                    <ScanDonationDialog
-                        onScanComplete={(details, dataUrl) => {
-                                Object.entries(details).forEach(([key, value]) => {
-                                if(value) {
-                                    if (key === 'date') setValue('donationDate', new Date(value as string));
-                                    else if (key === 'amount') setValue('totalTransactionAmount', value as number);
-                                    else setValue(key as any, value);
-                                }
-                            });
-                                setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
-                        }}
-                    />
-                </div>
-                    <FormField
-                    control={form.control}
-                    name="paymentScreenshotDataUrl"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormControl>
-                                <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    ref={fileInputRef}
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
-                                            };
-                                            reader.readAsDataURL(file);
-                                        } else {
-                                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
-                                        }
-                                    }}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                {watch('paymentScreenshotDataUrl') && (
-                    <div className="flex flex-col items-center gap-2">
-                        <Image src={watch('paymentScreenshotDataUrl')} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                            <Button type="button" variant="ghost" size="sm" onClick={() => {
-                            if(fileInputRef.current) fileInputRef.current.value = "";
-                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
-                        }}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove
-                        </Button>
-                    </div>
-                )}
-                </div>
+
             <FormField
                 control={form.control}
                 name="paymentMethod"

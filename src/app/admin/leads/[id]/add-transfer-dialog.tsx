@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect } from "lucide-react";
+import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Text } from "lucide-react";
 import { handleFundTransfer } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -108,7 +108,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   
    const handleExtractText = async () => {
     if (!file) {
-      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file first.' });
+      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
       return;
     }
     setIsExtractingText(true);
@@ -316,13 +316,13 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     </div>
                 )}
                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
-                        {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanEye className="h-4 w-4" />}
-                        Scan &amp; Fill Fields
-                    </Button>
-                     <Button type="button" variant="secondary" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
-                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <TextSelect className="h-4 w-4" />}
+                    <Button type="button" variant="outline" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
+                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
                         Get Raw Text
+                    </Button>
+                    <Button type="button" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
+                        {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                        Auto-fill Fields
                     </Button>
                 </div>
                 {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center py-4"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning image...</div>}
