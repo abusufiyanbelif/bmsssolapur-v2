@@ -202,6 +202,15 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
             purpose: 'Sadaqah',
             includePledge: false,
             paymentMethod: onlinePaymentsEnabled ? 'Online (UPI/Card)' : 'Bank Transfer',
+            donorName: '',
+            phone: '',
+            email: '',
+            notes: '',
+            leadId: '',
+            campaignId: '',
+            utrNumber: '',
+            senderBankName: '',
+            senderIfscCode: '',
         },
     });
 
@@ -236,7 +245,7 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         if(user) {
             setValue('donorName', user.name);
             setValue('phone', user.phone);
-            setValue('email', user.email || undefined);
+            setValue('email', user.email || '');
         }
     }, [user, setValue]);
     
