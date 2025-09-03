@@ -1,12 +1,17 @@
 
+
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers, updateUser as updateUserService, type User } from "@/services/user-service";
-import { getPublicCampaigns } from "@/services/public-data-service";
+import { getPublicCampaigns, getPublicLeads } from "@/services/public-data-service";
 import { getInspirationalQuotes as getQuotesFlow } from "@/ai/flows/get-inspirational-quotes-flow";
-import type { Quote } from '@/services/types';
+import type { Quote, Lead } from '@/services/types';
+
+export interface EnrichedLead extends Lead {
+    beneficiary?: User;
+}
 
 export async function getPublicDashboardData() {
     try {
@@ -42,6 +47,22 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
         return quotes;
     } catch (error) {
         console.error("Server action getQuotes failed:", error);
+        return [];
+    }
+}
+
+
+/**
+ * Fetches leads that are verified and public.
+ * These are the general leads that should be displayed for donations.
+ */
+export async function getOpenGeneralLeads(): Promise<Lead[]> {
+    try {
+        const leads = await getPublicLeads();
+        // The data is automatically serialized when returned from a server action.
+        return JSON.parse(JSON.stringify(leads));
+    } catch (error) {
+        console.error("Error fetching public leads:", error);
         return [];
     }
 }

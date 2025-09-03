@@ -4,23 +4,11 @@
 
 import type { Lead, User, Campaign } from "@/services/types";
 import { isConfigValid } from "@/services/firebase";
-import { getPublicLeads, getPublicCampaigns } from "@/services/public-data-service";
+import { getPublicCampaigns } from "@/services/public-data-service";
 
 
 export interface EnrichedLead extends Lead {
     beneficiary?: User;
-}
-
-/**
- * Fetches leads that are verified and public.
- * These are the general leads that should be displayed for donations.
- */
-export async function getOpenGeneralLeads(): Promise<Lead[]> {
-    if (!isConfigValid) {
-        console.warn("Firebase is not configured. Skipping fetching open leads.");
-        return [];
-    }
-    return getPublicLeads();
 }
 
 

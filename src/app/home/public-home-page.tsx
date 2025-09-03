@@ -1,17 +1,17 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon } from "lucide-react";
-import { EnrichedLead, getOpenGeneralLeads } from "@/app/campaigns/actions";
-import type { Quote } from "@/services/types";
+import type { Quote, Lead } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { PublicDashboardCards } from "./public-dashboard-cards";
-import { getPublicDashboardData, getQuotes } from "./actions";
+import { getPublicDashboardData, getQuotes, getOpenGeneralLeads } from "./actions";
 
 function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
     const [quotes, setQuotes] = useState<Quote[]>(initialQuotes);
@@ -79,7 +79,7 @@ function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
 
 export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
   const router = useRouter();
-  const [leads, setLeads] = useState<EnrichedLead[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(true);
   
   useEffect(() => {
@@ -87,7 +87,7 @@ export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
           setLeadsLoading(true);
           const fetchedLeads = await getOpenGeneralLeads();
           if(fetchedLeads) {
-            setLeads(fetchedLeads as EnrichedLead[]);
+            setLeads(fetchedLeads);
           }
           setLeadsLoading(false);
       };
