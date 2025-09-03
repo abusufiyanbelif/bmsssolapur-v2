@@ -147,6 +147,10 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         return snapshot.docs.map(doc => doc.data() as (Campaign & { raisedAmount: number, fundingProgress: number }));
     } catch (e) {
         console.error("Error fetching public campaigns:", e);
+        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
+            console.error("FATAL: Firestore permission error. The server cannot connect to the database. Please check IAM roles.");
+            return []; // Return empty array to prevent crash
+        }
         if (e instanceof Error && e.message.includes('index')) {
             console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'publicCampaigns' collection.");
         }
