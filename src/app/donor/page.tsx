@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Suspense, useEffect, useState } from "react";
@@ -8,10 +7,11 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { getUser, User } from "@/services/user-service";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
-import { getAppSettings } from "@/services/app-settings-service";
+import { getAppSettings } from "@/app/admin/settings/actions";
 import { getAllCampaigns } from "@/services/campaign-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getQuotes } from "@/app/home/actions";
+import type { AppSettings, Donation, Lead, Campaign, Quote } from "@/services/types";
 
 async function DonorPageLoader({ userId }: { userId: string | null }) {
     if (!userId) {
@@ -24,6 +24,7 @@ async function DonorPageLoader({ userId }: { userId: string | null }) {
         );
     }
     
+    // Fetch all data in parallel on the server
     const [user, donations, allLeads, allDonations, allCampaigns, quotes, settings] = await Promise.all([
         getUser(userId),
         getDonationsByUserId(userId),
@@ -44,9 +45,12 @@ async function DonorPageLoader({ userId }: { userId: string | null }) {
         );
     }
     
+    // Pass the fetched data as props to the client component
     return <DonorDashboardContent user={user} donations={donations} allLeads={allLeads} allDonations={allDonations} allCampaigns={allCampaigns} quotes={quotes} settings={settings} />
 }
 
+
+// This component remains a client component to handle localStorage and state.
 function DonorPageWithAuth() {
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -68,6 +72,9 @@ function DonorPageWithAuth() {
     );
 }
 
-export default function DonorDashboardPage() {
+// The page itself becomes a Server Component that uses the client component
+export default async function DonorDashboardPage() {
+    // This is a Server Component. It can't use hooks like useState or useEffect directly.
+    // We delegate the client-side logic to DonorPageWithAuth.
     return <DonorPageWithAuth />;
 }

@@ -218,6 +218,9 @@ export const getAppSettings = async (): Promise<AppSettings> => {
       const data = settingsDoc.data();
       // Deep merge with defaults to handle nested objects and new settings
       const mergedSettings = mergeDeep({ ...defaultSettings }, data);
+       if (mergedSettings.updatedAt instanceof Timestamp) {
+        mergedSettings.updatedAt = mergedSettings.updatedAt.toDate();
+      }
       return { id: settingsDoc.id, ...mergedSettings } as AppSettings;
     } else {
       // Document doesn't exist, so create it with defaults
@@ -227,7 +230,7 @@ export const getAppSettings = async (): Promise<AppSettings> => {
         updatedAt: Timestamp.now(),
       };
       await settingsDocRef.set(newSettings);
-      return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings } as AppSettings; // Return without timestamp for immediate use
+      return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings, updatedAt: new Date() } as AppSettings;
     }
   } catch (error) {
     console.error('Error getting app settings: ', error);

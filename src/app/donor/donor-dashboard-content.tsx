@@ -20,6 +20,7 @@ import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } fro
 import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
 import { getQuotes } from "@/app/home/actions";
 import { getAllLeads } from "@/services/lead-service";
+import { useRouter } from "next/navigation";
 
 const statusColors: Record<Donation['status'], string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -220,4 +221,3 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
         </Card>
     );
 }
-

@@ -82,10 +82,10 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         const orgQuery = query(collection(db, ORGANIZATIONS_COLLECTION), limit(1));
         const querySnapshot = await getDocs(orgQuery);
         if (!querySnapshot.empty) {
-            const doc = querySnapshot.docs[0];
-            const data = doc.data();
+            const docSnap = querySnapshot.docs[0];
+            const data = docSnap.data();
             return { 
-                id: doc.id, 
+                id: docSnap.id, 
                 ...data,
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: (data.updatedAt as Timestamp)?.toDate(),
