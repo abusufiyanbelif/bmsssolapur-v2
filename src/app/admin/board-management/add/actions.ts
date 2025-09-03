@@ -3,7 +3,6 @@
 
 import { getUser, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import { arrayUnion } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -17,8 +16,15 @@ export async function handleAddBoardMember(userId: string, role: string): Promis
         return { success: false, error: "Selected user not found." };
     }
     
-    // Use arrayUnion to add the new group without duplicating it
-    await updateUser(userId, { groups: arrayUnion(role) as any });
+    // Get existing groups or initialize an empty array
+    const existingGroups = user.groups || [];
+    
+    // Create a new set to handle uniqueness and add the new role
+    const newGroups = new Set(existingGroups);
+    newGroups.add(role);
+
+    // Update the user with the new array of groups
+    await updateUser(userId, { groups: Array.from(newGroups) });
     
     revalidatePath("/admin/board-management");
     revalidatePath("/organization");
