@@ -22,9 +22,12 @@ import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import type { ExtractDonationDetailsOutput } from '@/ai/schemas';
 
-export function ScanDonationDialog() {
+interface ScanDonationDialogProps {
+  onScanComplete: (details: ExtractDonationDetailsOutput, dataUrl: string) => void;
+}
+
+export function ScanDonationDialog({ onScanComplete }: ScanDonationDialogProps) {
   const { toast } = useToast();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -59,46 +62,17 @@ export function ScanDonationDialog() {
     setIsScanning(false);
     
     if (result.success && result.details) {
-        toast({ variant: 'success', title: 'Scan Successful!', description: 'Redirecting to pre-filled form...' });
+        toast({ variant: 'success', title: 'Scan Successful!', description: 'The form has been pre-filled with the scanned data.' });
         
-        // Store screenshot data in session storage to pass to the next page
         const reader = new FileReader();
         reader.onloadend = () => {
             const dataUrl = reader.result as string;
             const detailsToStore = {
                 ...result.details,
-                // We only need the data URL, not the full raw text for this purpose.
                 rawText: undefined 
             };
-            const sessionData = {
-                details: detailsToStore,
-                dataUrl: dataUrl
-            };
-            sessionStorage.setItem('manualDonationScreenshot', JSON.stringify(sessionData));
-
-            // Build query params from the *other* details
-            const queryParams = new URLSearchParams();
-            Object.entries(detailsToStore).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && typeof value !== 'object') {
-                    queryParams.set(key, String(value));
-                }
-            });
-
-            if (result.donorFound) {
-                router.push(`/admin/donations/add?${queryParams.toString()}`);
-            } else {
-                 // Pass relevant info to create a new user
-                const userParams = new URLSearchParams();
-                if(result.details.senderName) userParams.set('name', result.details.senderName);
-                if(result.details.donorPhone) userParams.set('phone', result.details.donorPhone);
-                if(result.details.senderUpiId) userParams.set('upiId', result.details.senderUpiId);
-                // Add a redirect URL so we land on the donation page after user creation
-                userParams.set('redirect_url', `/admin/donations/add?${queryParams.toString()}`);
-                
-                router.push(`/admin/user-management/add?${userParams.toString()}`);
-            }
-            
-             setOpen(false); // Close the dialog
+            onScanComplete(detailsToStore, dataUrl);
+            setOpen(false); // Close the dialog
         };
         reader.readAsDataURL(file);
 
@@ -126,7 +100,7 @@ export function ScanDonationDialog() {
         <DialogHeader>
           <DialogTitle>Scan Payment Screenshot</DialogTitle>
           <DialogDescription>
-            Upload a payment proof image. The system will attempt to extract the details and pre-fill the donation form for you.
+            Upload a payment proof image. The system will attempt to extract the details and pre-fill the form for you.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -163,11 +137,10 @@ export function ScanDonationDialog() {
           </DialogClose>
           <Button onClick={handleScan} disabled={isScanning || !file}>
             {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanEye className="mr-2 h-4 w-4" />}
-            Scan and Continue
+            Scan and Fill Form
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-

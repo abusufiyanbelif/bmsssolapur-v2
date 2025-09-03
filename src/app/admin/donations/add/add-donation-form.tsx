@@ -43,6 +43,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ScanDonationDialog } from "../scan-donation-dialog";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
@@ -195,13 +196,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isExtractingText, setIsExtractingText] = useState(false);
-  const [rawText, setRawText] = useState<string | null>(null);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
-  const [localFiles, setLocalFiles] = useState<FilePreview[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
@@ -358,10 +355,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
             const donor = await getUser(existingDonation.donorId);
             setSelectedDonor(donor);
             if(existingDonation.paymentScreenshotUrls && existingDonation.paymentScreenshotUrls.length > 0) {
-                setLocalFiles([{ file: new File([], 'existing-proof.png'), previewUrl: existingDonation.paymentScreenshotUrls[0] }]);
+                 setValue('paymentScreenshotDataUrl', existingDonation.paymentScreenshotUrls[0] || '', { shouldValidate: true });
             }
             if(existingDonation.rawText) {
-                setRawText(existingDonation.rawText);
+                // Not storing raw text anymore, but this is for backward compatibility
             }
             return;
         }
@@ -385,13 +382,13 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
 
                 if (details.donorId) {
                     const foundUser = await getUser(details.donorId);
-                     if (foundUser) setSelectedDonor(foundUser);
+                     if (foundUser) {
+                        setValue('donorId', foundUser.id!);
+                        setSelectedDonor(foundUser);
+                     }
                 }
 
                 if (dataUrl) {
-                    const file = await dataUrlToFile(dataUrl, 'scanned-screenshot.png');
-                    setLocalFiles([{ file, previewUrl: dataUrl }]);
-                    setValue('paymentScreenshots', [file], { shouldValidate: true });
                     setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
                 }
             } catch (error) {
@@ -419,8 +416,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       if (value !== undefined && value !== null) {
         if (value instanceof Date) {
           formData.append(key, value.toISOString());
-        } else if (key === 'paymentScreenshots' && Array.isArray(value) && value[0] instanceof File) {
-             formData.append("paymentScreenshots", value[0]);
         } else if (Array.isArray(value)) {
             // This will handle non-file arrays, like upiIds
         }
@@ -514,6 +509,64 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     </FormItem>
                 )}
                 />
+
+             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between">
+                    <FormLabel>Payment Proof</FormLabel>
+                    <ScanDonationDialog
+                        onScanComplete={(details, dataUrl) => {
+                             Object.entries(details).forEach(([key, value]) => {
+                                if(value) {
+                                    if (key === 'date') setValue('donationDate', new Date(value as string));
+                                    else if (key === 'amount') setValue('totalTransactionAmount', value as number);
+                                    else setValue(key as any, value);
+                                }
+                            });
+                             setValue('paymentScreenshotDataUrl', dataUrl, { shouldValidate: true });
+                        }}
+                    />
+                </div>
+                 <FormField
+                    control={form.control}
+                    name="paymentScreenshotDataUrl"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    ref={fileInputRef}
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
+                                            };
+                                            reader.readAsDataURL(file);
+                                        } else {
+                                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
+                                        }
+                                    }}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                {watch('paymentScreenshotDataUrl') && (
+                    <div className="flex flex-col items-center gap-2">
+                        <Image src={watch('paymentScreenshotDataUrl')} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                            <Button type="button" variant="ghost" size="sm" onClick={() => {
+                            if(fileInputRef.current) fileInputRef.current.value = "";
+                            setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
+                        }}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                        </Button>
+                    </div>
+                )}
+             </div>
             
             <FormField
                 control={form.control}
@@ -535,52 +588,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     </FormItem>
                 )}
             />
-
-             {showProofSection && (
-                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                    <FormField
-                        control={form.control}
-                        name="paymentScreenshotDataUrl"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Payment Proof</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        type="file" 
-                                        accept="image/*,application/pdf"
-                                        ref={fileInputRef}
-                                        onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    setValue('paymentScreenshotDataUrl', reader.result as string, { shouldValidate: true });
-                                                };
-                                                reader.readAsDataURL(file);
-                                            } else {
-                                                setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
-                                            }
-                                        }}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    
-                    {watch('paymentScreenshotDataUrl') && (
-                        <div className="flex flex-col items-center gap-2">
-                            <Image src={watch('paymentScreenshotDataUrl')} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                             <Button type="button" variant="ghost" size="sm" onClick={() => {
-                                if(fileInputRef.current) fileInputRef.current.value = "";
-                                setValue('paymentScreenshotDataUrl', '', { shouldValidate: true });
-                            }}>
-                                <Trash2 className="mr-2 h-4 w-4" /> Remove
-                            </Button>
-                        </div>
-                    )}
-                 </div>
-             )}
 
             <FormField
                 control={form.control}
