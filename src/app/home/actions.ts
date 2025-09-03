@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
@@ -21,13 +20,11 @@ export async function getPublicDashboardData() {
             getPublicLeads(), // Fetch public leads
             getPublicCampaigns()
         ]);
-        // The data is automatically serialized when returned from a server action.
-        // We need to handle the Date objects manually.
         return {
-            donations: JSON.parse(JSON.stringify(donations)),
-            users: JSON.parse(JSON.stringify(users)),
-            leads: JSON.parse(JSON.stringify(leads)),
-            campaigns: JSON.parse(JSON.stringify(campaigns)),
+            donations,
+            users,
+            leads,
+            campaigns,
         };
     } catch (error) {
         console.error("Error fetching public dashboard data:", error);
@@ -42,9 +39,8 @@ export async function updateUser(userId: string, updates: Partial<User>) {
 
 export async function getQuotes(count: number = 3): Promise<Quote[]> {
     try {
-        const quotes = await getQuotesFlow(count);
-        // The data is automatically serialized when returned from a server action, so this is safe.
-        return quotes;
+        const quotes = await getQuotesFlow({count});
+        return JSON.parse(JSON.stringify(quotes));
     } catch (error) {
         console.error("Server action getQuotes failed:", error);
         return [];
