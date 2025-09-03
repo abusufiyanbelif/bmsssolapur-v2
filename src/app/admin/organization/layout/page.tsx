@@ -1,8 +1,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCurrentOrganization } from "@/services/organization-service";
+import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Palette } from "lucide-react";
 import { LayoutSettingsForm } from "./layout-settings-form";
 
 export default async function LayoutSettingsPage() {
@@ -24,10 +24,13 @@ export default async function LayoutSettingsPage() {
     
     return (
         <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Layout Settings</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Layout Configuration</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle>Header & Footer Configuration</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <Palette />
+                        Header & Footer Configuration
+                    </CardTitle>
                     <CardDescription>
                        Manage the content displayed in the header and footer across the public-facing pages of the website.
                     </CardDescription>
