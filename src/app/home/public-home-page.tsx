@@ -10,7 +10,6 @@ import type { Quote, Lead } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
-import { PublicDashboardCards } from "./public-dashboard-cards";
 import { getQuotes, getOpenGeneralLeads } from "./actions";
 
 function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
@@ -171,5 +170,3 @@ export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
     </div>
   );
 }
-
-    

@@ -4,9 +4,9 @@ import { Suspense } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PublicHomePage } from "./home/public-home-page";
-import { PublicDashboardCards } from "./home/public-dashboard-cards";
 import { Quote, Donation, User, Lead, Campaign } from "@/services/types";
 import { getPublicDashboardData, getQuotes } from "./home/actions";
+import { MainMetricsCard, BeneficiaryBreakdownCard, DonationTypeCard, TopDonationsCard, RecentCampaignsCard, CampaignBreakdownCard } from "@/app/admin/dashboard-cards";
 
 
 const CardSkeleton = () => (
@@ -21,6 +21,17 @@ const CardSkeleton = () => (
     </Card>
 );
 
+const TableSkeleton = () => (
+    <Card>
+        <div className="p-4 space-y-4">
+             <Skeleton className="h-6 w-1/4" />
+             <Skeleton className="h-10 w-full" />
+             <Skeleton className="h-10 w-full" />
+        </div>
+    </Card>
+);
+
+
 async function PublicData() {
     const data = await getPublicDashboardData();
 
@@ -31,14 +42,27 @@ async function PublicData() {
             </div>
         );
     }
+
+    const allDonations = data.donations || [];
+    const allUsers = data.users || [];
+    const allLeads = data.leads || [];
+    const allCampaigns = data.campaigns || [];
     
     return (
-        <PublicDashboardCards
-            allDonations={data.donations || []}
-            allUsers={data.users || []}
-            allLeads={data.leads || []}
-            allCampaigns={data.campaigns || []}
-        />
+         <div className="space-y-4">
+            <MainMetricsCard allDonations={allDonations} allLeads={allLeads} />
+            <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
+            <DonationTypeCard donations={allDonations} isPublicView={true} />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <div className="col-span-full lg:col-span-4">
+                    <TopDonationsCard allDonations={allDonations} isPublicView={true} />
+                </div>
+                <div className="col-span-full lg:col-span-3">
+                    <RecentCampaignsCard allCampaigns={allCampaigns} allLeads={allLeads} />
+                </div>
+            </div>
+            <CampaignBreakdownCard allCampaigns={allCampaigns} />
+        </div>
     )
 }
 
