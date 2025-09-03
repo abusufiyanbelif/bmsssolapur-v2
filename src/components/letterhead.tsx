@@ -14,16 +14,21 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         const textStyle = { letterSpacing: '0.5px' };
 
         return (
-            <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative">
-                <img
-                    src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
-                    alt="Watermark"
-                    crossOrigin="anonymous"
-                    className="absolute inset-0 w-full h-full object-contain opacity-5 z-0"
-                    data-ai-hint="logo watermark"
-                />
+            <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative">
+                {/* Watermark Layer */}
+                <div className="absolute inset-0 z-0 flex items-center justify-center">
+                    <img
+                        src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
+                        alt="Watermark"
+                        crossOrigin="anonymous"
+                        className="w-3/4 h-3/4 object-contain opacity-5"
+                        data-ai-hint="logo watermark"
+                    />
+                </div>
+
+                {/* Content Layer */}
                 <div className="relative z-10 flex flex-col flex-grow">
-                    <header className="pb-4 border-b-2 border-gray-800">
+                     <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
                                 <tr>
