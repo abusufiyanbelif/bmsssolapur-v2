@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -63,6 +62,9 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
         },
     });
 
+    const { watch } = form;
+    const activeMode = watch('mode');
+
     async function onSubmit(values: GatewayFormValues) {
         setIsSubmitting(true);
         const formData = new FormData();
@@ -101,19 +103,29 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
                 <fieldset disabled={!form.watch('enabled')} className="space-y-6">
                     <FormField control={form.control} name="mode" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Active Mode</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="test" /></FormControl><FormLabel className="font-normal">Test</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="live" /></FormControl><FormLabel className="font-normal">Live</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
                     <Separator />
-                    <h4 className="font-semibold text-muted-foreground">Test Credentials</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField control={form.control} name="test.keyId" render={({field}) => (<FormItem><FormLabel>Test Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="test.keySecret" render={({field}) => (<FormItem><FormLabel>Test Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
-                    <Separator />
-                    <h4 className="font-semibold text-muted-foreground">Live Credentials</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField control={form.control} name="live.keyId" render={({field}) => (<FormItem><FormLabel>Live Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="live.keySecret" render={({field}) => (<FormItem><FormLabel>Live Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
+
+                    {activeMode === 'test' && (
+                        <div>
+                            <h4 className="font-semibold text-muted-foreground mb-4">Test Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="test.keyId" render={({field}) => (<FormItem><FormLabel>Test Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="test.keySecret" render={({field}) => (<FormItem><FormLabel>Test Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                        </div>
+                    )}
+                    
+                    {activeMode === 'live' && (
+                        <div>
+                             <h4 className="font-semibold text-muted-foreground mb-4">Live Credentials</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="live.keyId" render={({field}) => (<FormItem><FormLabel>Live Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="live.keySecret" render={({field}) => (<FormItem><FormLabel>Live Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                        </div>
+                    )}
+                    
                 </fieldset>
-                 <div className="flex gap-2">
+                 <div className="flex gap-2 pt-4 border-t">
                     {form.formState.isDirty && (
                          <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
