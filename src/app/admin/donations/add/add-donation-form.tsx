@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -128,6 +127,15 @@ const formSchema = z.object({
 }, {
     message: "Support amount cannot be greater than or equal to the total amount.",
     path: ["tipAmount"],
+}).refine(data => {
+    // If payment method is Online or Bank Transfer, a screenshot is required unless one is already present
+    if (['Online (UPI/Card)', 'Bank Transfer'].includes(data.paymentMethod)) {
+        return !!data.paymentScreenshots?.[0] || !!data.paymentScreenshotDataUrl;
+    }
+    return true;
+}, {
+    message: 'A payment screenshot is required for this payment method.',
+    path: ['paymentScreenshots'],
 });
 
 type AddDonationFormValues = z.infer<typeof formSchema>;
@@ -244,6 +252,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         recipientPhone: existingDonation?.recipientPhone || '',
         recipientUpiId: existingDonation?.recipientUpiId || '',
         recipientAccountNumber: existingDonation?.recipientAccountNumber || '',
+        paymentScreenshots: [],
         paymentScreenshotDataUrl: existingDonation?.paymentScreenshotUrls?.[0] || '',
         includeTip: false,
         tipAmount: 0,
@@ -252,7 +261,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     },
   });
   
-  const { watch, setValue, reset, getValues, control } = form;
+  const { watch, setValue, reset, getValues, control, trigger } = form;
   const includeTip = watch("includeTip");
   const totalTransactionAmount = watch("totalTransactionAmount");
   const tipAmount = watch("tipAmount");
@@ -268,6 +277,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const paymentApp = watch("paymentApp");
   const includePledge = watch("includePledge");
   
+  const showProofSection = useMemo(() => {
+    return ['Online (UPI/Card)', 'Bank Transfer'].includes(paymentMethod);
+  }, [paymentMethod]);
+
   const selectedLead = useMemo(() => {
     if (!linkedLeadId) return null;
     return leads.find(l => l.id === linkedLeadId);
@@ -401,8 +414,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       if (value !== undefined && value !== null) {
         if (value instanceof Date) {
           formData.append(key, value.toISOString());
-        } else if (value instanceof File) {
-            formData.append("paymentScreenshots", value);
+        } else if (key === 'paymentScreenshots' && Array.isArray(value) && value[0] instanceof File) {
+             formData.append("paymentScreenshots", value[0]);
         } else if (Array.isArray(value)) {
             // This will handle non-file arrays, like upiIds
         }
@@ -411,6 +424,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         }
       }
     });
+    
+    formData.append('adminUserId', adminUserId);
 
     const result = isEditing 
         ? await handleUpdateDonation(existingDonation.id!, formData, adminUserId)
@@ -492,6 +507,76 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 )}
                 />
             
+            <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshots'); }} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {paymentMethods.map(method => (
+                                    <SelectItem key={method} value={method}>{method}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+             {showProofSection && (
+                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <FormField
+                        control={form.control}
+                        name="paymentScreenshots"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Payment Proof</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        type="file" 
+                                        accept="image/*,application/pdf"
+                                        ref={fileInputRef}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const filePreview = { file, previewUrl: URL.createObjectURL(file) };
+                                                setLocalFiles([filePreview]);
+                                                field.onChange([file]);
+                                                setValue('paymentScreenshotDataUrl', filePreview.previewUrl);
+                                            } else {
+                                                setLocalFiles([]);
+                                                field.onChange([]);
+                                                setValue('paymentScreenshotDataUrl', '');
+                                            }
+                                        }}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    
+                    {localFiles.length > 0 && (
+                        <div className="flex flex-col items-center gap-2">
+                            <Image src={localFiles[0].previewUrl} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                             <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                setLocalFiles([]);
+                                if(fileInputRef.current) fileInputRef.current.value = "";
+                                setValue('paymentScreenshots', []);
+                                setValue('paymentScreenshotDataUrl', '');
+                            }}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Remove
+                            </Button>
+                        </div>
+                    )}
+                 </div>
+             )}
+
             <FormField
                 control={form.control}
                 name="totalTransactionAmount"
@@ -669,3 +754,5 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
+    
