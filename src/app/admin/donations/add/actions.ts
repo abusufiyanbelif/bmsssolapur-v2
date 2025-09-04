@@ -10,6 +10,8 @@ import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
 import { extractDonationDetails as extractDetailsFlow } from "@/ai/flows/extract-donation-details-flow";
 import { extractRawText as extractRawTextFlow } from "@/ai/flows/extract-raw-text-flow";
+import { extractDetailsFromText as extractDetailsFromTextFlow } from "@/ai/flows/extract-details-from-text-flow";
+
 
 interface FormState {
     success: boolean;
@@ -215,3 +217,30 @@ export async function getRawTextFromImage(formData: FormData): Promise<{success:
     }
 }
 
+export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
+    if (!rawText) {
+        return { success: false, error: "No text was provided for parsing." };
+    }
+
+    try {
+        const extractedDetails = await extractDetailsFromTextFlow({ rawText });
+        
+        let foundDonor: User | null = null;
+        if (extractedDetails.senderUpiId) foundDonor = await getUserByUpiId(extractedDetails.senderUpiId);
+        if (!foundDonor && extractedDetails.donorPhone) {
+            const phone = extractedDetails.donorPhone.replace(/\D/g,'').slice(-10);
+            foundDonor = await getUserByPhone(phone);
+        }
+        if (!foundDonor && extractedDetails.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(extractedDetails.senderAccountNumber);
+
+        return { 
+            success: true, 
+            details: { ...extractedDetails, donorId: foundDonor?.id, rawText: rawText },
+            donorFound: !!foundDonor,
+        };
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Text parsing failed:`, lastError);
+        return { success: false, error: `Text parsing failed: ${lastError}` };
+    }
+}

@@ -38,7 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId } from "./actions";
+import { handleAddDonation, checkTransactionId, getDetailsFromText } from "./actions";
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
@@ -313,6 +313,28 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setIsScanning(false);
   };
   
+   const handleAutoFillFromText = async () => {
+        if (!extractedRawText) {
+            toast({ variant: 'destructive', title: 'No Text Available', description: 'Please click "Get Text" first.' });
+            return;
+        }
+        setIsScanning(true);
+        const result = await getDetailsFromText(extractedRawText);
+        if (result.success && result.details) {
+             Object.entries(result.details).forEach(([key, value]) => {
+                if (value && key !== 'rawText') {
+                    if (key === 'date') setValue('donationDate', new Date(value as string));
+                    else if (key === 'amount') setValue('totalTransactionAmount', value as number);
+                    else setValue(key as any, value);
+                }
+            });
+            toast({ variant: 'success', title: 'Auto-fill Complete!', description: 'Form populated from extracted text.' });
+        } else {
+             toast({ variant: 'destructive', title: 'Parsing Failed', description: result.error || "Could not parse details from the text." });
+        }
+        setIsScanning(false);
+    };
+
   const handleGetText = async () => {
     const proofFile = getValues('paymentScreenshot');
     if (!proofFile) {
@@ -369,7 +391,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                               </Button>
                               <Button type="button" size="sm" onClick={handleAutoFill} disabled={isScanning}>
                                   {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                  Auto-fill Form
+                                  Scan & Auto-fill
                               </Button>
                           </div>
                       </div>
@@ -377,6 +399,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                    {extractedRawText && (
                       <div className="space-y-2">
                           <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                           <Button type="button" size="sm" variant="secondary" onClick={handleAutoFillFromText} disabled={isScanning}>
+                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
+                                Auto-fill from Text
+                            </Button>
                           <Textarea id="rawTextOutput" readOnly value={extractedRawText} rows={8} className="text-xs font-mono" />
                       </div>
                   )}
