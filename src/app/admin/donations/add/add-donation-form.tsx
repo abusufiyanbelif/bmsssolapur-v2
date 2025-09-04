@@ -38,8 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId } from "./actions";
-import { getDetailsFromText, getRawTextFromImage } from '@/app/donate/actions';
+import { handleAddDonation, checkTransactionId, scanProof } from "./actions";
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
@@ -132,7 +131,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
   
   const [isScanning, setIsScanning] = useState(false);
-  const [isExtractingText, setIsExtractingText] = useState(false);
   const [extractedRawText, setExtractedRawText] = useState<string | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
@@ -284,14 +282,19 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     }
   };
   
-   const handleAutoFillFromText = async () => {
-        if (!extractedRawText) {
-            toast({ variant: 'destructive', title: 'No Text Available', description: 'Please click "Get Text" first.' });
-            return;
+   const handleAutoFill = async () => {
+        const proofFile = getValues('paymentScreenshot');
+        if (!proofFile) {
+          toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
+          return;
         }
         setIsScanning(true);
-        const result = await getDetailsFromText(extractedRawText);
+        const formData = new FormData();
+        formData.append('proofFile', proofFile);
+        const result = await scanProof(formData);
+        
         if (result.success && result.details) {
+             setExtractedRawText(result.details.rawText || null);
              Object.entries(result.details).forEach(([key, value]) => {
                 if (value && key !== 'rawText') {
                     if (key === 'date') setValue('donationDate', new Date(value as string));
@@ -306,27 +309,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         setIsScanning(false);
     };
 
-  const handleGetText = async () => {
-    const proofFile = getValues('paymentScreenshot');
-    if (!proofFile) {
-      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
-      return;
-    }
-    setIsExtractingText(true);
-    const formData = new FormData();
-    formData.append('imageFile', proofFile);
-    try {
-        const result = await getRawTextFromImage(formData);
-        if(result.success && result.text) {
-            setExtractedRawText(result.text);
-        } else {
-            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
-        }
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Extraction Failed', description: e instanceof Error ? e.message : 'Could not extract text from the image.' });
-    }
-    setIsExtractingText(false);
-  };
   
   const isFormInvalid = transactionIdState.isAvailable === false;
 
@@ -359,16 +341,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       <div className="flex flex-col items-center gap-4">
                           <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
                           <div className="flex gap-2">
-                             <Button type="button" variant="outline" size="sm" onClick={handleGetText} disabled={isExtractingText}>
-                                  {isExtractingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                                  Get Text
+                               <Button type="button" size="sm" variant="secondary" onClick={handleAutoFill} disabled={isScanning}>
+                                  {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
+                                  Scan & Auto-fill
                               </Button>
-                                {extractedRawText && (
-                                     <Button type="button" size="sm" variant="secondary" onClick={handleAutoFillFromText} disabled={isScanning}>
-                                        {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
-                                        Auto-fill from Text
-                                    </Button>
-                                )}
                           </div>
                       </div>
                   )}
