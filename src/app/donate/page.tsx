@@ -47,8 +47,8 @@ import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
-import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
+import { getRawTextFromImage, getDetailsFromText } from "@/app/admin/donations/add/actions";
+
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
 const allPaymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
@@ -740,19 +740,27 @@ function UploadProofSection({ user }: { user: User | null }) {
         setIsScanning(true);
         
         const formData = new FormData();
-        formData.append("proofFile", file);
+        formData.append("imageFile", file);
 
-        const result = await scanProof(formData);
+        const textResult = await getRawTextFromImage(formData);
 
-        if (result.success && result.details) {
+        if (!textResult.success || !textResult.text) {
+             toast({ variant: 'destructive', title: 'Scan Failed', description: textResult.error || "Could not extract text from the image." });
+             setIsScanning(false);
+             return;
+        }
+
+        const detailsResult = await getDetailsFromText(textResult.text);
+
+        if (detailsResult.success && detailsResult.details) {
             const queryParams = new URLSearchParams();
-            if(result.details.rawText) {
-                queryParams.set('rawText', encodeURIComponent(result.details.rawText));
+            if(detailsResult.details.rawText) {
+                queryParams.set('rawText', encodeURIComponent(detailsResult.details.rawText));
             }
             
             try {
                 const dataUrl = await fileToDataUrl(file);
-                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ details: result.details, dataUrl, rawText: result.details.rawText }));
+                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ details: detailsResult.details, dataUrl, rawText: detailsResult.details.rawText }));
             } catch (e) {
                  toast({ variant: 'destructive', title: "Error preparing screenshot" });
             }
@@ -760,7 +768,7 @@ function UploadProofSection({ user }: { user: User | null }) {
             router.push(`/donate/confirm?${queryParams.toString()}`);
 
         } else {
-             toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "An unknown error occurred." });
+             toast({ variant: 'destructive', title: 'Parsing Failed', description: detailsResult.error || "An unknown error occurred." });
         }
         setIsScanning(false);
     };
