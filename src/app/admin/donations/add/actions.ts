@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
@@ -7,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
-import { getRawTextFromImage } from '@/ai/flows/extract-raw-text-flow';
+import { getRawTextFromImage } from '@/app/donate/actions';
 import { extractDetailsFromText as extractDetailsFromTextFlow } from '@/ai/flows/extract-details-from-text-flow';
 
 
@@ -150,62 +151,22 @@ interface ScanResult {
     success: boolean;
     details?: ExtractDonationDetailsOutput;
     error?: string;
-    donorFound?: boolean;
 }
 
-async function getDetailsFromText(rawText: string): Promise<ScanResult> {
+export async function handleExtractLeadDetailsFromText(rawText: string): Promise<ScanResult> {
     if (!rawText) {
         return { success: false, error: "No text was provided for parsing." };
     }
 
     try {
         const extractedDetails = await extractDetailsFromTextFlow({ rawText });
-        
-        let foundDonor: User | null = null;
-        if (extractedDetails.senderUpiId) foundDonor = await getUserByUpiId(extractedDetails.senderUpiId);
-        if (!foundDonor && extractedDetails.donorPhone) {
-            const phone = extractedDetails.donorPhone.replace(/\D/g,'').slice(-10);
-            foundDonor = await getUserByPhone(phone);
-        }
-        if (!foundDonor && extractedDetails.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(extractedDetails.senderAccountNumber);
-
         return { 
             success: true, 
-            details: { ...extractedDetails, donorId: foundDonor?.id, rawText: rawText },
-            donorFound: !!foundDonor,
+            details: { ...extractedDetails, rawText: rawText },
         };
     } catch (e) {
         const lastError = e instanceof Error ? e.message : "An unknown error occurred";
         console.error(`Text parsing failed:`, lastError);
         return { success: false, error: `Text parsing failed: ${lastError}` };
-    }
-}
-
-
-export async function scanProof(formData: FormData): Promise<ScanResult> {
-    const proofFile = formData.get("proofFile") as File | null;
-    if (!proofFile) {
-        return { success: false, error: "No image file provided." };
-    }
-    
-    try {
-        const arrayBuffer = await proofFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const dataUri = `data:${proofFile.type};base64,${base64}`;
-
-        // Step 1: Get Raw Text
-        const textResult = await getRawTextFromImage({ photoDataUri: dataUri });
-
-        if (!textResult?.rawText) {
-            throw new Error("Failed to extract text from image.");
-        }
-
-        // Step 2: Get Details from Text
-        return await getDetailsFromText(textResult.rawText);
-
-    } catch (e) {
-        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error(`Full scanning process failed:`, lastError);
-        return { success: false, error: lastError };
     }
 }

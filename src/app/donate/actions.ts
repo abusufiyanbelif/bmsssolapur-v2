@@ -5,6 +5,9 @@ import { createDonation } from "@/services/donation-service";
 import type { Donation, DonationPurpose, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
+import { getRawTextFromImage as getRawTextFromImageFlow } from '@/ai/flows/extract-raw-text-flow';
+import { extractDetailsFromText as extractDetailsFromTextFlow } from '@/ai/flows/extract-details-from-text-flow';
+
 
 interface FormState {
     success: boolean;
@@ -77,4 +80,43 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
   }
 }
 
+interface ScanResult {
+    success: boolean;
+    rawText?: string;
+    error?: string;
+}
+
+export async function getRawTextFromImage(formData: FormData): Promise<ScanResult> {
+    const imageFile = formData.get("imageFile") as File | null;
+    const dataUriFromSession = formData.get("dataUri") as string | null;
+
+    if (!imageFile && !dataUriFromSession) {
+        return { success: false, error: "No image file or data URI provided." };
+    }
+    
+    let dataUri: string;
+
+    if(imageFile) {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        dataUri = `data:${imageFile.type};base64,${base64}`;
+    } else {
+        dataUri = dataUriFromSession!;
+    }
+    
+    try {
+        const textResult = await getRawTextFromImageFlow({ photoDataUri: dataUri });
+
+        if (!textResult?.rawText) {
+            throw new Error("Failed to extract text from image.");
+        }
+
+        return { success: true, rawText: textResult.rawText };
+
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Full scanning process failed:`, lastError);
+        return { success: false, error: lastError };
+    }
+}
     

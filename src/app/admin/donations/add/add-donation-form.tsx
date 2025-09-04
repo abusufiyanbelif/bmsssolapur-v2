@@ -28,7 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, Bot, Clipboard, Text } from "lucide-react";
-import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose } from "@/services/types";
+import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose, ExtractDonationDetailsOutput } from "@/services/types";
 import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,12 +38,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, scanProof } from "./actions";
+import { handleAddDonation, checkTransactionId, handleExtractLeadDetailsFromText } from "./actions";
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
+import { getRawTextFromImage } from "@/app/donate/actions";
+
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
 const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
@@ -130,8 +132,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
   
-  const [isScanning, setIsScanning] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [extractedRawText, setExtractedRawText] = useState<string | null>(null);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
   const isEditing = !!existingDonation;
@@ -276,26 +279,54 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       setValue('paymentScreenshot', file, { shouldValidate: true });
       const preview = URL.createObjectURL(file);
       setFilePreview(preview);
+      setExtractedRawText(null); // Reset text when new file is chosen
     } else {
       setValue('paymentScreenshot', null);
       setFilePreview(null);
     }
   };
   
-   const handleAutoFill = async () => {
-        const proofFile = getValues('paymentScreenshot');
-        if (!proofFile) {
-          toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
-          return;
-        }
-        setIsScanning(true);
-        const formData = new FormData();
-        formData.append('proofFile', proofFile);
-        const result = await scanProof(formData);
+  const handleGetText = async () => {
+    const proofFile = getValues('paymentScreenshot');
+    if (!proofFile) {
+        toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
+        return;
+    }
+    setIsExtracting(true);
+    setExtractedRawText(null);
+
+    try {
+        const arrayBuffer = await proofFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const dataUri = `data:${proofFile.type};base64,${base64}`;
+
+        const result = await getRawTextFromImage({ photoDataUri: dataUri });
         
+        if (result.success && result.rawText) {
+            setExtractedRawText(result.rawText);
+            toast({ variant: 'success', title: 'Text Extracted', description: 'Review the text below and click "Auto-fill".' });
+        } else {
+            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || "Could not extract text from the image." });
+        }
+    } catch (e) {
+        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred during text extraction.' });
+    } finally {
+        setIsExtracting(false);
+    }
+  };
+
+  const handleAutoFillFromText = async () => {
+    if (!extractedRawText) {
+        toast({ variant: 'destructive', title: 'No Text Available', description: 'Please extract text from the image first.' });
+        return;
+    }
+    setIsAutoFilling(true);
+    try {
+        const result = await handleExtractLeadDetailsFromText(extractedRawText);
         if (result.success && result.details) {
-             setExtractedRawText(result.details.rawText || null);
-             Object.entries(result.details).forEach(([key, value]) => {
+            const details = result.details;
+            // Auto-fill all simple fields
+            Object.entries(details).forEach(([key, value]) => {
                 if (value && key !== 'rawText') {
                     if (key === 'date') setValue('donationDate', new Date(value as string));
                     else if (key === 'amount') setValue('totalTransactionAmount', value as number);
@@ -306,8 +337,12 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         } else {
              toast({ variant: 'destructive', title: 'Parsing Failed', description: result.error || "Could not parse details from the text." });
         }
-        setIsScanning(false);
-    };
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred during auto-fill.' });
+    } finally {
+        setIsAutoFilling(false);
+    }
+  };
 
   
   const isFormInvalid = transactionIdState.isAvailable === false;
@@ -340,11 +375,17 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                   {filePreview && (
                       <div className="flex flex-col items-center gap-4">
                           <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                          <div className="flex gap-2">
-                               <Button type="button" size="sm" variant="secondary" onClick={handleAutoFill} disabled={isScanning}>
-                                  {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
-                                  Scan & Auto-fill
-                              </Button>
+                           <div className="flex gap-2 w-full">
+                            <Button type="button" size="sm" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtracting}>
+                                {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                Get Text
+                            </Button>
+                            {extractedRawText && (
+                                 <Button type="button" size="sm" variant="secondary" className="w-full" onClick={handleAutoFillFromText} disabled={isAutoFilling}>
+                                    {isAutoFilling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
+                                    Auto-fill from Text
+                                </Button>
+                            )}
                           </div>
                       </div>
                   )}
