@@ -195,8 +195,18 @@ export async function scanProof(formData: FormData): Promise<ScanResult> {
     }
 }
 
-export async function getRawTextFromImage(dataUri: string): Promise<{success: boolean, text?: string, error?: string}> {
+export async function getRawTextFromImage(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
+    const imageFile = formData.get("imageFile") as File | null;
+    if (!imageFile) {
+        return { success: false, error: "No image file provided." };
+    }
+    
     try {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = imageFile.type;
+        const dataUri = `data:${mimeType};base64,${base64}`;
+
         const result = await extractRawTextFlow({ photoDataUri: dataUri });
         return { success: true, text: result.rawText };
     } catch (e) {
@@ -204,3 +214,4 @@ export async function getRawTextFromImage(dataUri: string): Promise<{success: bo
         return { success: false, error };
     }
 }
+
