@@ -44,6 +44,7 @@ import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
 const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
@@ -236,7 +237,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         if (value instanceof Date) {
           formData.append(key, value.toISOString());
         } else if (key === 'paymentScreenshot' && value instanceof File) {
-            formData.append('paymentScreenshots', value);
+            formData.append('paymentScreenshot', value);
         }
         else {
           formData.append(key, String(value));
