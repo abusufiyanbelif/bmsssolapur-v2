@@ -153,7 +153,7 @@ interface ScanResult {
     error?: string;
 }
 
-export async function handleExtractLeadDetailsFromText(rawText: string): Promise<ScanResult> {
+export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
     if (!rawText) {
         return { success: false, error: "No text was provided for parsing." };
     }

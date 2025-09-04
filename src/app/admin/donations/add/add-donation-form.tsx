@@ -38,7 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, handleExtractLeadDetailsFromText } from "./actions";
+import { handleAddDonation, checkTransactionId, getDetailsFromText } from "./actions";
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
@@ -296,11 +296,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setExtractedRawText(null);
 
     try {
-        const arrayBuffer = await proofFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const dataUri = `data:${proofFile.type};base64,${base64}`;
-
-        const result = await getRawTextFromImage({ photoDataUri: dataUri });
+        const formData = new FormData();
+        formData.append('imageFile', proofFile);
+        
+        const result = await getRawTextFromImage(formData);
         
         if (result.success && result.rawText) {
             setExtractedRawText(result.rawText);
@@ -322,7 +321,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     }
     setIsAutoFilling(true);
     try {
-        const result = await handleExtractLeadDetailsFromText(extractedRawText);
+        const result = await getDetailsFromText(extractedRawText);
         if (result.success && result.details) {
             const details = result.details;
             // Auto-fill all simple fields
@@ -353,6 +352,26 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <FormField
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Payment Method</FormLabel>
+                              <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshot'); }} value={field.value}>
+                                  <FormControl>
+                                      <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {paymentMethods.map(method => (
+                                          <SelectItem key={method} value={method}>{method}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
                    <FormField
                       control={form.control}
                       name="paymentScreenshot"
@@ -447,27 +466,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                   )}
                   />
               
-              <FormField
-                  control={form.control}
-                  name="paymentMethod"
-                  render={({ field }) => (
-                      <FormItem>
-                          <FormLabel>Payment Method</FormLabel>
-                          <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshot'); }} value={field.value}>
-                              <FormControl>
-                                  <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                  {paymentMethods.map(method => (
-                                      <SelectItem key={method} value={method}>{method}</SelectItem>
-                                  ))}
-                              </SelectContent>
-                          </Select>
-                          <FormMessage />
-                      </FormItem>
-                  )}
-              />
-
               <FormField
                   control={form.control}
                   name="totalTransactionAmount"

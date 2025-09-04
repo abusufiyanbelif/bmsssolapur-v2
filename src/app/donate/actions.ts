@@ -6,7 +6,6 @@ import type { Donation, DonationPurpose, ExtractDonationDetailsOutput, User } fr
 import { Timestamp } from "firebase/firestore";
 import { getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
 import { getRawTextFromImage as getRawTextFromImageFlow } from '@/ai/flows/extract-raw-text-flow';
-import { extractDetailsFromText as extractDetailsFromTextFlow } from '@/ai/flows/extract-details-from-text-flow';
 
 
 interface FormState {
@@ -88,21 +87,16 @@ interface ScanResult {
 
 export async function getRawTextFromImage(formData: FormData): Promise<ScanResult> {
     const imageFile = formData.get("imageFile") as File | null;
-    const dataUriFromSession = formData.get("dataUri") as string | null;
-
-    if (!imageFile && !dataUriFromSession) {
-        return { success: false, error: "No image file or data URI provided." };
+    
+    if (!imageFile) {
+        return { success: false, error: "No image file provided." };
     }
     
     let dataUri: string;
 
-    if(imageFile) {
-        const arrayBuffer = await imageFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        dataUri = `data:${imageFile.type};base64,${base64}`;
-    } else {
-        dataUri = dataUriFromSession!;
-    }
+    const arrayBuffer = await imageFile.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    dataUri = `data:${imageFile.type};base64,${base64}`;
     
     try {
         const textResult = await getRawTextFromImageFlow({ photoDataUri: dataUri });
@@ -119,4 +113,3 @@ export async function getRawTextFromImage(formData: FormData): Promise<ScanResul
         return { success: false, error: lastError };
     }
 }
-    
