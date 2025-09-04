@@ -1,11 +1,10 @@
-
 // src/app/donate/actions.ts
 "use server";
 
 import { createDonation } from "@/services/donation-service";
 import type { Donation, DonationPurpose, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
-import { extractRawText as extractRawTextFlow } from "@/ai/flows/extract-raw-text-flow";
+import { getRawTextFromImage } from "@/ai/flows/extract-raw-text-flow";
 import { extractDetailsFromText as extractDetailsFromTextFlow } from "@/ai/flows/extract-details-from-text-flow";
 import { getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
 
@@ -87,26 +86,6 @@ interface ScanResult {
     details?: ExtractDonationDetailsOutput;
     error?: string;
     donorFound?: boolean;
-}
-
-export async function getRawTextFromImage(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
-    const imageFile = formData.get("imageFile") as File | null;
-    if (!imageFile) {
-        return { success: false, error: "No image file provided." };
-    }
-    
-    try {
-        const arrayBuffer = await imageFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = imageFile.type;
-        const dataUri = `data:${mimeType};base64,${base64}`;
-
-        const result = await extractRawTextFlow({ photoDataUri: dataUri });
-        return { success: true, text: result.rawText };
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "Failed to extract text from image.";
-        return { success: false, error };
-    }
 }
 
 export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
