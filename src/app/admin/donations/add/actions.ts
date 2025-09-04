@@ -8,8 +8,7 @@ import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
-import { extractRawText as extractRawTextFlow } from "@/ai/flows/extract-raw-text-flow";
-import { extractDetailsFromText as extractDetailsFromTextFlow } from "@/ai/flows/extract-details-from-text-flow";
+import { getRawTextFromImage, getDetailsFromText } from '@/app/donate/actions';
 
 
 interface FormState {
@@ -57,28 +56,23 @@ export async function handleAddDonation(
     
     const createDonationRecord = async (data: Partial<Donation>) => {
         let proofUrl: string | undefined = undefined;
+        // Create a temporary donation record to get an ID for the upload path
+        const tempDonation = await createDonation({
+            ...data,
+            donorId: donor.id!,
+            donorName: donor.name,
+            status: "Pending verification",
+            donationDate: donationDate,
+        }, adminUserId, adminUser.name, adminUser.email);
+
         if(screenshotFile && screenshotFile.size > 0) {
-            const tempDonation = await createDonation({
-                ...data,
-                donorId: donor.id!,
-                donorName: donor.name,
-                status: "Pending verification",
-                donationDate: donationDate,
-            }, adminUserId, adminUser.name, adminUser.email);
-            
             let uploadPath = `donations/${tempDonation.id}/proofs/`;
             proofUrl = await uploadFile(screenshotFile, uploadPath);
             await updateDonation(tempDonation.id!, { paymentScreenshotUrls: [proofUrl] });
-            return tempDonation;
-        } else {
-             return await createDonation({
-                ...data,
-                donorId: donor.id!,
-                donorName: donor.name,
-                status: "Pending verification",
-                donationDate: donationDate,
-            }, adminUserId, adminUser.name, adminUser.email);
         }
+        
+        // Return the final donation object with all details
+        return { ...tempDonation, paymentScreenshotUrls: proofUrl ? [proofUrl] : [] };
     };
     
     const includePledge = formData.get("includePledge") === 'true';
@@ -150,4 +144,43 @@ export async function checkTransactionId(transactionId: string): Promise<Availab
         return { isAvailable: false, existingDonationId: existingDonation.id };
     }
     return { isAvailable: true };
+}
+
+interface ScanResult {
+    success: boolean;
+    details?: ExtractDonationDetailsOutput;
+    error?: string;
+    donorFound?: boolean;
+}
+
+export async function scanProof(formData: FormData): Promise<ScanResult> {
+    const proofFile = formData.get("proofFile") as File | null;
+    if (!proofFile) {
+        return { success: false, error: "No image file provided." };
+    }
+    
+    try {
+        // Step 1: Get Raw Text
+        const textData = new FormData();
+        textData.append("imageFile", proofFile);
+        const textResult = await getRawTextFromImage(textData);
+
+        if (!textResult.success || !textResult.text) {
+            throw new Error(textResult.error || "Failed to extract text from image.");
+        }
+
+        // Step 2: Get Details from Text
+        const detailsResult = await getDetailsFromText(textResult.text);
+
+        if (!detailsResult.success) {
+            throw new Error(detailsResult.error || "Failed to parse details from text.");
+        }
+
+        return detailsResult;
+
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Full scanning process failed:`, lastError);
+        return { success: false, error: lastError };
+    }
 }
