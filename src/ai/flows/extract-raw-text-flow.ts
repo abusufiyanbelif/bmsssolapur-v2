@@ -17,11 +17,6 @@ import {
 
 
 export async function getRawTextFromImage(input: ExtractRawTextInput): Promise<ExtractRawTextOutput> {
-  return extractRawText(input);
-}
-
-
-export async function extractRawText(input: ExtractRawTextInput): Promise<ExtractRawTextOutput> {
   return extractRawTextFlow(input);
 }
 
