@@ -3,8 +3,11 @@
 "use server";
 
 import { createDonation } from "@/services/donation-service";
-import type { Donation, DonationPurpose } from "@/services/types";
+import type { Donation, DonationPurpose, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
+import { extractRawText as extractRawTextFlow } from "@/ai/flows/extract-raw-text-flow";
+import { extractDetailsFromText as extractDetailsFromTextFlow } from "@/ai/flows/extract-details-from-text-flow";
+import { getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
 
 interface FormState {
     success: boolean;
@@ -75,4 +78,61 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
       error: `Failed to create pending donation: ${error}`,
     };
   }
+}
+
+// --- AI SCANNING ACTIONS ---
+
+interface ScanResult {
+    success: boolean;
+    details?: ExtractDonationDetailsOutput;
+    error?: string;
+    donorFound?: boolean;
+}
+
+export async function getRawTextFromImage(formData: FormData): Promise<{success: boolean, text?: string, error?: string}> {
+    const imageFile = formData.get("imageFile") as File | null;
+    if (!imageFile) {
+        return { success: false, error: "No image file provided." };
+    }
+    
+    try {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = imageFile.type;
+        const dataUri = `data:${mimeType};base64,${base64}`;
+
+        const result = await extractRawTextFlow({ photoDataUri: dataUri });
+        return { success: true, text: result.rawText };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "Failed to extract text from image.";
+        return { success: false, error };
+    }
+}
+
+export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
+    if (!rawText) {
+        return { success: false, error: "No text was provided for parsing." };
+    }
+
+    try {
+        const extractedDetails = await extractDetailsFromTextFlow({ rawText });
+        
+        let foundDonor: User | null = null;
+        if (extractedDetails.senderUpiId) foundDonor = await getUserByUpiId(extractedDetails.senderUpiId);
+        if (!foundDonor && extractedDetails.donorPhone) {
+            const phone = extractedDetails.donorPhone.replace(/\D/g,'').slice(-10);
+            foundDonor = await getUserByPhone(phone);
+        }
+        if (!foundDonor && extractedDetails.senderAccountNumber) foundDonor = await getUserByBankAccountNumber(extractedDetails.senderAccountNumber);
+
+        return { 
+            success: true, 
+            details: { ...extractedDetails, donorId: foundDonor?.id, rawText: rawText },
+            donorFound: !!foundDonor,
+        };
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Text parsing failed:`, lastError);
+        return { success: false, error: `Text parsing failed: ${lastError}` };
+    }
 }

@@ -32,7 +32,7 @@ import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { handleCreatePendingDonation } from './actions';
+import { handleCreatePendingDonation, getRawTextFromImage, getDetailsFromText } from './actions';
 import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
 import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType, PaymentMethod, AppSettings } from '@/services/types';
 import { getUser, updateUser } from '@/services/user-service';
@@ -47,7 +47,6 @@ import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { getRawTextFromImage, getDetailsFromText } from "@/app/admin/donations/add/actions";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -128,7 +127,7 @@ function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate
     return (
          <Card>
             <CardHeader>
-                <CardTitle>Notification &amp; Pledge Settings</CardTitle>
+                <CardTitle>Notification & Pledge Settings</CardTitle>
                 <CardDescription>Manage your recurring donation commitment and related notification settings.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

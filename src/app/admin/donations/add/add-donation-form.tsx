@@ -38,7 +38,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, getDetailsFromText, getRawTextFromImage } from "./actions";
+import { handleAddDonation, checkTransactionId } from "./actions";
+import { getDetailsFromText, getRawTextFromImage } from '@/app/donate/actions';
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
@@ -317,6 +318,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         const result = await getRawTextFromImage(formData);
         if(result.success && result.text) {
             setExtractedRawText(result.text);
+        } else {
+            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'Extraction Failed', description: e instanceof Error ? e.message : 'Could not extract text from the image.' });
@@ -359,16 +362,18 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                   {isExtractingText ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
                                   Get Text
                               </Button>
+                                {extractedRawText && (
+                                     <Button type="button" size="sm" variant="secondary" onClick={handleAutoFillFromText} disabled={isScanning}>
+                                        {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
+                                        Auto-fill from Text
+                                    </Button>
+                                )}
                           </div>
                       </div>
                   )}
                    {extractedRawText && (
                       <div className="space-y-2">
                           <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                           <Button type="button" size="sm" variant="secondary" onClick={handleAutoFillFromText} disabled={isScanning}>
-                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
-                                Auto-fill from Text
-                            </Button>
                           <Textarea id="rawTextOutput" readOnly value={extractedRawText} rows={8} className="text-xs font-mono" />
                       </div>
                   )}
