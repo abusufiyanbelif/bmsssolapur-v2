@@ -123,7 +123,7 @@ export const getDonation = async (id: string): Promise<Donation | null> => {
   try {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
     if (donationDoc.exists()) {
-      const data = donationDoc.data();
+      const data = doc.data();
       const allocations = (data.allocations || []).map((alloc: Allocation) => ({
         ...alloc,
         allocatedAt: (alloc.allocatedAt as Timestamp).toDate(),
