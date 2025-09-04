@@ -37,29 +37,41 @@ export default function Page() {
         setLoading(false);
     }, []);
 
-    if (loading) {
+    useEffect(() => {
+        // This effect handles the redirection after the role has been determined.
+        if (activeRole && activeRole !== 'Guest') {
+            switch (activeRole) {
+                case 'Donor':
+                    router.push('/donor');
+                    break;
+                case 'Beneficiary':
+                    router.push('/beneficiary');
+                    break;
+                case 'Referral':
+                    router.push('/referral');
+                    break;
+                case 'Admin':
+                case 'Super Admin':
+                case 'Finance Admin':
+                    router.push('/admin');
+                    break;
+                default:
+                    // Stay on the public home page if role is unknown
+                    break;
+            }
+        }
+    }, [activeRole, router]);
+
+    if (loading || (activeRole && activeRole !== 'Guest')) {
         return <LoadingState />;
     }
-    
-    // Based on the role, render the correct dashboard component.
-    // The components themselves will handle their data fetching.
-    switch (activeRole) {
-        case 'Donor':
-             router.push('/donor');
-             return <LoadingState />;
-        case 'Beneficiary':
-             router.push('/beneficiary');
-             return <LoadingState />;
-        case 'Referral':
-             router.push('/referral');
-             return <LoadingState />;
-        case 'Admin':
-        case 'Super Admin':
-        case 'Finance Admin':
-             router.push('/admin');
-             return <LoadingState />;
-        case 'Guest':
-        default:
-            return <PublicHomePage quotes={quotes} />;
+
+    // Only render the PublicHomePage if the role is definitively 'Guest'.
+    // Other roles will be caught by the loading state above while they are redirecting.
+    if (activeRole === 'Guest') {
+        return <PublicHomePage quotes={quotes} />;
     }
+
+    // Fallback loading state
+    return <LoadingState />;
 }
