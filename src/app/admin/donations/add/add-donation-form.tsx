@@ -38,13 +38,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, getDetailsFromText } from "./actions";
+import { handleAddDonation, checkTransactionId, getDetailsFromText, getRawTextFromImage } from "./actions";
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
-import { getRawTextFromImage } from "@/app/donate/actions";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
