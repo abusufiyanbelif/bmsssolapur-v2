@@ -7,7 +7,6 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { googleAI } from '@genkit-ai/googleai';
 import {
     ExtractRawTextInput,
     ExtractRawTextInputSchema,
@@ -35,7 +34,6 @@ const extractRawTextFlow = ai.defineFlow(
   async (input) => {
     
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
         prompt: [
             { text: `You are an Optical Character Recognition (OCR) tool. Extract all text from the provided image exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it.` },
             { media: { url: input.photoDataUri } }
