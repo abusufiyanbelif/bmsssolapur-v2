@@ -850,7 +850,7 @@ function DonatePageContent() {
         
         setSettings(appSettings);
         setOrganization(orgData);
-        setOpenLeads(allLeads.filter(l => l.status === 'Ready For Help' || l.status === 'Publish' || l.status === 'Partial'));
+        setOpenLeads(allLeads.filter(l => l.caseAction === 'Publish' || l.caseAction === 'Partial'));
         setActiveCampaigns(allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming'));
 
 
