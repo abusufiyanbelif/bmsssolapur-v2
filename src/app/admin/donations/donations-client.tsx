@@ -573,10 +573,10 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                                         </DropdownMenu>
                                     </div>
                                     <CardDescription>
-                                        <div className="flex items-center gap-2">
+                                        <span className="flex items-center gap-2">
                                             <span>{donation.donorName}</span>
                                             {donation.isAnonymous && <Badge variant="secondary" title="Anonymous"><EyeOff className="h-3 w-3" /></Badge>}
-                                        </div>
+                                        </span>
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-0 space-y-3 text-sm">
