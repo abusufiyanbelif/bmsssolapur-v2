@@ -1,5 +1,4 @@
 
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -32,7 +31,7 @@ import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { handleCreatePendingDonation, getRawTextFromImage, getDetailsFromText } from './actions';
+import { handleCreatePendingDonation } from './actions';
 import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
 import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType, PaymentMethod, AppSettings } from '@/services/types';
 import { getUser, updateUser } from '@/services/user-service';
@@ -47,6 +46,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { scanProof } from '@/app/admin/donations/add/actions';
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -739,27 +739,19 @@ function UploadProofSection({ user }: { user: User | null }) {
         setIsScanning(true);
         
         const formData = new FormData();
-        formData.append("imageFile", file);
+        formData.append("proofFile", file);
 
-        const textResult = await getRawTextFromImage(formData);
+        const result = await scanProof(formData);
 
-        if (!textResult.success || !textResult.text) {
-             toast({ variant: 'destructive', title: 'Scan Failed', description: textResult.error || "Could not extract text from the image." });
-             setIsScanning(false);
-             return;
-        }
-
-        const detailsResult = await getDetailsFromText(textResult.text);
-
-        if (detailsResult.success && detailsResult.details) {
+        if (result.success && result.details) {
             const queryParams = new URLSearchParams();
-            if(detailsResult.details.rawText) {
-                queryParams.set('rawText', encodeURIComponent(detailsResult.details.rawText));
+            if(result.details.rawText) {
+                queryParams.set('rawText', encodeURIComponent(result.details.rawText));
             }
             
             try {
                 const dataUrl = await fileToDataUrl(file);
-                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ details: detailsResult.details, dataUrl, rawText: detailsResult.details.rawText }));
+                sessionStorage.setItem('manualDonationScreenshot', JSON.stringify({ details: result.details, dataUrl, rawText: result.details.rawText }));
             } catch (e) {
                  toast({ variant: 'destructive', title: "Error preparing screenshot" });
             }
@@ -767,7 +759,7 @@ function UploadProofSection({ user }: { user: User | null }) {
             router.push(`/donate/confirm?${queryParams.toString()}`);
 
         } else {
-             toast({ variant: 'destructive', title: 'Parsing Failed', description: detailsResult.error || "An unknown error occurred." });
+             toast({ variant: 'destructive', title: 'Parsing Failed', description: result.error || "An unknown error occurred." });
         }
         setIsScanning(false);
     };
