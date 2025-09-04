@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
@@ -8,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
-import { getRawTextFromImage as getRawTextFromImageFlow } from '@/ai/flows/extract-raw-text-flow';
+import { extractRawTextFlow } from '@/ai/flows/extract-raw-text-flow';
 import { extractDetailsFromText as extractDetailsFromTextFlow } from '@/ai/flows/extract-details-from-text-flow';
 
 
@@ -191,7 +190,7 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
     dataUri = `data:${imageFile.type};base64,${base64}`;
     
     try {
-        const textResult = await getRawTextFromImageFlow({ photoDataUri: dataUri });
+        const textResult = await extractRawTextFlow({ photoDataUri: dataUri });
 
         if (!textResult?.rawText) {
             throw new Error("Failed to extract text from image.");

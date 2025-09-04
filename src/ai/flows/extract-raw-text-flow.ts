@@ -3,25 +3,18 @@
 /**
  * @fileOverview A Genkit flow for extracting raw text from an image.
  * 
- * - extractRawText - A function that performs OCR on an image.
+ * - extractRawTextFlow - A function that performs OCR on an image.
  */
 
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import {
-    ExtractRawTextInput,
     ExtractRawTextInputSchema,
     ExtractRawTextOutput,
     ExtractRawTextOutputSchema
 } from '@/ai/schemas';
 
-
-export async function getRawTextFromImage(input: ExtractRawTextInput): Promise<ExtractRawTextOutput> {
-  return extractRawTextFlow(input);
-}
-
-
-const extractRawTextFlow = ai.defineFlow(
+export const extractRawTextFlow = ai.defineFlow(
   {
     name: 'extractRawTextFlow',
     inputSchema: ExtractRawTextInputSchema,
