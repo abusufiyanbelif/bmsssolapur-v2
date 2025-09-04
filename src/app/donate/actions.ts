@@ -1,4 +1,3 @@
-
 // src/app/donate/actions.ts
 "use server";
 
@@ -49,7 +48,7 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
         amount: formData.amount,
         type: formData.purpose === 'Zakat' ? 'Zakat' : formData.purpose === 'Fitr' ? 'Fitr' : 'Sadaqah', // Simple mapping
         purpose: formData.purpose,
-        status: "Pending", // Standardized status
+        status: "Pending verification", // Standardized status
         notes: `Donation initiated via online payment. User notes: ${formData.notes || 'N/A'}`,
         leadId: formData.leadId || undefined,
         campaignId: formData.campaignId || undefined,
@@ -77,3 +76,5 @@ export async function handleCreatePendingDonation(formData: DonationFormData): P
     };
   }
 }
+
+    

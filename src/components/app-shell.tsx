@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         ]);
                         setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
                         setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
-                        setPendingDonations(allDonations.filter(d => d.status === 'Pending verification'));
+                        setPendingDonations(allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending'));
                     }
 
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
@@ -511,3 +511,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
     )
 }
+
+    

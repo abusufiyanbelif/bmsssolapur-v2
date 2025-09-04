@@ -227,7 +227,7 @@ export const PendingLeadsCard = ({ allLeads = [] }: { allLeads: Lead[] }) => {
 }
 
 export const PendingDonationsCard = ({ allDonations = [] }: { allDonations: Donation[] }) => {
-    const donations = useMemo(() => allDonations.filter(d => d.status === 'Pending verification'), [allDonations]);
+    const donations = useMemo(() => allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending'), [allDonations]);
 
     return (
         <AccordionItem value="pending-donations">
@@ -804,5 +804,7 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
+
+    
 
     
