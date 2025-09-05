@@ -80,6 +80,10 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
         return enrichedLeads;
     } catch (e) {
         console.error("Error fetching public leads:", e);
+        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
+            console.error("FATAL: Firestore permission error. The server cannot connect to the database. Please check IAM roles.");
+            return []; // Return empty array to prevent crash
+        }
         if (e instanceof Error && e.message.includes('index')) {
             console.error("Firestore index missing. Please create a descending index on 'dateCreated' for the 'publicLeads' collection.");
         }
@@ -109,7 +113,7 @@ export const getPublicOrganization = async (): Promise<Organization | null> => {
  */
 export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
     const adminDb = getAdminDb();
-    const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLlection).doc('stats');
+    const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
     await publicStatsRef.set(stats, { merge: true });
 };
 
