@@ -65,6 +65,10 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
 
     } catch (e) {
         const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        // Check for the specific API key error message
+        if(lastError.includes("API key not valid")) {
+            return { success: false, error: "The Gemini API Key is invalid or missing. Please configure it in your project settings." };
+        }
         console.error(`Full scanning process failed:`, lastError);
         return { success: false, error: lastError };
     }
