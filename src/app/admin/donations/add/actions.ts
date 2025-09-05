@@ -5,9 +5,10 @@
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
 import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User } from "@/services/types";
+import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User, ExtractDonationDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
+import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 
 
 interface FormState {
@@ -143,4 +144,22 @@ export async function checkTransactionId(transactionId: string): Promise<Availab
         return { isAvailable: false, existingDonationId: existingDonation.id };
     }
     return { isAvailable: true };
+}
+
+interface DonationDetailsResult {
+    success: boolean;
+    details?: ExtractDonationDetailsOutput;
+    error?: string;
+}
+
+// Orchestrator action that calls the two-step AI process
+export async function getDetailsFromText(rawText: string): Promise<DonationDetailsResult> {
+     try {
+        const extractedDetails = await extractDonationDetails({ rawText });
+        return { success: true, details: extractedDetails };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
+        console.error("Error extracting donation details from text:", error);
+        return { success: false, error };
+    }
 }
