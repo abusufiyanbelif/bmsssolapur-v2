@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
@@ -167,5 +168,45 @@ export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
         const lastError = e instanceof Error ? e.message : "An unknown error occurred";
         console.error(`Text parsing failed:`, lastError);
         return { success: false, error: `Text parsing failed: ${lastError}` };
+    }
+}
+
+
+interface RawTextScanResult {
+    success: boolean;
+    rawText?: string;
+    error?: string;
+}
+
+export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
+    const imageFile = formData.get("imageFile") as File | null;
+    
+    if (!imageFile) {
+        return { success: false, error: "No image file provided." };
+    }
+    
+    let dataUri: string;
+
+    try {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        dataUri = `data:${imageFile.type};base64,${base64}`;
+    } catch (e) {
+         return { success: false, error: "Failed to read the image file." };
+    }
+    
+    try {
+        const textResult = await extractRawTextFlow({ photoDataUri: dataUri });
+
+        if (!textResult?.rawText) {
+            throw new Error("Failed to extract text from image.");
+        }
+
+        return { success: true, rawText: textResult.rawText };
+
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Full scanning process failed:`, lastError);
+        return { success: false, error: lastError };
     }
 }
