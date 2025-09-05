@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -82,8 +81,14 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         });
         return quotes;
     } catch (error) {
-        console.error("Error getting all quotes, falling back to hardcoded list: ", error);
-        // Fallback to a simple list if service fails
+        // Specifically check for the access token error and fall back gracefully.
+        if (error instanceof Error && error.message.includes('Could not refresh access token')) {
+            console.warn("Could not refresh access token for quotes, falling back to hardcoded list.");
+        } else {
+            console.error("Error getting all quotes, falling back to hardcoded list: ", error);
+        }
+
+        // Fallback to a simple list if any service fails
         return [
             { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
             { id: 'fb2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
