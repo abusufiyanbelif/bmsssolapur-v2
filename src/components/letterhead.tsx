@@ -19,7 +19,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                 {/* Watermark Layer */}
                 <div className="absolute inset-0 z-0 flex items-center justify-center">
                     <img
-                        src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media&token=a8698188-5394-4303-9118-8f8319f397d1"
+                        src="https://picsum.photos/seed/watermark/800/1120"
                         alt="Watermark"
                         crossOrigin="anonymous"
                         className="w-3/4 h-3/4 object-contain opacity-5"
@@ -36,7 +36,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                     <td style={{ width: '128px', verticalAlign: 'top' }}>
                                          <div className="relative w-32 h-32">
                                         <img
-                                            src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media&token=a8698188-5394-4303-9118-8f8319f397d1"
+                                            src="https://picsum.photos/seed/logo/128/128"
                                             alt="Organization Logo"
                                             crossOrigin="anonymous"
                                             className="w-full h-full object-contain"
