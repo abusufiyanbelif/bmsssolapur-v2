@@ -6,7 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PublicHomePage } from "./home/public-home-page";
 import { Quote, Donation, User, Lead, Campaign } from "@/services/types";
 import { getPublicDashboardData, getQuotes } from "./home/actions";
-import { MainMetricsCard, BeneficiaryBreakdownCard, DonationTypeCard, TopDonationsCard, RecentCampaignsCard, CampaignBreakdownCard } from "@/app/admin/dashboard-cards";
+import { BeneficiaryBreakdownCard, DonationTypeCard, TopDonationsCard, RecentCampaignsCard, CampaignBreakdownCard } from "@/app/admin/dashboard-cards";
+import { PublicMainMetricsCard } from "@/app/home/public-dashboard-cards";
 
 
 const CardSkeleton = () => (
@@ -50,7 +51,7 @@ async function PublicData() {
     
     return (
          <div className="space-y-4">
-            <MainMetricsCard allDonations={allDonations} allLeads={allLeads} />
+            <PublicMainMetricsCard allDonations={allDonations} allLeads={allLeads} />
             <BeneficiaryBreakdownCard allUsers={allUsers} allLeads={allLeads} isAdmin={false} />
             <DonationTypeCard donations={allDonations} isPublicView={true} />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
