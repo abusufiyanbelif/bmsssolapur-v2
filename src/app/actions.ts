@@ -2,7 +2,7 @@
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
-
+import { extractRawTextFlow } from '@/ai/flows/extract-raw-text-flow';
 /**
  * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
  * to check if the current environment has the necessary permissions.
@@ -29,3 +29,43 @@ export async function performPermissionCheck(): Promise<{success: boolean, error
         return { success: false, error: "An unexpected error occurred during the initial permission check." };
     }
 };
+
+interface RawTextScanResult {
+    success: boolean;
+    rawText?: string;
+    error?: string;
+}
+
+// This function is now correctly placed in a server context and will be called by client components.
+export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
+    const imageFile = formData.get("imageFile") as File | null;
+    
+    if (!imageFile) {
+        return { success: false, error: "No image file provided." };
+    }
+    
+    let dataUri: string;
+
+    try {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        dataUri = `data:${imageFile.type};base64,${base64}`;
+    } catch (e) {
+         return { success: false, error: "Failed to read the image file." };
+    }
+    
+    try {
+        const textResult = await extractRawTextFlow({ photoDataUri: dataUri });
+
+        if (!textResult?.rawText) {
+            throw new Error("Failed to extract text from image.");
+        }
+
+        return { success: true, rawText: textResult.rawText };
+
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Full scanning process failed:`, lastError);
+        return { success: false, error: lastError };
+    }
+}

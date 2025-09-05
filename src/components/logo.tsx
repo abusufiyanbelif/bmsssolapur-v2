@@ -1,4 +1,5 @@
 
+
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
@@ -10,7 +11,7 @@ export function Logo({ className }: LogoProps) {
   return (
     <div className={cn("relative", className)}>
       <Image
-        src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect-visualizer.firebasestorage.app/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media"
+        src="https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app_assets%2FIMG-20250816-WA0000.jpg?alt=media&token=a8698188-5394-4303-9118-8f8319f397d1"
         alt="Baitul Mal Samajik Sanstha (Solapur) Logo"
         fill
         priority

@@ -18,10 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ScanEye, FileText } from "lucide-react";
-import { scanProof } from './add/actions';
+import { getRawTextFromImage } from '@/app/actions';
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import type { ExtractDonationDetailsOutput } from '@/ai/schemas';
+import { getDetailsFromText } from './add/actions';
+import { getUserByPhone, getUserByUpiId } from "@/services/user-service";
 
 export function ScanDonationDialog({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
@@ -62,42 +64,58 @@ export function ScanDonationDialog({ children }: { children: React.ReactNode }) 
     
     setIsScanning(true);
     const formData = new FormData();
-    formData.append("proofFile", file);
+    formData.append("imageFile", file);
 
-    const result = await scanProof(formData);
+    const rawTextResult = await getRawTextFromImage(formData);
+
+    if (!rawTextResult.success || !rawTextResult.rawText) {
+        toast({ variant: 'destructive', title: 'Scan Failed', description: rawTextResult.error || "Could not extract text from the image." });
+        setIsScanning(false);
+        return;
+    }
+    
+    const detailsResult = await getDetailsFromText(rawTextResult.rawText);
+
+    if (!detailsResult.success || !detailsResult.details) {
+        toast({ variant: 'destructive', title: 'Parsing Failed', description: detailsResult.error || "Could not parse details from the extracted text." });
+        setIsScanning(false);
+        return;
+    }
+
+    // Donor matching logic
+    let donorFound = null;
+    if (detailsResult.details.donorPhone) {
+        const phone = detailsResult.details.donorPhone.replace(/\D/g, '').slice(-10);
+        donorFound = await getUserByPhone(phone);
+    }
+    if (!donorFound && detailsResult.details.senderUpiId) {
+        donorFound = await getUserByUpiId(detailsResult.details.senderUpiId);
+    }
+
+    const dataUrl = await fileToDataUrl(file);
+    const sessionData = {
+        details: detailsResult.details,
+        dataUrl: dataUrl,
+        rawText: rawTextResult.rawText,
+    }
+    sessionStorage.setItem('manualDonationScreenshot', JSON.stringify(sessionData));
+
+    if(donorFound) {
+        const queryParams = new URLSearchParams();
+        queryParams.set('donorId', donorFound.id!);
+        router.push(`/admin/donations/add?${queryParams.toString()}`);
+    } else {
+        const queryParams = new URLSearchParams();
+        if(detailsResult.details.senderName) queryParams.set('name', detailsResult.details.senderName);
+        if(detailsResult.details.donorPhone) queryParams.set('phone', detailsResult.details.donorPhone.replace(/\D/g, '').slice(-10));
+        if(detailsResult.details.senderUpiId) queryParams.set('upiId', detailsResult.details.senderUpiId);
+        queryParams.set('redirect_url', '/admin/donations/add');
+
+        router.push(`/admin/user-management/add?${queryParams.toString()}`);
+    }
 
     setIsScanning(false);
-    
-    if (result.success && result.details) {
-        const details = result.details;
-        const dataUrl = await fileToDataUrl(file);
-        
-        // Store details in sessionStorage to pass to the next page
-        const sessionData = {
-            details: details,
-            dataUrl: dataUrl,
-            rawText: details.rawText,
-        }
-        sessionStorage.setItem('manualDonationScreenshot', JSON.stringify(sessionData));
-
-        if(result.donorFound) {
-            router.push('/admin/donations/add');
-        } else {
-            const queryParams = new URLSearchParams();
-            if(details.senderName) queryParams.set('name', details.senderName);
-            if(details.donorPhone) queryParams.set('phone', details.donorPhone.replace(/\D/g, '').slice(-10));
-            if(details.senderUpiId) queryParams.set('upiId', details.senderUpiId);
-            // Add a redirect URL so we come back to add the donation after creating the user
-            queryParams.set('redirect_url', '/admin/donations/add');
-            if(details.rawText) queryParams.set('rawText', encodeURIComponent(details.rawText));
-
-            router.push(`/admin/user-management/add?${queryParams.toString()}`);
-        }
-        setOpen(false); // Close the dialog
-
-    } else {
-         toast({ variant: 'destructive', title: 'Scan Failed', description: result.error || "Could not extract details from the image." });
-    }
+    setOpen(false); // Close the dialog
   };
 
   return (

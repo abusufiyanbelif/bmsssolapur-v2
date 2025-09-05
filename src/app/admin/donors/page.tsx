@@ -43,10 +43,13 @@ const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-function DonorsPageContent({ initialDonors, error: initialError }: { initialDonors: User[], error?: string }) {
-    const [donors, setDonors] = useState<User[]>(initialDonors);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(initialError || null);
+function DonorsPageContent() {
+    const searchParams = useSearchParams();
+    const nameFromUrl = searchParams.get('name');
+
+    const [donors, setDonors] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
@@ -54,13 +57,13 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
 
 
     // Input states
-    const [nameInput, setNameInput] = useState('');
+    const [nameInput, setNameInput] = useState(nameFromUrl || '');
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
     const [anonymityInput, setAnonymityInput] = useState<AnonymityFilter>('all');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
-        name: '',
+        name: nameFromUrl || '',
         status: 'all' as StatusFilter,
         anonymity: 'all' as AnonymityFilter,
     });
@@ -99,6 +102,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
 
 
     useEffect(() => {
+        fetchUsers();
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
     }, []);
@@ -500,52 +504,12 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="nameFilter">Donor Name</Label>
-                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant="outline"
-                                role="combobox"
-                                className="w-full justify-between font-normal"
-                                >
-                                {nameInput
-                                    ? donors.find((user) => user.name.toLowerCase() === nameInput.toLowerCase())?.name
-                                    : "Select a donor..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput 
-                                        placeholder="Search donor..."
-                                        value={nameInput}
-                                        onValueChange={setNameInput}
-                                    />
-                                    <CommandList>
-                                        <CommandEmpty>No donors found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {donors.map((user) => (
-                                            <CommandItem
-                                            value={user.name}
-                                            key={user.id}
-                                            onSelect={(currentValue) => {
-                                                setNameInput(currentValue === nameInput ? "" : currentValue);
-                                                setPopoverOpen(false);
-                                            }}
-                                            >
-                                            <Check
-                                                className={cn(
-                                                "mr-2 h-4 w-4",
-                                                nameInput.toLowerCase() === user.name.toLowerCase() ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                            {user.name}
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
+                        <Input 
+                            id="nameFilter" 
+                            placeholder="Filter by name..." 
+                            value={nameInput}
+                            onChange={e => setNameInput(e.target.value)}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="statusFilter">Status</Label>
@@ -587,21 +551,37 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
   )
 }
 
-async function DonorsPageDataLoader() {
-  try {
-    const allUsers = await getAllUsers();
-    const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
-    return <DonorsPageContent initialDonors={initialDonors} />;
-  } catch (e) {
-    const error = e instanceof Error ? e.message : "An unknown error occurred.";
-    return <DonorsPageContent initialDonors={[]} error={error} />;
-  }
-}
-
+// Convert the main page to a Server Component for data fetching
 export default function DonorsPage() {
     return (
         <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <DonorsPageDataLoader />
+            <DonorsPageContent />
         </Suspense>
     )
+}
+
+function DonorsPageDataLoader() {
+  const [initialDonors, setInitialDonors] = useState<User[]>([]);
+  const [error, setError] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const allUsers = await getAllUsers();
+        setInitialDonors(allUsers.filter(u => u.roles.includes('Donor')));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "An unknown error occurred.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  return <DonorsPageContent />;
 }

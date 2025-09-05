@@ -361,17 +361,19 @@ export const TopDonorsCard = ({ allDonations = [] }: { allDonations: Donation[] 
                     <ScrollArea className="h-80 pr-4">
                         <div className="space-y-4">
                             {paginatedDonors.map(donor => (
-                                <div key={donor.id} className="flex items-center rounded-lg border p-4">
-                                    <Avatar className="h-9 w-9">
-                                        <AvatarImage src={`https://placehold.co/100x100.png?text=${donor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}`} alt={donor.name} data-ai-hint="male portrait" />
-                                        <AvatarFallback>{donor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="ml-4 flex-grow">
-                                        <p className="text-sm font-medium leading-none">{donor.name}</p>
-                                        <p className="text-sm text-muted-foreground">{donor.count} donations</p>
+                                <Link href={`/admin/donors?name=${donor.name}`} key={donor.id}>
+                                    <div className="flex items-center rounded-lg border p-4 hover:bg-muted transition-colors">
+                                        <Avatar className="h-9 w-9">
+                                            <AvatarImage src={`https://placehold.co/100x100.png?text=${donor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}`} alt={donor.name} data-ai-hint="male portrait" />
+                                            <AvatarFallback>{donor.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="ml-4 flex-grow">
+                                            <p className="text-sm font-medium leading-none">{donor.name}</p>
+                                            <p className="text-sm text-muted-foreground">{donor.count} donations</p>
+                                        </div>
+                                        <div className="ml-4 font-semibold text-lg">₹{donor.total.toLocaleString()}</div>
                                     </div>
-                                    <div className="ml-4 font-semibold text-lg">₹{donor.total.toLocaleString()}</div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </ScrollArea>
@@ -804,7 +806,3 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
-
-    
-
-    

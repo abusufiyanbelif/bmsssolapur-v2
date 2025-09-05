@@ -79,7 +79,8 @@ export const createDonation = async (
     const newDonation: Partial<Donation> = {
         ...donation,
         id: donationRef.id,
-        createdAt: Timestamp.now()
+        createdAt: Timestamp.now(),
+        source: donation.source || 'Manual Entry', // Default source
     };
     
     // Remove undefined fields to prevent Firestore errors
