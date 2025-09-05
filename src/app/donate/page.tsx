@@ -45,7 +45,8 @@ import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { handleAddDonation, getRawTextFromImage } from '@/app/admin/donations/add/actions';
+import { handleAddDonation } from '@/app/admin/donations/add/actions';
+import { extractRawTextFromImage } from "@/app/actions";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -621,6 +622,8 @@ function UploadProofSection({ user }: { user: User | null }) {
     const [isScanning, setIsScanning] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [rawText, setRawText] = useState<string | null>(null);
+    const [isContinuing, setIsContinuing] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0] || null;
@@ -630,33 +633,37 @@ function UploadProofSection({ user }: { user: User | null }) {
         } else {
             setPreviewUrl(null);
         }
+        setRawText(null); // Reset text when file changes
     }
     
-    const handleScan = async (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
+    const handleScan = async () => {
         if (!file) {
             toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to upload.' });
             return;
         }
         setIsScanning(true);
-        
         const formData = new FormData();
         formData.append("imageFile", file);
 
-        const result = await getRawTextFromImage(formData);
+        const result = await extractRawTextFromImage(formData);
 
         if (result.success && result.rawText) {
-            const queryParams = new URLSearchParams();
-            if(result.rawText) {
-                queryParams.set('rawText', encodeURIComponent(result.rawText));
-            }
-            router.push(`/admin/donations/add?${queryParams.toString()}`);
-
+            setRawText(result.rawText);
+            toast({ variant: 'success', title: 'Text Extracted', description: 'Review the text and click Continue.' });
         } else {
-             toast({ variant: 'destructive', title: 'Parsing Failed', description: result.error || "An unknown error occurred." });
+             toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || "An unknown error occurred." });
         }
         setIsScanning(false);
     };
+
+    const handleContinue = () => {
+        setIsContinuing(true);
+        const queryParams = new URLSearchParams();
+        if(rawText) {
+            queryParams.set('rawText', encodeURIComponent(rawText));
+        }
+        router.push(`/admin/donations/add?${queryParams.toString()}`);
+    }
 
     const handleLoginRedirect = () => {
         toast({
@@ -680,7 +687,7 @@ function UploadProofSection({ user }: { user: User | null }) {
                     onChange={handleFileChange}
                 />
                  <FormDescription>
-                    Upload a screenshot of a payment you have already made. The system will scan it and take you to a form to confirm the details.
+                    Upload a screenshot of a payment you have already made.
                 </FormDescription>
             </div>
              {previewUrl && (
@@ -696,9 +703,22 @@ function UploadProofSection({ user }: { user: User | null }) {
                 disabled={isScanning || !file} 
                 className="w-full"
             >
-                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                {user ? 'Scan and Confirm Donation' : 'Login to Scan'}
+                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                {user ? 'Scan Text from Image' : 'Login to Scan'}
             </Button>
+
+            {rawText && (
+                <>
+                    <div className="space-y-2">
+                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                        <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
+                    </div>
+                     <Button onClick={handleContinue} className="w-full" disabled={isContinuing}>
+                         {isContinuing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                        Continue to Record Donation
+                    </Button>
+                </>
+            )}
         </div>
     );
 }
