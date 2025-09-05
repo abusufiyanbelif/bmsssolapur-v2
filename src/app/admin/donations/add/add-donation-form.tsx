@@ -37,7 +37,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId } from "./actions";
+import { handleAddDonation, checkTransactionId, getDetailsFromText } from "./actions";
 import { getRawTextFromImage } from '@/app/actions';
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
@@ -116,12 +116,15 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [rawText, setRawText] = useState<string | null>(null);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
   
+  const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
   const isEditing = !!existingDonation;
@@ -265,10 +268,47 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     if (file) {
       setValue('paymentScreenshot', file, { shouldValidate: true });
       const preview = URL.createObjectURL(file);
+      setFile(file);
       setFilePreview(preview);
     } else {
       setValue('paymentScreenshot', null);
+      setFile(null);
       setFilePreview(null);
+    }
+  };
+
+  const handleScanText = async () => {
+    if (!file) return;
+    setIsScanning(true);
+    setRawText(null);
+    try {
+        const formData = new FormData();
+        formData.append("imageFile", file);
+        const result = await getRawTextFromImage(formData);
+
+        if (result.success && result.rawText) {
+            setRawText(result.rawText);
+            const detailsResult = await getDetailsFromText(result.rawText);
+            if (detailsResult.success && detailsResult.details) {
+                const details = detailsResult.details;
+                 Object.entries(details).forEach(([key, value]) => {
+                    if (value && key !== 'rawText') {
+                        if (key === 'date') setValue('donationDate', new Date(value as string));
+                        else if (key === 'amount') setValue('totalTransactionAmount', value as number);
+                        else setValue(key as any, value);
+                    }
+                });
+                toast({ variant: "success", title: "Scan Successful", description: "Form has been auto-filled. Please review."});
+            } else {
+                toast({ variant: 'destructive', title: "Parsing Failed", description: detailsResult.error || "Could not parse details from text." });
+            }
+        } else {
+            toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "Could not extract text from the image." });
+        }
+    } catch (e) {
+        toast({ variant: 'destructive', title: "Error", description: e instanceof Error ? e.message : "An unknown error occurred." });
+    } finally {
+        setIsScanning(false);
     }
   };
   
@@ -303,6 +343,18 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       <div className="flex flex-col items-center gap-4">
                           <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
                       </div>
+                  )}
+                  {file && (
+                     <Button type="button" onClick={handleScanText} disabled={isScanning} className="w-full">
+                          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                          {isScanning ? 'Scanning...' : 'Get Text & Auto-fill'}
+                      </Button>
+                  )}
+                  {rawText && (
+                    <div className="space-y-2">
+                        <Label>Extracted Text</Label>
+                        <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
+                    </div>
                   )}
               </div>
 
