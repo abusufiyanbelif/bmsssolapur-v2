@@ -8,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, UploadCloud
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -45,6 +45,7 @@ const allNavItems: NavItem[] = [
     { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Donor"] },
     { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
+    { href: "/my-uploads", label: "My Uploads", icon: UploadCloud, allowedRoles: ["Donor"] },
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
