@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getOpenGeneralLeads, EnrichedLead } from "@/app/campaigns/actions";
+import { getOpenGeneralLeads, EnrichedLead } from "@/app/home/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CreditCard, Copy, Loader2, AlertCircle, Share2 } from "lucide-react";
 import Image from "next/image";
@@ -76,8 +75,8 @@ function PublicLeadsList({ leads }: PublicLeadsListProps) {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">
-                            <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{lead.caseDetails || "No details provided."}</p>
-                            <Progress value={progress} className="mb-2" />
+                            <p className="text-sm text-muted-foreground line-clamp-3">{lead.caseDetails || "No details provided."}</p>
+                            <Progress value={progress} className="my-2" />
                             <div className="flex justify-between text-sm">
                                 <span className="font-semibold">Raised: ₹{lead.helpGiven.toLocaleString()}</span>
                                 <span className="text-muted-foreground">Goal: ₹{lead.helpRequested.toLocaleString()}</span>
