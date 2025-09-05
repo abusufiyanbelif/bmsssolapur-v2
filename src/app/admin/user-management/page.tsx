@@ -349,63 +349,49 @@ export default function UserManagementPage() {
                  const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
                  return (
                 <Card key={user.id} className={cn(selectedUsers.includes(user.id!) && "ring-2 ring-primary")}>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                             <div className="flex items-center gap-4">
-                                <Checkbox
-                                    className="mt-1"
-                                    checked={selectedUsers.includes(user.id!)}
-                                    onCheckedChange={(checked) => {
-                                        setSelectedUsers(prev => 
-                                            checked ? [...prev, user.id!] : prev.filter(id => id !== user.id!)
-                                        );
-                                    }}
-                                    aria-label="Select card"
-                                    disabled={isProtectedUser}
-                                />
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                    <div className="p-4 flex gap-4">
+                         <Checkbox
+                                className="mt-1.5 flex-shrink-0"
+                                checked={selectedUsers.includes(user.id!)}
+                                onCheckedChange={(checked) => {
+                                    setSelectedUsers(prev => 
+                                        checked ? [...prev, user.id!] : prev.filter(id => id !== user.id!)
+                                    );
+                                }}
+                                aria-label="Select card"
+                                disabled={isProtectedUser}
+                            />
+                        <Link href={`/admin/user-management/${user.id}/edit`} className="flex-grow space-y-3">
+                            <CardHeader className="p-0">
+                                <div className="flex justify-between items-start">
+                                    <CardTitle className="text-lg flex items-center gap-2">
                                         {user.name}
-                                    </Link>
-                                </CardTitle>
-                            </div>
-                            <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
-                                {user.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
+                                    </CardTitle>
+                                    <Badge variant="outline" className={cn(user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
+                                        {user.isActive ? 'Active' : 'Inactive'}
+                                    </Badge>
+                                </div>
+                                <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0 space-y-3 text-sm">
+                                <div className="flex justify-between"><span className="text-muted-foreground">User Key</span><span className="font-semibold">{user.userKey || 'N/A'}</span></div>
+                                <div className="flex justify-between"><span className="text-muted-foreground">User ID</span><span className="font-mono text-xs">{user.userId}</span></div>
+                                <div>
+                                    <h4 className="font-semibold mb-2">Roles</h4>
+                                     <div className="flex flex-wrap gap-1">
+                                        {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
+                                    </div>
+                                </div>
+                                <div className="flex justify-between text-xs text-muted-foreground pt-2">
+                                     <span>Joined On</span>
+                                     <span>{format(user.createdAt, "dd MMM yyyy")}</span>
+                                </div>
+                            </CardContent>
+                        </Link>
+                         <div className="flex-shrink-0 -mr-2 -mt-2">
+                           {renderActions(user)}
                         </div>
-                        <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">User Key</span>
-                            <span className="font-semibold">{user.userKey || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">User ID</span>
-                             <div className="text-right">
-                                <span className="font-mono text-xs">{user.userId}</span>
-                                {user.isAnonymousAsBeneficiary && user.anonymousBeneficiaryId && (
-                                    <div className="font-mono text-xs text-muted-foreground" title="Anonymous Beneficiary ID">{user.anonymousBeneficiaryId}</div>
-                                )}
-                                {user.isAnonymousAsDonor && user.anonymousDonorId && (
-                                    <div className="font-mono text-xs text-muted-foreground" title="Anonymous Donor ID">{user.anonymousDonorId}</div>
-                                )}
-                            </div>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold mb-2">Roles</h4>
-                             <div className="flex flex-wrap gap-1">
-                                {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
-                            </div>
-                        </div>
-                        <div className="flex justify-between text-xs text-muted-foreground pt-2">
-                             <span>Joined On</span>
-                             <span>{format(user.createdAt, "dd MMM yyyy")}</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end">
-                        {renderActions(user)}
-                    </CardFooter>
+                    </div>
                 </Card>
                  )
             })}
