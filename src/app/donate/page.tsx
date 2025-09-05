@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -27,11 +26,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { createRazorpayOrder } from './actions';
+import { createRazorpayOrder, handleManualDonation } from './actions';
 import type { User, Lead, Organization, Campaign, AppSettings } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
@@ -43,7 +42,6 @@ import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
-import { handleManualDonation } from './actions';
 import { getRawTextFromImage } from '@/app/actions';
 
 
@@ -319,6 +317,7 @@ function DonatePageContent() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [donationMethod, setDonationMethod] = useState<'online' | 'record' | null>(null);
   
   const leadId = searchParams.get('leadId');
   const campaignId = searchParams.get('campaignId');
@@ -347,8 +346,10 @@ function DonatePageContent() {
         if (leadId) {
           const lead = await getLead(leadId);
           setTargetLead(lead);
+          setDonationMethod('online'); // Default to online payment if a specific cause is chosen
         } else if (campaignId) {
           setTargetCampaignId(campaignId);
+          setDonationMethod('online'); // Default to online payment if a specific cause is chosen
         }
       } catch (e) {
         setError("Failed to load necessary data. Please try again.");
@@ -382,14 +383,45 @@ function DonatePageContent() {
   const onlinePaymentsEnabled = settings?.features?.onlinePaymentsEnabled ?? false;
   const razorpayEnabled = settings?.paymentGateway?.razorpay?.enabled && onlinePaymentsEnabled;
   const razorpayKey = razorpayEnabled ? (settings.paymentGateway.razorpay.mode === 'live' ? settings.paymentGateway.razorpay.live.keyId : settings.paymentGateway.razorpay.test.keyId) : undefined;
+  
+  const allowRecordDonation = settings?.donationConfiguration?.allowDonorSelfServiceDonations ?? true;
+
 
   return (
      <div className="flex-1 space-y-8">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Make a Donation</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-             <OnlineDonationForm 
+
+        {!donationMethod && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>How would you like to donate?</CardTitle>
+                    <CardDescription>Please select one of the options below to proceed.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div 
+                        className="p-6 border rounded-lg hover:shadow-lg hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-4"
+                        onClick={() => setDonationMethod('online')}
+                    >
+                        <CreditCard className="h-12 w-12 text-primary" />
+                        <h3 className="text-xl font-semibold">Make a New Online Donation</h3>
+                        <p className="text-sm text-muted-foreground">Use our secure payment gateway to contribute directly.</p>
+                    </div>
+                     <div 
+                        className="p-6 border rounded-lg hover:shadow-lg hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-4"
+                        onClick={() => setDonationMethod('record')}
+                    >
+                        <FileUp className="h-12 w-12 text-primary" />
+                        <h3 className="text-xl font-semibold">I've Already Donated</h3>
+                        <p className="text-sm text-muted-foreground">Upload proof of a past payment made via bank transfer, UPI, or another method.</p>
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+
+        {donationMethod === 'online' && (
+            <OnlineDonationForm 
                 user={user}
                 targetLead={targetLead}
                 targetCampaignId={targetCampaignId}
@@ -397,8 +429,11 @@ function DonatePageContent() {
                 activeCampaigns={activeCampaigns}
                 razorpayKeyId={razorpayKey}
              />
-             <RecordPastDonationForm user={user} />
-        </div>
+        )}
+        
+        {donationMethod === 'record' && (
+            <RecordPastDonationForm user={user} />
+        )}
      </div>
   );
 }

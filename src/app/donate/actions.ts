@@ -16,7 +16,7 @@ export async function createRazorpayOrder(amount: number, currency: string = 'IN
 
 export async function handleManualDonation(userId: string, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
-        formData.append("adminUserId", userId);
+        formData.append("adminUserId", userId); // The user is acting as their own admin here
         formData.append("donorId", userId);
         formData.append("status", "Pending verification");
 
