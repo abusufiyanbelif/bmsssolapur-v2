@@ -147,31 +147,6 @@ export async function checkTransactionId(transactionId: string): Promise<Availab
     return { isAvailable: true };
 }
 
-interface ScanResult {
-    success: boolean;
-    details?: ExtractDonationDetailsOutput;
-    error?: string;
-}
-
-export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
-    if (!rawText) {
-        return { success: false, error: "No text was provided for parsing." };
-    }
-
-    try {
-        const extractedDetails = await extractDetailsFromTextFlow({ rawText });
-        return { 
-            success: true, 
-            details: { ...extractedDetails, rawText: rawText },
-        };
-    } catch (e) {
-        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error(`Text parsing failed:`, lastError);
-        return { success: false, error: `Text parsing failed: ${lastError}` };
-    }
-}
-
-
 interface RawTextScanResult {
     success: boolean;
     rawText?: string;
@@ -208,5 +183,30 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
         const lastError = e instanceof Error ? e.message : "An unknown error occurred";
         console.error(`Full scanning process failed:`, lastError);
         return { success: false, error: lastError };
+    }
+}
+
+
+interface ScanResult {
+    success: boolean;
+    details?: ExtractDonationDetailsOutput;
+    error?: string;
+}
+
+export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
+    if (!rawText) {
+        return { success: false, error: "No text was provided for parsing." };
+    }
+
+    try {
+        const extractedDetails = await extractDetailsFromTextFlow({ rawText });
+        return { 
+            success: true, 
+            details: { ...extractedDetails, rawText: rawText },
+        };
+    } catch (e) {
+        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(`Text parsing failed:`, lastError);
+        return { success: false, error: `Text parsing failed: ${lastError}` };
     }
 }

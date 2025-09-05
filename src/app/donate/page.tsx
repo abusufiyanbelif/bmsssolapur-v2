@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -45,8 +44,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { handleAddDonation } from '@/app/admin/donations/add/actions';
-import { extractRawTextFromImage } from "@/app/actions";
+import { handleAddDonation, getRawTextFromImage } from '@/app/admin/donations/add/actions';
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -645,13 +643,13 @@ function UploadProofSection({ user }: { user: User | null }) {
         const formData = new FormData();
         formData.append("imageFile", file);
 
-        const result = await extractRawTextFromImage(formData);
+        const result = await getRawTextFromImage(formData);
 
         if (result.success && result.rawText) {
             setRawText(result.rawText);
             toast({ variant: 'success', title: 'Text Extracted', description: 'Review the text and click Continue.' });
         } else {
-             toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || "An unknown error occurred." });
+             toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || "An unexpected error occurred." });
         }
         setIsScanning(false);
     };
