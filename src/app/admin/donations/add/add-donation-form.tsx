@@ -37,7 +37,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, getDetailsFromText } from "./actions";
+import { handleAddDonation, checkTransactionId } from "./actions";
 import { getRawTextFromImage } from '@/app/actions';
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
@@ -122,9 +122,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
   
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractedRawText, setExtractedRawText] = useState<string | null>(null);
-  const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
   const isEditing = !!existingDonation;
@@ -210,41 +207,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         setSelectedDonor(user);
       }
     }
-    
-    // Retrieve scanned data from sessionStorage
-    const storedScanData = sessionStorage.getItem('manualDonationScreenshot');
-    if(storedScanData) {
-        try {
-            const parsedData = JSON.parse(storedScanData);
-            if (parsedData.details) {
-                setExtractedRawText(parsedData.rawText || 'No raw text available.');
-                autoFillFromDetails(parsedData.details);
-            }
-            if(parsedData.dataUrl) {
-                 // Convert data URL back to a file object for the form
-                dataUrlToFile(parsedData.dataUrl, 'scanned-proof.png').then(file => {
-                    setValue('paymentScreenshot', file, { shouldValidate: true });
-                    setFilePreview(URL.createObjectURL(file));
-                });
-            }
-        } catch (e) {
-            console.error("Could not parse scanned data from session storage", e);
-        } finally {
-            // Clean up session storage after use
-            sessionStorage.removeItem('manualDonationScreenshot');
-        }
-    }
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const donorUsers = users.filter(u => u.roles.includes('Donor'));
-
-  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        return new File([blob], filename, { type: blob.type });
-    };
 
   async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
@@ -300,69 +266,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       setValue('paymentScreenshot', file, { shouldValidate: true });
       const preview = URL.createObjectURL(file);
       setFilePreview(preview);
-      setExtractedRawText(null); // Reset text when new file is chosen
     } else {
       setValue('paymentScreenshot', null);
       setFilePreview(null);
-    }
-  };
-  
-  const handleGetText = async () => {
-    const proofFile = getValues('paymentScreenshot');
-    if (!proofFile) {
-        toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
-        return;
-    }
-    setIsExtracting(true);
-    setExtractedRawText(null);
-
-    try {
-        const formData = new FormData();
-        formData.append('imageFile', proofFile);
-        
-        const result = await getRawTextFromImage(formData);
-        
-        if (result.success && result.rawText) {
-            setExtractedRawText(result.rawText);
-            toast({ variant: 'success', title: 'Text Extracted', description: 'Review the text below and click "Auto-fill".' });
-        } else {
-            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || "Could not extract text from the image." });
-        }
-    } catch (e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred during text extraction.' });
-    } finally {
-        setIsExtracting(false);
-    }
-  };
-  
-  const autoFillFromDetails = (details: any) => {
-     Object.entries(details).forEach(([key, value]) => {
-        if (value && key !== 'rawText') {
-            if (key === 'date') setValue('donationDate', new Date(value as string));
-            else if (key === 'amount') setValue('totalTransactionAmount', value as number);
-            else setValue(key as any, value);
-        }
-    });
-  }
-
-  const handleAutoFillFromText = async () => {
-    if (!extractedRawText) {
-        toast({ variant: 'destructive', title: 'No Text Available', description: 'Please extract text from the image first.' });
-        return;
-    }
-    setIsAutoFilling(true);
-    try {
-        const result = await getDetailsFromText(extractedRawText);
-        if (result.success && result.details) {
-            autoFillFromDetails(result.details);
-            toast({ variant: 'success', title: 'Auto-fill Complete!', description: 'Form populated from extracted text.' });
-        } else {
-             toast({ variant: 'destructive', title: 'Parsing Failed', description: result.error || "Could not parse details from the text." });
-        }
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred during auto-fill.' });
-    } finally {
-        setIsAutoFilling(false);
     }
   };
   
@@ -396,24 +302,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                   {filePreview && (
                       <div className="flex flex-col items-center gap-4">
                           <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                           <div className="flex gap-2 w-full">
-                            <Button type="button" size="sm" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtracting}>
-                                {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                                Get Text
-                            </Button>
-                            {extractedRawText && (
-                                 <Button type="button" size="sm" variant="secondary" className="w-full" onClick={handleAutoFillFromText} disabled={isAutoFilling}>
-                                    {isAutoFilling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                    Auto-fill from Text
-                                </Button>
-                            )}
-                          </div>
-                      </div>
-                  )}
-                   {extractedRawText && (
-                      <div className="space-y-2">
-                          <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                          <Textarea id="rawTextOutput" readOnly value={extractedRawText} rows={8} className="text-xs font-mono" />
                       </div>
                   )}
               </div>

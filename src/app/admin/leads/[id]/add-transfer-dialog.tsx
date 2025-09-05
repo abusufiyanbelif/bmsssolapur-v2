@@ -23,10 +23,9 @@ import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Tex
 import { handleFundTransfer } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import type { ExtractDonationDetailsOutput } from "@/ai/schemas";
+import type { ExtractDonationDetailsOutput } from '@/ai/schemas';
 import Image from "next/image";
 import { FormDescription, FormField, FormControl, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
-import { scanProof, getRawTextFromImage } from '@/app/admin/donations/add/actions';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import type { PaymentMethod } from "@/services/types";
 
@@ -41,40 +40,12 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isExtractingText, setIsExtractingText] = useState(false);
   const [open, setOpen] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
-  const [scannedDetails, setScannedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
-  const [rawText, setRawText] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   
   const form = useForm();
   const { setValue, register, handleSubmit, getValues, watch } = form;
-
-  useEffect(() => {
-    if (scannedDetails) {
-        // Use Object.entries to iterate and set values
-        for (const [key, value] of Object.entries(scannedDetails)) {
-            if (value !== undefined && value !== null) {
-                setValue(key as any, value);
-            }
-        }
-    }
-  }, [scannedDetails, setValue]);
-
-
-  useEffect(() => {
-    if (file) {
-      setPreviewUrl(URL.createObjectURL(file));
-      return () => {
-        if(previewUrl) URL.revokeObjectURL(previewUrl);
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file]);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -83,46 +54,6 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     }
   }, [open]);
 
-  const handleScan = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No File', description: 'Please select a file to scan.' });
-      return;
-    }
-    
-    setIsScanning(true);
-    setScannedDetails(null);
-    setRawText(null);
-    
-    const formData = new FormData();
-    formData.append('proofFile', file);
-    const result = await scanProof(formData);
-    
-    if (result && result.success && result.details) {
-        setScannedDetails(result.details);
-        toast({ variant: 'success', title: 'Scan Successful', description: 'Form fields have been auto-filled. Please review.' });
-    } else {
-        toast({ variant: 'destructive', title: 'Scan Failed', description: result?.error || 'Could not extract details from the image.' });
-    }
-    setIsScanning(false);
-  };
-  
-   const handleExtractText = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
-      return;
-    }
-    setIsExtractingText(true);
-    const formData = new FormData();
-    formData.append('imageFile', file);
-    const result = await getRawTextFromImage(formData);
-    if(result.success && result.text) {
-        setRawText(result.text);
-    } else {
-         toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
-    }
-    setIsExtractingText(false);
-  };
-
    const onFormSubmit = async (data: any) => {
     if (!adminUserId) {
       toast({ variant: "destructive", title: "Authentication Error", description: "Could not identify the logged-in administrator. Please log out and back in." });
@@ -130,26 +61,16 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     }
 
     setIsSubmitting(true);
-    const formData = new FormData();
-    for (const key in data) {
-        if (data[key]) {
-            formData.append(key, data[key]);
-        }
-    }
+    const formData = new FormData(formRef.current!);
+    
     formData.append("adminUserId", adminUserId);
-    if(file) formData.append("proof", file);
-
-    // Pass the leadId to the server action
+    
     const result = await handleFundTransfer(leadId, formData);
     setIsSubmitting(false);
 
     if (result.success) {
       toast({ variant: "success", title: "Transfer Recorded", description: "The fund transfer has been successfully recorded." });
       setOpen(false);
-      setScannedDetails(null);
-      setFile(null);
-      setPreviewUrl(null);
-      setRawText(null);
       form.reset();
       router.refresh(); 
     } else {
@@ -163,10 +84,6 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) {
-        setScannedDetails(null);
-        setFile(null);
-        setPreviewUrl(null);
-        setRawText(null);
         form.reset();
       }
       setOpen(isOpen)
@@ -181,7 +98,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         <DialogHeader>
           <DialogTitle>Record Fund Transfer</DialogTitle>
           <DialogDescription>
-            Fill out the details below to record a payment. Scan the proof to auto-fill details.
+            Fill out the details below to record a payment.
           </DialogDescription>
         </DialogHeader>
         <form ref={formRef} onSubmit={handleSubmit(onFormSubmit)} className="grid md:grid-cols-2 gap-x-8 gap-y-4 max-h-[80vh] overflow-y-auto pr-2">
@@ -231,12 +148,10 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                         <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} type="text" />
                     </div>
                  )}
-                 {scannedDetails?.utrNumber && (
-                    <div className="space-y-2">
-                        <Label htmlFor="utrNumber">UTR Number</Label>
-                        <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
-                    </div>
-                 )}
+                 <div className="space-y-2">
+                    <Label htmlFor="utrNumber">UTR Number</Label>
+                    <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
+                </div>
                   {paymentApp === 'PhonePe' && (
                     <div className="space-y-2">
                         <Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label>
@@ -298,47 +213,10 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                  <div className="space-y-2">
                     <Label htmlFor="proof">Proof of Transfer</Label>
                     <div className="flex gap-2">
-                        <Input id="proof" type="file" required accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                        <Input id="proof" name="proof" type="file" accept="image/*,application/pdf" />
                     </div>
-                    <FormDescription>A screenshot or PDF receipt is required.</FormDescription>
+                    <FormDescription>A screenshot or PDF receipt is required for online payments.</FormDescription>
                 </div>
-
-                 {previewUrl ? (
-                    <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
-                        <div className="relative w-full h-80">
-                            <Image src={previewUrl} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
-                        </div>
-                    </div>
-                ) : (
-                     <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center justify-center gap-4 h-80">
-                        <FileText className="h-16 w-16 text-muted-foreground"/>
-                        <p className="text-sm text-muted-foreground">Upload an image to see a preview</p>
-                    </div>
-                )}
-                 <div className="flex gap-2">
-                    <Button type="button" variant="outline" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
-                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                        Get Raw Text
-                    </Button>
-                    <Button type="button" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
-                        {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                        Auto-fill Fields
-                    </Button>
-                </div>
-                {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center py-4"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning image...</div>}
-                {scannedDetails && (
-                    <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Review Auto-Filled Details</AlertTitle>
-                        <AlertDescription>The form has been populated with scanned data. Please verify all details before submitting.</AlertDescription>
-                    </Alert>
-                )}
-                 {rawText && (
-                    <div className="space-y-2">
-                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                        <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
-                    </div>
-                )}
             </div>
             
             <div className="md:col-span-2">

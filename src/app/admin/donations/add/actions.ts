@@ -5,11 +5,9 @@
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
 import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, ExtractDonationDetailsOutput, User } from "@/services/types";
+import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
-import { extractRawTextFlow } from '@/ai/flows/extract-raw-text-flow';
-import { extractDetailsFromText as extractDetailsFromTextFlow } from '@/ai/flows/extract-details-from-text-flow';
 
 
 interface FormState {
@@ -145,68 +143,4 @@ export async function checkTransactionId(transactionId: string): Promise<Availab
         return { isAvailable: false, existingDonationId: existingDonation.id };
     }
     return { isAvailable: true };
-}
-
-interface RawTextScanResult {
-    success: boolean;
-    rawText?: string;
-    error?: string;
-}
-
-export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
-    const imageFile = formData.get("imageFile") as File | null;
-    
-    if (!imageFile) {
-        return { success: false, error: "No image file provided." };
-    }
-    
-    let dataUri: string;
-
-    try {
-        const arrayBuffer = await imageFile.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        dataUri = `data:${imageFile.type};base64,${base64}`;
-    } catch (e) {
-         return { success: false, error: "Failed to read the image file." };
-    }
-    
-    try {
-        const textResult = await extractRawTextFlow({ photoDataUri: dataUri });
-
-        if (!textResult?.rawText) {
-            throw new Error("Failed to extract text from image.");
-        }
-
-        return { success: true, rawText: textResult.rawText };
-
-    } catch (e) {
-        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error(`Full scanning process failed:`, lastError);
-        return { success: false, error: lastError };
-    }
-}
-
-
-interface ScanResult {
-    success: boolean;
-    details?: ExtractDonationDetailsOutput;
-    error?: string;
-}
-
-export async function getDetailsFromText(rawText: string): Promise<ScanResult> {
-    if (!rawText) {
-        return { success: false, error: "No text was provided for parsing." };
-    }
-
-    try {
-        const extractedDetails = await extractDetailsFromTextFlow({ rawText });
-        return { 
-            success: true, 
-            details: { ...extractedDetails, rawText: rawText },
-        };
-    } catch (e) {
-        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error(`Text parsing failed:`, lastError);
-        return { success: false, error: `Text parsing failed: ${lastError}` };
-    }
 }
