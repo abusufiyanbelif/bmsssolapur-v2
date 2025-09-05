@@ -76,7 +76,8 @@ export async function testGeminiConnection(apiKey?: string): Promise<{success: b
     } catch (e) {
         if (e instanceof Error) {
              if(e.message.includes("API key not valid")) {
-                return { success: false, error: "The provided API Key is invalid or expired." };
+                const errorMessage = `The provided API Key is invalid or expired. You can generate a new one at https://aistudio.google.com/app/apikey.`;
+                return { success: false, error: errorMessage };
             }
             return { success: false, error: e.message };
         }
