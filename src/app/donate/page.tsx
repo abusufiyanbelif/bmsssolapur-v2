@@ -218,6 +218,7 @@ function RecordPastDonationForm({ user }: { user: User }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
     const [rawText, setRawText] = useState<string | null>(null);
+    const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const form = useForm<RecordDonationFormValues>({
@@ -227,15 +228,33 @@ function RecordPastDonationForm({ user }: { user: User }) {
     
     const { control, handleSubmit, setValue } = form;
 
-    const handleScan = async (file: File) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0] || null;
+        setFile(selectedFile);
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
+        if (selectedFile) {
+            setPreviewUrl(URL.createObjectURL(selectedFile));
+            setValue('proof', selectedFile, { shouldValidate: true });
+        } else {
+            setPreviewUrl(null);
+            setValue('proof', null, { shouldValidate: true });
+        }
+    };
+    
+    const handleGetText = async () => {
+        if (!file) {
+          toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
+          return;
+        }
         setIsScanning(true);
         const formData = new FormData();
         formData.append("imageFile", file);
         const result = await getRawTextFromImage(formData);
         if (result.success && result.rawText) {
             setRawText(result.rawText);
-            // Here you could call another AI flow to parse the rawText and pre-fill the form
-            toast({ variant: 'success', title: 'Text Extracted', description: 'Review details and submit.' });
+            toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text has been populated below.' });
         } else {
              toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text.' });
         }
@@ -274,20 +293,20 @@ function RecordPastDonationForm({ user }: { user: User }) {
                             <FormItem>
                                 <FormLabel>Proof of Donation</FormLabel>
                                 <FormControl>
-                                    <Input type="file" accept="image/*,application/pdf" onChange={e => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            field.onChange(file);
-                                            setPreviewUrl(URL.createObjectURL(file));
-                                            handleScan(file);
-                                        }
-                                    }}/>
+                                    <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}/>
                         {previewUrl && <Image src={previewUrl} alt="Proof preview" width={200} height={200} className="rounded-md object-contain mx-auto" />}
-                        {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center"><Loader2 className="mr-2 animate-spin"/>Analyzing image...</div>}
+                        
+                        {file && (
+                           <Button type="button" onClick={handleGetText} disabled={isScanning} className="w-full">
+                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                Get Text from Image
+                            </Button>
+                        )}
+                        
                         {rawText && <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-muted"/>}
                         
                         <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Transaction ID / UTR</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
