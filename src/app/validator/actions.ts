@@ -9,6 +9,7 @@ import type {
   ValidateConfigurationInput,
   ValidateConfigurationOutput,
 } from "@/ai/schemas";
+import { testGeminiConnection } from "@/app/services/actions";
 
 
 type FormState = ValidateConfigurationOutput | null;
@@ -19,7 +20,19 @@ export async function handleValidation(
 ): Promise<FormState> {
   const firebaseConfig = formData.get("firebaseConfig") as string;
   const externalServiceConfigs = formData.get("externalServiceConfigs") as string;
+  const geminiApiKey = formData.get("geminiApiKey") as string | undefined;
 
+  // Perform a live connection test if a key was provided manually
+  if (geminiApiKey) {
+      const testResult = await testGeminiConnection(geminiApiKey);
+      if (!testResult.success) {
+          return {
+              isValid: false,
+              errors: [`Live Gemini Test Failed: ${testResult.error}`]
+          }
+      }
+  }
+  
   if (!firebaseConfig || !externalServiceConfigs) {
       return {
           isValid: false,
@@ -34,6 +47,10 @@ export async function handleValidation(
 
   try {
     const result = await validateConfiguration(input);
+    // Add the live test success message to the results
+    if (geminiApiKey && result.isValid) {
+        result.errors.push("Live Gemini API key test was successful.");
+    }
     return result;
   } catch (e) {
     console.error("Validation Error:", e);

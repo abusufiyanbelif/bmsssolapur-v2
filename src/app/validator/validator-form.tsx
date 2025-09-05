@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, AlertTriangle, KeySquare } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "../components/ui/input";
 
 const initialState = {
   isValid: false,
@@ -52,6 +53,23 @@ export function ValidatorForm() {
 
   return (
     <form action={formAction} className="space-y-8">
+      <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+        <div className="flex items-center gap-2">
+            <KeySquare className="h-5 w-5 text-primary" />
+            <Label htmlFor="geminiApiKey" className="font-semibold text-base">Gemini API Key (Optional for Testing)</Label>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          If you provide an API key here, the validator will attempt a live connection test with it. This overrides the server-configured key for this one test.
+        </p>
+        <Input
+            id="geminiApiKey"
+            name="geminiApiKey"
+            type="password"
+            placeholder="Paste your Gemini API key here to test it..."
+            className="font-mono text-xs bg-background"
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="firebaseConfig" className="font-semibold">Firebase Configuration (JSON)</Label>

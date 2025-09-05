@@ -7,6 +7,7 @@ import { testTwilioConnection as testTwilio } from '@/services/twilio';
 import { testNodemailerConnection as testNodemailer } from '@/services/email';
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
+import { genkit } from 'genkit';
 
 
 /**
@@ -61,9 +62,12 @@ export async function testNodemailerConnection(): Promise<{success: boolean, err
     }
 }
 
-export async function testGeminiConnection(): Promise<{success: boolean, error?: string}> {
+export async function testGeminiConnection(apiKey?: string): Promise<{success: boolean, error?: string}> {
     try {
-        await ai.generate({
+        // If a key is provided, create a temporary Genkit instance with it for testing.
+        const testAi = apiKey ? genkit({ plugins: [googleAI({ apiKey })] }) : ai;
+        
+        await testAi.generate({
             model: googleAI.model('gemini-1.5-flash-latest'),
             prompt: 'Test prompt',
             config: { temperature: 0 },
@@ -71,6 +75,9 @@ export async function testGeminiConnection(): Promise<{success: boolean, error?:
         return { success: true };
     } catch (e) {
         if (e instanceof Error) {
+             if(e.message.includes("API key not valid")) {
+                return { success: false, error: "The provided API Key is invalid or expired." };
+            }
             return { success: false, error: e.message };
         }
         return { success: false, error: "An unknown error occurred while testing Gemini." };
