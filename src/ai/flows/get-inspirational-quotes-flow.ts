@@ -22,24 +22,34 @@ const getInspirationalQuotesFlow = ai.defineFlow(
     async ({count}) => {
         let allQuotes: Quote[] = [];
         try {
-            // Try to fetch from the database
             allQuotes = await getAllQuotes();
-            
         } catch (error) {
-            // If any error occurs (e.g., connection failure), log it and fall back
-            console.error("Error getting random quotes, falling back to hardcoded list: ", error);
-            // This fallback is not ideal as it doesn't have IDs, but it prevents a crash.
-            // In a real app, you might have a static JSON file for this.
+            console.error("Error getting quotes from database, falling back to hardcoded list: ", error);
             allQuotes = [
                 { id: '1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
                 { id: '2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
                 { id: '3', number: 3, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran", categoryTypeNumber: 1 },
+                { id: '4', number: 1, text: "A man's true wealth is the good he does in this world.", source: "Imam Ali (RA)", category: "Scholar", categoryTypeNumber: 3 },
             ];
         }
         
-        // Shuffle and return the requested number of quotes from the chosen list
-        const shuffled = allQuotes.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, count);
+        const quranQuotes = allQuotes.filter(q => q.category === 'Quran');
+        const hadithQuotes = allQuotes.filter(q => q.category === 'Hadith');
+        const scholarQuotes = allQuotes.filter(q => q.category === 'Scholar');
+
+        const selectedQuotes: Quote[] = [];
+
+        if (quranQuotes.length > 0) {
+            selectedQuotes.push(quranQuotes[Math.floor(Math.random() * quranQuotes.length)]);
+        }
+        if (hadithQuotes.length > 0) {
+            selectedQuotes.push(hadithQuotes[Math.floor(Math.random() * hadithQuotes.length)]);
+        }
+        if (scholarQuotes.length > 0) {
+            selectedQuotes.push(scholarQuotes[Math.floor(Math.random() * scholarQuotes.length)]);
+        }
+
+        return selectedQuotes;
     }
 );
 
