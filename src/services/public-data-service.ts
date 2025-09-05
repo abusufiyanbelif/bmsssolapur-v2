@@ -109,7 +109,7 @@ export const getPublicOrganization = async (): Promise<Organization | null> => {
  */
 export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
     const adminDb = getAdminDb();
-    const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
+    const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLlection).doc('stats');
     await publicStatsRef.set(stats, { merge: true });
 };
 
