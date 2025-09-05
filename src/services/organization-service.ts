@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -94,6 +95,10 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         }
         return null;
     } catch (error) {
+        if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
+            console.warn("Firestore permission error in getCurrentOrganization. Please check IAM roles.");
+            return null; 
+        }
         console.error('Error getting current organization: ', error);
         return null;
     }

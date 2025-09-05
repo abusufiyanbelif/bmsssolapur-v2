@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */
@@ -79,13 +80,14 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
 
         return enrichedLeads;
     } catch (e) {
-        console.error("Error fetching public leads:", e);
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
-            console.error("FATAL: Firestore permission error. The server cannot connect to the database. Please check IAM roles.");
+            console.warn("Firestore permission error in getPublicLeads. Returning empty array. Please check IAM roles.");
             return []; // Return empty array to prevent crash
         }
         if (e instanceof Error && e.message.includes('index')) {
             console.error("Firestore index missing. Please create a descending index on 'dateCreated' for the 'publicLeads' collection.");
+        } else {
+             console.error("Error fetching public leads:", e);
         }
         return [];
     }
@@ -155,13 +157,14 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         const snapshot = await q.get();
         return snapshot.docs.map(doc => doc.data() as (Campaign & { raisedAmount: number, fundingProgress: number }));
     } catch (e) {
-        console.error("Error fetching public campaigns:", e);
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
-            console.error("FATAL: Firestore permission error. The server cannot connect to the database. Please check IAM roles.");
+            console.warn("Firestore permission error in getPublicCampaigns. Returning empty array. Please check IAM roles.");
             return []; // Return empty array to prevent crash
         }
         if (e instanceof Error && e.message.includes('index')) {
             console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'publicCampaigns' collection.");
+        } else {
+            console.error("Error fetching public campaigns:", e);
         }
         return [];
     }
