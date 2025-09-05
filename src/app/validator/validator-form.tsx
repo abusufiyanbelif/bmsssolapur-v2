@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { handleValidation } from "./actions";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,7 +54,7 @@ const externalServicesPlaceholder = `{
 }`;
 
 export function ValidatorForm() {
-  const [state, formAction] = useFormState(handleValidation, initialState);
+  const [state, formAction] = useActionState(handleValidation, initialState);
   const geminiApiKeyRef = useRef<HTMLInputElement>(null);
   const [isTesting, setIsTesting] = useState(false);
   const { toast } = useToast();
