@@ -7,9 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Loader2, AlertTriangle, KeySquare } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, AlertTriangle, KeySquare, Wifi } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { useState, useRef } from "react";
+import { testGeminiConnection } from "@/app/services/actions";
+import { useToast } from "@/hooks/use-toast";
 
 const initialState = {
   isValid: false,
@@ -51,6 +54,25 @@ const externalServicesPlaceholder = `{
 
 export function ValidatorForm() {
   const [state, formAction] = useFormState(handleValidation, initialState);
+  const geminiApiKeyRef = useRef<HTMLInputElement>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const { toast } = useToast();
+
+  const handleTestKey = async () => {
+      const apiKey = geminiApiKeyRef.current?.value;
+      if (!apiKey) {
+          toast({ variant: 'destructive', title: "No API Key Provided", description: "Please enter a Gemini API key to test." });
+          return;
+      }
+      setIsTesting(true);
+      const result = await testGeminiConnection(apiKey);
+      if (result.success) {
+          toast({ variant: 'success', title: "Connection Successful!", description: "The provided Gemini API key is valid." });
+      } else {
+          toast({ variant: 'destructive', title: "Connection Failed", description: result.error });
+      }
+      setIsTesting(false);
+  }
 
   return (
     <form action={formAction} className="space-y-8">
@@ -60,15 +82,22 @@ export function ValidatorForm() {
             <Label htmlFor="geminiApiKey" className="font-semibold text-base">Gemini API Key (Optional for Testing)</Label>
         </div>
         <p className="text-sm text-muted-foreground">
-          If you provide an API key here, the validator will attempt a live connection test with it. This overrides the server-configured key for this one test.
+          If you provide an API key here, you can test it directly. Submitting the main form will also use this key for a live validation check.
         </p>
-        <Input
-            id="geminiApiKey"
-            name="geminiApiKey"
-            type="password"
-            placeholder="Paste your Gemini API key here to test it..."
-            className="font-mono text-xs bg-background"
-        />
+        <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+                id="geminiApiKey"
+                name="geminiApiKey"
+                ref={geminiApiKeyRef}
+                type="password"
+                placeholder="Paste your Gemini API key here to test it..."
+                className="font-mono text-xs bg-background"
+            />
+            <Button type="button" variant="secondary" onClick={handleTestKey} disabled={isTesting}>
+                {isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wifi className="mr-2 h-4 w-4" />}
+                Test Connection
+            </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -117,6 +146,13 @@ export function ValidatorForm() {
                 <AlertTitle>Configuration Valid!</AlertTitle>
                 <AlertDescription>
                   No potential misconfigurations or security vulnerabilities found.
+                   {state.errors.length > 0 && (
+                    <ul className="list-disc pl-5 space-y-1 mt-2 text-xs">
+                        {state.errors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                        ))}
+                    </ul>
+                  )}
                 </AlertDescription>
               </Alert>
             ) : (
