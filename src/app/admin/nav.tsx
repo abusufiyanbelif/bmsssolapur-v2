@@ -65,21 +65,22 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { 
-                label: "Organization Profile", 
-                href: "/admin/organization",
-                subItems: [
-                    { href: "/admin/board-members", label: "Board Members" },
-                ]
-            },
-            { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper },
-            { href: "/admin/campaigns", label: "Campaigns" },
-            { href: "/admin/leads", label: "All Leads" },
-            { href: "/admin/donations", label: "All Donations" },
-            { href: "/admin/transfers", label: "All Beneficiaries Transfer", icon: ArrowRightLeft },
+            { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
         ]
     },
     
+    // Admin - Campaigns Management (Collapsible)
+    {
+        label: "Campaigns Management",
+        icon: Megaphone,
+        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        subItems: [
+            { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+        ]
+    },
+
 
      // Admin - Lead Management (Collapsible)
     {
