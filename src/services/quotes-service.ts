@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -82,8 +83,8 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         return quotes;
     } catch (error) {
         // Specifically check for the access token error and fall back gracefully.
-        if (error instanceof Error && error.message.includes('Could not refresh access token')) {
-            console.warn("Could not refresh access token for quotes, falling back to hardcoded list.");
+        if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
+            console.warn("Could not connect to Firestore to get quotes, falling back to hardcoded list. This is likely an IAM permission issue.");
         } else {
             console.error("Error getting all quotes, falling back to hardcoded list: ", error);
         }
