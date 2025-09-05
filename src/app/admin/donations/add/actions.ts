@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User, ExtractDonationDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
-import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
+import { extractRawTextFlow } from "@/ai/flows/extract-raw-text-flow";
 
 
 interface FormState {
@@ -172,7 +172,7 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
     }
     
     try {
-        const textResult = await extractRawText({ photoDataUri: dataUri });
+        const textResult = await extractRawTextFlow({ photoDataUri: dataUri });
 
         if (!textResult?.rawText) {
             throw new Error("Failed to extract text from image.");
