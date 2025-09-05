@@ -7,12 +7,10 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, Palette, Receipt, History
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
-import { AppSettings, getAppSettings } from "@/services/app-settings-service";
-import { useEffect, useState } from "react";
 
 type NavSubItem = {
     href?: string;
@@ -20,7 +18,6 @@ type NavSubItem = {
     icon?: React.ElementType;
     subItems?: NavSubItem[]; // For nested collapsibles
     allowedRoles?: string[];
-    featureFlag?: (settings: AppSettings) => boolean;
 };
 
 type NavItem = {
@@ -29,7 +26,6 @@ type NavItem = {
   icon: React.ElementType;
   allowedRoles: string[]; 
   subItems?: NavSubItem[];
-  featureFlag?: (settings: AppSettings) => boolean;
 };
 
 // A single source of truth for all navigation items
@@ -41,15 +37,7 @@ const allNavItems: NavItem[] = [
     { href: "/organization", label: "Organization Details", icon: Info, allowedRoles: ["Guest"] },
     
     // Authenticated User Home (common entry point)
-    {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"],
-        subItems: [
-            { href: "/home", label: "Overview", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
-            { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: Settings, allowedRoles: ["Super Admin"] }
-        ]
-    },
+    { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
     
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
@@ -59,16 +47,7 @@ const allNavItems: NavItem[] = [
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
-    { 
-        href: "/request-help", 
-        label: "Request Help", 
-        icon: FilePlus2, 
-        allowedRoles: ["Beneficiary"],
-        featureFlag: (settings) => settings.leadConfiguration?.allowBeneficiaryRequests ?? true,
-    },
-    
-    // Referral
-    { href: "/referral/my-beneficiaries", label: "My Referrals", icon: Users, allowedRoles: ["Referral"] },
+    { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
     
     // Admin - Communications (Collapsible)
     {
@@ -77,7 +56,6 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin"],
         subItems: [
             { href: "/admin/communications", label: "Generate Messages", icon: MessageSquare, allowedRoles: ["Admin", "Super Admin"] },
-            { href: "/admin/communications/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
 
@@ -87,25 +65,21 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/layout", label: "Layout Config", icon: Palette, allowedRoles: ["Super Admin", "Admin"] },
-            { href: "/admin/organization/expenses", label: "Operational Expenses", icon: Receipt, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { 
+                label: "Organization Profile", 
+                href: "/admin/organization",
+                subItems: [
+                    { href: "/admin/board-members", label: "Board Members" },
+                ]
+            },
+            { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper },
+            { href: "/admin/campaigns", label: "Campaigns" },
+            { href: "/admin/leads", label: "All Leads" },
+            { href: "/admin/donations", label: "All Donations" },
+            { href: "/admin/transfers", label: "All Beneficiaries Transfer", icon: ArrowRightLeft },
         ]
     },
     
-    // Admin - Campaigns Management (Collapsible)
-    {
-        label: "Campaigns Management",
-        icon: Megaphone,
-        allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
-        subItems: [
-            { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/campaigns/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
-        ]
-    },
-
 
      // Admin - Lead Management (Collapsible)
     {
@@ -182,19 +156,14 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Super Admin"],
         subItems: [
             { href: "/admin/settings", label: "General Settings" },
-            { 
-                href: "/admin/payment-gateways", 
-                label: "Payment Gateways", 
-                icon: CreditCard,
-                featureFlag: (settings) => settings.features?.onlinePaymentsEnabled ?? false
-            },
+            { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: LayoutDashboard },
+            { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard },
             { href: "/admin/settings/notifications", label: "Notification Settings", icon: BellRing },
             { href: "/admin/seed", label: "Seed Database", icon: Database },
             { href: "/services", label: "Services Summary", icon: Server },
             { href: "/dependencies", label: "Dependency Map", icon: Share2 },
             { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
             { href: "/personas", label: "AI Personas", icon: BrainCircuit },
-            { href: "/admin/audit-trail", label: "Audit Trail", icon: History },
         ]
     },
     
@@ -226,7 +195,7 @@ const NavLink = ({ item, isActive, onClick, paddingLeft }: { item: NavItem | Nav
     );
 };
 
-const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRoleSwitchRequired, settings }: { item: NavItem | NavSubItem, pathname: string, level?: number, userRoles: string[], activeRole: string, onRoleSwitchRequired: (requiredRole: string) => void, settings: AppSettings | null }) => {
+const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubItem, pathname: string, level?: number }) => {
     const Icon = item.icon;
     const isAnySubItemActive = item.subItems?.some(sub => sub.href && pathname.startsWith(sub.href)) || 
                                item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href))) ||
@@ -234,15 +203,7 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
 
     const paddingLeft = level > 0 ? `pl-${level * 4}` : '';
     
-    // Filter sub-items based on the active role and feature flags
-    const visibleSubItems = item.subItems?.filter(subItem => {
-        const roleAllowed = !subItem.allowedRoles || subItem.allowedRoles.includes(activeRole);
-        const featureEnabled = !subItem.featureFlag || (settings && subItem.featureFlag(settings));
-        return roleAllowed && featureEnabled;
-    }) || [];
-
-    if(visibleSubItems.length === 0 && !item.href) return null;
-    
+    // This component now handles both being a direct link AND a collapsible trigger
     const TriggerContent = (
         <div className={cn(
             "flex items-center w-full gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
@@ -250,9 +211,7 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
         )}>
             {Icon && <Icon className="h-4 w-4" />}
             {item.label}
-            {item.subItems && item.subItems.length > 0 && (
-                <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
-            )}
+            <ChevronDown className="h-4 w-4 ml-auto transition-transform [&[data-state=open]]:rotate-180" />
         </div>
     );
 
@@ -266,9 +225,9 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
                 )}
             </CollapsibleTrigger>
             <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
-                {visibleSubItems.map(subItem => {
-                    if (subItem.subItems && subItem.subItems.length > 0) {
-                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} settings={settings} />
+                {item.subItems?.map(subItem => {
+                    if (subItem.subItems) {
+                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} />
                     }
                     const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
                     return <NavLink key={subItem.href} item={subItem} isActive={isSubActive} />
@@ -281,16 +240,12 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
 
 export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
     const pathname = usePathname();
-    const [settings, setSettings] = useState<AppSettings | null>(null);
-
-    useEffect(() => {
-        getAppSettings().then(setSettings);
-    }, []);
     
     const visibleNavItems = allNavItems.filter(item => {
-        const roleAllowed = item.allowedRoles.includes(activeRole);
-        const featureEnabled = !item.featureFlag || (settings && item.featureFlag(settings));
-        return roleAllowed && featureEnabled;
+        if ('allowedRoles' in item) {
+            return item.allowedRoles.includes(activeRole);
+        }
+        return true;
     });
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
@@ -312,7 +267,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
                  if (item.subItems) {
-                    return <NavCollapsible key={key} item={item} pathname={pathname} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} settings={settings} />;
+                    return <NavCollapsible key={key} item={item} pathname={pathname} />;
                 }
                 const isActive = (item.href === '/' && pathname === '/') || 
                                  (item.href && item.href !== '/' && pathname.startsWith(item.href));
