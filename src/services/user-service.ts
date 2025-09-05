@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -93,8 +94,8 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (!userId) {
         return null;
     }
-     // Hardcoded check for the default admin user
-    if (userId === hardcodedSuperAdmin.userId) {
+     // Hardcoded check for the default admin user by their specific User ID.
+    if (userId === 'admin') {
         return hardcodedSuperAdmin;
     }
     try {
@@ -257,7 +258,7 @@ export const getUser = async (id: string): Promise<User | null> => {
     return null;
   }
    // Hardcoded check for the default admin user
-  if (id === hardcodedSuperAdmin.id || id === hardcodedSuperAdmin.userId) {
+  if (id === hardcodedSuperAdmin.id) {
         return hardcodedSuperAdmin;
   }
   try {
@@ -286,7 +287,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
     if (!name) {
         return null;
     }
-     if (name === hardcodedSuperAdmin.name) {
+     if (name === 'admin') {
         return hardcodedSuperAdmin;
     }
     try {
@@ -341,7 +342,7 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
     if (!name) {
         return null;
     }
-     if (name === hardcodedSuperAdmin.name) {
+     if (name === 'admin') {
         return hardcodedSuperAdmin;
     }
     try {
