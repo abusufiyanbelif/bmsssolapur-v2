@@ -37,7 +37,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, getDetailsFromText } from "./actions";
+import { handleAddDonation, checkTransactionId } from "./actions";
 import { getRawTextFromImage } from '@/app/actions';
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
@@ -288,20 +288,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
 
         if (result.success && result.rawText) {
             setRawText(result.rawText);
-            const detailsResult = await getDetailsFromText(result.rawText);
-            if (detailsResult.success && detailsResult.details) {
-                const details = detailsResult.details;
-                 Object.entries(details).forEach(([key, value]) => {
-                    if (value && key !== 'rawText') {
-                        if (key === 'date') setValue('donationDate', new Date(value as string));
-                        else if (key === 'amount') setValue('totalTransactionAmount', value as number);
-                        else setValue(key as any, value);
-                    }
-                });
-                toast({ variant: "success", title: "Scan Successful", description: "Form has been auto-filled. Please review."});
-            } else {
-                toast({ variant: 'destructive', title: "Parsing Failed", description: detailsResult.error || "Could not parse details from text." });
-            }
+            toast({ variant: "success", title: "Text Extracted", description: "Raw text from the image is now available below."});
         } else {
             toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "Could not extract text from the image." });
         }
@@ -346,8 +333,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                   )}
                   {file && (
                      <Button type="button" onClick={handleScanText} disabled={isScanning} className="w-full">
-                          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                          {isScanning ? 'Scanning...' : 'Get Text & Auto-fill'}
+                          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                          {isScanning ? 'Scanning...' : 'Get Text from Image'}
                       </Button>
                   )}
                   {rawText && (
