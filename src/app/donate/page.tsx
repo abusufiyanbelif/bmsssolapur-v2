@@ -25,189 +25,69 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef, useMemo } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Edit, Link2, XCircle, CreditCard, Save, Banknote, Bot, Text } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { useState, useEffect, Suspense } from "react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { createRazorpayOrder, verifyRazorpayPayment } from './razorpay-actions';
-import type { User, Lead, DonationPurpose, Organization, Campaign, Donation, DonationType, PaymentMethod, AppSettings } from '@/services/types';
-import { getUser, updateUser } from '@/services/user-service';
+import { createRazorpayOrder } from './actions';
+import type { User, Lead, Organization, Campaign, AppSettings } from '@/services/types';
+import { getUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
-import { QrCodeDialog } from "@/components/qr-code-dialog";
 import { getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
-import { getAllCampaigns as getAllCampaignsService } from "@/services/campaign-service";
+import { getAllCampaigns } from "@/services/campaign-service";
 import { LinkLeadCampaignDialog } from "./link-lead-campaign-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { handleAddDonation, getRawTextFromImage } from '@/app/admin/donations/add/actions';
+import { handleManualDonation } from './actions';
+import { getRawTextFromImage } from '@/app/actions';
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
-const allPaymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 
-
-// Schema for paying now
-const payNowFormSchema = z.object({
-  paymentMethod: z.enum(allPaymentMethods, { required_error: "Please select a payment method." }),
+// Schema for making a new online donation
+const onlineDonationSchema = z.object({
   purpose: z.enum(donationPurposes, { required_error: "Please select a purpose."}),
   amount: z.coerce.number().min(10, "Donation amount must be at least ₹10."),
-  donorName: z.string().optional(),
   isAnonymous: z.boolean().default(false),
-  phone: z.string().optional(),
-  email: z.string().optional(),
-  notes: z.string().optional(),
   leadId: z.string().optional(),
   campaignId: z.string().optional(),
   includePledge: z.boolean().default(false),
-  // Bank Transfer Fields
-  utrNumber: z.string().optional(),
-  senderBankName: z.string().optional(),
-  senderIfscCode: z.string().optional(),
-}).refine(data => {
-    if (!data.isAnonymous) {
-        return !!data.donorName && data.donorName.length > 0;
-    }
-    return true;
-}, {
-    message: "Donor name is required for non-anonymous donations.",
-    path: ["donorName"],
-}).refine(data => {
-    if (data.paymentMethod === 'Bank Transfer') {
-        return !!data.utrNumber && data.utrNumber.length > 0;
-    }
-    return true;
-}, {
-    message: "UTR Number is required for Bank Transfers.",
-    path: ["utrNumber"],
+  notes: z.string().optional(),
 });
+export type OnlineDonationFormValues = z.infer<typeof onlineDonationSchema>;
 
-export type PayNowFormValues = z.infer<typeof payNowFormSchema>;
+// Schema for recording a past donation
+const recordDonationSchema = z.object({
+  amount: z.coerce.number().min(1, "Amount must be greater than 0."),
+  purpose: z.enum(donationPurposes, { required_error: "Please select a purpose."}),
+  transactionId: z.string().min(1, "Transaction ID/UTR is required."),
+  donationDate: z.date(),
+  notes: z.string().optional(),
+  proof: z.any().refine(file => file?.size > 0, "A proof file is required."),
+});
+export type RecordDonationFormValues = z.infer<typeof recordDonationSchema>;
 
-function PledgeSettings({ user, onUpdate, organization }: { user: User, onUpdate: () => void, organization: Organization | null }) {
+
+function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, activeCampaigns, razorpayKeyId }: { user: User, targetLead: Lead | null, targetCampaignId: string | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string }) {
     const { toast } = useToast();
-    const [monthlyPledgeEnabled, setMonthlyPledgeEnabled] = useState(user.monthlyPledgeEnabled || false);
-    const [monthlyPledgeAmount, setMonthlyPledgeAmount] = useState(user.monthlyPledgeAmount || 0);
-    const [enableMonthlyDonationReminder, setEnableMonthlyDonationReminder] = useState(user.enableMonthlyDonationReminder || false);
-    const [isSavingPledge, setIsSavingPledge] = useState(false);
-    const [isDirty, setIsDirty] = useState(false);
-
-    useEffect(() => {
-        const hasChanged = (monthlyPledgeEnabled !== (user.monthlyPledgeEnabled || false)) ||
-                           (Number(monthlyPledgeAmount) !== (user.monthlyPledgeAmount || 0)) ||
-                           (enableMonthlyDonationReminder !== (user.enableMonthlyDonationReminder || false));
-        setIsDirty(hasChanged);
-    }, [monthlyPledgeEnabled, monthlyPledgeAmount, enableMonthlyDonationReminder, user]);
-
-
-    const handleSavePledge = async () => {
-        setIsSavingPledge(true);
-        try {
-            await updateUser(user.id!, {
-                monthlyPledgeEnabled,
-                monthlyPledgeAmount: Number(monthlyPledgeAmount),
-                enableMonthlyDonationReminder,
-            });
-            toast({ variant: 'success', title: 'Settings Updated', description: 'Your pledge and notification settings have been saved.' });
-            onUpdate();
-        } catch(e) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save your settings.' });
-            console.error(e);
-        } finally {
-            setIsSavingPledge(false);
-        }
-    };
-
-    return (
-         <Card>
-            <CardHeader>
-                <CardTitle>Notification & Pledge Settings</CardTitle>
-                <CardDescription>Manage your recurring donation commitment and related notification settings.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-4 p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="monthly-pledge-switch" className="font-semibold">Enable Monthly Donation Pledge</Label>
-                        <Switch
-                            id="monthly-pledge-switch"
-                            checked={monthlyPledgeEnabled}
-                            onCheckedChange={setMonthlyPledgeEnabled}
-                        />
-                    </div>
-                     {monthlyPledgeEnabled && (
-                        <div className="space-y-2 pt-2">
-                            <Label htmlFor="pledge-amount">My Monthly Pledge Amount (₹)</Label>
-                            <Input
-                                id="pledge-amount"
-                                type="number"
-                                value={monthlyPledgeAmount}
-                                onChange={(e) => setMonthlyPledgeAmount(Number(e.target.value))}
-                                placeholder="e.g., 500"
-                            />
-                        </div>
-                    )}
-                </div>
-                 <div className="space-y-4 p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="monthly-reminder-switch" className="font-semibold">Enable Monthly Donation Reminder</Label>
-                         <Switch
-                            id="monthly-reminder-switch"
-                            checked={enableMonthlyDonationReminder}
-                            onCheckedChange={setEnableMonthlyDonationReminder}
-                        />
-                    </div>
-                    <p className="text-sm text-muted-foreground">If enabled, you will receive an email reminder to make your monthly donation.</p>
-                </div>
-            </CardContent>
-            {isDirty && (
-                <CardFooter>
-                    <Button onClick={handleSavePledge} disabled={isSavingPledge}>
-                        {isSavingPledge ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Save Settings
-                    </Button>
-                </CardFooter>
-            )}
-        </Card>
-    );
-}
-
-function PayNowForm({ user, targetLead, targetCampaignId, organization, openLeads, activeCampaigns, razorpayKeyId, onlinePaymentsEnabled }: { user: User | null, targetLead: Lead | null, targetCampaignId: string | null, organization: Organization | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string, onlinePaymentsEnabled: boolean }) {
-    const { toast } = useToast();
-    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRazorpayLoaded, razorpayError] = useRazorpay();
-    const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
-    const [donationData, setDonationData] = useState<PayNowFormValues | null>(null);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
-    
-    const availablePaymentMethods = useMemo(() => {
-        if (!onlinePaymentsEnabled) {
-            return allPaymentMethods.filter(m => m !== 'Online (UPI/Card)');
-        }
-        return allPaymentMethods;
-    }, [onlinePaymentsEnabled]);
-    
-    const form = useForm<PayNowFormValues>({
-        resolver: zodResolver(payNowFormSchema),
+
+    const form = useForm<OnlineDonationFormValues>({
+        resolver: zodResolver(onlineDonationSchema),
         defaultValues: {
             amount: 100,
-            isAnonymous: false,
-            purpose: 'Sadaqah',
+            isAnonymous: user.isAnonymousAsDonor || false,
+            purpose: targetLead?.donationType || 'Sadaqah',
             includePledge: false,
-            paymentMethod: onlinePaymentsEnabled ? 'Online (UPI/Card)' : 'Bank Transfer',
-            donorName: '',
-            phone: '',
-            email: '',
             notes: '',
-            leadId: '',
-            campaignId: '',
-            utrNumber: '',
-            senderBankName: '',
-            senderIfscCode: '',
+            leadId: targetLead?.id || undefined,
+            campaignId: targetCampaignId || undefined,
         },
     });
 
@@ -216,76 +96,67 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
     const includePledge = watch("includePledge");
-    const paymentMethod = watch("paymentMethod");
 
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
     
-    const availableDonationTypes = useMemo(() => {
-        if (linkedLead && linkedLead.acceptableDonationTypes && linkedLead.acceptableDonationTypes.length > 0) {
-            if(linkedLead.acceptableDonationTypes.includes('Any')) return donationPurposes;
-            return linkedLead.acceptableDonationTypes.filter(t => donationPurposes.includes(t as any)) as typeof donationPurposes;
-        }
-        return donationPurposes;
-    }, [linkedLead]);
-    
-    // Auto-update purpose when lead changes
-    useEffect(() => {
-        const currentType = getValues('purpose');
-        if (linkedLead && !availableDonationTypes.includes(currentType)) {
-            setValue('purpose', availableDonationTypes[0]);
-        }
-    }, [linkedLead, availableDonationTypes, setValue, getValues]);
-
-
-    useEffect(() => {
-        if(user) {
-            setValue('donorName', user.name);
-            setValue('phone', user.phone);
-            setValue('email', user.email || '');
-        }
-    }, [user, setValue]);
-    
-    useEffect(() => {
-        if (targetLead) {
-            setValue('leadId', targetLead.id);
-            const leadDonationTypes = targetLead.acceptableDonationTypes?.filter(t => donationPurposes.includes(t as any)) as (typeof donationPurposes) | undefined;
-            if(leadDonationTypes && leadDonationTypes.length > 0) {
-                setValue('purpose', leadDonationTypes[0]);
-            } else {
-                setValue('purpose', 'Sadaqah');
-            }
-        }
-        if (targetCampaignId) {
-            setValue('campaignId', targetCampaignId);
-            setValue('purpose', 'Sadaqah'); // Default purpose for campaigns
-        }
-    }, [targetLead, targetCampaignId, setValue]);
-
     useEffect(() => {
         if (includePledge && user?.monthlyPledgeEnabled && user.monthlyPledgeAmount) {
             setValue('amount', user.monthlyPledgeAmount);
             setValue('notes', 'Monthly pledged donation to organization.');
-        } else {
-            // Reset to default or clear if you want
+        } else if (!targetLead) {
             setValue('amount', 100);
             setValue('notes', '');
         }
-    }, [includePledge, user, setValue]);
+    }, [includePledge, user, setValue, targetLead]);
 
+    async function onSubmit(values: OnlineDonationFormValues) {
+        setIsSubmitting(true);
+        const orderResult = await createRazorpayOrder(values.amount, 'INR');
 
-    const isAnonymous = watch("isAnonymous");
+        if (!orderResult.success || !orderResult.order) {
+            toast({ variant: 'destructive', title: 'Error', description: orderResult.error || 'Could not create payment order.' });
+            setIsSubmitting(false);
+            return;
+        }
 
-    const handleLoginRedirect = () => {
-        toast({
-            title: "Login Required",
-            description: "Please log in to continue with your donation.",
-        });
-        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
-        router.push('/login');
+        const options = {
+            key: razorpayKeyId,
+            amount: orderResult.order.amount,
+            currency: orderResult.order.currency,
+            name: "Baitul Mal Samajik Sanstha",
+            description: `Donation for ${values.purpose}`,
+            order_id: orderResult.order.id,
+            handler: function (response: any) {
+                // This is a placeholder. A real implementation would verify this on the backend.
+                toast({
+                    variant: 'success',
+                    title: 'Payment Successful!',
+                    description: 'Your donation has been recorded. Thank you!',
+                });
+            },
+            prefill: {
+                name: user.name,
+                email: user.email,
+                contact: user.phone,
+            },
+            notes: {
+                ...values.notes && { notes: values.notes },
+                ...values.leadId && { leadId: values.leadId },
+                ...values.campaignId && { campaignId: values.campaignId },
+                userId: user.id,
+            },
+            theme: {
+                color: '#16a34a' // Your primary theme color
+            }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+        setIsSubmitting(false);
     }
-
-    const handleLinkSelection = ({ leadId, campaignId }: { leadId?: string, campaignId?: string }) => {
+    
+     const handleLinkSelection = ({ leadId, campaignId }: { leadId?: string, campaignId?: string }) => {
         setValue('leadId', leadId, { shouldDirty: true });
         setValue('campaignId', campaignId, { shouldDirty: true });
         setIsLinkDialogOpen(false);
@@ -296,129 +167,16 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
         setValue('campaignId', undefined);
     };
 
-    const handlePayWithRazorpay = async (values: PayNowFormValues) => {
-        // This is a placeholder since handleCreatePendingDonation was removed.
-        // For a real app, we'd create the pending donation here before opening Razorpay.
-        toast({ title: 'Razorpay integration not fully implemented in this context.' });
-    }
-
-    async function onSubmit(values: PayNowFormValues) {
-        if (!user || !user.id) {
-            handleLoginRedirect();
-            return;
-        }
-        setIsSubmitting(true);
-        // We'll call the admin `handleAddDonation` action, which is now more generic.
-        const formData = new FormData();
-        formData.append("adminUserId", user.id); // The donor is the admin of their own donation
-        formData.append("donorId", user.id);
-        formData.append("paymentMethod", values.paymentMethod);
-        formData.append("amount", String(values.amount));
-        formData.append("totalTransactionAmount", String(values.amount)); // Simple case for now
-        formData.append("donationDate", new Date().toISOString());
-        formData.append("type", values.purpose); // Using purpose as type
-        formData.append("purpose", values.purpose);
-        formData.append("status", "Pending verification");
-        if(values.isAnonymous) formData.append("isAnonymous", "on");
-        if(values.notes) formData.append("notes", values.notes);
-        if(values.leadId) formData.append("leadId", values.leadId);
-        if(values.campaignId) formData.append("campaignId", values.campaignId);
-        if(values.utrNumber) formData.append("transactionId", values.utrNumber);
-
-        const result = await handleAddDonation(formData);
-
-        if (result.success) {
-            if (values.paymentMethod === 'Online (UPI/Card)') {
-                setDonationData(values);
-                setIsQrDialogOpen(true);
-            } else {
-                toast({
-                    variant: "success",
-                    title: "Donation Recorded",
-                    description: "Thank you! Please complete your donation via the chosen method. Our team will verify it soon.",
-                });
-                router.push('/my-donations');
-            }
-        } else {
-             toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to prepare donation.' });
-        }
-        setIsSubmitting(false);
-    }
-    
-     return (
-        <>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    {(targetLead || linkedLead) && (
-                        <Alert className="mb-6">
-                            <Info className="h-4 w-4" />
-                            <AlertTitle>You are donating to a specific case!</AlertTitle>
-                            <AlertDescription>
-                            Your contribution will be directed to help <span className="font-semibold">{targetLead?.name || linkedLead?.name}</span> for the purpose of <span className="font-semibold">{targetLead?.purpose || linkedLead?.purpose}</span>.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    
-                    {(targetCampaignId || linkedCampaign) && (
-                        <Alert className="mb-6">
-                            <Info className="h-4 w-4" />
-                            <AlertTitle>You are donating to a specific campaign!</AlertTitle>
-                            <AlertDescription>
-                            Your contribution will support our <span className="font-semibold">{(targetCampaignId || linkedCampaign?.name)?.replace(/-/g, ' ')}</span> campaign.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
-                    {user?.monthlyPledgeEnabled && user.monthlyPledgeAmount && user.monthlyPledgeAmount > 0 && (
-                        <FormField
-                            control={form.control}
-                            name="includePledge"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                        <FormLabel>
-                                            Fulfill my monthly pledge of ₹{user.monthlyPledgeAmount.toLocaleString()}
-                                        </FormLabel>
-                                        <FormDescription>
-                                            This will set the donation amount to your pledged amount.
-                                        </FormDescription>
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                    
-                    <FormField
-                        control={form.control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Payment Method</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a payment method" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {availablePaymentMethods.map(method => (
-                                        <SelectItem key={method} value={method}>{method}</SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                     <div className="space-y-2">
-                         <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Make a New Online Donation</CardTitle>
+                <CardDescription>Use our secure payment gateway to make your contribution.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
                             <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
                         </Button>
                         {(linkedLead || linkedCampaign) && (
@@ -431,297 +189,122 @@ function PayNowForm({ user, targetLead, targetCampaignId, organization, openLead
                                 </Button>
                             </div>
                         )}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField
-                        control={form.control}
-                        name="purpose"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Donation Purpose</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!!linkedLead}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a purpose" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {availableDonationTypes.map(type => (
-                                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                                { linkedLead && <FormDescription>Only showing types allowed for this lead.</FormDescription>}
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="amount"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Donation Amount (INR)</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="Enter amount" {...field} disabled={includePledge} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    </div>
-                    
-                    <FormField
-                        control={form.control}
-                        name="isAnonymous"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base">Donate Anonymously</FormLabel>
-                                    <FormDescription>Your name will not be publicly displayed.</FormDescription>
-                                </div>
-                                <FormControl>
-                                    <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                    />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-
-                    {!isAnonymous && (
-                            <FormField
-                            control={form.control}
-                            name="donorName"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Your Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Enter your full name" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                    
-                    {paymentMethod === 'Bank Transfer' && (
-                        <div className="space-y-6 pt-4 border-t">
-                             <Alert>
-                                <Banknote className="h-4 w-4" />
-                                <AlertTitle>Bank Transfer Details</AlertTitle>
-                                <AlertDescription>
-                                    Please transfer your donation to the account below and enter the UTR number to help us verify your payment.
-                                </AlertDescription>
-                             </Alert>
-                             <div className="p-4 border rounded-lg bg-muted/50 space-y-2 text-sm">
-                                <p><strong>Account Name:</strong> {organization?.bankAccountName}</p>
-                                <p><strong>Account Number:</strong> {organization?.bankAccountNumber}</p>
-                                <p><strong>IFSC Code:</strong> {organization?.bankIfscCode}</p>
-                             </div>
-                             <FormField
-                                control={control}
-                                name="utrNumber"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>UTR Number</FormLabel>
-                                        <FormControl><Input placeholder="Enter the transaction reference number" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Your Bank Name</FormLabel><FormControl><Input placeholder="e.g., State Bank of India" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={control} name="senderIfscCode" render={({ field }) => (<FormItem><FormLabel>Your Branch IFSC Code</FormLabel><FormControl><Input placeholder="e.g., SBIN0001234" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                        </div>
-                    )}
-                    
-                    <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Notes (Optional)</FormLabel>
-                        <FormControl>
-                            <Textarea
-                                placeholder="Any specific instructions or notes for your donation?"
-                                className="resize-y"
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    
-                    <div className="flex flex-col gap-4">
-                        {onlinePaymentsEnabled && paymentMethod === 'Online (UPI/Card)' && razorpayKeyId && (
-                           <>
-                                <Button 
-                                    type="button" 
-                                    onClick={form.handleSubmit(handlePayWithRazorpay)}
-                                    disabled={!isRazorpayLoaded || isSubmitting}
-                                    className="w-full" 
-                                    size="lg"
-                                >
-                                    {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
-                                    Pay with Razorpay
-                                </Button>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-background px-2 text-muted-foreground">Or</span>
-                                </div>
-                                 <Button 
-                                    type={!user ? "button" : "submit"} 
-                                    onClick={!user ? handleLoginRedirect : undefined}
-                                    disabled={isSubmitting}
-                                    className="w-full" 
-                                    size="lg"
-                                    variant="secondary"
-                                >
-                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                                    {user ? 'Pay via Manual UPI / QR Code' : 'Login to Pay'}
-                                </Button>
-                            </>
-                        )}
-                         {(!onlinePaymentsEnabled || paymentMethod !== 'Online (UPI/Card)') && (
-                            <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
-                                Submit Donation Record
-                            </Button>
-                         )}
-                    </div>
-                </form>
-            </Form>
-            {donationData && organization && (
-                <QrCodeDialog
-                    open={isQrDialogOpen}
-                    onOpenChange={setIsQrDialogOpen}
-                    donationDetails={donationData}
-                    organization={organization}
+                        <FormField control={control} name="purpose" render={({ field }) => (<FormItem><FormLabel>Purpose</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{donationPurposes.map(p=>(<SelectItem key={p} value={p}>{p}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (INR)</FormLabel><FormControl><Input type="number" {...field} disabled={includePledge} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="isAnonymous" render={({ field }) => (<FormItem className="flex items-center space-x-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><Label>Donate Anonymously</Label></FormItem>)}/>
+                        {user.monthlyPledgeEnabled && user.monthlyPledgeAmount && (<FormField control={control} name="includePledge" render={({ field }) => (<FormItem className="flex items-center space-x-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><Label>Fulfill my monthly pledge of ₹{user.monthlyPledgeAmount}</Label></FormItem>)}/>)}
+                        <Button type="submit" disabled={isSubmitting || !razorpayKeyId || !isRazorpayLoaded} className="w-full">
+                           {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 animate-spin"/> : <CreditCard className="mr-2"/>}
+                           {razorpayError ? "Gateway Error" : isRazorpayLoaded ? "Pay Securely" : "Loading Gateway..."}
+                        </Button>
+                        {razorpayError && <p className="text-xs text-destructive text-center">{razorpayError}</p>}
+                    </form>
+                </Form>
+                 <LinkLeadCampaignDialog
+                    open={isLinkDialogOpen}
+                    onOpenChange={setIsLinkDialogOpen}
+                    leads={openLeads}
+                    campaigns={activeCampaigns}
+                    onLink={handleLinkSelection}
                 />
-            )}
-             <LinkLeadCampaignDialog
-                open={isLinkDialogOpen}
-                onOpenChange={setIsLinkDialogOpen}
-                leads={openLeads}
-                campaigns={activeCampaigns}
-                onLink={handleLinkSelection}
-            />
-        </>
-     );
+            </CardContent>
+        </Card>
+    )
 }
 
-function UploadProofSection({ user }: { user: User | null }) {
+function RecordPastDonationForm({ user }: { user: User }) {
     const { toast } = useToast();
     const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
-    const [file, setFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [rawText, setRawText] = useState<string | null>(null);
-    const [isContinuing, setIsContinuing] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0] || null;
-        setFile(selectedFile);
-        if (selectedFile) {
-            setPreviewUrl(URL.createObjectURL(selectedFile));
-        } else {
-            setPreviewUrl(null);
-        }
-        setRawText(null); // Reset text when file changes
-    }
+    const form = useForm<RecordDonationFormValues>({
+        resolver: zodResolver(recordDonationSchema),
+        defaultValues: { donationDate: new Date() }
+    });
     
-    const handleScan = async () => {
-        if (!file) {
-            toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to upload.' });
-            return;
-        }
+    const { control, handleSubmit, setValue } = form;
+
+    const handleScan = async (file: File) => {
         setIsScanning(true);
         const formData = new FormData();
         formData.append("imageFile", file);
-
         const result = await getRawTextFromImage(formData);
-
         if (result.success && result.rawText) {
             setRawText(result.rawText);
-            toast({ variant: 'success', title: 'Text Extracted', description: 'Review the text and click Continue.' });
+            // Here you could call another AI flow to parse the rawText and pre-fill the form
+            toast({ variant: 'success', title: 'Text Extracted', description: 'Review details and submit.' });
         } else {
-             toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || "An unexpected error occurred." });
+             toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text.' });
         }
         setIsScanning(false);
-    };
-
-    const handleContinue = () => {
-        setIsContinuing(true);
-        const queryParams = new URLSearchParams();
-        if(rawText) {
-            queryParams.set('rawText', encodeURIComponent(rawText));
-        }
-        router.push(`/admin/donations/add?${queryParams.toString()}`);
     }
-
-    const handleLoginRedirect = () => {
-        toast({
-            title: "Login Required",
-            description: "Please log in to upload proof.",
+    
+    const onSubmit = async (values: RecordDonationFormValues) => {
+        setIsSubmitting(true);
+        const formData = new FormData();
+        Object.entries(values).forEach(([key, value]) => {
+            if (value instanceof Date) formData.append(key, value.toISOString());
+            else if (value) formData.append(key, value);
         });
-        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
-        router.push('/login');
+
+        const result = await handleManualDonation(user.id!, formData);
+
+        if (result.success) {
+            toast({ variant: 'success', title: 'Donation Recorded', description: 'Thank you! Our team will verify your submission shortly.' });
+            router.push('/my-donations');
+        } else {
+            toast({ variant: 'destructive', title: 'Submission Failed', description: result.error || 'An unknown error occurred.' });
+        }
+        setIsSubmitting(false);
     }
 
     return (
-        <div className="space-y-6">
-            <div className="space-y-2">
-                <Label htmlFor="paymentScreenshot">Payment Screenshot</Label>
-                <Input 
-                    id="paymentScreenshot" 
-                    name="proof" 
-                    type="file" 
-                    required 
-                    accept="image/*"
-                    onChange={handleFileChange}
-                />
-                 <FormDescription>
-                    Upload a screenshot of a payment you have already made.
-                </FormDescription>
-            </div>
-             {previewUrl && (
-                <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
-                     <div className="relative w-full h-64">
-                         <Image src={previewUrl} alt="Screenshot Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" />
-                    </div>
-                </div>
-            )}
-            
-            <Button 
-                onClick={user ? handleScan : handleLoginRedirect} 
-                disabled={isScanning || !file} 
-                className="w-full"
-            >
-                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                {user ? 'Scan Text from Image' : 'Login to Scan'}
-            </Button>
-
-            {rawText && (
-                <>
-                    <div className="space-y-2">
-                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                        <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
-                    </div>
-                     <Button onClick={handleContinue} className="w-full" disabled={isContinuing}>
-                         {isContinuing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                        Continue to Record Donation
-                    </Button>
-                </>
-            )}
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Record a Past Donation</CardTitle>
+                <CardDescription>If you've already donated via bank transfer or another method, upload your proof here to record it.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <Form {...form}>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField control={control} name="proof" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Proof of Donation</FormLabel>
+                                <FormControl>
+                                    <Input type="file" accept="image/*,application/pdf" onChange={e => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            field.onChange(file);
+                                            setPreviewUrl(URL.createObjectURL(file));
+                                            handleScan(file);
+                                        }
+                                    }}/>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
+                        {previewUrl && <Image src={previewUrl} alt="Proof preview" width={200} height={200} className="rounded-md object-contain mx-auto" />}
+                        {isScanning && <div className="text-sm text-muted-foreground flex items-center justify-center"><Loader2 className="mr-2 animate-spin"/>Analyzing image...</div>}
+                        {rawText && <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-muted"/>}
+                        
+                        <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Transaction ID / UTR</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (INR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="purpose" render={({ field }) => (<FormItem><FormLabel>Purpose</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{donationPurposes.map(p=>(<SelectItem key={p} value={p}>{p}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                        
+                        <Button type="submit" disabled={isSubmitting} className="w-full">
+                           {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2"/>}
+                           Submit Record
+                        </Button>
+                    </form>
+                </Form>
+            </CardContent>
+        </Card>
     );
 }
-
-
 
 function DonatePageContent() {
   const router = useRouter();
@@ -735,21 +318,18 @@ function DonatePageContent() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [donationMethod, setDonationMethod] = useState<'payNow' | 'uploadProof'>('payNow');
-
+  
   const leadId = searchParams.get('leadId');
   const campaignId = searchParams.get('campaignId');
   
-  const fetchPageData = async () => {
+  const fetchPageData = async (userId: string | null) => {
       setIsLoading(true);
-      const storedUserId = localStorage.getItem('userId');
-      
       try {
         const [appSettings, orgData, allLeads, allCampaigns] = await Promise.all([
           getAppSettings(),
           getCurrentOrganization(),
           getAllLeads(),
-          getAllCampaignsService()
+          getAllCampaigns(),
         ]);
         
         setSettings(appSettings);
@@ -758,8 +338,8 @@ function DonatePageContent() {
         setActiveCampaigns(allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming'));
 
 
-        if (storedUserId) {
-            const fetchedUser = await getUser(storedUserId);
+        if (userId) {
+            const fetchedUser = await getUser(userId);
             setUser(fetchedUser);
         }
 
@@ -778,63 +358,46 @@ function DonatePageContent() {
     };
 
   useEffect(() => {
-    fetchPageData();
+    const storedUserId = localStorage.getItem('userId');
+    fetchPageData(storedUserId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leadId, campaignId, router]);
+  }, [leadId, campaignId]);
   
   if (isLoading) {
-    return (
-        <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
-    );
+    return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
   }
 
   if (error) {
     return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
+  }
+
+  if (!user) {
+    // Redirect to login if user is not found, preserving donation intent
+    const redirectUrl = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    router.push(redirectUrl);
+    return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>;
   }
   
   const onlinePaymentsEnabled = settings?.features?.onlinePaymentsEnabled ?? false;
   const razorpayEnabled = settings?.paymentGateway?.razorpay?.enabled && onlinePaymentsEnabled;
   const razorpayKey = razorpayEnabled ? (settings.paymentGateway.razorpay.mode === 'live' ? settings.paymentGateway.razorpay.live.keyId : settings.paymentGateway.razorpay.test.keyId) : undefined;
 
-
   return (
-     <div className="flex-1 space-y-4">
+     <div className="flex-1 space-y-8">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Make a Donation</h2>
         </div>
-        {user && user.roles.includes('Donor') && <PledgeSettings user={user} onUpdate={fetchPageData} organization={organization} />}
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle>Your Generosity Matters</CardTitle>
-                <CardDescription>
-                    Please choose how you'd like to proceed with your donation. Your support is greatly appreciated.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                    <Button 
-                        variant={donationMethod === 'payNow' ? 'default' : 'outline'}
-                        onClick={() => setDonationMethod('payNow')}
-                        className="h-16 text-base"
-                    >
-                        <HandHeart className="mr-2"/> Pay Now
-                    </Button>
-                    <Button
-                        variant={donationMethod === 'uploadProof' ? 'default' : 'outline'}
-                        onClick={() => setDonationMethod('uploadProof')}
-                        className="h-16 text-base"
-                    >
-                        <UploadCloud className="mr-2"/> Upload Proof
-                    </Button>
-                </div>
-
-                {donationMethod === 'payNow' ? (
-                   <PayNowForm user={user} targetLead={targetLead} targetCampaignId={targetCampaignId} organization={organization} openLeads={openLeads} activeCampaigns={activeCampaigns} razorpayKeyId={razorpayKey} onlinePaymentsEnabled={onlinePaymentsEnabled} />
-                ) : (
-                   <UploadProofSection user={user} />
-                )}
-            </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+             <OnlineDonationForm 
+                user={user}
+                targetLead={targetLead}
+                targetCampaignId={targetCampaignId}
+                openLeads={openLeads}
+                activeCampaigns={activeCampaigns}
+                razorpayKeyId={razorpayKey}
+             />
+             <RecordPastDonationForm user={user} />
+        </div>
      </div>
   );
 }

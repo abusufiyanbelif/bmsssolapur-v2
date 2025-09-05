@@ -1,5 +1,4 @@
-
-
+// src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,10 +25,10 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, Bot, Clipboard, Text } from "lucide-react";
-import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, UserRole, Lead, Campaign, LeadPurpose, ExtractDonationDetailsOutput } from "@/services/types";
-import { getUser, getUserByPhone, getUserByUpiId, getUserByBankAccountNumber } from "@/services/user-service";
+import { useState, useEffect, Suspense, useRef, useCallback } from "react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text } from "lucide-react";
+import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign } from "@/services/types";
+import { getUser } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -50,7 +49,6 @@ import { Label } from "@/components/ui/label";
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
 const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
-const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -89,14 +87,6 @@ const formSchema = z.object({
 }, {
     message: "Support amount cannot be greater than or equal to the total amount.",
     path: ["tipAmount"],
-}).refine(data => {
-    if (['Online (UPI/Card)', 'Bank Transfer'].includes(data.paymentMethod)) {
-        return !!data.paymentScreenshot;
-    }
-    return true;
-}, {
-    message: 'A payment screenshot is required for this payment method.',
-    path: ['paymentScreenshot'],
 });
 
 
@@ -147,7 +137,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         isAnonymous: existingDonation?.isAnonymous,
         totalTransactionAmount: existingDonation?.amount,
         amount: existingDonation?.amount,
-        donationDate: new Date(existingDonation.donationDate),
+        donationDate: new Date(existingDonation!.donationDate),
         type: existingDonation?.type,
         purpose: existingDonation?.purpose,
         status: existingDonation?.status,
@@ -179,13 +169,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const tipAmount = watch("tipAmount");
   const transactionId = watch('transactionId');
   const debouncedTransactionId = useDebounce(transactionId, 500);
-  const paymentMethod = watch("paymentMethod");
   const includePledge = watch("includePledge");
   
-  const showProofSection = useMemo(() => {
-    return ['Online (UPI/Card)', 'Bank Transfer'].includes(paymentMethod);
-  }, [paymentMethod]);
-
   const handleTxnIdCheck = useCallback(async (txnId: string) => {
     if (!txnId || (isEditing && txnId === existingDonation?.transactionId)) {
         setTransactionIdState(initialAvailabilityState);
@@ -215,6 +200,42 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     setAdminUserId(storedUserId);
+
+    // This effect runs once on mount to handle URL params
+    const donorIdFromUrl = searchParams.get('donorId');
+    if (donorIdFromUrl) {
+      const user = users.find(u => u.id === donorIdFromUrl);
+      if (user) {
+        setValue('donorId', user.id!, { shouldValidate: true });
+        setSelectedDonor(user);
+      }
+    }
+    
+    // Retrieve scanned data from sessionStorage
+    const storedScanData = sessionStorage.getItem('manualDonationScreenshot');
+    if(storedScanData) {
+        try {
+            const parsedData = JSON.parse(storedScanData);
+            if (parsedData.details) {
+                setExtractedRawText(parsedData.rawText || 'No raw text available.');
+                autoFillFromDetails(parsedData.details);
+            }
+            if(parsedData.dataUrl) {
+                 // Convert data URL back to a file object for the form
+                dataUrlToFile(parsedData.dataUrl, 'scanned-proof.png').then(file => {
+                    setValue('paymentScreenshot', file, { shouldValidate: true });
+                    setFilePreview(URL.createObjectURL(file));
+                });
+            }
+        } catch (e) {
+            console.error("Could not parse scanned data from session storage", e);
+        } finally {
+            // Clean up session storage after use
+            sessionStorage.removeItem('manualDonationScreenshot');
+        }
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const donorUsers = users.filter(u => u.roles.includes('Donor'));
@@ -313,6 +334,16 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         setIsExtracting(false);
     }
   };
+  
+  const autoFillFromDetails = (details: any) => {
+     Object.entries(details).forEach(([key, value]) => {
+        if (value && key !== 'rawText') {
+            if (key === 'date') setValue('donationDate', new Date(value as string));
+            else if (key === 'amount') setValue('totalTransactionAmount', value as number);
+            else setValue(key as any, value);
+        }
+    });
+  }
 
   const handleAutoFillFromText = async () => {
     if (!extractedRawText) {
@@ -323,15 +354,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     try {
         const result = await getDetailsFromText(extractedRawText);
         if (result.success && result.details) {
-            const details = result.details;
-            // Auto-fill all simple fields
-            Object.entries(details).forEach(([key, value]) => {
-                if (value && key !== 'rawText') {
-                    if (key === 'date') setValue('donationDate', new Date(value as string));
-                    else if (key === 'amount') setValue('totalTransactionAmount', value as number);
-                    else setValue(key as any, value);
-                }
-            });
+            autoFillFromDetails(result.details);
             toast({ variant: 'success', title: 'Auto-fill Complete!', description: 'Form populated from extracted text.' });
         } else {
              toast({ variant: 'destructive', title: 'Parsing Failed', description: result.error || "Could not parse details from the text." });
@@ -342,7 +365,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         setIsAutoFilling(false);
     }
   };
-
   
   const isFormInvalid = transactionIdState.isAvailable === false;
 
@@ -353,26 +375,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                   <FormField
-                      control={form.control}
-                      name="paymentMethod"
-                      render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Payment Method</FormLabel>
-                              <Select onValueChange={(value) => { field.onChange(value); trigger('paymentScreenshot'); }} value={field.value}>
-                                  <FormControl>
-                                      <SelectTrigger><SelectValue placeholder="Select a payment method" /></SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                      {paymentMethods.map(method => (
-                                          <SelectItem key={method} value={method}>{method}</SelectItem>
-                                      ))}
-                                  </SelectContent>
-                              </Select>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                  />
-                   <FormField
                       control={form.control}
                       name="paymentScreenshot"
                       render={({ field }) => (
@@ -401,7 +403,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                             </Button>
                             {extractedRawText && (
                                  <Button type="button" size="sm" variant="secondary" className="w-full" onClick={handleAutoFillFromText} disabled={isAutoFilling}>
-                                    {isAutoFilling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TextSelect className="mr-2 h-4 w-4" />}
+                                    {isAutoFilling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
                                     Auto-fill from Text
                                 </Button>
                             )}
