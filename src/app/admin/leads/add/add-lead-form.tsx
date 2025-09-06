@@ -471,8 +471,44 @@ Referral Phone:
         <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-8 max-w-2xl">
             <fieldset disabled={isFormDisabled}>
+                 <h3 className="text-lg font-semibold border-b pb-2">Verification Document</h3>
+                 <FormField
+                    control={form.control}
+                    name="verificationDocument"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Attach Document</FormLabel>
+                        <FormControl>
+                            <Input 
+                            type="file" 
+                            ref={fileInputRef}
+                            accept="image/*,application/pdf"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                field.onChange(file);
+                                setFileForScan(file);
+                                setRawText("");
+                            }}
+                            />
+                        </FormControl>
+                        <FormDescription>
+                            Upload a supporting document (ID, Bill, etc.). You can scan it to extract text.
+                        </FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    {fileForScan && (
+                        <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                            <Button type="button" variant="outline" onClick={handleGetText} disabled={isScanning} className="w-full">
+                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                {isScanning ? 'Scanning...' : 'Get Text from Image'}
+                            </Button>
+                        </div>
+                    )}
 
-                <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
+
+                <h3 className="text-lg font-semibold border-b pb-2 mt-8">Beneficiary Details</h3>
                 <FormField
                     control={form.control}
                     name="beneficiaryType"
@@ -489,8 +525,6 @@ Referral Phone:
                                 form.setValue('newBeneficiaryLastName', '');
                                 form.setValue('newBeneficiaryPhone', '');
                                 form.setValue('newBeneficiaryEmail', '');
-                                setRawText('');
-                                setFileForScan(null);
                             }}
                             defaultValue={field.value}
                             className="grid grid-cols-2 gap-4"
@@ -529,10 +563,7 @@ Referral Phone:
                                 <Button
                                 variant="outline"
                                 role="combobox"
-                                className={cn(
-                                    "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
-                                )}
+                                className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
                                 >
                                 {field.value
                                     ? potentialBeneficiaries.find(
@@ -558,12 +589,7 @@ Referral Phone:
                                             setPopoverOpen(false);
                                         }}
                                         >
-                                        <Check
-                                            className={cn(
-                                            "mr-2 h-4 w-4",
-                                            user.id === field.value ? "opacity-100" : "opacity-0"
-                                            )}
-                                        />
+                                        <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
                                         {user.name} ({user.phone})
                                         </CommandItem>
                                     ))}
@@ -581,55 +607,6 @@ Referral Phone:
                 {beneficiaryType === 'new' && (
                     <div className="space-y-4 p-4 border rounded-lg">
                         <h3 className="font-medium">New Beneficiary Details</h3>
-                         <FormField
-                            control={form.control}
-                            name="verificationDocument"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Verification Document</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                    type="file" 
-                                    ref={fileInputRef}
-                                    accept="image/*,application/pdf"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0] || null;
-                                        field.onChange(file);
-                                        setFileForScan(file);
-                                        setRawText("");
-                                    }}
-                                    />
-                                </FormControl>
-                                <FormDescription>
-                                    Upload a supporting document (ID, Bill, etc.) to scan.
-                                </FormDescription>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                         />
-                         {fileForScan && (
-                            <div className="flex flex-col sm:flex-row gap-2">
-                               <Button type="button" variant="outline" onClick={handleGetText} disabled={isScanning} className="w-full">
-                                  {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                                  {isScanning ? 'Scanning...' : 'Get Text from Image'}
-                               </Button>
-                               {rawText && (
-                                   <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
-                                      {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                      Auto-fill Form
-                                   </Button>
-                               )}
-                           </div>
-                         )}
-                         {rawText && (
-                            <div className="space-y-2">
-                                <Label>Extracted Text</Label>
-                                <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-muted/50" />
-                            </div>
-                        )}
-
-                        <Separator className="my-6" />
-
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
                                 <FormItem>
@@ -1167,7 +1144,11 @@ Referral Phone:
         
                 <div className="flex gap-4">
                     <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isSubmitting ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <UserPlus className="mr-2 h-4 w-4" />
+                        )}
                         Create Lead
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
@@ -1220,3 +1201,5 @@ export function AddLeadForm(props: AddLeadFormProps) {
         </Suspense>
     )
 }
+
+    
