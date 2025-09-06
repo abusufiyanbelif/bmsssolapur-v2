@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from 'next/navigation'
 import {
   Table,
@@ -144,6 +144,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
     useEffect(() => {
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
+        fetchData();
     }, []);
 
     const handleSearch = () => {
@@ -294,7 +295,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
     const leadsById = useMemo(() => {
         if (!allLeads) return {};
         return allLeads.reduce((acc, lead) => {
-            acc[lead.id] = lead;
+            if (lead.id) acc[lead.id] = lead;
             return acc;
         }, {} as Record<string, Lead>);
     }, [allLeads]);
