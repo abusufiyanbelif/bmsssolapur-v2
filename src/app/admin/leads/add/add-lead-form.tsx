@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
-import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -137,7 +137,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [duplicateWarning, setDuplicateWarning] = useState<Lead[] | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
-  const [selectedReferralDetails, setSelectedReferralDetails = useState<User | null>(null);
+  const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
   const [rawText, setRawText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -1189,5 +1189,3 @@ export function AddLeadForm(props: AddLeadFormProps) {
         </Suspense>
     )
 }
-
-    
