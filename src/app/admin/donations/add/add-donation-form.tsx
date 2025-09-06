@@ -363,6 +363,99 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     <>
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a method" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {paymentMethods.map(method => (
+                                <SelectItem key={method} value={method}>{method}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="paymentScreenshot"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Payment Proof</FormLabel>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                {paymentMethod === 'Online (UPI/Card)' && (
+                    <FormField
+                        control={form.control}
+                        name="paymentApp"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Payment App</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an app" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {paymentApps.map(app => (
+                                    <SelectItem key={app} value={app}>{app}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+                
+                {filePreview && (
+                    <div className="flex flex-col items-center gap-4">
+                        <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                    </div>
+                )}
+                {file && (
+                   <div className="flex flex-col sm:flex-row gap-2">
+                      <Button type="button" variant="outline" onClick={handleScanText} disabled={isScanning} className="w-full">
+                          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                          {isScanning ? 'Scanning...' : 'Get Text from Image'}
+                      </Button>
+                      {rawText && (
+                          <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
+                              {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                              Auto-fill Form
+                          </Button>
+                      )}
+                   </div>
+                )}
+                {rawText && (
+                  <div className="space-y-2">
+                      <Label>Extracted Text</Label>
+                      <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
+                  </div>
+                )}
+              </div>
+              
               <FormField
                   control={form.control}
                   name="donorId"
@@ -459,99 +552,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       )}
                   />
                 </div>
-                
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                    <FormField
-                        control={form.control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Payment Method</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a method" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {paymentMethods.map(method => (
-                                    <SelectItem key={method} value={method}>{method}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                  <FormField
-                      control={form.control}
-                      name="paymentScreenshot"
-                      render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Payment Proof</FormLabel>
-                              <FormControl>
-                                  <Input 
-                                      type="file" 
-                                      accept="image/*,application/pdf"
-                                      ref={fileInputRef}
-                                      onChange={handleFileChange}
-                                  />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                  />
-                  {paymentMethod === 'Online (UPI/Card)' && (
-                      <FormField
-                          control={form.control}
-                          name="paymentApp"
-                          render={({ field }) => (
-                              <FormItem>
-                              <FormLabel>Payment App</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                  <SelectTrigger>
-                                      <SelectValue placeholder="Select an app" />
-                                  </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                  {paymentApps.map(app => (
-                                      <SelectItem key={app} value={app}>{app}</SelectItem>
-                                  ))}
-                                  </SelectContent>
-                              </Select>
-                              <FormMessage />
-                              </FormItem>
-                          )}
-                      />
-                  )}
-                  
-                  {filePreview && (
-                      <div className="flex flex-col items-center gap-4">
-                          <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                      </div>
-                  )}
-                  {file && (
-                     <div className="flex flex-col sm:flex-row gap-2">
-                        <Button type="button" variant="outline" onClick={handleScanText} disabled={isScanning} className="w-full">
-                            {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                            {isScanning ? 'Scanning...' : 'Get Text from Image'}
-                        </Button>
-                        {rawText && (
-                            <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
-                                {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                Auto-fill Form
-                            </Button>
-                        )}
-                     </div>
-                  )}
-                  {rawText && (
-                    <div className="space-y-2">
-                        <Label>Extracted Text</Label>
-                        <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
-                    </div>
-                  )}
-              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
