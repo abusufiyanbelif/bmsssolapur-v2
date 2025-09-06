@@ -39,7 +39,7 @@ import { handleAddTransfer } from "./actions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import { extractDetailsFromText } from "@/ai/flows/extract-details-from-text-flow";
 import { getRawTextFromImage } from '@/app/actions';
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
@@ -244,7 +244,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
         const textResult = await getRawTextFromImage(formData);
 
         if (textResult.success && textResult.rawText) {
-            const result = await extractDonationDetails({ rawText: textResult.rawText });
+            const result = await extractDetailsFromText({ rawText: textResult.rawText });
             toast({ variant: 'success', title: 'Scan Successful!', description: 'Form fields populated. Please review.' });
             
             Object.entries(result).forEach(([key, value]) => {
