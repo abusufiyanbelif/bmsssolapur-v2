@@ -363,53 +363,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     <>
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-               <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                  <FormField
-                      control={form.control}
-                      name="paymentScreenshot"
-                      render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Payment Proof</FormLabel>
-                              <FormControl>
-                                  <Input 
-                                      type="file" 
-                                      accept="image/*,application/pdf"
-                                      ref={fileInputRef}
-                                      onChange={handleFileChange}
-                                  />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                  />
-                  
-                  {filePreview && (
-                      <div className="flex flex-col items-center gap-4">
-                          <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                      </div>
-                  )}
-                  {file && (
-                     <div className="flex flex-col sm:flex-row gap-2">
-                        <Button type="button" variant="outline" onClick={handleScanText} disabled={isScanning} className="w-full">
-                            {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                            {isScanning ? 'Scanning...' : 'Get Text from Image'}
-                        </Button>
-                        {rawText && (
-                            <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
-                                {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                Auto-fill Form
-                            </Button>
-                        )}
-                     </div>
-                  )}
-                  {rawText && (
-                    <div className="space-y-2">
-                        <Label>Extracted Text</Label>
-                        <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
-                    </div>
-                  )}
-              </div>
-
               <FormField
                   control={form.control}
                   name="donorId"
@@ -474,46 +427,55 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                           </FormItem>
                       )}
                       />
-                    <FormField
+                  <FormField
                       control={form.control}
-                      name="paymentMethod"
+                      name="donationDate"
                       render={({ field }) => (
-                          <FormItem>
-                          <FormLabel>Payment Method</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="Select a method" />
-                              </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                              {paymentMethods.map(method => (
-                                  <SelectItem key={method} value={method}>{method}</SelectItem>
-                              ))}
-                              </SelectContent>
-                          </Select>
-                          <FormMessage />
+                          <FormItem className="flex flex-col">
+                              <FormLabel>Donation Date</FormLabel>
+                              <Popover>
+                                  <PopoverTrigger asChild>
+                                  <FormControl>
+                                      <Button
+                                      variant={"outline"}
+                                      className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
+                                      >
+                                      {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                  </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                  />
+                                  </PopoverContent>
+                              </Popover>
+                              <FormMessage />
                           </FormItem>
                       )}
                   />
                 </div>
-
-                {paymentMethod === 'Online (UPI/Card)' && (
-                    <FormField
+                
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                  <FormField
                         control={form.control}
-                        name="paymentApp"
+                        name="paymentMethod"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Payment App</FormLabel>
+                            <FormLabel>Payment Method</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select an app" />
+                                    <SelectValue placeholder="Select a method" />
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                {paymentApps.map(app => (
-                                    <SelectItem key={app} value={app}>{app}</SelectItem>
+                                {paymentMethods.map(method => (
+                                    <SelectItem key={method} value={method}>{method}</SelectItem>
                                 ))}
                                 </SelectContent>
                             </Select>
@@ -521,8 +483,76 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                             </FormItem>
                         )}
                     />
-                )}
-              
+                     {paymentMethod === 'Online (UPI/Card)' && (
+                      <FormField
+                          control={form.control}
+                          name="paymentApp"
+                          render={({ field }) => (
+                              <FormItem>
+                              <FormLabel>Payment App</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Select an app" />
+                                  </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                  {paymentApps.map(app => (
+                                      <SelectItem key={app} value={app}>{app}</SelectItem>
+                                  ))}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                  )}
+                  <FormField
+                      control={form.control}
+                      name="paymentScreenshot"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Payment Proof</FormLabel>
+                              <FormControl>
+                                  <Input 
+                                      type="file" 
+                                      accept="image/*,application/pdf"
+                                      ref={fileInputRef}
+                                      onChange={handleFileChange}
+                                  />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  
+                  {filePreview && (
+                      <div className="flex flex-col items-center gap-4">
+                          <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                      </div>
+                  )}
+                  {file && (
+                     <div className="flex flex-col sm:flex-row gap-2">
+                        <Button type="button" variant="outline" onClick={handleScanText} disabled={isScanning} className="w-full">
+                            {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                            {isScanning ? 'Scanning...' : 'Get Text from Image'}
+                        </Button>
+                        {rawText && (
+                            <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
+                                {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                Auto-fill Form
+                            </Button>
+                        )}
+                     </div>
+                  )}
+                  {rawText && (
+                    <div className="space-y-2">
+                        <Label>Extracted Text</Label>
+                        <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
+                    </div>
+                  )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
                       control={form.control}
@@ -574,6 +604,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
                     <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Transaction ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />
                         {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
                         {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                         {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}

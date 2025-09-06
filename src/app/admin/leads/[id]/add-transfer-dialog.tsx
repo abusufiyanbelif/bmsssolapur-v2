@@ -29,7 +29,7 @@ import { FormDescription, FormField, FormControl, FormItem, FormLabel, FormMessa
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import type { PaymentMethod } from "@/services/types";
 import { getRawTextFromImage } from "@/app/actions";
-import { extractDetailsFromText } from "@/ai/flows/extract-details-from-text-flow";
+import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
 
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 
@@ -121,10 +121,10 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const handleAutoFill = async () => {
     if (!rawText) return;
     setIsScanning(true);
-    const result = await extractDetailsFromText({ rawText });
-    if (result) {
-        setExtractedDetails(result);
-        Object.entries(result).forEach(([key, value]) => {
+    const result = await handleExtractDonationDetails(rawText);
+    if (result.success && result.details) {
+        setExtractedDetails(result.details);
+        Object.entries(result.details).forEach(([key, value]) => {
             if (value && key !== 'rawText') {
                 setValue(key as any, value);
             }
@@ -165,6 +165,28 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
             
             {/* Left Column - Form Fields */}
             <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="paymentMethod">Payment Method</Label>
+                     <Select onValueChange={(v) => setValue('paymentMethod', v)} defaultValue={getValues('paymentMethod')}>
+                        <SelectTrigger><SelectValue placeholder="Select a method"/></SelectTrigger>
+                        <SelectContent>
+                            {(['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'] as PaymentMethod[]).map(m => (
+                                <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                        </SelectContent>
+                     </Select>
+                </div>
+                {paymentMethod === 'Online (UPI/Card)' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="paymentApp">Payment App</Label>
+                        <Select onValueChange={(v) => setValue('paymentApp', v)} defaultValue={getValues('paymentApp')}>
+                           <SelectTrigger><SelectValue placeholder="Select UPI app..." /></SelectTrigger>
+                           <SelectContent>
+                               {paymentApps.map(app => <SelectItem key={app} value={app}>{app}</SelectItem>)}
+                           </SelectContent>
+                        </Select>
+                    </div>
+                )}
                 <div className="space-y-2">
                     <Label htmlFor="proof">Proof of Transfer</Label>
                     <Input id="proof" name="proof" type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
@@ -208,28 +230,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Label htmlFor="transactionId">Main Transaction ID</Label>
                     <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" />
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="paymentMethod">Payment Method</Label>
-                     <Select onValueChange={(v) => setValue('paymentMethod', v)} defaultValue={getValues('paymentMethod')}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            {(['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'] as PaymentMethod[]).map(m => (
-                                <SelectItem key={m} value={m}>{m}</SelectItem>
-                            ))}
-                        </SelectContent>
-                     </Select>
-                </div>
-                {paymentMethod === 'Online (UPI/Card)' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="paymentApp">Payment App</Label>
-                        <Select onValueChange={(v) => setValue('paymentApp', v)} defaultValue={getValues('paymentApp')}>
-                           <SelectTrigger><SelectValue placeholder="Select UPI app..." /></SelectTrigger>
-                           <SelectContent>
-                               {paymentApps.map(app => <SelectItem key={app} value={app}>{app}</SelectItem>)}
-                           </SelectContent>
-                        </Select>
-                    </div>
-                )}
+                
                  {extractedDetails?.googlePayTransactionId && <div className="space-y-2"><Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label><Input id="googlePayTransactionId" {...register("googlePayTransactionId")} /></div>}
                  {extractedDetails?.utrNumber && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} /></div>}
                  {extractedDetails?.phonePeTransactionId && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} /></div>}
