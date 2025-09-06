@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -48,14 +49,14 @@ const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     },
     
     // Admins (Founders and Members)
-    { userKey: "USR03", name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", email: "moosa.shaikh@example.com", phone: "8421708907", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['8421708907@ybl'], source: 'Seeded' },
-    { userKey: "USR04", name: "Maaz Shaikh", userId: "maaz.shaikh", firstName: "Maaz", middleName: "", lastName: "Shaikh", email: "maaz.shaikh@example.com", phone: "9372145889", password: "admin", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR05", name: "AbuRehan Bedrekar", userId: "aburehan.bedrekar", firstName: "AbuRehan", middleName: "", lastName: "Bedrekar", email: "aburehan.bedrekar@example.com", phone: "7276224160", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR06", name: "NayyarAhmed Karajgi", userId: "nayyarahmed.karajgi", firstName: "NayyarAhmed", middleName: "", lastName: "Karajgi", email: "nayyar.karajgi@example.com", phone: "9028976036", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR07", name: "Arif Baig", userId: "arif.baig", firstName: "Arif", middleName: "", lastName: "Baig", email: "arif.baig@example.com", phone: "9225747045", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR08", name: "Mazhar Shaikh", userId: "mazhar.shaikh", firstName: "Mazhar", middleName: "", lastName: "Shaikh", email: "mazhar.shaikh@example.com", phone: "8087669914", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR09", name: "Mujahid Chabukswar", userId: "mujahid.chabukswar", firstName: "Mujahid", middleName: "", lastName: "Chabukswar", email: "mujahid.chabukswar@example.com", phone: "8087420544", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR10", name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR03", name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", fatherName: "", email: "moosa.shaikh@example.com", phone: "8421708907", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['8421708907@ybl'], source: 'Seeded' },
+    { userKey: "USR04", name: "Maaz Shaikh", userId: "maaz.shaikh", firstName: "Maaz", middleName: "", lastName: "Shaikh", fatherName: "", email: "maaz.shaikh@example.com", phone: "9372145889", password: "admin", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR05", name: "AbuRehan Bedrekar", userId: "aburehan.bedrekar", firstName: "AbuRehan", middleName: "", lastName: "Bedrekar", fatherName: "", email: "aburehan.bedrekar@example.com", phone: "7276224160", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR06", name: "NayyarAhmed Karajgi", userId: "nayyarahmed.karajgi", firstName: "NayyarAhmed", middleName: "", lastName: "Karajgi", fatherName: "", email: "nayyar.karajgi@example.com", phone: "9028976036", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR07", name: "Arif Baig", userId: "arif.baig", firstName: "Arif", middleName: "", lastName: "Baig", fatherName: "", email: "arif.baig@example.com", phone: "9225747045", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR08", name: "Mazhar Shaikh", userId: "mazhar.shaikh", firstName: "Mazhar", middleName: "", lastName: "Shaikh", fatherName: "", email: "mazhar.shaikh@example.com", phone: "8087669914", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR09", name: "Mujahid Chabukswar", userId: "mujahid.chabukswar", firstName: "Mujahid", middleName: "", lastName: "Chabukswar", fatherName: "", email: "mujahid.chabukswar@example.com", phone: "8087420544", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { userKey: "USR10", name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", fatherName: "", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
 ];
 
 const defaultFooterContent: OrganizationFooter = {
@@ -164,6 +165,7 @@ const ramadan2025Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     status: 'Completed',
     startDate: Timestamp.fromDate(new Date("2025-03-01")),
     endDate: Timestamp.fromDate(new Date("2025-03-30")),
+    source: 'Seeded',
 };
 
 // WINTER CAMPAIGN DATA
@@ -179,6 +181,7 @@ const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     status: 'Active',
     startDate: Timestamp.fromDate(new Date("2024-11-01")),
     endDate: Timestamp.fromDate(new Date("2024-12-31")),
+    source: 'Seeded',
 };
 
 // RAMADAN 2026 CAMPAIGN DATA
@@ -194,6 +197,7 @@ const ramadan2026Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     status: 'Upcoming',
     startDate: Timestamp.fromDate(new Date("2026-02-18")),
     endDate: Timestamp.fromDate(new Date("2026-03-20")),
+    source: 'Seeded',
 };
 
 
@@ -324,13 +328,13 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
                 transferredByUserId: adminUser.id!,
                 transferredByUserName: adminUser.name,
                 amount: leadInfo.amount,
-                transferredAt: Timestamp.now(),
+                transferredAt: Timestamp.now() as any,
                 proofUrl: 'https://placehold.co/600x400.png?text=seeded-transfer-proof',
                 notes: 'Dummy transfer for seeded closed lead.',
                 transactionId: `SEED_TXN_${newLeadData.id}`
             };
             
-            newLeadData.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: adminUser.id, allocatedByUserName: adminUser.name }];
+            newLeadData.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now() as any, allocatedByUserId: adminUser.id, allocatedByUserName: adminUser.name }];
             newLeadData.fundTransfers = [newTransfer];
         }
         
@@ -367,14 +371,14 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     const historicalVerifier: Verifier = {
         verifierId: moosaShaikh.id!,
         verifierName: moosaShaikh.name,
-        verifiedAt: Timestamp.now(),
+        verifiedAt: Timestamp.now() as any,
         notes: "Verified as part of historical data import."
     };
     
      const currentVerifier: Verifier = {
         verifierId: verifierAdmin.id!,
         verifierName: verifierAdmin.name,
-        verifiedAt: Timestamp.now(),
+        verifiedAt: Timestamp.now() as any,
         notes: "Verified as part of campaign data import."
     };
 
@@ -430,13 +434,13 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
                 transferredByUserId: verifierAdmin.id!,
                 transferredByUserName: verifierAdmin.name,
                 amount: leadInfo.amount,
-                transferredAt: Timestamp.now(),
+                transferredAt: Timestamp.now() as any,
                 proofUrl: 'https://placehold.co/600x400.png?text=seeded-transfer-proof',
                 notes: 'Dummy transfer for seeded closed lead.',
                 transactionId: `SEED_TXN_${leadRef.id}`
             };
             
-            newLead.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
+            newLead.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now() as any, allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
             newLead.fundTransfers = [newTransfer];
         }
         
@@ -627,16 +631,21 @@ export const eraseOrganizationProfile = async (): Promise<SeedResult> => {
 };
 
 export const erasePaymentGateways = async (): Promise<SeedResult> => {
-    const updates = {
+    const updates: Partial<AppSettings> = {
         paymentGateway: {
             razorpay: {
                 enabled: false,
                 mode: 'test',
                 test: { keyId: '', keySecret: '' },
                 live: { keyId: '', keySecret: '' }
-            }
+            },
+            phonepe: { enabled: false, mode: 'test', test: {}, live: {} },
+            paytm: { enabled: false, mode: 'test', test: {}, live: {} },
+            cashfree: { enabled: false, mode: 'test', test: {}, live: {} },
+            instamojo: { enabled: false, mode: 'test', test: {}, live: {} },
+            stripe: { enabled: false, mode: 'test', test: {}, live: {} },
         },
-        features: { onlinePaymentsEnabled: false }
+        features: { onlinePaymentsEnabled: false, directPaymentToBeneficiary: {enabled: false} }
     };
     await updateAppSettings(updates);
     return {
@@ -662,7 +671,12 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
         getDocs(seededCampaignsQuery),
     ]);
 
-    users.docs.forEach(doc => batch.delete(doc.ref));
+    users.docs.forEach(doc => {
+        // Prevent deleting the main admin users if they were seeded
+        if (doc.id !== 'ADMIN_USER_ID' && doc.data().phone !== '7887646583') {
+           batch.delete(doc.ref);
+        }
+    });
     details.push(`Deleted ${users.size} seeded users.`);
     
     leads.docs.forEach(doc => batch.delete(doc.ref));
