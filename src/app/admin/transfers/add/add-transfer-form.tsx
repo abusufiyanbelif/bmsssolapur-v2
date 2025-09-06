@@ -155,7 +155,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     defaultValues: initialFormValues,
   });
 
-  const { setValue, register, handleSubmit, getValues, watch, control, trigger } = form;
+  const { setValue, register, handleSubmit, getValues, watch, control, trigger, reset } = form;
   
   const paymentMethod = watch("paymentMethod");
   const selectedLeadId = watch("leadId");
@@ -472,95 +472,91 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             </Card>
 
             <h3 className="text-lg font-semibold border-b pb-2">Transaction Details</h3>
-             <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Payment Method</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a method" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {paymentMethods.map(method => (
-                            <SelectItem key={method} value={method}>{method}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={control}
-                name="proof"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Proof of Transfer</FormLabel>
-                        <FormControl>
-                            <Input 
-                                type="file" 
-                                accept="image/*,application/pdf"
-                                ref={fileInputRef}
-                                onChange={(e) => { field.onChange(e.target.files?.[0]); setFile(e.target.files?.[0] || null); }}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            {previewUrl && (
-                <div className="relative w-full h-64"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
-            )}
-            {paymentMethod === 'Online (UPI/Card)' && (
-                <FormField
-                    control={form.control}
-                    name="paymentApp"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Payment App</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an app" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {paymentApps.map(app => (
-                                <SelectItem key={app} value={app}>{app}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+              <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Payment Method</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Select a method" />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                          {paymentMethods.map(method => (
+                              <SelectItem key={method} value={method}>{method}</SelectItem>
+                          ))}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+              />
+              <FormField
+                  control={control}
+                  name="proof"
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Proof of Transfer</FormLabel>
+                          <FormControl>
+                              <Input 
+                                  type="file" 
+                                  accept="image/*,application/pdf"
+                                  ref={fileInputRef}
+                                  onChange={(e) => { field.onChange(e.target.files?.[0]); setFile(e.target.files?.[0] || null); }}
+                              />
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+              />
+              {paymentMethod === 'Online (UPI/Card)' && (
+                  <FormField
+                      control={form.control}
+                      name="paymentApp"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Payment App</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select an app" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                              {paymentApps.map(app => (
+                                  <SelectItem key={app} value={app}>{app}</SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+              )}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="Enter amount transferred" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
             </div>
 
-            <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input placeholder={`Enter ${transactionIdLabel}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
-
-            {extractedDetails && (
-                 <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
-                    <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                        {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.googlePayTransactionId && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.phonePeTransactionId && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.paytmUpiReferenceNo && <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm Ref No</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                    </div>
-                </div>
-            )}
+            {extractedDetails ? (
+              <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
+                  <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Transaction ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />
+                      {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                      {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                      {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                  </div>
+              </div>
+             ) : (
+                <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input placeholder={`Enter ${transactionIdLabel}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
+             )}
 
             <div className="flex gap-4">
               <Button type="submit" disabled={isSubmitting}>

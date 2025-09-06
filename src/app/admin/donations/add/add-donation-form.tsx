@@ -483,7 +483,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                             </FormItem>
                         )}
                     />
-
                   <FormField
                       control={form.control}
                       name="paymentScreenshot"
@@ -502,8 +501,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                           </FormItem>
                       )}
                   />
-
-                    {paymentMethod === 'Online (UPI/Card)' && (
+                  {paymentMethod === 'Online (UPI/Card)' && (
                       <FormField
                           control={form.control}
                           name="paymentApp"
@@ -526,7 +524,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                               </FormItem>
                           )}
                       />
-                    )}
+                  )}
                   
                   {filePreview && (
                       <div className="flex flex-col items-center gap-4">
