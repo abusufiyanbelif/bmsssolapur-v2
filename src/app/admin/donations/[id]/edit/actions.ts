@@ -37,8 +37,8 @@ const getChangedFields = (original: Donation, updates: Partial<Donation>) => {
       if (originalValue instanceof Date && updatedValue instanceof Date) {
         if (originalValue?.getTime() !== updatedValue?.getTime()) {
           changes[typedKey] = {
-            from: originalValue?.toISOString().split("T")[0],
-            to: updatedValue?.toISOString().split("T")[0],
+            from: originalValue?.toISOString().split('T')[0],
+            to: updatedValue?.toISOString().split('T')[0],
           };
         }
       } else {

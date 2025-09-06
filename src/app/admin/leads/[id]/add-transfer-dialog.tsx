@@ -28,7 +28,8 @@ import Image from "next/image";
 import { FormDescription, FormField, FormControl, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import type { PaymentMethod } from "@/services/types";
-
+import { getRawTextFromImage } from "@/app/actions";
+import { extractDetailsFromText } from "@/ai/flows/extract-details-from-text-flow";
 
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
 
@@ -43,6 +44,12 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const [open, setOpen] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [rawText, setRawText] = useState<string | null>(null);
+  const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
   
   const form = useForm();
   const { setValue, register, handleSubmit, getValues, watch } = form;
@@ -81,10 +88,63 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const paymentApp = watch("paymentApp");
   const paymentMethod = watch("paymentMethod");
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] || null;
+    setFile(selectedFile);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    if (selectedFile) {
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    } else {
+      setPreviewUrl(null);
+    }
+     setRawText(null);
+     setExtractedDetails(null);
+  };
+  
+   const handleGetText = async () => {
+    if (!file) return;
+    setIsExtractingText(true);
+    const formData = new FormData();
+    formData.append("imageFile", file);
+    const result = await getRawTextFromImage(formData);
+    if (result.success && result.rawText) {
+      setRawText(result.rawText);
+      toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error });
+    }
+    setIsExtractingText(false);
+  };
+
+  const handleAutoFill = async () => {
+    if (!rawText) return;
+    setIsScanning(true);
+    const result = await extractDetailsFromText({ rawText });
+    if (result) {
+        setExtractedDetails(result);
+        Object.entries(result).forEach(([key, value]) => {
+            if (value && key !== 'rawText') {
+                setValue(key as any, value);
+            }
+        });
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review all fields.' });
+    } else {
+        toast({ variant: 'destructive', title: 'Auto-fill Failed' });
+    }
+    setIsScanning(false);
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) {
         form.reset();
+        setFile(null);
+        setPreviewUrl(null);
+        setRawText(null);
+        setExtractedDetails(null);
       }
       setOpen(isOpen)
     }}>
@@ -105,7 +165,35 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
             
             {/* Left Column - Form Fields */}
             <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">Transaction Details</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="proof">Proof of Transfer</Label>
+                    <Input id="proof" name="proof" type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
+                    <FormDescription>A screenshot or PDF receipt is required for online payments.</FormDescription>
+                </div>
+                {previewUrl && <Image src={previewUrl} alt="Proof preview" width={200} height={400} className="object-contain mx-auto rounded-md" />}
+
+                {file && (
+                    <div className="flex gap-2">
+                        <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtractingText}>
+                            {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                            Get Text
+                        </Button>
+                        {rawText && (
+                            <Button type="button" className="w-full" onClick={handleAutoFill} disabled={isScanning}>
+                                {isScanning ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                Auto-fill
+                            </Button>
+                        )}
+                    </div>
+                )}
+                 {rawText && (
+                    <div className="space-y-2">
+                        <Label>Extracted Text</Label>
+                        <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
+                    </div>
+                  )}
+
+                <h3 className="font-semibold text-lg border-b pb-2 pt-4">Transaction Details</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="amount">Amount (₹)</Label>
@@ -142,80 +230,33 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                         </Select>
                     </div>
                 )}
-                 {paymentApp === 'Google Pay' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label>
-                        <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} type="text" />
-                    </div>
-                 )}
-                 <div className="space-y-2">
-                    <Label htmlFor="utrNumber">UTR Number</Label>
-                    <Input id="utrNumber" {...register("utrNumber")} type="text" placeholder="Enter UTR number" />
-                </div>
-                  {paymentApp === 'PhonePe' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label>
-                        <Input id="phonePeTransactionId" {...register("phonePeTransactionId")} type="text" />
-                    </div>
-                 )}
-                 {paymentApp === 'Paytm' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label>
-                        <Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} type="text" />
-                    </div>
-                 )}
-
-                <h3 className="font-semibold text-lg border-b pb-2 pt-4">Participant Details</h3>
-                 <div className="space-y-2">
-                    <Label htmlFor="senderName">Sender Name</Label>
-                    <Input id="senderName" {...register("senderName")} type="text" placeholder="As per bank records" />
-                </div>
-                 {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label><Input id="googlePaySenderName" {...register("googlePaySenderName")} /></div>}
-                 {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} /></div>}
-                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmSenderName">Paytm Sender Name</Label><Input id="paytmSenderName" {...register("paytmSenderName")} /></div>}
-                <div className="space-y-2">
-                    <Label htmlFor="senderUpiId">Sender UPI ID</Label>
-                    <Input id="senderUpiId" {...register("senderUpiId")} type="text" placeholder="e.g., sender@upi" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="senderAccountNumber">Sender Account Number</Label>
-                    <Input id="senderAccountNumber" {...register("senderAccountNumber")} type="text" placeholder="e.g., XXXXXX1234" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="recipientName">Recipient Name</Label>
-                    <Input id="recipientName" {...register("recipientName")} type="text" placeholder="As per bank records" />
-                </div>
-                {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label><Input id="googlePayRecipientName" {...register("googlePayRecipientName")} /></div>}
-                {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label><Input id="phonePeRecipientName" {...register("phonePeRecipientName")} /></div>}
-                {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label><Input id="paytmRecipientName" {...register("paytmRecipientName")} /></div>}
-                 <div className="space-y-2">
-                    <Label htmlFor="recipientAccountNumber">Recipient Account Number</Label>
-                    <Input id="recipientAccountNumber" {...register("recipientAccountNumber")} type="text" placeholder="e.g., XXXXXX5678" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="recipientUpiId">Recipient UPI ID</Label>
-                    <Input id="recipientUpiId" {...register("recipientUpiId")} type="text" placeholder="e.g., username@upi" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="recipientPhone">Recipient Phone</Label>
-                    <Input id="recipientPhone" {...register("recipientPhone")} type="text" placeholder="e.g., 9876543210" />
-                </div>
-
-                <h3 className="font-semibold text-lg border-b pb-2 pt-4">Additional Info</h3>
-                <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea id="notes" {...register("notes")} placeholder="e.g., Bank transfer reference, payment details..." />
-                </div>
+                 {extractedDetails?.googlePayTransactionId && <div className="space-y-2"><Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label><Input id="googlePayTransactionId" {...register("googlePayTransactionId")} /></div>}
+                 {extractedDetails?.utrNumber && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} /></div>}
+                 {extractedDetails?.phonePeTransactionId && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} /></div>}
+                 {extractedDetails?.paytmUpiReferenceNo && <div className="space-y-2"><Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label><Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} /></div>}
             </div>
 
-            {/* Right Column - Upload & Preview */}
+            {/* Right Column - Participant Details */}
             <div className="space-y-4">
+                 <h3 className="font-semibold text-lg border-b pb-2">Participant Details</h3>
+                 {extractedDetails?.senderName && <div className="space-y-2"><Label htmlFor="senderName">Sender Name</Label><Input id="senderName" {...register("senderName")} /></div>}
+                 {extractedDetails?.googlePaySenderName && <div className="space-y-2"><Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label><Input id="googlePaySenderName" {...register("googlePaySenderName")} /></div>}
+                 {extractedDetails?.phonePeSenderName && <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} /></div>}
+                 {extractedDetails?.paytmSenderName && <div className="space-y-2"><Label htmlFor="paytmSenderName">Paytm Sender Name</Label><Input id="paytmSenderName" {...register("paytmSenderName")} /></div>}
+                 {extractedDetails?.senderUpiId && <div className="space-y-2"><Label htmlFor="senderUpiId">Sender UPI ID</Label><Input id="senderUpiId" {...register("senderUpiId")} /></div>}
+                 {extractedDetails?.senderAccountNumber && <div className="space-y-2"><Label htmlFor="senderAccountNumber">Sender Account Number</Label><Input id="senderAccountNumber" {...register("senderAccountNumber")} /></div>}
+                 {extractedDetails?.recipientName && <div className="space-y-2"><Label htmlFor="recipientName">Recipient Name</Label><Input id="recipientName" {...register("recipientName")} /></div>}
+                 {extractedDetails?.googlePayRecipientName && <div className="space-y-2"><Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label><Input id="googlePayRecipientName" {...register("googlePayRecipientName")} /></div>}
+                 {extractedDetails?.phonePeRecipientName && <div className="space-y-2"><Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label><Input id="phonePeRecipientName" {...register("phonePeRecipientName")} /></div>}
+                 {extractedDetails?.paytmRecipientName && <div className="space-y-2"><Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label><Input id="paytmRecipientName" {...register("paytmRecipientName")} /></div>}
+                 {extractedDetails?.recipientAccountNumber && <div className="space-y-2"><Label htmlFor="recipientAccountNumber">Recipient Account Number</Label><Input id="recipientAccountNumber" {...register("recipientAccountNumber")} /></div>}
+                 {extractedDetails?.recipientUpiId && <div className="space-y-2"><Label htmlFor="recipientUpiId">Recipient UPI ID</Label><Input id="recipientUpiId" {...register("recipientUpiId")} /></div>}
+                 {extractedDetails?.recipientPhone && <div className="space-y-2"><Label htmlFor="recipientPhone">Recipient Phone</Label><Input id="recipientPhone" {...register("recipientPhone")} /></div>}
+
+                 <h3 className="font-semibold text-lg border-b pb-2 pt-4">Additional Info</h3>
                  <div className="space-y-2">
-                    <Label htmlFor="proof">Proof of Transfer</Label>
-                    <div className="flex gap-2">
-                        <Input id="proof" name="proof" type="file" accept="image/*,application/pdf" />
-                    </div>
-                    <FormDescription>A screenshot or PDF receipt is required for online payments.</FormDescription>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea id="notes" {...register("notes")} placeholder="e.g., Bank transfer reference, payment details..." />
                 </div>
             </div>
             

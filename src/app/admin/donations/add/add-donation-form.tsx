@@ -28,7 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text } from "lucide-react";
-import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign } from "@/services/types";
+import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,6 +64,10 @@ const formSchema = z.object({
   status: z.enum(['Pending verification', 'Verified', 'Partially Allocated', 'Allocated', 'Failed/Incomplete']).default("Pending verification"),
   
   transactionId: z.string().optional(),
+  utrNumber: z.string().optional(),
+  googlePayTransactionId: z.string().optional(),
+  phonePeTransactionId: z.string().optional(),
+  paytmUpiReferenceNo: z.string().optional(),
   
   paymentScreenshot: z.any().optional(),
 
@@ -71,6 +75,11 @@ const formSchema = z.object({
   tipAmount: z.coerce.number().optional(),
   includePledge: z.boolean().default(false),
   notes: z.string().optional(),
+
+  // Extracted details
+  paymentApp: z.string().optional(),
+  senderName: z.string().optional(),
+  recipientName: z.string().optional(),
   
 }).refine(data => {
     if (data.includeTip) {
@@ -129,6 +138,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
+  const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
+
   const isEditing = !!existingDonation;
   
   const form = useForm<AddDonationFormValues>({
@@ -146,6 +157,13 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         transactionId: existingDonation?.transactionId,
         notes: existingDonation?.notes,
         paymentScreenshot: existingDonation?.paymentScreenshotUrls?.[0] || null,
+        paymentApp: existingDonation?.paymentApp,
+        senderName: existingDonation?.senderName,
+        recipientName: existingDonation?.recipientName,
+        utrNumber: existingDonation?.utrNumber,
+        googlePayTransactionId: existingDonation?.googlePayTransactionId,
+        phonePeTransactionId: existingDonation?.phonePeTransactionId,
+        paytmUpiReferenceNo: existingDonation?.paytmUpiReferenceNo,
     } : {
         donorId: '',
         paymentMethod: 'Online (UPI/Card)',
@@ -273,11 +291,13 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       setFile(file);
       setFilePreview(preview);
       setRawText(null); // Clear old text on new file
+      setExtractedDetails(null);
     } else {
       setValue('paymentScreenshot', null);
       setFile(null);
       setFilePreview(null);
       setRawText(null);
+      setExtractedDetails(null);
     }
   };
 
@@ -285,6 +305,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     if (!file) return;
     setIsScanning(true);
     setRawText(null);
+    setExtractedDetails(null);
     try {
         const formData = new FormData();
         formData.append("imageFile", file);
@@ -309,6 +330,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     const result = await handleExtractDonationDetails(rawText);
     if (result.success && result.details) {
         const { details } = result;
+        setExtractedDetails(details);
+        
         Object.entries(details).forEach(([key, value]) => {
             if (value !== undefined) {
                  if (key === 'amount') {
@@ -519,6 +542,21 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       )}
                   />
               </div>
+
+               {extractedDetails && (
+                <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
+                    <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                        {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                        {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                        {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                        {extractedDetails.googlePayTransactionId && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                        {extractedDetails.phonePeTransactionId && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                        {extractedDetails.paytmUpiReferenceNo && <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm Ref No</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                    </div>
+                </div>
+               )}
 
                <div className="flex gap-4">
                   <Button type="submit" disabled={isSubmitting || isFormInvalid}>

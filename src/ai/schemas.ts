@@ -137,3 +137,51 @@ export const ExtractRawTextOutputSchema = z.object({
     rawText: z.string().describe("The full, raw text extracted from the image.")
 });
 export type ExtractRawTextOutput = z.infer<typeof ExtractRawTextOutputSchema>;
+
+
+// Schema for extracting donation details from an image (now combined with text extraction)
+export const ExtractDetailsFromTextInputSchema = z.object({
+  rawText: z.string().describe("A block of raw text from a payment receipt to be parsed."),
+});
+export type ExtractDetailsFromTextInput = z.infer<typeof ExtractDetailsFromTextInputSchema>;
+
+export const ExtractDonationDetailsOutputSchema = z.object({
+  amount: z.number().optional().describe('The primary transaction amount. It must be a number.'),
+  transactionId: z.string().optional().describe("The primary Transaction ID, Order ID, or UPI Reference No. For Google Pay, this should be the 'UPI transaction ID'."),
+  utrNumber: z.string().optional().describe("The UTR number if it is explicitly visible. It's often a long number."),
+  googlePayTransactionId: z.string().optional().describe("The Google Pay specific transaction ID."),
+  phonePeTransactionId: z.string().optional().describe("The PhonePe specific transaction ID."),
+  paytmUpiReferenceNo: z.string().optional().describe("The Paytm specific UPI Reference No."),
+  date: z.string().optional().describe('The date of the transaction. Format it as YYYY-MM-DD.'),
+  time: z.string().optional().describe('The time of the transaction. Format it as hh:mm am/pm.'),
+  type: z.enum(['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest', 'Any']).optional().describe("The category of donation if mentioned (e.g., Zakat, Sadaqah)."),
+  purpose: z.enum(['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Monthly Pledge', 'Other']).optional().describe("The specific purpose of the donation if mentioned (e.g., Education, Hospital)."),
+  
+  paymentApp: z.string().optional().describe('The primary method or app of payment (e.g., GPay, PhonePe, Paytm). Infer this from the UI, especially logos like "पे" for PhonePe or "Paytm Bank".'),
+  senderPaymentApp: z.string().optional().describe("The app the sender used (e.g., 'PhonePe')."),
+  recipientPaymentApp: z.string().optional().describe("The app the recipient received money on, if specified (e.g., 'Google Pay')."),
+  
+  paymentMethod: z.string().optional().describe('The specific payment method used, e.g., UPI, Bank Transfer. Often found near the transaction ID.'),
+  
+  senderName: z.string().optional().describe("The full name of the person who sent the money, often found under a 'FROM' or 'Debited From' heading."),
+  phonePeSenderName: z.string().optional().describe("The sender's name specifically from a PhonePe receipt."),
+  googlePaySenderName: z.string().optional().describe("The sender's name specifically from a Google Pay receipt."),
+  paytmSenderName: z.string().optional().describe("The sender's name specifically from a Paytm receipt."),
+
+  senderUpiId: z.string().optional().describe("The sender's UPI ID if visible (e.g., 'username@okaxis'). This is often found directly under or on the next line after the sender's name and contains an '@' symbol."),
+  senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial. Look for labels like 'A/c No.', 'From account ...1234', or a phone number explicitly linked to the account like '...linked to 1234567890'. Do NOT extract a standalone phone number here."),
+  
+  recipientName: z.string().optional().describe("The full name of the person who received the money, often found under a 'TO' heading."),
+  phonePeRecipientName: z.string().optional().describe("The recipient's name specifically from a PhonePe receipt."),
+  googlePayRecipientName: z.string().optional().describe("The recipient's name specifically from a Google Pay receipt."),
+  paytmRecipientName: z.string().optional().describe("The recipient's name specifically from a Paytm receipt."),
+
+  donorPhone: z.string().optional().describe("The sender's phone number, especially if it is specified as the linked account (e.g., '...linked to 1234567890')."),
+  recipientPhone: z.string().optional().describe("The recipient's phone number if visible, often near the recipient's name."),
+  recipientUpiId: z.string().optional().describe("The recipient's UPI ID if visible (e.g., 'username@okhdfc'). This is often found directly under the recipient's name."),
+  recipientAccountNumber: z.string().optional().describe("The recipient's bank account number, even if partial (e.g., 'To account ...5678')."),
+  status: z.string().optional().describe('The status of the transaction (e.g., Successful, Completed, Received).'),
+  notes: z.string().optional().describe('Any user-added comments, remarks, or descriptions found in the payment details. Also labeled as "Message".'),
+});
+
+export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
