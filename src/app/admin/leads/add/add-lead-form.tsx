@@ -172,29 +172,29 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       beneficiaryType: 'existing',
-      isLoan: false,
-      helpRequested: 0,
-      acceptableDonationTypes: [],
-      priority: 'Medium',
-      hasReferral: false,
+      beneficiaryId: '',
       newBeneficiaryFirstName: '',
       newBeneficiaryMiddleName: '',
       newBeneficiaryLastName: '',
       newBeneficiaryPhone: '',
       newBeneficiaryEmail: '',
-      beneficiaryId: '',
-      headline: '',
-      story: '',
-      caseDetails: '',
-      category: '',
-      otherCategoryDetail: '',
-      otherPurposeDetail: '',
-      purpose: undefined,
-      campaignId: 'none',
-      campaignName: '',
+      hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
+      campaignId: 'none',
+      campaignName: '',
+      headline: '',
+      story: '',
+      purpose: '',
+      otherPurposeDetail: '',
+      category: '',
+      otherCategoryDetail: '',
+      priority: 'Medium',
+      acceptableDonationTypes: [],
+      helpRequested: 0,
       dueDate: undefined,
+      isLoan: false,
+      caseDetails: '',
       verificationDocument: undefined,
     },
   });
@@ -217,7 +217,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         category: '',
         otherCategoryDetail: '',
         otherPurposeDetail: '',
-        purpose: undefined,
+        purpose: '',
         priority: 'Medium',
         campaignId: 'none',
         campaignName: '',
@@ -467,7 +467,7 @@ Referral Phone:
                 <AccordionTrigger>
                     <div className="flex items-center gap-2 text-primary">
                         <FileUp className="h-5 w-5" />
-                        Upload &amp; Scan Documents (Optional)
+                        Upload & Scan Documents (Optional)
                     </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4">
