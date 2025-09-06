@@ -254,6 +254,10 @@ export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'|
     await settingsDocRef.update(updateWithTimestamp);
   } catch (error) {
     console.error("Error updating app settings: ", error);
-    throw new Error('Failed to update app settings.');
+    if (error instanceof Error) {
+        // Pass the specific Firestore error message up the chain
+        throw new Error(error.message);
+    }
+    throw new Error('An unknown error occurred while updating app settings.');
   }
 };
