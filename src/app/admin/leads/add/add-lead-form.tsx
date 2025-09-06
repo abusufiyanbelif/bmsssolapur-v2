@@ -49,6 +49,7 @@ import {
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getUserByPhone } from "@/services/user-service";
+import { getRawTextFromImage } from "@/app/actions";
 
 
 const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
@@ -139,6 +140,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
   const [rawText, setRawText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [fileForScan, setFileForScan] = useState<File | null>(null);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
@@ -268,6 +271,21 @@ Referral Phone:
         });
     };
     
+    const handleGetText = async () => {
+        if (!fileForScan) return;
+        setIsScanning(true);
+        const formData = new FormData();
+        formData.append("imageFile", fileForScan);
+        const result = await getRawTextFromImage(formData);
+        if (result.success && result.rawText) {
+            setRawText(result.rawText);
+            toast({ variant: "success", title: "Text Extracted" });
+        } else {
+            toast({ variant: "destructive", title: "Scan Failed", description: result.error });
+        }
+        setIsScanning(false);
+    };
+
     const handleAutoFill = async () => {
         if (!rawText) {
             toast({ variant: 'destructive', title: "No text provided." });
@@ -453,29 +471,6 @@ Referral Phone:
         <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-8 max-w-2xl">
             <fieldset disabled={isFormDisabled}>
-                 <h3 className="text-lg font-semibold border-b pb-2">Verification Document (Optional)</h3>
-                <FormField
-                control={form.control}
-                name="verificationDocument"
-                render={({ field: { onChange, value, ...rest } }) => (
-                    <FormItem>
-                    <FormLabel>Document Upload</FormLabel>
-                    <FormControl>
-                        <Input 
-                        type="file" 
-                        ref={fileInputRef}
-                        accept="image/*,application/pdf"
-                        onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
-                        {...rest}
-                        />
-                    </FormControl>
-                    <FormDescription>
-                        Upload a supporting document for verification purposes (e.g., ID card, medical report).
-                    </FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
 
                 <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
                 <FormField
@@ -494,6 +489,8 @@ Referral Phone:
                                 form.setValue('newBeneficiaryLastName', '');
                                 form.setValue('newBeneficiaryPhone', '');
                                 form.setValue('newBeneficiaryEmail', '');
+                                setRawText('');
+                                setFileForScan(null);
                             }}
                             defaultValue={field.value}
                             className="grid grid-cols-2 gap-4"
@@ -584,6 +581,55 @@ Referral Phone:
                 {beneficiaryType === 'new' && (
                     <div className="space-y-4 p-4 border rounded-lg">
                         <h3 className="font-medium">New Beneficiary Details</h3>
+                         <FormField
+                            control={form.control}
+                            name="verificationDocument"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Verification Document</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                    type="file" 
+                                    ref={fileInputRef}
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        field.onChange(file);
+                                        setFileForScan(file);
+                                        setRawText("");
+                                    }}
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    Upload a supporting document (ID, Bill, etc.) to scan.
+                                </FormDescription>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                         />
+                         {fileForScan && (
+                            <div className="flex flex-col sm:flex-row gap-2">
+                               <Button type="button" variant="outline" onClick={handleGetText} disabled={isScanning} className="w-full">
+                                  {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                  {isScanning ? 'Scanning...' : 'Get Text from Image'}
+                               </Button>
+                               {rawText && (
+                                   <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
+                                      {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                      Auto-fill Form
+                                   </Button>
+                               )}
+                           </div>
+                         )}
+                         {rawText && (
+                            <div className="space-y-2">
+                                <Label>Extracted Text</Label>
+                                <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-muted/50" />
+                            </div>
+                        )}
+
+                        <Separator className="my-6" />
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
                                 <FormItem>
