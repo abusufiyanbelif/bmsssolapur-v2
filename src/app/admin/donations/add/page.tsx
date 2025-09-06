@@ -15,7 +15,7 @@ export default async function AddDonationPage() {
         getAllCampaigns(),
     ]);
 
-    const linkableLeads = leads.filter(l => l.status !== 'Closed' && l.status !== 'Cancelled');
+    const linkableLeads = leads.filter(l => l.caseStatus !== 'Closed' && l.caseStatus !== 'Cancelled');
     const linkableCampaigns = campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled');
     
     return (

@@ -396,19 +396,43 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                   )}
                   />
               
-              <FormField
-                  control={form.control}
-                  name="totalTransactionAmount"
-                  render={({ field }) => (
-                      <FormItem>
-                      <FormLabel>Total Transaction Amount</FormLabel>
-                      <FormControl>
-                          <Input type="number" placeholder="Enter full amount from receipt" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                      </FormItem>
-                  )}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <FormField
+                      control={form.control}
+                      name="totalTransactionAmount"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Total Transaction Amount</FormLabel>
+                          <FormControl>
+                              <Input type="number" placeholder="Enter full amount from receipt" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                      />
+                    <FormField
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Payment Method</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select a method" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                              {paymentMethods.map(method => (
+                                  <SelectItem key={method} value={method}>{method}</SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
                   />
+                </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
