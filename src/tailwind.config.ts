@@ -18,9 +18,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['var(--font-pt-sans)'],
-        headline: ['var(--font-pt-sans)'],
-        mono: ['var(--font-source-code-pro)'],
+        body: ['var(--font-inter)'],
+        headline: ['var(--font-space-grotesk)'],
       },
       colors: {
         border: 'hsl(var(--border))',

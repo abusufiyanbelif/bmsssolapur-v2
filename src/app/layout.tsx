@@ -3,18 +3,17 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AppShell } from '@/components/app-shell';
 import { Toaster } from "@/components/ui/toaster";
-import { PT_Sans, Source_Code_Pro } from 'next/font/google';
+import { Inter, Space_Grotesk } from 'next/font/google';
 import { cn } from '@/lib/utils';
 
-const ptSans = PT_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-pt-sans',
+  variable: '--font-inter',
 });
 
-const sourceCodePro = Source_Code_Pro({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-source-code-pro',
+  variable: '--font-space-grotesk',
 });
 
 
@@ -30,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={cn("font-body antialiased h-full bg-background", ptSans.variable, sourceCodePro.variable)}>
+      <body className={cn("font-body antialiased h-full bg-background", inter.variable, spaceGrotesk.variable)}>
         <AppShell>
           {children}
         </AppShell>
