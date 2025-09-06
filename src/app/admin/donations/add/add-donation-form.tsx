@@ -38,7 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId } from "./actions";
+import { handleAddDonation, checkTransactionId, handleExtractDonationDetails } from "./actions";
 import { getRawTextFromImage } from '@/app/actions';
 import { handleUpdateDonation } from '../[id]/edit/actions';
 import { useDebounce } from "@/hooks/use-debounce";
@@ -118,6 +118,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [rawText, setRawText] = useState<string | null>(null);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
@@ -271,10 +272,12 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       const preview = URL.createObjectURL(file);
       setFile(file);
       setFilePreview(preview);
+      setRawText(null); // Clear old text on new file
     } else {
       setValue('paymentScreenshot', null);
       setFile(null);
       setFilePreview(null);
+      setRawText(null);
     }
   };
 
@@ -298,6 +301,34 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     } finally {
         setIsScanning(false);
     }
+  };
+  
+   const handleAutoFill = async () => {
+    if (!rawText) return;
+    setIsExtracting(true);
+    const result = await handleExtractDonationDetails(rawText);
+    if (result.success && result.details) {
+        const { details } = result;
+        Object.entries(details).forEach(([key, value]) => {
+            if (value !== undefined) {
+                 if (key === 'amount') {
+                    setValue('totalTransactionAmount', value as number);
+                 } else if (key === 'date') {
+                    setValue('donationDate', new Date(value as string));
+                 } else if (key === 'type' && donationTypes.includes(value as any)) {
+                    setValue('type', value as any);
+                 } else if (key === 'purpose' && donationPurposes.includes(value as any)) {
+                    setValue('purpose', value as any);
+                 } else {
+                    setValue(key as any, value);
+                 }
+            }
+        });
+        toast({ variant: "success", title: "Auto-fill Complete!", description: "Form has been populated. Please review." });
+    } else {
+        toast({ variant: "destructive", title: "Extraction Failed", description: result.error || "Could not extract details from text." });
+    }
+    setIsExtracting(false);
   };
   
   const isFormInvalid = transactionIdState.isAvailable === false;
@@ -333,10 +364,18 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       </div>
                   )}
                   {file && (
-                     <Button type="button" onClick={handleScanText} disabled={isScanning} className="w-full">
-                          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                          {isScanning ? 'Scanning...' : 'Get Text from Image'}
-                      </Button>
+                     <div className="flex flex-col sm:flex-row gap-2">
+                        <Button type="button" variant="outline" onClick={handleScanText} disabled={isScanning} className="w-full">
+                            {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                            {isScanning ? 'Scanning...' : 'Get Text from Image'}
+                        </Button>
+                        {rawText && (
+                            <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
+                                {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                Auto-fill Form
+                            </Button>
+                        )}
+                     </div>
                   )}
                   {rawText && (
                     <div className="space-y-2">

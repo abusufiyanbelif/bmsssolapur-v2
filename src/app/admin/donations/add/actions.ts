@@ -9,6 +9,7 @@ import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, 
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
 import { extractRawTextFlow } from "@/ai/flows/extract-raw-text-flow";
+import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 
 
 interface FormState {
@@ -188,5 +189,20 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
         }
         console.error(`Full scanning process failed:`, lastError);
         return { success: false, error: lastError };
+    }
+}
+
+
+export async function handleExtractDonationDetails(rawText: string): Promise<{ success: boolean; details?: ExtractDonationDetailsOutput; error?: string }> {
+    try {
+        if (!rawText) {
+            return { success: false, error: "No text provided to extract details from." };
+        }
+        const extractedDetails = await extractDonationDetails({ rawText });
+        return { success: true, details: extractedDetails };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
+        console.error("Error extracting donation details from text:", error);
+        return { success: false, error };
     }
 }
