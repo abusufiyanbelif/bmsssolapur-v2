@@ -78,7 +78,7 @@ export async function handleAddLead(
     }
 
     const approvalProcessDisabled = settings.leadConfiguration?.approvalProcessDisabled || false;
-    const userHasOverride = adminUser?.groups?.some(g => ['Founder', 'Co-Founder', 'Finance'].includes(g));
+    const userHasOverride = adminUser?.roles?.includes('Super Admin');
 
     if (approvalProcessDisabled && !userHasOverride) {
         return { success: false, error: "Lead approval process is disabled. Only authorized users can create leads." };
