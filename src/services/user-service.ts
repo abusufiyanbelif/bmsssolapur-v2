@@ -28,7 +28,6 @@ const USERS_COLLECTION = 'users';
 
 // Re-export types for backward compatibility if other services import from here
 export type { User, UserRole };
-export { updateLead } from './lead-service';
 
 
 // Hardcoded Super Admin User for dev purposes
