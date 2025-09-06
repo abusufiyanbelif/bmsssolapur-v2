@@ -84,13 +84,15 @@ export default function CreateLeadFromDocumentPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+    }
     if (selectedFile) {
       setFile(selectedFile);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreview(reader.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
+      setFilePreview(URL.createObjectURL(selectedFile));
+    } else {
+        setFile(null);
+        setFilePreview(null);
     }
   };
 
