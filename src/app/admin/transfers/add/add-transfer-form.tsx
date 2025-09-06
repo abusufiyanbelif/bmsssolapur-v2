@@ -40,7 +40,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
-import { extractRawText } from "@/ai/flows/extract-raw-text-flow";
+import { getRawTextFromImage } from '@/app/actions';
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
@@ -239,24 +239,27 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     setIsScanning(true);
     
     try {
-        const arrayBuffer = await file.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const dataUri = `data:${file.type};base64,${base64}`;
-        const result = await extractDonationDetails({ photoDataUri: dataUri });
+        const formData = new FormData();
+        formData.append("imageFile", file);
+        const textResult = await getRawTextFromImage(formData);
 
-        toast({ variant: 'success', title: 'Scan Successful!', description: 'Form fields populated. Please review.' });
-        
-        Object.entries(result).forEach(([key, value]) => {
-            if (value && key !== 'rawText') {
-                if (key === 'date') setValue('transactionDate', new Date(value as string));
-                else if (key === 'amount') setValue('amount', value as number);
-                else setValue(key as any, value);
-            }
-        });
-        if (result.rawText) setRawText(result.rawText);
-        setTransferMethod('record');
-        trigger();
-
+        if (textResult.success && textResult.rawText) {
+            const result = await extractDonationDetails({ rawText: textResult.rawText });
+            toast({ variant: 'success', title: 'Scan Successful!', description: 'Form fields populated. Please review.' });
+            
+            Object.entries(result).forEach(([key, value]) => {
+                if (value && key !== 'rawText') {
+                    if (key === 'date') setValue('transactionDate', new Date(value as string));
+                    else if (key === 'amount') setValue('amount', value as number);
+                    else setValue(key as any, value);
+                }
+            });
+            if (textResult.rawText) setRawText(textResult.rawText);
+            setTransferMethod('record');
+            trigger();
+        } else {
+             toast({ variant: 'destructive', title: 'Text Extraction Failed', description: textResult.error || 'Could not extract text from the image.' });
+        }
     } catch (e) {
         toast({ variant: 'destructive', title: 'Scan Failed', description: e instanceof Error ? e.message : "Could not extract details." });
     }
@@ -270,11 +273,14 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     }
     setIsExtractingText(true);
     try {
-        const arrayBuffer = await file.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const dataUri = `data:${file.type};base64,${base64}`;
-        const result = await extractRawText({ photoDataUri: dataUri });
-        setRawText(result.rawText);
+        const formData = new FormData();
+        formData.append("imageFile", file);
+        const result = await getRawTextFromImage(formData);
+        if (result.success && result.rawText) {
+            setRawText(result.rawText);
+        } else {
+            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
+        }
     } catch(e) {
         toast({ variant: 'destructive', title: 'Extraction Failed', description: e instanceof Error ? e.message : 'Could not extract text from the image.' });
     }
