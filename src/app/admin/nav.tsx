@@ -148,10 +148,10 @@ const allNavItems: NavItem[] = [
     { 
         label: "Data Profiling & Analytics", 
         icon: BrainCircuit, 
-        allowedRoles: ["Super Admin"],
+        allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard },
-            { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
     

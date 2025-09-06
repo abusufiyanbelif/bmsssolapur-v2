@@ -61,7 +61,7 @@ export default async function DataAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <Accordion type="multiple" className="w-full space-y-4">
+             <Accordion type="multiple" defaultValue={["performance-metrics"]} className="w-full space-y-4">
                 <AccordionItem value="performance-metrics" className="border rounded-lg">
                     <AccordionTrigger className="p-4 hover:no-underline">
                         <div className="flex items-center gap-3">
