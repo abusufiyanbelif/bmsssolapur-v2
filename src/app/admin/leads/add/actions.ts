@@ -81,7 +81,7 @@ export async function handleAddLead(
     const userHasOverride = adminUser?.roles?.includes('Super Admin');
 
     if (approvalProcessDisabled && !userHasOverride) {
-        return { success: false, error: "Lead approval process is disabled. Only authorized users can create leads." };
+        return { success: false, error: "Lead approval process is disabled. Only Super Admins can create leads at this time." };
     }
 
     let beneficiaryUser: User | null = null;
