@@ -25,7 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
 import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp, UploadCloud, Bot, Text } from "lucide-react";
-import type { User, Lead, PaymentMethod, Campaign, UserRole } from "@/services/types";
+import type { User, Lead, PaymentMethod, Campaign, UserRole, ExtractDonationDetailsOutput } from "@/services/types";
 import { getUser, getUserByPhone, getUserByUpiId } from "@/services/user-service";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +43,7 @@ import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions"
 import { getRawTextFromImage } from '@/app/actions';
 
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
-const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'] as const;
 
 const formSchema = z.object({
   leadId: z.string().min(1, "Please select a lead/beneficiary."),
@@ -146,7 +146,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   const [beneficiaryDetails, setBeneficiaryDetails] = useState<User | null>(null);
   const [recipientDetails, setRecipientDetails] = useState<User | null>(null);
   const [transferMethod, setTransferMethod] = useState<'record' | 'scan'>('record');
-  const [extractedDetails, setExtractedDetails] = useState<any | null>(null);
+  const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
   
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
 
@@ -155,7 +155,8 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     defaultValues: initialFormValues,
   });
 
-  const { watch, setValue, reset, control, trigger, register, handleSubmit } = form;
+  const { setValue, register, handleSubmit, getValues, watch, control, trigger } = form;
+  
   const paymentMethod = watch("paymentMethod");
   const selectedLeadId = watch("leadId");
   const paymentApp = watch("paymentApp");
@@ -230,68 +231,42 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
           setRecipientDetails(null);
       }
   }, [recipientType, beneficiaryDetails, selectedRecipientId, users]);
-
-  const handleScan = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No File', description: 'Please select a screenshot to scan.' });
-      return;
-    }
-    
-    setIsScanning(true);
-    
-    try {
-        const formData = new FormData();
-        formData.append("imageFile", file);
-        const textResult = await getRawTextFromImage(formData);
-
-        if (textResult.success && textResult.rawText) {
-            const result = await handleExtractDonationDetails(textResult.rawText);
-            
-            if (result.success && result.details) {
-                toast({ variant: 'success', title: 'Scan Successful!', description: 'Form fields populated. Please review.' });
-                 setExtractedDetails(result.details);
-                Object.entries(result.details).forEach(([key, value]) => {
-                    if (value && key !== 'rawText') {
-                        if (key === 'date') setValue('transactionDate', new Date(value as string));
-                        else if (key === 'amount') setValue('amount', value as number);
-                        else setValue(key as any, value);
-                    }
-                });
-                if (textResult.rawText) setRawText(textResult.rawText);
-                setTransferMethod('record');
-                trigger();
-            } else {
-                 toast({ variant: 'destructive', title: 'Detail Extraction Failed', description: result.error || 'Could not extract details from the text.' });
-            }
-        } else {
-             toast({ variant: 'destructive', title: 'Text Extraction Failed', description: textResult.error || 'Could not extract text from the image.' });
-        }
-    } catch (e) {
-        toast({ variant: 'destructive', title: 'Scan Failed', description: e instanceof Error ? e.message : "Could not extract details." });
-    }
-    setIsScanning(false);
-  };
   
-   const handleExtractText = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select a payment screenshot first.' });
-      return;
-    }
+  const handleGetText = async () => {
+    if (!file) return;
     setIsExtractingText(true);
-    try {
-        const formData = new FormData();
-        formData.append("imageFile", file);
-        const result = await getRawTextFromImage(formData);
-        if (result.success && result.rawText) {
-            setRawText(result.rawText);
-        } else {
-            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text from the image.' });
-        }
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Extraction Failed', description: e instanceof Error ? e.message : 'Could not extract text from the image.' });
+    const formData = new FormData();
+    formData.append("imageFile", file);
+    const result = await getRawTextFromImage(formData);
+    if (result.success && result.rawText) {
+      setRawText(result.rawText);
+      toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error });
     }
     setIsExtractingText(false);
   };
+
+  const handleAutoFill = async () => {
+    if (!rawText) return;
+    setIsScanning(true);
+    const result = await handleExtractDonationDetails(rawText);
+    if (result.success && result.details) {
+        setExtractedDetails(result.details);
+        Object.entries(result.details).forEach(([key, value]) => {
+            if (value && key !== 'rawText') {
+                if (key === 'date') setValue('transactionDate', new Date(value as string));
+                else if (key === 'amount') setValue('amount', value as number);
+                else setValue(key as any, value);
+            }
+        });
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review all fields.' });
+    } else {
+        toast({ variant: 'destructive', title: 'Auto-fill Failed' });
+    }
+    setIsScanning(false);
+  };
+
 
    const onFormSubmit = async (data: AddTransferFormValues) => {
     if (!adminUserId) {
@@ -366,29 +341,32 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                     </FormItem>
                 )}
             />
-            {previewUrl && (
-                <div className="relative w-full h-96"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
+            {previewUrl && <Image src={previewUrl} alt="Proof preview" width={200} height={400} className="object-contain mx-auto rounded-md" />}
+            
+            {file && (
+                <div className="flex gap-2">
+                    <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtractingText}>
+                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                        Get Text
+                    </Button>
+                    {rawText && (
+                        <Button type="button" className="w-full" onClick={handleAutoFill} disabled={isScanning}>
+                            {isScanning ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                            Auto-fill Form
+                        </Button>
+                    )}
+                </div>
             )}
-             <div className="flex gap-2">
-                <Button type="button" variant="outline" className="w-full" onClick={handleExtractText} disabled={!file || isExtractingText}>
-                    {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                    Get Raw Text
-                </Button>
-                <Button type="button" className="w-full" onClick={handleScan} disabled={!file || isScanning}>
-                    {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                    Auto-fill Form
-                </Button>
-            </div>
              {rawText && (
                 <div className="space-y-2">
                     <Label htmlFor="rawTextOutput">Extracted Text</Label>
                     <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
                 </div>
-            )}
+              )}
         </div>
     ) : (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
             <h3 className="text-lg font-semibold border-b pb-2">Recipient & Case Details</h3>
             <FormField
                 control={control}
@@ -516,6 +494,27 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                     </FormItem>
                 )}
             />
+             <FormField
+                control={control}
+                name="proof"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Proof of Transfer</FormLabel>
+                        <FormControl>
+                            <Input 
+                                type="file" 
+                                accept="image/*,application/pdf"
+                                ref={fileInputRef}
+                                onChange={(e) => { field.onChange(e.target.files?.[0]); setFile(e.target.files?.[0] || null); }}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            {previewUrl && (
+                <div className="relative w-full h-64"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
+            )}
             {paymentMethod === 'Online (UPI/Card)' && (
                 <FormField
                     control={form.control}
@@ -539,27 +538,6 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                         </FormItem>
                     )}
                 />
-            )}
-            <FormField
-                control={control}
-                name="proof"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Proof of Transfer</FormLabel>
-                        <FormControl>
-                            <Input 
-                                type="file" 
-                                accept="image/*,application/pdf"
-                                ref={fileInputRef}
-                                onChange={(e) => { field.onChange(e.target.files?.[0]); setFile(e.target.files?.[0] || null); }}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            {previewUrl && (
-                <div className="relative w-full h-64"><Image src={previewUrl} alt="Preview" fill className="object-contain rounded-md" data-ai-hint="payment screenshot" /></div>
             )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

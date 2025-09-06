@@ -461,7 +461,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 </div>
                 
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                  <FormField
+                    <FormField
                         control={form.control}
                         name="paymentMethod"
                         render={({ field }) => (
@@ -483,7 +483,27 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                             </FormItem>
                         )}
                     />
-                     {paymentMethod === 'Online (UPI/Card)' && (
+
+                  <FormField
+                      control={form.control}
+                      name="paymentScreenshot"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Payment Proof</FormLabel>
+                              <FormControl>
+                                  <Input 
+                                      type="file" 
+                                      accept="image/*,application/pdf"
+                                      ref={fileInputRef}
+                                      onChange={handleFileChange}
+                                  />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+
+                    {paymentMethod === 'Online (UPI/Card)' && (
                       <FormField
                           control={form.control}
                           name="paymentApp"
@@ -506,25 +526,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                               </FormItem>
                           )}
                       />
-                  )}
-                  <FormField
-                      control={form.control}
-                      name="paymentScreenshot"
-                      render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Payment Proof</FormLabel>
-                              <FormControl>
-                                  <Input 
-                                      type="file" 
-                                      accept="image/*,application/pdf"
-                                      ref={fileInputRef}
-                                      onChange={handleFileChange}
-                                  />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                  />
+                    )}
                   
                   {filePreview && (
                       <div className="flex flex-col items-center gap-4">
