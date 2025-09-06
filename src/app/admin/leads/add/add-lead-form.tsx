@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -296,9 +295,9 @@ Referral Phone:
         const result = await getRawTextFromImage(formData);
         if (result.success && result.rawText) {
             setRawText(result.rawText);
-            toast({ variant: "success", title: "Text Extracted" });
+            toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
         } else {
-            toast({ variant: "destructive", title: "Scan Failed", description: result.error });
+            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error });
         }
         setIsScanning(false);
     };
@@ -334,12 +333,6 @@ Referral Phone:
             }
             if (details.fatherName) setValue('newBeneficiaryMiddleName', details.fatherName); // Assuming middleName for father
             if (details.beneficiaryEmail) setValue('newBeneficiaryEmail', details.beneficiaryEmail);
-            if (details.beneficiaryType) {
-                 const type = details.beneficiaryType as any;
-                 if (['Adult', 'Old Age', 'Kid', 'Family', 'Widow'].includes(type)) {
-                     setValue('beneficiaryType', type);
-                 }
-            }
             
             // Check for existing user by phone
             if (details.beneficiaryPhone) {
@@ -532,42 +525,46 @@ Referral Phone:
                     name="beneficiaryType"
                     render={({ field }) => (
                         <FormItem className="space-y-3">
-                        <FormLabel>Beneficiary</FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={(value) => {
-                                field.onChange(value);
-                                form.setValue('beneficiaryId', undefined);
-                                form.setValue('newBeneficiaryFirstName', '');
-                                form.setValue('newBeneficiaryMiddleName', '');
-                                form.setValue('newBeneficiaryLastName', '');
-                                form.setValue('newBeneficiaryPhone', '');
-                                form.setValue('newBeneficiaryEmail', '');
-                            }}
-                            defaultValue={field.value}
-                            className="grid grid-cols-2 gap-4"
-                            >
-                                <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                    <FormControl>
-                                        <RadioGroupItem value="existing" className="sr-only" />
-                                    </FormControl>
-                                    <Users className="mb-3 h-6 w-6" />
-                                    Existing Beneficiary
-                                </Label>
-                                <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                    <FormControl>
-                                        <RadioGroupItem value="new" className="sr-only" />
-                                    </FormControl>
-                                    <UserPlus className="mb-3 h-6 w-6" />
-                                    New Beneficiary
-                                </Label>
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
+                            <FormLabel>Beneficiary</FormLabel>
+                            <FormControl>
+                                <RadioGroup
+                                    onValueChange={(value) => {
+                                        field.onChange(value);
+                                        form.setValue('beneficiaryId', undefined);
+                                        form.setValue('newBeneficiaryFirstName', '');
+                                        form.setValue('newBeneficiaryMiddleName', '');
+                                        form.setValue('newBeneficiaryLastName', '');
+                                        form.setValue('newBeneficiaryPhone', '');
+                                        form.setValue('newBeneficiaryEmail', '');
+                                    }}
+                                    defaultValue={field.value}
+                                    className="grid grid-cols-2 gap-4"
+                                >
+                                    <FormItem>
+                                        <FormControl>
+                                            <RadioGroupItem value="existing" id="existingBeneficiary" className="sr-only peer" />
+                                        </FormControl>
+                                        <Label htmlFor="existingBeneficiary" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                            <Users className="mb-3 h-6 w-6" />
+                                            Existing Beneficiary
+                                        </Label>
+                                    </FormItem>
+                                    <FormItem>
+                                        <FormControl>
+                                            <RadioGroupItem value="new" id="newBeneficiary" className="sr-only peer" />
+                                        </FormControl>
+                                         <Label htmlFor="newBeneficiary" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                            <UserPlus className="mb-3 h-6 w-6" />
+                                            New Beneficiary
+                                        </Label>
+                                    </FormItem>
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
                         </FormItem>
                     )}
-                    />
-
+                />
+                
                 {beneficiaryType === 'existing' && (
                     <FormField
                         control={form.control}
@@ -968,29 +965,6 @@ Referral Phone:
                             name="acceptableDonationTypes"
                             render={({ field }) => {
                             const allOtherTypes = donationTypes.filter(t => t !== 'Any');
-                            const handleAnyChange = (checked: boolean) => {
-                                field.onChange(checked ? allOtherTypes : []);
-                            }
-                            const isAnyChecked = field.value?.includes('Any') || (field.value?.length === allOtherTypes.length);
-
-                            if (type === 'Any') {
-                                return (
-                                    <FormItem
-                                    key={type}
-                                    className="flex flex-row items-start space-x-3 space-y-0 font-bold"
-                                >
-                                    <FormControl>
-                                    <Checkbox
-                                        checked={isAnyChecked}
-                                        onCheckedChange={(checked) => handleAnyChange(!!checked)}
-                                    />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                    {type}
-                                    </FormLabel>
-                                </FormItem>
-                                )
-                            }
                             
                             return (
                                 <FormItem
@@ -1005,13 +979,7 @@ Referral Phone:
                                         ? [...(field.value || []), type]
                                         : field.value?.filter((value) => value !== type);
                                         
-                                        // If all others are checked, check 'Any' as well
-                                        if (newValue && newValue.length === allOtherTypes.length) {
-                                        field.onChange(donationTypes);
-                                        } else {
-                                        // Remove 'Any' if not all are checked
-                                        field.onChange(newValue?.filter(v => v !== 'Any'));
-                                        }
+                                        field.onChange(newValue);
                                     }}
                                     />
                                 </FormControl>
@@ -1096,7 +1064,7 @@ Referral Phone:
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Priority</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Set a priority level" />
