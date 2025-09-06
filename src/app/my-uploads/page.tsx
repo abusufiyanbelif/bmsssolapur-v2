@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, FileText } from "lucide-react";
+import { Loader2, UploadCloud, FileText, ScanSearch } from "lucide-react";
 import Image from "next/image";
 
 export default function MyUploadsPage() {
@@ -54,14 +54,17 @@ export default function MyUploadsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Upload a File</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ScanSearch />
+            Upload a File
+          </CardTitle>
           <CardDescription>
-            You can upload images here, such as screenshots of donation receipts or other relevant documents.
+            You can upload images here, such as screenshots of donation receipts or other relevant documents for verification by our team.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid w-full items-center gap-2">
-            <Label htmlFor="image-upload">Select Image</Label>
+            <Label htmlFor="image-upload">Select Image or Document</Label>
             <Input
               id="image-upload"
               type="file"
@@ -84,7 +87,7 @@ export default function MyUploadsPage() {
           )}
           <Button onClick={handleUpload} disabled={isUploading || !file}>
             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-            Upload Image
+            Upload File
           </Button>
         </CardContent>
       </Card>

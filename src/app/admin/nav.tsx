@@ -7,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -44,10 +44,14 @@ const allNavItems: NavItem[] = [
     { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Donor"] },
     { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
+    { href: "/my-uploads", label: "My Uploads", icon: ScanSearch, allowedRoles: ["Donor"] },
 
     // Beneficiary
     { href: "/my-cases", label: "My Cases", icon: FileText, allowedRoles: ["Beneficiary"] },
     { href: "/request-help", label: "Request Help", icon: FilePlus2, allowedRoles: ["Beneficiary"] },
+    
+    // Referral
+    { href: "/referral/my-beneficiaries", label: "My Referrals", icon: Users, allowedRoles: ["Referral"] },
     
     // Admin - Communications (Collapsible)
     {
@@ -89,6 +93,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/leads/create-from-document", label: "Create from Document", icon: ScanSearch, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/leads/configuration", label: "Configuration", icon: BookText, allowedRoles: ["Super Admin"] },
         ]
     },
@@ -196,7 +201,7 @@ const NavLink = ({ item, isActive, onClick, paddingLeft }: { item: NavItem | Nav
     );
 };
 
-const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubItem, pathname: string, level?: number }) => {
+const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRoleSwitchRequired }: { item: NavItem | NavSubItem, pathname: string, level?: number, userRoles: string[], activeRole: string, onRoleSwitchRequired: (requiredRole: string) => void }) => {
     const Icon = item.icon;
     const isAnySubItemActive = item.subItems?.some(sub => sub.href && pathname.startsWith(sub.href)) || 
                                item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href))) ||
@@ -204,7 +209,14 @@ const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubI
 
     const paddingLeft = level > 0 ? `pl-${level * 4}` : '';
     
-    // This component now handles both being a direct link AND a collapsible trigger
+    // Filter sub-items based on the active role
+    const visibleSubItems = item.subItems?.filter(subItem => {
+        if (!subItem.allowedRoles) return true; // if no roles specified, it's visible to all parent roles
+        return subItem.allowedRoles.includes(activeRole);
+    }) || [];
+
+    if(visibleSubItems.length === 0) return null;
+    
     const TriggerContent = (
         <div className={cn(
             "flex items-center w-full gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
@@ -226,9 +238,9 @@ const NavCollapsible = ({ item, pathname, level = 0 }: { item: NavItem | NavSubI
                 )}
             </CollapsibleTrigger>
             <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
-                {item.subItems?.map(subItem => {
+                {visibleSubItems.map(subItem => {
                     if (subItem.subItems) {
-                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} />
+                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />
                     }
                     const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
                     return <NavLink key={subItem.href} item={subItem} isActive={isSubActive} />
@@ -268,7 +280,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
                  if (item.subItems) {
-                    return <NavCollapsible key={key} item={item} pathname={pathname} />;
+                    return <NavCollapsible key={key} item={item} pathname={pathname} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />;
                 }
                 const isActive = (item.href === '/' && pathname === '/') || 
                                  (item.href && item.href !== '/' && pathname.startsWith(item.href));
