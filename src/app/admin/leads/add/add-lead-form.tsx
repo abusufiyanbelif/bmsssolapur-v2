@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,6 +51,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getUserByPhone } from "@/services/user-service";
 import { getRawTextFromImage } from "@/app/actions";
+import Image from "next/image";
 
 
 const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
@@ -142,6 +144,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [fileForScan, setFileForScan] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
@@ -161,7 +164,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   }, [users]);
   
-  const userHasOverridePermission = adminUser?.groups?.some(g => ['Founder', 'Co-Founder', 'Finance'].includes(g)) || adminUser?.roles.includes('Super Admin');
+  const userHasOverridePermission = adminUser?.roles.includes('Super Admin');
   const isFormDisabled = approvalProcessDisabled && !userHasOverridePermission;
 
 
@@ -208,6 +211,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       });
       setSelectedReferralDetails(null);
       setRawText("");
+      setFileForScan(null);
+      setFilePreview(null);
       if (fileInputRef.current) {
           fileInputRef.current.value = "";
       }
@@ -271,6 +276,18 @@ Referral Phone:
         });
     };
     
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        setValue('verificationDocument', file, { shouldValidate: true });
+        setFileForScan(file);
+        if (file) {
+            setFilePreview(URL.createObjectURL(file));
+        } else {
+            setFilePreview(null);
+        }
+        setRawText("");
+    };
+
     const handleGetText = async () => {
         if (!fileForScan) return;
         setIsScanning(true);
@@ -471,7 +488,7 @@ Referral Phone:
         <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-8 max-w-2xl">
             <fieldset disabled={isFormDisabled}>
-                 <h3 className="text-lg font-semibold border-b pb-2">Verification Document</h3>
+                <h3 className="text-lg font-semibold border-b pb-2">Verification Document</h3>
                  <FormField
                     control={form.control}
                     name="verificationDocument"
@@ -483,12 +500,7 @@ Referral Phone:
                             type="file" 
                             ref={fileInputRef}
                             accept="image/*,application/pdf"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0] || null;
-                                field.onChange(file);
-                                setFileForScan(file);
-                                setRawText("");
-                            }}
+                            onChange={handleFileChange}
                             />
                         </FormControl>
                         <FormDescription>
@@ -498,14 +510,20 @@ Referral Phone:
                         </FormItem>
                     )}
                     />
-                    {fileForScan && (
-                        <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                            <Button type="button" variant="outline" onClick={handleGetText} disabled={isScanning} className="w-full">
-                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                                {isScanning ? 'Scanning...' : 'Get Text from Image'}
-                            </Button>
-                        </div>
-                    )}
+                {fileForScan && (
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                        <Button type="button" variant="outline" onClick={handleGetText} disabled={isScanning} className="w-full">
+                            {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                            {isScanning ? 'Scanning...' : 'Get Text from Image'}
+                        </Button>
+                    </div>
+                )}
+                {rawText && (
+                  <div className="space-y-2 mt-4">
+                      <Label>Extracted Text</Label>
+                      <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-muted" />
+                  </div>
+                )}
 
 
                 <h3 className="text-lg font-semibold border-b pb-2 mt-8">Beneficiary Details</h3>
@@ -1201,5 +1219,3 @@ export function AddLeadForm(props: AddLeadFormProps) {
         </Suspense>
     )
 }
-
-    
