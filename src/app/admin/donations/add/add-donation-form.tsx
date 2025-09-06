@@ -50,6 +50,7 @@ import { Label } from "@/components/ui/label";
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
 const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'] as const;
 
 const formSchema = z.object({
   donorId: z.string().min(1, "Please select a donor."),
@@ -190,6 +191,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const transactionId = watch('transactionId');
   const debouncedTransactionId = useDebounce(transactionId, 500);
   const includePledge = watch("includePledge");
+  const paymentMethod = watch("paymentMethod");
   
   const handleTxnIdCheck = useCallback(async (txnId: string) => {
     if (!txnId || (isEditing && txnId === existingDonation?.transactionId)) {
@@ -495,6 +497,31 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       )}
                   />
                 </div>
+
+                {paymentMethod === 'Online (UPI/Card)' && (
+                    <FormField
+                        control={form.control}
+                        name="paymentApp"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Payment App</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an app" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {paymentApps.map(app => (
+                                    <SelectItem key={app} value={app}>{app}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
@@ -547,7 +574,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
                     <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                        {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
                         {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                         {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                         {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
