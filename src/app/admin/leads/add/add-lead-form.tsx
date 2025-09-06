@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,7 +64,7 @@ const formSchema = z.object({
   newBeneficiaryMiddleName: z.string().optional(),
   newBeneficiaryLastName: z.string().optional(),
   newBeneficiaryPhone: z.string().optional(),
-  newBeneficiaryEmail: z.string().email().optional(),
+  newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
   
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
@@ -159,7 +158,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   }, [users]);
   
-  const userHasOverridePermission = adminUser?.groups?.some(g => ['Founder', 'Co-Founder', 'Finance'].includes(g));
+  const userHasOverridePermission = adminUser?.groups?.some(g => ['Founder', 'Co-Founder', 'Finance'].includes(g)) || adminUser?.roles.includes('Super Admin');
   const isFormDisabled = approvalProcessDisabled && !userHasOverridePermission;
 
 
@@ -410,7 +409,7 @@ Referral Phone:
                 <Lock className="h-4 w-4" />
                 <AlertTitle>Lead Creation Disabled</AlertTitle>
                 <AlertDescription>
-                    The lead approval process is currently disabled. Only users in the Founder, Co-Founder, or Finance groups can create new leads.
+                    The lead approval process is currently disabled. Only users with override permissions can create new leads.
                 </AlertDescription>
             </Alert>
         )}
@@ -454,6 +453,31 @@ Referral Phone:
         <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-8 max-w-2xl">
             <fieldset disabled={isFormDisabled}>
+                 <h3 className="text-lg font-semibold border-b pb-2">Verification Document (Optional)</h3>
+                <FormField
+                control={form.control}
+                name="verificationDocument"
+                render={({ field: { onChange, value, ...rest } }) => (
+                    <FormItem>
+                    <FormLabel>Document Upload</FormLabel>
+                    <FormControl>
+                        <Input 
+                        type="file" 
+                        ref={fileInputRef}
+                        accept="image/*,application/pdf"
+                        onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                        {...rest}
+                        />
+                    </FormControl>
+                    <FormDescription>
+                        Upload a supporting document for verification purposes (e.g., ID card, medical report).
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
                 <FormField
                     control={form.control}
                     name="beneficiaryType"
@@ -540,9 +564,7 @@ Referral Phone:
                                         <Check
                                             className={cn(
                                             "mr-2 h-4 w-4",
-                                            user.id === field.value
-                                                ? "opacity-100"
-                                                : "opacity-0"
+                                            user.id === field.value ? "opacity-100" : "opacity-0"
                                             )}
                                         />
                                         {user.name} ({user.phone})
@@ -616,6 +638,7 @@ Referral Phone:
                     </div>
                 )}
                 
+                <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
                 <FormField
                     control={form.control}
                     name="hasReferral"
@@ -1095,29 +1118,6 @@ Referral Phone:
                         )}
                     />
                 )}
-        
-                <FormField
-                control={form.control}
-                name="verificationDocument"
-                render={({ field: { onChange, value, ...rest } }) => (
-                    <FormItem>
-                    <FormLabel>Verification Document</FormLabel>
-                    <FormControl>
-                        <Input 
-                        type="file" 
-                        ref={fileInputRef}
-                        accept="image/*,application/pdf"
-                        onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
-                        {...rest}
-                        />
-                    </FormControl>
-                    <FormDescription>
-                        (Optional) Upload a document for verification purposes (e.g., ID card, medical report).
-                    </FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
         
                 <div className="flex gap-4">
                     <Button type="submit" disabled={isSubmitting}>
