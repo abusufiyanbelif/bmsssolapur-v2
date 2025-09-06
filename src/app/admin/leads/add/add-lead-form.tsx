@@ -177,6 +177,25 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       acceptableDonationTypes: [],
       priority: 'Medium',
       hasReferral: false,
+      newBeneficiaryFirstName: '',
+      newBeneficiaryMiddleName: '',
+      newBeneficiaryLastName: '',
+      newBeneficiaryPhone: '',
+      newBeneficiaryEmail: '',
+      beneficiaryId: '',
+      headline: '',
+      story: '',
+      caseDetails: '',
+      category: '',
+      otherCategoryDetail: '',
+      otherPurposeDetail: '',
+      purpose: undefined,
+      campaignId: 'none',
+      campaignName: '',
+      referredByUserId: '',
+      referredByUserName: '',
+      dueDate: undefined,
+      verificationDocument: undefined,
     },
   });
   
@@ -463,7 +482,7 @@ Referral Phone:
                                 multiple
                                 onChange={handleFileChange}
                             />
-                            <FormDescription>Upload one or more supporting documents (ID, Bill, etc.).</FormDescription>
+                            <FormDescription>Upload one or more supporting documents (ID, Bill, etc.). The first file will be saved as the primary verification document.</FormDescription>
                        </div>
                         
                         {files.length > 0 && (
@@ -509,6 +528,12 @@ Referral Phone:
                                 {isProcessing ? 'Processing...' : 'Generate & Fill from Documents'}
                             </Button>
                         </div>
+                         {rawText && (
+                            <div className="space-y-2 pt-4">
+                                <Label>Extracted Text</Label>
+                                <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-background" />
+                            </div>
+                        )}
                     </div>
                 </AccordionContent>
             </AccordionItem>
@@ -1025,10 +1050,7 @@ Referral Phone:
                                 <FormControl>
                                     <Button
                                     variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
+                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                                     >
                                     {field.value ? (
                                         format(field.value, "PPP")
