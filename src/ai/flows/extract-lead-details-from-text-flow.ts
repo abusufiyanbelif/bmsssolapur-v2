@@ -35,7 +35,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
 
             **Fields to Extract:**
             - headline: A short, one-sentence summary of the case.
-            - story: A detailed narrative of the beneficiary's situation, suitable for public display.
+            - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text.
             - purpose: The primary purpose (e.g., Education, Medical, Relief Fund, Deen, Loan, Other).
             - category: A more specific category if provided (e.g., School Fees, Ration Kit, Hospital Bill).
             - amount: The numeric value of the amount requested.
