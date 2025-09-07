@@ -29,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -200,33 +200,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   });
   
   const handleCancel = () => {
-    form.reset({
-        beneficiaryType: 'existing',
-        isLoan: false,
-        helpRequested: 0,
-        acceptableDonationTypes: [],
-        newBeneficiaryFirstName: '',
-        newBeneficiaryMiddleName: '',
-        newBeneficiaryLastName: '',
-        newBeneficiaryPhone: '',
-        newBeneficiaryEmail: '',
-        beneficiaryId: '',
-        headline: '',
-        story: '',
-        caseDetails: '',
-        category: '',
-        otherCategoryDetail: '',
-        otherPurposeDetail: '',
-        purpose: '',
-        priority: 'Medium',
-        campaignId: 'none',
-        campaignName: '',
-        hasReferral: false,
-        referredByUserId: '',
-        referredByUserName: '',
-        dueDate: undefined,
-        verificationDocument: undefined,
-      });
+    form.reset();
       setSelectedReferralDetails(null);
       setRawText("");
       setFiles([]);
@@ -255,43 +229,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         form.setValue('isLoan', false);
     }
   }, [selectedPurposeName, form]);
-  
-  const handleGenerateTemplate = () => {
-        const template = `
---- LEAD DETAILS ---
-Headline: 
-Purpose: (Education, Medical, Relief Fund, Deen, Loan, Other)
-Category: (e.g., School Fees, Hospital Bill, Ration Kit)
-Amount Requested: 
-Due Date: (DD-MM-YYYY)
-Acceptable Donation Types: (Zakat, Sadaqah, Fitr, Lillah, Kaffarah, Interest)
-Case Details: (The detailed story or reason for the request)
-
---- BENEFICIARY DETAILS ---
-Full Name: 
-Father's Name:
-Beneficiary Type: (e.g., Adult, Family, Kid, Widow)
-Phone: 
-Email:
-Address:
-Occupation:
-Aadhaar Number:
-PAN Number:
-Bank Account Name:
-Bank Account Number:
-Bank IFSC Code:
-UPI IDs: (Comma-separated, e.g., user@upi, 9876543210@ybl)
-
---- REFERRAL DETAILS (IF ANY) ---
-Referral Name: 
-Referral Phone: 
-`.trim();
-        navigator.clipboard.writeText(template);
-        toast({
-            title: "Template Copied!",
-            description: "The lead details template has been copied to your clipboard.",
-        });
-    };
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -1193,7 +1130,7 @@ Referral Phone:
                     <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => {
                         setDuplicateWarning(null);
-                        onSubmit(form.getValues(), true);
+                        form.handleSubmit((values) => onSubmit(values, true))();
                     }}>
                         Yes, Create Anyway
                     </AlertDialogAction>

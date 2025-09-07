@@ -31,27 +31,27 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
         prompt: [
-            { text: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which contains details for a new help request (lead). Your task is to carefully extract the following details. Be precise. If a field is not present in the text, omit it entirely from the output.
+            { text: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, bills, or handwritten notes. Your task is to carefully extract the following details. Be precise. If a field is not present, omit it entirely.
 
             **Fields to Extract:**
-            - headline: A short, one-sentence summary of the case.
+            - headline: A short, one-sentence summary of the case. If not explicit, create one from the story.
             - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text.
             - purpose: The primary purpose (e.g., Education, Medical, Relief Fund, Deen, Loan, Other).
             - category: A more specific category if provided (e.g., School Fees, Ration Kit, Hospital Bill).
             - amount: The numeric value of the amount requested.
             - dueDate: The deadline for funds (Format: YYYY-MM-DD).
             - acceptableDonationTypes: An array of allowed donation types (e.g., ["Zakat", "Sadaqah"]).
-            - caseDetails: The detailed story or reason for the request. Capture the full narrative.
+            - caseDetails: The detailed story or reason for the request. Capture the full narrative for internal review.
             
-            - beneficiaryName: The full name of the person needing help.
-            - fatherName: The beneficiary's father's name.
+            - beneficiaryName: The full name of the person needing help. Look for "Name" or similar labels.
+            - fatherName: The beneficiary's father's name. Look for "S/O", "Son of", or "Father's Name".
             - beneficiaryType: The type of beneficiary (e.g., Adult, Family, Kid, Widow).
             - beneficiaryPhone: The 10-digit phone number of the beneficiary.
             - beneficiaryEmail: The beneficiary's email address.
-            - address: The full address of the beneficiary.
+            - address: The full address of the beneficiary. Look for "Address" or similar labels and combine lines.
             - occupation: The beneficiary's occupation.
-            - aadhaarNumber: The beneficiary's Aadhaar card number.
-            - panNumber: The beneficiary's PAN card number.
+            - aadhaarNumber: The beneficiary's Aadhaar card number (usually a 12-digit number).
+            - panNumber: The beneficiary's PAN card number (usually a 10-character alphanumeric string).
             - bankAccountName: The name on the bank account.
             - bankAccountNumber: The bank account number.
             - bankIfscCode: The bank IFSC code.
