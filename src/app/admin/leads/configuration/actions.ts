@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
@@ -19,12 +20,8 @@ export async function handleUpdateLeadConfiguration(
 ): Promise<FormState> {
   
   try {
-    const currentSettings = await (await import('@/services/app-settings-service')).getAppSettings();
     const updates = {
-      leadConfiguration: {
-        ...currentSettings.leadConfiguration,
-        ...settings,
-      }
+      leadConfiguration: settings,
     };
 
     await updateAppSettings(updates);
