@@ -81,6 +81,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   referredByUserName: z.string().optional(),
   headline: z.string().min(10, "Headline must be at least 10 characters.").max(100, "Headline cannot exceed 100 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
+  diseaseIdentified: z.string().optional(),
   purpose: z.string().min(1, "Purpose is required."),
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
@@ -202,6 +203,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       campaignName: '',
       headline: '',
       story: '',
+      diseaseIdentified: '',
       purpose: '',
       otherPurposeDetail: '',
       category: '',
@@ -238,7 +240,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   
   useEffect(() => {
     const fullName = `${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim();
-    setValue('newBeneficiaryFullName', fullName);
+    setValue('newBeneficiaryFullName', fullName, { shouldDirty: true });
   }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, setValue]);
 
   const availableCategories = useMemo(() => {
@@ -250,9 +252,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
   useEffect(() => {
     if (selectedPurposeName === 'Loan') {
-        form.setValue('isLoan', true);
+        form.setValue('isLoan', true, { shouldDirty: true });
     } else {
-        form.setValue('isLoan', false);
+        form.setValue('isLoan', false, { shouldDirty: true });
     }
   }, [selectedPurposeName, form]);
     
@@ -310,6 +312,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             // Auto-fill all simple fields
             if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
             if (details.story) setValue('story', details.story, { shouldDirty: true });
+            if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
             if (details.purpose) {
                 const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
                 if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
@@ -427,93 +430,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </AlertDescription>
             </Alert>
         )}
-
-        <Accordion type="single" collapsible className="w-full mb-6">
-            <AccordionItem value="item-1">
-                <AccordionTrigger>
-                    <div className="flex items-center gap-2 text-primary">
-                        <FileUp className="h-5 w-5" />
-                        Upload & Scan Documents (Optional)
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                       <div className="space-y-2">
-                           <Label htmlFor="verificationDocument">Attach Documents</Label>
-                            <Input 
-                                id="verificationDocument"
-                                type="file" 
-                                ref={fileInputRef}
-                                accept="image/*,application/pdf"
-                                multiple
-                                onChange={handleFileChange}
-                                className="hidden"
-                            />
-                            <FormDescription>Upload one or more supporting documents (ID, Bill, etc.). The first file will be saved as the primary verification document.</FormDescription>
-                       </div>
-                        
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {files.map((file, index) => {
-                                const isImage = file.type.startsWith('image/');
-                                const zoom = zoomLevels[index] || 1;
-                                return (
-                                    <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
-                                        <div className="w-full h-40 overflow-auto flex items-center justify-center">
-                                                {isImage ? (
-                                                <Image
-                                                    src={URL.createObjectURL(file)}
-                                                    alt={`Preview ${index + 1}`}
-                                                    width={150 * zoom}
-                                                    height={150 * zoom}
-                                                    className="object-contain transition-transform duration-300"
-                                                />
-                                                ) : (
-                                                    <FileIcon className="w-16 h-16 text-muted-foreground" />
-                                                )}
-                                        </div>
-                                        <p className="text-xs text-muted-foreground truncate">{file.name}</p>
-                                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
-                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
-                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
-                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
-                                                <XCircle className="h-4 w-4"/>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="h-48 flex-col gap-2 border-dashed"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                <PlusCircle className="h-8 w-8 text-muted-foreground" />
-                                <span className="text-muted-foreground">Add More Files</span>
-                            </Button>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={files.length === 0 || isExtractingText}>
-                                {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                Get Text from Documents
-                            </Button>
-                            <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
-                                {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                Auto-fill from Text
-                            </Button>
-                        </div>
-                         {rawText && (
-                            <div className="space-y-2 pt-4">
-                                <Label>Extracted Text</Label>
-                                <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
-                            </div>
-                        )}
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-
 
         <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
@@ -681,190 +597,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </div>
                 )}
                 
-                <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
-                <FormField
-                    control={form.control}
-                    name="hasReferral"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                        <Checkbox
-                            checked={field.value}
-                            onCheckedChange={(checked) => {
-                                field.onChange(checked)
-                                if (!checked) {
-                                    form.setValue("referredByUserId", undefined)
-                                    form.setValue("referredByUserName", undefined)
-                                    setSelectedReferralDetails(null)
-                                }
-                            }}
-                        />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                        <FormLabel>
-                            This lead was referred by someone
-                        </FormLabel>
-                        </div>
-                    </FormItem>
-                    )}
-                />
-
-                {hasReferral && (
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                        <FormField
-                            control={form.control}
-                            name="referredByUserId"
-                            render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Select Referral</FormLabel>
-                                <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        className={cn(
-                                        "w-full justify-between bg-background",
-                                        !field.value && "text-muted-foreground"
-                                        )}
-                                    >
-                                        {field.value
-                                        ? potentialReferrals.find(
-                                            (user) => user.id === field.value
-                                            )?.name
-                                        : "Select a referral"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                    <CommandInput placeholder="Search referral..." />
-                                    <CommandList>
-                                        <CommandEmpty>No referrals found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {potentialReferrals.map((user) => (
-                                            <CommandItem
-                                            value={user.name}
-                                            key={user.id}
-                                            onSelect={() => {
-                                                form.setValue("referredByUserId", user.id!);
-                                                form.setValue("referredByUserName", user.name);
-                                                setSelectedReferralDetails(user);
-                                                setReferralPopoverOpen(false);
-                                            }}
-                                            >
-                                            <Check
-                                                className={cn(
-                                                "mr-2 h-4 w-4",
-                                                user.id === field.value
-                                                    ? "opacity-100"
-                                                    : "opacity-0"
-                                                )}
-                                            />
-                                            {user.name} ({user.phone})
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        {selectedReferralDetails && (
-                            <div className="space-y-3 pt-2">
-                                <div className="space-y-1">
-                                    <Label>Referral&apos;s Bank Account</Label>
-                                    <Input value={selectedReferralDetails.bankAccountNumber || 'Not Available'} readOnly disabled />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label>Referral&apos;s UPI IDs</Label>
-                                    {selectedReferralDetails.upiIds && selectedReferralDetails.upiIds.length > 0 ? (
-                                        selectedReferralDetails.upiIds.map((upi, i) => (
-                                            <Input key={i} value={upi} readOnly disabled />
-                                        ))
-                                    ) : (
-                                        <Input value="Not Available" readOnly disabled />
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-
-                <FormField
-                control={form.control}
-                name="campaignId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Link to Campaign (Optional)</FormLabel>
-                    <Select
-                        onValueChange={(value) => {
-                        const selectedCampaign = campaigns.find(c => c.id === value);
-                        field.onChange(value === 'none' ? undefined : value);
-                        form.setValue('campaignName', selectedCampaign?.name || '');
-                        }}
-                        value={field.value}
-                    >
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a campaign" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            {campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled').map((campaign) => (
-                                <SelectItem key={campaign.id} value={campaign.id!}>
-                                {campaign.name} ({campaign.status})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormDescription>Link this lead to a specific fundraising campaign.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                
-                <FormField
-                    control={form.control}
-                    name="headline"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Headline Summary</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Urgent help needed for final year student's fees" {...field} />
-                        </FormControl>
-                        <FormDescription>A short, compelling summary of the case for public display.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-
-                <FormField
-                    control={form.control}
-                    name="story"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Story</FormLabel>
-                        <FormControl>
-                            <Textarea
-                                placeholder="Tell the full story of the beneficiary and their situation. This will be shown on the public case page."
-                                className="resize-y min-h-[150px]"
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormDescription>A detailed narrative for public display.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField
                         control={form.control}
                         name="purpose"
@@ -918,6 +651,94 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         />
                     )}
                 </div>
+
+                <Accordion type="single" collapsible className="w-full mb-6">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>
+                            <div className="flex items-center gap-2 text-primary">
+                                <FileUp className="h-5 w-5" />
+                                Upload & Scan Documents (Optional)
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4">
+                            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                            <div className="space-y-2">
+                                <Label htmlFor="verificationDocument">Attach Documents</Label>
+                                    <Input 
+                                        id="verificationDocument"
+                                        type="file" 
+                                        ref={fileInputRef}
+                                        accept="image/*,application/pdf"
+                                        multiple
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                    />
+                                    <FormDescription>Upload one or more supporting documents (ID, Bill, etc.). The first file will be saved as the primary verification document.</FormDescription>
+                            </div>
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {files.map((file, index) => {
+                                        const isImage = file.type.startsWith('image/');
+                                        const zoom = zoomLevels[index] || 1;
+                                        return (
+                                            <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
+                                                <div className="w-full h-40 overflow-auto flex items-center justify-center">
+                                                        {isImage ? (
+                                                        <Image
+                                                            src={URL.createObjectURL(file)}
+                                                            alt={`Preview ${index + 1}`}
+                                                            width={150 * zoom}
+                                                            height={150 * zoom}
+                                                            className="object-contain transition-transform duration-300"
+                                                        />
+                                                        ) : (
+                                                            <FileIcon className="w-16 h-16 text-muted-foreground" />
+                                                        )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                                                <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
+                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
+                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
+                                                        <XCircle className="h-4 w-4"/>
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="h-48 flex-col gap-2 border-dashed"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                                        <span className="text-muted-foreground">Add More Files</span>
+                                    </Button>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={files.length === 0 || isExtractingText}>
+                                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                        Get Text from Documents
+                                    </Button>
+                                    <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
+                                        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                        Auto-fill from Text
+                                    </Button>
+                                </div>
+                                {rawText && (
+                                    <div className="space-y-2 pt-4">
+                                        <Label>Extracted Text</Label>
+                                        <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
+                                    </div>
+                                )}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+                
+                <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
                 
                 {selectedPurposeName === 'Other' && (
                     <FormField
@@ -950,184 +771,44 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         )}
                     />
                 )}
-                
+
                 <FormField
-                control={form.control}
-                name="acceptableDonationTypes"
-                render={() => (
-                    <FormItem className="space-y-3 p-4 border rounded-lg">
-                    <div className="mb-4">
-                        <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
-                        <FormDescription>
-                        Select which types of donations can be allocated to this lead.
-                        </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {donationTypes.map((type) => (
-                        <FormField
-                            key={type}
-                            control={form.control}
-                            name="acceptableDonationTypes"
-                            render={({ field }) => {
-                            
-                            return (
-                                <FormItem
-                                key={type}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                                >
+                    control={form.control}
+                    name="story"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Story</FormLabel>
+                        <FormControl>
+                            <Textarea
+                                placeholder="Tell the full story of the beneficiary and their situation. This will be shown on the public case page."
+                                className="resize-y min-h-[150px]"
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormDescription>A detailed narrative for public display.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                 {form.watch("purpose") === "Medical" && (
+                    <FormField
+                        control={form.control}
+                        name="diseaseIdentified"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Disease Identified (if any)</FormLabel>
                                 <FormControl>
-                                    <Checkbox
-                                    checked={field.value?.includes(type)}
-                                    onCheckedChange={(checked) => {
-                                        const newValue = checked
-                                        ? [...(field.value || []), type]
-                                        : field.value?.filter((value) => value !== type);
-                                        
-                                        field.onChange(newValue);
-                                    }}
+                                    <Textarea
+                                        placeholder="Enter the specific disease or diagnosis from the medical report."
+                                        {...field}
                                     />
                                 </FormControl>
-                                <FormLabel className="font-normal">
-                                        {type}
-                                    </FormLabel>
-                                    </FormItem>
-                                );
-                                }}
-                            />
-                            ))}
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-        
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                    control={form.control}
-                    name="helpRequested"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Amount Requested</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="Enter amount" {...field} />
-                        </FormControl>
-                        <FormDescription>The total amount of funds needed.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="dueDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Due Date (Optional)</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date < new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormDescription>
-                                The deadline for when funds are needed.
-                            </FormDescription>
-                            <FormMessage />
+                                <FormDescription>This helps in categorizing medical cases accurately.</FormDescription>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div>
-                
-                <FormField
-                    control={form.control}
-                    name="priority"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Priority</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Set a priority level" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {leadPriorities.map(p => (
-                                <SelectItem key={p} value={p}>{p}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormDescription>Set the urgency of this case.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-        
-        
-                <FormField
-                control={form.control}
-                name="caseDetails"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Internal Case Summary</FormLabel>
-                    <FormControl>
-                        <Textarea
-                            placeholder="Provide a brief summary of the case, the reason for the need, and any other relevant information."
-                            className="resize-y min-h-[100px]"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormDescription>Internal notes for administrators. Not visible to the public.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-        
-                {selectedPurposeName === 'Loan' && (
-                    <FormField
-                        control={form.control}
-                        name="isLoan"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                                <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={true}
-                                />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                Is this a repayable loan?
-                                </FormLabel>
-                                <FormDescription>
-                                This is automatically selected if the purpose is &quot;Loan&quot;.
-                                </FormDescription>
-                            </div>
-                            </FormItem>
-                        )}
-                    />
-                )}
+                 )}
         
                 <div className="flex gap-4 pt-6 border-t">
                     <Button type="submit" disabled={isSubmitting}>

@@ -34,13 +34,14 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
 
             **Key Instructions:**
             1.  **Generate a Compelling Story**: Based on all the text, synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience to understand the beneficiary's situation and need for help. Use the "Comment" or "Impression" section of medical reports for this.
-            2.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and incorporate it into the story.
+            2.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field.
             3.  **Extract Beneficiary Details**: Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.". Split this full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. If there are only two names, treat them as first and last.
             4.  **Extract Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name.
 
             **Fields to Extract:**
             - headline: A short, one-sentence summary of the case. If not explicit, create one from the story. For a medical report, it could be "Assistance needed for medical tests and treatment."
             - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text. If a medical condition is present, describe it clearly in the story.
+            - diseaseIdentified: If a medical report, extract the specific disease or diagnosis mentioned (e.g., "Typhoid Fever", "Osteoarthritis").
             - purpose: The primary purpose (e.g., Education, Medical, Relief Fund, Deen, Loan, Other). Infer "Medical" from lab reports or bills.
             - category: A more specific category if provided (e.g., School Fees, Ration Kit, Hospital Bill, Diagnostic Tests).
             - amount: The numeric value of the amount requested.
