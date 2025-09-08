@@ -41,8 +41,10 @@ export async function handleAddLead(
       newBeneficiaryFirstName: formData.get("newBeneficiaryFirstName") as string | undefined,
       newBeneficiaryMiddleName: formData.get("newBeneficiaryMiddleName") as string | undefined,
       newBeneficiaryLastName: formData.get("newBeneficiaryLastName") as string | undefined,
+      newBeneficiaryFatherName: formData.get("newBeneficiaryFatherName") as string | undefined,
       newBeneficiaryPhone: formData.get("newBeneficiaryPhone") as string | undefined,
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
+      newBeneficiaryAadhaar: formData.get("newBeneficiaryAadhaar") as string | undefined,
       campaignId: formData.get("campaignId") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       referredByUserId: formData.get("referredByUserId") as string | undefined,
@@ -87,7 +89,7 @@ export async function handleAddLead(
     let beneficiaryUser: User | null = null;
     
     if (rawFormData.beneficiaryType === 'new') {
-        const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail } = rawFormData;
+        const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName } = rawFormData;
 
         if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone) {
             return { success: false, error: "New beneficiary First Name, Last Name, and Phone number are required." };
@@ -101,8 +103,10 @@ export async function handleAddLead(
                 firstName: newBeneficiaryFirstName,
                 middleName: newBeneficiaryMiddleName || '',
                 lastName: newBeneficiaryLastName,
+                fatherName: newBeneficiaryFatherName || undefined,
                 phone: newBeneficiaryPhone,
                 email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
+                aadhaarNumber: newBeneficiaryAadhaar || undefined,
                 roles: ['Beneficiary'],
                 isActive: true,
                 createdAt: Timestamp.now(),

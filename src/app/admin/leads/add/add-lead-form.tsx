@@ -67,6 +67,8 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   newBeneficiaryFirstName: z.string().optional(),
   newBeneficiaryMiddleName: z.string().optional(),
   newBeneficiaryLastName: z.string().optional(),
+  newBeneficiaryFullName: z.string().optional(),
+  newBeneficiaryFatherName: z.string().optional(),
   newBeneficiaryPhone: z.string().optional(),
   newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
   newBeneficiaryAadhaar: z.string().optional(),
@@ -187,6 +189,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       newBeneficiaryFirstName: '',
       newBeneficiaryMiddleName: '',
       newBeneficiaryLastName: '',
+      newBeneficiaryFullName: '',
+      newBeneficiaryFatherName: '',
       newBeneficiaryPhone: '',
       newBeneficiaryEmail: '',
       newBeneficiaryAadhaar: '',
@@ -231,6 +235,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const newBeneficiaryMiddleName = watch("newBeneficiaryMiddleName");
   const newBeneficiaryLastName = watch("newBeneficiaryLastName");
   
+  useEffect(() => {
+    const fullName = `${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim();
+    setValue('newBeneficiaryFullName', fullName);
+  }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, setValue]);
+
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
       const purpose = leadPurposes.find(p => p.name === selectedPurposeName);
@@ -315,6 +324,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 setValue('newBeneficiaryFirstName', nameParts[0] || '', { shouldDirty: true });
                 setValue('newBeneficiaryLastName', nameParts.slice(1).join(' ') || '', { shouldDirty: true });
             }
+            if(details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
             if (details.beneficiaryPhone) {
                 const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
                 setValue('newBeneficiaryPhone', phone, { shouldDirty: true });
@@ -625,8 +635,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </div>
                         <div className="space-y-2">
                              <Label>Full Name</Label>
-                             <Input readOnly value={`${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim()} className="bg-muted" />
+                             <FormField control={form.control} name="newBeneficiaryFullName" render={({ field }) => (<FormControl><Input readOnly {...field} className="bg-muted" /></FormControl>)} />
                         </div>
+                        <FormField control={form.control} name="newBeneficiaryFatherName" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Name</FormLabel><FormControl><Input placeholder="Father's Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
