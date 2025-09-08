@@ -105,9 +105,11 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     acceptableDonationTypes: z.array(z.string()).optional().describe("A list of donation types, e.g., ['Zakat', 'Sadaqah']."),
     caseDetails: z.string().optional().describe("The detailed reason or story for the help request."),
     // Beneficiary fields
-    beneficiaryName: z.string().optional().describe("The full name of the beneficiary."),
-    beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
+    beneficiaryFirstName: z.string().optional().describe("The beneficiary's first name."),
+    beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
+    beneficiaryLastName: z.string().optional().describe("The beneficiary's last name."),
     fatherName: z.string().optional().describe("The beneficiary's father's name."),
+    beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
     beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
     beneficiaryType: z.string().optional().describe("The type of beneficiary (e.g., Adult, Family, Kid, Widow)."),
     address: z.string().optional().describe("The full address of the beneficiary."),

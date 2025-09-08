@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -319,12 +320,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
             if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
 
-            if (details.beneficiaryName) {
-                const nameParts = details.beneficiaryName.split(' ');
-                setValue('newBeneficiaryFirstName', nameParts[0] || '', { shouldDirty: true });
-                setValue('newBeneficiaryLastName', nameParts.slice(1).join(' ') || '', { shouldDirty: true });
-            }
-            if(details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
+            if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
+            if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
+            if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
+            if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
             if (details.beneficiaryPhone) {
                 const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
                 setValue('newBeneficiaryPhone', phone, { shouldDirty: true });

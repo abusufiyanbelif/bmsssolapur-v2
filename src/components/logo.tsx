@@ -1,9 +1,11 @@
 
 
+"use client";
+
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import { getCurrentOrganization } from '@/services/organization-service';
+import { getCurrentOrganization } from '@/app/admin/settings/actions';
 
 interface LogoProps {
     className?: string;

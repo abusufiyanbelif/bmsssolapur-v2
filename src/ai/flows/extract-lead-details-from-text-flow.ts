@@ -35,9 +35,9 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             **Key Instructions:**
             1.  **Generate a Compelling Story**: Based on all the text, synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience to understand the beneficiary's situation and need for help. Use the "Comment" or "Impression" section of medical reports for this.
             2.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and incorporate it into the story.
-            3.  **Extract Beneficiary Details**: Carefully find the beneficiary's full name (often labeled 'Patient Name' or 'Name'), phone number, and address (from 'Patient location' or similar fields) from the text.
-            4.  **Extract Father's Name**: Look for labels like "S/O" or "Son of" to find the father's name.
-            
+            3.  **Extract Beneficiary Details**: Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name", "Mr.", "Mrs.", "Miss". Split this full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. If there are only two names, treat them as first and last.
+            4.  **Extract Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name.
+
             **Fields to Extract:**
             - headline: A short, one-sentence summary of the case. If not explicit, create one from the story. For a medical report, it could be "Assistance needed for medical tests and treatment."
             - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text. If a medical condition is present, describe it clearly in the story.
@@ -48,9 +48,11 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - acceptableDonationTypes: An array of allowed donation types (e.g., ["Zakat", "Sadaqah"]).
             - caseDetails: The detailed story or reason for the request. Capture the full narrative for internal review.
             
-            - beneficiaryName: The full name of the person needing help. Look for "Name" or "Patient Name" or similar labels.
-            - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
+            - beneficiaryFirstName: The beneficiary's first name.
+            - beneficiaryMiddleName: The beneficiary's middle name, if present.
+            - beneficiaryLastName: The beneficiary's last name.
             - fatherName: The beneficiary's father's name. Look for "S/O", "Son of", or "Father's Name".
+            - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
             - beneficiaryEmail: The beneficiary's email address.
             - beneficiaryType: The type of beneficiary (e.g., Adult, Family, Kid, Widow).
             - address: The full address of the beneficiary. Look for "Address" or "Patient location" or similar labels and combine lines.

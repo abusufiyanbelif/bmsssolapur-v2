@@ -7,7 +7,7 @@
 import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs, where, Timestamp } from 'firebase/firestore';
 import { db } from './firebase'; // Use client-side SDK
 import type { Organization, OrganizationFooter } from './types';
-import { updatePublicOrganization } from './public-data-service';
+import { getAdminDb } from './firebase-admin';
 
 
 // Re-export types for backward compatibility
@@ -49,7 +49,7 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
     await setDoc(orgRef, newOrganization);
 
     // Sync with public collection
-    await updatePublicOrganization(newOrganization);
+    // await updatePublicOrganization(newOrganization); // This must be called from a server context
 
     return newOrganization;
   } catch (error) {
@@ -78,33 +78,6 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
   }
 };
 
-// For now, we will assume one organization for simplicity. This can be expanded later.
-export const getCurrentOrganization = async (): Promise<Organization | null> => {
-    try {
-        const orgQuery = query(collection(db, ORGANIZATIONS_COLLECTION), limit(1));
-        const querySnapshot = await getDocs(orgQuery);
-        if (!querySnapshot.empty) {
-            const docSnap = querySnapshot.docs[0];
-            const data = docSnap.data();
-            return { 
-                id: docSnap.id, 
-                ...data,
-                createdAt: (data.createdAt as Timestamp)?.toDate(),
-                updatedAt: (data.updatedAt as Timestamp)?.toDate(),
-            } as Organization;
-        }
-        return null;
-    } catch (error) {
-        if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
-            console.warn("Firestore permission error in getCurrentOrganization. This may be an expected error if the database has not been seeded yet. Please check IAM roles if this persists. Returning null.");
-            return null; 
-        }
-        console.error('Error getting current organization: ', error);
-        return null;
-    }
-}
-
-
 // Function to update an organization
 export const updateOrganization = async (id: string, updates: Partial<Omit<Organization, 'id' | 'createdAt'>>) => {
   try {
@@ -117,7 +90,6 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
     // After updating, get the full document and sync it to the public collection
     const updatedOrg = await getOrganization(id);
     if (updatedOrg) {
-        // This function uses firebase-admin, so it can only be called from a server context.
         // The calling server action is responsible for this.
         // await updatePublicOrganization(updatedOrg);
     }
@@ -139,3 +111,30 @@ export const updateOrganizationFooter = async (id: string, footerData: Organizat
         throw new Error('Failed to update organization footer.');
     }
 };
+
+// For now, we will assume one organization for simplicity. This can be expanded later.
+export const getCurrentOrganization = async (): Promise<Organization | null> => {
+    try {
+        const adminDb = getAdminDb();
+        const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
+        const querySnapshot = await orgQuery.get();
+        if (!querySnapshot.empty) {
+            const docSnap = querySnapshot.docs[0];
+            const data = docSnap.data();
+            return { 
+                id: docSnap.id, 
+                ...data,
+                createdAt: (data.createdAt as Timestamp)?.toDate(),
+                updatedAt: (data.updatedAt as Timestamp)?.toDate(),
+            } as Organization;
+        }
+        return null;
+    } catch (error) {
+        if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
+            console.warn("Firestore permission error in getCurrentOrganization. This may be an expected error if the database has not been seeded yet. Please check IAM roles. Returning null.");
+            return null; 
+        }
+        console.error('Error getting current organization: ', error);
+        return null;
+    }
+}
