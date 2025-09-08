@@ -57,11 +57,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
+const degreeOptions = ['SSC', 'HSC', 'B.A.', 'B.Com', 'B.Sc.', 'B.E.', 'MBBS', 'B.Pharm', 'D.Pharm', 'BUMS', 'BHMS', 'Other'];
+const schoolYearOptions = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const collegeYearOptions = ['First Year', 'Second Year', 'Third Year', 'Final Year'];
+
 
 const FileUploadField = ({ name, label, control, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, isEditing?: boolean }) => {
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const { setValue } = useFormContext();
+    const { setValue } = useForm<any>();
 
     useEffect(() => {
         if (file) {
@@ -132,6 +136,8 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
+  degree: z.string().optional(),
+  year: z.string().optional(),
   priority: z.enum(leadPriorities),
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
@@ -423,6 +429,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       });
     }
   }
+  
+  const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
+  const yearOptions = selectedCategory === 'School Fees' ? schoolYearOptions : collegeYearOptions;
 
   return (
     <>
@@ -524,6 +533,31 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             </FormItem>
                         )}
                     />
+                )}
+                
+                 {showEducationFields && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField control={form.control} name="degree" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Degree/Class</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree" /></SelectTrigger></FormControl>
+                                    <SelectContent>{degreeOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <FormField control={form.control} name="year" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Year</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
+                                    <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
                 )}
                  
                  <Accordion type="single" collapsible className="w-full">
@@ -730,7 +764,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 )}
                  
                  <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
-                 <FormField
+                  <FormField
                     control={form.control}
                     name="story"
                     render={({ field }) => (
