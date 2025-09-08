@@ -300,6 +300,7 @@ export interface OrganizationFooter {
 export interface Organization {
     id: string;
     name: string;
+    logoUrl?: string;
     address: string;
     city: string;
     registrationNumber: string;

@@ -2,16 +2,30 @@
 
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { getCurrentOrganization } from '@/services/organization-service';
 
 interface LogoProps {
     className?: string;
 }
 
 export function Logo({ className }: LogoProps) {
+  const [logoUrl, setLogoUrl] = useState("https://picsum.photos/seed/logo/128/128");
+
+  useEffect(() => {
+      const fetchLogo = async () => {
+          const org = await getCurrentOrganization();
+          if (org?.logoUrl) {
+              setLogoUrl(org.logoUrl);
+          }
+      };
+      fetchLogo();
+  }, []);
+
   return (
     <div className={cn("relative", className)}>
       <Image
-        src="https://picsum.photos/seed/logo/128/128"
+        src={logoUrl}
         alt="Baitul Mal Samajik Sanstha (Solapur) Logo"
         fill
         sizes="56px"

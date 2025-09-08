@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   name: z.string().min(1, "Organization name is required."),
+  logoUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   address: z.string().min(1, "Address is required."),
   city: z.string().min(1, "City is required."),
   registrationNumber: z.string().min(1, "Registration number is required."),
@@ -57,6 +58,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: organization.name,
+      logoUrl: organization.logoUrl || '',
       address: organization.address,
       city: organization.city,
       registrationNumber: organization.registrationNumber,
@@ -78,6 +80,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
   const handleCancel = () => {
     reset({
       name: organization.name,
+      logoUrl: organization.logoUrl || '',
       address: organization.address,
       city: organization.city,
       registrationNumber: organization.registrationNumber,
@@ -159,6 +162,20 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                                     <FormControl>
                                         <Input {...field} disabled={!isEditing} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="logoUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Logo URL</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={!isEditing} placeholder="https://storage.googleapis.com/..." />
+                                    </FormControl>
+                                    <FormDescription>Paste the public URL of your logo from Firebase Storage.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}

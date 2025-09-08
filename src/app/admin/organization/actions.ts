@@ -33,6 +33,7 @@ export async function handleUpdateOrganization(
 
     const updates: Partial<Organization> = {
         name: formData.get('name') as string,
+        logoUrl: formData.get('logoUrl') as string,
         address: formData.get('address') as string,
         city: formData.get('city') as string,
         registrationNumber: formData.get('registrationNumber') as string,
