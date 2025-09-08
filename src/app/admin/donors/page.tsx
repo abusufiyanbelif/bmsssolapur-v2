@@ -144,7 +144,14 @@ function DonorsPageContent() {
 
     const filteredDonors = useMemo(() => {
         let filtered = donors.filter(user => {
-            const nameMatch = appliedFilters.name === '' || user.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            const searchTerm = appliedFilters.name.toLowerCase();
+            const nameMatch = appliedFilters.name === '' ||
+                user.name.toLowerCase().includes(searchTerm) ||
+                (user.phone && user.phone.includes(searchTerm)) ||
+                (user.aadhaarNumber && user.aadhaarNumber.includes(searchTerm)) ||
+                (user.panNumber && user.panNumber.toLowerCase().includes(searchTerm)) ||
+                (user.upiIds && user.upiIds.some(id => id.toLowerCase().includes(searchTerm)));
+            
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
             const anonymityMatch = appliedFilters.anonymity === 'all' ||
                 (appliedFilters.anonymity === 'anonymous' && user.isAnonymousAsDonor) ||
@@ -503,10 +510,10 @@ function DonorsPageContent() {
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
                     <div className="space-y-2 lg:col-span-2">
-                        <Label htmlFor="nameFilter">Donor Name</Label>
+                        <Label htmlFor="nameFilter">Search by Name, Phone, Aadhaar, etc.</Label>
                         <Input 
                             id="nameFilter" 
-                            placeholder="Filter by name..." 
+                            placeholder="Enter search term..." 
                             value={nameInput}
                             onChange={e => setNameInput(e.target.value)}
                         />

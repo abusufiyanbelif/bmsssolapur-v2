@@ -216,7 +216,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
   const hasReferral = form.watch("hasReferral");
-
+  const caseAction = form.watch("caseAction");
+  const caseVerification = form.watch("verifiedStatus");
+  
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
       const purpose = leadPurposes.find(p => p.name === selectedPurposeName);
@@ -519,7 +521,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                         <CommandGroup>
                                         {potentialBeneficiaries.map((user) => (
                                             <CommandItem
-                                            value={user.name}
+                                            value={`${user.name} ${user.phone} ${user.aadhaarNumber} ${user.panNumber} ${user.upiIds?.join(' ')}`}
                                             key={user.id}
                                             onSelect={() => {
                                                 form.setValue("beneficiaryId", user.id!);
