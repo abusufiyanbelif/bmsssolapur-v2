@@ -67,6 +67,7 @@ const formSchema = z.object({
   newBeneficiaryLastName: z.string().optional(),
   newBeneficiaryPhone: z.string().optional(),
   newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
+  newBeneficiaryAadhaar: z.string().optional(),
   
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
@@ -178,6 +179,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       newBeneficiaryLastName: '',
       newBeneficiaryPhone: '',
       newBeneficiaryEmail: '',
+      newBeneficiaryAadhaar: '',
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -332,6 +334,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if(values.newBeneficiaryLastName) formData.append("newBeneficiaryLastName", values.newBeneficiaryLastName);
     if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
+    if(values.newBeneficiaryAadhaar) formData.append("aadhaarNumber", values.newBeneficiaryAadhaar);
     if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     if(values.hasReferral && values.referredByUserId) {
@@ -601,6 +604,19 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 )}
                             />
                         </div>
+                        <FormField
+                            control={form.control}
+                            name="newBeneficiaryAadhaar"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Aadhaar Number</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
                     </div>
                 )}
                 
@@ -1105,7 +1121,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   );
 }
 
-export function AddLeadForm(props: AddLeadFormProps) {
+export function AddLeadForm(props: { settings: AppSettings }) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />
