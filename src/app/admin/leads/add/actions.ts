@@ -66,6 +66,8 @@ export async function handleAddLead(
       otherDocument1: formData.get("otherDocument1") as File | null,
       otherDocument2: formData.get("otherDocument2") as File | null,
       forceCreate: formData.get("forceCreate") === 'true',
+      degree: formData.get("degree") as string | undefined,
+      year: formData.get("year") as string | undefined,
   };
   
   if (!rawFormData.purpose || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
@@ -169,7 +171,9 @@ export async function handleAddLead(
         dateCreated: Timestamp.now(),
         dueDate: rawFormData.dueDate ? Timestamp.fromDate(rawFormData.dueDate) : undefined,
         isLoan: rawFormData.isLoan,
-        source: 'Manual Entry'
+        source: 'Manual Entry',
+        degree: rawFormData.degree,
+        year: rawFormData.year,
     };
 
     const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });

@@ -94,6 +94,8 @@ export async function handleUpdateLead(
         status: status,
         caseAction: caseAction,
         verifiedStatus: verifiedStatus,
+        degree: rawFormData.degree as string | undefined,
+        year: rawFormData.year as string | undefined,
     };
     
     const changes = getChangedFields(lead, updates);

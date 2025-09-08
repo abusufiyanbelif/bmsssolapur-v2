@@ -137,6 +137,14 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                 </div>
                             )}
 
+                            {lead.purpose === 'Education' && (lead.degree || lead.year) && (
+                                <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                    {lead.degree && <div><span className="font-semibold">Degree/Class: </span>{lead.degree}</div>}
+                                    {lead.year && <div><span className="font-semibold">Year: </span>{lead.year}</div>}
+                                </div>
+                            )}
+
+
                             <div className="flex flex-wrap gap-4 text-sm">
                                 <div className="flex items-center">
                                     <span className="text-muted-foreground mr-2">Case Action:</span> 

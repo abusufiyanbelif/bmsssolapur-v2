@@ -48,6 +48,9 @@ const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified
 const leadActions: LeadAction[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
+const degreeOptions = ['SSC', 'HSC', 'B.A.', 'B.Com', 'B.Sc.', 'B.E.', 'MBBS', 'B.Pharm', 'D.Pharm', 'BUMS', 'BHMS', 'Other'];
+const schoolYearOptions = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const collegeYearOptions = ['First Year', 'Second Year', 'Third Year', 'Final Year'];
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other' | 'Loan'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
@@ -71,6 +74,8 @@ const formSchema = z.object({
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
+  degree: z.string().optional(),
+  year: z.string().optional(),
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
@@ -148,6 +153,8 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       otherPurposeDetail: lead.otherPurposeDetail || '',
       category: lead.category || '',
       otherCategoryDetail: lead.otherCategoryDetail || '',
+      degree: lead.degree || '',
+      year: lead.year || '',
       acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
       dueDate: lead.dueDate ? lead.dueDate : undefined,
@@ -180,6 +187,8 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         otherPurposeDetail: lead.otherPurposeDetail || '',
         category: lead.category || '',
         otherCategoryDetail: lead.otherCategoryDetail || '',
+        degree: lead.degree || '',
+        year: lead.year || '',
         acceptableDonationTypes: lead.acceptableDonationTypes || [],
         helpRequested: lead.helpRequested,
         dueDate: lead.dueDate ? lead.dueDate : undefined,
@@ -244,6 +253,8 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     formData.append("caseAction", values.caseAction || 'Pending');
     formData.append("verifiedStatus", values.verifiedStatus);
     if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
+    if (values.degree) formData.append("degree", values.degree);
+    if (values.year) formData.append("year", values.year);
     
     const result = await handleUpdateLead(lead.id!, formData, adminUserId);
 
@@ -264,6 +275,9 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       });
     }
   }
+  
+  const showEducationFields = selectedPurpose === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
+  const yearOptions = selectedCategory === 'School Fees' ? schoolYearOptions : collegeYearOptions;
 
   return (
      <Card>
@@ -556,6 +570,32 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         )}
                     />
                 )}
+
+                 {showEducationFields && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField control={form.control} name="degree" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Degree/Class</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree" /></SelectTrigger></FormControl>
+                                    <SelectContent>{degreeOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <FormField control={form.control} name="year" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Year</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
+                                    <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
+                )}
+
 
                 <FormField
                   control={form.control}
