@@ -97,6 +97,7 @@ export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsF
 export const ExtractLeadDetailsOutputSchema = z.object({
     // Lead fields
     headline: z.string().optional().describe("A short, one-sentence summary of the case."),
+    story: z.string().optional().describe("A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text."),
     purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical)."),
     category: z.string().optional().describe("The specific category for the purpose (e.g., School Fees, Hospital Bill)."),
     amount: z.number().optional().describe("The amount requested."),
@@ -125,10 +126,9 @@ export type ExtractLeadDetailsOutput = z.infer<typeof ExtractLeadDetailsOutputSc
 
 // Schema for extracting raw text from an image
 export const ExtractRawTextInputSchema = z.object({
-  photoDataUri: z
-    .string()
+  photoDataUris: z.array(z.string())
     .describe(
-      "A photo of a document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "An array of photos of documents, as data URIs that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 export type ExtractRawTextInput = z.infer<typeof ExtractRawTextInputSchema>;

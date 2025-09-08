@@ -30,12 +30,12 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
-        prompt: [
-            { text: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, or handwritten notes. Your task is to carefully extract the following details. Be precise. If a field is not present, omit it entirely.
+        prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, or handwritten notes. Your task is to carefully extract the following details. Be precise. If a field is not present, omit it entirely.
 
             **Key Instructions:**
             1.  **Generate a Compelling Story**: Based on all the text, synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience to understand the beneficiary's situation and need for help.
             2.  **Identify Medical Conditions**: If the text is a medical document, identify the specific disease, diagnosis, or medical condition mentioned and incorporate it into the story.
+            3. **Extract Beneficiary Details**: Carefully find the beneficiary's full name, phone number, and address from the text.
             
             **Fields to Extract:**
             - headline: A short, one-sentence summary of the case. If not explicit, create one from the story.
@@ -48,10 +48,10 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - caseDetails: The detailed story or reason for the request. Capture the full narrative for internal review.
             
             - beneficiaryName: The full name of the person needing help. Look for "Name" or similar labels.
+            - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
             - fatherName: The beneficiary's father's name. Look for "S/O", "Son of", or "Father's Name".
-            - beneficiaryType: The type of beneficiary (e.g., Adult, Family, Kid, Widow).
-            - beneficiaryPhone: The 10-digit phone number of the beneficiary.
             - beneficiaryEmail: The beneficiary's email address.
+            - beneficiaryType: The type of beneficiary (e.g., Adult, Family, Kid, Widow).
             - address: The full address of the beneficiary. Look for "Address" or similar labels and combine lines.
             - occupation: The beneficiary's occupation.
             - aadhaarNumber: The beneficiary's Aadhaar card number (usually a 12-digit number).
@@ -68,8 +68,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             ---
             ${input.rawText}
             ---
-            ` },
-        ],
+            `,
         output: {
             schema: ExtractLeadDetailsOutputSchema
         }
@@ -84,3 +83,4 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
+

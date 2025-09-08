@@ -222,11 +222,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       }
   };
 
-  const { formState: { isValid }, setValue } = form;
-  const selectedPurposeName = form.watch("purpose");
-  const selectedCategory = form.watch("category");
-  const beneficiaryType = form.watch("beneficiaryType");
-  const hasReferral = form.watch("hasReferral");
+  const { formState: { isValid }, setValue, watch, getValues } = form;
+  const selectedPurposeName = watch("purpose");
+  const selectedCategory = watch("category");
+  const beneficiaryType = watch("beneficiaryType");
+  const hasReferral = watch("hasReferral");
+  const newBeneficiaryFirstName = watch("newBeneficiaryFirstName");
+  const newBeneficiaryMiddleName = watch("newBeneficiaryMiddleName");
+  const newBeneficiaryLastName = watch("newBeneficiaryLastName");
   
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
@@ -258,20 +261,23 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         setIsExtractingText(true);
 
         try {
-            const textPromises = files.map(file => {
-                const formData = new FormData();
-                formData.append("imageFile", file);
-                return getRawTextFromImage(formData);
+            const fileReadPromises = files.map(file => {
+                return new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
+                });
             });
+            const dataUris = await Promise.all(fileReadPromises);
 
-            const textResults = await Promise.all(textPromises);
-            const combinedText = textResults.map(r => r.rawText || '').join('\n\n---\n\n');
-            setRawText(combinedText);
-            
-            if (!combinedText.trim()) {
-                 toast({ variant: 'destructive', title: 'Extraction Failed', description: 'Could not extract any text from the documents.' });
-            } else {
+            const result = await getRawTextFromImage({ photoDataUris: dataUris });
+
+            if (result.success && result.rawText) {
+                setRawText(result.rawText);
                  toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+            } else {
+                 toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text from the documents.' });
             }
         } catch (e) {
             toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
@@ -290,39 +296,31 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             
         if (analysisResult.success && analysisResult.details) {
             const details = analysisResult.details;
-                // Auto-fill all simple fields
-            if (details.headline) setValue('headline', details.headline);
-            if (details.story) setValue('story', details.story);
+            // Auto-fill all simple fields
+            if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
+            if (details.story) setValue('story', details.story, { shouldDirty: true });
             if (details.purpose) {
                 const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
-                if (matchingPurpose) setValue('purpose', matchingPurpose.name);
+                if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
             }
-            if (details.category) setValue('category', details.category);
-            if (details.amount) setValue('helpRequested', details.amount);
-            if (details.dueDate) setValue('dueDate', new Date(details.dueDate));
-            if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes);
-            if (details.caseDetails) setValue('caseDetails', details.caseDetails);
+            if (details.category) setValue('category', details.category, { shouldDirty: true });
+            if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
+            if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
+            if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
+            if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
 
+            if (details.beneficiaryName) {
+                const nameParts = details.beneficiaryName.split(' ');
+                setValue('newBeneficiaryFirstName', nameParts[0] || '', { shouldDirty: true });
+                setValue('newBeneficiaryLastName', nameParts.slice(1).join(' ') || '', { shouldDirty: true });
+            }
             if (details.beneficiaryPhone) {
                 const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-                setValue('newBeneficiaryPhone', phone);
-                const existingUser = await getUserByPhone(phone);
-                if (existingUser) {
-                    setValue('beneficiaryType', 'existing');
-                    setValue('beneficiaryId', existingUser.id);
-                    toast({ title: "Existing Beneficiary Found", description: `${existingUser.name} has been selected. Their details will be used.`});
-                } else {
-                    setValue('beneficiaryType', 'new');
-                        if (details.beneficiaryName) {
-                        const nameParts = details.beneficiaryName.split(' ');
-                        setValue('newBeneficiaryFirstName', nameParts[0] || '');
-                        setValue('newBeneficiaryLastName', nameParts.slice(1).join(' ') || '');
-                    }
-                    toast({ title: "New Beneficiary", description: "No existing user found with this phone number. A new profile will be created."});
-                }
-            } else {
-                    setValue('beneficiaryType', 'new');
+                setValue('newBeneficiaryPhone', phone, { shouldDirty: true });
             }
+             if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber, { shouldDirty: true });
+
+            setValue('beneficiaryType', 'new', { shouldDirty: true });
             
             toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
         } else {
@@ -352,7 +350,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if(values.newBeneficiaryLastName) formData.append("newBeneficiaryLastName", values.newBeneficiaryLastName);
     if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
-    if(values.newBeneficiaryAadhaar) formData.append("aadhaarNumber", values.newBeneficiaryAadhaar);
+    if(values.newBeneficiaryAadhaar) formData.append("newBeneficiaryAadhaar", values.newBeneficiaryAadhaar);
     if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
     if(values.campaignName) formData.append("campaignName", values.campaignName);
     if(values.hasReferral && values.referredByUserId) {
@@ -618,6 +616,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     <FormMessage />
                                 </FormItem>
                             )} />
+                        </div>
+                        <div className="space-y-2">
+                             <Label>Full Name</Label>
+                             <Input readOnly value={`${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim()} className="bg-muted" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
