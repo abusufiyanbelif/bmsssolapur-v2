@@ -365,6 +365,10 @@ export interface LeadPurpose {
     categories?: PurposeCategory[];
 }
 
+export interface UserConfiguration {
+    isAadhaarMandatory?: boolean;
+}
+
 export interface DashboardSettings {
     mainMetrics: CardVisibility;
     fundsInHand: CardVisibility;
@@ -458,6 +462,7 @@ export interface AppSettings {
         leadCreatorRoles?: UserRole[];
         allowBeneficiaryRequests?: boolean;
     };
+    userConfiguration?: UserConfiguration;
     dashboard?: DashboardSettings;
     analyticsDashboard?: AnalyticsDashboardSettings;
     updatedAt?: FieldValue;

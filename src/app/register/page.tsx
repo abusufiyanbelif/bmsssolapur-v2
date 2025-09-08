@@ -1,8 +1,12 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegisterForm } from "./register-form";
+import { getAppSettings } from "@/services/app-settings-service";
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+    const settings = await getAppSettings();
+
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
             <Card className="w-full max-w-lg">
@@ -13,7 +17,7 @@ export default function RegisterPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RegisterForm />
+                    <RegisterForm settings={settings} />
                 </CardContent>
             </Card>
         </div>

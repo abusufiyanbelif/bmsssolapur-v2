@@ -13,13 +13,17 @@ import { useState } from "react";
 import { handleRegister } from "./actions";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle, UserPlus, PlusCircle, Trash2 } from "lucide-react";
+import type { AppSettings } from "@/services/types";
 
-const formSchema = z.object({
+const createRegisterFormSchema = (isAadhaarMandatory: boolean) => z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   lastName: z.string().min(1, "Last name is required."),
   email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
+  aadhaarNumber: isAadhaarMandatory
+    ? z.string().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits.")
+    : z.string().optional(),
   bankAccountName: z.string().optional(),
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
@@ -28,12 +32,20 @@ const formSchema = z.object({
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
-type RegisterFormValues = z.infer<typeof formSchema>;
 
-export function RegisterForm() {
+type RegisterFormValues = z.infer<ReturnType<typeof createRegisterFormSchema>>;
+
+interface RegisterFormProps {
+    settings: AppSettings;
+}
+
+export function RegisterForm({ settings }: RegisterFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const isAadhaarMandatory = settings.userConfiguration?.isAadhaarMandatory || false;
+  const formSchema = createRegisterFormSchema(isAadhaarMandatory);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(formSchema),
@@ -43,6 +55,7 @@ export function RegisterForm() {
       email: "",
       phone: "",
       password: "",
+      aadhaarNumber: "",
       upiIds: [{ value: "" }],
     },
   });
@@ -55,18 +68,12 @@ export function RegisterForm() {
   const onSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     const formData = new FormData();
-    formData.append("firstName", values.firstName);
-    formData.append("lastName", values.lastName);
-    if(values.email) formData.append("email", values.email);
-    formData.append("phone", values.phone);
-    formData.append("password", values.password);
-    if(values.bankAccountName) formData.append("bankAccountName", values.bankAccountName);
-    if(values.bankName) formData.append("bankName", values.bankName);
-    if(values.bankAccountNumber) formData.append("bankAccountNumber", values.bankAccountNumber);
-    if(values.bankIfscCode) formData.append("bankIfscCode", values.bankIfscCode);
-    if(values.upiPhone) formData.append("upiPhone", values.upiPhone);
-    values.upiIds?.forEach(upi => {
-        if(upi.value) formData.append("upiIds", upi.value);
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === 'upiIds' && Array.isArray(value)) {
+        value.forEach(item => item.value && formData.append('upiIds', item.value));
+      } else if (value) {
+        formData.append(key, String(value));
+      }
     });
 
     const result = await handleRegister(formData);
@@ -161,6 +168,19 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
+        <FormField
+            control={form.control}
+            name="aadhaarNumber"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Aadhaar Number {isAadhaarMandatory && <span className="text-destructive">*</span>}</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
 
         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Payment Details (Optional)</h3>
          <FormField
@@ -278,4 +298,3 @@ export function RegisterForm() {
     </Form>
   );
 }
-

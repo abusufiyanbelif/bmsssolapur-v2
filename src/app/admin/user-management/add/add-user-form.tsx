@@ -23,7 +23,7 @@ import { useState, useEffect, Suspense, useCallback } from "react";
 import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { User, UserRole } from "@/services/types";
+import type { User, UserRole, AppSettings } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from "@/hooks/use-debounce";
@@ -56,7 +56,7 @@ const states = [
     { name: "Telangana", cities: ["Hyderabad", "Warangal", "Nizamabad"] },
 ];
 
-const formSchema = z.object({
+const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   userId: z.string().min(3, "User ID must be at least 3 characters."),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
@@ -82,7 +82,9 @@ const formSchema = z.object({
   familyMembers: z.coerce.number().optional(),
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
-  aadhaarNumber: z.string().optional(),
+  aadhaarNumber: isAadhaarMandatory
+    ? z.string().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits.")
+    : z.string().optional(),
   bankAccountName: z.string().optional(),
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
@@ -92,7 +94,7 @@ const formSchema = z.object({
 });
 
 
-type AddUserFormValues = z.infer<typeof formSchema>;
+type AddUserFormValues = z.infer<returnType<typeof createFormSchema>>;
 
 type AvailabilityState = {
     isChecking: boolean;
@@ -144,8 +146,12 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
     return null;
 }
 
+interface AddUserFormProps {
+    settings: AppSettings;
+}
 
-function AddUserFormContent() {
+
+function AddUserFormContent({ settings }: AddUserFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -161,6 +167,9 @@ function AddUserFormContent() {
   const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
   const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
   const [scannedRawText, setScannedRawText] = useState<string | null>(null);
+  
+  const isAadhaarMandatory = settings.userConfiguration?.isAadhaarMandatory || false;
+  const formSchema = createFormSchema(isAadhaarMandatory);
 
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
@@ -189,6 +198,16 @@ function AddUserFormContent() {
       city: 'Solapur',
       country: 'India',
       upiIds: [{ value: "" }],
+      occupation: '',
+      addressLine1: '',
+      pincode: '',
+      panNumber: '',
+      aadhaarNumber: '',
+      bankAccountName: '',
+      bankName: '',
+      bankAccountNumber: '',
+      bankIfscCode: '',
+      upiPhone: ''
     },
   });
 
@@ -785,7 +804,7 @@ function AddUserFormContent() {
             name="aadhaarNumber"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Aadhaar Number (Optional)</FormLabel>
+                <FormLabel>Aadhaar Number {isAadhaarMandatory && <span className="text-destructive">*</span>}</FormLabel>
                 <FormControl>
                     <Input placeholder="Enter Aadhaar number" {...field} />
                 </FormControl>
@@ -923,10 +942,10 @@ function AddUserFormContent() {
   );
 }
 
-export function AddUserForm() {
+export function AddUserForm(props: { settings: AppSettings }) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
-            <AddUserFormContent />
+            <AddUserFormContent {...props} />
         </Suspense>
     )
 }
