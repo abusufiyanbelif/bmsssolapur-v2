@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -307,6 +308,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             
         if (analysisResult.success && analysisResult.details) {
             const details = analysisResult.details;
+            
             // Auto-fill all simple fields
             if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
             if (details.story) setValue('story', details.story, { shouldDirty: true });
@@ -329,7 +331,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
                 setValue('newBeneficiaryPhone', phone, { shouldDirty: true });
             }
-             if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber, { shouldDirty: true });
+             if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true });
 
             setValue('beneficiaryType', 'new', { shouldDirty: true });
             
@@ -359,6 +361,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if(values.newBeneficiaryFirstName) formData.append("newBeneficiaryFirstName", values.newBeneficiaryFirstName);
     if(values.newBeneficiaryMiddleName) formData.append("newBeneficiaryMiddleName", values.newBeneficiaryMiddleName);
     if(values.newBeneficiaryLastName) formData.append("newBeneficiaryLastName", values.newBeneficiaryLastName);
+    if(values.newBeneficiaryFatherName) formData.append("newBeneficiaryFatherName", values.newBeneficiaryFatherName);
     if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
     if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
     if(values.newBeneficiaryAadhaar) formData.append("newBeneficiaryAadhaar", values.newBeneficiaryAadhaar);
@@ -524,7 +527,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
                                 <FileUp className="h-5 w-5" />
-                                Upload &amp; Scan Documents (Optional)
+                                Upload & Scan Documents (Optional)
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
