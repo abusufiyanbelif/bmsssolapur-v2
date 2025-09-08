@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -217,6 +216,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       setSelectedReferralDetails(null);
       setRawText("");
       setFiles([]);
+      setZoomLevels({});
       if (fileInputRef.current) {
           fileInputRef.current.value = "";
       }
@@ -444,24 +444,27 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 const zoom = zoomLevels[index] || 1;
                                 return (
                                     <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
-                                        <div className="w-full h-40 overflow-hidden flex items-center justify-center">
+                                        <div className="w-full h-40 overflow-auto flex items-center justify-center">
                                                 {isImage ? (
                                                 <Image
                                                     src={URL.createObjectURL(file)}
                                                     alt={`Preview ${index + 1}`}
-                                                    width={150}
-                                                    height={150}
+                                                    width={150 * zoom}
+                                                    height={150 * zoom}
                                                     className="object-contain transition-transform duration-300"
-                                                    style={{ transform: `scale(${zoom})` }}
                                                 />
                                                 ) : (
                                                     <FileIcon className="w-16 h-16 text-muted-foreground" />
                                                 )}
                                         </div>
                                         <p className="text-xs text-muted-foreground truncate">{file.name}</p>
-                                        <Button type="button" size="icon" variant="ghost" className="absolute top-1 right-1 h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
-                                            <XCircle className="h-4 w-4"/>
-                                        </Button>
+                                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
+                                                <XCircle className="h-4 w-4"/>
+                                            </Button>
+                                        </div>
                                     </div>
                                 )
                             })}
@@ -1164,7 +1167,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   );
 }
 
-export function AddLeadForm(props: AddLeadFormProps) {
+export function AddLeadForm(props: { users: User[], campaigns: Campaign[], settings: AppSettings }) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />
