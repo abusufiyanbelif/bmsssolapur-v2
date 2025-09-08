@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -205,25 +204,23 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                         <AccordionItem key={purpose.id} value={purpose.id}>
                             <div className="flex items-center pr-4">
                                 <AccordionTrigger className="flex-grow">
-                                    <div className="flex items-center gap-4">
-                                        <FormLabel className="text-base">{purpose.name}</FormLabel>
-                                        <FormField
-                                            control={form.control}
-                                            name={`purposes.${index}.enabled`}
-                                            render={({ field }) => (
-                                                <FormItem onClick={(e) => e.stopPropagation()}>
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                    <FormLabel className="text-base">{purpose.name}</FormLabel>
                                 </AccordionTrigger>
                                 <div className="flex items-center gap-2 pl-4">
+                                    <FormField
+                                        control={form.control}
+                                        name={`purposes.${index}.enabled`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
                                     <AddPurposeDialog purposeToEdit={purpose} />
                                     <DeletePurposeDialog purposeToDelete={purpose} allPurposes={form.getValues('purposes')} />
                                 </div>
