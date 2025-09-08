@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,7 +49,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { getUserByPhone } from "@/services/user-service";
 import { getRawTextFromImage } from '@/app/actions';
 import Image from "next/image";
 import { getUser, checkAvailability } from "@/services/user-service";
@@ -263,19 +263,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             return;
         }
         setIsExtractingText(true);
+        const formData = new FormData();
+        files.forEach(file => formData.append("imageFiles", file));
 
         try {
-            const fileReadPromises = files.map(file => {
-                return new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.onerror = (error) => reject(error);
-                    reader.readAsDataURL(file);
-                });
-            });
-            const dataUris = await Promise.all(fileReadPromises);
-
-            const result = await getRawTextFromImage({ photoDataUris });
+            const result = await getRawTextFromImage(formData);
 
             if (result.success && result.rawText) {
                 setRawText(result.rawText);
