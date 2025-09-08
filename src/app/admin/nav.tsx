@@ -93,6 +93,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/leads/add", label: "Create Lead", icon: FilePlus2, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/leads/create-from-document", label: "Create from Document", icon: ScanSearch, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/leads/configuration", label: "Configuration", icon: BookText, allowedRoles: ["Super Admin"] },
         ]
