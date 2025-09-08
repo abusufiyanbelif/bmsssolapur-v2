@@ -11,8 +11,9 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { Button } from "./button"
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, CheckCircle } from "lucide-react"
 import { useState } from "react"
+import { ScrollArea } from "./scroll-area"
 
 function CopyButton({ text }: { text: React.ReactNode }) {
     const { toast } = useToast();
@@ -42,24 +43,28 @@ function CopyButton({ text }: { text: React.ReactNode }) {
 
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts, dismiss } = useToast()
 
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, icon, variant, ...props }) {
         return (
           <Toast key={id} variant={variant} {...props}>
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4 w-full">
               {icon && <div className="flex-shrink-0 mt-1">{icon}</div>}
               <div className="grid gap-1 flex-grow pr-12">
                 {title && <ToastTitle>{title}</ToastTitle>}
                 {description && (
-                  <ToastDescription>{description}</ToastDescription>
+                  <ScrollArea className="max-h-32 w-full pr-4">
+                    <ToastDescription>{description}</ToastDescription>
+                  </ScrollArea>
                 )}
+                 <div className="flex gap-2 items-center mt-2">
+                    {action}
+                    {variant === 'destructive' && description && <CopyButton text={description} />}
+                </div>
               </div>
             </div>
-            {action}
-            {variant === 'destructive' && description && <CopyButton text={description} />}
             <ToastClose />
           </Toast>
         )
