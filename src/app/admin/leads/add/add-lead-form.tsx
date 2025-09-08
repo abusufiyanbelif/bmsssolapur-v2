@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -228,7 +227,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       }
   };
 
-  const { formState: { isValid }, setValue, watch, getValues } = form;
+  const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
   const beneficiaryType = watch("beneficiaryType");
@@ -434,6 +433,178 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
 
+                <h3 className="text-lg font-semibold border-b pb-2">Lead Purpose</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <FormField
+                        control={form.control}
+                        name="purpose"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Lead Purpose</FormLabel>
+                            <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                form.setValue('category', '');
+                                form.setValue('otherCategoryDetail', '');
+                                form.setValue('otherPurposeDetail', '');
+                            }} value={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a purpose" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {leadPurposes.map(purpose => (
+                                    <SelectItem key={purpose.id} value={purpose.name}>{purpose.name}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormDescription>The main reason for the help request.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    {selectedPurposeName && selectedPurposeName !== 'Other' && (
+                        <FormField
+                            control={form.control}
+                            name="category"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Category</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {(availableCategories || []).map(cat => (
+                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                </div>
+                {selectedPurposeName === 'Other' && (
+                    <FormField
+                        control={form.control}
+                        name="otherPurposeDetail"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Please specify &quot;Other&quot; purpose</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., House Repair" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+                {selectedCategory === 'Other' && (
+                    <FormField
+                        control={form.control}
+                        name="otherCategoryDetail"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Please specify &quot;Other&quot; category details</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., Specific textbook name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>
+                            <div className="flex items-center gap-2 text-primary">
+                                <FileUp className="h-5 w-5" />
+                                Upload &amp; Scan Documents (Optional)
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4">
+                            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                            <div className="space-y-2">
+                                <Label htmlFor="verificationDocument">Attach Documents</Label>
+                                    <Input 
+                                        id="verificationDocument"
+                                        type="file" 
+                                        ref={fileInputRef}
+                                        accept="image/*,application/pdf"
+                                        multiple
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                    />
+                                    <FormDescription>Upload one or more supporting documents (ID, Bill, etc.). The first file will be saved as the primary verification document.</FormDescription>
+                            </div>
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {files.map((file, index) => {
+                                        const isImage = file.type.startsWith('image/');
+                                        const zoom = zoomLevels[index] || 1;
+                                        return (
+                                            <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
+                                                <div className="w-full h-40 overflow-auto flex items-center justify-center">
+                                                        {isImage ? (
+                                                        <Image
+                                                            src={URL.createObjectURL(file)}
+                                                            alt={`Preview ${index + 1}`}
+                                                            width={150 * zoom}
+                                                            height={150 * zoom}
+                                                            className="object-contain transition-transform duration-300"
+                                                        />
+                                                        ) : (
+                                                            <FileIcon className="w-16 h-16 text-muted-foreground" />
+                                                        )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                                                <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
+                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
+                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
+                                                        <XCircle className="h-4 w-4"/>
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="h-48 flex-col gap-2 border-dashed"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                                        <span className="text-muted-foreground">Add More Files</span>
+                                    </Button>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={files.length === 0 || isExtractingText}>
+                                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                        Get Text from Documents
+                                    </Button>
+                                    <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
+                                        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                        Auto-fill from Text
+                                    </Button>
+                                </div>
+                                {rawText && (
+                                    <div className="space-y-2 pt-4">
+                                        <Label>Extracted Text</Label>
+                                        <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
+                                    </div>
+                                )}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+
                 <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
                 <FormField
                     control={form.control}
@@ -595,181 +766,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </div>
                     </div>
                 )}
+                 
                  <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <FormField
-                        control={form.control}
-                        name="purpose"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Lead Purpose</FormLabel>
-                            <Select onValueChange={(value) => {
-                                field.onChange(value);
-                                form.setValue('category', '');
-                                form.setValue('otherCategoryDetail', '');
-                                form.setValue('otherPurposeDetail', '');
-                            }} value={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a purpose" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {leadPurposes.map(purpose => (
-                                    <SelectItem key={purpose.id} value={purpose.name}>{purpose.name}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormDescription>The main reason for the help request.</FormDescription>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    {selectedPurposeName && selectedPurposeName !== 'Other' && (
-                        <FormField
-                            control={form.control}
-                            name="category"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {(availableCategories || []).map(cat => (
-                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                </div>
-
-                <Accordion type="single" collapsible className="w-full mb-6">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger>
-                            <div className="flex items-center gap-2 text-primary">
-                                <FileUp className="h-5 w-5" />
-                                Upload &amp; Scan Documents (Optional)
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pt-4">
-                            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                            <div className="space-y-2">
-                                <Label htmlFor="verificationDocument">Attach Documents</Label>
-                                    <Input 
-                                        id="verificationDocument"
-                                        type="file" 
-                                        ref={fileInputRef}
-                                        accept="image/*,application/pdf"
-                                        multiple
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                    />
-                                    <FormDescription>Upload one or more supporting documents (ID, Bill, etc.). The first file will be saved as the primary verification document.</FormDescription>
-                            </div>
-                                
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {files.map((file, index) => {
-                                        const isImage = file.type.startsWith('image/');
-                                        const zoom = zoomLevels[index] || 1;
-                                        return (
-                                            <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
-                                                <div className="w-full h-40 overflow-auto flex items-center justify-center">
-                                                        {isImage ? (
-                                                        <Image
-                                                            src={URL.createObjectURL(file)}
-                                                            alt={`Preview ${index + 1}`}
-                                                            width={150 * zoom}
-                                                            height={150 * zoom}
-                                                            className="object-contain transition-transform duration-300"
-                                                        />
-                                                        ) : (
-                                                            <FileIcon className="w-16 h-16 text-muted-foreground" />
-                                                        )}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground truncate">{file.name}</p>
-                                                <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
-                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
-                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
-                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
-                                                        <XCircle className="h-4 w-4"/>
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="h-48 flex-col gap-2 border-dashed"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        <PlusCircle className="h-8 w-8 text-muted-foreground" />
-                                        <span className="text-muted-foreground">Add More Files</span>
-                                    </Button>
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={files.length === 0 || isExtractingText}>
-                                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                        Get Text from Documents
-                                    </Button>
-                                    <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
-                                        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                        Auto-fill from Text
-                                    </Button>
-                                </div>
-                                {rawText && (
-                                    <div className="space-y-2 pt-4">
-                                        <Label>Extracted Text</Label>
-                                        <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
-                                    </div>
-                                )}
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-                
-                {selectedPurposeName === 'Other' && (
-                    <FormField
-                        control={form.control}
-                        name="otherPurposeDetail"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Please specify &quot;Other&quot; purpose</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., House Repair" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-                
-                {selectedCategory === 'Other' && (
-                    <FormField
-                        control={form.control}
-                        name="otherCategoryDetail"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Please specify &quot;Other&quot; category details</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., Specific textbook name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-
-                <FormField
+                 <FormField
                     control={form.control}
                     name="story"
                     render={({ field }) => (
