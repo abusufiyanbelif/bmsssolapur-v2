@@ -134,7 +134,7 @@ interface AddLeadFormProps {
   settings: AppSettings;
 }
 
-export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
+function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
@@ -337,7 +337,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Could not identify the logged in administrator. Please log out and back in.",
+            description: "Could not identify the admin performing the update. Please log out and back in.",
         });
         return;
     }
@@ -503,10 +503,10 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
 
 
         <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-8 max-w-2xl">
-            <fieldset disabled={isFormDisabled}>
+        <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
+            <fieldset disabled={isFormDisabled} className="space-y-6">
 
-                <h3 className="text-lg font-semibold border-b pb-2 mt-8">Beneficiary Details</h3>
+                <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
                 <FormField
                     control={form.control}
                     name="beneficiaryType"
@@ -560,7 +560,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                                     ? potentialBeneficiaries.find(
                                         (user) => user.id === field.value
                                     )?.name
-                                    : "Select a beneficiary"}
+                                    : "Search by name, phone, Aadhaar..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </FormControl>
@@ -651,7 +651,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                                 name="newBeneficiaryAadhaar"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Aadhaar Number</FormLabel>
+                                    <FormLabel>Aadhaar Number {isAadhaarMandatory && <span className="text-destructive">*</span>}</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
                                     </FormControl>
@@ -663,7 +663,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                     </div>
                 )}
                 
-                <h3 className="text-lg font-semibold border-b pb-2 mt-8">Case Details</h3>
+                <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
                 <FormField
                     control={form.control}
                     name="hasReferral"
@@ -790,7 +790,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                         field.onChange(value === 'none' ? undefined : value);
                         form.setValue('campaignName', selectedCampaign?.name || '');
                         }}
-                        defaultValue={field.value}
+                        value={field.value}
                     >
                         <FormControl>
                         <SelectTrigger>
@@ -846,7 +846,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                     )}
                     />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField
                         control={form.control}
                         name="purpose"
@@ -984,7 +984,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                     )}
                     />
         
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                     control={form.control}
                     name="helpRequested"
@@ -1112,7 +1112,7 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
                     />
                 )}
         
-                <div className="flex gap-4">
+                <div className="flex gap-4 pt-6 border-t">
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1162,4 +1162,12 @@ export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
         </AlertDialog>
     </>
   );
+}
+
+export function AddLeadForm(props: AddLeadFormProps) {
+    return (
+        <Suspense fallback={<div>Loading form...</div>}>
+            <AddLeadFormContent {...props} />
+        </Suspense>
+    )
 }
