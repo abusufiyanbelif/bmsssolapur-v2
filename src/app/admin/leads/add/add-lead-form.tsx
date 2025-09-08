@@ -29,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -482,53 +482,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             <fieldset disabled={isFormDisabled}>
 
                 <h3 className="text-lg font-semibold border-b pb-2 mt-8">Beneficiary Details</h3>
-                <FormField
-                    control={form.control}
-                    name="beneficiaryType"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                            <FormLabel>Beneficiary</FormLabel>
-                            <FormControl>
-                                <RadioGroup
-                                    onValueChange={(value) => {
-                                        field.onChange(value);
-                                        form.setValue('beneficiaryId', undefined);
-                                        form.setValue('newBeneficiaryFirstName', '');
-                                        form.setValue('newBeneficiaryMiddleName', '');
-                                        form.setValue('newBeneficiaryLastName', '');
-                                        form.setValue('newBeneficiaryPhone', '');
-                                        form.setValue('newBeneficiaryEmail', '');
-                                    }}
-                                    defaultValue={field.value}
-                                    className="grid grid-cols-2 gap-4"
-                                >
-                                    <FormItem>
-                                        <FormControl>
-                                            <RadioGroupItem value="existing" id="existingBeneficiary" className="sr-only peer" />
-                                        </FormControl>
-                                        <Label htmlFor="existingBeneficiary" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                            <Users className="mb-3 h-6 w-6" />
-                                            Existing Beneficiary
-                                        </Label>
-                                    </FormItem>
-                                    <FormItem>
-                                        <FormControl>
-                                            <RadioGroupItem value="new" id="newBeneficiary" className="sr-only peer" />
-                                        </FormControl>
-                                         <Label htmlFor="newBeneficiary" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                            <UserPlus className="mb-3 h-6 w-6" />
-                                            New Beneficiary
-                                        </Label>
-                                    </FormItem>
-                                </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 
-                {beneficiaryType === 'existing' && (
-                     <div className="space-y-2">
+                {beneficiaryType === 'existing' ? (
+                     <div className="space-y-4">
                         <FormField
                             control={form.control}
                             name="beneficiaryId"
@@ -580,12 +536,20 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 </FormItem>
                             )}
                         />
+                         <Button type="button" variant="outline" onClick={() => setValue('beneficiaryType', 'new')}>
+                            <UserRoundPlus className="mr-2 h-4 w-4" />
+                            Create New Beneficiary
+                        </Button>
                     </div>
-                )}
-                
-                {beneficiaryType === 'new' && (
-                    <div className="space-y-4 p-4 border rounded-lg">
-                        <h3 className="font-medium">New Beneficiary Details</h3>
+                ) : (
+                     <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-medium">New Beneficiary Details</h3>
+                            <Button type="button" variant="outline" onClick={() => setValue('beneficiaryType', 'existing')}>
+                                <UserSearch className="mr-2 h-4 w-4" />
+                                Search Existing
+                            </Button>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
                                 <FormItem>
