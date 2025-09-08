@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -596,7 +595,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </div>
                     </div>
                 )}
-                
+                 <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField
                         control={form.control}
@@ -657,7 +656,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
                                 <FileUp className="h-5 w-5" />
-                                Upload & Scan Documents (Optional)
+                                Upload &amp; Scan Documents (Optional)
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
@@ -737,8 +736,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
-                
-                <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
                 
                 {selectedPurposeName === 'Other' && (
                     <FormField
