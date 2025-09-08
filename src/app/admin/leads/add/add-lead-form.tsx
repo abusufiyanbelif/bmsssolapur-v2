@@ -969,7 +969,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             control={form.control}
                             name="acceptableDonationTypes"
                             render={({ field }) => {
-                            const allOtherTypes = donationTypes.filter(t => t !== 'Any');
                             
                             return (
                                 <FormItem
