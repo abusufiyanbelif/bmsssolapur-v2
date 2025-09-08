@@ -29,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -248,10 +248,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            setFiles(Array.from(e.target.files));
+             setFiles(prevFiles => [...prevFiles, ...Array.from(e.target.files!)]);
              setRawText(''); // Clear old text when new files are selected
         }
     };
+
+    const handleRemoveFile = (index: number) => {
+        setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    }
     
     const handleGetTextFromImage = async () => {
         if (files.length === 0) {
@@ -271,7 +275,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             });
             const dataUris = await Promise.all(fileReadPromises);
 
-            const result = await getRawTextFromImage({ photoDataUris: dataUris });
+            const result = await getRawTextFromImage({ photoDataUris });
 
             if (result.success && result.rawText) {
                 setRawText(result.rawText);
@@ -437,46 +441,48 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 accept="image/*,application/pdf"
                                 multiple
                                 onChange={handleFileChange}
+                                className="hidden"
                             />
                             <FormDescription>Upload one or more supporting documents (ID, Bill, etc.). The first file will be saved as the primary verification document.</FormDescription>
                        </div>
                         
-                        {files.length > 0 && (
-                            <div className="space-y-4">
-                                <Label>Document Previews</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {files.map((file, index) => {
-                                        const isImage = file.type.startsWith('image/');
-                                        const zoom = zoomLevels[index] || 1;
-                                        return (
-                                            <div key={index} className="relative p-2 border rounded-lg bg-background space-y-2">
-                                                <div className="w-full h-40 overflow-hidden flex items-center justify-center">
-                                                     {isImage ? (
-                                                        <Image
-                                                            src={URL.createObjectURL(file)}
-                                                            alt={`Preview ${index + 1}`}
-                                                            width={150}
-                                                            height={150}
-                                                            className="object-contain transition-transform duration-300"
-                                                            style={{ transform: `scale(${zoom})` }}
-                                                        />
-                                                     ) : (
-                                                         <FileIcon className="w-16 h-16 text-muted-foreground" />
-                                                     )}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground truncate">{file.name}</p>
-                                                {isImage && (
-                                                    <div className="absolute top-1 right-1 flex flex-col gap-1 bg-black/50 rounded-md p-0.5">
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-white" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-white" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
-                                                    </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {files.map((file, index) => {
+                                const isImage = file.type.startsWith('image/');
+                                const zoom = zoomLevels[index] || 1;
+                                return (
+                                    <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
+                                        <div className="w-full h-40 overflow-hidden flex items-center justify-center">
+                                                {isImage ? (
+                                                <Image
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={`Preview ${index + 1}`}
+                                                    width={150}
+                                                    height={150}
+                                                    className="object-contain transition-transform duration-300"
+                                                    style={{ transform: `scale(${zoom})` }}
+                                                />
+                                                ) : (
+                                                    <FileIcon className="w-16 h-16 text-muted-foreground" />
                                                 )}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                                        <Button type="button" size="icon" variant="ghost" className="absolute top-1 right-1 h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
+                                            <XCircle className="h-4 w-4"/>
+                                        </Button>
+                                    </div>
+                                )
+                            })}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-48 flex-col gap-2 border-dashed"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                                <span className="text-muted-foreground">Add More Files</span>
+                            </Button>
+                        </div>
 
                         <div className="flex flex-col sm:flex-row gap-2">
                             <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={files.length === 0 || isExtractingText}>

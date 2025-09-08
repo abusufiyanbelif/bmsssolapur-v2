@@ -7,40 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, FileText, ScanSearch, XCircle } from "lucide-react";
+import { Loader2, UploadCloud, FileText, ScanSearch, XCircle, PlusCircle, FileIcon } from "lucide-react";
 import Image from "next/image";
 
 export default function MyUploadsPage() {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setFile(selectedFile);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    if (selectedFile) {
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-    } else {
-      setPreviewUrl(null);
+    if (e.target.files) {
+      setFiles(prevFiles => [...prevFiles, ...Array.from(e.target.files!)]);
     }
   };
 
-  const clearFile = () => {
-      setFile(null);
-      setPreviewUrl(null);
-      if(fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+  const handleRemoveFile = (index: number) => {
+    setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   }
 
   const handleUpload = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select an image to upload.' });
+    if (files.length === 0) {
+      toast({ variant: 'destructive', title: 'No Files Selected', description: 'Please select one or more files to upload.' });
       return;
     }
     setIsUploading(true);
@@ -51,9 +39,9 @@ export default function MyUploadsPage() {
     toast({
       variant: 'success',
       title: "Upload Complete",
-      description: `Successfully uploaded ${file.name}.`
+      description: `Successfully uploaded ${files.length} file(s).`
     });
-    clearFile();
+    setFiles([]);
   };
 
   return (
@@ -80,32 +68,57 @@ export default function MyUploadsPage() {
               accept="image/*,application/pdf"
               ref={fileInputRef}
               onChange={handleFileChange}
+              multiple
             />
           </div>
-          {previewUrl ? (
-            <div className="relative group p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
-               <Button 
-                type="button" 
-                variant="destructive" 
-                size="icon" 
-                className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                onClick={clearFile}
-                >
-                    <XCircle className="h-4 w-4"/>
-                </Button>
-              <div className="relative w-full h-80">
-                <Image src={previewUrl} alt="Image Preview" fill className="object-contain rounded-md" data-ai-hint="receipt screenshot" />
+          {files.length > 0 ? (
+            <div className="space-y-4">
+              <Label>File Previews</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {files.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      return (
+                          <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
+                              <div className="w-full h-40 overflow-hidden flex items-center justify-center">
+                                      {isImage ? (
+                                      <Image
+                                          src={URL.createObjectURL(file)}
+                                          alt={`Preview ${index + 1}`}
+                                          width={150}
+                                          height={150}
+                                          className="object-contain"
+                                      />
+                                      ) : (
+                                          <FileIcon className="w-16 h-16 text-muted-foreground" />
+                                      )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                              <Button type="button" size="icon" variant="ghost" className="absolute top-1 right-1 h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
+                                  <XCircle className="h-4 w-4"/>
+                              </Button>
+                          </div>
+                      )
+                  })}
+                   <Button
+                      type="button"
+                      variant="outline"
+                      className="h-48 flex-col gap-2 border-dashed"
+                      onClick={() => fileInputRef.current?.click()}
+                  >
+                      <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                      <span className="text-muted-foreground">Add More Files</span>
+                  </Button>
               </div>
             </div>
           ) : (
             <div className="p-2 border-dashed border-2 rounded-md bg-muted/50 flex flex-col items-center justify-center gap-4 h-80">
               <FileText className="h-16 w-16 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Upload an image to see a preview</p>
+              <p className="text-sm text-muted-foreground">Upload files to see a preview</p>
             </div>
           )}
-          <Button onClick={handleUpload} disabled={isUploading || !file}>
+          <Button onClick={handleUpload} disabled={isUploading || files.length === 0}>
             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-            Upload File
+            Upload {files.length > 0 ? `${files.length} File(s)` : 'Files'}
           </Button>
         </CardContent>
       </Card>
