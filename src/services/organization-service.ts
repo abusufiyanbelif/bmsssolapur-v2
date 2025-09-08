@@ -96,7 +96,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         return null;
     } catch (error) {
         if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
-            console.warn("Firestore permission error in getCurrentOrganization. Please check IAM roles.");
+            console.warn("Firestore permission error in getCurrentOrganization. This may be an expected error if the database has not been seeded yet. Please check IAM roles if this persists. Returning null.");
             return null; 
         }
         console.error('Error getting current organization: ', error);

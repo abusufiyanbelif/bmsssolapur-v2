@@ -236,6 +236,11 @@ export const getAppSettings = async (): Promise<AppSettings> => {
       return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings, updatedAt: new Date() } as AppSettings;
     }
   } catch (error) {
+    if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
+        const permissionError = new Error("Permission Denied: The server's service account does not have permission to access Firestore. Please grant the 'Cloud Datastore User' role in IAM. Refer to TROUBLESHOOTING.md for details.");
+        console.error(permissionError.message);
+        throw permissionError;
+    }
     console.error('Error getting app settings: ', error);
     throw new Error('Failed to retrieve app settings.');
   }
