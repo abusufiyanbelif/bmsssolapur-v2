@@ -145,8 +145,8 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         purposes: defaultLeadPurposes,
         approvalProcessDisabled: true,
         roleBasedCreationEnabled: false,
-        leadCreatorRoles: ['Admin', 'Super Admin'],
-        allowBeneficiaryRequests: true, // New default setting
+        leadCreatorRoles: ['Admin', 'Super Admin', 'Finance Admin'],
+        allowBeneficiaryRequests: true,
         workflow: allLeadStatuses.reduce((acc, status) => {
             acc[status] = allLeadStatuses.filter(s => s !== status); // Default: allow transition to any other status
             return acc;
@@ -175,6 +175,9 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     analyticsDashboard: {
         financialPerformance: { visibleTo: ['Super Admin'] },
+    },
+    userConfiguration: {
+        isAadhaarMandatory: false,
     }
 };
 
