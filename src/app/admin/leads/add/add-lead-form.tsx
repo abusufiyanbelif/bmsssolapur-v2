@@ -29,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -139,8 +139,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
   const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
+  
+  // AI related state
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [rawText, setRawText] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // State for multi-file upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -216,8 +219,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const selectedCategory = form.watch("category");
   const beneficiaryType = form.watch("beneficiaryType");
   const hasReferral = form.watch("hasReferral");
-  const caseAction = form.watch("caseAction");
-  const caseVerification = form.watch("verifiedStatus");
   
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
@@ -237,15 +238,16 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             setFiles(Array.from(e.target.files));
+             setRawText(''); // Clear old text when new files are selected
         }
     };
     
-    const handleGenerateAndFill = async () => {
+    const handleGetTextFromImage = async () => {
         if (files.length === 0) {
             toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
             return;
         }
-        setIsProcessing(true);
+        setIsExtractingText(true);
 
         try {
             const textPromises = files.map(file => {
@@ -260,59 +262,65 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             
             if (!combinedText.trim()) {
                  toast({ variant: 'destructive', title: 'Extraction Failed', description: 'Could not extract any text from the documents.' });
-                 setIsProcessing(false);
-                 return;
-            }
-
-            toast({ variant: 'success', title: 'Text Extracted', description: 'Now analyzing text to generate details...' });
-
-            const analysisResult = await handleExtractLeadDetailsFromText(combinedText);
-            
-            if (analysisResult.success && analysisResult.details) {
-                const details = analysisResult.details;
-                 // Auto-fill all simple fields
-                if (details.headline) setValue('headline', details.headline);
-                if (details.story) setValue('story', details.story);
-                if (details.purpose) {
-                    const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
-                    if (matchingPurpose) setValue('purpose', matchingPurpose.name);
-                }
-                if (details.category) setValue('category', details.category);
-                if (details.amount) setValue('helpRequested', details.amount);
-                if (details.dueDate) setValue('dueDate', new Date(details.dueDate));
-                if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes);
-                if (details.caseDetails) setValue('caseDetails', details.caseDetails);
-
-                if (details.beneficiaryPhone) {
-                    const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-                    setValue('newBeneficiaryPhone', phone);
-                    const existingUser = await getUserByPhone(phone);
-                    if (existingUser) {
-                        setValue('beneficiaryType', 'existing');
-                        setValue('beneficiaryId', existingUser.id);
-                        toast({ title: "Existing Beneficiary Found", description: `${existingUser.name} has been selected. Their details will be used.`});
-                    } else {
-                        setValue('beneficiaryType', 'new');
-                         if (details.beneficiaryName) {
-                            const nameParts = details.beneficiaryName.split(' ');
-                            setValue('newBeneficiaryFirstName', nameParts[0] || '');
-                            setValue('newBeneficiaryLastName', nameParts.slice(1).join(' ') || '');
-                        }
-                        toast({ title: "New Beneficiary", description: "No existing user found with this phone number. A new profile will be created."});
-                    }
-                } else {
-                     setValue('beneficiaryType', 'new');
-                }
-                
-                toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
             } else {
-                toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
+                 toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
             }
         } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during processing." });
+            toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
         } finally {
-            setIsProcessing(false);
+            setIsExtractingText(false);
         }
+    };
+    
+    const handleAutoFillFromText = async () => {
+        if (!rawText) {
+             toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
+            return;
+        }
+        setIsAnalyzing(true);
+         const analysisResult = await handleExtractLeadDetailsFromText(rawText);
+            
+        if (analysisResult.success && analysisResult.details) {
+            const details = analysisResult.details;
+                // Auto-fill all simple fields
+            if (details.headline) setValue('headline', details.headline);
+            if (details.story) setValue('story', details.story);
+            if (details.purpose) {
+                const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
+                if (matchingPurpose) setValue('purpose', matchingPurpose.name);
+            }
+            if (details.category) setValue('category', details.category);
+            if (details.amount) setValue('helpRequested', details.amount);
+            if (details.dueDate) setValue('dueDate', new Date(details.dueDate));
+            if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes);
+            if (details.caseDetails) setValue('caseDetails', details.caseDetails);
+
+            if (details.beneficiaryPhone) {
+                const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
+                setValue('newBeneficiaryPhone', phone);
+                const existingUser = await getUserByPhone(phone);
+                if (existingUser) {
+                    setValue('beneficiaryType', 'existing');
+                    setValue('beneficiaryId', existingUser.id);
+                    toast({ title: "Existing Beneficiary Found", description: `${existingUser.name} has been selected. Their details will be used.`});
+                } else {
+                    setValue('beneficiaryType', 'new');
+                        if (details.beneficiaryName) {
+                        const nameParts = details.beneficiaryName.split(' ');
+                        setValue('newBeneficiaryFirstName', nameParts[0] || '');
+                        setValue('newBeneficiaryLastName', nameParts.slice(1).join(' ') || '');
+                    }
+                    toast({ title: "New Beneficiary", description: "No existing user found with this phone number. A new profile will be created."});
+                }
+            } else {
+                    setValue('beneficiaryType', 'new');
+            }
+            
+            toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
+        } else {
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
+        }
+        setIsAnalyzing(false);
     }
 
 
@@ -465,15 +473,19 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         )}
 
                         <div className="flex flex-col sm:flex-row gap-2">
-                             <Button type="button" className="w-full" onClick={handleGenerateAndFill} disabled={files.length === 0 || isProcessing}>
-                                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                {isProcessing ? 'Processing...' : 'Generate & Fill from Documents'}
+                            <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={files.length === 0 || isExtractingText}>
+                                {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                Get Text from Documents
+                            </Button>
+                            <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
+                                {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                Auto-fill from Text
                             </Button>
                         </div>
                          {rawText && (
                             <div className="space-y-2 pt-4">
                                 <Label>Extracted Text</Label>
-                                <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-background" />
+                                <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
                             </div>
                         )}
                     </div>
@@ -487,74 +499,95 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             <fieldset disabled={isFormDisabled}>
 
                 <h3 className="text-lg font-semibold border-b pb-2 mt-8">Beneficiary Details</h3>
-                
-                {beneficiaryType === 'existing' ? (
-                     <div className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="beneficiaryId"
-                            render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Select Beneficiary</FormLabel>
-                                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                                <PopoverTrigger asChild>
+                <FormField
+                    control={form.control}
+                    name="beneficiaryType"
+                    render={({ field }) => (
+                    <FormItem className="space-y-3">
+                        <FormControl>
+                        <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className="grid grid-cols-2 gap-4"
+                        >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
                                 <FormControl>
-                                    <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
-                                    >
-                                    {field.value
-                                        ? potentialBeneficiaries.find(
-                                            (user) => user.id === field.value
-                                        )?.name
-                                        : "Select a beneficiary"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}>
+                                        <UserSearch className="h-6 w-6"/>
+                                        <span>Search Existing</span>
                                     </Button>
                                 </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search beneficiary..." />
-                                    <CommandList>
-                                        <CommandEmpty>No beneficiaries found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {potentialBeneficiaries.map((user) => (
-                                            <CommandItem
-                                            value={`${user.name} ${user.phone} ${user.aadhaarNumber} ${user.panNumber} ${user.upiIds?.join(' ')}`}
-                                            key={user.id}
-                                            onSelect={() => {
-                                                form.setValue("beneficiaryId", user.id!);
-                                                setPopoverOpen(false);
-                                            }}
-                                            >
-                                            <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
-                                            {user.name} ({user.phone})
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                                </PopoverContent>
-                            </Popover>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <Button type="button" variant="outline" onClick={() => setValue('beneficiaryType', 'new')}>
-                            <UserRoundPlus className="mr-2 h-4 w-4" />
-                            Create New Beneficiary
-                        </Button>
-                    </div>
+                            </FormItem>
+                             <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                     <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
+                                        <UserRoundPlus className="h-6 w-6"/>
+                                        <span>Create New</span>
+                                    </Button>
+                                </FormControl>
+                            </FormItem>
+                        </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                
+                {beneficiaryType === 'existing' ? (
+                     <FormField
+                        control={form.control}
+                        name="beneficiaryId"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Select Beneficiary</FormLabel>
+                            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
+                                >
+                                {field.value
+                                    ? potentialBeneficiaries.find(
+                                        (user) => user.id === field.value
+                                    )?.name
+                                    : "Select a beneficiary"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search by name, phone, Aadhaar, PAN, UPI..." />
+                                <CommandList>
+                                    <CommandEmpty>No beneficiaries found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {potentialBeneficiaries.map((user) => (
+                                        <CommandItem
+                                        value={`${user.name} ${user.phone} ${user.aadhaarNumber} ${user.panNumber} ${user.upiIds?.join(' ')}`}
+                                        key={user.id}
+                                        onSelect={() => {
+                                            form.setValue("beneficiaryId", user.id!);
+                                            setPopoverOpen(false);
+                                        }}
+                                        >
+                                        <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                        {user.name} ({user.phone})
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 ) : (
                      <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                        <div className="flex justify-between items-center">
-                            <h3 className="font-medium">New Beneficiary Details</h3>
-                            <Button type="button" variant="outline" onClick={() => setValue('beneficiaryType', 'existing')}>
-                                <UserSearch className="mr-2 h-4 w-4" />
-                                Search Existing
-                            </Button>
-                        </div>
+                        <h3 className="font-medium">New Beneficiary Details</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
                                 <FormItem>
@@ -605,20 +638,20 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     </FormItem>
                                 )}
                             />
+                             <FormField
+                                control={form.control}
+                                name="newBeneficiaryAadhaar"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Aadhaar Number</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
                         </div>
-                        <FormField
-                            control={form.control}
-                            name="newBeneficiaryAadhaar"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Aadhaar Number</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
                     </div>
                 )}
                 
@@ -1082,7 +1115,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
                         <X className="mr-2 h-4 w-4" />
-                        Cancel
+                        Clear Form
                     </Button>
                 </div>
             </fieldset>
@@ -1124,9 +1157,35 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 }
 
 export function AddLeadForm(props: { settings: AppSettings }) {
+    const [users, setUsers] = useState<User[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [fetchedUsers, fetchedCampaigns] = await Promise.all([
+                    getAllUsers(),
+                    getAllCampaigns()
+                ]);
+                setUsers(fetchedUsers);
+                setCampaigns(fetchedCampaigns);
+            } catch (error) {
+                console.error("Failed to fetch initial data for AddLeadForm", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    }
+
     return (
         <Suspense fallback={<div>Loading form...</div>}>
-            <AddLeadFormContent {...props} />
+            <AddLeadFormContent {...props} users={users} campaigns={campaigns} />
         </Suspense>
     )
 }
