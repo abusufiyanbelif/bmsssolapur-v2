@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +31,7 @@ const allGroups: UserGroup[] = [
         typicalRoles: ["Super Admin", "Admin"]
     },
     { 
-        name: "Finance Team",
+        name: "Finance",
         description: "A group of users responsible for managing donations, verifying financial transactions, and viewing financial reports.",
         icon: Banknote,
         typicalRoles: ["Finance Admin", "Super Admin"]
@@ -49,6 +48,12 @@ const allGroups: UserGroup[] = [
         icon: ShieldCheck,
         typicalRoles: ["Admin", "Super Admin"]
     },
+    { 
+        name: "Mandatory Lead Approver",
+        description: "A subgroup of Lead Approvers whose approval is mandatory for a lead to be verified.",
+        icon: ShieldCheck,
+        typicalRoles: ["Admin", "Super Admin"]
+    }
 ];
 
 export default function UserGroupsPage() {
@@ -103,8 +108,13 @@ export default function UserGroupsPage() {
                     <Group className="h-6 w-6 text-primary" />
                     Manage User Groups
                 </CardTitle>
-                <CardDescription>
-                    Organize users into groups or teams (e.g., Founders, Finance Team). This is a read-only view of suggested groups based on your application&apos;s structure.
+                <CardDescription className="space-y-2">
+                   <p>
+                        In this application, <strong className="text-foreground">Roles</strong> define a user&apos;s function (e.g., Admin, Donor), while <strong className="text-foreground">Groups</strong> define their organizational title or team (e.g., Founder, Finance).
+                   </p>
+                   <p>
+                        This page provides a read-only view of the groups used to organize users and grant special permissions. To assign a user to a group, edit their profile in the User Management section.
+                   </p>
                 </CardDescription>
             </CardHeader>
             <CardContent>
