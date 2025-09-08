@@ -1,12 +1,13 @@
 
+
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers, updateUser as updateUserService, type User } from "@/services/user-service";
 import { getPublicCampaigns, getPublicLeads } from "@/services/public-data-service";
-import { getAllQuotes } from "@/services/quotes-service";
 import type { Quote, Lead } from '@/services/types';
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 export interface EnrichedLead extends Lead {
     beneficiary?: User;
@@ -39,10 +40,10 @@ export async function updateUser(userId: string, updates: Partial<User>) {
 
 export async function getQuotes(count: number = 3): Promise<Quote[]> {
     try {
-        const allQuotes = await getAllQuotes();
-        const shuffled = allQuotes.sort(() => 0.5 - Math.random());
-        const selectedQuotes = shuffled.slice(0, count);
-        return JSON.parse(JSON.stringify(selectedQuotes));
+        const quotes = await getInspirationalQuotes(count);
+        // The result from a server action to a client component must be serializable.
+        // Genkit flows might return objects with non-serializable properties.
+        return JSON.parse(JSON.stringify(quotes));
     } catch (error) {
         console.error("Server action getQuotes failed:", error);
         // Fallback to a simple list if service fails

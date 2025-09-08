@@ -1,15 +1,16 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Search, FilterX, Target, CheckCircle, HandCoins, Banknote, Hourglass, Users as UsersIcon, TrendingUp, Megaphone, Repeat, History, FileCheck, DollarSign, Baby, PersonStanding, HomeIcon, HeartHandshake, Eye } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Target, ChevronLeft, ChevronRight, FilePlus2, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, Eye, HandCoins } from "lucide-react";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import type { User, Donation, Lead, Quote, LeadPurpose, DonationType, Campaign, AppSettings } from "@/services/types";
+import type { User, Donation, Lead, Quote, LeadStatus, Campaign, AppSettings } from "@/services/types";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,9 +19,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EnrichedLead } from "@/app/campaigns/actions";
 import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
 import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
-import { getQuotes } from "@/app/home/actions";
 import { getAllLeads } from "@/services/lead-service";
 import { useRouter } from "next/navigation";
+import { getQuotes } from "@/app/home/actions";
 
 const statusColors: Record<Donation['status'], string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -196,7 +197,39 @@ export function DonorDashboardContent({ user, donations, allLeads, allDonations,
 }
 
 function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
-    if (quotes.length === 0) {
+    const [loading, setLoading] = useState(quotes.length === 0);
+    const [_quotes, setQuotes] = useState<Quote[]>(quotes);
+
+    useEffect(() => {
+        if(quotes.length > 0) return;
+
+        const fetchQuotes = async () => {
+             setLoading(true);
+             const fetchedQuotes = await getQuotes(3);
+             setQuotes(fetchedQuotes);
+             setLoading(false);
+        }
+        fetchQuotes();
+    }, [quotes]);
+
+
+    if (loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <QuoteIcon className="text-primary" />
+                        Wisdom & Reflection
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (_quotes.length === 0) {
         return null;
     }
 
@@ -210,7 +243,7 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    {quotes.map((quote, index) => (
+                    {_quotes.map((quote, index) => (
                         <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
                             <p>&quot;{quote.text}&quot;</p>
                             <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
