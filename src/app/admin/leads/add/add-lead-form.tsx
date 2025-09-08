@@ -255,6 +255,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
     const handleRemoveFile = (index: number) => {
         setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+        setZoomLevels(prev => {
+            const newLevels = {...prev};
+            delete newLevels[index];
+            return newLevels;
+        })
     }
     
     const handleGetTextFromImage = async () => {
