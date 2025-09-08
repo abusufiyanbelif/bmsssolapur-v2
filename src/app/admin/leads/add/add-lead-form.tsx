@@ -51,13 +51,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { getUserByPhone } from "@/services/user-service";
 import { getRawTextFromImage } from '@/app/actions';
 import Image from "next/image";
+import { getUser, checkAvailability } from "@/services/user-service";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useSearchParams, useRouter } from 'next/navigation';
 
 
 const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
 
-const formSchema = z.object({
+const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   beneficiaryType: z.enum(['existing', 'new']).default('existing'),
   beneficiaryId: z.string().optional(),
   
@@ -123,7 +126,7 @@ const formSchema = z.object({
 });
 
 
-type AddLeadFormValues = z.infer<typeof formSchema>;
+type AddLeadFormValues = z.infer<returnType<typeof createFormSchema>>;
 
 interface AddLeadFormProps {
   users: User[];
@@ -131,7 +134,7 @@ interface AddLeadFormProps {
   settings: AppSettings;
 }
 
-function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
+export function AddLeadForm({ users, campaigns, settings }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
@@ -139,6 +142,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
   const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   
   // AI related state
   const [isExtractingText, setIsExtractingText] = useState(false);
@@ -171,6 +176,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const userHasOverridePermission = adminUser?.roles.includes('Super Admin');
   const isFormDisabled = approvalProcessDisabled && !userHasOverridePermission;
 
+
+  const isAadhaarMandatory = settings.userConfiguration?.isAadhaarMandatory || false;
+  const formSchema = createFormSchema(isAadhaarMandatory);
 
   const form = useForm<AddLeadFormValues>({
     resolver: zodResolver(formSchema),
@@ -1154,38 +1162,4 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         </AlertDialog>
     </>
   );
-}
-
-export function AddLeadForm(props: { settings: AppSettings }) {
-    const [users, setUsers] = useState<User[]>([]);
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [fetchedUsers, fetchedCampaigns] = await Promise.all([
-                    getAllUsers(),
-                    getAllCampaigns()
-                ]);
-                setUsers(fetchedUsers);
-                setCampaigns(fetchedCampaigns);
-            } catch (error) {
-                console.error("Failed to fetch initial data for AddLeadForm", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
-
-    if (loading) {
-        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-    }
-
-    return (
-        <Suspense fallback={<div>Loading form...</div>}>
-            <AddLeadFormContent {...props} users={users} campaigns={campaigns} />
-        </Suspense>
-    )
 }
