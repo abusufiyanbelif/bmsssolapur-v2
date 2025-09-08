@@ -14,6 +14,7 @@ export function Logo({ className }: LogoProps) {
         src="https://picsum.photos/seed/logo/128/128"
         alt="Baitul Mal Samajik Sanstha (Solapur) Logo"
         fill
+        sizes="56px"
         priority
         className="object-contain"
         data-ai-hint="logo"
