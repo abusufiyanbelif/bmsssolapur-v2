@@ -30,7 +30,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
-        prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, or handwritten notes. Your task is to carefully extract the following details. Be precise. If a field is not present, omit it entirely.
+        prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, or handwritten notes. Your task is to carefully extract the following details. Be precise. If a field is not present or you cannot find a valid value, you MUST omit it entirely from the output. Do not output fields with "null" or "N/A" as their value.
 
             **Key Instructions:**
             1.  **Generate a Compelling Story**: Based on all the text, synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience to understand the beneficiary's situation and need for help. Use the "Comment" or "Impression" section of medical reports for this.
@@ -53,7 +53,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - beneficiaryLastName: The beneficiary's last name.
             - fatherName: The beneficiary's father's name. Look for "S/O", "Son of", or "Father's Name".
             - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
-            - beneficiaryEmail: The beneficiary's email address.
+            - beneficiaryEmail: The beneficiary's email address. Must be a valid email format.
             - beneficiaryType: The type of beneficiary (e.g., Adult, Family, Kid, Widow).
             - address: The full address of the beneficiary. Look for "Address" or "Patient location" or similar labels and combine lines.
             - occupation: The beneficiary's occupation.
