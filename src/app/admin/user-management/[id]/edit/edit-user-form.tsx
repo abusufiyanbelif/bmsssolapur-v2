@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser, handleSetPassword } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2, Paperclip } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -39,7 +39,58 @@ import {
 } from "@/components/ui/alert-dialog"
 import { UserActivityFeed } from "./user-activity-feed";
 import { DeleteUserButton } from "./delete-user-button";
+import Image from "next/image";
 
+const FileUploadField = ({ name, label, control, currentUrl, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, currentUrl?: string, isEditing?: boolean }) => {
+    const [file, setFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
+    const { setValue } = useFormContext();
+
+    useEffect(() => {
+        if (file) {
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+            return () => URL.revokeObjectURL(url);
+        } else {
+            setPreviewUrl(currentUrl || null);
+        }
+    }, [file, currentUrl]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0] || null;
+        setFile(selectedFile);
+        setValue(name, selectedFile, { shouldValidate: true });
+    };
+    
+    return (
+        <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <FormControl>
+                <Input 
+                    type="file" 
+                    accept="image/*,application/pdf"
+                    onChange={handleFileChange}
+                    disabled={!isEditing}
+                />
+            </FormControl>
+            {previewUrl && (
+                <div className="mt-2 p-2 border rounded-md">
+                    <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                         {previewUrl.match(/\.(jpeg|jpg|gif|png)$/) != null ? (
+                            <Image src={previewUrl} alt="Preview" width={100} height={100} className="object-contain" />
+                         ) : (
+                            <div className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm">
+                                <Paperclip className="h-4 w-4" />
+                                <span>View Document</span>
+                            </div>
+                         )}
+                    </a>
+                </div>
+            )}
+            <FormMessage />
+        </FormItem>
+    )
+}
 
 const setPasswordSchema = z.object({
   newPassword: z.string().min(6, "Password must be at least 6 characters."),
@@ -180,6 +231,10 @@ const formSchema = z.object({
   bankIfscCode: z.string().optional(),
   upiPhone: z.string().optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
+  aadhaarCard: z.any().optional(),
+  addressProof: z.any().optional(),
+  otherDocument1: z.any().optional(),
+  otherDocument2: z.any().optional(),
 });
 
 type EditUserFormValues = z.infer<typeof formSchema>;
@@ -234,7 +289,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
     },
   });
 
-  const { formState: { isDirty }, reset, control } = form;
+  const { formState: { isDirty }, control, reset } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "upiIds" });
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
@@ -355,6 +410,15 @@ export function EditUserForm({ user }: EditUserFormProps) {
             <CardContent>
                 <Form {...form}>
                 <form className="space-y-8 max-w-2xl">
+                     <h3 className="text-lg font-semibold border-b pb-2">Document Uploads</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FileUploadField name="aadhaarCard" label="Aadhaar Card" control={control} currentUrl={user.aadhaarCardUrl} isEditing={isEditing} />
+                        <FileUploadField name="addressProof" label="Address Proof" control={control} currentUrl={user.addressProofUrl} isEditing={isEditing} />
+                        <FileUploadField name="otherDocument1" label="Other Document 1" control={control} currentUrl={user.otherDocument1Url} isEditing={isEditing} />
+                        <FileUploadField name="otherDocument2" label="Other Document 2" control={control} currentUrl={user.otherDocument2Url} isEditing={isEditing} />
+                      </div>
+
+
                     <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
                      <FormField
                         control={form.control}

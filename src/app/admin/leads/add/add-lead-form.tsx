@@ -29,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -58,6 +58,53 @@ import { useSearchParams, useRouter } from 'next/navigation';
 const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
+const FileUploadField = ({ name, label, control, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, isEditing?: boolean }) => {
+    const [file, setFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const { setValue } = useFormContext();
+
+    useEffect(() => {
+        if (file) {
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+            return () => URL.revokeObjectURL(url);
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [file]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0] || null;
+        setFile(selectedFile);
+        setValue(name, selectedFile, { shouldValidate: true });
+    };
+    
+    return (
+        <FormField
+            control={control}
+            name={name}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{label}</FormLabel>
+                    <FormControl>
+                        <Input 
+                            type="file" 
+                            accept="image/*,application/pdf"
+                            onChange={handleFileChange}
+                            disabled={!isEditing}
+                        />
+                    </FormControl>
+                    {previewUrl && (
+                        <div className="mt-2 p-2 border rounded-md">
+                            <Image src={previewUrl} alt="Preview" width={100} height={100} className="object-contain" />
+                        </div>
+                    )}
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    )
+}
 
 const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   beneficiaryType: z.enum(['existing', 'new']).default('existing'),
@@ -93,7 +140,10 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
-  verificationDocument: z.any().optional(),
+  aadhaarCard: z.any().optional(),
+  addressProof: z.any().optional(),
+  otherDocument1: z.any().optional(),
+  otherDocument2: z.any().optional(),
 })
 .refine(data => {
     if (data.purpose === 'Other') {
@@ -152,11 +202,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [rawText, setRawText] = useState("");
 
-  // State for multi-file upload
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
-  const [zoomLevels, setZoomLevels] = useState<Record<number, number>>({});
-  
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
   
@@ -213,7 +258,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       dueDate: undefined,
       isLoan: false,
       caseDetails: '',
-      verificationDocument: undefined,
     },
   });
   
@@ -221,11 +265,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     form.reset();
       setSelectedReferralDetails(null);
       setRawText("");
-      setFiles([]);
-      setZoomLevels({});
-      if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-      }
   };
 
   const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
@@ -257,30 +296,18 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   }, [selectedPurposeName, form]);
     
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-             setFiles(prevFiles => [...prevFiles, ...Array.from(e.target.files!)]);
-             setRawText(''); // Clear old text when new files are selected
-        }
-    };
-
-    const handleRemoveFile = (index: number) => {
-        setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-        setZoomLevels(prev => {
-            const newLevels = {...prev};
-            delete newLevels[index];
-            return newLevels;
-        })
-    }
     
     const handleGetTextFromImage = async () => {
-        if (files.length === 0) {
+        const { aadhaarCard, addressProof, otherDocument1, otherDocument2 } = getValues();
+        const filesToScan = [aadhaarCard, addressProof, otherDocument1, otherDocument2].filter(Boolean);
+
+        if (filesToScan.length === 0) {
             toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
             return;
         }
         setIsExtractingText(true);
         const formData = new FormData();
-        files.forEach(file => formData.append("imageFiles", file));
+        filesToScan.forEach(file => formData.append("imageFiles", file));
 
         try {
             const result = await getRawTextFromImage(formData);
@@ -356,41 +383,18 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     
     const formData = new FormData();
     formData.append("adminUserId", adminUser.id);
-    formData.append("beneficiaryType", values.beneficiaryType);
-    if(values.beneficiaryId) formData.append("beneficiaryId", values.beneficiaryId);
-    if(values.newBeneficiaryFirstName) formData.append("newBeneficiaryFirstName", values.newBeneficiaryFirstName);
-    if(values.newBeneficiaryMiddleName) formData.append("newBeneficiaryMiddleName", values.newBeneficiaryMiddleName);
-    if(values.newBeneficiaryLastName) formData.append("newBeneficiaryLastName", values.newBeneficiaryLastName);
-    if(values.newBeneficiaryFatherName) formData.append("newBeneficiaryFatherName", values.newBeneficiaryFatherName);
-    if(values.newBeneficiaryPhone) formData.append("newBeneficiaryPhone", values.newBeneficiaryPhone);
-    if(values.newBeneficiaryEmail) formData.append("newBeneficiaryEmail", values.newBeneficiaryEmail);
-    if(values.newBeneficiaryAadhaar) formData.append("newBeneficiaryAadhaar", values.newBeneficiaryAadhaar);
-    if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
-    if(values.campaignName) formData.append("campaignName", values.campaignName);
-    if(values.hasReferral && values.referredByUserId) {
-        formData.append("referredByUserId", values.referredByUserId);
-        formData.append("referredByUserName", values.referredByUserName || '');
-    } else {
-        formData.append("referredByUserId", "");
-        formData.append("referredByUserName", "");
-    }
-    if(values.headline) formData.append("headline", values.headline);
-    if(values.story) formData.append("story", values.story);
-    formData.append("purpose", values.purpose);
-    if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
-    formData.append("category", values.category);
-    if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
-    formData.append("priority", values.priority);
-    values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
-    formData.append("helpRequested", String(values.helpRequested));
-    if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
-    if(values.isLoan) formData.append("isLoan", "on");
-    if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
-    
-    // Append first file if it exists for verificationDocument
-    if (files.length > 0) {
-        formData.append("verificationDocument", files[0]);
-    }
+    // Append all form values
+    Object.entries(values).forEach(([key, value]) => {
+        if (value instanceof File) {
+            formData.append(key, value);
+        } else if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+        } else if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+        } else if (value) {
+            formData.append(key, String(value));
+        }
+    });
 
     if (forceCreate) {
         formData.append("forceCreate", "true");
@@ -521,74 +525,28 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         )}
                     />
                 )}
-
-                <Accordion type="single" collapsible className="w-full">
+                 
+                 <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
-                                <FileUp className="h-5 w-5" />
+                                <ScanSearch className="h-5 w-5" />
                                 Upload & Scan Documents (Optional)
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
                             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                            <div className="space-y-2">
-                                <Label htmlFor="verificationDocument">Attach Documents</Label>
-                                    <Input 
-                                        id="verificationDocument"
-                                        type="file" 
-                                        ref={fileInputRef}
-                                        accept="image/*,application/pdf"
-                                        multiple
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                    />
-                                    <FormDescription>Upload one or more supporting documents (ID, Bill, etc.). The first file will be saved as the primary verification document.</FormDescription>
-                            </div>
+                                <p className="text-sm text-muted-foreground">Upload documents like Aadhaar card, address proof, medical bills, or other IDs. The AI will scan them to help you fill the form.</p>
                                 
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {files.map((file, index) => {
-                                        const isImage = file.type.startsWith('image/');
-                                        const zoom = zoomLevels[index] || 1;
-                                        return (
-                                            <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
-                                                <div className="w-full h-40 overflow-auto flex items-center justify-center">
-                                                        {isImage ? (
-                                                        <Image
-                                                            src={URL.createObjectURL(file)}
-                                                            alt={`Preview ${index + 1}`}
-                                                            width={150 * zoom}
-                                                            height={150 * zoom}
-                                                            className="object-contain transition-transform duration-300"
-                                                        />
-                                                        ) : (
-                                                            <FileIcon className="w-16 h-16 text-muted-foreground" />
-                                                        )}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground truncate">{file.name}</p>
-                                                <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
-                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
-                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
-                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
-                                                        <XCircle className="h-4 w-4"/>
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="h-48 flex-col gap-2 border-dashed"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        <PlusCircle className="h-8 w-8 text-muted-foreground" />
-                                        <span className="text-muted-foreground">Add More Files</span>
-                                    </Button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <FileUploadField name="aadhaarCard" label="Aadhaar Card" control={control} />
+                                    <FileUploadField name="addressProof" label="Address Proof" control={control} />
+                                    <FileUploadField name="otherDocument1" label="Other Document 1" control={control} />
+                                    <FileUploadField name="otherDocument2" label="Other Document 2" control={control} />
                                 </div>
-
+                                
                                 <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={files.length === 0 || isExtractingText}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={isExtractingText}>
                                         {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Text from Documents
                                     </Button>
@@ -607,6 +565,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
+
 
                 <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
                 <FormField

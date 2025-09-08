@@ -76,6 +76,10 @@ export interface User {
   enableMonthlyDonationReminder?: boolean;
   monthlyPledgeEnabled?: boolean;
   monthlyPledgeAmount?: number;
+  aadhaarCardUrl?: string;
+  addressProofUrl?: string;
+  otherDocument1Url?: string;
+  otherDocument2Url?: string;
   createdAt: Date;
   updatedAt?: Date;
   source?: 'Seeded' | 'Manual Entry';
@@ -229,7 +233,10 @@ export interface Lead {
     donations: LeadDonationAllocation[];
     fundTransfers?: FundTransfer[];
     caseDetails?: string;
-    verificationDocumentUrl?: string;
+    aadhaarCardUrl?: string;
+    addressProofUrl?: string;
+    otherDocument1Url?: string;
+    otherDocument2Url?: string;
     adminAddedBy: {
         id: string;
         name: string;

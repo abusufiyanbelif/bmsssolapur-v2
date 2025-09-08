@@ -61,7 +61,10 @@ export async function handleAddLead(
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
       isLoan: formData.get("isLoan") === 'on',
       caseDetails: formData.get("caseDetails") as string,
-      verificationDocument: formData.get("verificationDocument") as File | null,
+      aadhaarCard: formData.get("aadhaarCard") as File | null,
+      addressProof: formData.get("addressProof") as File | null,
+      otherDocument1: formData.get("otherDocument1") as File | null,
+      otherDocument2: formData.get("otherDocument2") as File | null,
       forceCreate: formData.get("forceCreate") === 'true',
   };
   
@@ -138,7 +141,6 @@ export async function handleAddLead(
         }
     }
       
-    // Create lead first to get its ID for the file path
     const newLeadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>> = {
         name: beneficiaryUser.name,
         beneficiaryId: beneficiaryUser.id!,
@@ -172,13 +174,25 @@ export async function handleAddLead(
 
     const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });
     
-    // Now upload file with the new lead's ID
-    if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
-        const uploadPath = `leads/${newLead.id}/documents/`;
-        const verificationDocumentUrl = await uploadFile(rawFormData.verificationDocument, uploadPath);
-        // Update the lead with the document URL
-        await updateLead(newLead.id!, { verificationDocumentUrl });
-        newLead.verificationDocumentUrl = verificationDocumentUrl;
+    // Now upload files with the new lead's ID
+    const uploadPromises = [
+        rawFormData.aadhaarCard ? uploadFile(rawFormData.aadhaarCard, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
+        rawFormData.addressProof ? uploadFile(rawFormData.addressProof, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
+        rawFormData.otherDocument1 ? uploadFile(rawFormData.otherDocument1, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
+        rawFormData.otherDocument2 ? uploadFile(rawFormData.otherDocument2, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
+    ];
+    
+    const [aadhaarUrl, addressUrl, other1Url, other2Url] = await Promise.all(uploadPromises);
+    
+    const docUpdates: Partial<Lead> = {};
+    if (aadhaarUrl) docUpdates.aadhaarCardUrl = aadhaarUrl;
+    if (addressUrl) docUpdates.addressProofUrl = addressUrl;
+    if (other1Url) docUpdates.otherDocument1Url = other1Url;
+    if (other2Url) docUpdates.otherDocument2Url = other2Url;
+    
+    if(Object.keys(docUpdates).length > 0) {
+      await updateLead(newLead.id!, docUpdates);
+      Object.assign(newLead, docUpdates);
     }
     
     revalidatePath("/admin/leads");
