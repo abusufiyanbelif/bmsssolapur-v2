@@ -1,3 +1,4 @@
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -220,6 +221,7 @@ function RecordPastDonationForm({ user }: { user: User }) {
     const [rawText, setRawText] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm<RecordDonationFormValues>({
         resolver: zodResolver(recordDonationSchema),
@@ -238,8 +240,16 @@ function RecordPastDonationForm({ user }: { user: User }) {
             setPreviewUrl(URL.createObjectURL(selectedFile));
             setValue('proof', selectedFile, { shouldValidate: true });
         } else {
-            setPreviewUrl(null);
-            setValue('proof', null, { shouldValidate: true });
+            clearFile();
+        }
+    };
+
+    const clearFile = () => {
+        setFile(null);
+        setPreviewUrl(null);
+        setValue('proof', null, { shouldValidate: true });
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
         }
     };
     
@@ -293,12 +303,32 @@ function RecordPastDonationForm({ user }: { user: User }) {
                             <FormItem>
                                 <FormLabel>Proof of Donation</FormLabel>
                                 <FormControl>
-                                    <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
+                                    <Input 
+                                      type="file" 
+                                      accept="image/*,application/pdf" 
+                                      ref={fileInputRef}
+                                      onChange={handleFileChange} 
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}/>
-                        {previewUrl && <Image src={previewUrl} alt="Proof preview" width={200} height={200} className="rounded-md object-contain mx-auto" />}
+                        {previewUrl && (
+                             <div className="relative group p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
+                                <Button 
+                                    type="button" 
+                                    variant="destructive" 
+                                    size="icon" 
+                                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                    onClick={clearFile}
+                                >
+                                    <XCircle className="h-4 w-4"/>
+                                </Button>
+                                <div className="relative w-full h-60">
+                                    <Image src={previewUrl} alt="Proof preview" fill className="object-contain rounded-md mx-auto" />
+                                </div>
+                            </div>
+                        )}
                         
                         {file && (
                            <Button type="button" onClick={handleGetText} disabled={isScanning} className="w-full">

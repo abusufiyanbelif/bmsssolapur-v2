@@ -295,13 +295,20 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       setRawText(null); // Clear old text on new file
       setExtractedDetails(null);
     } else {
-      setValue('paymentScreenshot', null);
-      setFile(null);
-      setFilePreview(null);
-      setRawText(null);
-      setExtractedDetails(null);
+      clearFile();
     }
   };
+
+  const clearFile = () => {
+    setValue('paymentScreenshot', null);
+    setFile(null);
+    setFilePreview(null);
+    setRawText(null);
+    setExtractedDetails(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  }
 
   const handleScanText = async () => {
     if (!file) return;
@@ -429,9 +436,18 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     />
                 )}
                 
-                {filePreview && (
-                    <div className="flex flex-col items-center gap-4">
+                 {filePreview && (
+                    <div className="relative group">
                         <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
+                        <Button 
+                            type="button" 
+                            variant="destructive" 
+                            size="icon" 
+                            className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={clearFile}
+                        >
+                            <X className="h-4 w-4"/>
+                        </Button>
                     </div>
                 )}
                 {file && (

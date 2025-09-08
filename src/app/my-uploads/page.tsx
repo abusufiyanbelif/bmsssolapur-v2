@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, FileText, ScanSearch } from "lucide-react";
+import { Loader2, UploadCloud, FileText, ScanSearch, XCircle } from "lucide-react";
 import Image from "next/image";
 
 export default function MyUploadsPage() {
@@ -30,6 +30,14 @@ export default function MyUploadsPage() {
     }
   };
 
+  const clearFile = () => {
+      setFile(null);
+      setPreviewUrl(null);
+      if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+  }
+
   const handleUpload = async () => {
     if (!file) {
       toast({ variant: 'destructive', title: 'No File Selected', description: 'Please select an image to upload.' });
@@ -45,6 +53,7 @@ export default function MyUploadsPage() {
       title: "Upload Complete",
       description: `Successfully uploaded ${file.name}.`
     });
+    clearFile();
   };
 
   return (
@@ -68,13 +77,22 @@ export default function MyUploadsPage() {
             <Input
               id="image-upload"
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               ref={fileInputRef}
               onChange={handleFileChange}
             />
           </div>
           {previewUrl ? (
-            <div className="p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
+            <div className="relative group p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
+               <Button 
+                type="button" 
+                variant="destructive" 
+                size="icon" 
+                className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                onClick={clearFile}
+                >
+                    <XCircle className="h-4 w-4"/>
+                </Button>
               <div className="relative w-full h-80">
                 <Image src={previewUrl} alt="Image Preview" fill className="object-contain rounded-md" data-ai-hint="receipt screenshot" />
               </div>

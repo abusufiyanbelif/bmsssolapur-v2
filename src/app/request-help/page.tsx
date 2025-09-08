@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleRequestHelp } from "./actions";
 import { useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, XCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
@@ -229,13 +229,30 @@ export default function RequestHelpPage() {
                         <FormItem>
                         <FormLabel>Verification Document</FormLabel>
                         <FormControl>
-                            <Input 
-                            type="file"
-                            ref={fileInputRef}
-                            accept="image/*,application/pdf"
-                            onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
-                            {...rest}
-                            />
+                             <div className="relative">
+                                <Input 
+                                type="file"
+                                ref={fileInputRef}
+                                accept="image/*,application/pdf"
+                                onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                                {...rest}
+                                className="pr-10"
+                                />
+                                {value && (
+                                     <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="absolute top-1/2 right-1 -translate-y-1/2 h-7 w-7"
+                                        onClick={() => {
+                                            onChange(null);
+                                            if (fileInputRef.current) fileInputRef.current.value = "";
+                                        }}
+                                    >
+                                        <XCircle className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                )}
+                            </div>
                         </FormControl>
                         <FormDescription>
                             (Optional) Upload a supporting document (e.g., ID card, medical report, bill).

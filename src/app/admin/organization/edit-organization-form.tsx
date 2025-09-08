@@ -134,7 +134,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                 <div>
                     <CardTitle>Manage Organization Details</CardTitle>
                     <CardDescription>
-                        Update your organization&apos;s public information, contact details, and payment settings. These details will be visible on the public-facing pages.
+                        Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
                     </CardDescription>
                 </div>
                  {!isEditing && (
@@ -205,16 +205,25 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                     </div>
                     <div className="md:col-span-1 space-y-4">
                         <Label>QR Code Preview</Label>
-                        <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
+                        <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
                             {previewUrl ? (
                                 <div className="relative w-48 h-48">
-                                        <Image src={previewUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
-                                    </div>
+                                    <Image src={previewUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                                </div>
                             ): (
                                 <p className="text-sm text-muted-foreground text-center p-8">
                                 Upload a QR code image below to see a preview.
                                 </p>
                             )}
+                             {isEditing && previewUrl && (
+                                <Button type="button" size="sm" variant="destructive" onClick={() => {
+                                    form.setValue('qrCodeFile', null, { shouldDirty: true });
+                                    form.setValue('qrCodeUrl', '', { shouldDirty: true });
+                                    setPreviewUrl('');
+                                }}>
+                                    Remove QR Code
+                                </Button>
+                             )}
                         </div>
                     </div>
                 </div>
