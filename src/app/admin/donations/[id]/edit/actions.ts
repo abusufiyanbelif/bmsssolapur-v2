@@ -18,6 +18,7 @@ import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase/firestore";
 import { getUser } from "@/services/user-service";
 import { logActivity } from "@/services/activity-log-service";
+import { getCampaign } from "@/services/campaign-service";
 
 interface FormState {
   success: boolean;
@@ -81,6 +82,14 @@ export async function handleUpdateDonation(
       ? new Date(donationDateStr)
       : originalDonation.donationDate;
 
+    const campaignId = formData.get("campaignId") as string | undefined;
+    let campaignName: string | undefined;
+    if (campaignId && campaignId !== 'none') {
+        const campaign = await getCampaign(campaignId);
+        campaignName = campaign?.name;
+    }
+
+
     const updates: Partial<Donation> = {
       isAnonymous: formData.get("isAnonymous") === "on",
       amount: parseFloat(formData.get("amount") as string),
@@ -123,8 +132,9 @@ export async function handleUpdateDonation(
         formData.get("recipientAccountNumber") as string | undefined,
       paymentMethod: formData.get("paymentMethod") as PaymentMethod | undefined,
       notes: formData.get("notes") as string | undefined,
-      leadId: formData.get("leadId") as string | undefined,
-      campaignId: formData.get("campaignId") as string | undefined,
+      leadId: formData.get("leadId") === 'none' ? undefined : formData.get("leadId") as string | undefined,
+      campaignId: campaignId === 'none' ? undefined : campaignId,
+      campaignName: campaignName,
     };
 
     const changes = getChangedFields(originalDonation, updates);

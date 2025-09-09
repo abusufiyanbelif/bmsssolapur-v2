@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
@@ -8,6 +9,7 @@ import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, 
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
+import { getCampaign } from "@/services/campaign-service";
 
 
 interface FormState {
@@ -53,6 +55,13 @@ export async function handleAddDonation(
     const donationDateStr = formData.get("donationDate") as string;
     const donationDate = donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now();
     
+    const campaignId = formData.get("campaignId") as string | undefined;
+    let campaignName: string | undefined;
+    if (campaignId && campaignId !== 'none') {
+        const campaign = await getCampaign(campaignId);
+        campaignName = campaign?.name;
+    }
+
     const createDonationRecord = async (data: Partial<Donation>) => {
         let proofUrl: string | undefined = undefined;
         // Create a temporary donation record to get an ID for the upload path
@@ -62,6 +71,9 @@ export async function handleAddDonation(
             donorName: donor.name,
             status: "Pending verification",
             donationDate: donationDate,
+            leadId: formData.get("leadId") === 'none' ? undefined : formData.get("leadId") as string | undefined,
+            campaignId: campaignId === 'none' ? undefined : campaignId,
+            campaignName: campaignName,
         }, adminUserId, adminUser.name, adminUser.email);
 
         if(screenshotFile && screenshotFile.size > 0) {

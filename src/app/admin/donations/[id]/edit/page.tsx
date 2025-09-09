@@ -31,6 +31,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
 
     const linkableLeads = allLeads.filter(l => l.caseStatus !== 'Closed' && l.caseStatus !== 'Cancelled');
     const linkableCampaigns = allCampaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled');
+    const currentUser = allUsers.find(u => u.id === donor?.id);
 
     return (
         <div className="flex-1 space-y-6">
@@ -52,6 +53,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                                 leads={linkableLeads} 
                                 campaigns={linkableCampaigns} 
                                 existingDonation={donation}
+                                currentUser={currentUser}
                             />
                         </CardContent>
                     </Card>

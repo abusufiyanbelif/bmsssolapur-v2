@@ -76,6 +76,10 @@ const formSchema = z.object({
   includePledge: z.boolean().default(false),
   notes: z.string().optional(),
 
+  // Linking fields
+  leadId: z.string().optional(),
+  campaignId: z.string().optional(),
+
   // Extracted details
   paymentApp: z.string().optional(),
   senderName: z.string().optional(),
@@ -164,6 +168,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         googlePayTransactionId: existingDonation?.googlePayTransactionId,
         phonePeTransactionId: existingDonation?.phonePeTransactionId,
         paytmUpiReferenceNo: existingDonation?.paytmUpiReferenceNo,
+        leadId: existingDonation?.leadId || 'none',
+        campaignId: existingDonation?.campaignId || 'none',
     } : {
         donorId: '',
         paymentMethod: 'Online (UPI/Card)',
@@ -180,6 +186,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         tipAmount: 0,
         includePledge: false,
         paymentScreenshot: null,
+        leadId: 'none',
+        campaignId: 'none',
     },
   });
   
@@ -222,15 +230,21 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     const storedUserId = localStorage.getItem('userId');
     setAdminUserId(storedUserId);
 
-    // This effect runs once on mount to handle URL params
-    const donorIdFromUrl = searchParams.get('donorId');
-    if (donorIdFromUrl) {
-      const user = users.find(u => u.id === donorIdFromUrl);
-      if (user) {
-        setValue('donorId', user.id!, { shouldValidate: true });
-        setSelectedDonor(user);
-      }
+    const initializeForm = async () => {
+        const donorIdFromUrl = searchParams.get('donorId');
+        if (donorIdFromUrl) {
+            const user = users.find(u => u.id === donorIdFromUrl);
+            if (user) {
+                setValue('donorId', user.id!, { shouldValidate: true });
+                setSelectedDonor(user);
+            }
+        }
+        if (isEditing && existingDonation?.donorId) {
+            const donor = users.find(u => u.id === existingDonation.donorId);
+            if(donor) setSelectedDonor(donor);
+        }
     }
+    initializeForm();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
@@ -614,6 +628,61 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       )}
                   />
               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField
+                  control={form.control}
+                  name="leadId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link to Lead (Optional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a lead to support" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {leads.map((lead) => (
+                            <SelectItem key={lead.id} value={lead.id}>
+                              {lead.name} (Req: ₹{lead.helpRequested})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Allocate this donation to a specific beneficiary's case.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="campaignId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link to Campaign (Optional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a campaign" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {campaigns.map((campaign) => (
+                            <SelectItem key={campaign.id} value={campaign.id}>
+                              {campaign.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Allocate this donation to a specific campaign drive.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+               </div>
 
                {extractedDetails && (
                 <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
