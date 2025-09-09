@@ -260,7 +260,7 @@ function RecordPastDonationForm({ user }: { user: User }) {
         }
         setIsScanning(true);
         const formData = new FormData();
-        formData.append("imageFile", file);
+        formData.append("imageFiles", file);
         const result = await getRawTextFromImage(formData);
         if (result.success && result.rawText) {
             setRawText(result.rawText);
