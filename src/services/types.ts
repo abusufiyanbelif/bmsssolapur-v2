@@ -377,8 +377,16 @@ export interface LeadPurpose {
     categories?: PurposeCategory[];
 }
 
-export interface UserConfiguration {
+export interface RoleFieldRequirements {
     isAadhaarMandatory?: boolean;
+    isPanMandatory?: boolean;
+    isAddressMandatory?: boolean;
+    isBankAccountMandatory?: boolean;
+}
+
+export interface UserConfiguration {
+    [key: string]: RoleFieldRequirements | undefined;
+    isAadhaarMandatory?: boolean; // Keep for backward compatibility
 }
 
 export interface DashboardSettings {

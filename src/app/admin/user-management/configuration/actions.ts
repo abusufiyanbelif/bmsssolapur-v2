@@ -1,8 +1,9 @@
 
 "use server";
 
-import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
+import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
+import type { UserConfiguration } from "@/services/types";
 
 interface FormState {
     success: boolean;
@@ -14,10 +15,33 @@ export async function handleUpdateUserConfiguration(
 ): Promise<FormState> {
   
   try {
-    const updates = {
-      userConfiguration: {
-        isAadhaarMandatory: formData.get("isAadhaarMandatory") === 'on',
+    const currentSettings = await getAppSettings();
+    
+    const userConfig: UserConfiguration = {
+      // Safely copy existing settings
+      ...(currentSettings.userConfiguration || {}),
+      Donor: {
+        isAadhaarMandatory: formData.get("Donor.isAadhaarMandatory") === 'on',
+        isPanMandatory: formData.get("Donor.isPanMandatory") === 'on',
+        isAddressMandatory: formData.get("Donor.isAddressMandatory") === 'on',
+        isBankAccountMandatory: formData.get("Donor.isBankAccountMandatory") === 'on',
       },
+      Beneficiary: {
+        isAadhaarMandatory: formData.get("Beneficiary.isAadhaarMandatory") === 'on',
+        isPanMandatory: formData.get("Beneficiary.isPanMandatory") === 'on',
+        isAddressMandatory: formData.get("Beneficiary.isAddressMandatory") === 'on',
+        isBankAccountMandatory: formData.get("Beneficiary.isBankAccountMandatory") === 'on',
+      },
+      Referral: {
+        isAadhaarMandatory: formData.get("Referral.isAadhaarMandatory") === 'on',
+        isPanMandatory: formData.get("Referral.isPanMandatory") === 'on',
+        isAddressMandatory: formData.get("Referral.isAddressMandatory") === 'on',
+        isBankAccountMandatory: formData.get("Referral.isBankAccountMandatory") === 'on',
+      },
+    };
+
+    const updates = {
+      userConfiguration: userConfig,
     };
 
     await updateAppSettings(updates);
@@ -36,3 +60,4 @@ export async function handleUpdateUserConfiguration(
     };
   }
 }
+
