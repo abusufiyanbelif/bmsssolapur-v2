@@ -151,6 +151,9 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
             acc[status] = allLeadStatuses.filter(s => s !== status); // Default: allow transition to any other status
             return acc;
         }, {} as Record<LeadStatus, LeadStatus[]>),
+        degreeOptions: ['SSC', 'HSC', 'B.A.', 'B.Com', 'B.Sc.', 'B.E.', 'MBBS', 'B.Pharm', 'D.Pharm', 'BUMS', 'BHMS', 'Other'],
+        schoolYearOptions: ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'],
+        collegeYearOptions: ['First Year', 'Second Year', 'Third Year', 'Final Year'],
     },
     dashboard: {
         mainMetrics: { visibleTo: defaultAdminRoles },

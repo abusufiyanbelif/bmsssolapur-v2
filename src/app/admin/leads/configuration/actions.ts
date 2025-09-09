@@ -2,7 +2,7 @@
 
 "use server";
 
-import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
+import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
 import { updateUser, getAllUsers } from "@/services/user-service";
 import { arrayRemove, arrayUnion, writeBatch, doc } from "firebase/firestore";
@@ -16,12 +16,16 @@ interface FormState {
 }
 
 export async function handleUpdateLeadConfiguration(
-  settings: AppSettings['leadConfiguration']
+  settings: Partial<AppSettings['leadConfiguration']>
 ): Promise<FormState> {
   
   try {
+    const currentSettings = await getAppSettings();
     const updates = {
-      leadConfiguration: settings,
+      leadConfiguration: {
+        ...currentSettings.leadConfiguration,
+        ...settings,
+      }
     };
 
     await updateAppSettings(updates);

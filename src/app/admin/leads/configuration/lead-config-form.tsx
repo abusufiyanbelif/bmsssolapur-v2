@@ -16,14 +16,14 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
-import { Loader2, Save, CheckCircle, Lock, UserCheck, Settings, Workflow, PlusCircle, Trash2, Edit } from "lucide-react";
+import { Loader2, Save, CheckCircle, Lock, UserCheck, Settings, Workflow, PlusCircle, Trash2, Edit, BookOpen } from "lucide-react";
 import { AppSettings, UserRole } from "@/services/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AddPurposeDialog, DeletePurposeDialog, AddCategoryDialog, DeleteCategoryDialog } from "./purpose-dialogs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 
 
 const formSchema = z.object({
@@ -41,6 +41,10 @@ const formSchema = z.object({
     roleBasedCreationEnabled: z.boolean().default(false),
     allowBeneficiaryRequests: z.boolean().default(true),
     leadCreatorRoles: z.array(z.string()),
+    // New fields for education options
+    degreeOptions: z.string().transform(v => v.split(',').map(s => s.trim()).filter(Boolean)),
+    schoolYearOptions: z.string().transform(v => v.split(',').map(s => s.trim()).filter(Boolean)),
+    collegeYearOptions: z.string().transform(v => v.split(',').map(s => s.trim()).filter(Boolean)),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -62,6 +66,9 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
       roleBasedCreationEnabled: leadConfig.roleBasedCreationEnabled || false,
       allowBeneficiaryRequests: leadConfig.allowBeneficiaryRequests ?? true,
       leadCreatorRoles: leadConfig.leadCreatorRoles || [],
+      degreeOptions: leadConfig.degreeOptions?.join(', ') || '',
+      schoolYearOptions: leadConfig.schoolYearOptions?.join(', ') || '',
+      collegeYearOptions: leadConfig.collegeYearOptions?.join(', ') || '',
     },
   });
 
@@ -262,6 +269,62 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
             </CardContent>
         </Card>
         
+        <Card>
+            <CardHeader>
+                 <CardTitle className="flex items-center gap-2">
+                    <BookOpen />
+                    Education Field Options
+                </CardTitle>
+                <CardDescription>
+                    Manage the dropdown values for education-specific fields. Enter values separated by commas.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="degreeOptions"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Degree/Class Options</FormLabel>
+                            <FormControl>
+                                <Input placeholder="SSC, HSC, B.A., B.Com, B.Sc., B.E., MBBS..." {...field} />
+                            </FormControl>
+                            <FormDescription>These values appear in the "Degree/Class" dropdown for education leads.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="schoolYearOptions"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>School Year/Class Options</FormLabel>
+                            <FormControl>
+                                <Input placeholder="I, II, III, IV, V, VI, VII, VIII, IX, X" {...field} />
+                            </FormControl>
+                             <FormDescription>Options for the "Year" dropdown when "School Fees" category is selected.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="collegeYearOptions"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>College Year Options</FormLabel>
+                            <FormControl>
+                                <Input placeholder="First Year, Second Year, Third Year, Final Year" {...field} />
+                            </FormControl>
+                             <FormDescription>Options for the "Year" dropdown when "College Fees" category is selected.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </CardContent>
+        </Card>
+
         {isDirty && (
             <Button type="submit" disabled={isSubmitting} size="lg">
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}

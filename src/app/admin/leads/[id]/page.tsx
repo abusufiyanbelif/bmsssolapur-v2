@@ -299,18 +299,13 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             <UploadDocumentDialog leadId={lead.id!} />
                         </CardHeader>
                          <CardContent>
-                             {lead.verificationDocumentUrl ? (
-                                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                                    <div className="flex items-center gap-3">
-                                        <FileText className="h-5 w-5 text-muted-foreground" />
-                                        <p className="font-semibold">Verification Document</p>
-                                    </div>
-                                     <Button asChild variant="outline" size="sm" download>
-                                        <a href={lead.verificationDocumentUrl} target="_blank" rel="noopener noreferrer">
-                                            <Download className="mr-2 h-3 w-3" />
-                                            View
-                                        </a>
-                                    </Button>
+                             {lead.verificationDocumentUrl || lead.aadhaarCardUrl || lead.addressProofUrl ? (
+                                <div className="grid grid-cols-2 gap-4">
+                                     {lead.verificationDocumentUrl && <a href={lead.verificationDocumentUrl} target="_blank" rel="noopener noreferrer" className="p-3 border rounded-lg hover:bg-muted/50 flex items-center gap-2"><FileText className="h-4 w-4"/>Verification Doc</a>}
+                                     {lead.aadhaarCardUrl && <a href={lead.aadhaarCardUrl} target="_blank" rel="noopener noreferrer" className="p-3 border rounded-lg hover:bg-muted/50 flex items-center gap-2"><FileText className="h-4 w-4"/>Aadhaar Card</a>}
+                                     {lead.addressProofUrl && <a href={lead.addressProofUrl} target="_blank" rel="noopener noreferrer" className="p-3 border rounded-lg hover:bg-muted/50 flex items-center gap-2"><FileText className="h-4 w-4"/>Address Proof</a>}
+                                     {lead.otherDocument1Url && <a href={lead.otherDocument1Url} target="_blank" rel="noopener noreferrer" className="p-3 border rounded-lg hover:bg-muted/50 flex items-center gap-2"><FileText className="h-4 w-4"/>Other Document 1</a>}
+                                     {lead.otherDocument2Url && <a href={lead.otherDocument2Url} target="_blank" rel="noopener noreferrer" className="p-3 border rounded-lg hover:bg-muted/50 flex items-center gap-2"><FileText className="h-4 w-4"/>Other Document 2</a>}
                                 </div>
                              ) : (
                                 <p className="text-sm text-muted-foreground text-center py-4">No documents have been uploaded for this lead.</p>

@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -233,6 +234,7 @@ export interface Lead {
     donations: LeadDonationAllocation[];
     fundTransfers?: FundTransfer[];
     caseDetails?: string;
+    verificationDocumentUrl?: string;
     aadhaarCardUrl?: string;
     addressProofUrl?: string;
     otherDocument1Url?: string;
@@ -471,6 +473,9 @@ export interface AppSettings {
         roleBasedCreationEnabled?: boolean;
         leadCreatorRoles?: UserRole[];
         allowBeneficiaryRequests?: boolean;
+        degreeOptions?: string[];
+        schoolYearOptions?: string[];
+        collegeYearOptions?: string[];
     };
     userConfiguration?: UserConfiguration;
     dashboard?: DashboardSettings;

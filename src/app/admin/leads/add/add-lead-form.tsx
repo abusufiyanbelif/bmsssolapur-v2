@@ -1,4 +1,4 @@
-
+// src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,11 +55,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
 
 
-const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
-const degreeOptions = ['SSC', 'HSC', 'B.A.', 'B.Com', 'B.Sc.', 'B.E.', 'MBBS', 'B.Pharm', 'D.Pharm', 'BUMS', 'BHMS', 'Other'];
-const schoolYearOptions = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-const collegeYearOptions = ['First Year', 'Second Year', 'Third Year', 'Final Year'];
 
 
 const FileUploadField = ({ name, label, control, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, isEditing?: boolean }) => {
@@ -276,6 +272,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
+  const selectedDegree = watch("degree");
   const beneficiaryType = watch("beneficiaryType");
   const hasReferral = watch("hasReferral");
   const newBeneficiaryFirstName = watch("newBeneficiaryFirstName");
@@ -313,7 +310,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         }
         setIsExtractingText(true);
         const formData = new FormData();
-        filesToScan.forEach(file => formData.append("imageFiles", file));
+        filesToScan.forEach(file => formData.append("imageFiles", file as Blob));
 
         try {
             const result = await getRawTextFromImage(formData);
@@ -430,8 +427,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   }
   
-  const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
-  const yearOptions = selectedCategory === 'School Fees' ? schoolYearOptions : collegeYearOptions;
+    const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
+    const showYearField = showEducationFields && selectedDegree && !['SSC'].includes(selectedDegree);
+    const yearOptions = useMemo(() => {
+        if (selectedCategory === 'School Fees') return leadConfiguration.schoolYearOptions || [];
+        if (selectedCategory === 'College Fees') return leadConfiguration.collegeYearOptions || [];
+        return [];
+    }, [selectedCategory, leadConfiguration]);
+
 
   return (
     <>
@@ -448,8 +451,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
-
-                <h3 className="text-lg font-semibold border-b pb-2">Lead Purpose</h3>
+                 <h3 className="text-lg font-semibold border-b pb-2">Lead Purpose</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField
                         control={form.control}
@@ -540,27 +542,29 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <FormField control={form.control} name="degree" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Degree/Class</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree" /></SelectTrigger></FormControl>
-                                    <SelectContent>{degreeOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree/class" /></SelectTrigger></FormControl>
+                                    <SelectContent>{(leadConfiguration.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <FormMessage />
                             </FormItem>
                         )} />
-                         <FormField control={form.control} name="year" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Year</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
-                                    <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
+                        {showYearField && (
+                             <FormField control={form.control} name="year" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Year</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
+                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        )}
                     </div>
                 )}
                  
-                 <Accordion type="single" collapsible className="w-full">
+                <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
@@ -599,7 +603,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
-
 
                 <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
                 <FormField
@@ -763,7 +766,21 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </div>
                 )}
                  
-                 <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
+                <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
+                <FormField
+                    control={form.control}
+                    name="headline"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Headline Summary</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Urgent help needed for final year student's fees" {...field} />
+                        </FormControl>
+                        <FormDescription>A short, compelling summary of the case for public display.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                   <FormField
                     control={form.control}
                     name="story"
@@ -861,3 +878,4 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
+```
