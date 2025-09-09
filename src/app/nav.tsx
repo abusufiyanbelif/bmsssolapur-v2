@@ -129,6 +129,7 @@ const allNavItems: NavItem[] = [
         icon: UserCog, 
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
+            { href: "/admin/user-management/add", label: "Create User", icon: UserPlus, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/user-management", label: "All Users", icon: Users, allowedRoles: ["Super Admin"] },
             { href: "/admin/donors", label: "All Donors", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
