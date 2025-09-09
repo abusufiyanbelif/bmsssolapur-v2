@@ -188,6 +188,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     mode: 'onBlur',
     defaultValues: {
       firstName: "",
+      middleName: "",
       lastName: "",
       fatherName: "",
       email: "",
@@ -314,9 +315,9 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     Object.entries(values).forEach(([key, value]) => {
       if (value) {
         if (key === 'upiIds' && Array.isArray(value)) {
-          value.forEach(item => item.value && formData.append(key, item.value));
+          value.forEach(item => item.value && formData.append('upiIds', item.value));
         } else if (key === 'upiPhoneNumbers' && Array.isArray(value)) {
-          value.forEach(item => item.value && formData.append(key, item.value));
+          value.forEach(item => item.value && formData.append('upiPhoneNumbers', item.value));
         } else if (typeof value !== 'object' || value instanceof Date) {
            if (value instanceof Date) {
                 formData.append(key, value.toISOString());
@@ -359,8 +360,8 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     } else {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: result.error || "An unknown error occurred.",
+        title: "Error Creating User",
+        description: result.error || "An unknown error occurred. Please check the form and try again.",
       });
       setIsSubmitting(false);
     }
@@ -971,8 +972,8 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                 {isSubmitting ? 'Creating User...' : 'Create User'}
             </Button>
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                <X className="mr-2 h-4 w-4" />
-                Cancel
+                <XCircle className="mr-2 h-4 w-4" />
+                Clear Form
             </Button>
         </div>
 
