@@ -232,7 +232,13 @@ function RecordPastDonationForm({ user }: { user: User }) {
 
     const form = useForm<RecordDonationFormValues>({
         resolver: zodResolver(recordDonationSchema),
-        defaultValues: { donationDate: new Date() }
+        defaultValues: { 
+            amount: 0,
+            transactionId: '',
+            notes: '',
+            proof: undefined,
+            donationDate: new Date() 
+        }
     });
     
     const { control, handleSubmit, setValue } = form;
