@@ -56,18 +56,20 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - Set both 'senderPaymentApp' and 'recipientPaymentApp' to "Google Pay" unless there's evidence of another app being involved.
             
             **Paytm Rules:**
-            - Look for "From" and "To" sections.
-            - The sender's name is usually next to "From". Use this for 'paytmSenderName'.
-            - The recipient's name is usually next to "To". Use this for 'paytmRecipientName'.
-            - The "UPI Reference No." is the most important transaction identifier. Prioritize this for the 'transactionId' and 'paytmUpiReferenceNo' fields.
-            - Set both 'senderPaymentApp' and 'recipientPaymentApp' to "Paytm".
+            - Look for "From" and "To" sections. The app is likely Paytm if you see "Paytm Payments Bank".
+            - The sender's name is usually next to "FROM". Use this for 'paytmSenderName'.
+            - The recipient's name is usually "Paytm Payments Bank" or similar. Use this for 'paytmRecipientName'.
+            - The **"UPI Reference No."** is the most important transaction identifier. You MUST prioritize this for the 'transactionId' field. Also map it to 'paytmUpiReferenceNo'.
+            - The recipient account number is labeled "A/c No.".
+            - Set 'senderPaymentApp' to "Paytm".
+            - The sender's UPI ID is often below their name.
 
             **General Fields to Extract:**
             - paymentApp: The primary app used for the transaction. Prefer 'senderPaymentApp' if available.
             - senderPaymentApp: The app the sender used (e.g., PhonePe, Google Pay, Paytm).
             - recipientPaymentApp: The app the recipient received the money on, if specified (e.g., in a "Sent to: G Pay" section).
             - amount: The primary transaction amount. Must be a number.
-            - transactionId: The main Transaction ID, Reference Number, or UPI Reference No. For PhonePe, this is the 'Transaction ID'. For Google Pay, this MUST be the 'UPI transaction ID'.
+            - transactionId: The main Transaction ID, Reference Number, or UPI Reference No. For PhonePe, this is the 'Transaction ID'. For Google Pay, this MUST be the 'UPI transaction ID'. For Paytm, it is the 'UPI Reference No.'.
             - utrNumber: The UTR number, if explicitly labeled.
             - googlePayTransactionId: The Google Pay specific transaction ID.
             - phonePeTransactionId: The PhonePe specific transaction ID.

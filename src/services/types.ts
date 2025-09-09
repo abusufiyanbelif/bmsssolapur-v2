@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
