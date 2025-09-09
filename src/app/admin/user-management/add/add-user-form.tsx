@@ -29,7 +29,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getUserByPhone } from "@/services/user-service";
 
 
@@ -56,6 +55,24 @@ const states = [
     { name: "Telangana", cities: ["Hyderabad", "Warangal", "Nizamabad"] },
 ];
 
+const createRegisterFormSchema = (isAadhaarMandatory: boolean) => z.object({
+  firstName: z.string().min(2, "First name must be at least 2 characters."),
+  lastName: z.string().min(1, "Last name is required."),
+  email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
+  password: z.string().optional(),
+  aadhaarNumber: isAadhaarMandatory
+    ? z.string().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits.")
+    : z.string().optional(),
+  bankAccountName: z.string().optional(),
+  bankName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
+  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
+  upiIds: z.array(z.object({ value: z.string() })).optional(),
+});
+
+
 const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   userId: z.string().min(3, "User ID must be at least 3 characters."),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
@@ -71,7 +88,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   createProfile: z.boolean().default(false),
   isAnonymousAsBeneficiary: z.boolean().default(false),
   isAnonymousAsDonor: z.boolean().default(false),
-  gender: z.enum(["Male", "Female", "Other"]),
+  gender: z.enum(["Male", "Female"], { required_error: "Please select a gender."}),
   beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
@@ -211,8 +228,19 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       bankIfscCode: '',
     },
   });
+  
+  const handleCancel = () => {
+    form.reset();
+    setUserIdState(initialAvailabilityState);
+    setEmailState(initialAvailabilityState);
+    setPhoneState(initialAvailabilityState);
+    setPanState(initialAvailabilityState);
+    setAadhaarState(initialAvailabilityState);
+    setBankAccountState(initialAvailabilityState);
+    setUpiIdStates({});
+  };
 
-   const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({
+  const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({
     control: form.control,
     name: "upiIds"
   });
@@ -224,6 +252,8 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   
   const { watch, trigger, setValue, reset } = form;
   const selectedState = watch("state");
+  const selectedRoles = watch("roles");
+  const selectedGender = watch("gender");
   
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
     if (!value) {
@@ -276,8 +306,6 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     prefillFromScan();
   }, [searchParams, setValue]);
 
-  const selectedRoles = form.watch("roles");
-  const selectedGender = form.watch("gender");
   const firstName = form.watch("firstName");
   const lastName = form.watch("lastName");
   const isAnonymousBeneficiary = form.watch("isAnonymousAsBeneficiary");
@@ -367,18 +395,6 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     }
   }
   
-  const handleCancel = () => {
-    reset();
-    setUserIdState(initialAvailabilityState);
-    setEmailState(initialAvailabilityState);
-    setPhoneState(initialAvailabilityState);
-    setPanState(initialAvailabilityState);
-    setAadhaarState(initialAvailabilityState);
-    setBankAccountState(initialAvailabilityState);
-    setUpiIdStates({});
-  };
-
-
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
   
   const isAnyFieldChecking = userIdState.isChecking || emailState.isChecking || phoneState.isChecking || panState.isChecking || aadhaarState.isChecking || bankAccountState.isChecking || Object.values(upiIdStates).some(s => s.isChecking);
@@ -524,12 +540,6 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                         <RadioGroupItem value="Female" />
                         </FormControl>
                         <FormLabel className="font-normal">Female</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                        <RadioGroupItem value="Other" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Other</FormLabel>
                     </FormItem>
                     </RadioGroup>
                 </FormControl>

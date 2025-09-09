@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -214,7 +213,7 @@ const formSchema = z.object({
   isAnonymousAsBeneficiary: z.boolean().default(false),
   isAnonymousAsDonor: z.boolean().default(false),
   isActive: z.boolean().default(true),
-  gender: z.enum(["Male", "Female", "Other"]),
+  gender: z.enum(["Male", "Female"], { required_error: "Please select a gender."}),
   beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
@@ -269,7 +268,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
       isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
       isAnonymousAsDonor: user.isAnonymousAsDonor || false,
       isActive: user.isActive,
-      gender: user.gender || 'Other',
+      gender: user.gender,
       beneficiaryType: user.beneficiaryType,
       addressLine1: user.address?.addressLine1 || '',
       city: user.address?.city || 'Solapur',
@@ -307,7 +306,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           isAnonymousAsBeneficiary: user.isAnonymousAsBeneficiary || false,
           isAnonymousAsDonor: user.isAnonymousAsDonor || false,
           isActive: user.isActive,
-          gender: user.gender || 'Other',
+          gender: user.gender,
           beneficiaryType: user.beneficiaryType,
           addressLine1: user.address?.addressLine1 || '',
           city: user.address?.city || 'Solapur',
@@ -519,12 +518,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                         </FormControl>
                                         <FormLabel className="font-normal">Female</FormLabel>
                                     </FormItem>
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                        <RadioGroupItem value="Other" />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">Other</FormLabel>
-                                    </FormItem>
                                     </RadioGroup>
                                 </FormControl>
                                 <FormMessage />
@@ -536,7 +529,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
                             <FormLabel>Email Address</FormLabel>
-                            <Input type="email" value={user.email} disabled />
+                            <Input type="email" value={user.email || ''} disabled />
                             <FormDescription>Email address cannot be changed.</FormDescription>
                         </div>
                     <FormField
