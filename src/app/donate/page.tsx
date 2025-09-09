@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
@@ -44,6 +44,12 @@ import { Badge } from "@/components/ui/badge";
 import { useRazorpay } from "@/hooks/use-razorpay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getRawTextFromImage } from '@/app/actions';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from 'date-fns';
+import { cn } from "@/lib/utils";
+import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -218,6 +224,7 @@ function RecordPastDonationForm({ user }: { user: User }) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [rawText, setRawText] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -247,6 +254,7 @@ function RecordPastDonationForm({ user }: { user: User }) {
     const clearFile = () => {
         setFile(null);
         setPreviewUrl(null);
+        setRawText(null);
         setValue('proof', null, { shouldValidate: true });
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -264,12 +272,29 @@ function RecordPastDonationForm({ user }: { user: User }) {
         const result = await getRawTextFromImage(formData);
         if (result.success && result.rawText) {
             setRawText(result.rawText);
-            toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text has been populated below.' });
+            toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text has been populated below. You can now analyze it.' });
         } else {
              toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract text.' });
         }
         setIsScanning(false);
     }
+    
+    const handleAutoFill = async () => {
+        if (!rawText) return;
+        setIsAnalyzing(true);
+        const result = await handleExtractDonationDetails(rawText);
+        if (result.success && result.details) {
+            const details = result.details;
+            if (details.amount) setValue('amount', details.amount);
+            if (details.transactionId) setValue('transactionId', details.transactionId);
+            if (details.date) setValue('donationDate', new Date(details.date));
+            if (details.notes) setValue('notes', details.notes);
+            toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review all fields.' });
+        } else {
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
+        }
+        setIsAnalyzing(false);
+    };
     
     const onSubmit = async (values: RecordDonationFormValues) => {
         setIsSubmitting(true);
@@ -331,10 +356,18 @@ function RecordPastDonationForm({ user }: { user: User }) {
                         )}
                         
                         {file && (
-                           <Button type="button" onClick={handleGetText} disabled={isScanning} className="w-full">
-                                {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                                Get Text from Image
-                            </Button>
+                           <div className="flex flex-col sm:flex-row gap-2">
+                              <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isScanning}>
+                                  {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                  Get Text from Image
+                              </Button>
+                              {rawText && (
+                                  <Button type="button" onClick={handleAutoFill} disabled={isAnalyzing} className="w-full">
+                                      {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                      Auto-fill Form
+                                  </Button>
+                              )}
+                           </div>
                         )}
                         
                         {rawText && <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-muted"/>}
@@ -342,6 +375,39 @@ function RecordPastDonationForm({ user }: { user: User }) {
                         <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Transaction ID / UTR</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (INR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={control} name="purpose" render={({ field }) => (<FormItem><FormLabel>Purpose</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{donationPurposes.map(p=>(<SelectItem key={p} value={p}>{p}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                        <FormField
+                            control={form.control}
+                            name="donationDate"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                <FormLabel>Donation Date</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
+                                        >
+                                        {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
+
                         
                         <Button type="submit" disabled={isSubmitting} className="w-full">
                            {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2"/>}
