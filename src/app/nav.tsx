@@ -8,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, UploadCloud
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, UploadCloud, ScanSearch
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -94,6 +94,8 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/leads/add", label: "Create Lead", icon: FilePlus2, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/leads/create-from-document", label: "Create from Document", icon: ScanSearch, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/leads/configuration", label: "Configuration", icon: BookText, allowedRoles: ["Super Admin"] },
         ]
     },
@@ -131,6 +133,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/donors", label: "All Donors", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/referrals", label: "All Referrals", icon: UserSearch, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/user-management/configuration", label: "User Page Configuration", icon: UserCog, allowedRoles: ["Super Admin"] },
             { 
                 label: "Access Management", 
                 icon: KeySquare,
@@ -143,15 +146,15 @@ const allNavItems: NavItem[] = [
             },
         ]
     },
-
+    
     // Super Admin - Data Profiling & Analytics (Collapsible)
     { 
         label: "Data Profiling & Analytics", 
         icon: BrainCircuit, 
-        allowedRoles: ["Super Admin"],
+        allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard },
-            { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings },
+            { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
     
