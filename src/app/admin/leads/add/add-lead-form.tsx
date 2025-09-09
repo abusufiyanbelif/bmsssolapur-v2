@@ -1,8 +1,9 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useFormContext } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,10 +59,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
 
-const FileUploadField = ({ name, label, control, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, isEditing?: boolean }) => {
+const FileUploadField = ({ name, label, control, currentUrl, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, currentUrl?: string, isEditing?: boolean }) => {
     const [file, setFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const { setValue } = useForm<any>();
+    const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
+    const { setValue } = useFormContext();
 
     useEffect(() => {
         if (file) {
@@ -69,9 +70,9 @@ const FileUploadField = ({ name, label, control, isEditing = true }: { name: "aa
             setPreviewUrl(url);
             return () => URL.revokeObjectURL(url);
         } else {
-            setPreviewUrl(null);
+            setPreviewUrl(currentUrl || null);
         }
-    }, [file]);
+    }, [file, currentUrl]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0] || null;
@@ -80,29 +81,32 @@ const FileUploadField = ({ name, label, control, isEditing = true }: { name: "aa
     };
     
     return (
-        <FormField
-            control={control}
-            name={name}
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel>{label}</FormLabel>
-                    <FormControl>
-                        <Input 
-                            type="file" 
-                            accept="image/*,application/pdf"
-                            onChange={handleFileChange}
-                            disabled={!isEditing}
-                        />
-                    </FormControl>
-                    {previewUrl && (
-                        <div className="mt-2 p-2 border rounded-md">
+        <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <FormControl>
+                <Input 
+                    type="file" 
+                    accept="image/*,application/pdf"
+                    onChange={handleFileChange}
+                    disabled={!isEditing}
+                />
+            </FormControl>
+            {previewUrl && (
+                <div className="mt-2 p-2 border rounded-md">
+                    <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                         {previewUrl.match(/\.(jpeg|jpg|gif|png)$/) != null ? (
                             <Image src={previewUrl} alt="Preview" width={100} height={100} className="object-contain" />
-                        </div>
-                    )}
-                    <FormMessage />
-                </FormItem>
+                         ) : (
+                            <div className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm">
+                                <Paperclip className="h-4 w-4" />
+                                <span>View Document</span>
+                            </div>
+                         )}
+                    </a>
+                </div>
             )}
-        />
+            <FormMessage />
+        </FormItem>
     )
 }
 
@@ -542,7 +546,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <FormField control={form.control} name="degree" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Degree/Class</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select a degree/class" /></SelectTrigger></FormControl>
                                     <SelectContent>{(leadConfiguration.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                                 </Select>
@@ -553,7 +557,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                              <FormField control={form.control} name="year" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Year</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
                                         <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                                     </Select>
@@ -766,7 +770,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </div>
                 )}
                  
-                <h3 className="text-lg font-semibold border-b pb-2 pt-4">Case Details</h3>
+                <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
                 <FormField
                     control={form.control}
                     name="headline"
@@ -878,4 +882,3 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
-```
