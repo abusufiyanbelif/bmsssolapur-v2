@@ -334,7 +334,6 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
         console.error("Error fetching campaign donations: ", error);
         if (error instanceof Error && error.message.includes('index')) {
              console.error("Firestore index missing. Please create a composite index in Firestore on the 'donations' collection for 'campaignId' (ascending) and 'donationDate' (descending).");
-             return [];
         }
         return [];
     }

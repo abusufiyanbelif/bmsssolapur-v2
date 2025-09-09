@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getUser, User } from '@/services/user-service';
-import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2 } from 'lucide-react';
+import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2, CreditCard, Fingerprint, MapPin, Banknote } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { handleUpdateProfile } from '../actions';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const profileFormSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
@@ -29,13 +30,14 @@ const profileFormSchema = z.object({
   country: z.string().optional(),
   pincode: z.string().optional(),
   gender: z.enum(['Male', 'Female', 'Other']),
-  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family"]).optional(),
+  beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   occupation: z.string().optional(),
   familyMembers: z.coerce.number().optional(),
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
   bankAccountName: z.string().optional(),
+  bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
   upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
@@ -96,6 +98,7 @@ export default function ProfileSettingsPage() {
                     panNumber: fetchedUser.panNumber || '',
                     aadhaarNumber: fetchedUser.aadhaarNumber || '',
                     bankAccountName: fetchedUser.bankAccountName || '',
+                    bankName: fetchedUser.bankName || '',
                     bankAccountNumber: fetchedUser.bankAccountNumber || '',
                     bankIfscCode: fetchedUser.bankIfscCode || '',
                     upiPhoneNumbers: fetchedUser.upiPhoneNumbers?.map(id => ({ value: id })) || [{ value: "" }],
@@ -167,343 +170,92 @@ export default function ProfileSettingsPage() {
                                 <CardTitle>Account Settings</CardTitle>
                                 <CardDescription>{isEditing ? "Update your account details below." : "View your account details."}</CardDescription>
                             </div>
-                            <Button type="button" onClick={() => setIsEditing(!isEditing)} variant={isEditing ? 'secondary' : 'default'}>
-                                {isEditing ? <><X className="mr-2 h-4 w-4" /> Cancel</> : <><Edit className="mr-2 h-4 w-4" /> Edit Profile</>}
-                            </Button>
+                            <div className="flex gap-2">
+                                {isEditing ? (
+                                    <>
+                                        <Button type="button" variant="outline" onClick={() => {setIsEditing(false); reset();}}>
+                                            <X className="mr-2 h-4 w-4" /> Cancel
+                                        </Button>
+                                         <Button type="submit" disabled={isSubmitting || !isDirty}>
+                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                            Save Changes
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button type="button" onClick={() => setIsEditing(true)}>
+                                        <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="firstName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>First Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} disabled={!isEditing} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="middleName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Middle Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} disabled={!isEditing} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="lastName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Last Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} disabled={!isEditing} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           <FormField
-                                control={form.control}
-                                name="phone"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Primary Phone</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} disabled={!isEditing} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="gender"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Gender</FormLabel>
-                                        <RadioGroup
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            className="flex items-center space-x-4 pt-2"
-                                            disabled={!isEditing}
-                                        >
-                                            <FormItem className="flex items-center space-x-2">
-                                                <FormControl>
-                                                    <RadioGroupItem value="Male" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">Male</FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-2">
-                                                <FormControl>
-                                                    <RadioGroupItem value="Female" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">Female</FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-2">
-                                                <FormControl>
-                                                    <RadioGroupItem value="Other" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">Other</FormLabel>
-                                            </FormItem>
-                                        </RadioGroup>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <h3 className="text-lg font-semibold border-b pb-2">Address Details</h3>
-                         <FormField
-                            control={form.control}
-                            name="addressLine1"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Address</FormLabel>
-                                    <FormControl>
-                                        <Textarea {...field} disabled={!isEditing} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="pincode"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Pincode</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} disabled={!isEditing} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {isBeneficiary && (
-                            <>
-                                <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField
-                                    control={form.control}
-                                    name="occupation"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Occupation</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} disabled={!isEditing} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                    <FormField
-                                    control={form.control}
-                                    name="familyMembers"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Number of Family Members</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" {...field} disabled={!isEditing} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                </div>
-                                <FormField
-                                    control={form.control}
-                                    name="beneficiaryType"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-3">
-                                        <FormLabel>Beneficiary Type</FormLabel>
-                                        <FormControl>
-                                            <RadioGroup
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            className="flex flex-row space-x-4 pt-2"
-                                            disabled={!isEditing}
-                                            >
-                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
-                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
-                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
-                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
-                                            </RadioGroup>
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                            </>
-                        )}
-
-                        <h3 className="text-lg font-semibold border-b pb-2">Verification & Payment Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="panNumber"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>PAN Number</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} disabled={!isEditing} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="aadhaarNumber"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Aadhaar Number</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} disabled={!isEditing} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="bankAccountName"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Full Name as per Bank Account</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Enter full name" {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="bankAccountNumber"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Bank Account Number</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter account number" {...field} disabled={!isEditing} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="bankIfscCode"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>IFSC Code</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter IFSC code" {...field} disabled={!isEditing} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        
-                         <div className="space-y-4">
-                            <FormLabel>UPI Phone Numbers</FormLabel>
-                            {upiPhoneFields.map((field, index) => (
-                                <FormField
-                                control={form.control}
-                                key={field.id}
-                                name={`upiPhoneNumbers.${index}.value`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <div className="flex items-center gap-2">
-                                        <FormControl>
-                                        <Input {...field} placeholder="e.g., 9876543210" disabled={!isEditing} type="tel" maxLength={10} />
-                                        </FormControl>
-                                        {isEditing && (
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                        )}
+                        <Accordion type="multiple" defaultValue={["basic", "payment"]} className="w-full space-y-4">
+                            <AccordionItem value="basic">
+                                <AccordionTrigger className="text-lg font-semibold">Basic Information</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="middleName" render={({ field }) => (<FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                            ))}
-                            {isEditing && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => appendUpiPhone({ value: "" })}
-                                >
-                                    <PlusCircle className="mr-2" />
-                                    Add UPI Phone
-                                </Button>
-                            )}
-                        </div>
-
-                         <div className="space-y-4">
-                            <FormLabel>UPI IDs</FormLabel>
-                            {upiIdFields.map((field, index) => (
-                                <FormField
-                                control={form.control}
-                                key={field.id}
-                                name={`upiIds.${index}.value`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <div className="flex items-center gap-2">
-                                        <FormControl>
-                                        <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
-                                        </FormControl>
-                                        {isEditing && (
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                        )}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                       <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Primary Phone</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4 pt-2" disabled={!isEditing}><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Other" /></FormControl><FormLabel className="font-normal">Other</FormLabel></FormItem></RadioGroup><FormMessage /></FormItem>)} />
                                     </div>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                            ))}
-                            {isEditing && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => appendUpiId({ value: "" })}
-                                >
-                                    <PlusCircle className="mr-2" />
-                                    Add UPI ID
-                                </Button>
-                            )}
-                        </div>
-                        
-                        {isEditing && (
-                            <Button type="submit" disabled={isSubmitting || !isDirty}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Save Changes
-                            </Button>
-                        )}
+                                </AccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="address">
+                                <AccordionTrigger className="text-lg font-semibold">Address Details</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-6">
+                                    <FormField control={form.control} name="addressLine1" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="pincode" render={({ field }) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                            
+                             {isBeneficiary && (
+                                 <AccordionItem value="beneficiary">
+                                     <AccordionTrigger className="text-lg font-semibold">Beneficiary Details</AccordionTrigger>
+                                     <AccordionContent className="pt-4 space-y-6">
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                            <FormField control={form.control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Number of Family Members</FormLabel><FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        </div>
+                                         <FormField control={form.control} name="beneficiaryType" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Beneficiary Type</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                                     </AccordionContent>
+                                 </AccordionItem>
+                             )}
+
+                            <AccordionItem value="payment">
+                                <AccordionTrigger className="text-lg font-semibold">Verification &amp; Payment Details</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    </div>
+                                    <FormField control={form.control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    </div>
+                                    <FormField control={form.control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <Separator />
+                                    <div className="space-y-4">
+                                        <FormLabel>UPI Phone Numbers</FormLabel>
+                                        {upiPhoneFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} type="tel" maxLength={10} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
+                                        {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>)}
+                                    </div>
+                                    <div className="space-y-4">
+                                        <FormLabel>UPI IDs</FormLabel>
+                                        {upiIdFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
+                                        {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>)}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </CardContent>
                 </Card>
             </form>
