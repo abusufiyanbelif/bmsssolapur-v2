@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +43,7 @@ import Image from "next/image";
 const FileUploadField = ({ name, label, control, currentUrl, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, currentUrl?: string, isEditing?: boolean }) => {
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
-    const { setValue } = useFormContext();
+    const { setValue } = useForm<any>();
 
     useEffect(() => {
         if (file) {
@@ -408,7 +407,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 </div>
             </CardHeader>
             <CardContent>
-                <Form {...form}>
+                <FormProvider {...form}>
                 <form className="space-y-8 max-w-2xl">
                      <h3 className="text-lg font-semibold border-b pb-2">Document Uploads</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -959,7 +958,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     />
                     
                 </form>
-                </Form>
+                </FormProvider>
             </CardContent>
         </Card>
         

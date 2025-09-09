@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -389,7 +388,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
         
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <FormField
                 control={form.control}
                 name="firstName"
@@ -403,18 +402,31 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                     </FormItem>
                 )}
             />
-             <FormField
+            <FormField
                 control={form.control}
-                name="lastName"
+                name="middleName"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Middle Name</FormLabel>
                     <FormControl>
-                        <Input type="text" placeholder="Enter your last name" {...field} />
+                        <Input type="text" placeholder="Enter your middle name" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
+            />
+             <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                    <Input type="text" placeholder="Enter your last name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
             />
         </div>
          <FormField
@@ -855,22 +867,21 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                     </FormItem>
                 )}
             />
-             <FormField
-                control={form.control}
-                name="bankName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Bank Name (Optional)</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Enter bank name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormField
+            control={form.control}
+            name="bankName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Bank Name (Optional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter bank name" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <FormField
                 control={form.control}
                 name="upiPhone"
@@ -885,7 +896,6 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                 )}
             />
         </div>
-
          <div className="space-y-4">
             <FormLabel>UPI IDs (Optional)</FormLabel>
             <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
