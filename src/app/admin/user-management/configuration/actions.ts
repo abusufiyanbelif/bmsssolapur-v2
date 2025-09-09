@@ -38,6 +38,12 @@ export async function handleUpdateUserConfiguration(
         isAddressMandatory: formData.get("Referral.isAddressMandatory") === 'on',
         isBankAccountMandatory: formData.get("Referral.isBankAccountMandatory") === 'on',
       },
+       Admin: {
+        isAadhaarMandatory: formData.get("Admin.isAadhaarMandatory") === 'on',
+        isPanMandatory: formData.get("Admin.isPanMandatory") === 'on',
+        isAddressMandatory: formData.get("Admin.isAddressMandatory") === 'on',
+        isBankAccountMandatory: formData.get("Admin.isBankAccountMandatory") === 'on',
+      },
     };
 
     const updates = {
@@ -60,4 +66,3 @@ export async function handleUpdateUserConfiguration(
     };
   }
 }
-

@@ -48,7 +48,7 @@ export interface User {
     country?: string;
     pincode?: string;
   };
-  gender: 'Male' | 'Female';
+  gender: 'Male' | 'Female' | 'Other';
   beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow';
   isAnonymousAsBeneficiary?: boolean;
   isAnonymousAsDonor?: boolean;
@@ -385,6 +385,10 @@ export interface RoleFieldRequirements {
 
 export interface UserConfiguration {
     [key: string]: RoleFieldRequirements | undefined;
+    Donor?: RoleFieldRequirements;
+    Beneficiary?: RoleFieldRequirements;
+    Referral?: RoleFieldRequirements;
+    Admin?: RoleFieldRequirements;
     isAadhaarMandatory?: boolean; // Keep for backward compatibility
 }
 

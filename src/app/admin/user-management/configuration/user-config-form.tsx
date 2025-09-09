@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUserConfiguration } from "./actions";
 import { useState } from "react";
-import { Loader2, Save, User, HandHeart, UserSearch, UserPlus, Fingerprint, MapPin, CreditCard } from "lucide-react";
+import { Loader2, Save, User, HandHeart, UserSearch, UserCog, Fingerprint, MapPin, CreditCard } from "lucide-react";
 import { UserConfiguration, UserRole } from "@/services/types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
@@ -33,6 +33,7 @@ const formSchema = z.object({
   Donor: roleRequirementSchema,
   Beneficiary: roleRequirementSchema,
   Referral: roleRequirementSchema,
+  Admin: roleRequirementSchema,
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,10 +42,11 @@ interface UserConfigFormProps {
     settings?: UserConfiguration;
 }
 
-const rolesToConfigure: { name: 'Donor' | 'Beneficiary' | 'Referral', icon: React.ElementType, description: string }[] = [
+const rolesToConfigure: { name: 'Donor' | 'Beneficiary' | 'Referral' | 'Admin', icon: React.ElementType, description: string }[] = [
     { name: 'Donor', icon: HandHeart, description: 'Settings for users who donate.' },
     { name: 'Beneficiary', icon: User, description: 'Settings for users who request help.' },
     { name: 'Referral', icon: UserSearch, description: 'Settings for users who refer beneficiaries.' },
+    { name: 'Admin', icon: UserCog, description: 'Settings for Admins and Super Admins.' },
 ];
 
 export function UserConfigForm({ settings }: UserConfigFormProps) {
@@ -57,6 +59,7 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
       Donor: settings?.Donor || { isAadhaarMandatory: false },
       Beneficiary: settings?.Beneficiary || { isAadhaarMandatory: true }, // Default Aadhaar to true for Beneficiaries
       Referral: settings?.Referral || { isAadhaarMandatory: false },
+      Admin: settings?.Admin || { isAadhaarMandatory: false },
     },
   });
 
@@ -86,7 +89,7 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
   return (
     <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <Accordion type="multiple" defaultValue={["Donor", "Beneficiary", "Referral"]} className="w-full space-y-4">
+            <Accordion type="multiple" defaultValue={["Donor", "Beneficiary", "Referral", "Admin"]} className="w-full space-y-4">
                 {rolesToConfigure.map(role => (
                     <AccordionItem key={role.name} value={role.name}>
                         <AccordionTrigger className="p-4 bg-muted/50 rounded-lg hover:no-underline">
