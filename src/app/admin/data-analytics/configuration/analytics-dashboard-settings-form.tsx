@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -62,7 +61,7 @@ export function AnalyticsDashboardSettingsForm({ settings }: AnalyticsDashboardS
     },
   });
   
-  const { formState: { isDirty }, reset } = form;
+  const { formState: { isDirty }, reset, handleSubmit } = form;
 
   const handleCancel = () => {
     reset({
@@ -116,7 +115,7 @@ export function AnalyticsDashboardSettingsForm({ settings }: AnalyticsDashboardS
                     <Button variant="outline" onClick={handleCancel}>
                         <X className="mr-2 h-4 w-4" /> Cancel
                     </Button>
-                     <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                     <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Changes
                     </Button>

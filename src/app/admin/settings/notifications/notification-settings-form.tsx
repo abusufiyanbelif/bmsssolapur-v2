@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +75,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isDirty }, handleSubmit } = form;
 
   async function onSubmit(values: SettingsFormValues) {
     setIsSubmitting(true);
@@ -111,7 +110,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
         
         <Accordion type="multiple" className="w-full space-y-6">
             <AccordionItem value="sms">

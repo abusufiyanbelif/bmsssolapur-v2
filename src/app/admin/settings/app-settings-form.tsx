@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,7 +63,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isDirty }, handleSubmit } = form;
 
   async function onSubmit(values: SettingsFormValues) {
     setIsSubmitting(true);
@@ -103,7 +102,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
         <Card>
             <CardHeader>
                 <CardTitle>Login Methods</CardTitle>

@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,7 +57,7 @@ export default function ProfileSettingsPage() {
         resolver: zodResolver(profileFormSchema),
     });
 
-    const { formState: { isDirty }, control, reset } = form;
+    const { formState: { isDirty }, control, reset, handleSubmit } = form;
     const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
     const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
 
@@ -160,7 +159,7 @@ export default function ProfileSettingsPage() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)}>
                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -464,7 +463,7 @@ export default function ProfileSettingsPage() {
 
                          <div className="space-y-4">
                             <FormLabel>UPI IDs</FormLabel>
-                            {fields.map((field, index) => (
+                            {upiIdFields.map((field, index) => (
                                 <FormField
                                 control={form.control}
                                 key={field.id}
@@ -476,7 +475,7 @@ export default function ProfileSettingsPage() {
                                         <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
                                         </FormControl>
                                         {isEditing && (
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
                                         )}
@@ -491,7 +490,7 @@ export default function ProfileSettingsPage() {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => append({ value: "" })}
+                                    onClick={() => appendUpiId({ value: "" })}
                                 >
                                     <PlusCircle className="mr-2" />
                                     Add UPI ID

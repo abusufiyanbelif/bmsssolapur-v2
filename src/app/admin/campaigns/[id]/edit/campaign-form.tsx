@@ -75,7 +75,7 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
     },
   });
 
-  const { formState: { isDirty }, reset } = form;
+  const { formState: { isDirty }, reset, handleSubmit } = form;
 
   const handleCancel = () => {
     reset({
@@ -140,7 +140,7 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
         </CardHeader>
         <CardContent>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
                 <FormField
                 control={form.control}
                 name="name"

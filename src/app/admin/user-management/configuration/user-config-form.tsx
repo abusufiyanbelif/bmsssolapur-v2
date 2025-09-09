@@ -60,7 +60,7 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
     },
   });
 
-  const { formState: { isDirty } } = form;
+  const { formState: { isDirty }, handleSubmit } = form;
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -85,7 +85,7 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
 
   return (
     <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <Accordion type="multiple" defaultValue={["Donor", "Beneficiary", "Referral"]} className="w-full space-y-4">
                 {rolesToConfigure.map(role => (
                     <AccordionItem key={role.name} value={role.name}>

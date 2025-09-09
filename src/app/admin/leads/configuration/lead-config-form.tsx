@@ -72,7 +72,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
     },
   });
 
-  const { formState: { isDirty }, watch, getValues, setValue } = form;
+  const { formState: { isDirty }, watch, getValues, setValue, handleSubmit } = form;
   const roleBasedCreationEnabled = watch("roleBasedCreationEnabled");
 
   async function onSubmit(values: FormValues) {
@@ -90,7 +90,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         
         <Card>
              <CardHeader>
