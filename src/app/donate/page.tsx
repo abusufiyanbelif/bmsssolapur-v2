@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -27,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot, ZoomIn, ZoomOut } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
@@ -274,6 +273,8 @@ function RecordPastDonationForm({ user }: { user: User }) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
+    const [zoom, setZoom] = useState(1);
+
 
     const form = useForm<RecordDonationFormValues>({
         resolver: zodResolver(recordDonationSchema),
@@ -368,6 +369,12 @@ function RecordPastDonationForm({ user }: { user: User }) {
         }
         setIsSubmitting(false);
     }
+    
+     const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
+    };
+
 
     return (
         <Card>
@@ -393,18 +400,21 @@ function RecordPastDonationForm({ user }: { user: User }) {
                             </FormItem>
                         )}/>
                         {previewUrl && (
-                             <div className="relative group p-2 border rounded-md bg-muted/50 flex flex-col items-center gap-4">
-                                <Button 
-                                    type="button" 
-                                    variant="destructive" 
-                                    size="icon" 
-                                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                    onClick={clearFile}
-                                >
-                                    <XCircle className="h-4 w-4"/>
-                                </Button>
-                                <div className="relative w-full h-60">
-                                    <Image src={previewUrl} alt="Proof preview" fill className="object-contain rounded-md mx-auto" />
+                            <div className="relative group">
+                                 <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                                    <Image 
+                                        src={previewUrl} 
+                                        alt="Screenshot Preview"
+                                        width={800 * zoom}
+                                        height={800 * zoom}
+                                        className="object-contain transition-transform duration-100"
+                                        style={{ transform: `scale(${zoom})` }}
+                                    />
+                                </div>
+                                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                    <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
                                 </div>
                             </div>
                         )}

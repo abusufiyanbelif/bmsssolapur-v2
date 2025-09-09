@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text } from "lucide-react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -153,6 +153,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+
 
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
 
@@ -319,6 +321,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       setFilePreview(preview);
       setRawText(null); // Clear old text on new file
       setExtractedDetails(null);
+      setZoom(1);
     } else {
       clearFile();
     }
@@ -389,6 +392,11 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   };
   
   const isFormInvalid = transactionIdState.isAvailable === false;
+  
+   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
+  };
 
 
   return (
@@ -463,16 +471,21 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 
                  {filePreview && (
                     <div className="relative group">
-                        <Image src={filePreview} alt="Screenshot Preview" width={200} height={400} className="rounded-md object-contain" />
-                        <Button 
-                            type="button" 
-                            variant="destructive" 
-                            size="icon" 
-                            className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={clearFile}
-                        >
-                            <X className="h-4 w-4"/>
-                        </Button>
+                        <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                            <Image 
+                                src={filePreview} 
+                                alt="Screenshot Preview"
+                                width={800 * zoom}
+                                height={800 * zoom}
+                                className="object-contain transition-transform duration-100"
+                                style={{ transform: `scale(${zoom})` }}
+                            />
+                        </div>
+                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                            <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
+                        </div>
                     </div>
                 )}
                 {file && (

@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Text } from "lucide-react";
+import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Text, ZoomIn, ZoomOut, X } from "lucide-react";
 import { handleFundTransfer } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -50,6 +50,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [rawText, setRawText] = useState<string | null>(null);
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
+  const [zoom, setZoom] = useState(1);
   
   const form = useForm();
   const { setValue, register, handleSubmit, getValues, watch } = form;
@@ -101,6 +102,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     }
      setRawText(null);
      setExtractedDetails(null);
+     setZoom(1);
   };
   
    const handleGetText = async () => {
@@ -135,6 +137,12 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     }
     setIsScanning(false);
   };
+  
+   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
+  };
+
 
 
   return (
@@ -145,6 +153,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         setPreviewUrl(null);
         setRawText(null);
         setExtractedDetails(null);
+        setZoom(1);
       }
       setOpen(isOpen)
     }}>
@@ -192,7 +201,25 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Input id="proof" name="proof" type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
                     <FormDescription>A screenshot or PDF receipt is required for online payments.</FormDescription>
                 </div>
-                {previewUrl && <Image src={previewUrl} alt="Proof preview" width={200} height={400} className="object-contain mx-auto rounded-md" />}
+                {previewUrl && (
+                  <div className="relative group">
+                     <div onWheel={handleWheel} className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                          <Image 
+                              src={previewUrl} 
+                              alt="Proof preview" 
+                              width={800 * zoom}
+                              height={800 * zoom}
+                              className="object-contain transition-transform duration-100"
+                              style={{ transform: `scale(${zoom})` }}
+                          />
+                      </div>
+                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                          <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setZoom(1); }}><X className="h-4 w-4"/></Button>
+                      </div>
+                  </div>
+                )}
 
                 {file && (
                     <div className="flex gap-2">
