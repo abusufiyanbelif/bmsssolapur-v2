@@ -88,6 +88,12 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - recipientAccountNumber: The recipient's bank account number, even if partial.
             - status: The transaction status (e.g., Successful, Completed).
             - notes: Any user-added comments, remarks, or descriptions found in the payment details.
+            - phonePeSenderName: The sender's name if it appears on a PhonePe receipt (rare).
+            - phonePeRecipientName: The recipient's name from a PhonePe receipt.
+            - googlePaySenderName: The sender's name from a Google Pay receipt.
+            - googlePayRecipientName: The recipient's name from a Google Pay receipt.
+            - paytmSenderName: The sender's name from a Paytm receipt.
+            - paytmRecipientName: The recipient's name from a Paytm receipt.
 
             Raw Text to Parse:
             ---
@@ -108,3 +114,5 @@ const extractDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
+
+    

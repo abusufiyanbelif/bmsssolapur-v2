@@ -72,7 +72,7 @@ const recordDonationSchema = z.object({
   transactionId: z.string().min(1, "Transaction ID/UTR is required."),
   donationDate: z.date(),
   notes: z.string().optional(),
-  proof: z.any().refine(file => file?.size > 0, "A proof file is required."),
+  proof: z.any().optional(), // No longer mandatory as it can be uploaded after
   // Extracted fields
   paymentApp: z.string().optional(),
   senderName: z.string().optional(),
@@ -640,3 +640,5 @@ export default function DonatePage() {
         </Suspense>
     )
 }
+
+    
