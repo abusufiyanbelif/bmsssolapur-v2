@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -317,7 +316,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setExtractedDetails(null);
     try {
         const formData = new FormData();
-        formData.append("imageFile", file);
+        formData.append("imageFiles", file);
         const result = await getRawTextFromImage(formData);
 
         if (result.success && result.rawText) {
