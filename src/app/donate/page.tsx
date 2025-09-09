@@ -81,6 +81,11 @@ const recordDonationSchema = z.object({
   googlePayTransactionId: z.string().optional(),
   phonePeTransactionId: z.string().optional(),
   paytmUpiReferenceNo: z.string().optional(),
+  googlePaySenderName: z.string().optional(),
+  googlePayRecipientName: z.string().optional(),
+  phonePeRecipientName: z.string().optional(),
+  paytmSenderName: z.string().optional(),
+  paytmRecipientName: z.string().optional(),
 });
 export type RecordDonationFormValues = z.infer<typeof recordDonationSchema>;
 
@@ -246,13 +251,18 @@ function RecordPastDonationForm({ user }: { user: User }) {
             notes: '',
             proof: undefined,
             donationDate: new Date(),
-            paymentApp: undefined,
+            paymentApp: '',
             senderName: '',
             recipientName: '',
             utrNumber: '',
             googlePayTransactionId: '',
             phonePeTransactionId: '',
             paytmUpiReferenceNo: '',
+            googlePaySenderName: '',
+            googlePayRecipientName: '',
+            phonePeRecipientName: '',
+            paytmSenderName: '',
+            paytmRecipientName: '',
         }
     });
     
@@ -442,11 +452,20 @@ function RecordPastDonationForm({ user }: { user: User }) {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Transaction ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />
                                     {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                                    {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                                    {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                                     {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    
+                                    {/* Google Pay */}
+                                    {extractedDetails.googlePaySenderName && <FormField control={form.control} name="googlePaySenderName" render={({field}) => (<FormItem><FormLabel>GPay Sender</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.googlePayRecipientName && <FormField control={form.control} name="googlePayRecipientName" render={({field}) => (<FormItem><FormLabel>GPay Recipient</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                                     {extractedDetails.googlePayTransactionId && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    
+                                    {/* PhonePe */}
+                                    {extractedDetails.phonePeRecipientName && <FormField control={form.control} name="phonePeRecipientName" render={({field}) => (<FormItem><FormLabel>PhonePe Recipient</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                                     {extractedDetails.phonePeTransactionId && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    
+                                    {/* Paytm */}
+                                    {extractedDetails.paytmSenderName && <FormField control={form.control} name="paytmSenderName" render={({field}) => (<FormItem><FormLabel>Paytm Sender</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.paytmRecipientName && <FormField control={form.control} name="paytmRecipientName" render={({field}) => (<FormItem><FormLabel>Paytm Recipient</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                                     {extractedDetails.paytmUpiReferenceNo && <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm Ref No</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                                 </div>
                             </div>
