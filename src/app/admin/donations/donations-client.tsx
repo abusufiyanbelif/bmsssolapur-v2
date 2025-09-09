@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
 import { useSearchParams } from 'next/navigation'
 import {
   Table,
