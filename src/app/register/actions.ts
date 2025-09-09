@@ -52,7 +52,7 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       bankName: formData.get("bankName") as string || undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string || undefined,
       bankIfscCode: formData.get("bankIfscCode") as string || undefined,
-      upiPhone: formData.get("upiPhone") as string || undefined,
+      upiPhoneNumbers: (formData.getAll("upiPhoneNumbers") as string[]).filter(id => id.trim() !== ''),
       upiIds: (formData.getAll("upiIds") as string[]).filter(id => id.trim() !== ''),
       source: 'Manual Entry'
     };
@@ -65,4 +65,3 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
     return { success: false, error: `Registration failed: ${error}` };
   }
 }
-

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -228,7 +229,7 @@ const formSchema = z.object({
   bankAccountName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
-  upiPhone: z.string().optional(),
+  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
   aadhaarCard: z.any().optional(),
   addressProof: z.any().optional(),
@@ -283,13 +284,14 @@ export function EditUserForm({ user }: EditUserFormProps) {
       bankAccountName: user.bankAccountName || '',
       bankAccountNumber: user.bankAccountNumber || '',
       bankIfscCode: user.bankIfscCode || '',
-      upiPhone: user.upiPhone || '',
+      upiPhoneNumbers: user.upiPhoneNumbers?.map(id => ({ value: id })) || [{ value: "" }],
       upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
     },
   });
 
   const { formState: { isDirty }, control, reset } = form;
-  const { fields, append, remove } = useFieldArray({ control, name: "upiIds" });
+  const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
+  const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
   const selectedRoles = form.watch("roles");
   const selectedGender = form.watch("gender");
   
@@ -320,7 +322,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           bankAccountName: user.bankAccountName || '',
           bankAccountNumber: user.bankAccountNumber || '',
           bankIfscCode: user.bankIfscCode || '',
-          upiPhone: user.upiPhone || '',
+          upiPhoneNumbers: user.upiPhoneNumbers?.map(id => ({ value: id })) || [{ value: "" }],
           upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
       });
       setIsEditing(false);
@@ -341,6 +343,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
       } else if (key === 'upiIds' && Array.isArray(value)) {
         value.forEach(item => {
           if (item.value) formData.append('upiIds', item.value)
+        });
+      } else if (key === 'upiPhoneNumbers' && Array.isArray(value)) {
+        value.forEach(item => {
+          if (item.value) formData.append('upiPhoneNumbers', item.value)
         });
       } else if (key === 'isActive' || key === 'isAnonymousAsBeneficiary' || key === 'isAnonymousAsDonor' || key === 'isWidow') {
         if (value) formData.append(key, 'on');
@@ -879,38 +885,22 @@ export function EditUserForm({ user }: EditUserFormProps) {
                         />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                         <FormField
-                            control={form.control}
-                            name="upiPhone"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>UPI Phone Number (Optional)</FormLabel>
-                                <FormControl>
-                                    <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-
-                     <div className="space-y-4">
-                        <FormLabel>UPI IDs</FormLabel>
-                        <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
-                        {fields.map((field, index) => (
+                    <div className="space-y-4">
+                        <FormLabel>UPI Phone Numbers</FormLabel>
+                        <FormDescription>Add one or more UPI-linked phone numbers.</FormDescription>
+                        {upiPhoneFields.map((field, index) => (
                             <FormField
                             control={form.control}
                             key={field.id}
-                            name={`upiIds.${index}.value`}
+                            name={`upiPhoneNumbers.${index}.value`}
                             render={({ field }) => (
                                 <FormItem>
                                 <div className="flex items-center gap-2">
                                     <FormControl>
-                                    <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
+                                    <Input {...field} placeholder="e.g., 9876543210" disabled={!isEditing} type="tel" maxLength={10} />
                                     </FormControl>
                                     {isEditing && (
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                     )}
@@ -925,7 +915,45 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => append({ value: "" })}
+                                onClick={() => appendUpiPhone({ value: "" })}
+                            >
+                                <PlusCircle className="mr-2" />
+                                Add UPI Phone
+                            </Button>
+                        )}
+                    </div>
+
+                     <div className="space-y-4">
+                        <FormLabel>UPI IDs</FormLabel>
+                        <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
+                        {upiIdFields.map((field, index) => (
+                            <FormField
+                            control={form.control}
+                            key={field.id}
+                            name={`upiIds.${index}.value`}
+                            render={({ field }) => (
+                                <FormItem>
+                                <div className="flex items-center gap-2">
+                                    <FormControl>
+                                    <Input {...field} placeholder="e.g., username@okhdfc" disabled={!isEditing} />
+                                    </FormControl>
+                                    {isEditing && (
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                    )}
+                                </div>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        ))}
+                        {isEditing && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => appendUpiId({ value: "" })}
                             >
                                 <PlusCircle className="mr-2" />
                                 Add UPI ID

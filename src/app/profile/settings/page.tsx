@@ -39,7 +39,7 @@ const profileFormSchema = z.object({
   bankAccountName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
-  upiPhone: z.string().optional(),
+  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -59,7 +59,8 @@ export default function ProfileSettingsPage() {
     });
 
     const { formState: { isDirty }, control, reset } = form;
-    const { fields, append, remove } = useFieldArray({ control, name: "upiIds" });
+    const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
+    const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
 
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
@@ -98,7 +99,7 @@ export default function ProfileSettingsPage() {
                     bankAccountName: fetchedUser.bankAccountName || '',
                     bankAccountNumber: fetchedUser.bankAccountNumber || '',
                     bankIfscCode: fetchedUser.bankIfscCode || '',
-                    upiPhone: fetchedUser.upiPhone || '',
+                    upiPhoneNumbers: fetchedUser.upiPhoneNumbers?.map(id => ({ value: id })) || [{ value: "" }],
                     upiIds: fetchedUser.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
                 });
             } else {
@@ -125,6 +126,7 @@ export default function ProfileSettingsPage() {
         const updatePayload = {
             ...values,
             upiIds: values.upiIds?.map(item => item.value).filter(Boolean),
+            upiPhoneNumbers: values.upiPhoneNumbers?.map(item => item.value).filter(Boolean),
             enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
         };
         const result = await handleUpdateProfile(user.id, updatePayload as any);
@@ -339,30 +341,10 @@ export default function ProfileSettingsPage() {
                                             className="flex flex-row space-x-4 pt-2"
                                             disabled={!isEditing}
                                             >
-                                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                                <FormControl>
-                                                <RadioGroupItem value="Adult" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">Adult</FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                                <FormControl>
-                                                <RadioGroupItem value="Old Age" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">Old Age</FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                                <FormControl>
-                                                <RadioGroupItem value="Kid" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">Kid</FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                                <FormControl>
-                                                <RadioGroupItem value="Family" />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">Family</FormLabel>
-                                            </FormItem>
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
+                                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
                                             </RadioGroup>
                                         </FormControl>
                                         <FormMessage />
@@ -442,19 +424,44 @@ export default function ProfileSettingsPage() {
                                 )}
                             />
                         </div>
-                        <FormField
-                            control={form.control}
-                            name="upiPhone"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>UPI Phone Number</FormLabel>
-                                <FormControl>
-                                    <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
+                        
+                         <div className="space-y-4">
+                            <FormLabel>UPI Phone Numbers</FormLabel>
+                            {upiPhoneFields.map((field, index) => (
+                                <FormField
+                                control={form.control}
+                                key={field.id}
+                                name={`upiPhoneNumbers.${index}.value`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <div className="flex items-center gap-2">
+                                        <FormControl>
+                                        <Input {...field} placeholder="e.g., 9876543210" disabled={!isEditing} type="tel" maxLength={10} />
+                                        </FormControl>
+                                        {isEditing && (
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                        )}
+                                    </div>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                            ))}
+                            {isEditing && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => appendUpiPhone({ value: "" })}
+                                >
+                                    <PlusCircle className="mr-2" />
+                                    Add UPI Phone
+                                </Button>
                             )}
-                        />
+                        </div>
+
                          <div className="space-y-4">
                             <FormLabel>UPI IDs</FormLabel>
                             {fields.map((field, index) => (

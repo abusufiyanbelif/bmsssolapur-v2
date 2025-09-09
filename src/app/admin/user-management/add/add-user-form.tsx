@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -88,12 +89,12 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
-  upiPhone: z.string().optional(),
+  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
 
-type AddUserFormValues = z.infer<returnType<typeof createFormSchema>>;
+type AddUserFormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 type AvailabilityState = {
     isChecking: boolean;
@@ -197,6 +198,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       city: 'Solapur',
       country: 'India',
       upiIds: [{ value: "" }],
+      upiPhoneNumbers: [{ value: "" }],
       occupation: '',
       addressLine1: '',
       pincode: '',
@@ -206,18 +208,22 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       bankName: '',
       bankAccountNumber: '',
       bankIfscCode: '',
-      upiPhone: ''
     },
   });
 
-   const { fields, append, remove } = useFieldArray({
+   const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({
     control: form.control,
     name: "upiIds"
+  });
+
+   const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({
+    control: form.control,
+    name: "upiPhoneNumbers"
   });
   
   const { watch, trigger, setValue, reset } = form;
   const selectedState = watch("state");
-
+  
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
     if (!value) {
         setState(initialAvailabilityState);
@@ -309,8 +315,14 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       if (value) {
         if (key === 'upiIds' && Array.isArray(value)) {
           value.forEach(item => item.value && formData.append(key, item.value));
-        } else if (typeof value !== 'object') {
-          formData.append(key, String(value));
+        } else if (key === 'upiPhoneNumbers' && Array.isArray(value)) {
+          value.forEach(item => item.value && formData.append(key, item.value));
+        } else if (typeof value !== 'object' || value instanceof Date) {
+           if (value instanceof Date) {
+                formData.append(key, value.toISOString());
+            } else {
+                formData.append(key, String(value));
+            }
         }
       }
     });
@@ -353,7 +365,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       setIsSubmitting(false);
     }
   }
-
+  
   const handleCancel = () => {
     reset();
     setUserIdState(initialAvailabilityState);
@@ -881,25 +893,43 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                 </FormItem>
             )}
         />
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField
-                control={form.control}
-                name="upiPhone"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>UPI Phone Number (Optional)</FormLabel>
+         <div className="space-y-4">
+            <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
+            <FormDescription>Add one or more UPI-linked phone numbers.</FormDescription>
+            {upiPhoneFields.map((field, index) => (
+            <FormField
+              control={form.control}
+              key={field.id}
+              name={`upiPhoneNumbers.${index}.value`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center gap-2">
                     <FormControl>
-                        <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} />
+                      <Input {...field} type="tel" maxLength={10} placeholder="10-digit UPI linked phone" />
                     </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-        </div>
+          ))}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendUpiPhone({ value: "" })}
+            >
+                <PlusCircle className="mr-2" />
+                Add Phone Number
+            </Button>
+         </div>
          <div className="space-y-4">
             <FormLabel>UPI IDs (Optional)</FormLabel>
             <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
-            {fields.map((field, index) => (
+            {upiIdFields.map((field, index) => (
             <FormField
               control={form.control}
               key={field.id}
@@ -910,7 +940,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                     <FormControl>
                       <Input {...field} placeholder="e.g., username@okhdfc" />
                     </FormControl>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -924,10 +954,10 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ value: "" })}
+                onClick={() => appendUpiId({ value: "" })}
             >
                 <PlusCircle className="mr-2" />
-                Add another UPI ID
+                Add UPI ID
             </Button>
          </div>
         

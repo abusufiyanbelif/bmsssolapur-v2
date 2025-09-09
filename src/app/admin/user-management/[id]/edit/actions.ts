@@ -79,7 +79,7 @@ export async function handleUpdateUser(
       bankName: formData.get("bankName") as string | undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
       bankIfscCode: formData.get("bankIfscCode") as string | undefined,
-      upiPhone: formData.get("upiPhone") as string | undefined,
+      upiPhoneNumbers: formData.getAll("upiPhoneNumbers") as string[] | undefined,
       upiIds: formData.getAll("upiIds") as string[] | undefined,
   };
   
@@ -138,7 +138,7 @@ export async function handleUpdateUser(
         bankName: rawFormData.bankName || '',
         bankAccountNumber: rawFormData.bankAccountNumber || '',
         bankIfscCode: rawFormData.bankIfscCode || '',
-        upiPhone: rawFormData.upiPhone || '',
+        upiPhoneNumbers: rawFormData.upiPhoneNumbers?.filter(Boolean) || [],
         upiIds: rawFormData.upiIds?.filter(Boolean) || [],
     };
     

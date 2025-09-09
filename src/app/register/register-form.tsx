@@ -28,7 +28,7 @@ const createRegisterFormSchema = (isAadhaarMandatory: boolean) => z.object({
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
-  upiPhone: z.string().optional(),
+  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -57,12 +57,17 @@ export function RegisterForm({ settings }: RegisterFormProps) {
       password: "",
       aadhaarNumber: "",
       upiIds: [{ value: "" }],
+      upiPhoneNumbers: [{ value: "" }],
     },
   });
   
-  const { fields, append, remove } = useFieldArray({
+  const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({
     control: form.control,
     name: "upiIds"
+  });
+  const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({
+    control: form.control,
+    name: "upiPhoneNumbers"
   });
 
   const onSubmit = async (values: RegisterFormValues) => {
@@ -71,6 +76,8 @@ export function RegisterForm({ settings }: RegisterFormProps) {
     Object.entries(values).forEach(([key, value]) => {
       if (key === 'upiIds' && Array.isArray(value)) {
         value.forEach(item => item.value && formData.append('upiIds', item.value));
+      } else if (key === 'upiPhoneNumbers' && Array.isArray(value)) {
+        value.forEach(item => item.value && formData.append('upiPhoneNumbers', item.value));
       } else if (value) {
         formData.append(key, String(value));
       }
@@ -237,35 +244,20 @@ export function RegisterForm({ settings }: RegisterFormProps) {
                 </FormItem>
             )}
         />
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField
-                control={form.control}
-                name="upiPhone"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>UPI Phone Number</FormLabel>
-                    <FormControl>
-                        <Input type="tel" maxLength={10} placeholder="10-digit UPI linked phone" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-         <div className="space-y-4">
-            <FormLabel>UPI IDs</FormLabel>
-            {fields.map((field, index) => (
+        <div className="space-y-4">
+            <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
+            {upiPhoneFields.map((field, index) => (
             <FormField
               control={form.control}
               key={field.id}
-              name={`upiIds.${index}.value`}
+              name={`upiPhoneNumbers.${index}.value`}
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center gap-2">
                     <FormControl>
-                      <Input {...field} placeholder="e.g., username@okhdfc" />
+                      <Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} />
                     </FormControl>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -278,10 +270,42 @@ export function RegisterForm({ settings }: RegisterFormProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ value: "" })}
+                onClick={() => appendUpiPhone({ value: "" })}
             >
                 <PlusCircle className="mr-2" />
-                Add another UPI ID
+                Add Phone Number
+            </Button>
+         </div>
+         <div className="space-y-4">
+            <FormLabel>UPI IDs (Optional)</FormLabel>
+            {upiIdFields.map((field, index) => (
+            <FormField
+              control={form.control}
+              key={field.id}
+              name={`upiIds.${index}.value`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., username@okhdfc" />
+                    </FormControl>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendUpiId({ value: "" })}
+            >
+                <PlusCircle className="mr-2" />
+                Add UPI ID
             </Button>
          </div>
 

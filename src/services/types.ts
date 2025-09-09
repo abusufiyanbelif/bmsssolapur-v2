@@ -67,7 +67,7 @@ export interface User {
   bankName?: string;
   bankAccountNumber?: string;
   bankIfscCode?: string;
-  upiPhone?: string;
+  upiPhoneNumbers?: string[];
   upiIds?: string[];
   roles: UserRole[]; 
   privileges?: Privilege[]; 

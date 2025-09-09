@@ -47,7 +47,7 @@ export async function handleAddUser(
       bankName: formData.get("bankName") as string | undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string | undefined,
       bankIfscCode: formData.get("bankIfscCode") as string | undefined,
-      upiPhone: formData.get("upiPhone") as string | undefined,
+      upiPhoneNumbers: formData.getAll("upiPhoneNumbers") as string[],
       upiIds: formData.getAll("upiIds") as string[],
       
       // The "Create Profile" checkbox is mainly for client-side validation,
@@ -95,7 +95,7 @@ export async function handleAddUser(
         bankName: rawFormData.bankName || '',
         bankAccountNumber: rawFormData.bankAccountNumber || '',
         bankIfscCode: rawFormData.bankIfscCode || '',
-        upiPhone: rawFormData.upiPhone || '',
+        upiPhoneNumbers: rawFormData.upiPhoneNumbers?.filter(Boolean) || [],
         upiIds: rawFormData.upiIds.filter(id => id.trim() !== ''),
         privileges: [],
         groups: [],
