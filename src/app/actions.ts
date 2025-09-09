@@ -38,26 +38,24 @@ interface RawTextScanResult {
 
 // This function is now correctly placed in a server context and will be called by client components.
 export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
-    const imageFiles = formData.getAll("imageFiles") as File[];
+    const imageFile = formData.get("imageFile") as File;
     
-    if (!imageFiles || imageFiles.length === 0) {
-        return { success: false, error: "No image files provided." };
+    if (!imageFile) {
+        return { success: false, error: "No image file provided." };
     }
     
-    let dataUris: string[] = [];
+    let dataUri: string;
 
     try {
-        for (const imageFile of imageFiles) {
-             const arrayBuffer = await imageFile.arrayBuffer();
-             const base64 = Buffer.from(arrayBuffer).toString('base64');
-             dataUris.push(`data:${imageFile.type};base64,${base64}`);
-        }
+         const arrayBuffer = await imageFile.arrayBuffer();
+         const base64 = Buffer.from(arrayBuffer).toString('base64');
+         dataUri = `data:${imageFile.type};base64,${base64}`;
     } catch (e) {
-         return { success: false, error: "Failed to read the image file(s)." };
+         return { success: false, error: "Failed to read the image file." };
     }
     
     try {
-        const textResult = await extractRawTextFlow({ photoDataUris: dataUris });
+        const textResult = await extractRawTextFlow({ photoDataUri: dataUri });
 
         if (!textResult?.rawText) {
             throw new Error("Failed to extract text from image.");

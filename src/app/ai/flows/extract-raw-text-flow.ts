@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting raw text from an image.
