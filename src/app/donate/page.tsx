@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { createRazorpayOrder, handleManualDonation } from './actions';
-import type { User, Lead, Organization, Campaign, AppSettings } from '@/services/types';
+import type { User, Lead, Organization, Campaign, AppSettings, ExtractDonationDetailsOutput } from '@/services/types';
 import { getUser } from '@/services/user-service';
 import { getLead, getAllLeads } from '@/services/lead-service';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -74,6 +74,13 @@ const recordDonationSchema = z.object({
   donationDate: z.date(),
   notes: z.string().optional(),
   proof: z.any().refine(file => file?.size > 0, "A proof file is required."),
+  paymentApp: z.string().optional(),
+  senderName: z.string().optional(),
+  recipientName: z.string().optional(),
+  utrNumber: z.string().optional(),
+  googlePayTransactionId: z.string().optional(),
+  phonePeTransactionId: z.string().optional(),
+  paytmUpiReferenceNo: z.string().optional(),
 });
 export type RecordDonationFormValues = z.infer<typeof recordDonationSchema>;
 
@@ -229,15 +236,23 @@ function RecordPastDonationForm({ user }: { user: User }) {
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
 
     const form = useForm<RecordDonationFormValues>({
         resolver: zodResolver(recordDonationSchema),
-        defaultValues: { 
+        defaultValues: {
             amount: 0,
             transactionId: '',
             notes: '',
             proof: undefined,
-            donationDate: new Date() 
+            donationDate: new Date(),
+            paymentApp: undefined,
+            senderName: '',
+            recipientName: '',
+            utrNumber: '',
+            googlePayTransactionId: '',
+            phonePeTransactionId: '',
+            paytmUpiReferenceNo: '',
         }
     });
     
@@ -261,6 +276,7 @@ function RecordPastDonationForm({ user }: { user: User }) {
         setFile(null);
         setPreviewUrl(null);
         setRawText(null);
+        setExtractedDetails(null);
         setValue('proof', null, { shouldValidate: true });
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -291,10 +307,18 @@ function RecordPastDonationForm({ user }: { user: User }) {
         const result = await handleExtractDonationDetails(rawText);
         if (result.success && result.details) {
             const details = result.details;
-            if (details.amount) setValue('amount', details.amount);
-            if (details.transactionId) setValue('transactionId', details.transactionId);
-            if (details.date) setValue('donationDate', new Date(details.date));
-            if (details.notes) setValue('notes', details.notes);
+            setExtractedDetails(details);
+            Object.entries(details).forEach(([key, value]) => {
+                if (value !== undefined && key !== 'rawText') {
+                    if (key === 'date' && typeof value === 'string') {
+                        setValue('donationDate', new Date(value));
+                    } else if (key === 'amount' && typeof value === 'number') {
+                        setValue('amount', value);
+                    } else {
+                        setValue(key as any, value);
+                    }
+                }
+            });
             toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review all fields.' });
         } else {
             toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
@@ -378,7 +402,6 @@ function RecordPastDonationForm({ user }: { user: User }) {
                         
                         {rawText && <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono bg-muted"/>}
                         
-                        <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Transaction ID / UTR</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={control} name="amount" render={({ field }) => (<FormItem><FormLabel>Amount (INR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={control} name="purpose" render={({ field }) => (<FormItem><FormLabel>Purpose</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{donationPurposes.map(p=>(<SelectItem key={p} value={p}>{p}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
                         <FormField
@@ -412,8 +435,26 @@ function RecordPastDonationForm({ user }: { user: User }) {
                                 </FormItem>
                             )}
                         />
-                         <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
-
+                        
+                        {extractedDetails ? (
+                           <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
+                                <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Transaction ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />
+                                    {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+                                    {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.googlePayTransactionId && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.phonePeTransactionId && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.paytmUpiReferenceNo && <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm Ref No</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                </div>
+                            </div>
+                        ) : (
+                            <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Transaction ID / UTR</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        )}
+                        
+                        <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         
                         <Button type="submit" disabled={isSubmitting} className="w-full">
                            {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2"/>}
