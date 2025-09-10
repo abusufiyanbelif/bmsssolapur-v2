@@ -109,6 +109,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
               roles: getUnique(data.roles),
               createdAt: (data.createdAt as Timestamp)?.toDate(),
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+              dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
             } as User;
         }
         return null;
@@ -203,6 +204,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
             pincode: userData.address?.pincode || '',
         },
         gender: userData.gender!,
+        dateOfBirth: userData.dateOfBirth,
         beneficiaryType: userData.beneficiaryType,
         isAnonymousAsBeneficiary: userData.isAnonymousAsBeneficiary || false,
         isAnonymousAsDonor: userData.isAnonymousAsDonor || false,
@@ -272,6 +274,7 @@ export const getUser = async (id: string): Promise<User | null> => {
         privileges: getUnique(data.privileges),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
       } as User;
     }
     return null;
@@ -301,6 +304,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
             roles: getUnique(data.roles),
             createdAt: (data.createdAt as Timestamp)?.toDate(),
             updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+            dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
         } as User;
         }
         return null;
@@ -327,6 +331,7 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
             return {
                 id: doc.id, ...data, roles: getUnique(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
             } as User;
         }
         return null;
@@ -353,6 +358,7 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
             return {
                 id: doc.id, ...data, roles: getUnique(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
             } as User;
         }
         return null;
@@ -384,6 +390,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
         roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
       } as User;
     }
     return null;
@@ -413,6 +420,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
         roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
       } as User;
     }
     return null;
@@ -437,6 +445,7 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
         roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
       } as User;
     }
     return null;
@@ -463,6 +472,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
         roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
       } as User;
     }
     return null;
@@ -487,6 +497,7 @@ export const getUserByPan = async (pan: string): Promise<User | null> => {
         roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
       } as User;
     }
     return null;
@@ -511,6 +522,7 @@ export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> =>
         roles: getUnique(data.roles),
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+        dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
       } as User;
     }
     return null;
@@ -595,6 +607,7 @@ export const getAllUsers = async (): Promise<User[]> => {
                 roles: getUnique(data.roles),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
             } as User);
         });
         return users;
@@ -624,6 +637,7 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
                 roles: getUnique(data.roles),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
             } as User);
         });
         return users;

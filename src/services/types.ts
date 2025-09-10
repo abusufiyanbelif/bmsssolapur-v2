@@ -48,6 +48,7 @@ export interface User {
     pincode?: string;
   };
   gender: 'Male' | 'Female' | 'Other';
+  dateOfBirth?: Date;
   beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow';
   isAnonymousAsBeneficiary?: boolean;
   isAnonymousAsDonor?: boolean;

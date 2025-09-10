@@ -40,6 +40,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
                 - Split this full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. If there are three parts to the name, the middle part is the middle name. If there are only two names, treat them as first and last.
                 - **Address Extraction:** Look for the specific label "Address:". Capture all text and lines that follow it until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
             4.  **Extract Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name.
+            5.  **Date of Birth and Gender**: Extract the Date of Birth (in DD/MM/YYYY format) and Gender (Male/Female) from the Aadhaar card.
 
             **Fields to Extract:**
             - headline: A short, one-sentence summary of the case. If not explicit, create one from the story. For a medical report, it could be "Assistance needed for medical tests and treatment."
@@ -56,6 +57,8 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - beneficiaryMiddleName: The beneficiary's middle name, if present.
             - beneficiaryLastName: The beneficiary's last name.
             - fatherName: The beneficiary's father's name. Look for "S/O", "Son of", or "Father's Name".
+            - dateOfBirth: The beneficiary's date of birth (Format: YYYY-MM-DD).
+            - gender: The beneficiary's gender ("Male" or "Female").
             - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
             - beneficiaryEmail: The beneficiary's email address. Must be a valid email format.
             - beneficiaryType: The type of beneficiary (e.g., Adult, Family, Kid, Widow).

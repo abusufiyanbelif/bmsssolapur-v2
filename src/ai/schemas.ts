@@ -110,6 +110,8 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
     beneficiaryLastName: z.string().optional().describe("The beneficiary's last name."),
     fatherName: z.string().optional().describe("The beneficiary's father's name."),
+    dateOfBirth: z.string().optional().describe("The beneficiary's date of birth (Format: YYYY-MM-DD)."),
+    gender: z.enum(['Male', 'Female', 'Other']).optional().describe("The beneficiary's gender."),
     beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
     beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
     beneficiaryType: z.string().optional().describe("The type of beneficiary (e.g., Adult, Family, Kid, Widow)."),
