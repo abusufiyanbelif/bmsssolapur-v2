@@ -766,51 +766,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             )}
                         />
                     )}
-                     <FormField
-                        control={form.control}
-                        name="priority"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Priority</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {leadPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                 </div>
-
-                {showEducationFields && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="degree" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Degree/Class</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree" /></SelectTrigger></FormControl>
-                                    <SelectContent>{(settings.leadConfiguration?.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                         {showYearField && (
-                             <FormField control={form.control} name="year" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Year</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
-                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                         )}
-                    </div>
-                )}
-                
                  <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
                         <AccordionTrigger>
@@ -863,7 +819,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Amount Requested</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Target Amount</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
                  <FormField
@@ -885,7 +841,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </FormItem>
                     )}
                     />
-                <FormField
+                 <FormField
                   control={form.control}
                   name="acceptableDonationTypes"
                   render={() => (
@@ -929,6 +885,22 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {leadPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
                 
                 <div className="flex gap-4 pt-6 border-t">
