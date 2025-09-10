@@ -74,6 +74,8 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   pincode: z.string().optional(),
+  aadhaarCard: z.any().optional(),
+  addressProof: z.any().optional(),
   
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
@@ -97,8 +99,6 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
-  aadhaarCard: z.any().optional(),
-  addressProof: z.any().optional(),
   otherDocuments: z.array(z.instanceof(File)).optional(),
 })
 .refine(data => {
@@ -153,14 +153,19 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // AI related state
-  const [isExtractingText, setIsExtractingText] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [rawText, setRawText] = useState("");
+  // AI related state for Case Documents
+  const [isCaseTextExtracting, setIsCaseTextExtracting] = useState(false);
+  const [isCaseAnalyzing, setIsCaseAnalyzing] = useState(false);
+  const [caseRawText, setCaseRawText] = useState<string | null>(null);
   
-  // State for beneficiary-specific scanning
-  const [isBeneficiaryScanning, setIsBeneficiaryScanning] = useState(false);
+  // AI related state for Beneficiary Documents
+  const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
+  const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
   const [beneficiaryRawText, setBeneficiaryRawText] = useState<string | null>(null);
+
+  const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
+  const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
 
 
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
@@ -231,7 +236,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const handleCancel = () => {
     form.reset();
       setSelectedReferralDetails(null);
-      setRawText("");
+      setCaseRawText("");
   };
 
   const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
@@ -289,50 +294,57 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         }
     };
     
-    const handleAutoFillFromText = async (textToAnalyze: string | null) => {
+    const handleAutoFillFromText = async (textToAnalyze: string | null, section: 'case' | 'beneficiary') => {
         if (!textToAnalyze) {
              toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
             return;
         }
-        setIsAnalyzing(true);
+        const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
+        loadingSetter(true);
+
          const analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
             
         if (analysisResult.success && analysisResult.details) {
             const details = analysisResult.details;
             
-            // Auto-fill all simple fields
-            if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
-            if (details.story) setValue('story', details.story, { shouldDirty: true });
-            if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
-            if (details.purpose) {
-                const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
-                if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
+            if (section === 'case') {
+                if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
+                if (details.story) setValue('story', details.story, { shouldDirty: true });
+                if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
+                if (details.purpose) {
+                    const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
+                    if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
+                }
+                if (details.category) setValue('category', details.category, { shouldDirty: true });
+                if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
+                if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
+                if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
+                if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
+            } else { // beneficiary section
+                if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
+                if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
+                if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
+                if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
+                if (details.beneficiaryPhone) {
+                    const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
+                    setValue('newBeneficiaryPhone', phone, { shouldDirty: true });
+                }
+                if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true });
+                if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
+                setValue('beneficiaryType', 'new', { shouldDirty: true });
             }
-            if (details.category) setValue('category', details.category, { shouldDirty: true });
-            if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
-            if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
-            if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
-            if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
-
-            if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
-            if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
-            if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
-            if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
-            if (details.beneficiaryPhone) {
-                const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-                setValue('newBeneficiaryPhone', phone, { shouldDirty: true });
-            }
-             if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true });
-             if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
-
-            setValue('beneficiaryType', 'new', { shouldDirty: true });
             
-            toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
+            toast({ variant: 'success', title: 'Auto-fill Complete', description: `The ${section} fields have been populated. Please review.` });
         } else {
             toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
         }
-        setIsAnalyzing(false);
+        loadingSetter(false);
     }
+
+   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
+  };
 
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
@@ -418,166 +430,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
-                 <h3 className="text-lg font-semibold border-b pb-2">Lead Purpose</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <FormField
-                        control={form.control}
-                        name="purpose"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Lead Purpose</FormLabel>
-                            <Select onValueChange={(value) => {
-                                field.onChange(value);
-                                form.setValue('category', '');
-                                form.setValue('otherCategoryDetail', '');
-                                form.setValue('otherPurposeDetail', '');
-                            }} value={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a purpose" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {leadPurposes.map(purpose => (
-                                    <SelectItem key={purpose.id} value={purpose.name}>{purpose.name}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormDescription>The main reason for the help request.</FormDescription>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    {selectedPurposeName && selectedPurposeName !== 'Other' && (
-                        <FormField
-                            control={form.control}
-                            name="category"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {(availableCategories || []).map(cat => (
-                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                </div>
-                {selectedPurposeName === 'Other' && (
-                    <FormField
-                        control={form.control}
-                        name="otherPurposeDetail"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Please specify &quot;Other&quot; purpose</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., House Repair" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-                {selectedCategory === 'Other' && (
-                    <FormField
-                        control={form.control}
-                        name="otherCategoryDetail"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Please specify &quot;Other&quot; category details</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., Specific textbook name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-                
-                 {showEducationFields && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="degree" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Degree/Class</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree/class" /></SelectTrigger></FormControl>
-                                    <SelectContent>{(leadConfiguration.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        {showYearField && (
-                             <FormField control={form.control} name="year" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Year</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
-                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        )}
-                    </div>
-                )}
-                 
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger>
-                            <div className="flex items-center gap-2 text-primary">
-                                <ScanSearch className="h-5 w-5" />
-                                Scan Case Documents (Medical Bills, etc.)
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pt-4">
-                             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                                <p className="text-sm text-muted-foreground">Upload case-specific documents like medical reports or fee receipts. The AI will scan them to help you fill out the case details, headline, and story.</p>
-                                <FormField
-                                    control={form.control}
-                                    name="otherDocuments"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Case Documents</FormLabel>
-                                            <FormControl>
-                                                <Input type="file" multiple onChange={(e) => field.onChange(Array.from(e.target.files || []))} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage(getValues('otherDocuments') || [], setRawText, setIsExtractingText)} disabled={isExtractingText}>
-                                        {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                        Get Text from Documents
-                                    </Button>
-                                    <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(rawText)} disabled={!rawText || isAnalyzing}>
-                                        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                        Auto-fill from Text
-                                    </Button>
-                                </div>
-                                {rawText && (
-                                    <div className="space-y-2 pt-4">
-                                        <Label>Extracted Text</Label>
-                                        <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
-                                    </div>
-                                )}
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-
-                <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
+                 <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
                 <FormField
                     control={form.control}
                     name="beneficiaryType"
@@ -667,25 +520,46 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 ) : (
                      <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                         <h3 className="font-medium">New Beneficiary Details</h3>
-                        <div className="space-y-2">
+                         <div className="space-y-4">
                              <Label>Identity Documents</Label>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
-                                <FormField control={form.control} name="addressProof" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
                              </div>
+                             {(aadhaarPreview || addressProofPreview) && (
+                                 <div className="flex gap-4">
+                                     {aadhaarPreview && (
+                                          <div className="relative group flex-1">
+                                             <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                                                 <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200*zoom} height={120*zoom} className="object-contain transition-transform" style={{transform: `scale(${zoom})`}}/>
+                                             </div>
+                                         </div>
+                                     )}
+                                     {addressProofPreview && (
+                                         <div className="relative group flex-1">
+                                             <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                                                <Image src={addressProofPreview} alt="Address Proof Preview" width={200*zoom} height={120*zoom} className="object-contain transition-transform" style={{transform: `scale(${zoom})`}}/>
+                                             </div>
+                                         </div>
+                                     )}
+                                 </div>
+                             )}
                              <Button
                                 type="button"
                                 variant="outline"
                                 className="w-full"
-                                disabled={isBeneficiaryScanning}
-                                onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(f => f) as File[], setBeneficiaryRawText, setIsBeneficiaryScanning)}
+                                disabled={isBeneficiaryTextExtracting || isBeneficiaryAnalyzing}
+                                onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(f => f) as File[], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)}
                             >
-                                {isBeneficiaryScanning ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                 Scan & Fill Beneficiary Details
                             </Button>
-                             {beneficiaryRawText && (
-                                <Textarea value={beneficiaryRawText} readOnly rows={5} className="text-xs font-mono bg-background" />
-                             )}
+                            {beneficiaryRawText && (
+                                <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(beneficiaryRawText, 'beneficiary')} disabled={isBeneficiaryAnalyzing}>
+                                    {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                    Auto-fill from Beneficiary Text
+                                </Button>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -767,59 +641,135 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </div>
                 )}
                  
-                <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
-                <FormField
-                    control={form.control}
-                    name="headline"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Headline Summary</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Urgent help needed for final year student's fees" {...field} />
-                        </FormControl>
-                        <FormDescription>A short, compelling summary of the case for public display.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                  <FormField
-                    control={form.control}
-                    name="story"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Story</FormLabel>
-                        <FormControl>
-                            <Textarea
-                                placeholder="Tell the full story of the beneficiary and their situation. This will be shown on the public case page."
-                                className="resize-y min-h-[150px]"
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormDescription>A detailed narrative for public display.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                 {form.watch("purpose") === "Medical" && (
-                    <FormField
+                 <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <FormField
                         control={form.control}
-                        name="diseaseIdentified"
+                        name="purpose"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Disease Identified (if any)</FormLabel>
+                            <FormLabel>Lead Purpose</FormLabel>
+                            <Select onValueChange={(value) => {
+                                field.onChange(value);
+                                form.setValue('category', '');
+                                form.setValue('otherCategoryDetail', '');
+                                form.setValue('otherPurposeDetail', '');
+                            }} value={field.value}>
                                 <FormControl>
-                                    <Textarea
-                                        placeholder="Enter the specific disease or diagnosis from the medical report."
-                                        {...field}
-                                    />
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a purpose" />
+                                </SelectTrigger>
                                 </FormControl>
-                                <FormDescription>This helps in categorizing medical cases accurately.</FormDescription>
-                                <FormMessage />
+                                <SelectContent>
+                                {leadPurposes.map(purpose => (
+                                    <SelectItem key={purpose.id} value={purpose.name}>{purpose.name}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormDescription>The main reason for the help request.</FormDescription>
+                            <FormMessage />
                             </FormItem>
                         )}
                     />
-                 )}
-        
+                    {selectedPurposeName && selectedPurposeName !== 'Other' && (
+                        <FormField
+                            control={form.control}
+                            name="category"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Category</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {(availableCategories || []).map(cat => (
+                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                </div>
+                
+                 {showEducationFields && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField control={form.control} name="degree" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Degree/Class</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree/class" /></SelectTrigger></FormControl>
+                                    <SelectContent>{(leadConfiguration.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        {showYearField && (
+                             <FormField control={form.control} name="year" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Year</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
+                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        )}
+                    </div>
+                )}
+                
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>
+                            <div className="flex items-center gap-2 text-primary">
+                                <ScanSearch className="h-5 w-5" />
+                                Scan Case Documents (Medical Bills, etc.)
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4">
+                             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                                <p className="text-sm text-muted-foreground">Upload case-specific documents like medical reports or fee receipts. The AI will scan them to help you fill out the case details, headline, and story.</p>
+                                <FormField
+                                    control={form.control}
+                                    name="otherDocuments"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Case Documents</FormLabel>
+                                            <FormControl>
+                                                <Input type="file" multiple onChange={(e) => field.onChange(Array.from(e.target.files || []))} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage(getValues('otherDocuments') || [], setCaseRawText, setIsCaseTextExtracting)} disabled={isCaseTextExtracting}>
+                                        {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                        Get Text from Documents
+                                    </Button>
+                                    <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(caseRawText, 'case')} disabled={!caseRawText || isCaseAnalyzing}>
+                                        {isCaseAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                        Auto-fill from Text
+                                    </Button>
+                                </div>
+                                {caseRawText && (
+                                    <div className="space-y-2 pt-4">
+                                        <Label>Extracted Text</Label>
+                                        <Textarea value={caseRawText} readOnly rows={8} className="text-xs font-mono bg-background" />
+                                    </div>
+                                )}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+                
                 <div className="flex gap-4 pt-6 border-t">
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? (
