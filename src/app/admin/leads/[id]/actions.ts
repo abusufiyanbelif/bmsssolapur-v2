@@ -216,7 +216,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
 
         let proofUrl = '';
         if (proofFile) {
-            const uploadPath = `leads/${leadId}/transfers/${transferId}/`;
+            const uploadPath = `leads/${leadId}/transfers/${adminKey}/${transferId}/`;
             proofUrl = await uploadFile(proofFile, uploadPath);
         }
 

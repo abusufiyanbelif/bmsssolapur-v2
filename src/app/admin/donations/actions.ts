@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/actions.ts
 "use server";
 
@@ -148,12 +147,13 @@ export async function handleUploadDonationProof(donationId: string, formData: Fo
         
         const donation = await getDonation(donationId);
         if(!donation) return { success: false, error: "Donation record not found." };
-
-        let uploadPath = `donations/${donationId}/proofs/`;
-        // If the donation is linked to a lead, use the structured path
-        if (donation.leadId) {
-            uploadPath = `leads/${donation.leadId}/donations/${donationId}/`;
+        
+        const donor = await getUser(donation.donorId);
+        if (!donor || !donor.userKey) {
+            return { success: false, error: "Could not find donor's user key." };
         }
+
+        const uploadPath = `donations/${donor.userKey}/${donationId}/proofs/`;
 
         const paymentScreenshotUrl = await uploadFile(screenshotFile, uploadPath);
 

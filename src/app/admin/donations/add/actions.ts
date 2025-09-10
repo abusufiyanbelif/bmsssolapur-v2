@@ -38,8 +38,8 @@ export async function handleAddDonation(
         return { success: false, error: "Donor ID is missing." };
     }
     const donor = await getUser(donorId);
-    if (!donor) {
-        return { success: false, error: "Selected donor user not found." };
+    if (!donor || !donor.userKey) {
+        return { success: false, error: "Selected donor user not found or is missing a User Key." };
     }
 
     const transactionId = formData.get("transactionId") as string | undefined;
@@ -77,7 +77,7 @@ export async function handleAddDonation(
         }, adminUserId, adminUser.name, adminUser.email);
 
         if(screenshotFile && screenshotFile.size > 0) {
-            let uploadPath = `donations/${tempDonation.id}/proofs/`;
+            const uploadPath = `donations/${donor.userKey}/${tempDonation.id}/proofs/`;
             proofUrl = await uploadFile(screenshotFile, uploadPath);
             await updateDonation(tempDonation.id!, { paymentScreenshotUrls: [proofUrl] });
         }
