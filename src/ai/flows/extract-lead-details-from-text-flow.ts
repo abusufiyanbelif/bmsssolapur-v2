@@ -57,7 +57,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - beneficiaryMiddleName: The beneficiary's middle name, if present.
             - beneficiaryLastName: The beneficiary's last name.
             - fatherName: The beneficiary's father's name. Look for "S/O", "Son of", or "Father's Name".
-            - dateOfBirth: The beneficiary's date of birth (Format: YYYY-MM-DD).
+            - dateOfBirth: The beneficiary's date of birth (Format: DD/MM/YYYY).
             - gender: The beneficiary's gender ("Male" or "Female").
             - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
             - beneficiaryEmail: The beneficiary's email address. Must be a valid email format.
