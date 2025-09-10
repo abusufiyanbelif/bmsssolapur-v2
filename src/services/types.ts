@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -225,6 +226,7 @@ export interface Lead {
     otherCategoryDetail?: string;
     priority?: LeadPriority;
     helpRequested: number;
+    fundingGoal?: number; // New field for organization's target
     helpGiven: number;
     caseStatus: LeadStatus;
     caseAction?: LeadAction;

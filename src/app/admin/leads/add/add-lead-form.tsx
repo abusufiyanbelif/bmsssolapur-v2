@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -62,6 +63,8 @@ const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaq
 const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   beneficiaryType: z.enum(['existing', 'new']).default('existing'),
   beneficiaryId: z.string().optional(),
+  linkBeneficiaryLater: z.boolean().default(false),
+  manualBeneficiaryName: z.string().optional(),
   
   // New beneficiary fields
   newBeneficiaryFirstName: z.string().optional(),
@@ -101,10 +104,26 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
     message: "You have to select at least one donation type.",
   }),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
+  fundingGoal: z.coerce.number().optional(),
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
   otherDocuments: z.array(z.instanceof(File)).optional(),
+})
+.refine(data => {
+    if (data.linkBeneficiaryLater) {
+        return !!data.manualBeneficiaryName && data.manualBeneficiaryName.trim() !== '';
+    }
+    if (data.beneficiaryType === 'existing') {
+        return !!data.beneficiaryId && data.beneficiaryId.trim() !== '';
+    }
+    if (data.beneficiaryType === 'new') {
+        return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone;
+    }
+    return false;
+}, {
+    message: "Please select an existing beneficiary, create a new one, or provide a name to link later.",
+    path: ["beneficiaryId"], // Report error on the most likely field
 })
 .refine(data => {
     if (data.purpose === 'Other') {
@@ -124,18 +143,6 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
 }, {
     message: "Please specify details for the 'Other' category.",
     path: ["otherCategoryDetail"],
-})
-.refine(data => {
-    if (data.beneficiaryType === 'existing') {
-        return !!data.beneficiaryId && data.beneficiaryId.trim() !== '';
-    }
-    if (data.beneficiaryType === 'new') {
-        return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone;
-    }
-    return false; // Should be either 'existing' or 'new'
-}, {
-    message: "Please either select an existing beneficiary or fill out the details for a new one.",
-    path: ["beneficiaryId"], // Report error on the most likely field
 });
 
 
@@ -236,6 +243,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       isLoan: false,
       caseDetails: '',
       otherDocuments: [],
+      linkBeneficiaryLater: false,
+      manualBeneficiaryName: '',
     },
   });
   
@@ -253,6 +262,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
   const beneficiaryType = watch("beneficiaryType");
+  const linkBeneficiaryLater = watch("linkBeneficiaryLater");
   const hasReferral = watch("hasReferral");
   const newBeneficiaryFirstName = watch("newBeneficiaryFirstName");
   const newBeneficiaryMiddleName = watch("newBeneficiaryMiddleName");
@@ -465,6 +475,31 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
                  <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
+                <FormField
+                    control={form.control}
+                    name="linkBeneficiaryLater"
+                    render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 bg-amber-500/10">
+                        <FormControl>
+                        <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                        <FormLabel>
+                            Link Beneficiary Later
+                        </FormLabel>
+                        <FormDescription>Check this if you do not have the beneficiary's full details and want to create the lead with just a name.</FormDescription>
+                        </div>
+                    </FormItem>
+                    )}
+                />
+                 
+                {linkBeneficiaryLater ? (
+                    <FormField control={form.control} name="manualBeneficiaryName" render={({ field }) => (<FormItem><FormLabel>Beneficiary Name</FormLabel><FormControl><Input placeholder="Enter the beneficiary's full name" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                ) : (
+                <>
                 <FormField
                     control={form.control}
                     name="beneficiaryType"
@@ -711,6 +746,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         />
                     </div>
                 )}
+                </>
+                )}
                  
                  <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -819,8 +856,27 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Target Amount</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Amount Requested</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="fundingGoal" render={({ field }) => (<FormItem><FormLabel>Fundraising Goal (Target)</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormDescription>The amount to be displayed on the public page.</FormDescription><FormMessage /></FormItem>)} />
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                    <FormField
+                        control={form.control}
+                        name="priority"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Priority</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {leadPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
                  <FormField
                     control={form.control}
@@ -885,22 +941,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="priority"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Priority</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {leadPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
                 />
                 
                 <div className="flex gap-4 pt-6 border-t">

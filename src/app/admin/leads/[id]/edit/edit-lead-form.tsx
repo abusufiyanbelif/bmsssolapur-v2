@@ -80,6 +80,7 @@ const formSchema = z.object({
     message: "You have to select at least one donation type.",
   }),
   helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
+  fundingGoal: z.coerce.number().optional(),
   dueDate: z.date().optional(),
   verificationDueDate: z.date().optional(),
   caseDetails: z.string().optional(),
@@ -157,6 +158,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       year: lead.year || '',
       acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
+      fundingGoal: lead.fundingGoal || lead.helpRequested,
       dueDate: lead.dueDate ? lead.dueDate : undefined,
       verificationDueDate: lead.verificationDueDate ? lead.verificationDueDate : undefined,
       caseDetails: lead.caseDetails || '',
@@ -192,6 +194,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         year: lead.year || '',
         acceptableDonationTypes: lead.acceptableDonationTypes || [],
         helpRequested: lead.helpRequested,
+        fundingGoal: lead.fundingGoal || lead.helpRequested,
         dueDate: lead.dueDate ? lead.dueDate : undefined,
         verificationDueDate: lead.verificationDueDate ? lead.verificationDueDate : undefined,
         caseDetails: lead.caseDetails || '',
@@ -247,6 +250,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
     values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
     formData.append("helpRequested", String(values.helpRequested));
+    if (values.fundingGoal) formData.append("fundingGoal", String(values.fundingGoal));
     if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
     if (values.verificationDueDate) formData.append("verificationDueDate", values.verificationDueDate.toISOString());
     if(values.isLoan) formData.append("isLoan", "on");
@@ -302,387 +306,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-                 <FormField
-                    control={form.control}
-                    name="hasReferral"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                        <Checkbox
-                            disabled={!isEditing}
-                            checked={field.value}
-                            onCheckedChange={(checked) => {
-                                field.onChange(checked)
-                                if (!checked) {
-                                    form.setValue("referredByUserId", undefined)
-                                    form.setValue("referredByUserName", undefined)
-                                    setSelectedReferralDetails(null)
-                                }
-                            }}
-                        />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                        <FormLabel>
-                            This lead was referred by someone
-                        </FormLabel>
-                        </div>
-                    </FormItem>
-                    )}
-                />
-
-                {hasReferral && (
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                        <FormField
-                            control={form.control}
-                            name="referredByUserId"
-                            render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Select Referral</FormLabel>
-                                <Popover open={referralPopoverOpen} onOpenChange={setReferralPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        disabled={!isEditing}
-                                        className={cn(
-                                        "w-full justify-between bg-background",
-                                        !field.value && "text-muted-foreground"
-                                        )}
-                                    >
-                                        {field.value
-                                        ? potentialReferrals.find(
-                                            (user) => user.id === field.value
-                                            )?.name
-                                        : "Select a referral"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                    <CommandInput placeholder="Search referral..." />
-                                    <CommandList>
-                                        <CommandEmpty>No referrals found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {potentialReferrals.map((user) => (
-                                            <CommandItem
-                                            value={user.name}
-                                            key={user.id}
-                                            onSelect={() => {
-                                                form.setValue("referredByUserId", user.id!);
-                                                form.setValue("referredByUserName", user.name);
-                                                setSelectedReferralDetails(user);
-                                                setReferralPopoverOpen(false);
-                                            }}
-                                            >
-                                            <Check
-                                                className={cn(
-                                                "mr-2 h-4 w-4",
-                                                user.id === field.value
-                                                    ? "opacity-100"
-                                                    : "opacity-0"
-                                                )}
-                                            />
-                                            {user.name} ({user.phone})
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        {selectedReferralDetails && (
-                            <div className="space-y-3 pt-2">
-                                <div className="space-y-1">
-                                    <Label>Referral&apos;s Bank Account</Label>
-                                    <Input value={selectedReferralDetails.bankAccountNumber || 'Not Available'} readOnly disabled />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label>Referral&apos;s UPI IDs</Label>
-                                    {selectedReferralDetails.upiIds && selectedReferralDetails.upiIds.length > 0 ? (
-                                        selectedReferralDetails.upiIds.map((upi, i) => (
-                                            <Input key={i} value={upi} readOnly disabled />
-                                        ))
-                                    ) : (
-                                        <Input value="Not Available" readOnly disabled />
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-
                 <FormField
-                  control={form.control}
-                  name="campaignId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link to Campaign (Optional)</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          const selectedCampaign = campaigns.find(c => c.id === value);
-                          field.onChange(value === 'none' ? undefined : value);
-                          form.setValue('campaignName', selectedCampaign?.name || '');
-                        }}
-                        defaultValue={field.value}
-                        disabled={!isEditing}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a campaign" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {campaigns.map((campaign) => (
-                            <SelectItem key={campaign.id} value={campaign.id!}>
-                              {campaign.name} ({campaign.status})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>Link this lead to a specific fundraising campaign.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="headline"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Headline Summary</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Urgent help needed for final year student's fees" {...field} disabled={!isEditing} />
-                        </FormControl>
-                        <FormDescription>A short, compelling summary of the case for public display.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-
-                <FormField
-                    control={form.control}
-                    name="story"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Story</FormLabel>
-                        <FormControl>
-                            <Textarea
-                                placeholder="Tell the full story of the beneficiary and their situation. This will be shown on the public case page."
-                                className="resize-y min-h-[150px]"
-                                {...field}
-                                disabled={!isEditing}
-                            />
-                        </FormControl>
-                        <FormDescription>A detailed narrative for public display.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <FormField
-                        control={form.control}
-                        name="purpose"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Lead Purpose</FormLabel>
-                            <Select onValueChange={(value) => {
-                                field.onChange(value);
-                                form.setValue('category', '');
-                                form.setValue('otherCategoryDetail', '');
-                                form.setValue('otherPurposeDetail', '');
-                            }} defaultValue={field.value} disabled={!isEditing}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a purpose" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {leadPurposes.map(purpose => (
-                                    <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    {selectedPurpose && selectedPurpose !== 'Other' && (
-                        <FormField
-                            control={form.control}
-                            name="category"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {(selectedPurpose === 'Loan' ? loanCategoryOptions : categoryOptions[selectedPurpose as Exclude<LeadPurpose, 'Other' | 'Loan'>]).map(sub => (
-                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                </div>
-                 
-                 {selectedPurpose === 'Other' && (
-                    <FormField
-                        control={form.control}
-                        name="otherPurposeDetail"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Please specify &quot;Other&quot; purpose</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., House Repair" {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-                {selectedCategory === 'Other' && (
-                    <FormField
-                        control={form.control}
-                        name="otherCategoryDetail"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Please specify &quot;Other&quot; category details</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., Specific textbook name" {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-
-                 {showEducationFields && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="degree" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Degree/Class</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree" /></SelectTrigger></FormControl>
-                                    <SelectContent>{degreeOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                         {showYearField && (
-                             <FormField control={form.control} name="year" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Year</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
-                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                         )}
-                    </div>
-                )}
-
-
-                <FormField
-                  control={form.control}
-                  name="acceptableDonationTypes"
-                  render={() => (
-                    <FormItem className="space-y-3 p-4 border rounded-lg">
-                      <div className="mb-4">
-                        <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
-                        <FormDescription>
-                          Select which types of donations can be allocated to this lead.
-                        </FormDescription>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {donationTypes.map((type) => (
-                          <FormField
-                            key={type}
-                            control={form.control}
-                            name="acceptableDonationTypes"
-                            render={({ field }) => {
-                              const allOtherTypes = donationTypes.filter(t => t !== 'Any');
-                              const handleAnyChange = (checked: boolean) => {
-                                 field.onChange(checked ? allOtherTypes : []);
-                              }
-                              const isAnyChecked = field.value?.includes('Any') || (field.value?.length === allOtherTypes.length);
-
-                              if (type === 'Any') {
-                                return (
-                                    <FormItem
-                                    key={type}
-                                    className="flex flex-row items-start space-x-3 space-y-0 font-bold"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={isAnyChecked}
-                                        onCheckedChange={(checked) => handleAnyChange(!!checked)}
-                                        disabled={!isEditing}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                      {type}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
-                              }
-                              
-                              return (
-                                <FormItem
-                                  key={type}
-                                  className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(type)}
-                                      onCheckedChange={(checked) => {
-                                        const newValue = checked
-                                          ? [...(field.value || []), type]
-                                          : field.value?.filter((value) => value !== type);
-                                        
-                                        if (newValue && newValue.length === allOtherTypes.length) {
-                                          field.onChange(donationTypes);
-                                        } else {
-                                          field.onChange(newValue?.filter(v => v !== 'Any'));
-                                        }
-                                      }}
-                                      disabled={!isEditing}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {type}
-                                  </FormLabel>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <FormField
                     control={form.control}
                     name="helpRequested"
                     render={({ field }) => (
@@ -695,6 +319,22 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         </FormItem>
                     )}
                     />
+                 <FormField
+                    control={form.control}
+                    name="fundingGoal"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Fundraising Goal (Target)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing} />
+                        </FormControl>
+                         <FormDescription>The amount to be displayed on the public page for this case.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField
                         control={form.control}
                         name="dueDate"
@@ -741,165 +381,6 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         )}
                     />
                 </div>
-                 <FormField
-                    control={form.control}
-                    name="verificationDueDate"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Verification Due Date (Optional)</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                disabled={!isEditing}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a verification deadline</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                date < new Date() || date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                            <FormDescription>
-                            A deadline for administrators to verify this lead.
-                            </FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                control={form.control}
-                name="caseDetails"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Internal Case Summary</FormLabel>
-                    <FormControl>
-                        <Textarea placeholder="Provide a brief summary of the case..." {...field} disabled={!isEditing} />
-                    </FormControl>
-                     <FormDescription>Internal notes for administrators. Not visible to the public.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                
-                <FormField
-                    control={form.control}
-                    name="verifiedStatus"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Verification Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a verification status" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {leadVerificationStatuses.map(status => (
-                                <SelectItem key={status} value={status}>{status}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                <FormField
-                    control={form.control}
-                    name="caseAction"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Case Action</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing || caseVerification !== 'Verified'}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an action" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {leadActions.map(action => (
-                                <SelectItem key={action} value={action}>{action}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                            <FormDescription>Can only be changed after lead is verified.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                
-                {caseAction === 'Publish' && (
-                     <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Case Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a status" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {leadStatuses.map(status => (
-                                    <SelectItem key={status} value={status}>{status}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-
-                
-                 {selectedPurpose === 'Loan' && (
-                     <FormField
-                        control={form.control}
-                        name="isLoan"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                                <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={true}
-                                />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                Is this a repayable loan?
-                                </FormLabel>
-                                <FormDescription>
-                                This is automatically selected if the purpose is &quot;Loan&quot;.
-                                </FormDescription>
-                            </div>
-                            </FormItem>
-                        )}
-                    />
-                )}
 
                 {isEditing && (
                     <div className="flex gap-4">

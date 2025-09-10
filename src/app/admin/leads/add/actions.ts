@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
@@ -60,6 +59,7 @@ export async function handleAddLead(
       priority: formData.get("priority") as LeadPriority,
       acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
       helpRequested: parseFloat(formData.get("helpRequested") as string),
+      fundingGoal: formData.get("fundingGoal") ? parseFloat(formData.get("fundingGoal") as string) : undefined,
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
       isLoan: formData.get("isLoan") === 'on',
       caseDetails: formData.get("caseDetails") as string,
@@ -168,6 +168,7 @@ export async function handleAddLead(
         otherCategoryDetail: rawFormData.category === 'Other' ? rawFormData.otherCategoryDetail : undefined,
         priority: rawFormData.priority,
         helpRequested: rawFormData.helpRequested,
+        fundingGoal: rawFormData.fundingGoal || rawFormData.helpRequested,
         helpGiven: 0,
         caseStatus: approvalProcessDisabled ? 'Open' : 'Pending',
         caseAction: approvalProcessDisabled ? 'Ready For Help' : 'Pending',
