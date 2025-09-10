@@ -32,7 +32,9 @@ export function DeleteConfirmationDialog({
   onDelete, 
   onSuccess 
 }: DeleteConfirmationDialogProps) {
+  const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
   const handleDelete = async () => {
@@ -40,47 +42,68 @@ export function DeleteConfirmationDialog({
     const result = await onDelete();
     setIsDeleting(false);
 
-    if (result && result.success) {
-        if (onSuccess) {
-            onSuccess();
-        }
-    } else if (result) { // Check if result exists before trying to access .error
+    if (result === undefined || result.success) {
+      setIsSuccess(true);
+      if (onSuccess) {
+        onSuccess();
+      }
+    } else {
       toast({
         variant: "destructive",
         title: `Failed to delete ${itemType}`,
         description: result.error || "An unknown error occurred.",
       });
-    } else if (!result) {
-        // This case handles when the onDelete function is successful but returns no object.
-        if (onSuccess) {
-            onSuccess();
-        }
+      setOpen(false); // Close on error
     }
   };
 
+  const handleDialogClose = () => {
+    setOpen(false);
+    // Reset state after a short delay to allow for animations
+    setTimeout(() => {
+        setIsSuccess(false);
+        setIsDeleting(false);
+    }, 300);
+  }
+
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         {children}
       </AlertDialogTrigger>
       <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the {itemType}{" "}
-            <span className="font-semibold text-foreground">&quot;{itemName}&quot;</span> from the database.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+        {isSuccess ? (
+             <AlertDialogHeader>
+                <AlertDialogTitle>Success!</AlertDialogTitle>
+                <AlertDialogDescription>
+                    The {itemType} "{itemName}" has been successfully deleted.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+        ) : (
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the {itemType}{" "}
+                    <span className="font-semibold text-foreground">&quot;{itemName}&quot;</span> from the database.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+        )}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-          >
-            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Yes, delete it
-          </AlertDialogAction>
+            {isSuccess ? (
+                 <Button onClick={handleDialogClose}>OK</Button>
+            ) : (
+                <>
+                    <AlertDialogCancel disabled={isDeleting} onClick={handleDialogClose}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                    >
+                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Yes, delete it
+                    </AlertDialogAction>
+                </>
+            )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
