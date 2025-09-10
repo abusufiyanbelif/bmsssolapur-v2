@@ -78,6 +78,8 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   pincode: z.string().optional(),
   aadhaarCard: z.any().optional(),
   addressProof: z.any().optional(),
+  dateOfBirth: z.date().optional(),
+  gender: z.enum(['Male', 'Female', 'Other']).optional(),
   
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
@@ -336,11 +338,32 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
                 if (details.beneficiaryPhone) {
                     const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-                    setValue('newBeneficiaryPhone', phone, { shouldDirty: true });
+                    setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
                 }
-                if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true });
+                if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
                 if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
-                setValue('beneficiaryType', 'new', { shouldDirty: true });
+                
+                 if (details.dateOfBirth) {
+                    // AI might return DD/MM/YYYY or YYYY-MM-DD, try to parse both
+                    const parts = details.dateOfBirth.split(/[\/\-]/);
+                    let date: Date | null = null;
+                    if(parts.length === 3) {
+                        if (parts[2].length === 4) { // DD/MM/YYYY
+                            date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                        } else if (parts[0].length === 4) { // YYYY-MM-DD
+                            date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                        }
+                    }
+                     if (date && !isNaN(date.getTime())) {
+                        setValue('dateOfBirth', date, { shouldDirty: true });
+                    }
+                }
+                 if (details.gender) {
+                    const gender = details.gender as 'Male' | 'Female' | 'Other';
+                    if (['Male', 'Female', 'Other'].includes(gender)) {
+                         setValue('gender', gender, { shouldDirty: true });
+                    }
+                }
             }
             
             toast({ variant: 'success', title: 'Auto-fill Complete', description: `The ${section} fields have been populated. Please review.` });
@@ -652,7 +675,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     </FormItem>
                                 )}
                                 />
+                             <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Date of Birth</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus captionLayout="dropdown-buttons" fromYear={1920} toYear={new Date().getFullYear()} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                         </div>
+                        <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><RadioGroup onValueChange={(v) => setValue('gender', v as 'Male' | 'Female' | 'Other')} value={field.value} className="flex space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male"/></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female"/></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup><FormMessage /></FormItem>)} />
                         <h4 className="font-medium pt-2">Address</h4>
                         <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
