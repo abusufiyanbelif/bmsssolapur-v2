@@ -40,18 +40,24 @@ interface RawTextScanResult {
 export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
     const imageFiles = formData.getAll("imageFiles") as File[];
     
-    if (!imageFiles || imageFiles.length === 0) {
+    if (!imageFiles || imageFiles.length === 0 || imageFiles.every(f => f.size === 0)) {
         return { success: false, error: "No image files provided." };
     }
     
     const dataUris: string[] = [];
     try {
         for (const imageFile of imageFiles) {
-             const arrayBuffer = await imageFile.arrayBuffer();
-             const base64 = Buffer.from(arrayBuffer).toString('base64');
-             dataUris.push(`data:${imageFile.type};base64,${base64}`);
+             if (imageFile && imageFile.size > 0) {
+                 const arrayBuffer = await imageFile.arrayBuffer();
+                 const base64 = Buffer.from(arrayBuffer).toString('base64');
+                 dataUris.push(`data:${imageFile.type};base64,${base64}`);
+             }
+        }
+        if (dataUris.length === 0) {
+            return { success: false, error: "Valid image files could not be processed." };
         }
     } catch (e) {
+         console.error("Failed to read image files:", e);
          return { success: false, error: "Failed to read the image file(s)." };
     }
     
@@ -59,7 +65,7 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
         const textResult = await extractRawTextFlow({ photoDataUris: dataUris });
 
         if (!textResult?.rawText) {
-            throw new Error("Failed to extract text from image.");
+            throw new Error("Failed to extract text from image. The document might be unreadable.");
         }
 
         return { success: true, rawText: textResult.rawText };
