@@ -37,10 +37,10 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             2.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field.
             3.  **Extract Beneficiary Details from Aadhaar Card**: 
                 - Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.". 
-                - Split this full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. If there are three parts to the name, the middle part is the middle name. If there are only two names, treat them as first and last.
-                - **Address Extraction:** Look for the specific label "Address:". Capture all text and lines that follow it until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
+                - **Name Parsing Logic**: A full name might have 2, 3, or 4 parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. Any words in between constitute the 'beneficiaryMiddleName'. For example, for "Abusufiyan Zulfiquar Ali Ahmed Belief", First Name is "Abusufiyan", Last Name is "Belief", and Middle Name is "Zulfiquar Ali Ahmed".
+                - **Address Extraction:** Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" (Son of) lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
             4.  **Extract Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name.
-            5.  **Date of Birth and Gender**: Extract the Date of Birth (in DD/MM/YYYY format) and Gender (Male/Female) from the Aadhaar card.
+            5.  **Date of Birth and Gender**: Extract the Date of Birth (in DD/MM/YYYY format) and Gender ("Male" or "Female") from the Aadhaar card.
 
             **Fields to Extract:**
             - headline: A short, one-sentence summary of the case. If not explicit, create one from the story. For a medical report, it could be "Assistance needed for medical tests and treatment."
