@@ -56,6 +56,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
+const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
+
 
 const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   beneficiaryType: z.enum(['existing', 'new']).default('existing'),
@@ -280,7 +282,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         }
         loadingSetter(true);
         const formData = new FormData();
-        filesToScan.forEach(file => formData.append("imageFiles", file as Blob));
+        filesToScan.forEach(file => {
+          if (file) {
+            formData.append("imageFiles", file as Blob)
+          }
+        });
 
         try {
             const result = await getRawTextFromImage(formData);
@@ -524,7 +530,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                      <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                         <h3 className="font-medium">New Beneficiary Details</h3>
                          <div className="space-y-4">
-                             <Label>Identity Documents</Label>
+                             <Label>Identity Documents (Aadhaar, Address Proof)</Label>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
                                 <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
@@ -711,36 +717,25 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             )}
                         />
                     )}
+                     <FormField
+                        control={form.control}
+                        name="priority"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Priority</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {leadPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
                 
-                 {showEducationFields && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="degree" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Degree/Class</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree/class" /></SelectTrigger></FormControl>
-                                    <SelectContent>{(leadConfiguration.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        {showYearField && (
-                             <FormField control={form.control} name="year" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Year</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
-                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        )}
-                    </div>
-                )}
-                
-                <Accordion type="single" collapsible className="w-full">
+                 <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
@@ -785,6 +780,80 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
+
+                <FormField control={form.control} name="headline" render={({ field }) => (<FormItem><FormLabel>Headline</FormLabel><FormControl><Input placeholder="Short, public summary of the case" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
+
+                <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Amount Requested</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                </div>
+                 <FormField
+                    control={form.control}
+                    name="isLoan"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                            <FormLabel>
+                                This is a repayable loan
+                            </FormLabel>
+                        </div>
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                  control={form.control}
+                  name="acceptableDonationTypes"
+                  render={() => (
+                    <FormItem className="space-y-3">
+                      <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {donationTypes.map((type) => (
+                          <FormField
+                            key={type}
+                            control={form.control}
+                            name="acceptableDonationTypes"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={type}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(type)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), type])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== type
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {type}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <div className="flex gap-4 pt-6 border-t">
                     <Button type="submit" disabled={isSubmitting}>
