@@ -211,7 +211,7 @@ export interface FundTransfer {
 export interface Lead {
     id: string; // Now a custom-generated string
     name: string; // Beneficiary name for easy access
-    beneficiaryId: string;
+    beneficiaryId?: string;
     beneficiary?: User;
     campaignId?: string;
     campaignName?: string;

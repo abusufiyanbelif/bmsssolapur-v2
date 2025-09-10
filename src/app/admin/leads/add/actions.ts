@@ -38,6 +38,8 @@ export async function handleAddLead(
   const rawFormData = {
       beneficiaryType: formData.get("beneficiaryType") as 'existing' | 'new',
       beneficiaryId: formData.get("beneficiaryId") as string | undefined,
+      linkBeneficiaryLater: formData.get("linkBeneficiaryLater") === 'on',
+      manualBeneficiaryName: formData.get("manualBeneficiaryName") as string | undefined,
       newBeneficiaryFirstName: formData.get("newBeneficiaryFirstName") as string | undefined,
       newBeneficiaryMiddleName: formData.get("newBeneficiaryMiddleName") as string | undefined,
       newBeneficiaryLastName: formData.get("newBeneficiaryLastName") as string | undefined,
@@ -96,67 +98,64 @@ export async function handleAddLead(
     }
 
     let beneficiaryUser: User | null = null;
-    
-    if (rawFormData.beneficiaryType === 'new') {
-        const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, addressLine1, city, state, pincode } = rawFormData;
+    let leadName: string;
 
-        if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone) {
-            return { success: false, error: "New beneficiary First Name, Last Name, and Phone number are required." };
+    if (rawFormData.linkBeneficiaryLater) {
+        if (!rawFormData.manualBeneficiaryName) {
+            return { success: false, error: "Beneficiary Name is required when linking later." };
+        }
+        leadName = rawFormData.manualBeneficiaryName;
+    } else {
+        if (rawFormData.beneficiaryType === 'new') {
+            const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, addressLine1, city, state, pincode } = rawFormData;
+            if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone) {
+                return { success: false, error: "New beneficiary First Name, Last Name, and Phone number are required." };
+            }
+            const newBeneficiaryName = `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim();
+
+            try {
+                beneficiaryUser = await createUser({
+                    name: newBeneficiaryName,
+                    firstName: newBeneficiaryFirstName,
+                    middleName: newBeneficiaryMiddleName || '',
+                    lastName: newBeneficiaryLastName,
+                    fatherName: newBeneficiaryFatherName || undefined,
+                    phone: newBeneficiaryPhone,
+                    email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
+                    aadhaarNumber: newBeneficiaryAadhaar || undefined,
+                    address: { addressLine1, city, state, pincode, country: 'India' },
+                    roles: ['Beneficiary'],
+                    isActive: true,
+                    createdAt: Timestamp.now(),
+                });
+            } catch (e) {
+                 const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
+                 return { success: false, error };
+            }
+        } else {
+            if (!rawFormData.beneficiaryId) {
+                 return { success: false, error: "Please select an existing beneficiary." };
+            }
+            beneficiaryUser = await getUser(rawFormData.beneficiaryId);
         }
         
-        const newBeneficiaryName = `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim();
-
-        try {
-            beneficiaryUser = await createUser({
-                name: newBeneficiaryName,
-                firstName: newBeneficiaryFirstName,
-                middleName: newBeneficiaryMiddleName || '',
-                lastName: newBeneficiaryLastName,
-                fatherName: newBeneficiaryFatherName || undefined,
-                phone: newBeneficiaryPhone,
-                email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
-                aadhaarNumber: newBeneficiaryAadhaar || undefined,
-                address: {
-                    addressLine1: addressLine1,
-                    city: city,
-                    state: state,
-                    pincode: pincode,
-                    country: 'India',
-                },
-                roles: ['Beneficiary'],
-                isActive: true,
-                createdAt: Timestamp.now(),
-            });
-        } catch (e) {
-             const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
-             console.error("Error creating new beneficiary from lead form:", error);
-             return { success: false, error };
+        if (!beneficiaryUser) {
+            return { success: false, error: "Could not find or create the beneficiary user." };
         }
-    } else {
-        if (!rawFormData.beneficiaryId) {
-             return { success: false, error: "Please select an existing beneficiary." };
-        }
-        beneficiaryUser = await getUser(rawFormData.beneficiaryId);
-    }
-    
-    if (!beneficiaryUser) {
-        return { success: false, error: "Could not find or create the beneficiary user." };
-    }
-
-    // Duplicate Lead Check
-    if (!rawFormData.forceCreate) {
-        const openLeads = await getOpenLeadsByBeneficiaryId(beneficiaryUser.id!);
-        if (openLeads.length > 0) {
-            return {
-                success: false,
-                duplicateLeadWarning: openLeads,
-            };
+        leadName = beneficiaryUser.name;
+        
+        // Duplicate Lead Check only if a beneficiary is linked
+        if (!rawFormData.forceCreate) {
+            const openLeads = await getOpenLeadsByBeneficiaryId(beneficiaryUser.id!);
+            if (openLeads.length > 0) {
+                return { success: false, duplicateLeadWarning: openLeads };
+            }
         }
     }
       
     const newLeadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>> = {
-        name: beneficiaryUser.name,
-        beneficiaryId: beneficiaryUser.id!,
+        name: leadName,
+        beneficiaryId: beneficiaryUser?.id,
         campaignId: rawFormData.campaignId === 'none' ? undefined : rawFormData.campaignId,
         campaignName: rawFormData.campaignName || undefined,
         headline: rawFormData.headline,
@@ -208,7 +207,6 @@ export async function handleAddLead(
     if (addressUrl) docUpdates.addressProofUrl = addressUrl;
     
     if (otherUrls.length > 0) {
-        // Simple assignment for now. Can be enhanced to otherDocument1, otherDocument2, etc. if needed.
         docUpdates.otherDocument1Url = otherUrls[0] || undefined;
         if (otherUrls.length > 1) {
              docUpdates.otherDocument2Url = otherUrls[1] || undefined;
