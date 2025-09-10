@@ -17,6 +17,12 @@ export async function handleDeleteLead(leadId: string, adminUserId: string) {
     try {
         const adminUser = await getUser(adminUserId);
         if (!adminUser) return { success: false, error: "Admin user not found for logging." };
+        
+        const leadToDelete = await getLead(leadId);
+        if (leadToDelete && leadToDelete.helpGiven > 0) {
+            return { success: false, error: "This lead cannot be deleted as funds have been transferred. You must reverse or delete the fund transfers from the lead's details page first." };
+        }
+        
         await deleteLeadService(leadId, adminUser);
         revalidatePath("/admin/leads");
         return { success: true };
@@ -31,6 +37,15 @@ export async function handleBulkDeleteLeads(leadIds: string[], adminUserId: stri
     try {
         const adminUser = await getUser(adminUserId);
         if (!adminUser) return { success: false, error: "Admin user not found for logging." };
+
+        // Check all leads before starting the batch
+        for (const id of leadIds) {
+            const lead = await getLead(id);
+            if (lead && lead.helpGiven > 0) {
+                throw new Error(`Lead "${lead.name}" (${id}) cannot be deleted because it has received funds. Please handle its fund transfers first.`);
+            }
+        }
+        
         const batch = writeBatch(db);
         const logPromises: Promise<void>[] = [];
 

@@ -15,6 +15,12 @@ export async function handleDeleteDonation(donationId: string, adminUserId: stri
     try {
         const adminUser = await getUser(adminUserId);
         if (!adminUser) return { success: false, error: "Admin user not found for logging." };
+        
+        const donationToDelete = await getDonation(donationId);
+        if (donationToDelete?.status === 'Allocated' || donationToDelete?.status === 'Partially Allocated') {
+            return { success: false, error: "This donation cannot be deleted because it has already been allocated to one or more leads. Please review the lead's fund transfers first." };
+        }
+
         await deleteDonationService(donationId, adminUser);
         revalidatePath("/admin/donations");
         return { success: true };
@@ -32,6 +38,13 @@ export async function handleBulkDeleteDonations(donationIds: string[], adminUser
 
         const batch = writeBatch(db);
         const logPromises: Promise<void>[] = [];
+        
+        for (const id of donationIds) {
+            const donation = await getDonation(id);
+             if (donation?.status === 'Allocated' || donation?.status === 'Partially Allocated') {
+                throw new Error(`Donation "${donation.id}" from ${donation.donorName} cannot be deleted because it has been allocated. Please de-allocate funds first.`);
+            }
+        }
 
         for (const id of donationIds) {
             const donationDocRef = doc(db, "donations", id);
