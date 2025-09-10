@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -180,6 +179,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [zoomLevels, setZoomLevels] = useState<Record<number, {zoom: number, rotation: number}>>({});
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
@@ -744,7 +744,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {aadhaarPreview && (
                                 <div className="relative group flex-1">
-                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
+                                    <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
                                         <Image src={aadhaarPreview} alt="Aadhaar Preview" layout="fill" className="object-contain p-2" style={{transform: `scale(${zoom}) rotate(${rotation}deg)`}}/>
                                     </div>
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
@@ -757,7 +757,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             )}
                             {addressProofPreview && (
                                 <div className="relative group flex-1">
-                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
+                                    <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
                                         <Image src={addressProofPreview} alt="Address Proof Preview" layout="fill" className="object-contain p-2" style={{transform: `scale(${zoom}) rotate(${rotation}deg)`}}/>
                                     </div>
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
@@ -926,12 +926,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 {otherDocumentsPreviews.length > 0 && (
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                         {otherDocumentsPreviews.map((url, index) => {
-                                             const zoom = zoomLevels[index] || 1;
+                                             const files = getValues('otherDocuments') || [];
+                                             const zoom = zoomLevels[index]?.zoom || 1;
                                              const rotation = zoomLevels[index]?.rotation || 0;
                                              const isImage = files[index]?.type.startsWith('image/');
                                             return (
                                             <div key={url} className="relative group p-1 border rounded-lg bg-background">
-                                                 <div className="w-full h-24 overflow-auto flex items-center justify-center">
+                                                 <div onWheel={handleWheel} className="w-full h-24 overflow-auto flex items-center justify-center">
                                                     {isImage ? (
                                                         <Image
                                                             src={url}
@@ -947,9 +948,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 </div>
                                                 <p className="text-xs text-muted-foreground truncate">{getValues('otherDocuments')?.[index]?.name}</p>
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1}), zoom: (z[index]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1}), zoom: Math.max(0.5, (z[index]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {rotation:0}), rotation: ((z[index]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1, rotation: 0}), zoom: (z[index]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[index]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1, rotation: 0}), rotation: ((z[index]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
                                                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
