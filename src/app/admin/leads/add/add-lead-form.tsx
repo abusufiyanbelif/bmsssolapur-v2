@@ -244,9 +244,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       otherPurposeDetail: '',
       category: '',
       otherCategoryDetail: '',
+      degree: '',
+      year: '',
       priority: 'Medium',
       acceptableDonationTypes: [],
       helpRequested: 0,
+      fundingGoal: 0,
+      caseReportedDate: undefined,
       dueDate: undefined,
       isLoan: false,
       caseDetails: '',
@@ -443,6 +447,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return { 0: { ...(prev[0] || {zoom: 1, rotation: 0}), zoom: clampedZoom }};
     });
   };
+
 
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
@@ -747,56 +752,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 )}
                 </>
                 )}
-                 <div className="space-y-4">
-                    <Label>Identity Documents (Aadhaar, Address Proof)</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="addressProof" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
-                    </div>
-                     {(aadhaarPreview || addressProofPreview) && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {aadhaarPreview && (
-                                <div className="relative group flex-1">
-                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
-                                        <Image src={aadhaarPreview} alt="Aadhaar Preview" layout="fill" className="object-contain p-2"/>
-                                    </div>
-                                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => {setAadhaarPreview(null); setValue('aadhaarCard', null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
-                                    </div>
-                                </div>
-                            )}
-                            {addressProofPreview && (
-                                <div className="relative group flex-1">
-                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
-                                        <Image src={addressProofPreview} alt="Address Proof Preview" layout="fill" className="object-contain p-2"/>
-                                    </div>
-                                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => {setAddressProofPreview(null); setValue('addressProof', null); if(addressProofInputRef.current) addressProofInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                     <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        disabled={isBeneficiaryTextExtracting || isBeneficiaryAnalyzing}
-                        onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(f => f) as File[], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)}
-                    >
-                        {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                        Get beneficiary details from Adhaar
-                    </Button>
-                    {beneficiaryRawText && (
-                        <>
-                            <Textarea value={beneficiaryRawText} readOnly rows={5} className="text-xs font-mono bg-background" />
-                            <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(beneficiaryRawText, 'beneficiary')} disabled={isBeneficiaryAnalyzing}>
-                                {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                Auto-fill Beneficiary Details
-                            </Button>
-                        </>
-                    )}
-                </div>
                  
                  <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
