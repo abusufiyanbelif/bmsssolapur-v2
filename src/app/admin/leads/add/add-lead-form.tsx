@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -29,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -178,6 +179,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
   const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
@@ -741,24 +744,26 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {aadhaarPreview && (
                                 <div className="relative group flex-1">
-                                    <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
-                                        <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200*zoom} height={120*zoom} className="object-contain transition-transform" style={{transform: `scale(${zoom})`}}/>
+                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
+                                        <Image src={aadhaarPreview} alt="Aadhaar Preview" layout="fill" className="object-contain p-2" style={{transform: `scale(${zoom}) rotate(${rotation}deg)`}}/>
                                     </div>
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-3 w-3"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-3 w-3"/></Button>
+                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => (r + 90) % 360)}><RotateCw className="h-3 w-3"/></Button>
                                         <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {setAadhaarPreview(null); setValue('aadhaarCard', null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
                                     </div>
                                 </div>
                             )}
                             {addressProofPreview && (
                                 <div className="relative group flex-1">
-                                    <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
-                                        <Image src={addressProofPreview} alt="Address Proof Preview" width={200*zoom} height={120*zoom} className="object-contain transition-transform" style={{transform: `scale(${zoom})`}}/>
+                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
+                                        <Image src={addressProofPreview} alt="Address Proof Preview" layout="fill" className="object-contain p-2" style={{transform: `scale(${zoom}) rotate(${rotation}deg)`}}/>
                                     </div>
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-3 w-3"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-3 w-3"/></Button>
+                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => (r + 90) % 360)}><RotateCw className="h-3 w-3"/></Button>
                                         <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {setAddressProofPreview(null); setValue('addressProof', null); if(addressProofInputRef.current) addressProofInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
                                     </div>
                                 </div>
@@ -920,11 +925,32 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 />
                                 {otherDocumentsPreviews.length > 0 && (
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                        {otherDocumentsPreviews.map((url, index) => (
-                                            <div key={url} className="relative group p-1 border rounded-lg">
-                                                <Image src={url} alt={`Preview ${index}`} width={100} height={100} className="w-full h-24 object-cover rounded" />
+                                        {otherDocumentsPreviews.map((url, index) => {
+                                             const zoom = zoomLevels[index] || 1;
+                                             const rotation = zoomLevels[index]?.rotation || 0;
+                                             const isImage = files[index]?.type.startsWith('image/');
+                                            return (
+                                            <div key={url} className="relative group p-1 border rounded-lg bg-background">
+                                                 <div className="w-full h-24 overflow-auto flex items-center justify-center">
+                                                    {isImage ? (
+                                                        <Image
+                                                            src={url}
+                                                            alt={`Preview ${index + 1}`}
+                                                            width={100 * zoom}
+                                                            height={100 * zoom}
+                                                            className="object-contain transition-transform"
+                                                            style={{transform: `rotate(${rotation}deg)`}}
+                                                        />
+                                                    ) : (
+                                                        <FileIcon className="w-12 h-12 text-muted-foreground" />
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground truncate">{getValues('otherDocuments')?.[index]?.name}</p>
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => {
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1}), zoom: (z[index]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1}), zoom: Math.max(0.5, (z[index]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {rotation:0}), rotation: ((z[index]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
+                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
                                                          setValue('otherDocuments', updatedFiles, { shouldDirty: true });
@@ -932,11 +958,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                     }}><XCircle className="h-4 w-4 text-destructive"/></Button>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )})}
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            className="h-28 flex-col gap-2 border-dashed"
+                                            className="h-full flex-col gap-2 border-dashed min-h-28"
                                             onClick={() => otherDocsInputRef.current?.click()}
                                         >
                                             <PlusCircle className="h-6 w-6 text-muted-foreground" />
