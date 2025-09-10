@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -176,6 +177,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
+  const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
 
 
@@ -254,6 +256,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       setBeneficiaryRawText("");
       setAadhaarPreview(null);
       setAddressProofPreview(null);
+      setOtherDocumentsPreviews([]);
   };
 
   const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
@@ -853,12 +856,36 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                         <FormItem>
                                             <FormLabel>Case Documents</FormLabel>
                                             <FormControl>
-                                                <Input type="file" multiple onChange={(e) => onChange(Array.from(e.target.files || []))} />
+                                                <Input
+                                                    type="file"
+                                                    multiple
+                                                    onChange={(e) => {
+                                                        const files = Array.from(e.target.files || []);
+                                                        onChange(files);
+                                                        const urls = files.map(file => URL.createObjectURL(file));
+                                                        setOtherDocumentsPreviews(urls);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+                                {otherDocumentsPreviews.length > 0 && (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        {otherDocumentsPreviews.map((url, index) => (
+                                            <div key={url} className="relative group p-1 border rounded-lg">
+                                                <Image src={url} alt={`Preview ${index}`} width={100} height={100} className="w-full h-24 object-cover rounded" />
+                                                <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                                                     const currentFiles = getValues('otherDocuments') || [];
+                                                     const updatedFiles = currentFiles.filter((_, i) => i !== index);
+                                                     setValue('otherDocuments', updatedFiles, { shouldDirty: true });
+                                                     setOtherDocumentsPreviews(prev => prev.filter((_, i) => i !== index));
+                                                }}><X className="h-4 w-4"/></Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                                 
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage(getValues('otherDocuments') || [], setCaseRawText, setIsCaseTextExtracting)} disabled={isCaseTextExtracting}>
