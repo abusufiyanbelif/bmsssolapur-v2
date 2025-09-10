@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { User, Lead, Campaign, Donation, DonationType, LeadPurpose } from "@/services/types";
-import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText, ChevronLeft, ChevronRight, Target as TargetIcon } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -28,6 +28,9 @@ export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonat
         const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
         const casesPending = allLeads.filter(l => l.caseStatus === 'Pending' || l.caseStatus === 'Open' || l.caseStatus === 'Partial').length;
         const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
+        const totalRequired = allLeads
+            .filter(l => l.caseStatus === 'Open' || l.caseStatus === 'Partial' || l.caseAction === 'Publish')
+            .reduce((acc, l) => acc + (l.helpRequested - l.helpGiven), 0);
         
         return {
             totalRaised,
@@ -36,14 +39,15 @@ export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonat
             casesClosed,
             casesPending,
             casesPublished,
+            totalRequired,
         };
     }, [allDonations, allLeads]);
 
     const mainMetrics = [
         { id: "totalRaised", title: "Total Verified Funds", value: `₹${stats.totalRaised.toLocaleString()}`, icon: TrendingUp, href: "/admin/donations?status=Verified" },
         { id: "totalDistributed", title: "Total Distributed", value: `₹${stats.totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
+        { id: "totalRequired", title: "Total Required", value: `₹${stats.totalRequired.toLocaleString()}`, icon: TargetIcon, description: "Total pending amount for all open leads.", href: "/admin/leads?status=Open" },
         { id: "casesClosed", title: "Cases Closed", value: stats.casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
-        { id: "casesPending", title: "Pending Leads", value: stats.casesPending.toString(), icon: Hourglass, description: "Leads currently open for funding.", href: "/admin/leads?status=Pending" },
         { id: "openLeads", title: "Open Leads", value: stats.casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/public-leads" },
         { id: "beneficiariesHelped", title: "Beneficiaries Helped", value: stats.beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
