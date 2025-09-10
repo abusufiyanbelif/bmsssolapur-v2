@@ -91,6 +91,8 @@ export type Quote = z.infer<typeof QuoteSchema>;
 // Schema for extracting lead details from text
 export const ExtractLeadDetailsFromTextInputSchema = z.object({
   rawText: z.string().describe("A block of raw text containing lead details to be parsed."),
+  purpose: z.string().optional().describe("The user-selected purpose to give context to the AI."),
+  category: z.string().optional().describe("The user-selected category to give context to the AI."),
 });
 export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsFromTextInputSchema>;
 
@@ -99,10 +101,11 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     headline: z.string().optional().describe("A short, one-sentence summary of the case."),
     story: z.string().optional().describe("A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text."),
     diseaseIdentified: z.string().optional().describe("If a medical report, extract the specific disease or diagnosis mentioned (e.g., 'Typhoid Fever', 'Osteoarthritis')."),
-    purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical)."),
+    purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical, Relief Fund, Deen, Loan, Other)."),
     category: z.string().optional().describe("The specific category for the purpose (e.g., School Fees, Hospital Bill)."),
     amount: z.number().optional().describe("The amount requested."),
     dueDate: z.string().optional().describe("The date by which the funds are needed (YYYY-MM-DD)."),
+    caseReportedDate: z.string().optional().describe("The date the case was reported or the document was issued (YYYY-MM-DD)."),
     acceptableDonationTypes: z.array(z.string()).optional().describe("A list of donation types, e.g., ['Zakat', 'Sadaqah']."),
     caseDetails: z.string().optional().describe("The detailed reason or story for the help request."),
     // Beneficiary fields
@@ -110,7 +113,7 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
     beneficiaryLastName: z.string().optional().describe("The beneficiary's last name."),
     fatherName: z.string().optional().describe("The beneficiary's father's name."),
-    dateOfBirth: z.string().optional().describe("The beneficiary's date of birth (Format: YYYY-MM-DD)."),
+    dateOfBirth: z.string().optional().describe("The beneficiary's date of birth (Format: DD/MM/YYYY)."),
     gender: z.enum(['Male', 'Female', 'Other']).optional().describe("The beneficiary's gender."),
     beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
     beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),

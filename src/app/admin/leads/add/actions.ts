@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { getAppSettings } from "@/services/app-settings-service";
-import { extractLeadDetailsFromText } from "@/ai/flows/extract-lead-details-from-text-flow";
+import { extractLeadDetailsFromText as extractLeadDetailsFlow } from "@/ai/flows/extract-lead-details-from-text-flow";
 import { uploadFile } from "@/services/storage-service";
 
 interface FormState {
@@ -61,6 +61,7 @@ export async function handleAddLead(
       acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
       helpRequested: parseFloat(formData.get("helpRequested") as string),
       fundingGoal: formData.get("fundingGoal") ? parseFloat(formData.get("fundingGoal") as string) : undefined,
+      caseReportedDate: formData.get("caseReportedDate") ? new Date(formData.get("caseReportedDate") as string) : undefined,
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
       isLoan: formData.get("isLoan") === 'on',
       caseDetails: formData.get("caseDetails") as string,
@@ -181,6 +182,7 @@ export async function handleAddLead(
         referredByUserId: rawFormData.referredByUserId || undefined,
         referredByUserName: rawFormData.referredByUserName || undefined,
         dateCreated: Timestamp.now(),
+        caseReportedDate: rawFormData.caseReportedDate ? Timestamp.fromDate(rawFormData.caseReportedDate) : undefined,
         dueDate: rawFormData.dueDate ? Timestamp.fromDate(rawFormData.dueDate) : undefined,
         isLoan: rawFormData.isLoan,
         source: 'Manual Entry',
@@ -238,9 +240,13 @@ export async function handleAddLead(
   }
 }
 
-export async function handleExtractLeadDetailsFromText(rawText: string): Promise<{ success: boolean; details?: ExtractLeadDetailsOutput; error?: string }> {
+export async function handleExtractLeadDetailsFromText(
+    rawText: string, 
+    purpose?: string, 
+    category?: string
+): Promise<{ success: boolean; details?: ExtractLeadDetailsOutput; error?: string }> {
     try {
-        const extractedDetails = await extractLeadDetailsFromText({ rawText });
+        const extractedDetails = await extractLeadDetailsFlow({ rawText, purpose, category });
         return { success: true, details: extractedDetails };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown AI error occurred.";

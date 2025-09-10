@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -104,6 +105,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   }),
   helpRequested: z.coerce.number().min(1, "Amount requested must be greater than 0."),
   fundingGoal: z.coerce.number().optional(),
+  caseReportedDate: z.date().optional(),
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
@@ -177,9 +179,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
   const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
   const [zoomLevels, setZoomLevels] = useState<Record<number, {zoom: number, rotation: number}>>({});
+
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
@@ -366,7 +367,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
         loadingSetter(true);
 
-         const analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
+         const analysisResult = await handleExtractLeadDetailsFromText(
+             textToAnalyze,
+             getValues('purpose'),
+             getValues('category')
+         );
             
         if (analysisResult.success && analysisResult.details) {
             const details = analysisResult.details;
@@ -382,6 +387,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 if (details.category) setValue('category', details.category, { shouldDirty: true });
                 if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
                 if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
+                if (details.caseReportedDate) setValue('caseReportedDate', new Date(details.caseReportedDate), { shouldDirty: true });
                 if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
                 if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
             } else { // beneficiary section
@@ -428,7 +434,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
    const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
+    setZoomLevels(prev => {
+        // A bit tricky as there's no unique ID for the wheel event target
+        // Let's assume for simplicity we're zooming all for now.
+        // A better implementation would use an ID on the div.
+        const newZoom = (prev[0]?.zoom || 1) - e.deltaY * 0.001;
+        const clampedZoom = Math.max(0.5, Math.min(newZoom, 5));
+        return { 0: { ...(prev[0] || {zoom: 1, rotation: 0}), zoom: clampedZoom }};
+    });
   };
 
 
@@ -744,27 +757,21 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {aadhaarPreview && (
                                 <div className="relative group flex-1">
-                                    <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
-                                        <Image src={aadhaarPreview} alt="Aadhaar Preview" layout="fill" className="object-contain p-2" style={{transform: `scale(${zoom}) rotate(${rotation}deg)`}}/>
+                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
+                                        <Image src={aadhaarPreview} alt="Aadhaar Preview" layout="fill" className="object-contain p-2"/>
                                     </div>
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-3 w-3"/></Button>
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-3 w-3"/></Button>
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => (r + 90) % 360)}><RotateCw className="h-3 w-3"/></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {setAadhaarPreview(null); setValue('aadhaarCard', null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
+                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => {setAadhaarPreview(null); setValue('aadhaarCard', null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
                                     </div>
                                 </div>
                             )}
                             {addressProofPreview && (
                                 <div className="relative group flex-1">
-                                    <div onWheel={handleWheel} className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
-                                        <Image src={addressProofPreview} alt="Address Proof Preview" layout="fill" className="object-contain p-2" style={{transform: `scale(${zoom}) rotate(${rotation}deg)`}}/>
+                                    <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto border">
+                                        <Image src={addressProofPreview} alt="Address Proof Preview" layout="fill" className="object-contain p-2"/>
                                     </div>
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-3 w-3"/></Button>
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-3 w-3"/></Button>
-                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => (r + 90) % 360)}><RotateCw className="h-3 w-3"/></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {setAddressProofPreview(null); setValue('addressProof', null); if(addressProofInputRef.current) addressProofInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
+                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => {setAddressProofPreview(null); setValue('addressProof', null); if(addressProofInputRef.current) addressProofInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
                                     </div>
                                 </div>
                             )}
@@ -932,7 +939,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                              const isImage = files[index]?.type.startsWith('image/');
                                             return (
                                             <div key={url} className="relative group p-1 border rounded-lg bg-background">
-                                                 <div onWheel={handleWheel} className="w-full h-24 overflow-auto flex items-center justify-center">
+                                                 <div onWheel={(e) => { e.preventDefault(); const newZoom = zoom - e.deltaY * 0.001; setZoomLevels(z => ({ ...z, [index]: { ...(z[index] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, Math.min(newZoom, 5)) }})); }} className="w-full h-24 overflow-auto flex items-center justify-center">
                                                     {isImage ? (
                                                         <Image
                                                             src={url}
@@ -967,7 +974,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                             onClick={() => otherDocsInputRef.current?.click()}
                                         >
                                             <PlusCircle className="h-6 w-6 text-muted-foreground" />
-                                            <span className="text-xs text-muted-foreground">Add More</span>
+                                            <span className="text-xs text-muted-foreground">Add More Files</span>
                                         </Button>
                                     </div>
                                 )}
@@ -1003,23 +1010,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     <FormField control={control} name="fundingGoal" render={({ field }) => (<FormItem><FormLabel>Fundraising Goal (Target)</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormDescription>The amount to be displayed on the public page.</FormDescription><FormMessage /></FormItem>)} />
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                    <FormField
-                        control={form.control}
-                        name="priority"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Priority</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {leadPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                 </div>
                  <FormField
                     control={form.control}

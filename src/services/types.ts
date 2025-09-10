@@ -248,6 +248,7 @@ export interface Lead {
     referredByUserId?: string;
     referredByUserName?: string;
     dateCreated: Date;
+    caseReportedDate?: Date;
     dueDate?: Date;
     verificationDueDate?: Date;
     closedAt?: Date;
