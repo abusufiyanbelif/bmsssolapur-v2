@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -103,7 +102,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
-  helpRequested: z.coerce.number().min(1, "Amount must be greater than 0."),
+  helpRequested: z.coerce.number().min(1, "Amount requested must be greater than 0."),
   fundingGoal: z.coerce.number().optional(),
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
@@ -267,6 +266,39 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const newBeneficiaryFirstName = watch("newBeneficiaryFirstName");
   const newBeneficiaryMiddleName = watch("newBeneficiaryMiddleName");
   const newBeneficiaryLastName = watch("newBeneficiaryLastName");
+  
+  const dynamicText = useMemo(() => {
+    let documentLabel = "Relevant Documents";
+    let headlinePlaceholder = "A short, compelling summary of the need";
+
+    switch (selectedPurposeName) {
+        case 'Education':
+            documentLabel = "Fee Receipts, Bonafide Certificates, etc.";
+            headlinePlaceholder = "e.g., Help needed for final year college fees";
+            break;
+        case 'Medical':
+            documentLabel = "Hospital Bills, Doctor's Notes, etc.";
+            headlinePlaceholder = "e.g., Assistance required for urgent heart surgery";
+            break;
+        case 'Relief Fund':
+            documentLabel = "Ration Slips, Utility Bills, etc.";
+            headlinePlaceholder = "e.g., Support needed for monthly ration kit";
+            break;
+        case 'Deen':
+             documentLabel = "Construction Quotes, Event Details, etc.";
+             headlinePlaceholder = "e.g., Contribution for Masjid renovation project";
+             break;
+        case 'Loan':
+             documentLabel = "Business Plan, Quotations, etc.";
+             headlinePlaceholder = "e.g., Small loan needed to start a tailoring business";
+             break;
+    }
+
+    return {
+        scanSectionTitle: `Scan Case Documents (${documentLabel})`,
+        headlinePlaceholder,
+    };
+  }, [selectedPurposeName]);
   
   useEffect(() => {
     const fullName = `${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim();
@@ -809,7 +841,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
                                 <ScanSearch className="h-5 w-5" />
-                                Scan Case Documents (Medical Bills, etc.)
+                                {dynamicText.scanSectionTitle}
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
@@ -850,7 +882,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </AccordionItem>
                 </Accordion>
 
-                <FormField control={form.control} name="headline" render={({ field }) => (<FormItem><FormLabel>Headline</FormLabel><FormControl><Input placeholder="Short, public summary of the case" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="headline" render={({ field }) => (<FormItem><FormLabel>Headline</FormLabel><FormControl><Input placeholder={dynamicText.headlinePlaceholder} {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
