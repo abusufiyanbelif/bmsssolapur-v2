@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -223,6 +222,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       addressLine1: '',
       city: 'Solapur',
       state: 'Maharashtra',
+      country: 'India',
       pincode: '',
       isAnonymousAsBeneficiary: false,
       hasReferral: false,
@@ -728,7 +728,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 )}
                 </>
                 )}
-                <div className="space-y-4">
+                 <div className="space-y-4">
                     <Label>Identity Documents (Aadhaar, Address Proof)</Label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
@@ -838,6 +838,48 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         />
                     )}
                 </div>
+                {showEducationFields && (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="degree"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Degree/Class</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select a degree/class" /></SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {(leadConfiguration.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {showYearField && (
+                             <FormField
+                                control={form.control}
+                                name="year"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Year</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                    </div>
+                )}
                  <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">
                         <AccordionTrigger>

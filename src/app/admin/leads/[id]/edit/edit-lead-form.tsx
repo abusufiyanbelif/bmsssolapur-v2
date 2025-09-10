@@ -172,10 +172,10 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const { formState: { isDirty }, reset, watch } = form;
   const selectedPurpose = watch("purpose");
   const selectedCategory = watch("category");
+  const selectedDegree = watch("degree");
   const hasReferral = watch("hasReferral");
   const caseAction = watch("caseAction");
   const caseVerification = watch("verifiedStatus");
-  const selectedDegree = watch("degree");
   
   const handleCancel = () => {
     reset({
@@ -306,6 +306,100 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+                 <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="purpose"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Purpose</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a purpose" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {leadPurposes.map(purpose => (
+                                    <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    {selectedPurpose && selectedPurpose !== 'Other' && (
+                        <FormField
+                            control={form.control}
+                            name="category"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Category</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {(categoryOptions[selectedPurpose as Exclude<LeadPurpose, 'Other' | 'Loan'>] || (selectedPurpose === 'Loan' ? loanCategoryOptions : [])).map(cat => (
+                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                 </div>
+                 
+                {showEducationFields && (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="degree"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Degree/Class</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                                        <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select a degree/class" /></SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {degreeOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {showYearField && (
+                             <FormField
+                                control={form.control}
+                                name="year"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Year</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                                            <FormControl>
+                                                <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                    </div>
+                )}
+                
+                <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
                 <FormField
                     control={form.control}
                     name="helpRequested"
