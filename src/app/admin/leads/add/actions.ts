@@ -63,8 +63,7 @@ export async function handleAddLead(
       caseDetails: formData.get("caseDetails") as string,
       aadhaarCard: formData.get("aadhaarCard") as File | null,
       addressProof: formData.get("addressProof") as File | null,
-      otherDocument1: formData.get("otherDocument1") as File | null,
-      otherDocument2: formData.get("otherDocument2") as File | null,
+      otherDocuments: formData.getAll("otherDocuments") as File[],
       forceCreate: formData.get("forceCreate") === 'true',
       degree: formData.get("degree") as string | undefined,
       year: formData.get("year") as string | undefined,
@@ -179,20 +178,30 @@ export async function handleAddLead(
     const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });
     
     // Now upload files with the new lead's ID
-    const uploadPromises = [
+    const uploadPromises: Promise<string | null>[] = [
         rawFormData.aadhaarCard ? uploadFile(rawFormData.aadhaarCard, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
         rawFormData.addressProof ? uploadFile(rawFormData.addressProof, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
-        rawFormData.otherDocument1 ? uploadFile(rawFormData.otherDocument1, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
-        rawFormData.otherDocument2 ? uploadFile(rawFormData.otherDocument2, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
     ];
-    
-    const [aadhaarUrl, addressUrl, other1Url, other2Url] = await Promise.all(uploadPromises);
+
+    if (rawFormData.otherDocuments && rawFormData.otherDocuments.length > 0) {
+        rawFormData.otherDocuments.forEach(file => {
+            uploadPromises.push(uploadFile(file, `leads/${newLead.id}/documents/`));
+        });
+    }
+
+    const [aadhaarUrl, addressUrl, ...otherUrls] = await Promise.all(uploadPromises);
     
     const docUpdates: Partial<Lead> = {};
     if (aadhaarUrl) docUpdates.aadhaarCardUrl = aadhaarUrl;
     if (addressUrl) docUpdates.addressProofUrl = addressUrl;
-    if (other1Url) docUpdates.otherDocument1Url = other1Url;
-    if (other2Url) docUpdates.otherDocument2Url = other2Url;
+    
+    if (otherUrls.length > 0) {
+        // Simple assignment for now. Can be enhanced to otherDocument1, otherDocument2, etc. if needed.
+        docUpdates.otherDocument1Url = otherUrls[0] || undefined;
+        if (otherUrls.length > 1) {
+             docUpdates.otherDocument2Url = otherUrls[1] || undefined;
+        }
+    }
     
     if(Object.keys(docUpdates).length > 0) {
       await updateLead(newLead.id!, docUpdates);

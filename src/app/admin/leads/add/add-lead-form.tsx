@@ -3,7 +3,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, useFormContext } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,58 +58,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 
-
-const FileUploadField = ({ name, label, control, currentUrl, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, currentUrl?: string, isEditing?: boolean }) => {
-    const [file, setFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
-    const { setValue } = useFormContext();
-
-    useEffect(() => {
-        if (file) {
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-            return () => URL.revokeObjectURL(url);
-        } else {
-            setPreviewUrl(currentUrl || null);
-        }
-    }, [file, currentUrl]);
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0] || null;
-        setFile(selectedFile);
-        setValue(name, selectedFile, { shouldValidate: true });
-    };
-    
-    return (
-        <FormItem>
-            <FormLabel>{label}</FormLabel>
-            <FormControl>
-                <Input 
-                    type="file" 
-                    accept="image/*,application/pdf"
-                    onChange={handleFileChange}
-                    disabled={!isEditing}
-                />
-            </FormControl>
-            {previewUrl && (
-                <div className="mt-2 p-2 border rounded-md">
-                    <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                         {previewUrl.match(/\.(jpeg|jpg|gif|png)$/) != null ? (
-                            <Image src={previewUrl} alt="Preview" width={100} height={100} className="object-contain" />
-                         ) : (
-                            <div className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm">
-                                <Paperclip className="h-4 w-4" />
-                                <span>View Document</span>
-                            </div>
-                         )}
-                    </a>
-                </div>
-            )}
-            <FormMessage />
-        </FormItem>
-    )
-}
-
 const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   beneficiaryType: z.enum(['existing', 'new']).default('existing'),
   beneficiaryId: z.string().optional(),
@@ -148,8 +96,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   caseDetails: z.string().optional(),
   aadhaarCard: z.any().optional(),
   addressProof: z.any().optional(),
-  otherDocument1: z.any().optional(),
-  otherDocument2: z.any().optional(),
+  otherDocuments: z.array(z.instanceof(File)).optional(),
 })
 .refine(data => {
     if (data.purpose === 'Other') {
@@ -264,6 +211,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       dueDate: undefined,
       isLoan: false,
       caseDetails: '',
+      otherDocuments: [],
     },
   });
   
@@ -305,8 +253,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     
     
     const handleGetTextFromImage = async () => {
-        const { aadhaarCard, addressProof, otherDocument1, otherDocument2 } = getValues();
-        const filesToScan = [aadhaarCard, addressProof, otherDocument1, otherDocument2].filter(Boolean);
+        const { aadhaarCard, addressProof, otherDocuments } = getValues();
+        const filesToScan: File[] = [aadhaarCard, addressProof, ...(otherDocuments || [])].filter((f): f is File => !!f);
+
 
         if (filesToScan.length === 0) {
             toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
@@ -392,16 +341,21 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     formData.append("adminUserId", adminUser.id);
     // Append all form values
     Object.entries(values).forEach(([key, value]) => {
-        if (value instanceof File) {
-            formData.append(key, value);
-        } else if (Array.isArray(value)) {
-            value.forEach(v => formData.append(key, v));
-        } else if (value instanceof Date) {
-            formData.append(key, value.toISOString());
-        } else if (value) {
-            formData.append(key, String(value));
+      if (Array.isArray(value)) {
+        if (key === 'otherDocuments') {
+          value.forEach(file => formData.append('otherDocuments', file));
+        } else {
+          value.forEach(v => formData.append(key, v));
         }
+      } else if (value instanceof File) {
+         formData.append(key, value);
+      } else if (value instanceof Date) {
+        formData.append(key, value.toISOString());
+      } else if (value) {
+        formData.append(key, String(value));
+      }
     });
+
 
     if (forceCreate) {
         formData.append("forceCreate", "true");
@@ -577,15 +531,27 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
-                            <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                                 <p className="text-sm text-muted-foreground">Upload documents like Aadhaar card, address proof, medical bills, or other IDs. The AI will scan them to help you fill the form.</p>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <FileUploadField name="aadhaarCard" label="Aadhaar Card" control={control} />
-                                    <FileUploadField name="addressProof" label="Address Proof" control={control} />
-                                    <FileUploadField name="otherDocument1" label="Other Document 1" control={control} />
-                                    <FileUploadField name="otherDocument2" label="Other Document 2" control={control} />
+                                     <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                                     <FormField control={form.control} name="addressProof" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
                                 </div>
+                                <FormField
+                                    control={form.control}
+                                    name="otherDocuments"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Other Documents</FormLabel>
+                                            <FormControl>
+                                                <Input type="file" multiple onChange={(e) => field.onChange(Array.from(e.target.files || []))} />
+                                            </FormControl>
+                                            <FormDescription>Upload any additional supporting documents.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={isExtractingText}>
