@@ -178,6 +178,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
   const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
+  const aadhaarInputRef = useRef<HTMLInputElement>(null);
+  const addressProofInputRef = useRef<HTMLInputElement>(null);
+  const otherDocsInputRef = useRef<HTMLInputElement>(null);
 
 
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
@@ -731,8 +734,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                  <div className="space-y-4">
                     <Label>Identity Documents (Aadhaar, Address Proof)</Label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="addressProof" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem> )} />
                     </div>
                      {(aadhaarPreview || addressProofPreview) && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -744,7 +747,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-3 w-3"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-3 w-3"/></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAadhaarPreview(null)}><XCircle className="h-3 w-3 text-destructive"/></Button>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {setAadhaarPreview(null); setValue('aadhaarCard', null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
                                     </div>
                                 </div>
                             )}
@@ -756,7 +759,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-3 w-3"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-3 w-3"/></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAddressProofPreview(null)}><XCircle className="h-3 w-3 text-destructive"/></Button>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {setAddressProofPreview(null); setValue('addressProof', null); if(addressProofInputRef.current) addressProofInputRef.current.value = "";}}><XCircle className="h-3 w-3 text-destructive"/></Button>
                                     </div>
                                 </div>
                             )}
@@ -901,11 +904,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <Input
                                                     type="file"
                                                     multiple
+                                                    ref={otherDocsInputRef}
                                                     onChange={(e) => {
-                                                        const files = Array.from(e.target.files || []);
-                                                        onChange(files);
-                                                        const urls = files.map(file => URL.createObjectURL(file));
-                                                        setOtherDocumentsPreviews(urls);
+                                                        const newFiles = Array.from(e.target.files || []);
+                                                        const currentFiles = getValues('otherDocuments') || [];
+                                                        const updatedFiles = [...currentFiles, ...newFiles];
+                                                        onChange(updatedFiles);
+                                                        setOtherDocumentsPreviews(urls => [...urls, ...newFiles.map(file => URL.createObjectURL(file))]);
                                                     }}
                                                 />
                                             </FormControl>
@@ -918,14 +923,25 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                         {otherDocumentsPreviews.map((url, index) => (
                                             <div key={url} className="relative group p-1 border rounded-lg">
                                                 <Image src={url} alt={`Preview ${index}`} width={100} height={100} className="w-full h-24 object-cover rounded" />
-                                                <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                                                     const currentFiles = getValues('otherDocuments') || [];
-                                                     const updatedFiles = currentFiles.filter((_, i) => i !== index);
-                                                     setValue('otherDocuments', updatedFiles, { shouldDirty: true });
-                                                     setOtherDocumentsPreviews(prev => prev.filter((_, i) => i !== index));
-                                                }}><X className="h-4 w-4"/></Button>
+                                                <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
+                                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => {
+                                                         const currentFiles = getValues('otherDocuments') || [];
+                                                         const updatedFiles = currentFiles.filter((_, i) => i !== index);
+                                                         setValue('otherDocuments', updatedFiles, { shouldDirty: true });
+                                                         setOtherDocumentsPreviews(prev => prev.filter((_, i) => i !== index));
+                                                    }}><XCircle className="h-4 w-4 text-destructive"/></Button>
+                                                </div>
                                             </div>
                                         ))}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-28 flex-col gap-2 border-dashed"
+                                            onClick={() => otherDocsInputRef.current?.click()}
+                                        >
+                                            <PlusCircle className="h-6 w-6 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">Add More</span>
+                                        </Button>
                                     </div>
                                 )}
                                 
