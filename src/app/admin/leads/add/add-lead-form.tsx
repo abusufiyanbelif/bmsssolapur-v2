@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -103,6 +102,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
+  isHistoricalRecord: z.boolean().default(false),
   helpRequested: z.coerce.number().min(1, "Amount requested must be greater than 0."),
   fundingGoal: z.coerce.number().optional(),
   caseReportedDate: z.date().optional(),
@@ -179,8 +179,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
   const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
-  const [zoomLevels, setZoomLevels] = useState<Record<number, {zoom: number, rotation: number}>>({});
-
+  const [zoomLevels, setZoomLevels] = useState<Record<string, {zoom: number, rotation: number}>>({});
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
@@ -253,6 +252,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       caseReportedDate: undefined,
       dueDate: undefined,
       isLoan: false,
+      isHistoricalRecord: false,
       caseDetails: '',
       otherDocuments: [],
       linkBeneficiaryLater: false,
@@ -280,6 +280,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const newBeneficiaryFirstName = watch("newBeneficiaryFirstName");
   const newBeneficiaryMiddleName = watch("newBeneficiaryMiddleName");
   const newBeneficiaryLastName = watch("newBeneficiaryLastName");
+  const isHistoricalRecord = watch("isHistoricalRecord");
   
   const dynamicText = useMemo(() => {
     let documentLabel = "Relevant Documents";
@@ -436,20 +437,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         loadingSetter(false);
     }
 
-   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setZoomLevels(prev => {
-        // A bit tricky as there's no unique ID for the wheel event target
-        // Let's assume for simplicity we're zooming all for now.
-        // A better implementation would use an ID on the div.
-        const newZoom = (prev[0]?.zoom || 1) - e.deltaY * 0.001;
-        const clampedZoom = Math.max(0.5, Math.min(newZoom, 5));
-        return { 0: { ...(prev[0] || {zoom: 1, rotation: 0}), zoom: clampedZoom }};
-    });
-  };
-
-
-
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
     if (!adminUser?.id) {
         toast({
@@ -496,6 +483,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
     if (result.success && result.lead) {
       toast({
+        variant: "success",
         title: "Lead Created",
         description: `Successfully created lead for ${result.lead.name}.`,
       });
@@ -889,12 +877,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                         {otherDocumentsPreviews.map((url, index) => {
                                              const files = getValues('otherDocuments') || [];
-                                             const zoom = zoomLevels[index]?.zoom || 1;
-                                             const rotation = zoomLevels[index]?.rotation || 0;
+                                             const zoom = zoomLevels[String(index)]?.zoom || 1;
+                                             const rotation = zoomLevels[String(index)]?.rotation || 0;
                                              const isImage = files[index]?.type.startsWith('image/');
                                             return (
                                             <div key={url} className="relative group p-1 border rounded-lg bg-background">
-                                                 <div onWheel={(e) => { e.preventDefault(); const newZoom = zoom - e.deltaY * 0.001; setZoomLevels(z => ({ ...z, [index]: { ...(z[index] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, Math.min(newZoom, 5)) }})); }} className="w-full h-24 overflow-auto flex items-center justify-center">
+                                                 <div onWheel={(e) => { e.preventDefault(); const newZoom = zoom - e.deltaY * 0.001; setZoomLevels(z => ({ ...z, [String(index)]: { ...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, Math.min(newZoom, 5)) }})); }} className="w-full h-24 overflow-auto flex items-center justify-center">
                                                     {isImage ? (
                                                         <Image
                                                             src={url}
@@ -910,9 +898,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 </div>
                                                 <p className="text-xs text-muted-foreground truncate">{getValues('otherDocuments')?.[index]?.name}</p>
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1, rotation: 0}), zoom: (z[index]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[index]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: {...(z[index] || {zoom:1, rotation: 0}), rotation: ((z[index]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), rotation: ((z[String(index)]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
                                                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
@@ -966,8 +954,26 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={!isHistoricalRecord && { before: new Date() }} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="isHistoricalRecord"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base">Create record for a past/closed lead</FormLabel>
+                            <FormDescription>Check this if you are entering data for a case that is already completed. This will allow you to select past dates.</FormDescription>
+                        </div>
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        </FormItem>
+                    )}
+                />
                  <FormField
                     control={form.control}
                     name="isLoan"

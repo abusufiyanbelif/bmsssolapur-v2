@@ -255,6 +255,7 @@ export interface Lead {
     verifiedAt?: Date; // Date of the latest verification
     lastAllocatedAt?: Date; // Date of the latest donation allocation
     isLoan: boolean;
+    isHistoricalRecord?: boolean;
     // New fields for Education
     degree?: string;
     year?: string;
