@@ -346,22 +346,22 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     }
     
     const formData = new FormData();
+    // Manually build FormData to ensure all fields are included correctly
     Object.entries(values).forEach(([key, value]) => {
-      if (value) {
-        if (key === 'upiIds' && Array.isArray(value)) {
-          value.forEach(item => item.value && formData.append('upiIds', item.value));
-        } else if (key === 'upiPhoneNumbers' && Array.isArray(value)) {
-          value.forEach(item => item.value && formData.append('upiPhoneNumbers', item.value));
-        } else if (typeof value !== 'object' || value instanceof Date) {
-           if (value instanceof Date) {
-                formData.append(key, value.toISOString());
-            } else {
-                formData.append(key, String(value));
-            }
-        }
+      if (Array.isArray(value)) {
+          if (key === 'roles') {
+            value.forEach(role => formData.append(key, role));
+          } else if (key === 'upiIds') {
+            value.forEach(item => item.value && formData.append(key, item.value));
+          } else if (key === 'upiPhoneNumbers') {
+            value.forEach(item => item.value && formData.append(key, item.value));
+          }
+      } else if (typeof value === 'boolean') {
+        if(value) formData.append(key, 'on');
+      } else if (value) {
+        formData.append(key, String(value));
       }
     });
-
 
     const result = await handleAddUser(formData);
 
