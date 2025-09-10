@@ -88,7 +88,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   createProfile: z.boolean().default(false),
   isAnonymousAsBeneficiary: z.boolean().default(false),
   isAnonymousAsDonor: z.boolean().default(false),
-  gender: z.enum(["Male", "Female"], { required_error: "Please select a gender."}),
+  gender: z.enum(["Male", "Female", "Other"], { required_error: "Please select a gender."}),
   beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
@@ -204,28 +204,36 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     resolver: zodResolver(formSchema),
     mode: 'onBlur',
     defaultValues: {
+      userId: "",
       firstName: "",
       middleName: "",
       lastName: "",
       fatherName: "",
       email: "",
       phone: "",
-      userId: "",
+      password: "",
       roles: ["Donor"],
-      state: 'Maharashtra',
-      city: 'Solapur',
-      country: 'India',
-      upiIds: [{ value: "" }],
+      createProfile: false,
+      isAnonymousAsBeneficiary: false,
+      isAnonymousAsDonor: false,
+      gender: undefined,
+      beneficiaryType: undefined,
+      addressLine1: "",
+      city: "Solapur",
+      state: "Maharashtra",
+      country: "India",
+      pincode: "",
+      occupation: "",
+      familyMembers: 0,
+      isWidow: false,
+      panNumber: "",
+      aadhaarNumber: "",
+      bankAccountName: "",
+      bankName: "",
+      bankAccountNumber: "",
+      bankIfscCode: "",
       upiPhoneNumbers: [{ value: "" }],
-      occupation: '',
-      addressLine1: '',
-      pincode: '',
-      panNumber: '',
-      aadhaarNumber: '',
-      bankAccountName: '',
-      bankName: '',
-      bankAccountNumber: '',
-      bankIfscCode: '',
+      upiIds: [{ value: "" }],
     },
   });
   
@@ -254,7 +262,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   const selectedState = watch("state");
   const selectedRoles = watch("roles");
   const selectedGender = watch("gender");
-  
+
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
     if (!value) {
         setState(initialAvailabilityState);
@@ -308,8 +316,6 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
 
   const firstName = form.watch("firstName");
   const lastName = form.watch("lastName");
-  const isAnonymousBeneficiary = form.watch("isAnonymousAsBeneficiary");
-  const isAnonymousDonor = form.watch("isAnonymousAsDonor");
   
   useEffect(() => {
     if (firstName && lastName) {
