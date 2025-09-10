@@ -565,13 +565,16 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(f => f) as File[], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)}
                             >
                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                Get Text from Beneficiary Docs
+                                Get beneficiary details from Adhaar
                             </Button>
                             {beneficiaryRawText && (
-                                <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(beneficiaryRawText, 'beneficiary')} disabled={isBeneficiaryAnalyzing}>
-                                    {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                    Auto-fill Beneficiary Details
-                                </Button>
+                                <>
+                                    <Textarea value={beneficiaryRawText} readOnly rows={5} className="text-xs font-mono bg-background" />
+                                    <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(beneficiaryRawText, 'beneficiary')} disabled={isBeneficiaryAnalyzing}>
+                                        {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                        Auto-fill Beneficiary Details
+                                    </Button>
+                                </>
                             )}
                         </div>
 
