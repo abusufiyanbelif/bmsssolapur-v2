@@ -87,6 +87,7 @@ export async function handleUpdateLead(
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
         helpRequested: parseFloat(rawFormData.helpRequested as string),
+        fundingGoal: parseFloat(rawFormData.fundingGoal as string),
         dueDate: dueDate,
         verificationDueDate: verificationDueDate,
         caseDetails: rawFormData.caseDetails as string | undefined,
