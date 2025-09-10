@@ -67,6 +67,11 @@ export async function handleAddLead(
       forceCreate: formData.get("forceCreate") === 'true',
       degree: formData.get("degree") as string | undefined,
       year: formData.get("year") as string | undefined,
+      // Address fields for new user
+      addressLine1: formData.get("addressLine1") as string | undefined,
+      city: formData.get("city") as string | undefined,
+      state: formData.get("state") as string | undefined,
+      pincode: formData.get("pincode") as string | undefined,
   };
   
   if (!rawFormData.purpose || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
@@ -93,7 +98,7 @@ export async function handleAddLead(
     let beneficiaryUser: User | null = null;
     
     if (rawFormData.beneficiaryType === 'new') {
-        const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName } = rawFormData;
+        const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, addressLine1, city, state, pincode } = rawFormData;
 
         if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone) {
             return { success: false, error: "New beneficiary First Name, Last Name, and Phone number are required." };
@@ -111,6 +116,13 @@ export async function handleAddLead(
                 phone: newBeneficiaryPhone,
                 email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
                 aadhaarNumber: newBeneficiaryAadhaar || undefined,
+                address: {
+                    addressLine1: addressLine1,
+                    city: city,
+                    state: state,
+                    pincode: pincode,
+                    country: 'India',
+                },
                 roles: ['Beneficiary'],
                 isActive: true,
                 createdAt: Timestamp.now(),

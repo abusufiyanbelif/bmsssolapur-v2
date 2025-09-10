@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -71,6 +70,10 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   newBeneficiaryPhone: z.string().optional(),
   newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
   newBeneficiaryAadhaar: z.string().optional(),
+  addressLine1: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: z.string().optional(),
   
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
@@ -154,6 +157,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [rawText, setRawText] = useState("");
+  
+  // State for beneficiary-specific scanning
+  const [isBeneficiaryScanning, setIsBeneficiaryScanning] = useState(false);
+  const [beneficiaryRawText, setBeneficiaryRawText] = useState<string | null>(null);
+
 
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
@@ -182,6 +190,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
   const form = useForm<AddLeadFormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onBlur',
     defaultValues: {
       beneficiaryType: 'existing',
       beneficiaryId: '',
@@ -193,6 +202,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       newBeneficiaryPhone: '',
       newBeneficiaryEmail: '',
       newBeneficiaryAadhaar: '',
+      addressLine1: '',
+      city: 'Solapur',
+      state: 'Maharashtra',
+      pincode: '',
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -252,42 +265,37 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, [selectedPurposeName, form]);
     
     
-    const handleGetTextFromImage = async () => {
-        const { aadhaarCard, addressProof, otherDocuments } = getValues();
-        const filesToScan: File[] = [aadhaarCard, addressProof, ...(otherDocuments || [])].filter((f): f is File => !!f);
-
-
+    const handleGetTextFromImage = async (filesToScan: File[], textSetter: React.Dispatch<React.SetStateAction<string | null>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
         if (filesToScan.length === 0) {
             toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
             return;
         }
-        setIsExtractingText(true);
+        loadingSetter(true);
         const formData = new FormData();
         filesToScan.forEach(file => formData.append("imageFiles", file as Blob));
 
         try {
             const result = await getRawTextFromImage(formData);
-
             if (result.success && result.rawText) {
-                setRawText(result.rawText);
-                 toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+                textSetter(result.rawText);
+                toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
             } else {
                  toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text from the documents.' });
             }
         } catch (e) {
             toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
         } finally {
-            setIsExtractingText(false);
+            loadingSetter(false);
         }
     };
     
-    const handleAutoFillFromText = async () => {
-        if (!rawText) {
+    const handleAutoFillFromText = async (textToAnalyze: string | null) => {
+        if (!textToAnalyze) {
              toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
             return;
         }
         setIsAnalyzing(true);
-         const analysisResult = await handleExtractLeadDetailsFromText(rawText);
+         const analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
             
         if (analysisResult.success && analysisResult.details) {
             const details = analysisResult.details;
@@ -315,6 +323,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 setValue('newBeneficiaryPhone', phone, { shouldDirty: true });
             }
              if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true });
+             if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
 
             setValue('beneficiaryType', 'new', { shouldDirty: true });
             
@@ -527,38 +536,32 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
                                 <ScanSearch className="h-5 w-5" />
-                                Upload & Scan Documents (Optional)
+                                Scan Case Documents (Medical Bills, etc.)
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
                              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                                <p className="text-sm text-muted-foreground">Upload documents like Aadhaar card, address proof, medical bills, or other IDs. The AI will scan them to help you fill the form.</p>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                     <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
-                                     <FormField control={form.control} name="addressProof" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
-                                </div>
+                                <p className="text-sm text-muted-foreground">Upload case-specific documents like medical reports or fee receipts. The AI will scan them to help you fill out the case details, headline, and story.</p>
                                 <FormField
                                     control={form.control}
                                     name="otherDocuments"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Other Documents</FormLabel>
+                                            <FormLabel>Case Documents</FormLabel>
                                             <FormControl>
                                                 <Input type="file" multiple onChange={(e) => field.onChange(Array.from(e.target.files || []))} />
                                             </FormControl>
-                                            <FormDescription>Upload any additional supporting documents.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                                 
                                 <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromImage} disabled={isExtractingText}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage(getValues('otherDocuments') || [], setRawText, setIsExtractingText)} disabled={isExtractingText}>
                                         {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Text from Documents
                                     </Button>
-                                    <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
+                                    <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(rawText)} disabled={!rawText || isAnalyzing}>
                                         {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
                                         Auto-fill from Text
                                     </Button>
@@ -664,6 +667,27 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 ) : (
                      <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                         <h3 className="font-medium">New Beneficiary Details</h3>
+                        <div className="space-y-2">
+                             <Label>Identity Documents</Label>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="addressProof" render={({ field: { onChange } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={(e) => onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                             </div>
+                             <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                disabled={isBeneficiaryScanning}
+                                onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(f => f) as File[], setBeneficiaryRawText, setIsBeneficiaryScanning)}
+                            >
+                                {isBeneficiaryScanning ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                Scan & Fill Beneficiary Details
+                            </Button>
+                             {beneficiaryRawText && (
+                                <Textarea value={beneficiaryRawText} readOnly rows={5} className="text-xs font-mono bg-background" />
+                             )}
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
                                 <FormItem>
@@ -732,6 +756,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     </FormItem>
                                 )}
                                 />
+                        </div>
+                        <h4 className="font-medium pt-2">Address</h4>
+                        <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="city" render={({field}) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="state" render={({field}) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         </div>
                     </div>
                 )}
