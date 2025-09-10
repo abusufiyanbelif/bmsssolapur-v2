@@ -4,7 +4,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield } from "lucide-react";
+import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileUp, HandCoins } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
 import { Footer } from "./footer";
@@ -327,7 +327,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="relative">
-                                        <HandHeart className="h-5 w-5 text-red-600" />
+                                        <HandCoins className="h-5 w-5 text-green-600" />
                                         {donationsNotificationCount > 0 && (
                                             <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                                                 {donationsNotificationCount}
@@ -360,7 +360,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="relative">
-                                        <ArrowRightLeft className="h-5 w-5 text-green-600" />
+                                        <ArrowRightLeft className="h-5 w-5 text-gray-500" />
                                         {transfersNotificationCount > 0 && (
                                             <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                                                 {transfersNotificationCount}
@@ -378,7 +378,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="relative">
-                                        <FileCheck className="h-5 w-5 text-blue-600" />
+                                        <FileUp className="h-5 w-5 text-blue-600" />
                                         {leadsNotificationCount > 0 && (
                                             <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                                                 {leadsNotificationCount}
