@@ -35,7 +35,10 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             **Key Instructions:**
             1.  **Generate a Compelling Story**: Based on all the text, synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience to understand the beneficiary's situation and need for help. Use the "Comment" or "Impression" section of medical reports for this.
             2.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field.
-            3.  **Extract Beneficiary Details**: Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.". Split this full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. If there are only two names, treat them as first and last.
+            3.  **Extract Beneficiary Details from Aadhaar Card**: 
+                - Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.". 
+                - Split this full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. If there are three parts to the name, the middle part is the middle name. If there are only two names, treat them as first and last.
+                - **Address Extraction:** Look for the specific label "Address:". Capture all text and lines that follow it until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
             4.  **Extract Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name.
 
             **Fields to Extract:**
