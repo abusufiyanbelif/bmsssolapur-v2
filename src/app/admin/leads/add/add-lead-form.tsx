@@ -80,7 +80,8 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   addressProof: z.any().optional(),
   dateOfBirth: z.date().optional(),
   gender: z.enum(['Male', 'Female', 'Other']).optional(),
-  
+  isAnonymousAsBeneficiary: z.boolean().default(false),
+
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
   campaignName: z.string().optional(),
@@ -215,6 +216,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       city: 'Solapur',
       state: 'Maharashtra',
       pincode: '',
+      isAnonymousAsBeneficiary: false,
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -348,9 +350,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     const parts = details.dateOfBirth.split(/[\/\-]/);
                     let date: Date | null = null;
                     if(parts.length === 3) {
-                        if (parts[2].length === 4) { // DD/MM/YYYY
+                        if (parts[2]?.length === 4) { // DD/MM/YYYY
                             date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                        } else if (parts[0].length === 4) { // YYYY-MM-DD
+                        } else if (parts[0]?.length === 4) { // YYYY-MM-DD
                             date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
                         }
                     }
@@ -685,6 +687,28 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             <FormField control={form.control} name="state" render={({field}) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         </div>
+                        <FormField
+                            control={form.control}
+                            name="isAnonymousAsBeneficiary"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                    <FormLabel>
+                                    Mark as Anonymous Beneficiary
+                                    </FormLabel>
+                                    <FormDescription>
+                                    If checked, their name will be hidden from public view.
+                                    </FormDescription>
+                                </div>
+                                </FormItem>
+                            )}
+                        />
                     </div>
                 )}
                  
@@ -759,6 +783,33 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         )}
                     />
                 </div>
+
+                {showEducationFields && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField control={form.control} name="degree" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Degree/Class</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a degree" /></SelectTrigger></FormControl>
+                                    <SelectContent>{(settings.leadConfiguration?.degreeOptions || []).map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         {showYearField && (
+                             <FormField control={form.control} name="year" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Year</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
+                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                         )}
+                    </div>
+                )}
                 
                  <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="item-1">

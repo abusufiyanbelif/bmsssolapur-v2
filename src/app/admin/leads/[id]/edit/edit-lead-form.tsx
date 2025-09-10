@@ -29,7 +29,7 @@ import { CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, Info, Edit, Save, X, ChevronsUpDown, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -173,6 +173,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const hasReferral = watch("hasReferral");
   const caseAction = watch("caseAction");
   const caseVerification = watch("verifiedStatus");
+  const selectedDegree = watch("degree");
   
   const handleCancel = () => {
     reset({
@@ -277,6 +278,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   }
   
   const showEducationFields = selectedPurpose === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
+  const showYearField = showEducationFields && selectedDegree && !['SSC'].includes(selectedDegree);
   const yearOptions = selectedCategory === 'School Fees' ? schoolYearOptions : collegeYearOptions;
 
   return (
@@ -583,16 +585,18 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                                 <FormMessage />
                             </FormItem>
                         )} />
-                         <FormField control={form.control} name="year" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Year</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
-                                    <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
+                         {showYearField && (
+                             <FormField control={form.control} name="year" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Year</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a year" /></SelectTrigger></FormControl>
+                                        <SelectContent>{yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                         )}
                     </div>
                 )}
 
