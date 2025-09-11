@@ -3,6 +3,9 @@
 // This is another comment to force a rebuild and clear the cache.
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverActions: {
+    bodySizeLimit: '4mb',
+  },
   webpack: (config, { isServer }) => {
     config.experiments = { ...config.experiments, asyncWebAssembly: true };
     config.output.webassemblyModuleFilename =
