@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -338,21 +339,21 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     }
   }
 
-  const handleScanText = async () => {
+ const handleScanText = async () => {
     if (!file) return;
     setIsScanning(true);
     setRawText(null);
     setExtractedDetails(null);
     try {
         const formData = new FormData();
-        formData.append("imageFiles", file);
+        formData.append("file", file); // Use a single key
         const result = await getRawTextFromImage(formData);
 
         if (result.success && result.rawText) {
             setRawText(result.rawText);
-            toast({ variant: "success", title: "Text Extracted", description: "Raw text from the image is now available below."});
+            toast({ variant: "success", title: "Text Extracted", description: "Raw text from the document is now available below."});
         } else {
-            toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "Could not extract text from the image." });
+            toast({ variant: 'destructive', title: "Scan Failed", description: result.error || "Could not extract text from the document." });
         }
     } catch (e) {
         toast({ variant: 'destructive', title: "Error", description: e instanceof Error ? e.message : "An unknown error occurred." });

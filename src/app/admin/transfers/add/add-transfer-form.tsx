@@ -236,7 +236,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     if (!file) return;
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append("imageFile", file);
+    formData.append("file", file);
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
       setRawText(result.rawText);
@@ -586,5 +586,3 @@ export function AddTransferForm(props: AddTransferFormProps) {
         </Suspense>
     )
 }
-
-    

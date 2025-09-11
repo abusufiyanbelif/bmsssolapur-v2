@@ -111,7 +111,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
   caseDetails: z.string().optional(),
-  otherDocuments: z.array(z.instanceof(File)).optional(),
+  otherDocuments: z.array(z.any()).optional(),
 })
 .refine(data => {
     if (data.linkBeneficiaryLater) {
@@ -247,8 +247,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       isAnonymousAsBeneficiary: false,
       dateOfBirth: undefined,
       gender: undefined,
-      aadhaarCard: undefined,
-      addressProof: undefined,
+      aadhaarCard: null,
+      addressProof: null,
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -354,7 +354,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, [selectedPurposeName, form]);
     
     
-  const handleGetTextFromImage = async (filesToScan: (File | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
+  const handleGetTextFromImage = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
     const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
     if (validFiles.length === 0) {
         toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
@@ -363,7 +363,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     loadingSetter(true);
     const formData = new FormData();
     validFiles.forEach((file, index) => {
-        // Use unique keys for each file
         formData.append(`file_${index}`, file);
     });
 
@@ -444,8 +443,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     // Append all form values
     Object.entries(values).forEach(([key, value]) => {
       if (Array.isArray(value)) {
-        if (key === 'otherDocuments') {
-          value.forEach(file => formData.append('otherDocuments', file));
+        if (key === 'otherDocuments' && value.length > 0) {
+            value.forEach((file: File) => {
+                if (file instanceof File) formData.append('otherDocuments', file);
+            });
         } else {
           value.forEach(v => formData.append(key, v));
         }
@@ -895,7 +896,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <FormField
                                     control={form.control}
                                     name="otherDocuments"
-                                    render={({ field: { onChange } }) => (
+                                    render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Case Documents</FormLabel>
                                             <FormControl>

@@ -41,7 +41,7 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
     const files: File[] = [];
     
     // Iterate over all FormData entries to find all files, regardless of key.
-    for (const [key, value] of formData.entries()) {
+    for (const value of formData.values()) {
         if (value instanceof File && value.size > 0) {
             files.push(value);
         }
