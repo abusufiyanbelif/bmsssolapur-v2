@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,6 +32,7 @@ import {
   Scan,
   Bot,
   UserPlus,
+  AlertTriangle,
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -100,7 +100,7 @@ export default function CreateLeadFromDocumentPage() {
     if (!file) return;
     setIsScanning(true);
     const formData = new FormData();
-    formData.append('imageFile', file);
+    formData.append('file_0', file);
 
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
@@ -175,7 +175,7 @@ export default function CreateLeadFromDocumentPage() {
               <Input
                 id="document-upload"
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 ref={fileInputRef}
                 onChange={handleFileChange}
               />
