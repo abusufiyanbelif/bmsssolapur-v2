@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -148,7 +149,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
 });
 
 
-type AddLeadFormValues = z.infer<returnType<typeof createFormSchema>>;
+type AddLeadFormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 interface AddLeadFormProps {
   users: User[];
@@ -246,8 +247,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       isAnonymousAsBeneficiary: false,
       dateOfBirth: undefined,
       gender: undefined,
-      aadhaarCard: null,
-      addressProof: null,
+      aadhaarCard: '',
+      addressProof: '',
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
