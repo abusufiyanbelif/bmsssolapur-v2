@@ -46,32 +46,32 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
     
     const dataUris: string[] = [];
     try {
-        for (const imageFile of imageFiles) {
-             if (imageFile && imageFile.size > 0) {
-                 const arrayBuffer = await imageFile.arrayBuffer();
+        for (const file of imageFiles) {
+             if (file && file.size > 0) {
+                 const arrayBuffer = await file.arrayBuffer();
                  const base64 = Buffer.from(arrayBuffer).toString('base64');
-                 dataUris.push(`data:${imageFile.type};base64,${base64}`);
+                 dataUris.push(`data:${file.type};base64,${base64}`);
              }
         }
         if (dataUris.length === 0) {
-            return { success: false, error: "Valid image files could not be processed." };
+            return { success: false, error: "Valid files could not be processed." };
         }
     } catch (e) {
          console.error("Failed to read image files:", e);
-         return { success: false, error: "Failed to read the image file(s)." };
+         return { success: false, error: "Failed to read the uploaded file(s)." };
     }
     
     try {
         const textResult = await extractRawTextFlow({ photoDataUris: dataUris });
 
         if (!textResult?.rawText) {
-            throw new Error("Failed to extract text from image. The document might be unreadable.");
+            throw new Error("Failed to extract text from the document. The document might be unreadable.");
         }
 
         return { success: true, rawText: textResult.rawText };
 
     } catch (e) {
-        const lastError = e instanceof Error ? e.message : "An unknown error occurred";
+        const lastError = e instanceof Error ? e.message : "An unexpected error occurred during text extraction.";
         // Check for the specific API key error message
         if(lastError.includes("API key not valid")) {
             return { success: false, error: "The Gemini API Key is invalid or missing. Please refer to the Troubleshooting Guide to fix this." };
