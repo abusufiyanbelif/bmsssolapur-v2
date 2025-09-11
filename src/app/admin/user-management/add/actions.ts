@@ -6,6 +6,7 @@ import { createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { User, UserRole } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
+import { uploadFile } from "@/services/storage-service";
 
 interface FormState {
     success: boolean;
@@ -50,8 +51,9 @@ export async function handleAddUser(
       upiPhoneNumbers: formData.getAll("upiPhoneNumbers") as string[],
       upiIds: formData.getAll("upiIds") as string[],
       
-      // The "Create Profile" checkbox is mainly for client-side validation,
-      // but we can check it here as a safeguard.
+      aadhaarCard: formData.get("aadhaarCard") as File | null,
+      addressProof: formData.get("addressProof") as File | null,
+      
       createProfile: formData.get("createProfile") === 'on',
   };
   
@@ -60,7 +62,7 @@ export async function handleAddUser(
   }
   
   try {
-    const newUserData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> = {
+    const newUser = await createUser({
         name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
         userId: rawFormData.userId,
         firstName: rawFormData.firstName,
@@ -71,12 +73,11 @@ export async function handleAddUser(
         phone: rawFormData.phone,
         password: rawFormData.password,
         roles: rawFormData.roles,
-        isActive: true, // Default to active
+        isActive: true,
         isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
         isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
         gender: rawFormData.gender,
         beneficiaryType: rawFormData.beneficiaryType,
-        
         address: {
             addressLine1: rawFormData.addressLine1 || '',
             city: rawFormData.city || 'Solapur',
@@ -84,11 +85,9 @@ export async function handleAddUser(
             country: rawFormData.country || 'India',
             pincode: rawFormData.pincode || '',
         },
-
         occupation: rawFormData.occupation || '',
         familyMembers: rawFormData.familyMembers || 0,
         isWidow: rawFormData.isWidow,
-
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
         bankAccountName: rawFormData.bankAccountName || '',
@@ -99,9 +98,23 @@ export async function handleAddUser(
         upiIds: rawFormData.upiIds.filter(id => id.trim() !== ''),
         privileges: [],
         groups: [],
-    };
+    });
+    
+    // After user is created, upload files if they exist
+    const docUpdates: Partial<User> = {};
+    const uploadPath = `users/${newUser.userKey}/documents/`;
 
-    const newUser = await createUser(newUserData);
+    if (rawFormData.aadhaarCard && rawFormData.aadhaarCard.size > 0) {
+      docUpdates.aadhaarCardUrl = await uploadFile(rawFormData.aadhaarCard, uploadPath);
+    }
+    if (rawFormData.addressProof && rawFormData.addressProof.size > 0) {
+      docUpdates.addressProofUrl = await uploadFile(rawFormData.addressProof, uploadPath);
+    }
+
+    if (Object.keys(docUpdates).length > 0) {
+      await updateUser(newUser.id!, docUpdates);
+      Object.assign(newUser, docUpdates);
+    }
     
     revalidatePath("/admin/user-management");
     revalidatePath("/admin/beneficiaries");

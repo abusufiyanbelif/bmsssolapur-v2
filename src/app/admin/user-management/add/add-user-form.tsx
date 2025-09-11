@@ -19,8 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser } from "./actions";
-import { useState, useEffect, Suspense, useCallback } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot } from "lucide-react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
+import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot, ScanSearch } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User, UserRole, AppSettings } from "@/services/types";
@@ -30,6 +30,10 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { getUserByPhone } from "@/services/user-service";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import Image from "next/image";
+import { getRawTextFromImage } from "@/app/actions";
+import { handleExtractLeadDetailsFromText } from "../../leads/add/actions";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
@@ -108,6 +112,8 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   bankIfscCode: z.string().optional(),
   upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
+  aadhaarCard: z.any().optional(),
+  addressProof: z.any().optional(),
 });
 
 
@@ -183,7 +189,15 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   const [aadhaarState, setAadhaarState] = useState<AvailabilityState>(initialAvailabilityState);
   const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
   const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
-  const [scannedRawText, setScannedRawText] = useState<string | null>(null);
+  
+  // AI related state
+  const [isTextExtracting, setIsTextExtracting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [rawText, setRawText] = useState<string | null>(null);
+
+  const aadhaarInputRef = useRef<HTMLInputElement>(null);
+  const addressProofInputRef = useRef<HTMLInputElement>(null);
+
   
   const isAadhaarMandatory = settings.userConfiguration?.isAadhaarMandatory || false;
   const formSchema = createFormSchema(isAadhaarMandatory);
@@ -195,7 +209,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     }
     const rawTextParam = searchParams.get('rawText');
     if (rawTextParam) {
-        setScannedRawText(decodeURIComponent(rawTextParam));
+        setRawText(decodeURIComponent(rawTextParam));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -234,6 +248,8 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       bankIfscCode: "",
       upiPhoneNumbers: [{ value: "" }],
       upiIds: [{ value: "" }],
+      aadhaarCard: null,
+      addressProof: null,
     },
   });
   
@@ -246,6 +262,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     setAadhaarState(initialAvailabilityState);
     setBankAccountState(initialAvailabilityState);
     setUpiIdStates({});
+    setRawText(null);
   };
 
   const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({
@@ -326,38 +343,71 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     }
   }, [firstName, lastName, form]);
 
+  const handleGetTextFromDocuments = async () => {
+    const filesToScan: File[] = [];
+    const aadhaarFile = form.getValues("aadhaarCard");
+    const addressFile = form.getValues("addressProof");
+    if(aadhaarFile) filesToScan.push(aadhaarFile);
+    if(addressFile) filesToScan.push(addressFile);
+
+    if (filesToScan.length === 0) {
+      toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
+      return;
+    }
+
+    setIsTextExtracting(true);
+    const formData = new FormData();
+    filesToScan.forEach(file => formData.append("imageFiles", file));
+
+    try {
+      const result = await getRawTextFromImage(formData);
+      if (result.success && result.rawText) {
+        setRawText(result.rawText);
+        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+      } else {
+        toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text.' });
+      }
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
+    } finally {
+      setIsTextExtracting(false);
+    }
+  };
+
+  const handleAutoFillFromText = async () => {
+    if (!rawText) return;
+    setIsAnalyzing(true);
+    const result = await handleExtractLeadDetailsFromText(rawText);
+    if (result.success && result.details) {
+      const details = result.details;
+      if (details.beneficiaryFirstName) setValue('firstName', details.beneficiaryFirstName, { shouldDirty: true });
+      if (details.beneficiaryMiddleName) setValue('middleName', details.beneficiaryMiddleName, { shouldDirty: true });
+      if (details.beneficiaryLastName) setValue('lastName', details.beneficiaryLastName, { shouldDirty: true });
+      if (details.fatherName) setValue('fatherName', details.fatherName, { shouldDirty: true });
+      if (details.beneficiaryPhone) setValue('phone', details.beneficiaryPhone.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true });
+      if (details.aadhaarNumber) setValue('aadhaarNumber', details.aadhaarNumber.replace(/\D/g, ''), { shouldDirty: true, shouldValidate: true });
+      if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
+      toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
+    }
+    setIsAnalyzing(false);
+  };
+
 
   async function onSubmit(values: AddUserFormValues) {
     setIsSubmitting(true);
     
-    // Final pre-submission check
-    const checks = [
-        checkAvailability('userId', values.userId),
-        checkAvailability('email', values.email || ''),
-        checkAvailability('phone', values.phone),
-    ];
-    const results = await Promise.all(checks);
-    const isInvalid = results.some(r => !r.isAvailable);
-
-    if (isInvalid) {
-        toast({ variant: "destructive", title: "Duplicate Information", description: "Please correct the highlighted fields before submitting." });
-        setIsSubmitting(false);
-        return;
-    }
-    
     const formData = new FormData();
-    // Manually build FormData to ensure all fields are included correctly
     Object.entries(values).forEach(([key, value]) => {
       if (Array.isArray(value)) {
-          if (key === 'roles') {
-            value.forEach(role => formData.append(key, role));
-          } else if (key === 'upiIds') {
-            value.forEach(item => item.value && formData.append(key, item.value));
-          } else if (key === 'upiPhoneNumbers') {
-            value.forEach(item => item.value && formData.append(key, item.value));
-          }
+          if (key === 'roles') value.forEach(role => formData.append('roles', role));
+          else if (key === 'upiIds') value.forEach(item => item.value && formData.append('upiIds', item.value));
+          else if (key === 'upiPhoneNumbers') value.forEach(item => item.value && formData.append('upiPhoneNumbers', item.value));
       } else if (typeof value === 'boolean') {
         if(value) formData.append(key, 'on');
+      } else if (value instanceof File) {
+        formData.append(key, value);
       } else if (value) {
         formData.append(key, String(value));
       }
@@ -372,24 +422,14 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
         description: `Successfully created user ${result.user.name}.`,
         icon: <CheckCircle />,
       });
-      // If we came from a donation scan, redirect back with the new donorId
-      const searchParamString = searchParams.toString();
       const redirectUrlParam = searchParams.get('redirect_url');
-      
       if (redirectUrlParam) {
-          const newParams = new URLSearchParams(searchParamString);
+          const newParams = new URLSearchParams(searchParams.toString());
           newParams.set('donorId', result.user.id!);
-          newParams.delete('redirect_url'); // Clean up the redirect param itself
+          newParams.delete('redirect_url');
           router.push(`${redirectUrlParam}?${newParams.toString()}`);
       } else {
-        form.reset();
-        setUserIdState(initialAvailabilityState);
-        setEmailState(initialAvailabilityState);
-        setPhoneState(initialAvailabilityState);
-        setPanState(initialAvailabilityState);
-        setAadhaarState(initialAvailabilityState);
-        setBankAccountState(initialAvailabilityState);
-        setUpiIdStates({});
+        handleCancel();
       }
     } else {
       toast({
@@ -409,19 +449,48 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
 
   return (
     <>
-    {scannedRawText && (
+    {rawText && (
         <div className="mb-6 space-y-2">
             <Label htmlFor="rawTextOutput" className="flex items-center gap-2 font-semibold text-base">
                 <Text className="h-5 w-5 text-primary"/>
                 Extracted Text from Screenshot
             </Label>
-            <Textarea id="rawTextOutput" readOnly value={scannedRawText} rows={8} className="text-xs font-mono bg-muted" />
+            <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono bg-muted" />
             <FormDescription>Review the text extracted from the screenshot to help fill out the form accurately.</FormDescription>
         </div>
     )}
     <Form {...form}>
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
-        
+        <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1">
+                <AccordionTrigger>
+                    <div className="flex items-center gap-2 text-primary">
+                        <ScanSearch className="h-5 w-5" />
+                        Scan Documents (Optional)
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm text-muted-foreground">Upload documents like Aadhaar card to auto-fill the user&apos;s details.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isTextExtracting}>
+                                {isTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                Get Text from Documents
+                            </Button>
+                            <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
+                                {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                Auto-fill from Text
+                            </Button>
+                        </div>
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <FormField
