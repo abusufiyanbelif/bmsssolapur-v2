@@ -354,80 +354,80 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, [selectedPurposeName, form]);
     
     
-    const handleGetTextFromImage = async (filesToScan: (File | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
-        const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
-        if (validFiles.length === 0) {
-            toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
-            return;
-        }
-        loadingSetter(true);
-        const formData = new FormData();
-        validFiles.forEach((file, index) => {
-          formData.append(`file_${index}`, file);
-        });
+  const handleGetTextFromImage = async (filesToScan: (File | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
+    const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
+    if (validFiles.length === 0) {
+        toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
+        return;
+    }
+    loadingSetter(true);
+    const formData = new FormData();
+    validFiles.forEach((file, index) => {
+        formData.append(`file_${index}`, file);
+    });
 
-        try {
-            const result = await getRawTextFromImage(formData);
-            if (result.success && result.rawText) {
-                textSetter(result.rawText);
-                toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
-            } else {
-                 toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text from the documents.' });
-            }
-        } catch (e) {
-            toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
-        } finally {
-            loadingSetter(false);
-        }
-    };
-    
-    const handleAutoFillFromText = async (textToAnalyze: string | null, section: 'case' | 'beneficiary') => {
-        if (!textToAnalyze) {
-             toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
-            return;
-        }
-        const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
-        loadingSetter(true);
-
-         const analysisResult = await handleExtractLeadDetailsFromText(
-             textToAnalyze,
-         );
-            
-        if (analysisResult.success && analysisResult.details) {
-            const details = analysisResult.details;
-            
-            if (section === 'case') {
-                if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
-                if (details.story) setValue('story', details.story, { shouldDirty: true });
-                if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
-                if (details.purpose) {
-                    const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
-                    if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
-                }
-                if (details.category) setValue('category', details.category, { shouldDirty: true });
-                if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
-                if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
-                if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
-                if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
-            } else { // beneficiary section
-                if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
-                if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
-                if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
-                if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
-                if (details.beneficiaryPhone) {
-                    const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-                    setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
-                }
-                if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
-                if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
-            }
-            
-            toast({ variant: 'success', title: 'Auto-fill Complete', description: `The ${section} fields have been populated. Please review.` });
+    try {
+        const result = await getRawTextFromImage(formData);
+        if (result.success && result.rawText) {
+            textSetter(result.rawText);
+            toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
         } else {
-            toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
+            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text from the documents.' });
         }
+    } catch (e) {
+        toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
+    } finally {
         loadingSetter(false);
     }
+  };
+    
+  const handleAutoFillFromText = async (textToAnalyze: string | null, section: 'case' | 'beneficiary') => {
+    if (!textToAnalyze) {
+         toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
+        return;
+    }
+    const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
+    loadingSetter(true);
+
+     const analysisResult = await handleExtractLeadDetailsFromText(
+         textToAnalyze,
+     );
+            
+    if (analysisResult.success && analysisResult.details) {
+        const details = analysisResult.details;
+        
+        if (section === 'case') {
+            if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
+            if (details.story) setValue('story', details.story, { shouldDirty: true });
+            if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
+            if (details.purpose) {
+                const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
+                if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
+            }
+            if (details.category) setValue('category', details.category, { shouldDirty: true });
+            if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
+            if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
+            if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
+            if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
+        } else { // beneficiary section
+            if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
+            if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
+            if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
+            if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
+            if (details.beneficiaryPhone) {
+                const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
+                setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
+            }
+            if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
+            if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
+        }
+        
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: `The ${section} fields have been populated. Please review.` });
+    } else {
+        toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
+    }
+    loadingSetter(false);
+  }
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
     if (!adminUser?.id) {
@@ -492,13 +492,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   }
   
-    const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
-    const showYearField = showEducationFields && selectedDegree && !['SSC'].includes(selectedDegree);
-    const yearOptions = useMemo(() => {
-        if (selectedCategory === 'School Fees') return leadConfiguration.schoolYearOptions || [];
-        if (selectedCategory === 'College Fees') return leadConfiguration.collegeYearOptions || [];
-        return [];
-    }, [selectedCategory, leadConfiguration]);
+  const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
+  const showYearField = showEducationFields && selectedDegree && !['SSC'].includes(selectedDegree);
+  const yearOptions = useMemo(() => {
+      if (selectedCategory === 'School Fees') return leadConfiguration.schoolYearOptions || [];
+      if (selectedCategory === 'College Fees') return leadConfiguration.collegeYearOptions || [];
+      return [];
+  }, [selectedCategory, leadConfiguration]);
 
 
   return (
@@ -641,9 +641,24 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
-                                         <FormField control={control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
-                                         <FormField control={control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
-                                         
+                                         <FormField control={control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                          {(aadhaarPreview || addressProofPreview) && (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {aadhaarPreview && (
+                                                    <div className="relative group">
+                                                        <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200} height={120} className="rounded-md object-cover"/>
+                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('aadhaarCard', null); setAadhaarPreview(null); }}><X className="h-4 w-4"/></Button>
+                                                    </div>
+                                                )}
+                                                {addressProofPreview && (
+                                                    <div className="relative group">
+                                                         <Image src={addressProofPreview} alt="Address Proof Preview" width={200} height={120} className="rounded-md object-cover"/>
+                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('addressProof', null); setAddressProofPreview(null); }}><X className="h-4 w-4"/></Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                          )}
                                          <div className="flex flex-col sm:flex-row gap-2">
                                              <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
