@@ -354,17 +354,16 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, [selectedPurposeName, form]);
     
     
-    const handleGetTextFromImage = async (filesToScan: File[], textSetter: React.Dispatch<React.SetStateAction<string | null>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
-        if (filesToScan.length === 0) {
+    const handleGetTextFromImage = async (filesToScan: (File | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
+        const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
+        if (validFiles.length === 0) {
             toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
             return;
         }
         loadingSetter(true);
         const formData = new FormData();
-        filesToScan.forEach(file => {
-          if (file) {
-            formData.append("imageFiles", file as Blob)
-          }
+        validFiles.forEach(file => {
+          formData.append("imageFiles", file as Blob)
         });
 
         try {
@@ -391,7 +390,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         loadingSetter(true);
 
          const analysisResult = await handleExtractLeadDetailsFromText(
-             textToAnalyze
+             textToAnalyze,
+             getValues('purpose'),
+             getValues('category')
          );
             
         if (analysisResult.success && analysisResult.details) {
@@ -455,7 +456,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
          formData.append(key, value);
       } else if (value instanceof Date) {
         formData.append(key, value.toISOString());
-      } else if (value) {
+      } else if (typeof value === 'boolean') {
+        if (value) formData.append(key, 'on');
+      }
+      else if (value) {
         formData.append(key, String(value));
       }
     });
@@ -639,11 +643,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
-                                         <FormField control={control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
-                                         <FormField control={control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
+                                         <FormField control={control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
+                                         <FormField control={control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
                                          
                                          <div className="flex flex-col sm:flex-row gap-2">
-                                             <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(Boolean) as File[], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
+                                             <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                                 Get Text
                                             </Button>
@@ -880,6 +884,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <Input
                                                     type="file"
                                                     multiple
+                                                    accept="image/*,application/pdf"
                                                     ref={otherDocsInputRef}
                                                     onChange={(e) => {
                                                         const newFiles = Array.from(e.target.files || []);
@@ -944,7 +949,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 )}
                                 
                                 <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage(getValues('otherDocuments') || [], setCaseRawText, setIsCaseTextExtracting)} disabled={isCaseTextExtracting}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage(getValues('otherDocuments'), setCaseRawText, setIsCaseTextExtracting)} disabled={isCaseTextExtracting}>
                                         {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Text from Documents
                                     </Button>
