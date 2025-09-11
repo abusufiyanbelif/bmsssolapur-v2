@@ -362,8 +362,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         }
         loadingSetter(true);
         const formData = new FormData();
-        validFiles.forEach(file => {
-          formData.append("imageFiles", file as Blob)
+        validFiles.forEach((file, index) => {
+          formData.append(`file_${index}`, file);
         });
 
         try {
@@ -391,8 +391,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
          const analysisResult = await handleExtractLeadDetailsFromText(
              textToAnalyze,
-             getValues('purpose'),
-             getValues('category')
          );
             
         if (analysisResult.success && analysisResult.details) {
