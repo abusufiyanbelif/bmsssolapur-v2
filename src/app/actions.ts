@@ -50,6 +50,7 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
              if (file && file.size > 0) {
                  const arrayBuffer = await file.arrayBuffer();
                  const base64 = Buffer.from(arrayBuffer).toString('base64');
+                 // Gemini can handle different mime types, including application/pdf
                  dataUris.push(`data:${file.type};base64,${base64}`);
              }
         }
