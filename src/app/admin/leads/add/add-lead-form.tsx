@@ -363,6 +363,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     loadingSetter(true);
     const formData = new FormData();
     validFiles.forEach((file, index) => {
+        // Use unique keys for each file
         formData.append(`file_${index}`, file);
     });
 
@@ -389,9 +390,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
     loadingSetter(true);
 
-     const analysisResult = await handleExtractLeadDetailsFromText(
-         textToAnalyze,
-     );
+     const analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
             
     if (analysisResult.success && analysisResult.details) {
         const details = analysisResult.details;
@@ -641,20 +640,20 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
-                                         <FormField control={control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={control} name="aadhaarCard" render={({ field: { onChange, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={control} name="addressProof" render={({ field: { onChange, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
                                           {(aadhaarPreview || addressProofPreview) && (
                                             <div className="grid grid-cols-2 gap-4">
                                                 {aadhaarPreview && (
                                                     <div className="relative group">
                                                         <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200} height={120} className="rounded-md object-cover"/>
-                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('aadhaarCard', null); setAadhaarPreview(null); }}><X className="h-4 w-4"/></Button>
+                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
                                                     </div>
                                                 )}
                                                 {addressProofPreview && (
                                                     <div className="relative group">
                                                          <Image src={addressProofPreview} alt="Address Proof Preview" width={200} height={120} className="rounded-md object-cover"/>
-                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('addressProof', null); setAddressProofPreview(null); }}><X className="h-4 w-4"/></Button>
+                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('addressProof', null); setAddressProofPreview(null); if(addressProofInputRef.current) addressProofInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
                                                     </div>
                                                 )}
                                             </div>
@@ -669,6 +668,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 Auto-fill
                                             </Button>
                                          </div>
+                                         {beneficiaryRawText && (
+                                            <div className="space-y-2 pt-4">
+                                                <Label>Extracted Text</Label>
+                                                <Textarea value={beneficiaryRawText} readOnly rows={8} className="text-xs font-mono bg-background" />
+                                            </div>
+                                        )}
                                      </div>
                                 </AccordionContent>
                             </AccordionItem>

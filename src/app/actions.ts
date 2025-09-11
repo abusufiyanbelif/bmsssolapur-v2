@@ -38,23 +38,22 @@ interface RawTextScanResult {
 
 // This function is now correctly placed in a server context and will be called by client components.
 export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
-    const imageFiles: File[] = [];
+    const files: File[] = [];
     
-    // FormData can have multiple entries with the same key. We iterate through all of them.
-    for (const entry of formData.entries()) {
-        const value = entry[1];
+    // Iterate over all FormData entries to find all files, regardless of key.
+    for (const [key, value] of formData.entries()) {
         if (value instanceof File && value.size > 0) {
-            imageFiles.push(value);
+            files.push(value);
         }
     }
 
-    if (imageFiles.length === 0) {
+    if (files.length === 0) {
         return { success: false, error: "No image or PDF files were provided or they were empty." };
     }
     
     const dataUris: string[] = [];
     try {
-        for (const file of imageFiles) {
+        for (const file of files) {
              const arrayBuffer = await file.arrayBuffer();
              const base64 = Buffer.from(arrayBuffer).toString('base64');
              // Gemini can handle different mime types, including application/pdf
@@ -87,6 +86,3 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
         return { success: false, error: lastError };
     }
 }
-
-
-
