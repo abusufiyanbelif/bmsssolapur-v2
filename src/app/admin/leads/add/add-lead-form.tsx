@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -77,6 +78,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  country: z.string().optional(),
   pincode: z.string().optional(),
   aadhaarCard: z.any().optional(),
   addressProof: z.any().optional(),
@@ -231,6 +233,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       country: 'India',
       pincode: '',
       isAnonymousAsBeneficiary: false,
+      dateOfBirth: undefined,
+      gender: undefined,
+      aadhaarCard: null,
+      addressProof: null,
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -247,12 +253,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       year: '',
       priority: 'Medium',
       acceptableDonationTypes: [],
+      isHistoricalRecord: false,
       helpRequested: 0,
       fundingGoal: 0,
       caseReportedDate: undefined,
       dueDate: undefined,
       isLoan: false,
-      isHistoricalRecord: false,
       caseDetails: '',
       otherDocuments: [],
       linkBeneficiaryLater: false,
