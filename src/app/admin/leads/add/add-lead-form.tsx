@@ -183,12 +183,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   // AI related state for Case Documents
   const [isCaseTextExtracting, setIsCaseTextExtracting] = useState(false);
   const [isCaseAnalyzing, setIsCaseAnalyzing] = useState(false);
-  const [caseRawText, setCaseRawText] = useState<string | null>(null);
+  const [caseRawText, setCaseRawText] = useState<string>('');
   
   // AI related state for Beneficiary Documents
   const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
   const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
-  const [beneficiaryRawText, setBeneficiaryRawText] = useState<string | null>(null);
+  const [beneficiaryRawText, setBeneficiaryRawText] = useState<string>('');
 
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
@@ -247,8 +247,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       isAnonymousAsBeneficiary: false,
       dateOfBirth: undefined,
       gender: undefined,
-      aadhaarCard: '',
-      addressProof: '',
+      aadhaarCard: undefined,
+      addressProof: undefined,
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -391,7 +391,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         loadingSetter(true);
 
          const analysisResult = await handleExtractLeadDetailsFromText(
-             textToAnalyze,
+             textToAnalyze
          );
             
         if (analysisResult.success && analysisResult.details) {
@@ -639,8 +639,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
-                                         <FormField control={control} name="aadhaarCard" render={({ field: { onChange, ...fieldProps } }) => (<FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} {...fieldProps} /></FormControl></FormItem>)} />
-                                         <FormField control={control} name="addressProof" render={({ field: { onChange, ...fieldProps } }) => (<FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} {...fieldProps} /></FormControl></FormItem>)} />
+                                         <FormField control={control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
+                                         <FormField control={control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={e => { field.onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl></FormItem>)} />
                                          
                                          <div className="flex flex-col sm:flex-row gap-2">
                                              <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(Boolean) as File[], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
