@@ -38,24 +38,30 @@ interface RawTextScanResult {
 
 // This function is now correctly placed in a server context and will be called by client components.
 export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
-    const imageFiles = formData.getAll("imageFiles") as File[];
+    const imageFiles: File[] = [];
     
-    if (!imageFiles || imageFiles.length === 0 || imageFiles.every(f => f.size === 0)) {
-        return { success: false, error: "No image files provided." };
+    // FormData can have multiple entries with the same key. We iterate through all of them.
+    for (const entry of formData.entries()) {
+        const value = entry[1];
+        if (value instanceof File && value.size > 0) {
+            imageFiles.push(value);
+        }
+    }
+
+    if (imageFiles.length === 0) {
+        return { success: false, error: "No image or PDF files were provided or they were empty." };
     }
     
     const dataUris: string[] = [];
     try {
         for (const file of imageFiles) {
-             if (file && file.size > 0) {
-                 const arrayBuffer = await file.arrayBuffer();
-                 const base64 = Buffer.from(arrayBuffer).toString('base64');
-                 // Gemini can handle different mime types, including application/pdf
-                 dataUris.push(`data:${file.type};base64,${base64}`);
-             }
+             const arrayBuffer = await file.arrayBuffer();
+             const base64 = Buffer.from(arrayBuffer).toString('base64');
+             // Gemini can handle different mime types, including application/pdf
+             dataUris.push(`data:${file.type};base64,${base64}`);
         }
         if (dataUris.length === 0) {
-            return { success: false, error: "Valid files could not be processed." };
+            return { success: false, error: "Valid files could not be processed into data URIs." };
         }
     } catch (e) {
          console.error("Failed to read image files:", e);
@@ -81,4 +87,5 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
         return { success: false, error: lastError };
     }
 }
+
 
