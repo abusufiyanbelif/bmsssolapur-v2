@@ -641,8 +641,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
-                                         <FormField control={control} name="aadhaarCard" render={({ field: { onChange, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={control} name="addressProof" render={({ field: { onChange, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={control} name="addressProof" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
                                           {(aadhaarPreview || addressProofPreview) && (
                                             <div className="grid grid-cols-2 gap-4">
                                                 {aadhaarPreview && (
@@ -909,7 +909,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                         const newFiles = Array.from(e.target.files || []);
                                                         const currentFiles = getValues('otherDocuments') || [];
                                                         const updatedFiles = [...currentFiles, ...newFiles];
-                                                        onChange(updatedFiles);
+                                                        field.onChange(updatedFiles);
                                                         setOtherDocumentsPreviews(urls => [...urls, ...newFiles.map(file => URL.createObjectURL(file))]);
                                                     }}
                                                 />
@@ -926,7 +926,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                              const rotation = zoomLevels[String(index)]?.rotation || 0;
                                              const isImage = files[index]?.type.startsWith('image/');
                                             return (
-                                            <div key={url} className="relative group p-1 border rounded-lg bg-background">
+                                            <div key={url} className="relative group p-1 border rounded-lg bg-background space-y-2">
                                                  <div onWheel={(e) => { e.preventDefault(); const newZoom = zoom - e.deltaY * 0.001; setZoomLevels(z => ({ ...z, [String(index)]: { ...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, Math.min(newZoom, 5)) }})); }} className="w-full h-24 overflow-auto flex items-center justify-center">
                                                     {isImage ? (
                                                         <Image
