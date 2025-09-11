@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -156,6 +155,18 @@ interface AddLeadFormProps {
   campaigns: Campaign[];
   settings: AppSettings;
 }
+
+type AvailabilityState = {
+    isChecking: boolean;
+    isAvailable: boolean | null;
+    suggestions?: string[];
+    existingUserName?: string;
+};
+
+const initialAvailabilityState: AvailabilityState = {
+    isChecking: false,
+    isAvailable: null,
+};
 
 function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const { toast } = useToast();
@@ -380,8 +391,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
          const analysisResult = await handleExtractLeadDetailsFromText(
              textToAnalyze,
-             getValues('purpose'),
-             getValues('category')
          );
             
         if (analysisResult.success && analysisResult.details) {
@@ -398,7 +407,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 if (details.category) setValue('category', details.category, { shouldDirty: true });
                 if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
                 if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
-                if (details.caseReportedDate) setValue('caseReportedDate', new Date(details.caseReportedDate), { shouldDirty: true });
                 if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
                 if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
             } else { // beneficiary section
@@ -412,28 +420,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 }
                 if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
                 if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
-                
-                 if (details.dateOfBirth) {
-                    // AI might return DD/MM/YYYY or YYYY-MM-DD, try to parse both
-                    const parts = details.dateOfBirth.split(/[\/\-]/);
-                    let date: Date | null = null;
-                    if(parts.length === 3) {
-                        if (parts[2]?.length === 4) { // DD/MM/YYYY
-                            date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                        } else if (parts[0]?.length === 4) { // YYYY-MM-DD
-                            date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-                        }
-                    }
-                     if (date && !isNaN(date.getTime())) {
-                        setValue('dateOfBirth', date, { shouldDirty: true });
-                    }
-                }
-                 if (details.gender) {
-                    const gender = details.gender as 'Male' | 'Female' | 'Other';
-                    if (['Male', 'Female', 'Other'].includes(gender)) {
-                         setValue('gender', gender, { shouldDirty: true });
-                    }
-                }
             }
             
             toast({ variant: 'success', title: 'Auto-fill Complete', description: `The ${section} fields have been populated. Please review.` });
