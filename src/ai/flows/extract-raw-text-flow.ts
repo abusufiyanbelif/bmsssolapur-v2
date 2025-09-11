@@ -28,7 +28,7 @@ export const extractRawTextFlow = ai.defineFlow(
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
         prompt: [
-            { text: `You are an Optical Character Recognition (OCR) tool. You will be given one or more images of documents (like medical reports, ID cards, or payment receipts). Extract all text from each image exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it. If there are multiple documents, separate the text from each one with '\n\n---\n\n'.` },
+            { text: `You are an Optical Character Recognition (OCR) tool. You will be given one or more images or PDF documents (like medical reports, ID cards, or payment receipts). Extract all text from each document exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it. If there are multiple documents, separate the text from each one with '---'.` },
             ...mediaParts
         ],
         output: {
@@ -39,7 +39,7 @@ export const extractRawTextFlow = ai.defineFlow(
     const output = llmResponse.output;
 
     if (!output?.rawText) {
-      throw new Error("The AI model did not return any text. The image might be unreadable or contain no text.");
+      throw new Error("The AI model did not return any text. The document might be unreadable or contain no text.");
     }
     
     return output;
