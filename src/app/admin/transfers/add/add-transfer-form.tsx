@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
-import { Loader2, Info, ImageIcon, CalendarIcon, FileText, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp, UploadCloud, Bot, Text, ZoomIn, ZoomOut } from "lucide-react";
+import { Loader2, Info, CalendarIcon, FileIcon, Trash2, ChevronsUpDown, Check, X, ScanEye, User as UserIcon, TextSelect, XCircle, Users, AlertTriangle, Megaphone, FileHeart, Building, CheckCircle, FileUp, UploadCloud, Bot, Text, ZoomIn, ZoomOut } from "lucide-react";
 import type { User, Lead, PaymentMethod, Campaign, UserRole, ExtractDonationDetailsOutput } from "@/services/types";
 import { getUser, getUserByPhone, getUserByUpiId } from "@/services/user-service";
 import { useRouter } from "next/navigation";
@@ -190,7 +190,9 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
-    setAdminUserId(storedUserId);
+    if (storedUserId) {
+      setAdminUserId(storedUserId);
+    }
   }, []);
   
   useEffect(() => {
@@ -236,7 +238,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     if (!file) return;
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file_0", file);
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
       setRawText(result.rawText);
@@ -341,7 +343,23 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                     </FormItem>
                 )}
             />
-            {previewUrl && <Image src={previewUrl} alt="Proof preview" width={200} height={400} className="object-contain mx-auto rounded-md" />}
+            {previewUrl && (
+                <div className="relative group">
+                    <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                        {file?.type.startsWith('image/') ? (
+                            <Image src={previewUrl} alt="Proof preview" layout="fill" className="object-contain"/>
+                        ) : (
+                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                <FileIcon className="h-16 w-16" />
+                                <span className="text-sm font-semibold">{file?.name}</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                        <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); }}><X className="h-4 w-4"/></Button>
+                    </div>
+                </div>
+            )}
             
             {file && (
                 <div className="flex gap-2">

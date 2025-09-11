@@ -27,7 +27,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut } from "lucide-react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -346,7 +346,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setExtractedDetails(null);
     try {
         const formData = new FormData();
-        formData.append("file", file); // Use a single key
+        formData.append("file_0", file);
         const result = await getRawTextFromImage(formData);
 
         if (result.success && result.rawText) {
@@ -472,15 +472,22 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 
                  {filePreview && (
                     <div className="relative group">
-                        <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
-                            <Image 
-                                src={filePreview} 
-                                alt="Screenshot Preview"
-                                width={800 * zoom}
-                                height={800 * zoom}
-                                className="object-contain transition-transform duration-100"
-                                style={{ transform: `scale(${zoom})` }}
-                            />
+                        <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                             {file?.type.startsWith('image/') ? (
+                                <Image 
+                                    src={filePreview} 
+                                    alt="Screenshot Preview"
+                                    width={800 * zoom}
+                                    height={800 * zoom}
+                                    className="object-contain transition-transform duration-100"
+                                    style={{ transform: `scale(${zoom})` }}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                    <FileIcon className="h-16 w-16" />
+                                    <span className="text-sm font-semibold">{file?.name}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
                             <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
@@ -493,7 +500,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button type="button" variant="outline" onClick={handleScanText} disabled={isScanning} className="w-full">
                           {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                          {isScanning ? 'Scanning...' : 'Get Text from Image'}
+                          {isScanning ? 'Scanning...' : 'Get Text from Document'}
                       </Button>
                       {rawText && (
                           <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">

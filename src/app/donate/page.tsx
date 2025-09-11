@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot, ZoomIn, ZoomOut, X } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot, ZoomIn, ZoomOut, X, FileIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
@@ -316,7 +316,7 @@ function RecordPastDonationForm({ user }: { user: User }) {
         }
         setIsScanning(true);
         const formData = new FormData();
-        formData.append("imageFiles", file);
+        formData.append("file_0", file);
         const result = await getRawTextFromImage(formData);
         if (result.success && result.rawText) {
             setRawText(result.rawText);
@@ -402,15 +402,22 @@ function RecordPastDonationForm({ user }: { user: User }) {
                         )}/>
                         {previewUrl && (
                             <div className="relative group">
-                                 <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
-                                    <Image 
-                                        src={previewUrl} 
-                                        alt="Screenshot Preview"
-                                        width={800 * zoom}
-                                        height={800 * zoom}
-                                        className="object-contain transition-transform duration-100"
-                                        style={{ transform: `scale(${zoom})` }}
-                                    />
+                                 <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                                    {file?.type.startsWith('image/') ? (
+                                        <Image 
+                                            src={previewUrl} 
+                                            alt="Screenshot Preview"
+                                            width={800 * zoom}
+                                            height={800 * zoom}
+                                            className="object-contain transition-transform duration-100"
+                                            style={{ transform: `scale(${zoom})` }}
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                            <FileIcon className="h-16 w-16" />
+                                            <span className="text-sm font-semibold">{file?.name}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
                                     <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
