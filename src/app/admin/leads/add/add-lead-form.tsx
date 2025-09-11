@@ -635,7 +635,35 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     />
                 ) : (
                     <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                        <h3 className="font-medium">New Beneficiary Details</h3>
+                        <Accordion type="single" collapsible>
+                            <AccordionItem value="scan-beneficiary-docs">
+                                <AccordionTrigger>
+                                     <div className="flex items-center gap-2 text-primary">
+                                        <ScanSearch className="h-5 w-5" />
+                                        Scan Beneficiary Documents (Optional)
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-4">
+                                     <div className="space-y-4 p-4 border rounded-lg bg-background">
+                                         <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
+                                         <FormField control={control} name="aadhaarCard" render={({ field: { onChange, ...fieldProps } }) => (<FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} {...fieldProps} /></FormControl></FormItem>)} />
+                                         <FormField control={control} name="addressProof" render={({ field: { onChange, ...fieldProps } }) => (<FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} {...fieldProps} /></FormControl></FormItem>)} />
+                                         
+                                         <div className="flex flex-col sm:flex-row gap-2">
+                                             <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')].filter(Boolean) as File[], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
+                                                {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                                Get Text
+                                            </Button>
+                                            <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(beneficiaryRawText, 'beneficiary')} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
+                                                {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                                Auto-fill
+                                            </Button>
+                                         </div>
+                                     </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                        <h3 className="font-medium pt-4">New Beneficiary Details</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
                                 <FormItem>
