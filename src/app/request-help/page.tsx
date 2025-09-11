@@ -66,8 +66,14 @@ export default function RequestHelpPage() {
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
-    setUserId(storedUserId);
-    setLoading(false);
+    if (storedUserId) {
+        setUserId(storedUserId);
+    } else {
+        setError("You must be logged in to submit a request.");
+        setLoading(false);
+    }
+    
+    getAppSettings().then(setSettings).catch(() => setError("Could not load app settings."));
   }, []);
 
   const form = useForm<RequestHelpFormValues>({

@@ -63,7 +63,7 @@ export default function MyUploadsPage() {
             Upload a File
           </CardTitle>
           <CardDescription>
-            You can upload images here, such as screenshots of donation receipts or other relevant documents for verification by our team.
+            You can upload images or PDFs here, such as screenshots of donation receipts or other relevant documents for verification by our team.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

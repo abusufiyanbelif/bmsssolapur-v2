@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow for extracting raw text from an image.
+ * @fileOverview A Genkit flow for extracting raw text from an image or PDF.
  * 
- * - extractRawTextFlow - A function that performs OCR on an image.
+ * - extractRawTextFlow - A function that performs OCR on a document.
  */
 
 import { ai } from '@/ai/genkit';
