@@ -41,12 +41,12 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             2.  **Generate a Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. For a medical report, it could be "Assistance needed for medical tests and treatment." For education, "Support required for final year college fees."
             3.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field.
             4.  **Extract Beneficiary Details from Aadhaar Card**: 
-                - Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.". 
-                - **Name Parsing Logic**: A full name might have 2, 3, or 4 parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. Any words in between constitute the 'beneficiaryMiddleName'. For example, for "Abusufiyan Zulfiquar Ali Ahmed Belief", First Name is "Abusufiyan", Last Name is "Belief", and Middle Name is "Zulfiquar Ali Ahmed".
-                - **Address Extraction:** Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" (Son of) lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
-            5.  **Extract Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name.
-            6.  **Date of Birth and Gender**: Extract the Date of Birth (in DD/MM/YYYY format) and Gender ("Male" or "Female") from the Aadhaar card.
-            7.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
+                - **Full Name**: Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.".
+                - **Name Parsing Logic**: A full name might have 2, 3, or more parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. Any words in between constitute the 'beneficiaryMiddleName'. For example, for "Abusufiyan Zulfiquar Ali Ahmed Belief", First Name is "Abusufiyan", Last Name is "Belief", and Middle Name is "Zulfiquar Ali Ahmed".
+                - **Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name. This is often part of the address block.
+                - **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" label. Extract Gender ("Male" or "Female") from the "Gender" label.
+                - **Address Extraction**: Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" (Son of) or "C/O" (Care of) lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
+            5.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
 
             **Fields to Extract:**
             - headline: A short, one-sentence summary of the case, tailored to the purpose.
