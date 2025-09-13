@@ -29,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -171,6 +171,7 @@ const initialAvailabilityState: AvailabilityState = {
 function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<Lead[] | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -445,6 +446,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         });
         return;
     }
+    
+    const hasFiles = values.aadhaarCard || values.addressProof || (values.otherDocuments && values.otherDocuments.length > 0);
+    if(hasFiles) setIsUploading(true);
     setIsSubmitting(true);
     
     const formData = new FormData();
@@ -477,7 +481,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
     
     const result = await handleAddLead(formData);
-
+    
+    if(hasFiles) setIsUploading(false);
     setIsSubmitting(false);
     
     if (result.duplicateLeadWarning) {
@@ -491,6 +496,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         title: "Lead Created",
         description: `Successfully created lead for ${result.lead.name}.`,
       });
+      if(hasFiles) {
+        toast({
+            variant: 'success',
+            title: "Documents Uploaded",
+            description: "All attached documents have been successfully saved."
+        });
+      }
       handleCancel();
     } else {
       toast({
@@ -1096,13 +1108,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 />
                 
                 <div className="flex gap-4 pt-6 border-t">
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <UserPlus className="mr-2 h-4 w-4" />
-                        )}
-                        Create Lead
+                    <Button type="submit" disabled={isSubmitting || isUploading}>
+                        {isUploading ? <UploadCloud className="mr-2 h-4 w-4 animate-spin" /> : isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                        {isUploading ? 'Uploading documents...' : isSubmitting ? 'Creating Lead...' : 'Create Lead'}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
                         <X className="mr-2 h-4 w-4" />
