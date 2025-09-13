@@ -46,6 +46,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
                 - **Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name. This is often part of the address block.
                 - **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" label. Extract Gender ("Male" or "Female") from the "Gender" label.
                 - **Address Extraction**: Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" (Son of) or "C/O" (Care of) lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
+                - **Phone Number**: Look for a 10-digit number labeled "Mobile" or "Phone". This is CRITICAL.
             5.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
 
             **Fields to Extract:**
