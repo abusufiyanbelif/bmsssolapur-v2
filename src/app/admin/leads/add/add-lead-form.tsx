@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -389,7 +388,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
     loadingSetter(true);
 
-     const analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
+     const analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze, getValues('purpose'), getValues('category'));
             
     if (analysisResult.success && analysisResult.details) {
         const details = analysisResult.details;
@@ -650,8 +649,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
-                                         <FormField control={control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={control} name="addressProof" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormField control={control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                                <FormField control={control} name="addressProof" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                            </div>
                                           {(aadhaarPreview || addressProofPreview) && (
                                             <div className="grid grid-cols-2 gap-4">
                                                 {aadhaarPreview && (
