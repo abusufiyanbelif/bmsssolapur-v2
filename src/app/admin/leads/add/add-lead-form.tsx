@@ -418,6 +418,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             }
             if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
             if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
+            if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
+            if (details.dateOfBirth) {
+                // DOB format from AI is DD/MM/YYYY
+                const parts = details.dateOfBirth.split('/');
+                if (parts.length === 3) {
+                    const date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    setValue('dateOfBirth', date, { shouldDirty: true });
+                }
+            }
         }
         
         toast({ variant: 'success', title: 'Auto-fill Complete', description: `The ${section} fields have been populated. Please review.` });
@@ -646,13 +655,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                           {(aadhaarPreview || addressProofPreview) && (
                                             <div className="grid grid-cols-2 gap-4">
                                                 {aadhaarPreview && (
-                                                    <div className="relative group">
+                                                    <div className="relative group p-2 border rounded-lg">
                                                         <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200} height={120} className="rounded-md object-cover"/>
                                                          <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
                                                     </div>
                                                 )}
                                                 {addressProofPreview && (
-                                                    <div className="relative group">
+                                                    <div className="relative group p-2 border rounded-lg">
                                                          <Image src={addressProofPreview} alt="Address Proof Preview" width={200} height={120} className="rounded-md object-cover"/>
                                                          <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('addressProof', null); setAddressProofPreview(null); if(addressProofInputRef.current) addressProofInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
                                                     </div>
