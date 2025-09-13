@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -381,7 +380,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   };
     
-  const handleAutoFillFromText = async (textToAnalyze: string | null, section: 'case' | 'beneficiary') => {
+  const handleAutoFillFromText = async (section: 'case' | 'beneficiary') => {
+    const textToAnalyze = section === 'case' ? caseRawText : beneficiaryRawText;
     if (!textToAnalyze) {
          toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
         return;
@@ -675,7 +675,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                                 Get Beneficiary Details
                                             </Button>
-                                            <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(beneficiaryRawText, 'beneficiary')} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
+                                            <Button type="button" className="w-full" onClick={() => handleAutoFillFromText('beneficiary')} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
                                                 {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
                                                 Fill Details
                                             </Button>
@@ -983,7 +983,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                         {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Case Details
                                     </Button>
-                                    <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(caseRawText, 'case')} disabled={!caseRawText || isCaseAnalyzing}>
+                                    <Button type="button" className="w-full" onClick={() => handleAutoFillFromText('case')} disabled={!caseRawText || isCaseAnalyzing}>
                                         {isCaseAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
                                         Fill Details
                                     </Button>
