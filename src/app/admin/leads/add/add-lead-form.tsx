@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -672,11 +673,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                          <div className="flex flex-col sm:flex-row gap-2">
                                              <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                                Get Text
+                                                Get Beneficiary Details
                                             </Button>
                                             <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(beneficiaryRawText, 'beneficiary')} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
                                                 {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                                Auto-fill
+                                                Fill Details
                                             </Button>
                                          </div>
                                          {beneficiaryRawText && (
@@ -980,11 +981,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage(getValues('otherDocuments'), setCaseRawText, setIsCaseTextExtracting)} disabled={isCaseTextExtracting}>
                                         {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                        Get Text from Documents
+                                        Get Case Details
                                     </Button>
                                     <Button type="button" className="w-full" onClick={() => handleAutoFillFromText(caseRawText, 'case')} disabled={!caseRawText || isCaseAnalyzing}>
                                         {isCaseAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                        Auto-fill from Text
+                                        Fill Details
                                     </Button>
                                 </div>
                                 {caseRawText && (
