@@ -98,7 +98,7 @@ export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsF
 
 export const ExtractLeadDetailsOutputSchema = z.object({
     // Lead fields
-    headline: z.string().optional().describe("A short, one-sentence summary of the case."),
+    caseSummary: z.string().optional().describe("A short, one-sentence summary of the case."),
     story: z.string().optional().describe("A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text."),
     diseaseIdentified: z.string().optional().describe("If a medical report, extract the specific disease or diagnosis mentioned (e.g., 'Typhoid Fever', 'Osteoarthritis')."),
     purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical, Relief Fund, Deen, Loan, Other)."),
@@ -108,6 +108,7 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     caseReportedDate: z.string().optional().describe("The date the case was reported or the document was issued (YYYY-MM-DD)."),
     acceptableDonationTypes: z.array(z.string()).optional().describe("A list of donation types, e.g., ['Zakat', 'Sadaqah']."),
     caseDetails: z.string().optional().describe("The detailed reason or story for the help request."),
+    semester: z.string().optional().describe("For education cases, the semester number (e.g., 'III', 'V')."),
     // Beneficiary fields
     beneficiaryFirstName: z.string().optional().describe("The beneficiary's first name."),
     beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
@@ -167,7 +168,7 @@ export const ExtractRawTextInputSchema = z.object({
 export type ExtractRawTextInput = z.infer<typeof ExtractRawTextInputSchema>;
 
 export const ExtractRawTextOutputSchema = z.object({
-    rawText: z.string().describe("The full, raw text extracted from the image.")
+    rawText: z.string().describe("The full, raw text extracted from the document.")
 });
 export type ExtractRawTextOutput = z.infer<typeof ExtractRawTextOutputSchema>;
 
@@ -218,3 +219,18 @@ export const ExtractDonationDetailsOutputSchema = z.object({
 });
 
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
+
+
+// Schema for generating summaries
+export const GenerateSummariesInputSchema = z.object({
+  rawText: z.string().describe("A block of raw text to generate summaries from."),
+});
+export type GenerateSummariesInput = z.infer<typeof GenerateSummariesInputSchema>;
+
+export const GenerateSummariesOutputSchema = z.object({
+    summaries: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+    })).describe("An array of three distinct, one-sentence summaries."),
+});
+export type GenerateSummariesOutput = z.infer<typeof GenerateSummariesOutputSchema>;

@@ -5,7 +5,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { googleAI } from '@gen-ai/googleai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     GenerateSummariesInputSchema,
     GenerateSummariesInput,
@@ -53,5 +53,3 @@ const generateSummariesFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

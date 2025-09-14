@@ -51,15 +51,15 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             7.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is often labeled with "Your Aadhaar No.", "आपला आधार क्रमांक", or "आधार क्रमांक". You MUST find this number.
 
             **--- CASE DOCUMENT PARSING RULES (Medical Reports, Bills, etc.) ---**
-            1.  **Generate a Compelling Story**: Based on all the text AND the provided purpose/category context, synthesize a detailed narrative for the 'story' field. If the purpose is "Medical", focus on the health condition. If "Education", focus on the academic need. This should be suitable for a public audience to understand the beneficiary's situation. Use the "Comment" or "Impression" section of medical reports for this.
-            2.  **Generate a Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. For a medical report, it could be "Assistance needed for medical tests and treatment." For education, "Support required for final year college fees."
+            1.  **Generate a Compelling Story**: Based on all the text AND the provided purpose/category context, synthesize a detailed narrative for the 'story' field. If the purpose is "Medical", focus on the health condition. If "Education", focus on the academic need, including the specific degree, year, and semester if mentioned. This should be suitable for a public audience to understand the beneficiary's situation. Use the "Comment" or "Impression" section of medical reports for this.
+            2.  **Generate a Headline**: Create a short, one-sentence summary for the 'caseSummary' field based on the story and context. For a medical report, it could be "Assistance needed for medical tests and treatment." For education, "Support required for final year college fees."
             3.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field.
             4.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
 
             **--- FIELDS TO EXTRACT (Populate as many as possible) ---**
             
             **Case Fields (Only if not parsing an ID card):**
-            - headline: A short, one-sentence summary of the case, tailored to the purpose.
+            - caseSummary: A short, one-sentence summary of the case, tailored to the purpose.
             - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text and the given context.
             - diseaseIdentified: If a medical report, extract the specific disease or diagnosis mentioned (e.g., "Typhoid Fever", "Osteoarthritis").
             - purpose: The main purpose of the request (e.g., Education, Medical, Relief Fund, Deen, Loan, Other). Infer "Medical" from lab reports or bills.
@@ -69,6 +69,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - caseReportedDate: The date the case was reported or the document was issued (Format: YYYY-MM-DD).
             - acceptableDonationTypes: An array of allowed donation types (e.g., ["Zakat", "Sadaqah"]).
             - caseDetails: The detailed story or reason for the request. Capture the full narrative for internal review.
+            - semester: For education cases, the semester number (e.g., "III", "V").
             
             **Beneficiary Fields (Always attempt to find these):**
             - beneficiaryFirstName: The beneficiary's first name.

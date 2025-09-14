@@ -51,6 +51,8 @@ const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fi
 const degreeOptions = ['SSC', 'HSC', 'B.A.', 'B.Com', 'B.Sc.', 'B.E.', 'MBBS', 'B.Pharm', 'D.Pharm', 'BUMS', 'BHMS', 'Other'];
 const schoolYearOptions = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 const collegeYearOptions = ['First Year', 'Second Year', 'Third Year', 'Final Year'];
+const semesterOptions = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+
 
 const categoryOptions: Record<Exclude<LeadPurpose, 'Other' | 'Loan'>, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
@@ -68,7 +70,7 @@ const formSchema = z.object({
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
   referredByUserName: z.string().optional(),
-  headline: z.string().min(10, "Headline must be at least 10 characters.").max(100, "Headline cannot exceed 100 characters.").optional().or(z.literal('')),
+  caseSummary: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
   purpose: z.enum(leadPurposes),
   otherPurposeDetail: z.string().optional(),
@@ -76,6 +78,7 @@ const formSchema = z.object({
   otherCategoryDetail: z.string().optional(),
   degree: z.string().optional(),
   year: z.string().optional(),
+  semester: z.string().optional(),
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
@@ -148,7 +151,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       campaignName: lead.campaignName || '',
       referredByUserId: lead.referredByUserId || '',
       referredByUserName: lead.referredByUserName || '',
-      headline: lead.headline || '',
+      caseSummary: lead.headline || '',
       story: lead.story || '',
       purpose: lead.purpose,
       otherPurposeDetail: lead.otherPurposeDetail || '',
@@ -156,6 +159,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       otherCategoryDetail: lead.otherCategoryDetail || '',
       degree: lead.degree || '',
       year: lead.year || '',
+      semester: lead.semester || '',
       acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
       fundingGoal: lead.fundingGoal || lead.helpRequested,
@@ -184,7 +188,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         campaignName: lead.campaignName || '',
         referredByUserId: lead.referredByUserId || '',
         referredByUserName: lead.referredByUserName || '',
-        headline: lead.headline || '',
+        caseSummary: lead.headline || '',
         story: lead.story || '',
         purpose: lead.purpose,
         otherPurposeDetail: lead.otherPurposeDetail || '',
@@ -192,6 +196,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         otherCategoryDetail: lead.otherCategoryDetail || '',
         degree: lead.degree || '',
         year: lead.year || '',
+        semester: lead.semester || '',
         acceptableDonationTypes: lead.acceptableDonationTypes || [],
         helpRequested: lead.helpRequested,
         fundingGoal: lead.fundingGoal || lead.helpRequested,
@@ -242,7 +247,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         formData.append("referredByUserId", "");
         formData.append("referredByUserName", "");
     }
-    if(values.headline) formData.append("headline", values.headline);
+    if(values.caseSummary) formData.append("headline", values.caseSummary);
     if(values.story) formData.append("story", values.story);
     formData.append("purpose", values.purpose);
     if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
@@ -260,6 +265,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
     if (values.degree) formData.append("degree", values.degree);
     if (values.year) formData.append("year", values.year);
+    if (values.semester) formData.append("semester", values.semester);
     
     const result = await handleUpdateLead(lead.id!, formData, adminUserId);
 
@@ -283,6 +289,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   
   const showEducationFields = selectedPurpose === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
   const showYearField = showEducationFields && selectedDegree && !['SSC'].includes(selectedDegree);
+  const showSemesterField = showEducationFields && selectedDegree && !['SSC', 'HSC'].includes(selectedDegree);
   const yearOptions = selectedCategory === 'School Fees' ? schoolYearOptions : collegeYearOptions;
 
   return (
@@ -357,7 +364,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                  </div>
                  
                 {showEducationFields && (
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
                             control={form.control}
                             name="degree"
@@ -389,6 +396,26 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                                             </FormControl>
                                             <SelectContent>
                                                 {yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                         {showSemesterField && (
+                             <FormField
+                                control={form.control}
+                                name="semester"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Semester</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
+                                            <FormControl>
+                                                <SelectTrigger><SelectValue placeholder="Select semester" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {semesterOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

@@ -29,8 +29,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCcw as RefreshIcon } from "lucide-react";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -45,6 +45,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -53,11 +54,12 @@ import Image from "next/image";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
+import { generateSummaries } from "@/ai/flows/generate-summaries-flow";
 
 
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
-
+const semesterOptions = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   beneficiaryType: z.enum(['existing', 'new']).default('existing'),
@@ -81,7 +83,6 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   country: z.string().optional(),
   pincode: z.string().optional(),
   aadhaarCard: z.any().optional(),
-  addressProof: z.any().optional(),
   dateOfBirth: z.date().optional(),
   gender: z.enum(['Male', 'Female', 'Other'], { required_error: "Gender is required."}),
   isAnonymousAsBeneficiary: z.boolean().default(false),
@@ -91,7 +92,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
   referredByUserName: z.string().optional(),
-  headline: z.string().min(10, "Headline must be at least 10 characters.").max(100, "Headline cannot exceed 100 characters.").optional().or(z.literal('')),
+  caseSummary: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
   diseaseIdentified: z.string().optional(),
   purpose: z.string().min(1, "Purpose is required."),
@@ -100,6 +101,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   otherCategoryDetail: z.string().optional(),
   degree: z.string().optional(),
   year: z.string().optional(),
+  semester: z.string().optional(),
   priority: z.enum(leadPriorities),
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
@@ -221,11 +223,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   
   const [isCaseTextExtracting, setIsCaseTextExtracting] = useState(false);
   const [isCaseAnalyzing, setIsCaseAnalyzing] = useState(false);
-  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
+  const [isRefreshingStory, setIsRefreshingStory] = useState(false);
+  const [isRefreshingSummary, setIsRefreshingSummary] = useState(false);
   const [caseRawText, setCaseRawText] = useState<string>('');
+  const [summaryOptions, setSummaryOptions] = useState<GenerateSummariesOutput['summaries']>([]);
+  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   
   const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
   const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
+  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
   const [beneficiaryRawText, setBeneficiaryRawText] = useState<string>('');
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
 
@@ -290,13 +296,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       dateOfBirth: undefined,
       gender: undefined,
       aadhaarCard: null,
-      addressProof: null,
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
       campaignId: 'none',
       campaignName: '',
-      headline: '',
+      caseSummary: '',
       story: '',
       diseaseIdentified: '',
       purpose: '',
@@ -305,6 +310,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       otherCategoryDetail: '',
       degree: '',
       year: '',
+      semester: '',
       priority: 'Medium',
       acceptableDonationTypes: [],
       isHistoricalRecord: false,
@@ -344,34 +350,34 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   
   const dynamicText = useMemo(() => {
     let documentLabel = "Relevant Documents";
-    let headlinePlaceholder = "A short, compelling summary of the need";
+    let caseSummaryPlaceholder = "A short, compelling summary of the need";
 
     switch (selectedPurposeName) {
         case 'Education':
             documentLabel = "Fee Receipts, Bonafide Certificates, etc.";
-            headlinePlaceholder = "e.g., Help needed for final year college fees";
+            caseSummaryPlaceholder = "e.g., Help needed for final year college fees";
             break;
         case 'Medical':
             documentLabel = "Hospital Bills, Doctor's Notes, etc.";
-            headlinePlaceholder = "e.g., Assistance required for urgent heart surgery";
+            caseSummaryPlaceholder = "e.g., Assistance required for urgent heart surgery";
             break;
         case 'Relief Fund':
             documentLabel = "Ration Slips, Utility Bills, etc.";
-            headlinePlaceholder = "e.g., Support needed for monthly ration kit";
+            caseSummaryPlaceholder = "e.g., Support needed for monthly ration kit";
             break;
         case 'Deen':
              documentLabel = "Construction Quotes, Event Details, etc.";
-             headlinePlaceholder = "e.g., Contribution for Masjid renovation project";
+             caseSummaryPlaceholder = "e.g., Contribution for Masjid renovation project";
              break;
         case 'Loan':
              documentLabel = "Business Plan, Quotations, etc.";
-             headlinePlaceholder = "e.g., Small loan needed to start a tailoring business";
+             caseSummaryPlaceholder = "e.g., Small loan needed to start a tailoring business";
              break;
     }
 
     return {
         scanSectionTitle: `Scan Case Documents (${documentLabel})`,
-        headlinePlaceholder,
+        caseSummaryPlaceholder,
     };
   }, [selectedPurposeName]);
   
@@ -488,6 +494,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     let analysisResult;
     if (section === 'case') {
         analysisResult = await analysisFunction(textToAnalyze);
+        if (analysisResult.success && analysisResult.details) {
+            const summaryResult = await generateSummaries({ rawText: textToAnalyze });
+            if (summaryResult.success && summaryResult.summaries) {
+                setSummaryOptions(summaryResult.summaries);
+                setIsSummaryDialogOpen(true);
+            }
+        }
     } else {
         let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
         if (isRefresh && extractedBeneficiaryDetails) {
@@ -499,7 +512,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if (analysisResult.success && analysisResult.details) {
         if (section === 'case') {
             const details = analysisResult.details as ExtractLeadDetailsOutput;
-            if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
+            // The case summary is now handled by the dialog
             if (details.story) setValue('story', details.story, { shouldDirty: true });
             if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
             if (details.purpose) {
@@ -511,7 +524,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
             if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
             if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
-            toast({ variant: 'success', title: 'Auto-fill Complete', description: `The case fields have been populated. Please review.` });
         } else {
              if (isRefresh && extractedBeneficiaryDetails) {
                 // Merge new results with existing ones
@@ -601,7 +613,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     
-    const hasFiles = values.aadhaarCard || values.addressProof || (values.otherDocuments && values.otherDocuments.length > 0);
+    const hasFiles = values.aadhaarCard || (values.otherDocuments && values.otherDocuments.length > 0);
     if(hasFiles) setIsUploading(true);
     setIsSubmitting(true);
     
@@ -669,6 +681,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   
   const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
   const showYearField = showEducationFields && selectedDegree && !['SSC'].includes(selectedDegree);
+  const showSemesterField = showEducationFields && selectedDegree && !['SSC', 'HSC'].includes(selectedDegree);
   const yearOptions = useMemo(() => {
       if (selectedCategory === 'School Fees') return leadConfiguration.schoolYearOptions || [];
       if (selectedCategory === 'College Fees') return leadConfiguration.collegeYearOptions || [];
@@ -817,7 +830,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 </AccordionTrigger>
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
-                                         <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
+                                         <p className="text-sm text-muted-foreground">Upload an Aadhaar card to auto-fill the new beneficiary's details.</p>
                                           <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
                                           {aadhaarPreview && (
                                             <div className="grid grid-cols-2 gap-4">
@@ -973,7 +986,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </div>
                 
                 {showEducationFields && (
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
                             control={form.control}
                             name="degree"
@@ -1005,6 +1018,26 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                             </FormControl>
                                             <SelectContent>
                                                 {yearOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                        {showSemesterField && (
+                             <FormField
+                                control={form.control}
+                                name="semester"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Semester</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger><SelectValue placeholder="Select semester" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {semesterOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -1059,7 +1092,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                              const isImage = files[index]?.type.startsWith('image/');
                                             return (
                                             <div key={url} className="relative group p-1 border rounded-lg bg-background space-y-2">
-                                                 <div onWheel={(e) => { e.preventDefault(); const newZoom = zoom - e.deltaY * 0.001; setZoomLevels(z => ({ ...z, [String(index)]: { ...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, Math.min(newZoom, 5)) }})); }} className="w-full h-24 overflow-auto flex items-center justify-center">
+                                                 <div className="w-full h-24 overflow-auto flex items-center justify-center">
                                                     {isImage ? (
                                                         <Image
                                                             src={url}
@@ -1077,7 +1110,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), rotation: ((z[String(index)]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
                                                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
@@ -1106,7 +1138,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     </Button>
                                     <Button type="button" className="w-full" onClick={() => handleAutoFillFromText('case')} disabled={!caseRawText || isCaseAnalyzing}>
                                         {isCaseAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                        Fill Details
+                                        Fill Case Details
                                     </Button>
                                 </div>
                                 {caseRawText && (
@@ -1120,8 +1152,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </AccordionItem>
                 </Accordion>
 
-                <FormField control={form.control} name="headline" render={({ field }) => (<FormItem><FormLabel>Headline</FormLabel><FormControl><Input placeholder={dynamicText.headlinePlaceholder} {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="caseSummary" render={({ field }) => (<FormItem><FormLabel>Case Summary</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder={dynamicText.caseSummaryPlaceholder} {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={() => handleAutoFillFromText('case')} disabled={!caseRawText || isRefreshingSummary}>{isRefreshingSummary ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><div className="flex items-center gap-2"><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={() => handleAutoFillFromText('case')} disabled={!caseRawText || isRefreshingStory}>{isRefreshingStory ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
@@ -1288,7 +1320,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </div>
                 <AlertDialogFooter>
                      <Button variant="outline" onClick={() => handleAutoFillFromText('beneficiary', true)} disabled={isRefreshingDetails}>
-                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RotateCw className="mr-2 h-4 w-4" />}
+                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
                         Refresh
                     </Button>
                     <div className='flex gap-2'>
@@ -1298,6 +1330,29 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        <AlertDialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
+             <AlertDialogContent>
+                <AlertDialogHeader>
+                     <AlertDialogTitle>Select a Case Summary</AlertDialogTitle>
+                     <AlertDialogDescription>
+                        Choose the best summary for this case. You can edit it later.
+                     </AlertDialogDescription>
+                 </AlertDialogHeader>
+                 <div className="space-y-4 py-4">
+                    {summaryOptions.map(option => (
+                        <div key={option.id} className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer" onClick={() => {
+                            setValue('caseSummary', option.text, { shouldDirty: true });
+                            setIsSummaryDialogOpen(false);
+                        }}>
+                           <p className="text-sm">{option.text}</p>
+                        </div>
+                    ))}
+                 </div>
+                 <AlertDialogFooter>
+                     <AlertDialogCancel>Cancel</AlertDialogCancel>
+                 </AlertDialogFooter>
+             </AlertDialogContent>
+         </AlertDialog>
     </>
   );
 }
