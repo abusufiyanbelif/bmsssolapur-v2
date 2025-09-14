@@ -43,7 +43,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
             5.  **Address Extraction**: Look for the specific label "Address:" or "पत्ता:". Capture all text and lines that follow it, including any "S/O" or "C/O" lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
             6.  **Address Components**: From the full address text, identify and extract the City, State, and PIN Code. The PIN Code is a 6-digit number.
             7.  **Phone Number**: Look for a 10-digit number labeled "Mobile" or "Phone". This is CRITICAL.
-            8.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is often labeled with "Your Aadhaar No." or "आपला आधार क्रमांक". You MUST find this number and map it to the 'aadhaarNumber' field.
+            8.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is often labeled with "Your Aadhaar No.", "आपला आधार क्रमांक", or "आधार क्रमांक". You MUST find this number and map it to the 'aadhaarNumber' field.
 
             **--- FIELDS TO EXTRACT (Populate as many as possible) ---**
             
