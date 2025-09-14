@@ -121,11 +121,11 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
         return !!data.beneficiaryId && data.beneficiaryId.trim() !== '';
     }
     if (data.beneficiaryType === 'new') {
-        return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone;
+        return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone && !!data.gender;
     }
     return false;
 }, {
-    message: "Please select an existing beneficiary, create a new one, or provide a name to link later.",
+    message: "Please select an existing beneficiary, create a new one (including gender), or provide a name to link later.",
     path: ["beneficiaryId"], // Report error on the most likely field
 })
 .refine(data => {
@@ -1269,5 +1269,3 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
-
-    

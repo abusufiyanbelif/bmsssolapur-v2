@@ -48,6 +48,7 @@ export async function handleAddLead(
       newBeneficiaryPhone: formData.get("newBeneficiaryPhone") as string | undefined,
       newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
       newBeneficiaryAadhaar: formData.get("newBeneficiaryAadhaar") as string | undefined,
+      gender: formData.get("gender") as 'Male' | 'Female' | 'Other' | undefined,
       campaignId: formData.get("campaignId") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       referredByUserId: formData.get("referredByUserId") as string | undefined,
@@ -111,9 +112,9 @@ export async function handleAddLead(
         leadName = rawFormData.manualBeneficiaryName;
     } else {
         if (rawFormData.beneficiaryType === 'new') {
-            const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, addressLine1, city, state, pincode } = rawFormData;
-            if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone) {
-                return { success: false, error: "New beneficiary First Name, Last Name, and Phone number are required." };
+            const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, gender, addressLine1, city, state, pincode } = rawFormData;
+            if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone || !gender) {
+                return { success: false, error: "New beneficiary First Name, Last Name, Phone, and Gender are required." };
             }
             const newBeneficiaryName = `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim();
 
@@ -127,6 +128,7 @@ export async function handleAddLead(
                     phone: newBeneficiaryPhone,
                     email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
                     aadhaarNumber: newBeneficiaryAadhaar || undefined,
+                    gender: gender,
                     address: { addressLine1, city, state, pincode, country: 'India' },
                     roles: ['Beneficiary'],
                     isActive: true,
@@ -269,5 +271,3 @@ export async function handleExtractLeadBeneficiaryDetailsFromText(
         return { success: false, error };
     }
 }
-
-    
