@@ -5,10 +5,11 @@
 import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
 import { getUser, createUser, checkAvailability } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput } from "@/services/types";
+import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { getAppSettings } from "@/services/app-settings-service";
 import { extractLeadDetailsFromText as extractLeadDetailsFlow } from "@/ai/flows/extract-lead-details-from-text-flow";
+import { extractBeneficiaryDetails as extractBeneficiaryDetailsFlow } from "@/ai/flows/extract-beneficiary-details-flow";
 import { uploadFile } from "@/services/storage-service";
 
 interface FormState {
@@ -252,6 +253,19 @@ export async function handleExtractLeadDetailsFromText(
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
         console.error("Error extracting lead details from text:", error);
+        return { success: false, error };
+    }
+}
+
+export async function handleExtractLeadBeneficiaryDetailsFromText(
+    rawText: string
+): Promise<{ success: boolean; details?: ExtractBeneficiaryDetailsOutput; error?: string }> {
+    try {
+        const extractedDetails = await extractBeneficiaryDetailsFlow({ rawText });
+        return { success: true, details: extractedDetails };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
+        console.error("Error extracting beneficiary details from text:", error);
         return { success: false, error };
     }
 }

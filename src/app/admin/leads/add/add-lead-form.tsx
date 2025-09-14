@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -28,10 +27,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
+import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -188,7 +187,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
   const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
   const [beneficiaryRawText, setBeneficiaryRawText] = useState<string>('');
-  const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractLeadDetailsOutput | null>(null);
+  const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
 
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
@@ -390,16 +389,20 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
     loadingSetter(true);
 
-     const analysisResult = await handleExtractLeadDetailsFromText(
-         textToAnalyze, 
-         getValues('purpose'), 
-         getValues('category')
-    );
+    let analysisResult;
+    if (section === 'case') {
+        analysisResult = await handleExtractLeadDetailsFromText(
+            textToAnalyze, 
+            getValues('purpose'), 
+            getValues('category')
+        );
+    } else {
+        analysisResult = await handleExtractLeadBeneficiaryDetailsFromText(textToAnalyze);
+    }
             
     if (analysisResult.success && analysisResult.details) {
-        const details = analysisResult.details;
-        
         if (section === 'case') {
+            const details = analysisResult.details as ExtractLeadDetailsOutput;
             if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
             if (details.story) setValue('story', details.story, { shouldDirty: true });
             if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
@@ -414,7 +417,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
             toast({ variant: 'success', title: 'Auto-fill Complete', description: `The case fields have been populated. Please review.` });
         } else { // beneficiary section
-            setExtractedBeneficiaryDetails(details);
+            setExtractedBeneficiaryDetails(analysisResult.details as ExtractBeneficiaryDetailsOutput);
         }
         
     } else {
@@ -541,7 +544,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
-  const beneficiaryDialogFields: { key: keyof ExtractLeadDetailsOutput; label: string }[] = [
+  const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
       { key: 'beneficiaryFirstName', label: 'First Name' },
       { key: 'beneficiaryMiddleName', label: 'Middle Name' },
       { key: 'beneficiaryLastName', label: 'Last Name' },
@@ -1196,7 +1199,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </AlertDialogHeader>
                 <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
                     {extractedBeneficiaryDetails && beneficiaryDialogFields.map(({ key, label }) => {
-                        const value = extractedBeneficiaryDetails[key as keyof ExtractLeadDetailsOutput];
+                        const value = extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput];
                         if (!value) return null;
                         return (
                             <div key={key} className="flex justify-between border-b pb-1">
@@ -1223,5 +1226,3 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
-
-    

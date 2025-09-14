@@ -88,7 +88,7 @@ export const QuoteSchema = z.object({
 });
 export type Quote = z.infer<typeof QuoteSchema>;
 
-// Schema for extracting lead details from text
+// Schema for extracting lead details from a document/text
 export const ExtractLeadDetailsFromTextInputSchema = z.object({
   rawText: z.string().describe("A block of raw text containing lead details to be parsed."),
   purpose: z.string().optional().describe("The user-selected purpose to give context to the AI."),
@@ -108,7 +108,17 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     caseReportedDate: z.string().optional().describe("The date the case was reported or the document was issued (YYYY-MM-DD)."),
     acceptableDonationTypes: z.array(z.string()).optional().describe("A list of donation types, e.g., ['Zakat', 'Sadaqah']."),
     caseDetails: z.string().optional().describe("The detailed reason or story for the help request."),
-    // Beneficiary fields
+});
+export type ExtractLeadDetailsOutput = z.infer<typeof ExtractLeadDetailsOutputSchema>;
+
+
+// Schema for extracting beneficiary details from an ID card/text
+export const ExtractBeneficiaryDetailsFromTextInputSchema = z.object({
+  rawText: z.string().describe("A block of raw text from an ID card to be parsed."),
+});
+export type ExtractBeneficiaryDetailsFromTextInput = z.infer<typeof ExtractBeneficiaryDetailsFromTextInputSchema>;
+
+export const ExtractBeneficiaryDetailsOutputSchema = z.object({
     beneficiaryFirstName: z.string().optional().describe("The beneficiary's first name."),
     beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
     beneficiaryLastName: z.string().optional().describe("The beneficiary's last name."),
@@ -117,20 +127,11 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     gender: z.enum(['Male', 'Female', 'Other']).optional().describe("The beneficiary's gender."),
     beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
     beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
-    beneficiaryType: z.string().optional().describe("The type of beneficiary (e.g., Adult, Family, Kid, Widow)."),
     address: z.string().optional().describe("The full address of the beneficiary."),
-    occupation: z.string().optional().describe("The beneficiary's occupation."),
     aadhaarNumber: z.string().optional().describe("The beneficiary's Aadhaar card number."),
-    panNumber: z.string().optional().describe("The beneficiary's PAN card number."),
-    bankAccountName: z.string().optional().describe("The name on the beneficiary's bank account."),
-    bankAccountNumber: z.string().optional().describe("The beneficiary's bank account number."),
-    bankIfscCode: z.string().optional().describe("The beneficiary's bank IFSC code."),
-    upiIds: z.string().optional().describe("A comma-separated list of the beneficiary's UPI IDs."),
-    // Referral fields
-    referralName: z.string().optional().describe("The name of the person who referred the case."),
-    referralPhone: z.string().optional().describe("The phone number of the person who referred the case."),
 });
-export type ExtractLeadDetailsOutput = z.infer<typeof ExtractLeadDetailsOutputSchema>;
+export type ExtractBeneficiaryDetailsOutput = z.infer<typeof ExtractBeneficiaryDetailsOutputSchema>;
+
 
 // Schema for extracting raw text from an image
 export const ExtractRawTextInputSchema = z.object({
@@ -193,5 +194,3 @@ export const ExtractDonationDetailsOutputSchema = z.object({
 });
 
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
-
-    
