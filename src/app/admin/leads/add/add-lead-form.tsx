@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -1253,15 +1254,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
-                    {extractedBeneficiaryDetails && beneficiaryDialogFields.map(({ key, label }) => {
-                        const value = extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput];
+                    {beneficiaryDialogFields.map(({ key, label }) => {
+                        const value = extractedBeneficiaryDetails?.[key];
                         return (
-                            value ? (
-                                <div key={key} className="flex justify-between border-b pb-1">
-                                    <span className="text-muted-foreground capitalize">{label}</span>
-                                    <span className="font-semibold text-right">{String(value || '')}</span>
-                                </div>
-                            ) : null
+                            <div key={key} className="flex justify-between border-b pb-1">
+                                <span className="text-muted-foreground capitalize">{label}</span>
+                                <span className="font-semibold text-right">{value || <span className="text-destructive font-normal">Not Found</span>}</span>
+                            </div>
                         )
                     })}
                 </div>
