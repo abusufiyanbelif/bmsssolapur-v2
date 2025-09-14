@@ -469,72 +469,104 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   };
     
-  const handleAutoFillFromText = async (section: 'case' | 'beneficiary', isRefresh = false) => {
-    const textToAnalyze = section === 'case' ? caseRawText : beneficiaryRawText;
-    if (!textToAnalyze) {
+  const handleFullAutoFill = async () => {
+    if (!caseRawText) {
          toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
         return;
     }
     
-    let loadingSetter, analysisFunction;
-    if (section === 'case') {
-        loadingSetter = setIsCaseAnalyzing;
-        analysisFunction = handleExtractLeadDetailsFromText;
-    } else {
-        if(isRefresh) {
-            setIsRefreshingDetails(true);
-        } else {
-            setIsBeneficiaryAnalyzing(true);
+    setIsCaseAnalyzing(true);
+
+    const [detailsResult, summaryResult] = await Promise.all([
+        handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory),
+        generateSummaries({ rawText: caseRawText })
+    ]);
+
+    if (detailsResult.success && detailsResult.details) {
+        const details = detailsResult.details;
+        if (details.story) setValue('story', details.story, { shouldDirty: true });
+        if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
+        if (details.purpose) {
+            const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
+            if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
         }
-        loadingSetter = isRefresh ? setIsRefreshingDetails : setIsBeneficiaryAnalyzing;
-        analysisFunction = handleExtractLeadBeneficiaryDetailsFromText;
+        if (details.category) setValue('category', details.category, { shouldDirty: true });
+        if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
+        if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
+        if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
+        if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
+        if (details.semester) setValue('semester', details.semester, { shouldDirty: true });
+
+        if (summaryResult.success && summaryResult.summaries) {
+            setSummaryOptions(summaryResult.summaries);
+            setIsSummaryDialogOpen(true);
+        } else {
+             if (details.caseSummary) setValue('caseSummary', details.caseSummary, { shouldDirty: true });
+        }
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
+    } else {
+        toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error || "Could not extract structured details from text." });
     }
+    
+    setIsCaseAnalyzing(false);
+  }
+  
+  const handleRefreshSummary = async () => {
+    if (!caseRawText) {
+        toast({ variant: 'destructive', title: 'No Text', description: 'Please scan documents first.' });
+        return;
+    }
+    setIsRefreshingSummary(true);
+    const summaryResult = await generateSummaries({ rawText: caseRawText });
+    if (summaryResult.success && summaryResult.summaries) {
+        setSummaryOptions(summaryResult.summaries);
+        setIsSummaryDialogOpen(true);
+    } else {
+        toast({ variant: 'destructive', title: 'Failed to Regenerate Summaries', description: 'Could not generate new summary options.' });
+    }
+    setIsRefreshingSummary(false);
+  }
+  
+  const handleRefreshStory = async () => {
+    if (!caseRawText) {
+        toast({ variant: 'destructive', title: 'No Text', description: 'Please scan documents first.' });
+        return;
+    }
+    setIsRefreshingStory(true);
+    const detailsResult = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+    if (detailsResult.success && detailsResult.details?.story) {
+        setValue('story', detailsResult.details.story, { shouldDirty: true });
+        toast({ variant: 'success', title: 'Story Refreshed' });
+    } else {
+         toast({ variant: 'destructive', title: 'Failed to Regenerate Story' });
+    }
+    setIsRefreshingStory(false);
+  }
+
+  const handleBeneficiaryAutoFill = async (isRefresh = false) => {
+    if (!beneficiaryRawText) {
+         toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from beneficiary documents first.' });
+        return;
+    }
+    
+    const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsBeneficiaryAnalyzing;
     loadingSetter(true);
 
-    let analysisResult;
-    if (section === 'case') {
-        analysisResult = await analysisFunction(textToAnalyze);
-        if (analysisResult.success && analysisResult.details) {
-            const summaryResult = await generateSummaries({ rawText: textToAnalyze });
-            if (summaryResult.success && summaryResult.summaries) {
-                setSummaryOptions(summaryResult.summaries);
-                setIsSummaryDialogOpen(true);
-            }
-        }
-    } else {
-        let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
-        if (isRefresh && extractedBeneficiaryDetails) {
-            missingFields = Object.keys(extractedBeneficiaryDetails).filter(key => !extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
-        }
-        analysisResult = await analysisFunction(textToAnalyze, missingFields.length > 0 ? missingFields : undefined);
+    let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
+    if (isRefresh && extractedBeneficiaryDetails) {
+        missingFields = Object.keys(extractedBeneficiaryDetails).filter(key => !extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
     }
+    const analysisResult = await handleExtractLeadBeneficiaryDetailsFromText(beneficiaryRawText, missingFields.length > 0 ? missingFields : undefined);
             
     if (analysisResult.success && analysisResult.details) {
-        if (section === 'case') {
-            const details = analysisResult.details as ExtractLeadDetailsOutput;
-            // The case summary is now handled by the dialog
-            if (details.story) setValue('story', details.story, { shouldDirty: true });
-            if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
-            if (details.purpose) {
-                const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
-                if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
-            }
-            if (details.category) setValue('category', details.category, { shouldDirty: true });
-            if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
-            if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
-            if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
-            if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
+         if (isRefresh && extractedBeneficiaryDetails) {
+            // Merge new results with existing ones
+            const mergedDetails = { ...extractedBeneficiaryDetails, ...analysisResult.details };
+            setExtractedBeneficiaryDetails(mergedDetails);
+            toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
         } else {
-             if (isRefresh && extractedBeneficiaryDetails) {
-                // Merge new results with existing ones
-                const mergedDetails = { ...extractedBeneficiaryDetails, ...analysisResult.details };
-                setExtractedBeneficiaryDetails(mergedDetails);
-                toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
-            } else {
-                setExtractedBeneficiaryDetails(analysisResult.details as ExtractBeneficiaryDetailsOutput);
-            }
+            setExtractedBeneficiaryDetails(analysisResult.details);
         }
-        
     } else {
         toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
     }
@@ -847,7 +879,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                                 Scan Beneficiary Docs
                                             </Button>
-                                            <Button type="button" className="w-full" onClick={() => handleAutoFillFromText('beneficiary')} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
+                                            <Button type="button" className="w-full" onClick={() => handleBeneficiaryAutoFill()} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
                                                 {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
                                                 Get Beneficiary Details
                                             </Button>
@@ -1110,7 +1142,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
-                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
                                                          setValue('otherDocuments', updatedFiles, { shouldDirty: true });
@@ -1136,7 +1168,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                         {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Case Details
                                     </Button>
-                                    <Button type="button" className="w-full" onClick={() => handleAutoFillFromText('case')} disabled={!caseRawText || isCaseAnalyzing}>
+                                    <Button type="button" className="w-full" onClick={handleFullAutoFill} disabled={!caseRawText || isCaseAnalyzing}>
                                         {isCaseAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
                                         Fill Case Details
                                     </Button>
@@ -1152,8 +1184,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </AccordionItem>
                 </Accordion>
 
-                <FormField control={form.control} name="caseSummary" render={({ field }) => (<FormItem><FormLabel>Case Summary</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder={dynamicText.caseSummaryPlaceholder} {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={() => handleAutoFillFromText('case')} disabled={!caseRawText || isRefreshingSummary}>{isRefreshingSummary ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><div className="flex items-center gap-2"><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={() => handleAutoFillFromText('case')} disabled={!caseRawText || isRefreshingStory}>{isRefreshingStory ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="caseSummary" render={({ field }) => (<FormItem><FormLabel>Case Summary</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder={dynamicText.caseSummaryPlaceholder} {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshSummary} disabled={!caseRawText || isRefreshingSummary}>{isRefreshingSummary ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><div className="flex items-center gap-2"><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshStory} disabled={!caseRawText || isRefreshingStory}>{isRefreshingStory ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
@@ -1319,7 +1351,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     })}
                 </div>
                 <AlertDialogFooter>
-                     <Button variant="outline" onClick={() => handleAutoFillFromText('beneficiary', true)} disabled={isRefreshingDetails}>
+                     <Button variant="outline" onClick={() => handleBeneficiaryAutoFill(true)} disabled={isRefreshingDetails}>
                         {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
                         Refresh
                     </Button>
