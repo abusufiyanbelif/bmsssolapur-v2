@@ -34,8 +34,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
 
             **--- EXTRACTION RULES ---**
 
-            1.  **Full Name:** Carefully find the beneficiary's full name. It is usually the first prominent name on the card.
-                - From this full name, parse the 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. The first word is the first name, the last word is the last name, and anything in between is the middle name.
+            1.  **Full Name:** Carefully find the beneficiary's full name. It is usually the first prominent name on the card. From this full name, parse the 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. The first word is the first name, the last word is the last name, and anything in between is the middle name. Also return the full name as 'beneficiaryFullName'.
 
             2.  **Father's Name:** Look for a name immediately following the labels "S/O" or "C/O". This is the father's name. If no such label is found, and the beneficiary's name has three parts, you can infer that the middle name is the father's name.
 
@@ -50,10 +49,10 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
             7.  **Address Block:** First, find the specific label **"Address:"** or **"पत्ता:"**. Capture all text and lines that follow it, until you reach the text containing the Aadhaar number or the end of the document. This complete text is the value for the 'address' field.
             
             8.  **Address Components:** From the full address block you just extracted, identify and populate the following dedicated fields:
-                -   `city`: The city name (e.g., Solapur).
-                -   `state`: The state name (e.g., Maharashtra).
-                -   `pincode`: The 6-digit PIN code.
-                -   `country`: The country. If not specified, assume "India".
+                -   'city': The city name (e.g., Solapur).
+                -   'state': The state name (e.g., Maharashtra).
+                -   'pincode': The 6-digit PIN code.
+                -   'country': The country. If not specified, assume "India".
 
             If you cannot find a valid value for a field, you MUST omit the field entirely from your JSON output.
 
@@ -76,4 +75,3 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
-
