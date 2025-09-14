@@ -76,7 +76,9 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   newBeneficiaryFatherName: z.string().optional(),
   newBeneficiaryPhone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
   newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
-  newBeneficiaryAadhaar: z.string().optional(),
+  newBeneficiaryAadhaar: isAadhaarMandatory
+    ? z.string().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits.")
+    : z.string().optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -272,8 +274,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const userHasOverridePermission = adminUser?.roles.includes('Super Admin');
   const isFormDisabled = approvalProcessDisabled && !userHasOverridePermission;
 
-
-  const isAadhaarMandatory = settings.userConfiguration?.isAadhaarMandatory || false;
+  const beneficiaryUserConfig = settings.userConfiguration?.Beneficiary || {};
+  const isAadhaarMandatory = beneficiaryUserConfig.isAadhaarMandatory || false;
   const formSchema = createFormSchema(isAadhaarMandatory);
 
   const form = useForm<AddLeadFormValues>({
@@ -488,9 +490,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   };
     
-    const applyExtractedDetails = (details: ExtractLeadDetailsOutput | null) => {
-      if (!details) return;
-      
+  const handleFullAutoFill = async () => {
+    if (!caseRawText) {
+      toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
+      return;
+    }
+    setIsCaseAnalyzing(true);
+    const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+    if (result.success && result.details) {
+      const details = result.details;
       if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
       if (details.story) setValue('story', details.story, { shouldDirty: true });
       if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
@@ -503,30 +511,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       if (details.category) setValue('category', details.category, { shouldDirty: true });
       if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
       if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
-      if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
       if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
       if (details.semester) setValue('semester', details.semester, { shouldDirty: true });
-      
+
       toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Auto-fill Failed', description: result.error || 'An unknown error occurred.' });
     }
-
-    const handleFullAutoFill = async () => {
-        if (!caseRawText) {
-            toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
-            return;
-        }
-        
-        setIsCaseAnalyzing(true);
-
-        const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
-
-        if (result.success && result.details) {
-            applyExtractedDetails(result.details);
-        } else {
-            toast({ variant: "destructive", title: "Analysis Failed", description: result.error || "Could not extract details from text." });
-        }
-        setIsCaseAnalyzing(false);
-    };
+    setIsCaseAnalyzing(false);
+  };
   
   const handleRefreshSummary = async () => {
     if (!caseRawText) {
@@ -1155,7 +1148,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <p className="text-xs text-muted-foreground truncate">{getValues('otherDocuments')?.[index]?.name}</p>
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}))}><ZoomOut className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
                                                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
@@ -1204,43 +1197,65 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 {selectedPurposeName === 'Medical' && (
                      <div className="p-4 border rounded-lg space-y-4">
                         <h4 className="font-semibold text-md">Medical Details</h4>
-                         <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
+                        <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField control={form.control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></Select></FormItem>)} />
+                            <FormField
+                                control={form.control}
+                                name="diseaseSeriousness"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Seriousness</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select seriousness" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="High">High</SelectItem>
+                                            <SelectItem value="Moderate">Moderate</SelectItem>
+                                            <SelectItem value="Low">Low</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </div>
                 )}
                 
                 <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="isHistoricalRecord"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">Create record for a past/closed lead</FormLabel>
+                                <FormDescription>This will allow you to select past dates.</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                </div>
+                 <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={!isHistoricalRecord && { before: new Date() }} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Amount Requested</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={control} name="fundingGoal" render={({ field }) => (<FormItem><FormLabel>Fundraising Goal (Target)</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormDescription>The amount to be displayed on the public page.</FormDescription><FormMessage /></FormItem>)} />
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={!isHistoricalRecord && { before: new Date() }} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                </div>
-                 <FormField
-                    control={form.control}
-                    name="isHistoricalRecord"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10">
-                        <div className="space-y-0.5">
-                            <FormLabel className="text-base">Create record for a past/closed lead</FormLabel>
-                            <FormDescription>Check this if you are entering data for a case that is already completed. This will allow you to select past dates.</FormDescription>
-                        </div>
-                        <FormControl>
-                            <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                        </FormItem>
-                    )}
-                />
+                 
                  <FormField
                     control={form.control}
                     name="isLoan"
@@ -1420,5 +1435,3 @@ export function AddLeadForm(props: { settings: AppSettings }) {
         </Suspense>
     )
 }
-
-    
