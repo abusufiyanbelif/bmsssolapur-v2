@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -459,7 +460,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
     let analysisResult;
     if (section === 'case') {
-        analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze, getValues('purpose'), getValues('category'));
+        analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
     } else {
         analysisResult = await handleExtractLeadBeneficiaryDetailsFromText(textToAnalyze);
     }

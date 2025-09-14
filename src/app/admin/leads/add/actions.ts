@@ -131,10 +131,15 @@ export async function handleAddLead(
                     email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
                     aadhaarNumber: newBeneficiaryAadhaar || undefined,
                     gender: gender,
-                    address: { addressLine1, city, state, pincode, country: 'India' },
                     roles: ['Beneficiary'],
                     isActive: true,
-                    createdAt: Timestamp.now(),
+                    address: {
+                        addressLine1: addressLine1,
+                        city: city,
+                        state: state,
+                        pincode: pincode,
+                        country: 'India'
+                    }
                 });
             } catch (e) {
                  const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
@@ -252,7 +257,7 @@ export async function handleExtractLeadDetailsFromText(
     category?: string
 ): Promise<{ success: boolean; details?: ExtractLeadDetailsOutput; error?: string }> {
     try {
-        const extractedDetails = await extractLeadDetailsFlow({ rawText, purpose, category });
+        const extractedDetails = await extractLeadDetailsFlow({ rawText });
         return { success: true, details: extractedDetails };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
