@@ -30,6 +30,12 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'baitul-mal-connect.firebasestorage.app',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
