@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -473,6 +474,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
     if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
     if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
+    if (details.city) setValue('city', details.city, { shouldDirty: true });
+    if (details.state) setValue('state', details.state, { shouldDirty: true });
+    if (details.pincode) setValue('pincode', details.pincode, { shouldDirty: true });
+    if (details.country) setValue('country', details.country, { shouldDirty: true });
     if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
     if (details.dateOfBirth) {
         const dateString = details.dateOfBirth.replace(/\s/g, ''); // remove spaces
@@ -588,6 +593,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       { key: 'beneficiaryPhone', label: 'Phone' },
       { key: 'aadhaarNumber', label: 'Aadhaar Number' },
       { key: 'address', label: 'Address' },
+      { key: 'city', label: 'City' },
+      { key: 'state', label: 'State' },
+      { key: 'pincode', label: 'Pincode' },
   ];
 
 
@@ -845,7 +853,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><RadioGroup onValueChange={(v) => setValue('gender', v as 'Male' | 'Female' | 'Other')} value={field.value} className="flex space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male"/></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female"/></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup><FormMessage /></FormItem>)} />
                         <h4 className="font-medium pt-2">Address</h4>
                         <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="city" render={({field}) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={form.control} name="state" render={({field}) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
@@ -932,6 +940,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         />
                     )}
                 </div>
+                
                 {showEducationFields && (
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
@@ -1260,3 +1269,5 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
+
+    
