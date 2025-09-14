@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -244,8 +245,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
 
   const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [emailState, setEmailState] = useState<AvailabilityState>(initialAvailabilityState);
   const [phoneState, setPhoneState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [panState, setPanState] = useState<AvailabilityState>(initialAvailabilityState);
   const [aadhaarState, setAadhaarState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
 
 
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
@@ -434,14 +439,27 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, []);
 
   // Debounced values
-  const debouncedUserId = useDebounce(watch('userId'), 500);
-  const debouncedPhone = useDebounce(watch('phone'), 500);
-  const debouncedAadhaar = useDebounce(watch('aadhaarNumber'), 500);
+  const debouncedUserId = useDebounce(form.watch('newBeneficiaryUserId'), 500);
+  const debouncedEmail = useDebounce(form.watch('newBeneficiaryEmail'), 500);
+  const debouncedPhone = useDebounce(form.watch('newBeneficiaryPhone'), 500);
+  const debouncedPan = useDebounce(form.watch('panNumber'), 500);
+  const debouncedAadhaar = useDebounce(form.watch('newBeneficiaryAadhaar'), 500);
+  const debouncedBankAccount = useDebounce(form.watch('bankAccountNumber'), 500);
+  const debouncedUpiIds = useDebounce(form.watch('upiIds'), 500);
 
   // Effects for debounced checks
   useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedEmail) handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
   useEffect(() => { if(debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
   useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+
+  useEffect(() => {
+    debouncedUpiIds?.forEach((upi, index) => {
+        if(upi.value) handleAvailabilityCheck('upiId', upi.value, (state) => setUpiIdStates(prev => ({...prev, [index]: state})));
+    });
+  }, [debouncedUpiIds, handleAvailabilityCheck]);
     
   const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
     const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
@@ -501,25 +519,23 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         setIsCaseAnalyzing(true);
 
         const [detailsResult, summaryResult] = await Promise.all([
-            handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory),
+            handleExtractLeadDetailsFromText(caseRawText),
             generateSummaries({ rawText: caseRawText })
         ]);
 
         setIsCaseAnalyzing(false);
 
-        if (detailsResult.success && detailsResult.details) {
-            if (summaryResult.success && summaryResult.summaries && summaryResult.summaries.length > 0) {
-                // Primary path: show summary selection
-                setTempExtractedDetails(detailsResult.details); // Store details temporarily
-                setSummaryOptions(summaryResult.summaries);
-                setIsSummaryDialogOpen(true);
-            } else {
-                // Fallback path: apply details directly if summary fails
-                applyExtractedDetails(detailsResult.details);
-                toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Could not generate summary options, but other details were applied.' });
+        if (summaryResult.success && summaryResult.summaries && summaryResult.summaries.length > 0) {
+            if (detailsResult.success && detailsResult.details) {
+                setTempExtractedDetails(detailsResult.details);
             }
+            setSummaryOptions(summaryResult.summaries);
+            setIsSummaryDialogOpen(true);
+        } else if (detailsResult.success && detailsResult.details) {
+            applyExtractedDetails(detailsResult.details);
+            toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Could not generate summary options, but other details were applied.' });
         } else {
-            toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error || "Could not extract structured details from text." });
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error || summaryResult.error || "Could not extract details from text." });
         }
     };
 
@@ -540,7 +556,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         setSummaryOptions(summaryResult.summaries);
         setIsSummaryDialogOpen(true);
     } else {
-        toast({ variant: 'destructive', title: 'Failed to Regenerate Summaries', description: 'Could not generate new summary options.' });
+        toast({ variant: 'destructive', title: 'Failed to Regenerate Summaries', description: summaryResult.error || 'Could not generate new summary options.' });
     }
     setIsRefreshingSummary(false);
   }
@@ -551,7 +567,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     setIsRefreshingStory(true);
-    const detailsResult = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+    const detailsResult = await handleExtractLeadDetailsFromText(caseRawText);
     if (detailsResult.success && detailsResult.details?.story) {
         setValue('story', detailsResult.details.story, { shouldDirty: true });
         toast({ variant: 'success', title: 'Story Refreshed' });
@@ -663,7 +679,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     
-    const hasFiles = values.aadhaarCard || (values.otherDocuments && values.otherDocuments.length > 0);
+    const hasFiles = values.aadhaarCard;
     if(hasFiles) setIsUploading(true);
     setIsSubmitting(true);
     
@@ -738,7 +754,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
-  const isAnyFieldInvalid = userIdState.isAvailable === false || phoneState.isAvailable === false || aadhaarState.isAvailable === false;
+  const isAnyFieldInvalid = userIdState.isAvailable === false || emailState.isAvailable === false || phoneState.isAvailable === false || panState.isAvailable === false || aadhaarState.isAvailable === false || bankAccountState.isAvailable === false || Object.values(upiIdStates).some(s => s.isAvailable === false);
 
 
   return (
@@ -887,7 +903,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 {aadhaarPreview && (
                                                     <div className="relative group p-2 border rounded-lg">
                                                         <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200} height={120} className="rounded-md object-cover"/>
-                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
+                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { form.setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
                                                     </div>
                                                 )}
                                             </div>
