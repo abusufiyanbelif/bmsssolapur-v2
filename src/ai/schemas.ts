@@ -133,6 +133,7 @@ export type ExtractLeadDetailsOutput = z.infer<typeof ExtractLeadDetailsOutputSc
 // Schema for extracting beneficiary details from an ID card/text
 export const ExtractBeneficiaryDetailsFromTextInputSchema = z.object({
   rawText: z.string().describe("A block of raw text from an ID card to be parsed."),
+  fieldsToFind: z.array(z.string()).optional().describe("A list of specific field names to focus on extracting."),
 });
 export type ExtractBeneficiaryDetailsFromTextInput = z.infer<typeof ExtractBeneficiaryDetailsFromTextInputSchema>;
 

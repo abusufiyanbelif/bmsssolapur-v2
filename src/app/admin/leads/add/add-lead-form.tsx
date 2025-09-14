@@ -221,6 +221,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   
   const [isCaseTextExtracting, setIsCaseTextExtracting] = useState(false);
   const [isCaseAnalyzing, setIsCaseAnalyzing] = useState(false);
+  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
   const [caseRawText, setCaseRawText] = useState<string>('');
   
   const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
@@ -283,8 +284,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       newBeneficiaryEmail: '',
       newBeneficiaryAadhaar: '',
       addressLine1: '',
-      city: '',
-      state: '',
+      city: 'Solapur',
+      state: 'Maharashtra',
       country: 'India',
       pincode: '',
       isAnonymousAsBeneficiary: false,
@@ -465,20 +466,37 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   };
     
-  const handleAutoFillFromText = async (section: 'case' | 'beneficiary') => {
+  const handleAutoFillFromText = async (section: 'case' | 'beneficiary', isRefresh = false) => {
     const textToAnalyze = section === 'case' ? caseRawText : beneficiaryRawText;
     if (!textToAnalyze) {
          toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
         return;
     }
-    const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
+    
+    let loadingSetter, analysisFunction;
+    if (section === 'case') {
+        loadingSetter = setIsCaseAnalyzing;
+        analysisFunction = handleExtractLeadDetailsFromText;
+    } else {
+        if(isRefresh) {
+            setIsRefreshingDetails(true);
+        } else {
+            setIsBeneficiaryAnalyzing(true);
+        }
+        loadingSetter = isRefresh ? setIsRefreshingDetails : setIsBeneficiaryAnalyzing;
+        analysisFunction = handleExtractLeadBeneficiaryDetailsFromText;
+    }
     loadingSetter(true);
 
     let analysisResult;
     if (section === 'case') {
-        analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
+        analysisResult = await analysisFunction(textToAnalyze);
     } else {
-        analysisResult = await handleExtractLeadBeneficiaryDetailsFromText(textToAnalyze);
+        let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
+        if (isRefresh && extractedBeneficiaryDetails) {
+            missingFields = Object.keys(extractedBeneficiaryDetails).filter(key => !extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
+        }
+        analysisResult = await analysisFunction(textToAnalyze, missingFields.length > 0 ? missingFields : undefined);
     }
             
     if (analysisResult.success && analysisResult.details) {
@@ -497,8 +515,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
             if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
             toast({ variant: 'success', title: 'Auto-fill Complete', description: `The case fields have been populated. Please review.` });
-        } else { // beneficiary section
-            setExtractedBeneficiaryDetails(analysisResult.details as ExtractBeneficiaryDetailsOutput);
+        } else {
+             if (isRefresh && extractedBeneficiaryDetails) {
+                // Merge new results with existing ones
+                const mergedDetails = { ...extractedBeneficiaryDetails, ...analysisResult.details };
+                setExtractedBeneficiaryDetails(mergedDetails);
+                toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
+            } else {
+                setExtractedBeneficiaryDetails(analysisResult.details as ExtractBeneficiaryDetailsOutput);
+            }
         }
         
     } else {
@@ -1276,8 +1301,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     })}
                 </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                     <Button variant="outline" onClick={() => handleAutoFillFromText('beneficiary', true)} disabled={isRefreshingDetails}>
+                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RotateCw className="mr-2 h-4 w-4" />}
+                        Refresh
+                    </Button>
+                    <div className='flex gap-2'>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                    </div>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

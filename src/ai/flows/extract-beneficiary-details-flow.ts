@@ -28,9 +28,13 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
   },
   async (input) => {
     
+    const fieldsToFind = input.fieldsToFind && input.fieldsToFind.length > 0
+        ? `Focus only on finding the following missing fields: ${input.fieldsToFind.join(', ')}.`
+        : 'Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.';
+
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
-        prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.
+        prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. ${fieldsToFind}
 
             **--- EXTRACTION RULES ---**
 
@@ -66,4 +70,5 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
+
 

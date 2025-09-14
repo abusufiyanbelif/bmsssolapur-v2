@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
@@ -267,10 +268,11 @@ export async function handleExtractLeadDetailsFromText(
 }
 
 export async function handleExtractLeadBeneficiaryDetailsFromText(
-    rawText: string
+    rawText: string,
+    fieldsToFind?: (keyof ExtractBeneficiaryDetailsOutput)[]
 ): Promise<{ success: boolean; details?: ExtractBeneficiaryDetailsOutput; error?: string }> {
     try {
-        const extractedDetails = await extractBeneficiaryDetailsFlow({ rawText });
+        const extractedDetails = await extractBeneficiaryDetailsFlow({ rawText, fieldsToFind });
         return { success: true, details: extractedDetails };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
