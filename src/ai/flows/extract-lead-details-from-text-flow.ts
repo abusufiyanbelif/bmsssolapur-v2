@@ -32,25 +32,33 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
         model: googleAI.model('gemini-1.5-flash-latest'),
         prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, or handwritten notes. Your task is to carefully extract the following details. Be precise. If you cannot find a valid value for a field, you MUST omit the field entirely from the output. Do not output fields with "null" or "N/A" as their value.
 
-            **Context:**
+            **Context (for Case-related documents):**
             - **Lead Purpose**: ${input.purpose || 'Not specified'}
             - **Lead Category**: ${input.category || 'Not specified'}
 
             **Key Instructions:**
+            
+            **--- AADHAAR CARD PARSING RULES ---**
+            If the text appears to be from an Aadhaar card (contains "Government of India", "Unique Identification Authority of India", "AADHAAR"):
+            1.  **Full Name**: Carefully find the beneficiary's full name. It is usually labeled clearly. Remove any titles like "MR.".
+            2.  **Name Parsing Logic**: A full name might have 2 or 3 parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. If there is a middle word, it is the 'beneficiaryMiddleName'. For example, for "Rayan Feroz Shaikh", First Name is "Rayan", Middle Name is "Feroz", and Last Name is "Shaikh".
+            3.  **Father's Name Logic**: 
+                - **Step 1:** First, try to find an explicit father's name by looking for labels like "S/O", "Son of", or "C/O" (Care of) and extracting the name that follows.
+                - **Step 2:** If and ONLY IF no such label is found, and the beneficiary's name has three parts (first, middle, last), then you can assume the middle name is the father's name. Use the middle name as the value for the 'fatherName' field in this case.
+            4.  **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" label. Extract Gender ("Male" or "Female") from the "Gender" label.
+            5.  **Address Extraction**: Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" or "C/O" lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
+            6.  **Phone Number**: Look for a 10-digit number labeled "Mobile" or "Phone". This is CRITICAL.
+            7.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is the 'aadhaarNumber'.
+
+            **--- CASE DOCUMENT PARSING RULES (Medical Reports, Bills, etc.) ---**
             1.  **Generate a Compelling Story**: Based on all the text AND the provided purpose/category context, synthesize a detailed narrative for the 'story' field. If the purpose is "Medical", focus on the health condition. If "Education", focus on the academic need. This should be suitable for a public audience to understand the beneficiary's situation. Use the "Comment" or "Impression" section of medical reports for this.
             2.  **Generate a Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. For a medical report, it could be "Assistance needed for medical tests and treatment." For education, "Support required for final year college fees."
             3.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field.
-            4.  **Extract Beneficiary Details from Aadhaar Card**: 
-                - **Full Name**: Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.".
-                - **Name Parsing Logic**: A full name might have 2 or 3 parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. If there is a middle word, it is the 'beneficiaryMiddleName'. For example, for "Rayan Feroz Shaikh", First Name is "Rayan", Middle Name is "Feroz", and Last Name is "Shaikh".
-                - **Father's Name Logic**: First, try to find an explicit father's name by looking for labels like "S/O", "Son of", or "Father's Name" and extracting the name that follows. If and ONLY IF no such label is found, and the beneficiary's name has three parts (first, middle, last), then you can assume the middle name is the father's name. Use the middle name as the value for the 'fatherName' field in this case.
-                - **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" label. Extract Gender ("Male" or "Female") from the "Gender" label.
-                - **Address Extraction**: Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" (Son of) or "C/O" (Care of) lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
-                - **Phone Number**: Look for a 10-digit number labeled "Mobile" or "Phone". This is CRITICAL.
-                - **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is the 'aadhaarNumber'.
-            5.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
+            4.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
 
-            **Fields to Extract:**
+            **--- FIELDS TO EXTRACT (Populate as many as possible) ---**
+            
+            **Case Fields:**
             - headline: A short, one-sentence summary of the case, tailored to the purpose.
             - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text and the given context.
             - diseaseIdentified: If a medical report, extract the specific disease or diagnosis mentioned (e.g., "Typhoid Fever", "Osteoarthritis").
@@ -62,6 +70,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - acceptableDonationTypes: An array of allowed donation types (e.g., ["Zakat", "Sadaqah"]).
             - caseDetails: The detailed story or reason for the request. Capture the full narrative for internal review.
             
+            **Beneficiary Fields:**
             - beneficiaryFirstName: The beneficiary's first name.
             - beneficiaryMiddleName: The beneficiary's middle name, if present.
             - beneficiaryLastName: The beneficiary's last name.
@@ -80,6 +89,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - bankIfscCode: The bank IFSC code.
             - upiIds: A comma-separated string of UPI IDs.
 
+            **Referral Fields:**
             - referralName: The full name of the person who referred the case.
             - referralPhone: The phone number of the referral.
             
