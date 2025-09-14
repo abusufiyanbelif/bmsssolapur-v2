@@ -217,7 +217,7 @@ export interface Lead {
     beneficiary?: User;
     campaignId?: string;
     campaignName?: string;
-    headline?: string;
+    caseSummary?: string;
     story?: string;
     purpose: LeadPurpose;
     otherPurposeDetail?: string;
@@ -518,4 +518,6 @@ export interface PublicStats {
     openCases: number;
     fundsInHand: number;
 }
-export type { ExtractDonationDetailsOutput } from '@/ai/schemas';
+export type { ExtractDonationDetailsOutput, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from '@/ai/schemas';
+
+    

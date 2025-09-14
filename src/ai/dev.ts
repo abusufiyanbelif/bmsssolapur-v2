@@ -11,3 +11,6 @@ import '@/ai/flows/extract-lead-details-from-text-flow.ts';
 import '@/ai/flows/extract-beneficiary-details-flow.ts';
 import '@/ai/flows/extract-donation-details-flow.ts';
 import '@/ai/flows/extract-raw-text-flow.ts';
+import '@/ai/flows/generate-summaries-flow.ts';
+
+    
