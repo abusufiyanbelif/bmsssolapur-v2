@@ -440,6 +440,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         if (parts.length === 3) {
             const [d, m, y] = parts;
             if (y.length === 4) {
+                // Handle ambiguous date formats like 04/05/YYYY by checking if day > 12
                 date = parseInt(d) > 12 ? new Date(`${y}-${m}-${d}`) : new Date(`${y}-${d}-${m}`);
             } else if (y.length === 2) {
                  date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
