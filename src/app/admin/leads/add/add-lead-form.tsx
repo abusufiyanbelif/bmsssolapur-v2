@@ -230,12 +230,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
 
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
-  const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
   const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
   const [zoomLevels, setZoomLevels] = useState<Record<string, {zoom: number, rotation: number}>>({});
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
-  const addressProofInputRef = useRef<HTMLInputElement>(null);
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
 
   const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
@@ -328,7 +326,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       setCaseRawText("");
       setBeneficiaryRawText("");
       setAadhaarPreview(null);
-      setAddressProofPreview(null);
       setOtherDocumentsPreviews([]);
   };
 
@@ -430,9 +427,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, []);
 
   // Debounced values
-  const debouncedUserId = useDebounce(watch('newBeneficiaryUserId'), 500);
-  const debouncedPhone = useDebounce(watch('newBeneficiaryPhone'), 500);
-  const debouncedAadhaar = useDebounce(watch('newBeneficiaryAadhaar'), 500);
+  const debouncedUserId = useDebounce(watch('userId'), 500);
+  const debouncedPhone = useDebounce(watch('phone'), 500);
+  const debouncedAadhaar = useDebounce(watch('aadhaarNumber'), 500);
 
   // Effects for debounced checks
   useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
@@ -544,7 +541,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     { key: 'aadhaarNumber', label: 'Aadhaar Number' },
     { key: 'address', label: 'Address' },
     { key: 'city', label: 'City' },
-    { key: 'state', label: 'State' },
     { key: 'pincode', label: 'Pincode' },
     { key: 'country', label: 'Country' },
 ];
@@ -569,7 +565,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             if (key === 'aadhaarNumber') setValue('newBeneficiaryAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
             if (key === 'address') setValue('addressLine1', value, { shouldDirty: true });
             if (key === 'city') setValue('city', value, { shouldDirty: true });
-            if (key === 'state') setValue('state', value, { shouldDirty: true });
             if (key === 'pincode') setValue('pincode', value, { shouldDirty: true });
             if (key === 'country') setValue('country', value, { shouldDirty: true });
             if (key === 'gender') setValue('gender', value as 'Male' | 'Female' | 'Other', { shouldDirty: true });
@@ -823,11 +818,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionContent className="pt-4">
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
-                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
-                                                <FormField control={form.control} name="addressProof" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
-                                            </div>
-                                          {(aadhaarPreview || addressProofPreview) && (
+                                          <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                          {aadhaarPreview && (
                                             <div className="grid grid-cols-2 gap-4">
                                                 {aadhaarPreview && (
                                                     <div className="relative group p-2 border rounded-lg">
@@ -835,16 +827,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                          <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
                                                     </div>
                                                 )}
-                                                {addressProofPreview && (
-                                                    <div className="relative group p-2 border rounded-lg">
-                                                         <Image src={addressProofPreview} alt="Address Proof Preview" width={200} height={120} className="rounded-md object-cover"/>
-                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { setValue('addressProof', null); setAddressProofPreview(null); if(addressProofInputRef.current) addressProofInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
-                                                    </div>
-                                                )}
                                             </div>
                                           )}
                                          <div className="flex flex-col sm:flex-row gap-2">
-                                             <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromDocuments([getValues('aadhaarCard'), getValues('addressProof')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
+                                             <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromDocuments([getValues('aadhaarCard')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                                 Scan Beneficiary Docs
                                             </Button>
