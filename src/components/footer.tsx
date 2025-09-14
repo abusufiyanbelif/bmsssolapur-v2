@@ -6,22 +6,14 @@ import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { Logo } from './logo';
 import type { Organization } from '@/services/types';
-import { useEffect, useState } from 'react';
 import { Skeleton } from './ui/skeleton';
-import { getCurrentOrganization } from '@/app/admin/settings/actions';
 
-export function Footer() {
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    getCurrentOrganization().then(org => {
-      setOrganization(org);
-      setLoading(false);
-    });
-  }, []);
+interface FooterProps {
+  organization: Organization | null;
+}
 
-  if (loading) {
+export function Footer({ organization }: FooterProps) {
+  if (!organization || !organization.footer) {
       return (
           <footer className="border-t bg-card text-card-foreground">
               <div className="container mx-auto px-4 lg:px-6 py-12">
@@ -45,10 +37,6 @@ export function Footer() {
       )
   }
   
-  if (!organization || !organization.footer) {
-      return <footer className="border-t bg-card text-card-foreground"><div className="container p-4 text-center text-sm text-muted-foreground">Footer data not configured.</div></footer>;
-  }
-  
   const { footer } = organization;
 
   return (
@@ -59,7 +47,7 @@ export function Footer() {
           {/* Column 1: Organization Info */}
           <div className="space-y-4 lg:col-span-2">
              <div className="flex items-center gap-3">
-                <Logo className="h-24 w-24" />
+                <Logo className="h-24 w-24" logoUrl={organization.logoUrl} />
                 <h3 className="text-xl font-bold font-headline text-foreground">
                     <span className="text-primary font-bold">{footer.organizationInfo.titleLine1}</span><br/>
                     <span className="text-accent font-bold">{footer.organizationInfo.titleLine2}</span><br/>

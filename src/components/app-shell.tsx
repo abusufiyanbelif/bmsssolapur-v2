@@ -21,13 +21,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
-import type { User as UserType, Lead as LeadType, Donation as DonationType } from "@/services/types";
+import type { User as UserType, Lead as LeadType, Donation as DonationType, Organization } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
-import { AppSettings, getAppSettings } from "@/services/app-settings-service";
+import { AppSettings, getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { performPermissionCheck } from "@/app/actions";
@@ -88,6 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [pendingLeads, setPendingLeads] = useState<LeadType[]>([]);
     const [readyToPublishLeads, setReadyToPublishLeads] = useState<LeadType[]>([]);
     const [pendingDonations, setPendingDonations] = useState<DonationType[]>([]);
+    const [organization, setOrganization] = useState<Organization | null>(null);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -109,7 +110,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     useEffect(() => {
         const initializeSession = async () => {
-            const permissionResult = await performPermissionCheck();
+            const [permissionResult, orgData] = await Promise.all([
+                performPermissionCheck(),
+                getCurrentOrganization()
+            ]);
+
+            setOrganization(orgData);
+
             if (!permissionResult.success && permissionResult.error) {
                 setPermissionError(permissionResult.error);
                 setIsSessionReady(true);
@@ -261,11 +268,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const HeaderTitle = () => (
         <Link href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-14 w-14" />
+            <Logo className="h-14 w-14" logoUrl={organization?.logoUrl} />
              <div className="flex flex-col leading-tight">
-                <span className="font-bold font-headline text-primary text-sm">Baitul Mal</span>
-                <span className="font-bold font-headline text-accent text-sm">Samajik Sanstha</span>
-                 <span className="font-bold font-headline text-primary text-xs">(Solapur)</span>
+                <span className="font-bold font-headline text-primary text-sm">{organization?.footer?.organizationInfo.titleLine1 || 'Baitul Mal'}</span>
+                <span className="font-bold font-headline text-accent text-sm">{organization?.footer?.organizationInfo.titleLine2 || 'Samajik Sanstha'}</span>
+                 <span className="font-bold font-headline text-primary text-xs">{organization?.footer?.organizationInfo.titleLine3 || '(Solapur)'}</span>
             </div>
         </Link>
     );
@@ -495,7 +502,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                     {childrenWithProps}
                 </main>
-                <Footer />
+                <Footer organization={organization} />
             </div>
             {user.isLoggedIn && (
                  <RoleSwitcherDialog 

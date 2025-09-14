@@ -9,20 +9,27 @@ import { getCurrentOrganization } from '@/app/admin/settings/actions';
 
 interface LogoProps {
     className?: string;
+    logoUrl?: string | null;
 }
 
-export function Logo({ className }: LogoProps) {
-  const [logoUrl, setLogoUrl] = useState("https://picsum.photos/seed/logo/128/128");
+export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
+  const [logoUrl, setLogoUrl] = useState(propLogoUrl || "https://picsum.photos/seed/logo/128/128");
 
   useEffect(() => {
-      const fetchLogo = async () => {
-          const org = await getCurrentOrganization();
-          if (org?.logoUrl) {
-              setLogoUrl(org.logoUrl);
-          }
-      };
-      fetchLogo();
-  }, []);
+    // If a URL is passed as a prop, use it directly.
+    if (propLogoUrl) {
+      setLogoUrl(propLogoUrl);
+      return;
+    }
+    // Otherwise, fetch it (for pages that don't get it from AppShell).
+    const fetchLogo = async () => {
+        const org = await getCurrentOrganization();
+        if (org?.logoUrl) {
+            setLogoUrl(org.logoUrl);
+        }
+    };
+    fetchLogo();
+  }, [propLogoUrl]);
 
   return (
     <div className={cn("relative", className)}>
