@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -425,7 +426,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 const parts = details.dateOfBirth.split('/');
                 if (parts.length === 3) {
                     const date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                    setValue('dateOfBirth', date, { shouldDirty: true });
+                    if (!isNaN(date.getTime())) {
+                        setValue('dateOfBirth', date, { shouldDirty: true });
+                    }
                 }
             }
         }
