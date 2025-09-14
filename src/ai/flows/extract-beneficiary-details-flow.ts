@@ -36,7 +36,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
 
             1.  **Full Name:** If a person's full name is present (e.g., "SHAIKH RAYAN FEROZ"), extract their first, middle, and last names into the dedicated fields. First name is the first word, last name is the last word, and anything in between is the middle name. Also return the full name as 'beneficiaryFullName'.
 
-            2.  **Address:** If an address is present (often following the label "Address:" or "पत्ता:"), extract the country, state, city, and pin code into their dedicated fields.
+            2.  **Address:** If an address is present, extract the country, state, city, and pin code into their dedicated fields. **If the country is not explicitly mentioned, assume it is 'India'.**
 
             3.  **Labeled Data:** For other fields, identify the labels (keys) and their corresponding values. In many documents, a key and value are separated by a colon (:). For example, "DOB: 29/09/2006". Make sure to capture the value correctly.
                 - Look for "DOB" or "जन्म तारीख" to find the 'dateOfBirth'.
