@@ -38,7 +38,7 @@ const formSchema = z.object({
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
   upiId: z.string().min(1, "UPI ID is required."),
-  qrCodeUrl: z.string().optional(),
+  qrCodeUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   qrCodeFile: z.any().optional(),
 });
 
@@ -75,7 +75,8 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
     },
   });
 
-  const { formState: { isDirty }, reset } = form;
+  const { formState: { isDirty }, reset, watch } = form;
+  const qrCodeUrlValue = watch('qrCodeUrl');
   
   const handleCancel = () => {
     reset({
@@ -223,16 +224,16 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                     <div className="md:col-span-1 space-y-4">
                         <Label>QR Code Preview</Label>
                         <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                            {previewUrl ? (
+                            {(previewUrl || qrCodeUrlValue) ? (
                                 <div className="relative w-48 h-48">
-                                    <Image src={previewUrl} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                                    <Image src={previewUrl || qrCodeUrlValue} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
                                 </div>
                             ): (
                                 <p className="text-sm text-muted-foreground text-center p-8">
-                                Upload a QR code image below to see a preview.
+                                Upload a QR code image below or paste a URL to see a preview.
                                 </p>
                             )}
-                             {isEditing && previewUrl && (
+                             {isEditing && (previewUrl || qrCodeUrlValue) && (
                                 <Button type="button" size="sm" variant="destructive" onClick={() => {
                                     form.setValue('qrCodeFile', null, { shouldDirty: true });
                                     form.setValue('qrCodeUrl', '', { shouldDirty: true });
@@ -333,7 +334,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                 </div>
                 
                 <h4 className="text-md font-semibold border-b pb-2">UPI / QR Code</h4>
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid md:grid-cols-2 gap-8 items-start">
                      <FormField
                         control={form.control}
                         name="upiId"
@@ -348,11 +349,25 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         )}
                     />
                      <FormField
+                        control={form.control}
+                        name="qrCodeUrl"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>QR Code URL</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="https://storage.googleapis.com/..." disabled={!isEditing} />
+                                </FormControl>
+                                <FormDescription>Paste the public URL of your QR code image.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
                     control={form.control}
                     name="qrCodeFile"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Upload New QR Code</FormLabel>
+                        <FormLabel>Or Upload New QR Code</FormLabel>
                         <FormControl>
                             <Input 
                             type="file" 
