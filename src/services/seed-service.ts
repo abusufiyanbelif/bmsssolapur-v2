@@ -18,7 +18,7 @@ const USERS_COLLECTION = 'users';
 
 const initialUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
-    { userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Other', source: 'Seeded' },
+    { userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded' },
 ];
 
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
@@ -651,7 +651,7 @@ export const erasePaymentGateways = async (): Promise<SeedResult> => {
     await updateAppSettings(updates);
     return {
         message: 'Payment Gateway Settings Erased',
-        details: ["Razorpay settings have been cleared and the gateway is disabled."]
+        details: ["Razorpay test credentials have been cleared and the gateway is disabled."]
     };
 };
 
@@ -696,5 +696,3 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
         details: details,
     };
 };
-
-    

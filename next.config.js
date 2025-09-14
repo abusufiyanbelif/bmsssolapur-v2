@@ -21,13 +21,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'storage.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'baitul-mal-connect.firebasestorage.app',
+        hostname: 'firebasestorage.googleapis.com',
         port: '',
         pathname: '/**',
       },
@@ -43,6 +37,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'baitul-mal-connect.firebasestorage.app',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
