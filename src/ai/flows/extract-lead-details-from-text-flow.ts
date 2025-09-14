@@ -40,7 +40,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             
             **--- AADHAAR CARD PARSING RULES ---**
             If the text appears to be from an Aadhaar card (contains "Government of India", "Unique Identification Authority of India", "AADHAAR"):
-            1.  **Full Name**: Carefully find the beneficiary's full name. It is usually labeled clearly. Remove any titles like "MR.".
+            1.  **Full Name**: Carefully find the beneficiary's full name. It is usually labeled clearly.
             2.  **Name Parsing Logic**: A full name might have 2 or 3 parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. If there is a middle word, it is the 'beneficiaryMiddleName'. For example, for "Rayan Feroz Shaikh", First Name is "Rayan", Middle Name is "Feroz", and Last Name is "Shaikh".
             3.  **Father's Name Logic**: 
                 - **Step 1:** First, try to find an explicit father's name by looking for labels like "S/O", "Son of", or "C/O" (Care of) and extracting the name that follows.
