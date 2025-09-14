@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCcw as RefreshIcon } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCcw as RefreshIcon, BookOpen } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -93,9 +93,11 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
   referredByUserName: z.string().optional(),
-  caseSummary: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
+  headline: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
   diseaseIdentified: z.string().optional(),
+  diseaseStage: z.string().optional(),
+  diseaseSeriousness: z.enum(['High', 'Moderate', 'Low']).optional(),
   purpose: z.string().min(1, "Purpose is required."),
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
@@ -307,9 +309,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       referredByUserName: '',
       campaignId: 'none',
       campaignName: '',
-      caseSummary: '',
+      headline: '',
       story: '',
       diseaseIdentified: '',
+      diseaseStage: '',
+      diseaseSeriousness: undefined,
       purpose: '',
       otherPurposeDetail: '',
       category: '',
@@ -439,13 +443,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, []);
 
   // Debounced values
-  const debouncedUserId = useDebounce(form.watch('newBeneficiaryUserId'), 500);
-  const debouncedEmail = useDebounce(form.watch('newBeneficiaryEmail'), 500);
-  const debouncedPhone = useDebounce(form.watch('newBeneficiaryPhone'), 500);
-  const debouncedPan = useDebounce(form.watch('panNumber'), 500);
-  const debouncedAadhaar = useDebounce(form.watch('newBeneficiaryAadhaar'), 500);
-  const debouncedBankAccount = useDebounce(form.watch('bankAccountNumber'), 500);
-  const debouncedUpiIds = useDebounce(form.watch('upiIds'), 500);
+  const debouncedUserId = useDebounce(watch('userId'), 500);
+  const debouncedEmail = useDebounce(watch('email'), 500);
+  const debouncedPhone = useDebounce(watch('phone'), 500);
+  const debouncedPan = useDebounce(watch('panNumber'), 500);
+  const debouncedAadhaar = useDebounce(watch('aadhaarNumber'), 500);
+  const debouncedBankAccount = useDebounce(watch('bankAccountNumber'), 500);
+  const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
   // Effects for debounced checks
   useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
@@ -491,11 +495,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const applyExtractedDetails = (details: ExtractLeadDetailsOutput | null, selectedSummary?: string) => {
       if (!details) return;
       
-      if (selectedSummary) setValue('caseSummary', selectedSummary, { shouldDirty: true });
-      else if (details.caseSummary) setValue('caseSummary', details.caseSummary, { shouldDirty: true });
+      if (selectedSummary) setValue('headline', selectedSummary, { shouldDirty: true });
+      else if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
 
       if (details.story) setValue('story', details.story, { shouldDirty: true });
       if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
+      if (details.diseaseStage) setValue('diseaseStage', details.diseaseStage, { shouldDirty: true });
+      if (details.diseaseSeriousness) setValue('diseaseSeriousness', details.diseaseSeriousness, { shouldDirty: true });
       if (details.purpose) {
         const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
         if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
@@ -519,7 +525,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         setIsCaseAnalyzing(true);
 
         const [detailsResult, summaryResult] = await Promise.all([
-            handleExtractLeadDetailsFromText(caseRawText),
+            handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory),
             generateSummaries({ rawText: caseRawText })
         ]);
 
@@ -567,7 +573,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     setIsRefreshingStory(true);
-    const detailsResult = await handleExtractLeadDetailsFromText(caseRawText);
+    const detailsResult = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
     if (detailsResult.success && detailsResult.details?.story) {
         setValue('story', detailsResult.details.story, { shouldDirty: true });
         toast({ variant: 'success', title: 'Story Refreshed' });
@@ -1049,8 +1055,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             )}
                         />
                     )}
-                </div>
-                
+                 </div>
+                 
                 {showEducationFields && (
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
@@ -1111,6 +1117,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 )}
                             />
                         )}
+                    </div>
+                )}
+                 {selectedPurposeName === 'Medical' && (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
+                         <FormField control={form.control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} /></FormControl></FormItem>)} />
+                         <FormField control={form.control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>)} />
                     </div>
                 )}
                  <Accordion type="single" collapsible className="w-full">
@@ -1175,7 +1188,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <p className="text-xs text-muted-foreground truncate">{getValues('otherDocuments')?.[index]?.name}</p>
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}))}><ZoomOut className="h-3 w-3"/></Button>
                                                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
@@ -1218,10 +1231,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </AccordionItem>
                 </Accordion>
 
-                <FormField control={form.control} name="caseSummary" render={({ field }) => (<FormItem><FormLabel>Case Summary</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder={dynamicText.caseSummaryPlaceholder} {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshSummary} disabled={!caseRawText || isRefreshingSummary}>{isRefreshingSummary ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="headline" render={({ field }) => (<FormItem><FormLabel>Case Summary</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder={dynamicText.caseSummaryPlaceholder} {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshSummary} disabled={!caseRawText || isRefreshingSummary}>{isRefreshingSummary ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><div className="flex items-center gap-2"><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshStory} disabled={!caseRawText || isRefreshingStory}>{isRefreshingStory ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
-
+                
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Amount Requested</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />

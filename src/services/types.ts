@@ -217,8 +217,11 @@ export interface Lead {
     beneficiary?: User;
     campaignId?: string;
     campaignName?: string;
-    caseSummary?: string;
+    headline?: string;
     story?: string;
+    diseaseIdentified?: string;
+    diseaseStage?: string;
+    diseaseSeriousness?: 'High' | 'Moderate' | 'Low';
     purpose: LeadPurpose;
     otherPurposeDetail?: string;
     donationType: DonationType;
@@ -259,6 +262,7 @@ export interface Lead {
     // New fields for Education
     degree?: string;
     year?: string;
+    semester?: string;
     createdAt: Date;
     updatedAt?: Date;
     source?: 'Seeded' | 'Manual Entry';
@@ -518,6 +522,4 @@ export interface PublicStats {
     openCases: number;
     fundsInHand: number;
 }
-export type { ExtractDonationDetailsOutput, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from '@/ai/schemas';
-
-    
+export type { ExtractDonationDetailsOutput, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from '@/ai/schemas';

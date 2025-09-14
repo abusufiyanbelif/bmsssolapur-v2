@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting structured lead details from a block of raw text.
@@ -52,16 +53,18 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
 
             **--- CASE DOCUMENT PARSING RULES (Medical Reports, Bills, etc.) ---**
             1.  **Generate a Compelling Story**: Based on all the text AND the provided purpose/category context, synthesize a detailed narrative for the 'story' field. If the purpose is "Medical", focus on the health condition. If "Education", focus on the academic need, including the specific degree, year, and semester if mentioned. This should be suitable for a public audience to understand the beneficiary's situation. Use the "Comment" or "Impression" section of medical reports for this.
-            2.  **Generate a Headline**: Create a short, one-sentence summary for the 'caseSummary' field based on the story and context. For a medical report, it could be "Assistance needed for medical tests and treatment." For education, "Support required for final year college fees."
-            3.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field.
+            2.  **Generate a Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. For a medical report, it could be "Assistance needed for medical tests and treatment." For education, "Support required for final year college fees."
+            3.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field. Also look for the 'diseaseStage' (e.g., "Stage II", "Chronic") and infer the 'diseaseSeriousness' ("High", "Moderate", "Low") based on report comments.
             4.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
 
             **--- FIELDS TO EXTRACT (Populate as many as possible) ---**
             
             **Case Fields (Only if not parsing an ID card):**
-            - caseSummary: A short, one-sentence summary of the case, tailored to the purpose.
+            - headline: A short, one-sentence summary of the case, tailored to the purpose.
             - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text and the given context.
             - diseaseIdentified: If a medical report, extract the specific disease or diagnosis mentioned (e.g., "Typhoid Fever", "Osteoarthritis").
+            - diseaseStage: If a medical report, extract the stage of the disease (e.g., "Stage II", "Chronic").
+            - diseaseSeriousness: If a medical report, infer the seriousness ("High", "Moderate", "Low") based on the text.
             - purpose: The main purpose of the request (e.g., Education, Medical, Relief Fund, Deen, Loan, Other). Infer "Medical" from lab reports or bills.
             - category: A more specific category if provided (e.g., School Fees, Ration Kit, Hospital Bill, Diagnostic Tests).
             - amount: The numeric value of the amount requested.

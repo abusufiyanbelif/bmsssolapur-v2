@@ -98,9 +98,11 @@ export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsF
 
 export const ExtractLeadDetailsOutputSchema = z.object({
     // Lead fields
-    caseSummary: z.string().optional().describe("A short, one-sentence summary of the case."),
+    headline: z.string().optional().describe("A short, one-sentence summary of the case."),
     story: z.string().optional().describe("A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text."),
     diseaseIdentified: z.string().optional().describe("If a medical report, extract the specific disease or diagnosis mentioned (e.g., 'Typhoid Fever', 'Osteoarthritis')."),
+    diseaseStage: z.string().optional().describe("If a medical report, extract the stage of the disease (e.g., 'Stage II', 'Chronic')."),
+    diseaseSeriousness: z.enum(['High', 'Moderate', 'Low']).optional().describe("If a medical report, infer the seriousness based on the text."),
     purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical, Relief Fund, Deen, Loan, Other)."),
     category: z.string().optional().describe("The specific category for the purpose (e.g., School Fees, Hospital Bill)."),
     amount: z.number().optional().describe("The amount requested."),
@@ -150,8 +152,8 @@ export const ExtractBeneficiaryDetailsOutputSchema = z.object({
     beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
     address: z.string().optional().describe("The full address of the beneficiary."),
     city: z.string().optional().describe("The city, if present."),
-    state: z.string().optional().describe("The state, if present."),
     pincode: z.string().optional().describe("The pin code or zip code, if present."),
+    state: z.string().optional().describe("The state, if present."),
     country: z.string().optional().describe("The country, if present."),
     aadhaarNumber: z.string().optional().describe("The beneficiary's Aadhaar card number."),
 });
