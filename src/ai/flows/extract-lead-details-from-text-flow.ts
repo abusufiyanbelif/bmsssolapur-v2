@@ -58,7 +58,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
 
             **--- FIELDS TO EXTRACT (Populate as many as possible) ---**
             
-            **Case Fields:**
+            **Case Fields (Only if not parsing an ID card):**
             - headline: A short, one-sentence summary of the case, tailored to the purpose.
             - story: A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text and the given context.
             - diseaseIdentified: If a medical report, extract the specific disease or diagnosis mentioned (e.g., "Typhoid Fever", "Osteoarthritis").
@@ -70,7 +70,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - acceptableDonationTypes: An array of allowed donation types (e.g., ["Zakat", "Sadaqah"]).
             - caseDetails: The detailed story or reason for the request. Capture the full narrative for internal review.
             
-            **Beneficiary Fields:**
+            **Beneficiary Fields (Always attempt to find these):**
             - beneficiaryFirstName: The beneficiary's first name.
             - beneficiaryMiddleName: The beneficiary's middle name, if present.
             - beneficiaryLastName: The beneficiary's last name.
@@ -88,10 +88,6 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - bankAccountNumber: The bank account number.
             - bankIfscCode: The bank IFSC code.
             - upiIds: A comma-separated string of UPI IDs.
-
-            **Referral Fields:**
-            - referralName: The full name of the person who referred the case.
-            - referralPhone: The phone number of the referral.
             
             Raw Text to Parse:
             ---

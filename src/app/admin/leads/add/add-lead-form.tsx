@@ -434,12 +434,21 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
     if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
     if (details.dateOfBirth) {
-        const parts = details.dateOfBirth.split('/');
+        // AI might return different formats, try to parse robustly
+        const dateString = details.dateOfBirth.replace(/\s/g, ''); // remove spaces
+        const parts = dateString.split(/[\/\-]/); // split by / or -
+        let date: Date | null = null;
         if (parts.length === 3) {
-            const date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            if (!isNaN(date.getTime())) {
-                setValue('dateOfBirth', date, { shouldDirty: true });
+            const [d, m, y] = parts;
+            if (y.length === 4) { // DD/MM/YYYY or MM/DD/YYYY
+                // Simple heuristic: if first part > 12, assume DD/MM
+                date = parseInt(d) > 12 ? new Date(`${y}-${m}-${d}`) : new Date(`${y}-${d}-${m}`);
+            } else if (y.length === 2) { // DD/MM/YY
+                 date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
             }
+        }
+        if (date && !isNaN(date.getTime())) {
+            setValue('dateOfBirth', date, { shouldDirty: true });
         }
     }
     toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Beneficiary details have been populated. Please review.' });
@@ -529,6 +538,18 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       if (selectedCategory === 'College Fees') return leadConfiguration.collegeYearOptions || [];
       return [];
   }, [selectedCategory, leadConfiguration]);
+
+  const beneficiaryDialogFields = [
+      { key: 'beneficiaryFirstName', label: 'First Name' },
+      { key: 'beneficiaryMiddleName', label: 'Middle Name' },
+      { key: 'beneficiaryLastName', label: 'Last Name' },
+      { key: 'fatherName', label: 'Father Name' },
+      { key: 'beneficiaryPhone', label: 'Phone' },
+      { key: 'aadhaarNumber', label: 'Aadhaar' },
+      { key: 'address', label: 'Address' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'dateOfBirth', label: 'Date of Birth' },
+  ];
 
 
   return (
@@ -1172,11 +1193,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
-                    {extractedBeneficiaryDetails && Object.entries(extractedBeneficiaryDetails).map(([key, value]) => {
+                    {extractedBeneficiaryDetails && beneficiaryDialogFields.map(({ key, label }) => {
+                        const value = extractedBeneficiaryDetails[key as keyof ExtractLeadDetailsOutput];
                         if (!value) return null;
                         return (
                             <div key={key} className="flex justify-between border-b pb-1">
-                                <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                <span className="text-muted-foreground capitalize">{label}</span>
                                 <span className="font-semibold text-right">{String(value)}</span>
                             </div>
                         )
