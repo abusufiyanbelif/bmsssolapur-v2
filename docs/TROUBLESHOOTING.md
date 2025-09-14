@@ -36,12 +36,12 @@ You must obtain a free API key from Google AI Studio and add it as a secret to y
 
 ---
 
-## 2. "Insufficient Permissions" or "Could not refresh access token"
+## 2. "Could not reach Cloud Firestore backend" or "Could not refresh access token"
 
-**Error Message:** `FATAL: Firestore permission error` or `Could not refresh access token`.
+**Error Message:** `Firestore (11.9.0): Could not reach Cloud Firestore backend.` or `Could not refresh access token`.
 
 **Cause:**
-This error means the server environment itself (Firebase App Hosting) doesn't have the necessary permission to access the database (Firestore). This is an infrastructure-level permission issue.
+This error means the server environment itself (Firebase App Hosting) doesn't have the necessary permission to access the database (Firestore). This is an infrastructure-level permission issue. The App Hosting service account needs to be explicitly granted permission to read from and write to the database.
 
 **Solution:**
 
@@ -49,10 +49,10 @@ You need to grant the **"Cloud Datastore User"** role to your App Hosting servic
 
 1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
 2.  Make sure you have selected the correct project (`baitul-mal-connect`).
-3.  Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `firebase-app-hosting-compute@...`.
+3.  Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
 4.  Click the **pencil icon** (Edit principal) for that row.
 5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
 6.  In the "Select a role" search box, type **`Cloud Datastore User`**.
 7.  Select the **Cloud Datastore User** role from the results.
 8.  Click **SAVE**.
-9.  The application should now have the correct permissions to access the database.
+9.  The application should now have the correct permissions to access the database. The error should resolve within a minute or two.

@@ -16,7 +16,7 @@ This document tracks the features and changes requested for the project.
     - **Private Collections (`users`, `leads`, `donations`)**: These contain sensitive data and are protected by Firestore Security Rules, allowing access only to authenticated users with specific roles (e.g., an admin, or a user accessing their own data).
     - **Public Collections (`publicLeads`, `publicCampaigns`)**: These contain sanitized, non-sensitive subsets of data intended for public display. Security rules on these collections permit read-only access for all users, including unauthenticated guests.
     - **Server-Side Logic**: Server-side functions are responsible for populating the public collections based on the status of items in the private collections (e.g., a lead is copied to `publicLeads` only when its status is set to "Publish").
-- **Infrastructure Permissions**: The application's backend, running on Firebase App Hosting, requires specific IAM (Identity and Access Management) roles to connect to Google Cloud services. The root cause of "Insufficient Permissions" errors is that the App Hosting service account (`firebase-app-hosting-compute@...`) is missing the **`Cloud Datastore User`** role, which is required for it to read from and write to Firestore.
+- **Infrastructure Permissions**: The application's backend, running on Firebase App Hosting, requires specific IAM (Identity and Access Management) roles to connect to Google Cloud services. The root cause of "Could not reach Cloud Firestore backend" errors is that the App Hosting service account (`[PROJECT_NUMBER]-compute@...`) is missing the **`Cloud Datastore User`** role, which is required for it to read from and write to Firestore.
 
 ---
 
