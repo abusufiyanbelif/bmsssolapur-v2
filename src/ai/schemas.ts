@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -136,6 +137,7 @@ export const ExtractBeneficiaryDetailsFromTextInputSchema = z.object({
 export type ExtractBeneficiaryDetailsFromTextInput = z.infer<typeof ExtractBeneficiaryDetailsFromTextInputSchema>;
 
 export const ExtractBeneficiaryDetailsOutputSchema = z.object({
+    beneficiaryFullName: z.string().optional().describe("The beneficiary's full name as it appears on the card."),
     beneficiaryFirstName: z.string().optional().describe("The beneficiary's first name."),
     beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
     beneficiaryLastName: z.string().optional().describe("The beneficiary's last name."),

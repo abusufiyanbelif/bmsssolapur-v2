@@ -34,8 +34,8 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
 
             **--- AADHAAR CARD PARSING RULES ---**
             
-            1.  **Full Name**: Carefully find the beneficiary's full name. It is usually labeled clearly under the "Government of India" heading.
-            2.  **Name Parsing Logic**: A full name might have 2 or 3 parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. If there is a middle word, it is the 'beneficiaryMiddleName'. For example, for "Rayan Feroz Shaikh", First Name is "Rayan", Middle Name is "Feroz", and Last Name is "Shaikh".
+            1.  **Full Name**: Carefully find the beneficiary's full name. It is usually labeled clearly under the "Government of India" heading. This should be mapped to 'beneficiaryFullName'.
+            2.  **Name Parsing Logic**: From the full name, parse the individual components. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. If there is a middle word, it is the 'beneficiaryMiddleName'. For example, for "Rayan Feroz Shaikh", First Name is "Rayan", Middle Name is "Feroz", and Last Name is "Shaikh".
             3.  **Father's Name Logic**: 
                 - **Step 1:** First, try to find an explicit father's name by looking for labels like "S/O", "Son of", or "C/O" (Care of) and extracting the name that follows.
                 - **Step 2:** If and ONLY IF no such label is found, and the beneficiary's name has three parts (first, middle, last), then you can assume the middle name is the father's name. Use the middle name as the value for the 'fatherName' field in this case.
@@ -47,6 +47,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
 
             **--- FIELDS TO EXTRACT (Populate as many as possible) ---**
             
+            - beneficiaryFullName: The beneficiary's full name as it appears on the document.
             - beneficiaryFirstName: The beneficiary's first name.
             - beneficiaryMiddleName: The beneficiary's middle name, if present.
             - beneficiaryLastName: The beneficiary's last name.

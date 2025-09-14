@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -274,6 +273,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     defaultValues: {
       beneficiaryType: 'existing',
       beneficiaryId: '',
+      newBeneficiaryUserId: '',
       newBeneficiaryFirstName: '',
       newBeneficiaryMiddleName: '',
       newBeneficiaryLastName: '',
@@ -341,6 +341,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const newBeneficiaryFirstName = watch("newBeneficiaryFirstName");
   const newBeneficiaryMiddleName = watch("newBeneficiaryMiddleName");
   const newBeneficiaryLastName = watch("newBeneficiaryLastName");
+  const newBeneficiaryFullName = watch("newBeneficiaryFullName");
   const isHistoricalRecord = watch("isHistoricalRecord");
   
   const dynamicText = useMemo(() => {
@@ -376,16 +377,31 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     };
   }, [selectedPurposeName]);
   
-  useEffect(() => {
-    const fullName = `${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim();
+  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fullName = e.target.value;
     setValue('newBeneficiaryFullName', fullName, { shouldDirty: true });
-     if (newBeneficiaryFirstName && newBeneficiaryLastName) {
-        const generatedUserId = `${newBeneficiaryFirstName.toLowerCase()}.${newBeneficiaryLastName.toLowerCase()}`.replace(/\s+/g, '');
-        if (!form.formState.dirtyFields.newBeneficiaryUserId) {
-            setValue('newBeneficiaryUserId', generatedUserId, { shouldValidate: true });
-        }
+    const nameParts = fullName.split(' ').filter(Boolean);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts[nameParts.length - 1] || '';
+    const middleName = nameParts.slice(1, -1).join(' ');
+    setValue('newBeneficiaryFirstName', firstName, { shouldDirty: true });
+    setValue('newBeneficiaryMiddleName', middleName, { shouldDirty: true });
+    setValue('newBeneficiaryLastName', lastName, { shouldDirty: true });
+  }
+
+  useEffect(() => {
+    const fullNameFromParts = `${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim();
+    if (fullNameFromParts !== newBeneficiaryFullName) {
+        setValue('newBeneficiaryFullName', fullNameFromParts, { shouldDirty: true });
     }
-  }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, setValue, form.formState.dirtyFields.newBeneficiaryUserId]);
+  }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryFullName, setValue]);
+
+  useEffect(() => {
+     if (newBeneficiaryFirstName && newBeneficiaryLastName && !form.formState.dirtyFields.newBeneficiaryUserId) {
+        const generatedUserId = `${newBeneficiaryFirstName.toLowerCase()}.${newBeneficiaryLastName.toLowerCase()}`.replace(/\s+/g, '');
+        setValue('newBeneficiaryUserId', generatedUserId, { shouldValidate: true });
+    }
+  }, [newBeneficiaryFirstName, newBeneficiaryLastName, setValue, form.formState.dirtyFields.newBeneficiaryUserId]);
 
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
@@ -494,6 +510,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const applyExtractedDetails = () => {
     if (!extractedBeneficiaryDetails) return;
     const details = extractedBeneficiaryDetails;
+    if (details.beneficiaryFullName) setValue('newBeneficiaryFullName', details.beneficiaryFullName, { shouldDirty: true });
     if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
     if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
     if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
@@ -614,6 +631,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, [selectedCategory, leadConfiguration]);
 
   const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+      { key: 'beneficiaryFullName', label: 'Full Name' },
       { key: 'beneficiaryFirstName', label: 'First Name' },
       { key: 'beneficiaryMiddleName', label: 'Middle Name' },
       { key: 'beneficiaryLastName', label: 'Last Name' },
@@ -813,33 +831,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             </AccordionItem>
                         </Accordion>
                         <h3 className="font-medium pt-4">New Beneficiary Details</h3>
+                        <FormField control={form.control} name="newBeneficiaryFullName" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Full Name" {...field} onChange={handleFullNameChange} /></FormControl><FormDescription>Edit this to automatically update the fields below.</FormDescription><FormMessage /></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>First Name</FormLabel>
-                                    <FormControl><Input placeholder="First Name" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            <FormField control={form.control} name="newBeneficiaryMiddleName" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Middle Name</FormLabel>
-                                    <FormControl><Input placeholder="Middle Name" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            <FormField control={form.control} name="newBeneficiaryLastName" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Last Name</FormLabel>
-                                    <FormControl><Input placeholder="Last Name" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
+                            <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="First Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="newBeneficiaryMiddleName" render={({ field }) => (<FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="newBeneficiaryLastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Last Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
-                        <div className="space-y-2">
-                             <Label>Full Name</Label>
-                             <FormField control={form.control} name="newBeneficiaryFullName" render={({ field }) => (<FormControl><Input readOnly {...field} className="bg-muted" /></FormControl>)} />
-                        </div>
+                        
                         <FormField
                             control={form.control}
                             name="newBeneficiaryUserId"
@@ -1258,10 +1256,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     {extractedBeneficiaryDetails && beneficiaryDialogFields.map(({ key, label }) => {
                         const value = extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput];
                         return (
-                            <div key={key} className="flex justify-between border-b pb-1">
-                                <span className="text-muted-foreground capitalize">{label}</span>
-                                <span className="font-semibold text-right">{String(value || '')}</span>
-                            </div>
+                            value ? (
+                                <div key={key} className="flex justify-between border-b pb-1">
+                                    <span className="text-muted-foreground capitalize">{label}</span>
+                                    <span className="font-semibold text-right">{String(value || '')}</span>
+                                </div>
+                            ) : null
                         )
                     })}
                 </div>
