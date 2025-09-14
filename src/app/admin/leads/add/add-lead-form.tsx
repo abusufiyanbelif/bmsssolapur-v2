@@ -390,7 +390,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const loadingSetter = section === 'case' ? setIsCaseAnalyzing : setIsBeneficiaryAnalyzing;
     loadingSetter(true);
 
-     const analysisResult = await handleExtractLeadDetailsFromText(textToAnalyze);
+     const analysisResult = await handleExtractLeadDetailsFromText(
+         textToAnalyze, 
+         getValues('purpose'), 
+         getValues('category')
+    );
             
     if (analysisResult.success && analysisResult.details) {
         const details = analysisResult.details;
@@ -1219,3 +1223,5 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
+
+    

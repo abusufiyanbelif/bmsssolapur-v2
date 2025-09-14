@@ -193,3 +193,5 @@ export const ExtractDonationDetailsOutputSchema = z.object({
 });
 
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
+
+    
