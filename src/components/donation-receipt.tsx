@@ -1,10 +1,10 @@
 
-
 "use client";
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import type { Donation, User } from '@/services/types';
+import type { Donation, User, Organization } from '@/services/types';
+import { getCurrentOrganization } from '@/services/organization-service';
 
 interface DonationReceiptProps {
     donation: Donation;
@@ -13,13 +13,24 @@ interface DonationReceiptProps {
 
 export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
     ({ donation, user }, ref) => {
+        const [organization, setOrganization] = useState<Organization | null>(null);
+        
+        useEffect(() => {
+            const fetchOrg = async () => {
+                const org = await getCurrentOrganization();
+                setOrganization(org);
+            }
+            fetchOrg();
+        }, []);
+
         const organizationDetails = {
-            name: "Baitul Mal Samajik Sanstha (Solapur)",
-            address: "123 Muslim Peth, Solapur, Maharashtra 413001",
-            registration: "MAHA/123/2024",
-            pan: "AAFTB9401P",
-            email: "contact@baitulmalsolapur.org",
-            phone: "+91 9372145889"
+            name: organization?.name || "Baitul Mal Samajik Sanstha (Solapur)",
+            address: organization?.address || "123 Muslim Peth, Solapur, Maharashtra 413001",
+            registration: organization?.registrationNumber || "MAHA/123/2024",
+            pan: organization?.panNumber || "AAFTB9401P",
+            email: organization?.contactEmail || "contact@baitulmalsolapur.org",
+            phone: organization?.contactPhone || "+91 9372145889",
+            logoUrl: organization?.logoUrl || "https://picsum.photos/seed/logo/128/128"
         };
         
         const textStyle = { letterSpacing: '0.5px' };
@@ -27,7 +38,7 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
         return (
             <div ref={ref} className="p-12 bg-white text-black font-sans w-[800px] relative">
                 <img
-                    src="https://picsum.photos/seed/watermark/800/1120"
+                    src={organizationDetails.logoUrl}
                     alt="Watermark"
                     crossOrigin="anonymous"
                     className="absolute inset-0 w-full h-full object-contain opacity-5 z-0"
@@ -40,7 +51,7 @@ export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
                                 <td style={{ width: '128px', verticalAlign: 'top' }}>
                                      <div className="relative w-32 h-32">
                                         <img
-                                            src="https://picsum.photos/seed/logo/128/128"
+                                            src={organizationDetails.logoUrl}
                                             alt="Organization Logo"
                                             crossOrigin="anonymous"
                                             className="w-full h-full object-contain"

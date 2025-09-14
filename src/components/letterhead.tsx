@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { forwardRef } from 'react';
@@ -19,7 +18,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                 {/* Watermark Layer */}
                 <div className="absolute inset-0 z-0 flex items-center justify-center">
                     <img
-                        src="https://picsum.photos/seed/watermark/800/1120"
+                        src={organization.logoUrl || "https://picsum.photos/seed/watermark/800/1120"}
                         alt="Watermark"
                         crossOrigin="anonymous"
                         className="w-3/4 h-3/4 object-contain opacity-5"
@@ -36,7 +35,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                     <td style={{ width: '128px', verticalAlign: 'top' }}>
                                          <div className="relative w-32 h-32">
                                         <img
-                                            src="https://picsum.photos/seed/logo/128/128"
+                                            src={organization.logoUrl || "https://picsum.photos/seed/logo/128/128"}
                                             alt="Organization Logo"
                                             crossOrigin="anonymous"
                                             className="w-full h-full object-contain"
@@ -46,7 +45,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                     </td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-4xl font-bold tracking-wider" style={textStyle}>
-                                            <span className="text-primary">BAITULMAL</span> <span className="text-accent">SAMAJIK</span> <span className="text-primary">SANSTHA</span>
+                                            <span className="text-primary">{organization.name.split(' ')[0]}</span> <span className="text-accent">{organization.name.split(' ')[1]}</span> <span className="text-primary">{organization.name.split(' ')[2]}</span>
                                         </h1>
                                         <h2 className="text-4xl font-bold tracking-wider text-accent" style={textStyle}>SOLAPUR</h2>
                                         <p className="text-lg font-bold text-primary" style={textStyle}>({organization.city})</p>
