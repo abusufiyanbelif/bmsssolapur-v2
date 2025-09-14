@@ -100,9 +100,9 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     // Lead fields
     headline: z.string().optional().describe("A short, one-sentence summary of the case."),
     story: z.string().optional().describe("A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text."),
-    diseaseIdentified: z.string().optional().describe("If a medical report, extract the specific disease or diagnosis mentioned (e.g., 'Typhoid Fever', 'Osteoarthritis')."),
-    diseaseStage: z.string().optional().describe("If a medical report, extract the stage of the disease (e.g., 'Stage II', 'Chronic')."),
-    diseaseSeriousness: z.enum(['High', 'Moderate', 'Low']).optional().describe("If a medical report, infer the seriousness based on the text."),
+    diseaseIdentified: z.string().optional().describe("If it's a medical document, this is the main diagnosis or condition mentioned (e.g., 'Typhoid Fever', 'Acute Gastroenteritis')."),
+    diseaseStage: z.string().optional().describe("If mentioned in a medical report, this is the stage or severity of the disease (e.g., 'Stage II', 'Chronic', 'Acute')."),
+    diseaseSeriousness: z.enum(['High', 'Moderate', 'Low']).optional().describe("Based on the language of a medical report, this is the inferred seriousness of the condition. High for critical issues, Low for minor ones."),
     purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical, Relief Fund, Deen, Loan, Other)."),
     category: z.string().optional().describe("The specific category for the purpose (e.g., School Fees, Hospital Bill)."),
     amount: z.number().optional().describe("The amount requested."),
