@@ -715,11 +715,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                          <div className="flex flex-col sm:flex-row gap-2">
                                              <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromImage([getValues('aadhaarCard'), getValues('addressProof')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                                Get Beneficiary Details
+                                                Scan Beneficiary Aadhaar
                                             </Button>
                                             <Button type="button" className="w-full" onClick={() => handleAutoFillFromText('beneficiary')} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
                                                 {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                                Fill Details
+                                                Get Beneficiary Details
                                             </Button>
                                          </div>
                                          {beneficiaryRawText && (
