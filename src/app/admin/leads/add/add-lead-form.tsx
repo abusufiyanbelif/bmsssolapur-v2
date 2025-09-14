@@ -542,12 +542,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       { key: 'beneficiaryFirstName', label: 'First Name' },
       { key: 'beneficiaryMiddleName', label: 'Middle Name' },
       { key: 'beneficiaryLastName', label: 'Last Name' },
-      { key: 'fatherName', label: 'Father Name' },
-      { key: 'beneficiaryPhone', label: 'Phone' },
-      { key: 'aadhaarNumber', label: 'Aadhaar' },
-      { key: 'address', label: 'Address' },
-      { key: 'gender', label: 'Gender' },
+      { key: 'fatherName', label: "Father's Name" },
       { key: 'dateOfBirth', label: 'Date of Birth' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'beneficiaryPhone', label: 'Phone' },
+      { key: 'aadhaarNumber', label: 'Aadhaar Number' },
+      { key: 'address', label: 'Address' },
   ] as const;
 
 
