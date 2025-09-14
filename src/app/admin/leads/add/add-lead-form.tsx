@@ -520,6 +520,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     { key: 'aadhaarNumber', label: 'Aadhaar Number' },
     { key: 'address', label: 'Address' },
     { key: 'city', label: 'City' },
+    { key: 'state', label: 'State' },
     { key: 'pincode', label: 'Pincode' },
     { key: 'country', label: 'Country' },
 ];
@@ -527,37 +528,46 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const applyExtractedDetails = () => {
     if (!extractedBeneficiaryDetails) return;
     const details = extractedBeneficiaryDetails;
-    if (details.beneficiaryFullName) setValue('newBeneficiaryFullName', details.beneficiaryFullName, { shouldDirty: true });
-    if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
-    if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
-    if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
-    if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
-    if (details.beneficiaryPhone) {
-        const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-        setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
-    }
-    if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
-    if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
-    if (details.city) setValue('city', details.city, { shouldDirty: true });
-    if (details.pincode) setValue('pincode', details.pincode, { shouldDirty: true });
-    if (details.country) setValue('country', details.country, { shouldDirty: true });
-    if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
-    if (details.dateOfBirth) {
-        const dateString = details.dateOfBirth.replace(/\s/g, ''); // remove spaces
-        const parts = dateString.split(/[\/\-]/); // split by / or -
-        let date: Date | null = null;
-        if (parts.length === 3) {
-            const [d, m, y] = parts;
-            if (y.length === 4) {
-                date = new Date(`${y}-${m}-${d}`);
-            } else if (y.length === 2) {
-                 date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
+    
+    // Iterate over the keys to set form values
+    beneficiaryDialogFields.forEach(({ key }) => {
+        const value = details[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
+        if (value) {
+            if (key === 'beneficiaryFullName') setValue('newBeneficiaryFullName', value, { shouldDirty: true });
+            if (key === 'beneficiaryFirstName') setValue('newBeneficiaryFirstName', value, { shouldDirty: true });
+            if (key === 'beneficiaryMiddleName') setValue('newBeneficiaryMiddleName', value, { shouldDirty: true });
+            if (key === 'beneficiaryLastName') setValue('newBeneficiaryLastName', value, { shouldDirty: true });
+            if (key === 'fatherName') setValue('newBeneficiaryFatherName', value, { shouldDirty: true });
+            if (key === 'beneficiaryPhone') {
+                const phone = value.replace(/\D/g, '').slice(-10);
+                setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
+            }
+            if (key === 'aadhaarNumber') setValue('newBeneficiaryAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
+            if (key === 'address') setValue('addressLine1', value, { shouldDirty: true });
+            if (key === 'city') setValue('city', value, { shouldDirty: true });
+            if (key === 'state') setValue('state', value, { shouldDirty: true });
+            if (key === 'pincode') setValue('pincode', value, { shouldDirty: true });
+            if (key === 'country') setValue('country', value, { shouldDirty: true });
+            if (key === 'gender') setValue('gender', value as 'Male' | 'Female' | 'Other', { shouldDirty: true });
+            if (key === 'dateOfBirth') {
+                const dateString = value.replace(/\s/g, '');
+                const parts = dateString.split(/[\/\-]/);
+                let date: Date | null = null;
+                if (parts.length === 3) {
+                    const [d, m, y] = parts;
+                    if (y.length === 4) {
+                        date = new Date(`${y}-${m}-${d}`);
+                    } else if (y.length === 2) {
+                        date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
+                    }
+                }
+                if (date && !isNaN(date.getTime())) {
+                    setValue('dateOfBirth', date, { shouldDirty: true });
+                }
             }
         }
-        if (date && !isNaN(date.getTime())) {
-            setValue('dateOfBirth', date, { shouldDirty: true });
-        }
-    }
+    });
+
     toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Beneficiary details have been populated. Please review.' });
     setExtractedBeneficiaryDetails(null);
   }
@@ -790,8 +800,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                      <div className="space-y-4 p-4 border rounded-lg bg-background">
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the new beneficiary's details.</p>
                                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormField control={control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
-                                                <FormField control={control} name="addressProof" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                                <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                                <FormField control={form.control} name="addressProof" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={addressProofInputRef} onChange={e => { onChange(e.target.files?.[0]); setAddressProofPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
                                             </div>
                                           {(aadhaarPreview || addressProofPreview) && (
                                             <div className="grid grid-cols-2 gap-4">
@@ -1276,7 +1286,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   );
 }
 
-export function AddLeadForm(props: { users: User[], campaigns: Campaign[], settings: AppSettings }) {
+export function AddLeadForm(props: { settings: AppSettings, users: User[], campaigns: Campaign[] }) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />

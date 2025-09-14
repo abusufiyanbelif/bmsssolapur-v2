@@ -30,28 +30,20 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
-        prompt: `You are an expert data entry assistant specializing in Indian identity documents like the Aadhaar card. Your task is to analyze the provided OCR text and extract the information into the dedicated fields defined in the output schema. Follow these rules precisely.
+        prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.
 
             **--- EXTRACTION RULES ---**
 
-            1.  **Full Name:** Carefully find the beneficiary's full name. It is usually the first prominent name on the card. From this full name, parse the 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. The first word is the first name, the last word is the last name, and anything in between is the middle name. Also return the full name as 'beneficiaryFullName'.
+            1.  **Full Name:** If a person's full name is present (e.g., "SHAIKH RAYAN FEROZ"), extract their first, middle, and last names into the dedicated fields. First name is the first word, last name is the last word, and anything in between is the middle name. Also return the full name as 'beneficiaryFullName'.
 
-            2.  **Father's Name:** Look for a name immediately following the labels "S/O" or "C/O". This is the father's name. If no such label is found, and the beneficiary's name has three parts, you can infer that the middle name is the father's name.
+            2.  **Address:** If an address is present (often following the label "Address:" or "पत्ता:"), extract the country, state, city, and pin code into their dedicated fields.
 
-            3.  **Date of Birth:** Find the date next to the label "DOB" or "जन्म तारीख".
-
-            4.  **Gender:** Find the gender next to the label "Gender" or "पुरुष / MALE".
-
-            5.  **Phone Number:** Find the 10-digit mobile number, which may or may not have a label.
-
-            6.  **Aadhaar Number:** This is critical. Look for a 12-digit number, which is often grouped in sets of four (e.g., 1234 5678 9012). It will be next to one of these labels: "Your Aadhaar No.", "आपला आधार क्रमांक", or "आधार क्रमांक". You MUST find this number.
-
-            7.  **Address Block:** First, find the specific label **"Address:"** or **"पत्ता:"**. Capture all text and lines that follow it, until you reach the text containing the Aadhaar number or the end of the document. This complete text is the value for the 'address' field.
+            3.  **Labeled Data:** For other fields, identify the labels (keys) and their corresponding values. In many documents, a key and value are separated by a colon (:). For example, "DOB: 29/09/2006". Make sure to capture the value correctly.
+                - Look for "DOB" or "जन्म तारीख" to find the 'dateOfBirth'.
+                - Look for "Gender" or "पुरुष / MALE" to find the 'gender'.
+                - Look for a 10-digit mobile number for the 'beneficiaryPhone'.
             
-            8.  **Address Components:** From the full address block you just extracted, identify and populate the following dedicated fields:
-                -   'city': The city name (e.g., Solapur).
-                -   'pincode': The 6-digit PIN code.
-                -   'country': The country. If not specified, assume "India".
+            4.  **Aadhaar Number:** This is critical. Look for a 12-digit number, often grouped in sets of four (e.g., 2165 0014 1667). It is often labeled with "Your Aadhaar No." or "आपला आधार क्रमांक" or "आधार क्रमांक".
 
             If you cannot find a valid value for a field, you MUST omit the field entirely from your JSON output.
 
@@ -74,3 +66,4 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
+
