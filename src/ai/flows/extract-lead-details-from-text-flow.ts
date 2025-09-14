@@ -40,13 +40,13 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             
             **--- AADHAAR CARD PARSING RULES ---**
             If the text appears to be from an Aadhaar card (contains "Government of India", "Unique Identification Authority of India", "AADHAAR"):
-            1.  **Full Name**: Carefully find the beneficiary's full name. It is usually labeled clearly.
+            1.  **Full Name**: Carefully find the beneficiary's full name. It is usually labeled clearly under the "Government of India" heading.
             2.  **Name Parsing Logic**: A full name might have 2 or 3 parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. If there is a middle word, it is the 'beneficiaryMiddleName'. For example, for "Rayan Feroz Shaikh", First Name is "Rayan", Middle Name is "Feroz", and Last Name is "Shaikh".
             3.  **Father's Name Logic**: 
                 - **Step 1:** First, try to find an explicit father's name by looking for labels like "S/O", "Son of", or "C/O" (Care of) and extracting the name that follows.
                 - **Step 2:** If and ONLY IF no such label is found, and the beneficiary's name has three parts (first, middle, last), then you can assume the middle name is the father's name. Use the middle name as the value for the 'fatherName' field in this case.
-            4.  **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" label. Extract Gender ("Male" or "Female") from the "Gender" label.
-            5.  **Address Extraction**: Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" or "C/O" lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
+            4.  **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" or "जन्म तारीख" label. Extract Gender ("Male" or "Female") from the "Gender" or "पुरुष / MALE" label.
+            5.  **Address Extraction**: Look for the specific label "Address:" or "पत्ता:". Capture all text and lines that follow it, including any "S/O" or "C/O" lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
             6.  **Phone Number**: Look for a 10-digit number labeled "Mobile" or "Phone". This is CRITICAL.
             7.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is the 'aadhaarNumber'.
 
