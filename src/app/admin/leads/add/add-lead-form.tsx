@@ -512,7 +512,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
       if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
       if (details.semester) setValue('semester', details.semester, { shouldDirty: true });
-
+      
       toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
     }
 
@@ -539,7 +539,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             setIsSummaryDialogOpen(true);
         } else if (detailsResult.success && detailsResult.details) {
             applyExtractedDetails(detailsResult.details);
-            toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Could not generate summary options, but other details were applied.' });
         } else {
             toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error || summaryResult.error || "Could not extract details from text." });
         }
@@ -685,7 +684,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     
-    const hasFiles = values.aadhaarCard;
+    const hasFiles = values.aadhaarCard || (values.otherDocuments && values.otherDocuments.length > 0);
     if(hasFiles) setIsUploading(true);
     setIsSubmitting(true);
     
