@@ -518,3 +518,4 @@ export interface PublicStats {
     openCases: number;
     fundsInHand: number;
 }
+export type { ExtractDonationDetailsOutput } from '@/ai/schemas';

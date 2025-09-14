@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -538,7 +537,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
-  const beneficiaryDialogFields = [
+  const beneficiaryDialogFields: { key: keyof ExtractLeadDetailsOutput; label: string }[] = [
       { key: 'beneficiaryFirstName', label: 'First Name' },
       { key: 'beneficiaryMiddleName', label: 'Middle Name' },
       { key: 'beneficiaryLastName', label: 'Last Name' },
@@ -548,7 +547,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       { key: 'beneficiaryPhone', label: 'Phone' },
       { key: 'aadhaarNumber', label: 'Aadhaar Number' },
       { key: 'address', label: 'Address' },
-  ] as const;
+  ];
 
 
   return (
