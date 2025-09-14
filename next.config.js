@@ -6,6 +6,9 @@ const nextConfig = {
     },
   },
   webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...config.externals, "handlebars"];
+    }
     config.experiments = { ...config.experiments, asyncWebAssembly: true };
     config.output.webassemblyModuleFilename =
       (isServer ? "../" : "") + "static/wasm/webassembly.wasm";
