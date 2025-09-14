@@ -420,7 +420,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   // Effects for debounced checks
   useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
   useEffect(() => { if(debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar, setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
     
   const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
     const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
@@ -626,6 +626,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       { key: 'city', label: 'City' },
       { key: 'state', label: 'State' },
       { key: 'pincode', label: 'Pincode' },
+      { key: 'country', label: 'Country' },
   ];
   
   const isAnyFieldInvalid = userIdState.isAvailable === false || phoneState.isAvailable === false || aadhaarState.isAvailable === false;
@@ -892,6 +893,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             <FormField control={form.control} name="state" render={({field}) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         </div>
+                         <FormField control={form.control} name="country" render={({field}) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} disabled /></FormControl></FormItem>)} />
                     </div>
                 )}
                 </>
