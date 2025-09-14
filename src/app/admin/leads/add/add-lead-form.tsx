@@ -31,7 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -181,15 +181,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // AI related state for Case Documents
   const [isCaseTextExtracting, setIsCaseTextExtracting] = useState(false);
   const [isCaseAnalyzing, setIsCaseAnalyzing] = useState(false);
   const [caseRawText, setCaseRawText] = useState<string>('');
   
-  // AI related state for Beneficiary Documents
   const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
   const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
   const [beneficiaryRawText, setBeneficiaryRawText] = useState<string>('');
+  const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractLeadDetailsOutput | null>(null);
 
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
   const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
@@ -409,35 +408,42 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
             if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
             if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
             if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
+            toast({ variant: 'success', title: 'Auto-fill Complete', description: `The case fields have been populated. Please review.` });
         } else { // beneficiary section
-            if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
-            if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
-            if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
-            if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
-            if (details.beneficiaryPhone) {
-                const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
-                setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
-            }
-            if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
-            if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
-            if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
-            if (details.dateOfBirth) {
-                // DOB format from AI is DD/MM/YYYY
-                const parts = details.dateOfBirth.split('/');
-                if (parts.length === 3) {
-                    const date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                    if (!isNaN(date.getTime())) {
-                        setValue('dateOfBirth', date, { shouldDirty: true });
-                    }
-                }
-            }
+            setExtractedBeneficiaryDetails(details);
         }
         
-        toast({ variant: 'success', title: 'Auto-fill Complete', description: `The ${section} fields have been populated. Please review.` });
     } else {
         toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
     }
     loadingSetter(false);
+  }
+
+  const applyExtractedDetails = () => {
+    if (!extractedBeneficiaryDetails) return;
+    const details = extractedBeneficiaryDetails;
+    if (details.beneficiaryFirstName) setValue('newBeneficiaryFirstName', details.beneficiaryFirstName, { shouldDirty: true });
+    if (details.beneficiaryMiddleName) setValue('newBeneficiaryMiddleName', details.beneficiaryMiddleName, { shouldDirty: true });
+    if (details.beneficiaryLastName) setValue('newBeneficiaryLastName', details.beneficiaryLastName, { shouldDirty: true });
+    if (details.fatherName) setValue('newBeneficiaryFatherName', details.fatherName, { shouldDirty: true });
+    if (details.beneficiaryPhone) {
+        const phone = details.beneficiaryPhone.replace(/\D/g, '').slice(-10);
+        setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
+    }
+    if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
+    if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
+    if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
+    if (details.dateOfBirth) {
+        const parts = details.dateOfBirth.split('/');
+        if (parts.length === 3) {
+            const date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            if (!isNaN(date.getTime())) {
+                setValue('dateOfBirth', date, { shouldDirty: true });
+            }
+        }
+    }
+    toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Beneficiary details have been populated. Please review.' });
+    setExtractedBeneficiaryDetails(null);
   }
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
@@ -1151,6 +1157,34 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     }}>
                         Yes, Create Anyway
                     </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+         <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                       <Bot className="h-6 w-6 text-primary" />
+                        Confirm Auto-fill Details
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        The AI has extracted the following details from the document. Please review them before applying to the form.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+                    {extractedBeneficiaryDetails && Object.entries(extractedBeneficiaryDetails).map(([key, value]) => {
+                        if (!value) return null;
+                        return (
+                            <div key={key} className="flex justify-between border-b pb-1">
+                                <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                <span className="font-semibold text-right">{String(value)}</span>
+                            </div>
+                        )
+                    })}
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
