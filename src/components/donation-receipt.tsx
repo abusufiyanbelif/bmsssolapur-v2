@@ -1,27 +1,19 @@
 
+
 "use client";
 
 import React, { forwardRef, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import type { Donation, User, Organization } from '@/services/types';
-import { getCurrentOrganization } from '@/services/organization-service';
 
 interface DonationReceiptProps {
     donation: Donation;
     user: User;
+    organization: Organization;
 }
 
 export const DonationReceipt = forwardRef<HTMLDivElement, DonationReceiptProps>(
-    ({ donation, user }, ref) => {
-        const [organization, setOrganization] = useState<Organization | null>(null);
-        
-        useEffect(() => {
-            const fetchOrg = async () => {
-                const org = await getCurrentOrganization();
-                setOrganization(org);
-            }
-            fetchOrg();
-        }, []);
+    ({ donation, user, organization }, ref) => {
 
         const organizationDetails = {
             name: organization?.name || "Baitul Mal Samajik Sanstha (Solapur)",

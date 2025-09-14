@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,10 +16,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Donation, User } from "@/services/types";
+import type { Donation, User, Organization } from "@/services/types";
 import { DonationReceipt } from "./donation-receipt";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { getCurrentOrganization } from "@/services/organization-service";
 
 interface DonationReceiptDialogProps {
   donation: Donation;
@@ -29,6 +31,16 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+
+  useEffect(() => {
+    // Fetch organization details when dialog is opened
+    const fetchOrg = async () => {
+        const org = await getCurrentOrganization();
+        setOrganization(org);
+    }
+    fetchOrg();
+  }, []);
 
   const handleDownload = async () => {
     if (!receiptRef.current) return;
@@ -37,10 +49,10 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
 
     try {
       const canvas = await html2canvas(receiptRef.current, { 
-          scale: 3, // Increase scale for better resolution
-          useCORS: true, // Allow loading cross-origin images
+          scale: 3, 
+          useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff', // Ensure a solid background for canvas
+          backgroundColor: '#ffffff',
       });
       const imgData = canvas.toDataURL('image/png');
       
@@ -52,7 +64,6 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
         format: 'a4'
       });
       
-      // Scale image to fit A4 page width
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = A4_WIDTH_PT;
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
@@ -95,13 +106,17 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[70vh] overflow-y-auto p-2 bg-gray-200">
-             <DonationReceipt ref={receiptRef} donation={donation} user={user} />
+            {organization ? (
+                <DonationReceipt ref={receiptRef} donation={donation} user={user} organization={organization} />
+            ) : (
+                <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin"/></div>
+            )}
         </div>
         <DialogFooter>
             <DialogClose asChild>
                 <Button variant="secondary">Close</Button>
             </DialogClose>
-            <Button onClick={handleDownload} disabled={isGenerating}>
+            <Button onClick={handleDownload} disabled={isGenerating || !organization}>
                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 Download PDF
             </Button>

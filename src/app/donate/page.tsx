@@ -1,4 +1,5 @@
 
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -50,6 +51,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
+import { QrCodeDialog } from "@/app/organization/qr-code-dialog";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -122,11 +124,12 @@ const initialRecordFormValues: Partial<RecordDonationFormValues> = {
     paytmUpiReferenceNo: '',
 };
 
-function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, activeCampaigns, razorpayKeyId }: { user: User, targetLead: Lead | null, targetCampaignId: string | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string }) {
+function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, activeCampaigns, razorpayKeyId, organization }: { user: User, targetLead: Lead | null, targetCampaignId: string | null, openLeads: Lead[], activeCampaigns: Campaign[], razorpayKeyId?: string, organization: Organization | null }) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRazorpayLoaded, razorpayError] = useRazorpay();
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
 
     const form = useForm<OnlineDonationFormValues>({
         resolver: zodResolver(onlineDonationSchema),
@@ -141,7 +144,7 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
         },
     });
 
-    const { watch, setValue, getValues, control } = form;
+    const { watch, setValue, getValues, control, formState: { isValid } } = form;
 
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
@@ -161,49 +164,48 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
     }, [includePledge, user, setValue, targetLead]);
 
     async function onSubmit(values: OnlineDonationFormValues) {
-        setIsSubmitting(true);
-        const orderResult = await createRazorpayOrder(values.amount, 'INR');
+        if (razorpayKeyId) {
+            // Existing Razorpay Logic
+            setIsSubmitting(true);
+            const orderResult = await createRazorpayOrder(values.amount, 'INR');
 
-        if (!orderResult.success || !orderResult.order) {
-            toast({ variant: 'destructive', title: 'Error', description: orderResult.error || 'Could not create payment order.' });
-            setIsSubmitting(false);
-            return;
-        }
-
-        const options = {
-            key: razorpayKeyId,
-            amount: orderResult.order.amount,
-            currency: orderResult.order.currency,
-            name: "Baitul Mal Samajik Sanstha",
-            description: `Donation for ${values.purpose}`,
-            order_id: orderResult.order.id,
-            handler: function (response: any) {
-                // This is a placeholder. A real implementation would verify this on the backend.
-                toast({
-                    variant: 'success',
-                    title: 'Payment Successful!',
-                    description: 'Your donation has been recorded. Thank you!',
-                });
-            },
-            prefill: {
-                name: user.name,
-                email: user.email,
-                contact: user.phone,
-            },
-            notes: {
-                ...values.notes && { notes: values.notes },
-                ...values.leadId && { leadId: values.leadId },
-                ...values.campaignId && { campaignId: values.campaignId },
-                userId: user.id,
-            },
-            theme: {
-                color: '#16a34a' // Your primary theme color
+            if (!orderResult.success || !orderResult.order) {
+                toast({ variant: 'destructive', title: 'Error', description: orderResult.error || 'Could not create payment order.' });
+                setIsSubmitting(false);
+                return;
             }
-        };
 
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-        setIsSubmitting(false);
+            const options = {
+                key: razorpayKeyId,
+                amount: orderResult.order.amount,
+                currency: orderResult.order.currency,
+                name: "Baitul Mal Samajik Sanstha",
+                description: `Donation for ${values.purpose}`,
+                order_id: orderResult.order.id,
+                handler: function (response: any) {
+                    toast({
+                        variant: 'success',
+                        title: 'Payment Successful!',
+                        description: 'Your donation has been recorded. Thank you!',
+                    });
+                },
+                prefill: { name: user.name, email: user.email, contact: user.phone },
+                notes: {
+                    ...values.notes && { notes: values.notes },
+                    ...values.leadId && { leadId: values.leadId },
+                    ...values.campaignId && { campaignId: values.campaignId },
+                    userId: user.id,
+                },
+                theme: { color: '#16a34a' }
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.open();
+            setIsSubmitting(false);
+        } else {
+            // UPI/QR Code flow
+            setIsQrDialogOpen(true);
+        }
     }
     
      const handleLinkSelection = ({ leadId, campaignId }: { leadId?: string, campaignId?: string }) => {
@@ -216,6 +218,8 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
         setValue('leadId', undefined);
         setValue('campaignId', undefined);
     };
+
+    const isPayDisabled = isSubmitting || (razorpayKeyId && !isRazorpayLoaded) || !isValid;
 
     return (
         <Card>
@@ -244,11 +248,11 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
                         <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={control} name="isAnonymous" render={({ field }) => (<FormItem className="flex items-center space-x-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><Label>Donate Anonymously</Label></FormItem>)}/>
                         {user.monthlyPledgeEnabled && user.monthlyPledgeAmount && (<FormField control={control} name="includePledge" render={({ field }) => (<FormItem className="flex items-center space-x-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><Label>Fulfill my monthly pledge of ₹{user.monthlyPledgeAmount}</Label></FormItem>)}/>)}
-                        <Button type="submit" disabled={isSubmitting || !razorpayKeyId || !isRazorpayLoaded} className="w-full">
-                           {isSubmitting || !isRazorpayLoaded ? <Loader2 className="mr-2 animate-spin"/> : <CreditCard className="mr-2"/>}
-                           {razorpayError ? "Gateway Error" : isRazorpayLoaded ? "Pay Securely" : "Loading Gateway..."}
+                        <Button type="submit" disabled={isPayDisabled} className="w-full">
+                           {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <CreditCard className="mr-2"/>}
+                           {razorpayKeyId ? "Pay Securely via Razorpay" : "Pay with UPI / QR"}
                         </Button>
-                        {razorpayError && <p className="text-xs text-destructive text-center">{razorpayError}</p>}
+                        {razorpayKeyId && razorpayError && <p className="text-xs text-destructive text-center">{razorpayError}</p>}
                     </form>
                 </Form>
                  <LinkLeadCampaignDialog
@@ -258,6 +262,14 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
                     campaigns={activeCampaigns}
                     onLink={handleLinkSelection}
                 />
+                 {organization && (
+                    <QrCodeDialog
+                        open={isQrDialogOpen}
+                        onOpenChange={setIsQrDialogOpen}
+                        organization={organization}
+                        donationDetails={getValues()}
+                    />
+                 )}
             </CardContent>
         </Card>
     )
@@ -617,27 +629,31 @@ function DonatePageContent() {
                     <CardDescription>Please select one of the options below to proceed.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div 
-                        className="p-6 border rounded-lg hover:shadow-lg hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-4"
-                        onClick={() => setDonationMethod('online')}
-                    >
-                        <CreditCard className="h-12 w-12 text-primary" />
-                        <h3 className="text-xl font-semibold">Make a New Online Donation</h3>
-                        <p className="text-sm text-muted-foreground">Use our secure payment gateway to contribute directly.</p>
-                    </div>
-                     <div 
-                        className="p-6 border rounded-lg hover:shadow-lg hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-4"
-                        onClick={() => setDonationMethod('record')}
-                    >
-                        <FileUp className="h-12 w-12 text-primary" />
-                        <h3 className="text-xl font-semibold">I've Already Donated</h3>
-                        <p className="text-sm text-muted-foreground">Upload proof of a past payment made via bank transfer, UPI, or another method.</p>
-                    </div>
+                    {onlinePaymentsEnabled && (
+                        <div 
+                            className="p-6 border rounded-lg hover:shadow-lg hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-4"
+                            onClick={() => setDonationMethod('online')}
+                        >
+                            <CreditCard className="h-12 w-12 text-primary" />
+                            <h3 className="text-xl font-semibold">Make a New Online Donation</h3>
+                            <p className="text-sm text-muted-foreground">Use our secure payment gateway to contribute directly.</p>
+                        </div>
+                    )}
+                     {allowRecordDonation && (
+                        <div 
+                            className="p-6 border rounded-lg hover:shadow-lg hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-4"
+                            onClick={() => setDonationMethod('record')}
+                        >
+                            <FileUp className="h-12 w-12 text-primary" />
+                            <h3 className="text-xl font-semibold">I've Already Donated</h3>
+                            <p className="text-sm text-muted-foreground">Upload proof of a past payment made via bank transfer, UPI, or another method.</p>
+                        </div>
+                     )}
                 </CardContent>
             </Card>
         )}
 
-        {donationMethod === 'online' && (
+        {donationMethod === 'online' && onlinePaymentsEnabled && (
             <OnlineDonationForm 
                 user={user}
                 targetLead={targetLead}
@@ -645,10 +661,11 @@ function DonatePageContent() {
                 openLeads={openLeads}
                 activeCampaigns={activeCampaigns}
                 razorpayKeyId={razorpayKey}
+                organization={organization}
              />
         )}
         
-        {donationMethod === 'record' && (
+        {donationMethod === 'record' && allowRecordDonation && (
             <RecordPastDonationForm user={user} />
         )}
      </div>

@@ -241,7 +241,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const childrenWithProps = Children.map(children, child => {
         if (isValidElement(child)) {
-            return cloneElement(child as React.ReactElement<any>, { user, activeRole: user?.activeRole });
+            // Pass organization data to all direct children of AppShell
+            return cloneElement(child as React.ReactElement<any>, { user, activeRole: user?.activeRole, organization });
         }
         return child;
     });

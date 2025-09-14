@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { forwardRef } from 'react';
@@ -44,10 +45,8 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                     </div>
                                     </td>
                                     <td className="pl-4 align-top">
-                                        <h1 className="text-4xl font-bold tracking-wider" style={textStyle}>
-                                            <span className="text-primary">{organization.name.split(' ')[0]}</span> <span className="text-accent">{organization.name.split(' ')[1]}</span> <span className="text-primary">{organization.name.split(' ')[2]}</span>
-                                        </h1>
-                                        <h2 className="text-4xl font-bold tracking-wider text-accent" style={textStyle}>SOLAPUR</h2>
+                                        <h1 className="text-3xl font-bold text-gray-800" style={textStyle}>{organization.name}</h1>
+                                        <h2 className="text-3xl font-bold text-accent" style={textStyle}>SOLAPUR</h2>
                                         <p className="text-lg font-bold text-primary" style={textStyle}>({organization.city})</p>
                                         <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organization.address}</p>
                                         <p className="text-sm text-gray-600" style={textStyle}>Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
