@@ -86,3 +86,4 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
         return { success: false, error: lastError };
     }
 }
+
