@@ -434,16 +434,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
     if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
     if (details.dateOfBirth) {
-        // AI might return different formats, try to parse robustly
         const dateString = details.dateOfBirth.replace(/\s/g, ''); // remove spaces
         const parts = dateString.split(/[\/\-]/); // split by / or -
         let date: Date | null = null;
         if (parts.length === 3) {
             const [d, m, y] = parts;
-            if (y.length === 4) { // DD/MM/YYYY or MM/DD/YYYY
-                // Simple heuristic: if first part > 12, assume DD/MM
+            if (y.length === 4) {
                 date = parseInt(d) > 12 ? new Date(`${y}-${m}-${d}`) : new Date(`${y}-${d}-${m}`);
-            } else if (y.length === 2) { // DD/MM/YY
+            } else if (y.length === 2) {
                  date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
             }
         }
@@ -549,7 +547,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       { key: 'address', label: 'Address' },
       { key: 'gender', label: 'Gender' },
       { key: 'dateOfBirth', label: 'Date of Birth' },
-  ];
+  ] as const;
 
 
   return (
