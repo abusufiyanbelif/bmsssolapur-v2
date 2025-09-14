@@ -52,7 +52,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             7.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is often labeled with "Your Aadhaar No.", "आपला आधार क्रमांक", or "आधार क्रमांक". You MUST find this number.
 
             **--- CASE DOCUMENT PARSING RULES (Medical Reports, Bills, etc.) ---**
-            1.  **Generate a Compelling Story**: Based on all the text AND the provided purpose/category context, synthesize a detailed narrative for the 'story' field. If the purpose is "Medical", focus on the health condition. If "Education", focus on the academic need, including the specific degree, year, and semester if mentioned. This should be suitable for a public audience to understand the beneficiary's situation. Use the "Comment" or "Impression" section of medical reports for this.
+            1.  **Generate a Compelling Story**: Based on all the text AND the provided purpose/category context, synthesize a detailed narrative for the 'story' field. If the purpose is "Medical", focus on the health condition, stage, and seriousness. If "Education", focus on the academic need, including the specific degree, year, and semester if mentioned. This should be suitable for a public audience to understand the beneficiary's situation. Use the "Comment" or "Impression" section of medical reports for this.
             2.  **Generate a Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. For a medical report, it could be "Assistance needed for medical tests and treatment." For education, "Support required for final year college fees."
             3.  **Identify Medical Conditions**: If the text is from a medical report (like Apollo Diagnostics), identify the specific disease, diagnosis, or abnormal test results (e.g., high ESR indicates inflammation). Use this information to set the 'purpose' to "Medical" and populate the 'diseaseIdentified' field. Also look for the 'diseaseStage' (e.g., "Stage II", "Chronic") and infer the 'diseaseSeriousness' ("High", "Moderate", "Low") based on report comments.
             4.  **Case Reported Date**: Look for a 'reported on' date, often near the patient details on medical reports. If available, extract this for 'caseReportedDate'. Format as YYYY-MM-DD.
@@ -112,3 +112,5 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
+
+    

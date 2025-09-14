@@ -228,9 +228,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [isRefreshingStory, setIsRefreshingStory] = useState(false);
   const [isRefreshingSummary, setIsRefreshingSummary] = useState(false);
   const [caseRawText, setCaseRawText] = useState<string>('');
-  const [summaryOptions, setSummaryOptions] = useState<GenerateSummariesOutput['summaries']>([]);
-  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
-  const [tempExtractedDetails, setTempExtractedDetails] = useState<ExtractLeadDetailsOutput | null>(null);
   
   const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
   const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
@@ -491,12 +488,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   };
     
-    const applyExtractedDetails = (details: ExtractLeadDetailsOutput | null, selectedSummary?: string) => {
+    const applyExtractedDetails = (details: ExtractLeadDetailsOutput | null) => {
       if (!details) return;
       
-      if (selectedSummary) setValue('headline', selectedSummary, { shouldDirty: true });
-      else if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
-
+      if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
       if (details.story) setValue('story', details.story, { shouldDirty: true });
       if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
       if (details.diseaseStage) setValue('diseaseStage', details.diseaseStage, { shouldDirty: true });
@@ -523,32 +518,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         
         setIsCaseAnalyzing(true);
 
-        const [detailsResult, summaryResult] = await Promise.all([
-            handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory),
-            generateSummaries({ rawText: caseRawText })
-        ]);
+        const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
 
-        setIsCaseAnalyzing(false);
-
-        if (summaryResult.success && summaryResult.summaries && summaryResult.summaries.length > 0) {
-            if (detailsResult.success && detailsResult.details) {
-                setTempExtractedDetails(detailsResult.details);
-            }
-            setSummaryOptions(summaryResult.summaries);
-            setIsSummaryDialogOpen(true);
-        } else if (detailsResult.success && detailsResult.details) {
-             toast({ title: 'Details Extracted', description: 'Could not generate multiple summary options, but other details were filled.' });
-            applyExtractedDetails(detailsResult.details);
+        if (result.success && result.details) {
+            applyExtractedDetails(result.details);
         } else {
-            toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error || summaryResult.error || "Could not extract details from text." });
+            toast({ variant: "destructive", title: "Analysis Failed", description: result.error || "Could not extract details from text." });
         }
+        setIsCaseAnalyzing(false);
     };
-
-    const handleSummarySelection = (summaryText: string) => {
-        applyExtractedDetails(tempExtractedDetails, summaryText);
-        setTempExtractedDetails(null);
-        setIsSummaryDialogOpen(false);
-    }
   
   const handleRefreshSummary = async () => {
     if (!caseRawText) {
@@ -556,12 +534,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     setIsRefreshingSummary(true);
-    const summaryResult = await generateSummaries({ rawText: caseRawText });
-    if (summaryResult.success && summaryResult.summaries) {
-        setSummaryOptions(summaryResult.summaries);
-        setIsSummaryDialogOpen(true);
+    const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+     if (result.success && result.details?.headline) {
+        setValue('headline', result.details.headline, { shouldDirty: true });
+        toast({ variant: 'success', title: 'Case Summary Refreshed' });
     } else {
-        toast({ variant: 'destructive', title: 'Failed to Regenerate Summaries', description: summaryResult.error || 'Could not generate new summary options.' });
+        toast({ variant: 'destructive', title: 'Failed to Regenerate Summary', description: result.error });
     }
     setIsRefreshingSummary(false);
   }
@@ -572,12 +550,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     setIsRefreshingStory(true);
-    const detailsResult = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
-    if (detailsResult.success && detailsResult.details?.story) {
-        setValue('story', detailsResult.details.story, { shouldDirty: true });
+    const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+    if (result.success && result.details?.story) {
+        setValue('story', result.details.story, { shouldDirty: true });
         toast({ variant: 'success', title: 'Story Refreshed' });
     } else {
-         toast({ variant: 'destructive', title: 'Failed to Regenerate Story' });
+         toast({ variant: 'destructive', title: 'Failed to Regenerate Story', description: result.error });
     }
     setIsRefreshingStory(false);
   }
@@ -904,13 +882,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                          <p className="text-sm text-muted-foreground">Upload an Aadhaar card to auto-fill the new beneficiary's details.</p>
                                           <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); setAadhaarPreview(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : null); }} /></FormControl><FormMessage /></FormItem>)} />
                                           {aadhaarPreview && (
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {aadhaarPreview && (
-                                                    <div className="relative group p-2 border rounded-lg">
-                                                        <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200} height={120} className="rounded-md object-cover"/>
-                                                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { form.setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
-                                                    </div>
-                                                )}
+                                            <div className="relative group p-2 border rounded-lg">
+                                                <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200} height={120} className="rounded-md object-cover"/>
+                                                 <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { form.setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
                                             </div>
                                           )}
                                          <div className="flex flex-col sm:flex-row gap-2">
@@ -1230,11 +1204,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 {selectedPurposeName === 'Medical' && (
                      <div className="p-4 border rounded-lg space-y-4">
                         <h4 className="font-semibold text-md">Medical Details</h4>
+                         <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
                             <FormField control={form.control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></Select></FormItem>)} />
                         </div>
-                        <FormField control={form.control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>)} />
                     </div>
                 )}
                 
@@ -1376,27 +1350,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-         <AlertDialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
-             <AlertDialogContent>
-                <AlertDialogHeader>
-                     <AlertDialogTitle>Select a Case Summary</AlertDialogTitle>
-                     <AlertDialogDescription>
-                        Choose the best summary for this case. You can edit it later.
-                     </AlertDialogDescription>
-                 </AlertDialogHeader>
-                 <div className="space-y-4 py-4">
-                    {summaryOptions.map(option => (
-                        <div key={option.id} className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer" onClick={() => handleSummarySelection(option.text)}>
-                           <p className="text-sm">{option.text}</p>
-                        </div>
-                    ))}
-                 </div>
-                 <AlertDialogFooter>
-                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                 </AlertDialogFooter>
-             </AlertDialogContent>
-         </AlertDialog>
-         <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
+        <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
@@ -1466,3 +1420,5 @@ export function AddLeadForm(props: { settings: AppSettings }) {
         </Suspense>
     )
 }
+
+    

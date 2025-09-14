@@ -11,6 +11,7 @@ import { getAppSettings } from "@/services/app-settings-service";
 import { extractLeadDetailsFromText as extractLeadDetailsFlow } from "@/ai/flows/extract-lead-details-from-text-flow";
 import { extractBeneficiaryDetails as extractBeneficiaryDetailsFlow } from "@/ai/flows/extract-beneficiary-details-flow";
 import { uploadFile } from "@/services/storage-service";
+import { generateSummaries } from "@/ai/flows/generate-summaries-flow";
 
 interface FormState {
     success: boolean;
@@ -75,6 +76,7 @@ export async function handleAddLead(
       forceCreate: formData.get("forceCreate") === 'true',
       degree: formData.get("degree") as string | undefined,
       year: formData.get("year") as string | undefined,
+      semester: formData.get("semester") as string | undefined,
       // Address fields for new user
       addressLine1: formData.get("addressLine1") as string | undefined,
       city: formData.get("city") as string | undefined,
@@ -200,6 +202,7 @@ export async function handleAddLead(
         source: 'Manual Entry',
         degree: rawFormData.degree,
         year: rawFormData.year,
+        semester: rawFormData.semester,
     };
 
     const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });
@@ -207,7 +210,6 @@ export async function handleAddLead(
     // Now upload files with the new lead's ID
     const uploadPromises: Promise<string | null>[] = [
         rawFormData.aadhaarCard ? uploadFile(rawFormData.aadhaarCard, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
-        rawFormData.addressProof ? uploadFile(rawFormData.addressProof, `leads/${newLead.id}/documents/`) : Promise.resolve(null),
     ];
 
     if (rawFormData.otherDocuments && rawFormData.otherDocuments.length > 0) {
@@ -216,11 +218,10 @@ export async function handleAddLead(
         });
     }
 
-    const [aadhaarUrl, addressUrl, ...otherUrls] = await Promise.all(uploadPromises);
+    const [aadhaarUrl, ...otherUrls] = await Promise.all(uploadPromises);
     
     const docUpdates: Partial<Lead> = {};
     if (aadhaarUrl) docUpdates.aadhaarCardUrl = aadhaarUrl;
-    if (addressUrl) docUpdates.addressProofUrl = addressUrl;
     
     if (otherUrls.length > 0) {
         docUpdates.otherDocument1Url = otherUrls[0] || undefined;
@@ -258,7 +259,7 @@ export async function handleExtractLeadDetailsFromText(
     category?: string
 ): Promise<{ success: boolean; details?: ExtractLeadDetailsOutput; error?: string }> {
     try {
-        const extractedDetails = await extractLeadDetailsFlow({ rawText });
+        const extractedDetails = await extractLeadDetailsFlow({ rawText, purpose, category });
         return { success: true, details: extractedDetails };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
@@ -280,3 +281,5 @@ export async function handleExtractLeadBeneficiaryDetailsFromText(
         return { success: false, error };
     }
 }
+
+    
