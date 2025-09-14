@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,8 +39,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Lead } from "@/services/types";
+import type { Lead, AppSettings } from "@/services/types";
 import Link from "next/link";
+import { getAppSettings } from "@/app/admin/settings/actions";
 
 
 const leadCategories = ['Education Fees', 'Medical Bill', 'Ration Kit', 'Zakat', 'Sadaqah', 'Fitr'] as const;
@@ -60,9 +60,11 @@ export default function RequestHelpPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string |null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [submittedLead, setSubmittedLead] = useState<Lead | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -73,7 +75,7 @@ export default function RequestHelpPage() {
         setLoading(false);
     }
     
-    getAppSettings().then(setSettings).catch(() => setError("Could not load app settings."));
+    getAppSettings().then(setSettings).finally(() => setLoading(false));
   }, []);
 
   const form = useForm<RequestHelpFormValues>({
@@ -129,6 +131,8 @@ export default function RequestHelpPage() {
     }
     setSubmittedLead(null);
   }
+  
+  const allowRequests = settings?.leadConfiguration?.allowBeneficiaryRequests ?? false;
 
   if (loading) {
     return (
@@ -138,15 +142,25 @@ export default function RequestHelpPage() {
     );
   }
 
-  if (!userId) {
+  if (error || !userId) {
     return (
         <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Access Denied</AlertTitle>
-            <AlertDescription>You must be logged in as a Beneficiary to access this page.</AlertDescription>
+            <AlertDescription>{error || "Could not identify user."}</AlertDescription>
         </Alert>
     );
   }
+
+  if (!allowRequests) {
+        return (
+             <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Submissions Temporarily Closed</AlertTitle>
+                <AlertDescription>We are not accepting new help requests at this time. Please check back later.</AlertDescription>
+            </Alert>
+        )
+    }
 
   return (
      <div className="flex-1 space-y-4">
@@ -280,11 +294,11 @@ export default function RequestHelpPage() {
         <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
             <AlertDialogContent>
                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                        <CheckCircle className="h-6 w-6 text-green-500" />
-                        Request Submitted Successfully
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                        <CheckCircle className="h-6 w-6 text-green-600" />
+                    </div>
+                    <AlertDialogTitle className="text-center">Request Submitted Successfully</AlertDialogTitle>
+                    <AlertDialogDescription className="text-center">
                        Your request has been received and is now pending review. Here is a summary of your submission.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -309,9 +323,8 @@ export default function RequestHelpPage() {
                     </div>
                 )}
                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={handleDialogClose}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction asChild>
-                        <Link href="/my-cases">View My Cases</Link>
+                    <AlertDialogAction asChild className="w-full">
+                        <Link href="/my-cases">OK</Link>
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

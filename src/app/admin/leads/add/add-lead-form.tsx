@@ -1143,7 +1143,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         {isUploading ? 'Uploading documents...' : isSubmitting ? 'Creating Lead...' : 'Create Lead'}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                        <X className="mr-2 h-4 w-4" />
+                        <XCircle className="mr-2 h-4 w-4" />
                         Clear Form
                     </Button>
                 </div>

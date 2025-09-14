@@ -34,7 +34,6 @@ export function DeleteConfirmationDialog({
 }: DeleteConfirmationDialogProps) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
   const handleDelete = async () => {
@@ -43,10 +42,10 @@ export function DeleteConfirmationDialog({
     setIsDeleting(false);
 
     if (result === undefined || result.success) {
-      setIsSuccess(true);
       if (onSuccess) {
         onSuccess();
       }
+      setOpen(false); // Close on success
     } else {
       toast({
         variant: "destructive",
@@ -59,11 +58,7 @@ export function DeleteConfirmationDialog({
 
   const handleDialogClose = () => {
     setOpen(false);
-    // Reset state after a short delay to allow for animations
-    setTimeout(() => {
-        setIsSuccess(false);
-        setIsDeleting(false);
-    }, 300);
+    setIsDeleting(false);
   }
 
   return (
@@ -72,38 +67,23 @@ export function DeleteConfirmationDialog({
         {children}
       </AlertDialogTrigger>
       <AlertDialogContent>
-        {isSuccess ? (
-             <AlertDialogHeader>
-                <AlertDialogTitle>Success!</AlertDialogTitle>
-                <AlertDialogDescription>
-                    The {itemType} "{itemName}" has been successfully deleted.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-        ) : (
-            <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the {itemType}{" "}
-                    <span className="font-semibold text-foreground">&quot;{itemName}&quot;</span> from the database.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-        )}
+        <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the {itemType}{" "}
+                <span className="font-semibold text-foreground">&quot;{itemName}&quot;</span> from the database.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
         <AlertDialogFooter>
-            {isSuccess ? (
-                 <Button onClick={handleDialogClose}>OK</Button>
-            ) : (
-                <>
-                    <AlertDialogCancel disabled={isDeleting} onClick={handleDialogClose}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                    >
-                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Yes, delete it
-                    </AlertDialogAction>
-                </>
-            )}
+            <AlertDialogCancel disabled={isDeleting} onClick={handleDialogClose}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Yes, delete it
+            </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
