@@ -112,6 +112,25 @@ export const updateOrganizationFooter = async (id: string, footerData: Organizat
     }
 };
 
+/**
+ * Converts a gs:// URI to a public https:// firebasestorage URL.
+ * @param gsUri The gs:// URI.
+ * @returns The corresponding https:// URL or the original string if it's not a gs:// URI.
+ */
+const convertGsToHttps = (gsUri?: string): string | undefined => {
+    if (!gsUri || !gsUri.startsWith('gs://')) {
+        return gsUri;
+    }
+    // Example: gs://baitul-mal-connect.appspot.com/app-assets/logo-new.png
+    const path = gsUri.substring(5); // Remove "gs://"
+    const bucket = path.substring(0, path.indexOf('/'));
+    const objectPath = path.substring(path.indexOf('/') + 1);
+    
+    // The public URL format for Firebase Storage
+    return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(objectPath)}?alt=media`;
+};
+
+
 // For now, we will assume one organization for simplicity. This can be expanded later.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
     try {
@@ -121,12 +140,18 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         if (!querySnapshot.empty) {
             const docSnap = querySnapshot.docs[0];
             const data = docSnap.data();
-            return { 
+
+            // Convert gs:// URIs to https:// URLs before returning
+            const organizationData = {
                 id: docSnap.id, 
                 ...data,
+                logoUrl: convertGsToHttps(data.logoUrl),
+                qrCodeUrl: convertGsToHttps(data.qrCodeUrl),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: (data.updatedAt as Timestamp)?.toDate(),
             } as Organization;
+            
+            return organizationData;
         }
         return null;
     } catch (error) {
