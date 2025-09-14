@@ -266,8 +266,8 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
                     <QrCodeDialog
                         open={isQrDialogOpen}
                         onOpenChange={setIsQrDialogOpen}
-                        organization={organization}
                         donationDetails={getValues()}
+                        organization={organization}
                     />
                  )}
             </CardContent>
@@ -551,49 +551,55 @@ function DonatePageContent() {
   const leadId = searchParams.get('leadId');
   const campaignId = searchParams.get('campaignId');
   
-  const fetchPageData = async (userId: string | null) => {
-      setIsLoading(true);
-      try {
-        const [appSettings, orgData, allLeads, allCampaigns] = await Promise.all([
-          getAppSettings(),
-          getCurrentOrganization(),
-          getAllLeads(),
-          getAllCampaigns(),
-        ]);
-        
-        setSettings(appSettings);
-        setOrganization(orgData);
-        setOpenLeads(allLeads.filter(l => l.caseAction === 'Publish' || l.caseAction === 'Partial'));
-        setActiveCampaigns(allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming'));
-
-
-        if (userId) {
-            const fetchedUser = await getUser(userId);
-            setUser(fetchedUser);
-        }
-
-        if (leadId) {
-          const lead = await getLead(leadId);
-          setTargetLead(lead);
-          setDonationMethod('online'); // Default to online payment if a specific cause is chosen
-        } else if (campaignId) {
-          setTargetCampaignId(campaignId);
-          setDonationMethod('online'); // Default to online payment if a specific cause is chosen
-        }
-      } catch (e) {
-        setError("Failed to load necessary data. Please try again.");
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
   useEffect(() => {
-    const storedUserId = localStorage.getItem('userId');
-    fetchPageData(storedUserId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const fetchPageData = async () => {
+        setIsLoading(true);
+        const storedUserId = localStorage.getItem('userId');
+        
+        try {
+          const [appSettings, orgData, allLeads, allCampaigns] = await Promise.all([
+            getAppSettings(),
+            getCurrentOrganization(),
+            getAllLeads(),
+            getAllCampaigns(),
+          ]);
+          
+          setSettings(appSettings);
+          setOrganization(orgData);
+          setOpenLeads(allLeads.filter(l => l.caseAction === 'Publish' || l.caseAction === 'Partial'));
+          setActiveCampaigns(allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming'));
+  
+          if (storedUserId) {
+              const fetchedUser = await getUser(storedUserId);
+              setUser(fetchedUser);
+          }
+  
+          if (leadId) {
+            const lead = await getLead(leadId);
+            setTargetLead(lead);
+            setDonationMethod('online');
+          } else if (campaignId) {
+            setTargetCampaignId(campaignId);
+            setDonationMethod('online');
+          }
+        } catch (e) {
+          setError("Failed to load necessary data. Please try again.");
+          console.error(e);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+    fetchPageData();
   }, [leadId, campaignId]);
   
+  useEffect(() => {
+    if (!isLoading && !user) {
+      const redirectUrl = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      router.push(redirectUrl);
+    }
+  }, [isLoading, user, router]);
+
   if (isLoading) {
     return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>
   }
@@ -601,11 +607,9 @@ function DonatePageContent() {
   if (error) {
     return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>
   }
-
+  
   if (!user) {
-    // Redirect to login if user is not found, preserving donation intent
-    const redirectUrl = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
-    router.push(redirectUrl);
+    // This will show briefly before the useEffect above redirects.
     return <div className="flex justify-center p-8"><Loader2 className="animate-spin h-8 w-8" /></div>;
   }
   
@@ -674,7 +678,7 @@ function DonatePageContent() {
 
 export default function DonatePage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>Loading form...</div>}>
             <DonatePageContent />
         </Suspense>
     )
