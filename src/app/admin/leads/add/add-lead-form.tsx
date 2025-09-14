@@ -282,8 +282,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       newBeneficiaryEmail: '',
       newBeneficiaryAadhaar: '',
       addressLine1: '',
-      city: 'Solapur',
-      state: 'Maharashtra',
+      city: '',
+      state: '',
       country: 'India',
       pincode: '',
       isAnonymousAsBeneficiary: false,
@@ -411,10 +411,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     setState({ isChecking: false, ...result });
   }, []);
 
+  // Debounced values
   const debouncedUserId = useDebounce(watch('newBeneficiaryUserId'), 500);
   const debouncedPhone = useDebounce(watch('newBeneficiaryPhone'), 500);
   const debouncedAadhaar = useDebounce(watch('newBeneficiaryAadhaar'), 500);
 
+  // Effects for debounced checks
   useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
   useEffect(() => { if(debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
   useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar, setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
