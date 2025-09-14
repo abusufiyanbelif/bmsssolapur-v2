@@ -48,7 +48,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             4.  **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" or "जन्म तारीख" label. Extract Gender ("Male" or "Female") from the "Gender" or "पुरुष / MALE" label.
             5.  **Address Extraction**: Look for the specific label "Address:" or "पत्ता:". Capture all text and lines that follow it, including any "S/O" or "C/O" lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
             6.  **Phone Number**: Look for a 10-digit number labeled "Mobile" or "Phone". This is CRITICAL.
-            7.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is the 'aadhaarNumber'.
+            7.  **Aadhaar Number**: Look for a 12-digit number, often grouped in sets of 4 (e.g., 1234 5678 9012). This is often labeled with "Your Aadhaar No.", "आपला आधार क्रमांक", or "आधार क्रमांक". You MUST find this number.
 
             **--- CASE DOCUMENT PARSING RULES (Medical Reports, Bills, etc.) ---**
             1.  **Generate a Compelling Story**: Based on all the text AND the provided purpose/category context, synthesize a detailed narrative for the 'story' field. If the purpose is "Medical", focus on the health condition. If "Education", focus on the academic need. This should be suitable for a public audience to understand the beneficiary's situation. Use the "Comment" or "Impression" section of medical reports for this.

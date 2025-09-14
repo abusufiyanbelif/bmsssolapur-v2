@@ -66,13 +66,13 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   manualBeneficiaryName: z.string().optional(),
   
   // New beneficiary fields
-  newBeneficiaryUserId: z.string().optional(),
-  newBeneficiaryFirstName: z.string().optional(),
+  newBeneficiaryUserId: z.string().min(3, "User ID must be at least 3 characters."),
+  newBeneficiaryFirstName: z.string().min(2, "First name must be at least 2 characters."),
   newBeneficiaryMiddleName: z.string().optional(),
-  newBeneficiaryLastName: z.string().optional(),
+  newBeneficiaryLastName: z.string().min(1, "Last name is required."),
   newBeneficiaryFullName: z.string().optional(),
   newBeneficiaryFatherName: z.string().optional(),
-  newBeneficiaryPhone: z.string().optional(),
+  newBeneficiaryPhone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
   newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
   newBeneficiaryAadhaar: z.string().optional(),
   addressLine1: z.string().optional(),
@@ -83,7 +83,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   aadhaarCard: z.any().optional(),
   addressProof: z.any().optional(),
   dateOfBirth: z.date().optional(),
-  gender: z.enum(['Male', 'Female', 'Other']).optional(),
+  gender: z.enum(['Male', 'Female', 'Other'], { required_error: "Gender is required."}),
   isAnonymousAsBeneficiary: z.boolean().default(false),
 
   hasReferral: z.boolean().default(false),
@@ -612,7 +612,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
-  const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+    const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
       { key: 'beneficiaryFirstName', label: 'First Name' },
       { key: 'beneficiaryMiddleName', label: 'Middle Name' },
       { key: 'beneficiaryLastName', label: 'Last Name' },

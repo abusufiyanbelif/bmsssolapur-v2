@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -216,5 +215,3 @@ export const ExtractDonationDetailsOutputSchema = z.object({
 });
 
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
-
-    
