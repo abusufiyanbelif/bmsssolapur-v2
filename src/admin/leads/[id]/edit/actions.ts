@@ -87,6 +87,7 @@ export async function handleUpdateLead(
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
         helpRequested: parseFloat(rawFormData.helpRequested as string),
+        fundingGoal: rawFormData.fundingGoal ? parseFloat(rawFormData.fundingGoal as string) : undefined,
         dueDate: dueDate,
         verificationDueDate: verificationDueDate,
         caseDetails: rawFormData.caseDetails as string | undefined,
@@ -94,6 +95,8 @@ export async function handleUpdateLead(
         status: status,
         caseAction: caseAction,
         verifiedStatus: verifiedStatus,
+        degree: rawFormData.degree as string | undefined,
+        year: rawFormData.year as string | undefined,
     };
     
     const changes = getChangedFields(lead, updates);

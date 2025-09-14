@@ -67,7 +67,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             **General Fields to Extract:**
             - paymentApp: The primary app used for the transaction. Prefer 'senderPaymentApp' if available.
             - senderPaymentApp: The app the sender used (e.g., PhonePe, Google Pay, Paytm).
-            - recipientPaymentApp: The app the recipient received the money on, if specified (e.g., in a "Sent to: G Pay" section).
+            - recipientPaymentApp: The app the recipient received money on, if specified (e.g., in a "Sent to: G Pay" section).
             - amount: The primary transaction amount. Must be a number.
             - transactionId: The main Transaction ID, Reference Number, or UPI Reference No. For PhonePe, this is the 'Transaction ID'. For Google Pay, this MUST be the 'UPI transaction ID'. For Paytm, it is the 'UPI Reference No.'.
             - utrNumber: The UTR number, if explicitly labeled.
@@ -114,5 +114,3 @@ const extractDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
