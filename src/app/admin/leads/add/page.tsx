@@ -39,16 +39,38 @@ export default async function AddLeadPage() {
         );
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        // This is a special case to handle the page crashing due to IAM permission issues.
+        // We will render the form but show an error.
+        const isPermissionError = error.includes("Permission Denied");
+
         return (
              <div className="flex-1 space-y-4">
-                <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error Loading Page</AlertTitle>
-                    <AlertDescription>
-                        Could not load the data required for this page. This is likely a permission issue with the database.
-                        <p className="mt-2 text-xs font-mono bg-destructive/20 p-2 rounded">Details: {error}</p>
-                    </AlertDescription>
-                </Alert>
+                <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Add New Lead</h2>
+                {isPermissionError && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Warning: Could Not Load App Settings</AlertTitle>
+                        <AlertDescription>
+                            The form is available, but some settings (like Lead Purposes) may not be loaded. This is likely due to a database permission issue. Please see the troubleshooting guide.
+                            <p className="mt-2 text-xs font-mono bg-destructive/20 p-2 rounded">Details: {error}</p>
+                        </AlertDescription>
+                    </Alert>
+                )}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Lead Details</CardTitle>
+                        <CardDescription>
+                            Fill in the form below to create a new help case (lead).
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AddLeadForm 
+                            users={[]} 
+                            campaigns={[]} 
+                            settings={{} as any}
+                        />
+                    </CardContent>
+                </Card>
             </div>
         )
     }
