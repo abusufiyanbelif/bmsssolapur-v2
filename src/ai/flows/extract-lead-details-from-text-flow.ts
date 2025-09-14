@@ -43,7 +43,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             4.  **Extract Beneficiary Details from Aadhaar Card**: 
                 - **Full Name**: Carefully find the beneficiary's full name. Look for labels like "Patient Name", "Name". Remove any titles like "MR.".
                 - **Name Parsing Logic**: A full name might have 2, 3, or more parts. The first word is always 'beneficiaryFirstName'. The last word is always 'beneficiaryLastName'. Any words in between constitute the 'beneficiaryMiddleName'. For example, for "Abusufiyan Zulfiquar Ali Ahmed Belief", First Name is "Abusufiyan", Last Name is "Belief", and Middle Name is "Zulfiquar Ali Ahmed".
-                - **Father's Name**: Look for labels like "S/O", "Son of", or "Father's Name" to find the father's name. This is often part of the address block.
+                - **Father's Name Logic**: First, try to find an explicit father's name by looking for labels like "S/O", "Son of", or "Father's Name" and extracting the name that follows. If and ONLY IF no such label is found, then construct the father's name by combining the beneficiary's middle name and last name. If no name can be determined by either method, omit the 'fatherName' field.
                 - **Date of Birth & Gender**: Extract the Date of Birth (in DD/MM/YYYY format) from the "DOB" or "Date of Birth" label. Extract Gender ("Male" or "Female") from the "Gender" label.
                 - **Address Extraction**: Look for the specific label "Address:". Capture all text and lines that follow it, including any "S/O" (Son of) or "C/O" (Care of) lines, until you reach the Aadhaar number (the 12-digit number). Combine these lines into a single, comma-separated string for the 'address' field.
                 - **Phone Number**: Look for a 10-digit number labeled "Mobile" or "Phone". This is CRITICAL.
@@ -65,7 +65,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             - beneficiaryFirstName: The beneficiary's first name.
             - beneficiaryMiddleName: The beneficiary's middle name, if present.
             - beneficiaryLastName: The beneficiary's last name.
-            - fatherName: The beneficiary's father's name. Look for "S/O", "Son of", or "Father's Name".
+            - fatherName: The beneficiary's father's name. Use the two-step logic described above.
             - dateOfBirth: The beneficiary's date of birth (Format: DD/MM/YYYY).
             - gender: The beneficiary's gender ("Male" or "Female").
             - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
@@ -102,4 +102,3 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
-
