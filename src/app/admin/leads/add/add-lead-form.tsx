@@ -1255,11 +1255,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </AlertDialogHeader>
                 <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
                     {beneficiaryDialogFields.map(({ key, label }) => {
-                        const value = extractedBeneficiaryDetails?.[key] || <span className="text-destructive font-normal">Not Found</span>;
+                        const value = extractedBeneficiaryDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
                         return (
                             <div key={key} className="flex justify-between border-b pb-1">
                                 <span className="text-muted-foreground capitalize">{label}</span>
-                                <span className="font-semibold text-right">{value}</span>
+                                {value ? (
+                                     <span className="font-semibold text-right">{value}</span>
+                                ) : (
+                                    <span className="text-destructive font-normal text-right">Not Found</span>
+                                )}
                             </div>
                         )
                     })}
@@ -1281,3 +1285,4 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
+

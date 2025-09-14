@@ -30,27 +30,38 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
-        prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents like the Aadhaar card.
+        prompt: `You are an expert data entry assistant specializing in Indian identity documents like the Aadhaar card. Your task is to analyze the provided OCR text and extract the information into the dedicated fields defined in the output schema. Follow these rules precisely.
 
-Your task is to analyze the provided OCR text from a document and extract the information into the dedicated fields defined in the output schema.
+            **--- EXTRACTION RULES ---**
 
-- If a person's full name is present, extract their first, middle, and last names into the 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName' fields.
-- If an address is present (often labeled with 'Address:' or 'पत्ता:'), extract the full address. From that full address, also extract the 'city', 'state', 'country', and 'pincode' into their dedicated fields.
-- For other fields, identify the labels and their corresponding values.
+            1.  **Full Name:** Carefully find the beneficiary's full name. It is usually the first prominent name on the card.
+                - From this full name, parse the 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. The first word is the first name, the last word is the last name, and anything in between is the middle name.
 
-**CRITICAL HINTS FOR ACCURACY:**
-- **Aadhaar Number:** This is the most important field. It is a 12-digit number, often grouped in sets of four (e.g., 1234 5678 9012). It is typically labeled with "Your Aadhaar No.", "आधार क्रमांक", or "आपला आधार क्रमांक". You MUST find this number.
-- **Father's Name:** Look for a name associated with "S/O" or "C/O". If not found, you can infer it from the middle name of a three-part beneficiary name.
-- **Date of Birth:** Often labeled as "DOB" or "जन्म तारीख".
-- **Phone Number:** Look for a 10-digit mobile number.
+            2.  **Father's Name:** Look for a name immediately following the labels "S/O" or "C/O". This is the father's name. If no such label is found, and the beneficiary's name has three parts, you can infer that the middle name is the father's name.
 
-Return the extracted data. If a value for a field is not found in the document, omit the field from your response.
+            3.  **Date of Birth:** Find the date next to the label "DOB" or "जन्म तारीख".
 
-Here is the OCR text from the document:
----
-${input.rawText}
----
-`,
+            4.  **Gender:** Find the gender next to the label "Gender" or "पुरुष / MALE".
+
+            5.  **Phone Number:** Find the 10-digit mobile number, which may or may not have a label.
+
+            6.  **Aadhaar Number:** This is critical. Look for a 12-digit number, which is often grouped in sets of four (e.g., 1234 5678 9012). It will be next to one of these labels: "Your Aadhaar No.", "आपला आधार क्रमांक", or "आधार क्रमांक". You MUST find this number.
+
+            7.  **Address Block:** First, find the specific label **"Address:"** or **"पत्ता:"**. Capture all text and lines that follow it, until you reach the text containing the Aadhaar number or the end of the document. This complete text is the value for the 'address' field.
+            
+            8.  **Address Components:** From the full address block you just extracted, identify and populate the following dedicated fields:
+                -   `city`: The city name (e.g., Solapur).
+                -   `state`: The state name (e.g., Maharashtra).
+                -   `pincode`: The 6-digit PIN code.
+                -   `country`: The country. If not specified, assume "India".
+
+            If you cannot find a valid value for a field, you MUST omit the field entirely from your JSON output.
+
+            ---
+            **OCR Text to Analyze:**
+            ${input.rawText}
+            ---
+            `,
         output: {
             schema: ExtractBeneficiaryDetailsOutputSchema
         }
@@ -65,3 +76,4 @@ ${input.rawText}
     return output;
   }
 );
+
