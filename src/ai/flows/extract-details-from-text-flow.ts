@@ -1,4 +1,5 @@
-
+// This file is deprecated. The logic has been moved to extract-donation-details-flow.ts
+// It is kept temporarily to avoid breaking build chains but can be safely deleted.
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting donation details from raw text.
@@ -9,14 +10,14 @@
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import {
-    ExtractDetailsFromTextInputSchema,
     ExtractDetailsFromTextInput,
+    ExtractDetailsFromTextInputSchema,
     ExtractDonationDetailsOutput,
     ExtractDonationDetailsOutputSchema
 } from '@/ai/schemas';
 
 
-export async function extractDonationDetails(input: ExtractDetailsFromTextInput): Promise<ExtractDonationDetailsOutput> {
+export async function extractDetailsFromText(input: ExtractDetailsFromTextInput): Promise<ExtractDonationDetailsOutput> {
   return extractDetailsFromTextFlow(input);
 }
 
@@ -65,9 +66,9 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             **General Fields to Extract:**
             - paymentApp: The primary app used for the transaction. Prefer 'senderPaymentApp' if available.
             - senderPaymentApp: The app the sender used (e.g., PhonePe, Google Pay, Paytm).
-            - recipientPaymentApp: The app the recipient received money on, if specified (e.g., in a "Sent to: G Pay" section).
+            - recipientPaymentApp: The app the recipient received the money on, if specified (e.g., in a "Sent to: G Pay" section).
             - amount: The primary transaction amount. Must be a number.
-            - transactionId: The main Transaction ID, Reference Number, or UPI Reference No. For PhonePe, this is the 'Transaction ID'. For Google Pay, this MUST be the 'UPI transaction ID'. For Paytm, it is the 'UPI Reference No.'.
+            - transactionId: The main Transaction ID, Reference Number, or UPI Reference No. For PhonePe, this is the 'Transaction ID'. For Google Pay, this MUST be the 'UPI transaction ID'.
             - utrNumber: The UTR number, if explicitly labeled.
             - googlePayTransactionId: The Google Pay specific transaction ID.
             - phonePeTransactionId: The PhonePe specific transaction ID.
@@ -86,12 +87,6 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - recipientAccountNumber: The recipient's bank account number, even if partial.
             - status: The transaction status (e.g., Successful, Completed).
             - notes: Any user-added comments, remarks, or descriptions found in the payment details.
-            - phonePeSenderName: The sender's name if it appears on a PhonePe receipt (rare).
-            - phonePeRecipientName: The recipient's name from a PhonePe receipt.
-            - googlePaySenderName: The sender's name from a Google Pay receipt.
-            - googlePayRecipientName: The recipient's name from a Google Pay receipt.
-            - paytmSenderName: The sender's name from a Paytm receipt.
-            - paytmRecipientName: The recipient's name from a Paytm receipt.
 
             Raw Text to Parse:
             ---
