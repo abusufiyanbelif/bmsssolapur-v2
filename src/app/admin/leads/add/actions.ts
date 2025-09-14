@@ -41,6 +41,7 @@ export async function handleAddLead(
       beneficiaryId: formData.get("beneficiaryId") as string | undefined,
       linkBeneficiaryLater: formData.get("linkBeneficiaryLater") === 'on',
       manualBeneficiaryName: formData.get("manualBeneficiaryName") as string | undefined,
+      newBeneficiaryUserId: formData.get("newBeneficiaryUserId") as string | undefined,
       newBeneficiaryFirstName: formData.get("newBeneficiaryFirstName") as string | undefined,
       newBeneficiaryMiddleName: formData.get("newBeneficiaryMiddleName") as string | undefined,
       newBeneficiaryLastName: formData.get("newBeneficiaryLastName") as string | undefined,
@@ -112,7 +113,7 @@ export async function handleAddLead(
         leadName = rawFormData.manualBeneficiaryName;
     } else {
         if (rawFormData.beneficiaryType === 'new') {
-            const { newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, gender, addressLine1, city, state, pincode } = rawFormData;
+            const { newBeneficiaryUserId, newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, gender, addressLine1, city, state, pincode } = rawFormData;
             if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone || !gender) {
                 return { success: false, error: "New beneficiary First Name, Last Name, Phone, and Gender are required." };
             }
@@ -120,6 +121,7 @@ export async function handleAddLead(
 
             try {
                 beneficiaryUser = await createUser({
+                    userId: newBeneficiaryUserId,
                     name: newBeneficiaryName,
                     firstName: newBeneficiaryFirstName,
                     middleName: newBeneficiaryMiddleName || '',

@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -30,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -67,6 +66,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   manualBeneficiaryName: z.string().optional(),
   
   // New beneficiary fields
+  newBeneficiaryUserId: z.string().optional(),
   newBeneficiaryFirstName: z.string().optional(),
   newBeneficiaryMiddleName: z.string().optional(),
   newBeneficiaryLastName: z.string().optional(),
@@ -237,6 +237,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const addressProofInputRef = useRef<HTMLInputElement>(null);
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
 
+  const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [phoneState, setPhoneState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [aadhaarState, setAadhaarState] = useState<AvailabilityState>(initialAvailabilityState);
+
 
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
@@ -374,7 +378,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   useEffect(() => {
     const fullName = `${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim();
     setValue('newBeneficiaryFullName', fullName, { shouldDirty: true });
-  }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, setValue]);
+     if (newBeneficiaryFirstName && newBeneficiaryLastName) {
+        const generatedUserId = `${newBeneficiaryFirstName.toLowerCase()}.${newBeneficiaryLastName.toLowerCase()}`.replace(/\s+/g, '');
+        if (!form.formState.dirtyFields.newBeneficiaryUserId) {
+            setValue('newBeneficiaryUserId', generatedUserId, { shouldValidate: true });
+        }
+    }
+  }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, setValue, form.formState.dirtyFields.newBeneficiaryUserId]);
 
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
@@ -391,6 +401,23 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   }, [selectedPurposeName, form]);
     
+  const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
+    if (!value) {
+        setState(initialAvailabilityState);
+        return;
+    }
+    setState({ isChecking: true, isAvailable: null });
+    const result = await checkAvailability(field, value);
+    setState({ isChecking: false, ...result });
+  }, []);
+
+  const debouncedUserId = useDebounce(watch('newBeneficiaryUserId'), 500);
+  const debouncedPhone = useDebounce(watch('newBeneficiaryPhone'), 500);
+  const debouncedAadhaar = useDebounce(watch('newBeneficiaryAadhaar'), 500);
+
+  useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar, setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
     
   const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
     const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
@@ -597,6 +624,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       { key: 'state', label: 'State' },
       { key: 'pincode', label: 'Pincode' },
   ];
+  
+  const isAnyFieldInvalid = userIdState.isAvailable === false || phoneState.isAvailable === false || aadhaarState.isAvailable === false;
 
 
   return (
@@ -807,6 +836,20 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                              <Label>Full Name</Label>
                              <FormField control={form.control} name="newBeneficiaryFullName" render={({ field }) => (<FormControl><Input readOnly {...field} className="bg-muted" /></FormControl>)} />
                         </div>
+                        <FormField
+                            control={form.control}
+                            name="newBeneficiaryUserId"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>User ID</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="auto-generated or custom" {...field} />
+                                </FormControl>
+                                <AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('newBeneficiaryUserId', s, { shouldValidate: true })} />
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField control={form.control} name="newBeneficiaryFatherName" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Name</FormLabel><FormControl><Input placeholder="Father's Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
@@ -818,24 +861,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     <FormControl>
                                         <Input type="tel" maxLength={10} placeholder="Enter 10-digit phone number" {...field} />
                                     </FormControl>
+                                    <AvailabilityFeedback state={phoneState} fieldName="phone number" />
                                     <FormMessage />
                                     </FormItem>
                                 )}
                             />
                             <FormField
-                                control={form.control}
-                                name="newBeneficiaryEmail"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Email (Optional)</FormLabel>
-                                    <FormControl>
-                                        <Input type="email" placeholder="beneficiary@example.com" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
                                 control={form.control}
                                 name="newBeneficiaryAadhaar"
                                 render={({ field }) => (
@@ -844,11 +875,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                     <FormControl>
                                         <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
                                     </FormControl>
+                                     <AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar number" />
                                     <FormMessage />
                                     </FormItem>
                                 )}
                                 />
-                             <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Date of Birth</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus captionLayout="dropdown-buttons" fromYear={1920} toYear={new Date().getFullYear()} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                         </div>
                         <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><RadioGroup onValueChange={(v) => setValue('gender', v as 'Male' | 'Female' | 'Other')} value={field.value} className="flex space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male"/></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female"/></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup><FormMessage /></FormItem>)} />
                         <h4 className="font-medium pt-2">Address</h4>
@@ -858,28 +889,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             <FormField control={form.control} name="state" render={({field}) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                             <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         </div>
-                        <FormField
-                            control={form.control}
-                            name="isAnonymousAsBeneficiary"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel>
-                                    Mark as Anonymous Beneficiary
-                                    </FormLabel>
-                                    <FormDescription>
-                                    If checked, their name will be hidden from public view.
-                                    </FormDescription>
-                                </div>
-                                </FormItem>
-                            )}
-                        />
                     </div>
                 )}
                 </>
@@ -1186,7 +1195,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 />
                 
                 <div className="flex gap-4 pt-6 border-t">
-                    <Button type="submit" disabled={isSubmitting || isUploading}>
+                    <Button type="submit" disabled={isSubmitting || isUploading || isAnyFieldInvalid}>
                         {isUploading ? <UploadCloud className="mr-2 h-4 w-4 animate-spin" /> : isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isUploading ? 'Uploading documents...' : isSubmitting ? 'Creating Lead...' : 'Create Lead'}
                     </Button>
