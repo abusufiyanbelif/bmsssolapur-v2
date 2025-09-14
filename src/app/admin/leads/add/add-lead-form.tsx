@@ -228,6 +228,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [caseRawText, setCaseRawText] = useState<string>('');
   const [summaryOptions, setSummaryOptions] = useState<GenerateSummariesOutput['summaries']>([]);
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
+  const [tempExtractedDetails, setTempExtractedDetails] = useState<ExtractLeadDetailsOutput | null>(null);
   
   const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
   const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
@@ -469,47 +470,64 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
   };
     
-  const handleFullAutoFill = async () => {
-    if (!caseRawText) {
-         toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
-        return;
+    const applyExtractedDetails = (details: ExtractLeadDetailsOutput | null, selectedSummary?: string) => {
+      if (!details) return;
+      
+      if (selectedSummary) setValue('caseSummary', selectedSummary, { shouldDirty: true });
+      else if (details.caseSummary) setValue('caseSummary', details.caseSummary, { shouldDirty: true });
+
+      if (details.story) setValue('story', details.story, { shouldDirty: true });
+      if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
+      if (details.purpose) {
+        const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
+        if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
+      }
+      if (details.category) setValue('category', details.category, { shouldDirty: true });
+      if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
+      if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
+      if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
+      if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
+      if (details.semester) setValue('semester', details.semester, { shouldDirty: true });
+
+      toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
     }
-    
-    setIsCaseAnalyzing(true);
 
-    const [detailsResult, summaryResult] = await Promise.all([
-        handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory),
-        generateSummaries({ rawText: caseRawText })
-    ]);
-
-    if (detailsResult.success && detailsResult.details) {
-        const details = detailsResult.details;
-        if (details.story) setValue('story', details.story, { shouldDirty: true });
-        if (details.diseaseIdentified) setValue('diseaseIdentified', details.diseaseIdentified, { shouldDirty: true });
-        if (details.purpose) {
-            const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
-            if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
+    const handleFullAutoFill = async () => {
+        if (!caseRawText) {
+            toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
+            return;
         }
-        if (details.category) setValue('category', details.category, { shouldDirty: true });
-        if (details.amount) setValue('helpRequested', details.amount, { shouldDirty: true });
-        if (details.dueDate) setValue('dueDate', new Date(details.dueDate), { shouldDirty: true });
-        if (details.acceptableDonationTypes) setValue('acceptableDonationTypes', details.acceptableDonationTypes, { shouldDirty: true });
-        if (details.caseDetails) setValue('caseDetails', details.caseDetails, { shouldDirty: true });
-        if (details.semester) setValue('semester', details.semester, { shouldDirty: true });
+        
+        setIsCaseAnalyzing(true);
 
-        if (summaryResult.success && summaryResult.summaries) {
-            setSummaryOptions(summaryResult.summaries);
-            setIsSummaryDialogOpen(true);
+        const [detailsResult, summaryResult] = await Promise.all([
+            handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory),
+            generateSummaries({ rawText: caseRawText })
+        ]);
+
+        setIsCaseAnalyzing(false);
+
+        if (detailsResult.success && detailsResult.details) {
+            if (summaryResult.success && summaryResult.summaries && summaryResult.summaries.length > 0) {
+                // Primary path: show summary selection
+                setTempExtractedDetails(detailsResult.details); // Store details temporarily
+                setSummaryOptions(summaryResult.summaries);
+                setIsSummaryDialogOpen(true);
+            } else {
+                // Fallback path: apply details directly if summary fails
+                applyExtractedDetails(detailsResult.details);
+                toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Could not generate summary options, but other details were applied.' });
+            }
         } else {
-             if (details.caseSummary) setValue('caseSummary', details.caseSummary, { shouldDirty: true });
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error || "Could not extract structured details from text." });
         }
-        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review the populated fields.' });
-    } else {
-        toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error || "Could not extract structured details from text." });
+    };
+
+    const handleSummarySelection = (summaryText: string) => {
+        applyExtractedDetails(tempExtractedDetails, summaryText);
+        setTempExtractedDetails(null);
+        setIsSummaryDialogOpen(false);
     }
-    
-    setIsCaseAnalyzing(false);
-  }
   
   const handleRefreshSummary = async () => {
     if (!caseRawText) {
@@ -589,7 +607,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     { key: 'country', label: 'Country' },
 ];
 
-  const applyExtractedDetails = () => {
+  const applyExtractedBeneficiaryDetails = () => {
     if (!extractedBeneficiaryDetails) return;
     const details = extractedBeneficiaryDetails;
     
@@ -857,7 +875,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <AccordionTrigger>
                                      <div className="flex items-center gap-2 text-primary">
                                         <ScanSearch className="h-5 w-5" />
-                                        Scan Beneficiary Documents (Optional)
+                                        Scan Aadhaar Card (Optional)
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent className="pt-4">
@@ -877,7 +895,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                          <div className="flex flex-col sm:flex-row gap-2">
                                              <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromDocuments([getValues('aadhaarCard')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
                                                 {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                                Scan Beneficiary Docs
+                                                Scan Aadhaar
                                             </Button>
                                             <Button type="button" className="w-full" onClick={() => handleBeneficiaryAutoFill()} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
                                                 {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
@@ -1324,6 +1342,26 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+         <AlertDialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
+             <AlertDialogContent>
+                <AlertDialogHeader>
+                     <AlertDialogTitle>Select a Case Summary</AlertDialogTitle>
+                     <AlertDialogDescription>
+                        Choose the best summary for this case. You can edit it later.
+                     </AlertDialogDescription>
+                 </AlertDialogHeader>
+                 <div className="space-y-4 py-4">
+                    {summaryOptions.map(option => (
+                        <div key={option.id} className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer" onClick={() => handleSummarySelection(option.text)}>
+                           <p className="text-sm">{option.text}</p>
+                        </div>
+                    ))}
+                 </div>
+                 <AlertDialogFooter>
+                     <AlertDialogCancel>Cancel</AlertDialogCancel>
+                 </AlertDialogFooter>
+             </AlertDialogContent>
+         </AlertDialog>
          <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -1357,42 +1395,40 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </Button>
                     <div className='flex gap-2'>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                        <AlertDialogAction onClick={applyExtractedBeneficiaryDetails}>Apply & Fill Form</AlertDialogAction>
                     </div>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-        <AlertDialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
-             <AlertDialogContent>
-                <AlertDialogHeader>
-                     <AlertDialogTitle>Select a Case Summary</AlertDialogTitle>
-                     <AlertDialogDescription>
-                        Choose the best summary for this case. You can edit it later.
-                     </AlertDialogDescription>
-                 </AlertDialogHeader>
-                 <div className="space-y-4 py-4">
-                    {summaryOptions.map(option => (
-                        <div key={option.id} className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer" onClick={() => {
-                            setValue('caseSummary', option.text, { shouldDirty: true });
-                            setIsSummaryDialogOpen(false);
-                        }}>
-                           <p className="text-sm">{option.text}</p>
-                        </div>
-                    ))}
-                 </div>
-                 <AlertDialogFooter>
-                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                 </AlertDialogFooter>
-             </AlertDialogContent>
-         </AlertDialog>
     </>
   );
 }
 
-export function AddLeadForm(props: { settings: AppSettings, users: User[], campaigns: Campaign[] }) {
+export function AddLeadForm(props: { settings: AppSettings }) {
+    const [users, setUsers] = useState<User[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const [fetchedUsers, fetchedCampaigns] = await Promise.all([
+                import('@/services/user-service').then(m => m.getAllUsers()),
+                import('@/services/campaign-service').then(m => m.getAllCampaigns()),
+            ]);
+            setUsers(fetchedUsers);
+            setCampaigns(fetchedCampaigns);
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary"/></div>;
+    }
+
     return (
         <Suspense fallback={<div>Loading form...</div>}>
-            <AddLeadFormContent {...props} />
+            <AddLeadFormContent {...props} users={users} campaigns={campaigns} />
         </Suspense>
     )
 }
