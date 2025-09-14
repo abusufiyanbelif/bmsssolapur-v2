@@ -50,7 +50,6 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
             
             8.  **Address Components:** From the full address block you just extracted, identify and populate the following dedicated fields:
                 -   'city': The city name (e.g., Solapur).
-                -   'state': The state name (e.g., Maharashtra).
                 -   'pincode': The 6-digit PIN code.
                 -   'country': The country. If not specified, assume "India".
 

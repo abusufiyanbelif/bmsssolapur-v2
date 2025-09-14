@@ -508,6 +508,22 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     loadingSetter(false);
   }
 
+  const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+    { key: 'beneficiaryFullName', label: 'Full Name' },
+    { key: 'beneficiaryFirstName', label: 'First Name' },
+    { key: 'beneficiaryMiddleName', label: 'Middle Name' },
+    { key: 'beneficiaryLastName', label: 'Last Name' },
+    { key: 'fatherName', label: "Father's Name" },
+    { key: 'dateOfBirth', label: 'Date of Birth' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'beneficiaryPhone', label: 'Phone' },
+    { key: 'aadhaarNumber', label: 'Aadhaar Number' },
+    { key: 'address', label: 'Address' },
+    { key: 'city', label: 'City' },
+    { key: 'pincode', label: 'Pincode' },
+    { key: 'country', label: 'Country' },
+];
+
   const applyExtractedDetails = () => {
     if (!extractedBeneficiaryDetails) return;
     const details = extractedBeneficiaryDetails;
@@ -523,7 +539,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if (details.aadhaarNumber) setValue('newBeneficiaryAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
     if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
     if (details.city) setValue('city', details.city, { shouldDirty: true });
-    if (details.state) setValue('state', details.state, { shouldDirty: true });
     if (details.pincode) setValue('pincode', details.pincode, { shouldDirty: true });
     if (details.country) setValue('country', details.country, { shouldDirty: true });
     if (details.gender) setValue('gender', details.gender as 'Male' | 'Female' | 'Other', { shouldDirty: true });
@@ -631,23 +646,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
-  const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
-      { key: 'beneficiaryFullName', label: 'Full Name' },
-      { key: 'beneficiaryFirstName', label: 'First Name' },
-      { key: 'beneficiaryMiddleName', label: 'Middle Name' },
-      { key: 'beneficiaryLastName', label: 'Last Name' },
-      { key: 'fatherName', label: "Father's Name" },
-      { key: 'dateOfBirth', label: 'Date of Birth' },
-      { key: 'gender', label: 'Gender' },
-      { key: 'beneficiaryPhone', label: 'Phone' },
-      { key: 'aadhaarNumber', label: 'Aadhaar Number' },
-      { key: 'address', label: 'Address' },
-      { key: 'city', label: 'City' },
-      { key: 'state', label: 'State' },
-      { key: 'pincode', label: 'Pincode' },
-      { key: 'country', label: 'Country' },
-  ];
-  
   const isAnyFieldInvalid = userIdState.isAvailable === false || phoneState.isAvailable === false || aadhaarState.isAvailable === false;
 
 
@@ -1285,4 +1283,3 @@ export function AddLeadForm(props: { users: User[], campaigns: Campaign[], setti
         </Suspense>
     )
 }
-
