@@ -613,7 +613,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
-    const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+  const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
       { key: 'beneficiaryFirstName', label: 'First Name' },
       { key: 'beneficiaryMiddleName', label: 'Middle Name' },
       { key: 'beneficiaryLastName', label: 'Last Name' },
@@ -1257,11 +1257,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
                     {extractedBeneficiaryDetails && beneficiaryDialogFields.map(({ key, label }) => {
                         const value = extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput];
-                        if (!value) return null;
                         return (
                             <div key={key} className="flex justify-between border-b pb-1">
                                 <span className="text-muted-foreground capitalize">{label}</span>
-                                <span className="font-semibold text-right">{String(value)}</span>
+                                <span className="font-semibold text-right">{String(value || '')}</span>
                             </div>
                         )
                     })}

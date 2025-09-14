@@ -55,7 +55,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
             - gender: The beneficiary's gender ("Male" or "Female").
             - beneficiaryPhone: The 10-digit phone number of the beneficiary. Look for "Mobile", "Phone", or similar labels.
             - beneficiaryEmail: The beneficiary's email address. Must be a valid email format.
-            - address: The full address of the beneficiary. Look for "Address" or "Patient location" or similar labels and combine lines.
+            - address: The full address of the beneficiary. Look for "Address" or "Patient location" or "पत्ता:" or similar labels and combine lines.
             - city: The city from the address.
             - state: The state from the address (e.g., Maharashtra).
             - pincode: The 6-digit pincode from the address.

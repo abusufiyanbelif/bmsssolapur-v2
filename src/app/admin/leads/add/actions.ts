@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
@@ -80,6 +79,7 @@ export async function handleAddLead(
       city: formData.get("city") as string | undefined,
       state: formData.get("state") as string | undefined,
       pincode: formData.get("pincode") as string | undefined,
+      country: formData.get("country") as string | undefined,
   };
   
   if (!rawFormData.purpose || !rawFormData.category || isNaN(rawFormData.helpRequested)) {
@@ -113,7 +113,7 @@ export async function handleAddLead(
         leadName = rawFormData.manualBeneficiaryName;
     } else {
         if (rawFormData.beneficiaryType === 'new') {
-            const { newBeneficiaryUserId, newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, gender, addressLine1, city, state, pincode } = rawFormData;
+            const { newBeneficiaryUserId, newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, gender, addressLine1, city, state, pincode, country } = rawFormData;
             if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone || !gender) {
                 return { success: false, error: "New beneficiary First Name, Last Name, Phone, and Gender are required." };
             }
@@ -138,7 +138,7 @@ export async function handleAddLead(
                         city: city,
                         state: state,
                         pincode: pincode,
-                        country: 'India'
+                        country: country
                     }
                 });
             } catch (e) {
