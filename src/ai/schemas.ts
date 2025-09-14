@@ -146,6 +146,10 @@ export const ExtractBeneficiaryDetailsOutputSchema = z.object({
     beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
     beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
     address: z.string().optional().describe("The full address of the beneficiary."),
+    city: z.string().optional().describe("The city from the address."),
+    state: z.string().optional().describe("The state from the address."),
+    pincode: z.string().optional().describe("The 6-digit pincode from the address."),
+    country: z.string().optional().describe("The country from the address."),
     aadhaarNumber: z.string().optional().describe("The beneficiary's Aadhaar card number."),
 });
 export type ExtractBeneficiaryDetailsOutput = z.infer<typeof ExtractBeneficiaryDetailsOutputSchema>;
