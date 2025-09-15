@@ -40,7 +40,7 @@ interface RawTextScanResult {
 export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
     const files: File[] = [];
     // Iterate over all entries in the FormData to find the files.
-    for (const [key, value] of formData.entries()) {
+    for (const value of formData.values()) {
         if (value instanceof File) {
             files.push(value);
         }

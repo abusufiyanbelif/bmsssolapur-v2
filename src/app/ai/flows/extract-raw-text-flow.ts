@@ -23,11 +23,13 @@ export const extractRawTextFlow = ai.defineFlow(
   },
   async (input) => {
     
+    const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
+    
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
         prompt: [
-            { text: `You are an Optical Character Recognition (OCR) tool. You will be given an image of a document (like a medical report, ID card, or payment receipt). Extract all text from the document exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it.` },
-            { media: { url: input.photoDataUri } }
+            { text: `You are an Optical Character Recognition (OCR) tool. You will be given one or more images or PDF documents (like medical reports, ID cards, or payment receipts). Extract all text from each document exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it. If there are multiple documents, separate the text from each one with '---'.` },
+            ...mediaParts
         ],
         output: {
             schema: ExtractRawTextOutputSchema

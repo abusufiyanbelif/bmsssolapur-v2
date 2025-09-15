@@ -147,6 +147,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   const [recipientDetails, setRecipientDetails] = useState<User | null>(null);
   const [transferMethod, setTransferMethod] = useState<'record' | 'scan'>('record');
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
+  const [zoom, setZoom] = useState(1);
   
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
 
@@ -183,6 +184,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     setRawText(null);
     setBeneficiaryDetails(null);
     setRecipientDetails(null);
+    setZoom(1);
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -238,7 +240,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     if (!file) return;
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("proof", file);
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
       setRawText(result.rawText);
@@ -304,6 +306,13 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     }
   };
   
+   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
+  };
+
+
+
   return (
     <>
        <div className="grid grid-cols-2 gap-4 mb-8">
@@ -345,20 +354,29 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             />
             {previewUrl && (
                 <div className="relative group">
-                    <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
-                        {file?.type.startsWith('image/') ? (
-                            <Image src={previewUrl} alt="Proof preview" layout="fill" className="object-contain"/>
+                     <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                          {file?.type.startsWith('image/') ? (
+                            <Image 
+                                src={previewUrl} 
+                                alt="Proof preview" 
+                                width={800 * zoom}
+                                height={800 * zoom}
+                                className="object-contain transition-transform duration-100"
+                                style={{ transform: `scale(${zoom})` }}
+                            />
                         ) : (
                             <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                 <FileIcon className="h-16 w-16" />
                                 <span className="text-sm font-semibold">{file?.name}</span>
                             </div>
                         )}
-                    </div>
-                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
-                        <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); }}><X className="h-4 w-4"/></Button>
-                    </div>
-                </div>
+                      </div>
+                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                          <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setZoom(1); }}><X className="h-4 w-4"/></Button>
+                      </div>
+                  </div>
             )}
             
             {file && (
