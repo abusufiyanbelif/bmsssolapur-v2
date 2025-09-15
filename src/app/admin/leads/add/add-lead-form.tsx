@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -1168,7 +1169,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                             width={100 * zoom}
                                                             height={100 * zoom}
                                                             className="object-contain transition-transform"
-                                                            style={{transform: `rotate(${rotation}deg)`}}
+                                                            style={{transform: `rotate(${rotation}deg) scale(${zoom})`}}
                                                         />
                                                     ) : (
                                                         <FileIcon className="w-12 h-12 text-muted-foreground" />
@@ -1178,6 +1179,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), rotation: ((z[String(index)]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
                                                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
@@ -1193,7 +1195,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                             className="h-full flex-col gap-2 border-dashed min-h-28"
                                             onClick={() => otherDocsInputRef.current?.click()}
                                         >
-                                            <PlusCircle className="h-6 w-6 text-muted-foreground" />
+                                            <PlusCircle className="h-8 w-8 text-muted-foreground" />
                                             <span className="text-xs text-muted-foreground">Add More Files</span>
                                         </Button>
                                     </div>
