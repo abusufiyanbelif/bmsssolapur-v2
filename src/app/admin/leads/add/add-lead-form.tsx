@@ -458,11 +458,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, []);
 
   // Debounced values
-  const debouncedUserId = useDebounce(watch('userId'), 500);
-  const debouncedEmail = useDebounce(watch('email'), 500);
-  const debouncedPhone = useDebounce(watch('phone'), 500);
+  const debouncedUserId = useDebounce(watch('newBeneficiaryUserId'), 500);
+  const debouncedEmail = useDebounce(watch('newBeneficiaryEmail'), 500);
+  const debouncedPhone = useDebounce(watch('newBeneficiaryPhone'), 500);
   const debouncedPan = useDebounce(watch('panNumber'), 500);
-  const debouncedAadhaar = useDebounce(watch('aadhaarNumber'), 500);
+  const debouncedAadhaar = useDebounce(watch('newBeneficiaryAadhaar'), 500);
   const debouncedBankAccount = useDebounce(watch('bankAccountNumber'), 500);
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
@@ -768,6 +768,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
+  const isAnyFieldChecking = userIdState.isChecking || emailState.isChecking || phoneState.isChecking || panState.isChecking || aadhaarState.isChecking || bankAccountState.isChecking || Object.values(upiIdStates).some(s => s.isChecking);
   const isAnyFieldInvalid = userIdState.isAvailable === false || emailState.isAvailable === false || phoneState.isAvailable === false || panState.isAvailable === false || aadhaarState.isAvailable === false || bankAccountState.isAvailable === false || Object.values(upiIdStates).some(s => s.isAvailable === false);
 
 
