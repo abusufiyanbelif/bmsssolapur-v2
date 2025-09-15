@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -88,9 +87,11 @@ export const QuoteSchema = z.object({
 });
 export type Quote = z.infer<typeof QuoteSchema>;
 
-// Schema for extracting lead details from text
+// Schema for extracting lead details from a document/text
 export const ExtractLeadDetailsFromTextInputSchema = z.object({
   rawText: z.string().describe("A block of raw text containing lead details to be parsed."),
+  purpose: z.string().optional().describe("The user-selected purpose to give context to the AI."),
+  category: z.string().optional().describe("The user-selected category to give context to the AI."),
 });
 export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsFromTextInputSchema>;
 
@@ -98,18 +99,24 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     // Lead fields
     headline: z.string().optional().describe("A short, one-sentence summary of the case."),
     story: z.string().optional().describe("A detailed narrative of the beneficiary's situation, suitable for public display. Synthesize this from all available information in the text."),
-    diseaseIdentified: z.string().optional().describe("If a medical report, extract the specific disease or diagnosis mentioned (e.g., 'Typhoid Fever', 'Osteoarthritis')."),
-    purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical)."),
+    diseaseIdentified: z.string().optional().describe("If it's a medical document, this is the main diagnosis or condition mentioned (e.g., 'Typhoid Fever', 'Acute Gastroenteritis')."),
+    diseaseStage: z.string().optional().describe("If mentioned in a medical report, this is the stage or severity of the disease (e.g., 'Stage II', 'Chronic', 'Acute')."),
+    diseaseSeriousness: z.enum(['High', 'Moderate', 'Low']).optional().describe("Based on the language of a medical report, this is the inferred seriousness of the condition. High for critical issues, Low for minor ones."),
+    purpose: z.string().optional().describe("The main purpose of the request (e.g., Education, Medical, Relief Fund, Deen, Loan, Other)."),
     category: z.string().optional().describe("The specific category for the purpose (e.g., School Fees, Hospital Bill)."),
     amount: z.number().optional().describe("The amount requested."),
     dueDate: z.string().optional().describe("The date by which the funds are needed (YYYY-MM-DD)."),
+    caseReportedDate: z.string().optional().describe("The date the case was reported or the document was issued (YYYY-MM-DD)."),
     acceptableDonationTypes: z.array(z.string()).optional().describe("A list of donation types, e.g., ['Zakat', 'Sadaqah']."),
     caseDetails: z.string().optional().describe("The detailed reason or story for the help request."),
+    semester: z.string().optional().describe("For education cases, the semester number (e.g., 'III', 'V')."),
     // Beneficiary fields
     beneficiaryFirstName: z.string().optional().describe("The beneficiary's first name."),
     beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
     beneficiaryLastName: z.string().optional().describe("The beneficiary's last name."),
     fatherName: z.string().optional().describe("The beneficiary's father's name."),
+    dateOfBirth: z.string().optional().describe("The beneficiary's date of birth (Format: DD/MM/YYYY)."),
+    gender: z.enum(['Male', 'Female', 'Other']).optional().describe("The beneficiary's gender."),
     beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
     beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
     beneficiaryType: z.string().optional().describe("The type of beneficiary (e.g., Adult, Family, Kid, Widow)."),
@@ -121,23 +128,48 @@ export const ExtractLeadDetailsOutputSchema = z.object({
     bankAccountNumber: z.string().optional().describe("The beneficiary's bank account number."),
     bankIfscCode: z.string().optional().describe("The beneficiary's bank IFSC code."),
     upiIds: z.string().optional().describe("A comma-separated list of the beneficiary's UPI IDs."),
-    // Referral fields
-    referralName: z.string().optional().describe("The name of the person who referred the case."),
-    referralPhone: z.string().optional().describe("The phone number of the person who referred the case."),
 });
 export type ExtractLeadDetailsOutput = z.infer<typeof ExtractLeadDetailsOutputSchema>;
 
+
+// Schema for extracting beneficiary details from an ID card/text
+export const ExtractBeneficiaryDetailsFromTextInputSchema = z.object({
+  rawText: z.string().describe("A block of raw text from an ID card to be parsed."),
+  fieldsToFind: z.array(z.string()).optional().describe("A list of specific field names to focus on extracting."),
+});
+export type ExtractBeneficiaryDetailsFromTextInput = z.infer<typeof ExtractBeneficiaryDetailsFromTextInputSchema>;
+
+export const ExtractBeneficiaryDetailsOutputSchema = z.object({
+    beneficiaryFullName: z.string().optional().describe("The beneficiary's full name as it appears on the card."),
+    beneficiaryFirstName: z.string().optional().describe("The beneficiary's first name."),
+    beneficiaryMiddleName: z.string().optional().describe("The beneficiary's middle name."),
+    beneficiaryLastName: z.string().optional().describe("The beneficiary's last name."),
+    fatherName: z.string().optional().describe("The beneficiary's father's name."),
+    dateOfBirth: z.string().optional().describe("The beneficiary's date of birth (Format: DD/MM/YYYY)."),
+    gender: z.enum(['Male', 'Female', 'Other']).optional().describe("The beneficiary's gender."),
+    beneficiaryPhone: z.string().optional().describe("The 10-digit phone number of the beneficiary."),
+    beneficiaryEmail: z.string().email().optional().describe("The beneficiary's email address."),
+    address: z.string().optional().describe("The full address of the beneficiary."),
+    city: z.string().optional().describe("The city, if present."),
+    pincode: z.string().optional().describe("The pin code or zip code, if present."),
+    state: z.string().optional().describe("The state, if present."),
+    country: z.string().optional().describe("The country, if present."),
+    aadhaarNumber: z.string().optional().describe("The beneficiary's Aadhaar card number."),
+});
+export type ExtractBeneficiaryDetailsOutput = z.infer<typeof ExtractBeneficiaryDetailsOutputSchema>;
+
+
 // Schema for extracting raw text from an image
 export const ExtractRawTextInputSchema = z.object({
-  photoDataUris: z.array(z.string())
+  photoDataUri: z.string()
     .describe(
-      "An array of photos of documents, as data URIs that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of a document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 export type ExtractRawTextInput = z.infer<typeof ExtractRawTextInputSchema>;
 
 export const ExtractRawTextOutputSchema = z.object({
-    rawText: z.string().describe("The full, raw text extracted from the image.")
+    rawText: z.string().describe("The full, raw text extracted from the document.")
 });
 export type ExtractRawTextOutput = z.infer<typeof ExtractRawTextOutputSchema>;
 
@@ -188,3 +220,18 @@ export const ExtractDonationDetailsOutputSchema = z.object({
 });
 
 export type ExtractDonationDetailsOutput = z.infer<typeof ExtractDonationDetailsOutputSchema>;
+
+
+// Schema for generating summaries
+export const GenerateSummariesInputSchema = z.object({
+  rawText: z.string().describe("A block of raw text to generate summaries from."),
+});
+export type GenerateSummariesInput = z.infer<typeof GenerateSummariesInputSchema>;
+
+export const GenerateSummariesOutputSchema = z.object({
+    summaries: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+    })).describe("An array of three distinct, one-sentence summaries."),
+});
+export type GenerateSummariesOutput = z.infer<typeof GenerateSummariesOutputSchema>;

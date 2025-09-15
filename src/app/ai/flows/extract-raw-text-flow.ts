@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow for extracting raw text from an image.
+ * @fileOverview A Genkit flow for extracting raw text from an image or PDF.
  * 
- * - extractRawTextFlow - A function that performs OCR on an image.
+ * - extractRawTextFlow - A function that performs OCR on a document.
  */
 
 import { ai } from '@/ai/genkit';
@@ -23,13 +23,11 @@ export const extractRawTextFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
-    
     const llmResponse = await ai.generate({
         model: googleAI.model('gemini-1.5-flash-latest'),
         prompt: [
-            { text: `You are an Optical Character Recognition (OCR) tool. You will be given one or more images of documents (like medical reports, ID cards, or payment receipts). Extract all text from each image exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it. If there are multiple documents, separate the text from each one with '---'.` },
-            ...mediaParts
+            { text: `You are an Optical Character Recognition (OCR) tool. You will be given an image of a document (like a medical report, ID card, or payment receipt). Extract all text from the document exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it.` },
+            { media: { url: input.photoDataUri } }
         ],
         output: {
             schema: ExtractRawTextOutputSchema
@@ -39,7 +37,7 @@ export const extractRawTextFlow = ai.defineFlow(
     const output = llmResponse.output;
 
     if (!output?.rawText) {
-      throw new Error("The AI model did not return any text. The image might be unreadable or contain no text.");
+      throw new Error("The AI model did not return any text. The document might be unreadable or contain no text.");
     }
     
     return output;

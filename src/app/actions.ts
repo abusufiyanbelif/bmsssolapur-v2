@@ -38,37 +38,24 @@ interface RawTextScanResult {
 
 // This function is now correctly placed in a server context and will be called by client components.
 export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
-    const files: File[] = [];
-    
-    // Iterate over all FormData entries to find all files, regardless of key.
-    for (const value of formData.values()) {
-        if (value instanceof File && value.size > 0) {
-            files.push(value);
-        }
-    }
+    const file = formData.get("file") as File | null;
 
-    if (files.length === 0) {
-        return { success: false, error: "No image or PDF files were provided or they were empty." };
+    if (!file || file.size === 0) {
+        return { success: false, error: "No image or PDF file was provided or it was empty." };
     }
     
-    const dataUris: string[] = [];
+    let dataUri: string;
     try {
-        for (const file of files) {
-             const arrayBuffer = await file.arrayBuffer();
-             const base64 = Buffer.from(arrayBuffer).toString('base64');
-             // Gemini can handle different mime types, including application/pdf
-             dataUris.push(`data:${file.type};base64,${base64}`);
-        }
-        if (dataUris.length === 0) {
-            return { success: false, error: "Valid files could not be processed into data URIs." };
-        }
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        dataUri = `data:${file.type};base64,${base64}`;
     } catch (e) {
-         console.error("Failed to read image files:", e);
-         return { success: false, error: "Failed to read the uploaded file(s)." };
+         console.error("Failed to read image file:", e);
+         return { success: false, error: "Failed to read the uploaded file." };
     }
     
     try {
-        const textResult = await extractRawTextFlow({ photoDataUris: dataUris });
+        const textResult = await extractRawTextFlow({ photoDataUri: dataUri });
 
         if (!textResult?.rawText) {
             throw new Error("Failed to extract text from the document. The document might be unreadable.");
@@ -86,5 +73,3 @@ export async function getRawTextFromImage(formData: FormData): Promise<RawTextSc
         return { success: false, error: lastError };
     }
 }
-
-
