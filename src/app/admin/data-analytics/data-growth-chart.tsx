@@ -258,17 +258,17 @@ export function DataGrowthChart({ users, leads, donations }: { users: User[], le
       <CardContent>
          <div className="flex justify-end pb-4">
              <RadioGroup value={chartType} onValueChange={(v) => setChartType(v as ChartType)} className="flex items-center gap-1 rounded-lg bg-muted p-1">
-                <RadioGroupItem value="line" id="line" className="peer sr-only" />
-                <Label htmlFor="line" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                <Label htmlFor="line-data" className={cn("flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal cursor-pointer", chartType === 'line' && "bg-background text-foreground shadow")}>
                     <LineChartIcon className="h-4 w-4" />
+                    <RadioGroupItem value="line" id="line-data" className="sr-only" />
                 </Label>
-                <RadioGroupItem value="bar" id="bar" className="peer sr-only" />
-                <Label htmlFor="bar" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                <Label htmlFor="bar-data" className={cn("flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal cursor-pointer", chartType === 'bar' && "bg-background text-foreground shadow")}>
                     <BarChart2 className="h-4 w-4" />
+                     <RadioGroupItem value="bar" id="bar-data" className="sr-only" />
                 </Label>
-                 <RadioGroupItem value="area" id="area" className="peer sr-only" />
-                 <Label htmlFor="area" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                 <Label htmlFor="area-data" className={cn("flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal cursor-pointer", chartType === 'area' && "bg-background text-foreground shadow")}>
                     <AreaChartIcon className="h-4 w-4" />
+                    <RadioGroupItem value="area" id="area-data" className="sr-only" />
                 </Label>
             </RadioGroup>
         </div>

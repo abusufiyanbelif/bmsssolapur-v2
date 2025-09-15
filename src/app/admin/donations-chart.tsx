@@ -289,28 +289,28 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
                  <RadioGroup value={aggregation} onValueChange={(v) => setAggregation(v as AggregationLevel)} className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="daily" id="daily" />
-                        <Label htmlFor="daily">Daily</Label>
+                        <Label htmlFor="daily" className="cursor-pointer">Daily</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="weekly" id="weekly" />
-                        <Label htmlFor="weekly">Weekly</Label>
+                        <Label htmlFor="weekly" className="cursor-pointer">Weekly</Label>
                     </div>
                 </RadioGroup>
             </div>
         )}
         <div className="flex justify-end pb-4">
              <RadioGroup value={chartType} onValueChange={(v) => setChartType(v as ChartType)} className="flex items-center gap-1 rounded-lg bg-muted p-1">
-                <RadioGroupItem value="line" id="line-donations" className="peer sr-only" />
-                <Label htmlFor="line-donations" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                <Label htmlFor="line-donations" className={cn("flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal cursor-pointer", chartType === 'line' && "bg-background text-foreground shadow")}>
                     <LineChartIcon className="h-4 w-4" />
+                    <RadioGroupItem value="line" id="line-donations" className="sr-only" />
                 </Label>
-                <RadioGroupItem value="bar" id="bar-donations" className="peer sr-only" />
-                <Label htmlFor="bar-donations" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                <Label htmlFor="bar-donations" className={cn("flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal cursor-pointer", chartType === 'bar' && "bg-background text-foreground shadow")}>
                     <BarChart2 className="h-4 w-4" />
+                    <RadioGroupItem value="bar" id="bar-donations" className="sr-only" />
                 </Label>
-                 <RadioGroupItem value="area" id="area-donations" className="peer sr-only" />
-                 <Label htmlFor="area-donations" className="flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal [&[data-state=checked]]:bg-background [&[data-state=checked]]:text-foreground [&[data-state=checked]]:shadow cursor-pointer">
+                 <Label htmlFor="area-donations" className={cn("flex h-8 w-8 items-center justify-center rounded-md border text-xs font-normal cursor-pointer", chartType === 'area' && "bg-background text-foreground shadow")}>
                     <AreaChartIcon className="h-4 w-4" />
+                    <RadioGroupItem value="area" id="area-donations" className="sr-only" />
                 </Label>
             </RadioGroup>
         </div>
