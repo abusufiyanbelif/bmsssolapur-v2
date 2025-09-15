@@ -29,11 +29,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText } from "./actions";
+import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries } from "./actions";
 import { handleAddUser } from "@/app/admin/user-management/add/actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCcw as RefreshIcon, BookOpen } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCcw as RefreshIcon, BookOpen, Sparkles } from "lucide-react";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -56,7 +56,6 @@ import Image from "next/image";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
-import { generateSummaries } from "@/ai/flows/generate-summaries-flow";
 
 
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
@@ -96,7 +95,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
   referredByUserName: z.string().optional(),
-  headline: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
+  headline: z.string().min(10, "Case Summary must be at least 10 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
   diseaseIdentified: z.string().optional(),
   diseaseStage: z.string().optional(),
@@ -115,6 +114,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   isHistoricalRecord: z.boolean().default(false),
   helpRequested: z.coerce.number().min(1, "Amount requested must be greater than 0."),
   fundingGoal: z.coerce.number().optional(),
+  collectedAmount: z.coerce.number().optional(),
   caseReportedDate: z.date().optional(),
   dueDate: z.date().optional(),
   isLoan: z.boolean().default(false),
@@ -333,6 +333,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       isHistoricalRecord: false,
       helpRequested: 0,
       fundingGoal: 0,
+      collectedAmount: 0,
       caseReportedDate: undefined,
       dueDate: undefined,
       isLoan: false,
@@ -1227,21 +1228,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 control={form.control}
                                 name="diseaseSeriousness"
                                 render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Seriousness</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select seriousness" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="High">High</SelectItem>
-                                            <SelectItem value="Moderate">Moderate</SelectItem>
-                                            <SelectItem value="Low">Low</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    </FormItem>
+                                    <FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>
                                 )}
                             />
                         </div>
@@ -1251,14 +1238,17 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="isHistoricalRecord" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10"><div className="space-y-0.5"><FormLabel className="text-base">Create as past/closed lead</FormLabel><FormDescription>This will allow you to select past dates.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    <FormField control={form.control} name="isHistoricalRecord" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10"><div className="space-y-0.5"><FormLabel className="text-base">Create record for a past/closed lead</FormLabel><FormDescription>This will allow you to select past dates.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
                  <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={!isHistoricalRecord && { before: new Date() }} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Amount Requested</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    {isHistoricalRecord && (
+                      <FormField control={control} name="collectedAmount" render={({ field }) => (<FormItem><FormLabel>Amount Collected</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormDescription>Enter the final amount that was collected for this past case.</FormDescription><FormMessage /></FormItem>)} />
+                    )}
                     <FormField control={control} name="fundingGoal" render={({ field }) => (<FormItem><FormLabel>Fundraising Goal (Target)</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormDescription>The amount to be displayed on the public page.</FormDescription><FormMessage /></FormItem>)} />
                 </div>
                  

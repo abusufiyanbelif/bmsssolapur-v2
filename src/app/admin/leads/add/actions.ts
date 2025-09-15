@@ -11,7 +11,7 @@ import { getAppSettings } from "@/services/app-settings-service";
 import { extractLeadDetailsFromText as extractLeadDetailsFlow } from "@/ai/flows/extract-lead-details-from-text-flow";
 import { extractBeneficiaryDetails as extractBeneficiaryDetailsFlow } from "@/ai/flows/extract-beneficiary-details-flow";
 import { uploadFile } from "@/services/storage-service";
-import { generateSummaries } from "@/ai/flows/generate-summaries-flow";
+import { generateSummaries as generateSummariesFlow } from "@/ai/flows/generate-summaries-flow";
 
 interface FormState {
     success: boolean;
@@ -65,6 +65,7 @@ export async function handleAddLead(
       acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
       helpRequested: parseFloat(formData.get("helpRequested") as string),
       fundingGoal: formData.get("fundingGoal") ? parseFloat(formData.get("fundingGoal") as string) : undefined,
+      collectedAmount: formData.get("collectedAmount") ? parseFloat(formData.get("collectedAmount") as string) : undefined,
       caseReportedDate: formData.get("caseReportedDate") ? new Date(formData.get("caseReportedDate") as string) : undefined,
       dueDate: formData.get("dueDate") ? new Date(formData.get("dueDate") as string) : undefined,
       isLoan: formData.get("isLoan") === 'on',
@@ -185,7 +186,8 @@ export async function handleAddLead(
         priority: rawFormData.priority,
         helpRequested: rawFormData.helpRequested,
         fundingGoal: rawFormData.fundingGoal || rawFormData.helpRequested,
-        helpGiven: 0,
+        collectedAmount: rawFormData.isHistoricalRecord ? rawFormData.collectedAmount : 0,
+        helpGiven: rawFormData.isHistoricalRecord ? rawFormData.collectedAmount : 0,
         caseStatus: rawFormData.isHistoricalRecord ? 'Closed' : (approvalProcessDisabled ? 'Open' : 'Pending'),
         caseAction: rawFormData.isHistoricalRecord ? 'Closed' : (approvalProcessDisabled ? 'Ready For Help' : 'Pending'),
         caseVerification: approvalProcessDisabled ? 'Verified' : 'Pending',
@@ -199,6 +201,7 @@ export async function handleAddLead(
         caseReportedDate: rawFormData.caseReportedDate ? Timestamp.fromDate(rawFormData.caseReportedDate) : undefined,
         dueDate: rawFormData.dueDate ? Timestamp.fromDate(rawFormData.dueDate) : undefined,
         isLoan: rawFormData.isLoan,
+        isHistoricalRecord: rawFormData.isHistoricalRecord,
         source: 'Manual Entry',
         degree: rawFormData.degree,
         year: rawFormData.year,
@@ -282,4 +285,13 @@ export async function handleExtractLeadBeneficiaryDetailsFromText(
     }
 }
 
+export async function handleGenerateSummaries(rawText: string): Promise<{ success: boolean; summaries?: GenerateSummariesOutput; error?: string }> {
+    try {
+        const summaryOptions = await generateSummariesFlow({ rawText });
+        return { success: true, summaries: summaryOptions };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
+        return { success: false, error };
+    }
+}
     
