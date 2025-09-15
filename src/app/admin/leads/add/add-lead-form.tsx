@@ -120,40 +120,47 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   caseDetails: z.string().optional(),
   otherDocuments: z.array(z.any()).optional(),
 })
-.refine(data => {
-    if (data.linkBeneficiaryLater) {
-        return !!data.manualBeneficiaryName && data.manualBeneficiaryName.trim() !== '';
+.superRefine((data, ctx) => {
+    // Beneficiary linking logic
+    if (!data.linkBeneficiaryLater) {
+        if (data.beneficiaryType === 'existing' && (!data.beneficiaryId || data.beneficiaryId.trim() === '')) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select an existing beneficiary.", path: ["beneficiaryId"] });
+        } else if (data.beneficiaryType === 'new' && (!data.newBeneficiaryFirstName || !data.newBeneficiaryLastName || !data.newBeneficiaryPhone || !data.gender)) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "New beneficiary requires First Name, Last Name, Phone, and Gender.", path: ["newBeneficiaryFirstName"] });
+        }
+    } else {
+        if (!data.manualBeneficiaryName || data.manualBeneficiaryName.trim() === '') {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Beneficiary Name is required when linking later.", path: ["manualBeneficiaryName"] });
+        }
     }
-    if (data.beneficiaryType === 'existing') {
-        return !!data.beneficiaryId && data.beneficiaryId.trim() !== '';
+
+    // Purpose and Category 'Other' logic
+    if (data.purpose === 'Other' && (!data.otherPurposeDetail || data.otherPurposeDetail.length === 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify details for the 'Other' purpose.", path: ["otherPurposeDetail"] });
     }
-    if (data.beneficiaryType === 'new') {
-        return !!data.newBeneficiaryFirstName && !!data.newBeneficiaryLastName && !!data.newBeneficiaryPhone && !!data.gender;
+    if (data.category === 'Other' && (!data.otherCategoryDetail || data.otherCategoryDetail.length === 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify details for the 'Other' category.", path: ["otherCategoryDetail"] });
     }
-    return false;
-}, {
-    message: "Please select an existing beneficiary, create a new one (including gender), or provide a name to link later.",
-    path: ["beneficiaryId"], // Report error on the most likely field
-})
-.refine(data => {
-    if (data.purpose === 'Other') {
-        return !!data.otherPurposeDetail && data.otherPurposeDetail.length > 0;
+
+    // Conditional Date Validation for Historical Records
+    if (data.isHistoricalRecord) {
+        if (!data.caseReportedDate) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Case Reported Date is required for historical records.", path: ["caseReportedDate"] });
+        } else if (data.caseReportedDate > new Date()) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Case Reported Date must be in the past.", path: ["caseReportedDate"] });
+        }
+        if (!data.dueDate) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Due Date is required for historical records.", path: ["dueDate"] });
+        } else if (data.dueDate > new Date()) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Due Date must be in the past.", path: ["dueDate"] });
+        }
+    } else {
+        if (data.dueDate && data.dueDate < new Date()) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Due Date cannot be in the past for new leads.", path: ["dueDate"] });
+        }
     }
-    return true;
-}, {
-    message: "Please specify details for the 'Other' purpose.",
-    path: ["otherPurposeDetail"],
-})
-.refine(data => {
-    // This logic might need refinement depending on how categories are structured per purpose
-    if (data.category === 'Other') {
-        return !!data.otherCategoryDetail && data.otherCategoryDetail.length > 0;
-    }
-    return true;
-}, {
-    message: "Please specify details for the 'Other' category.",
-    path: ["otherCategoryDetail"],
 });
+
 
 
 type AddLeadFormValues = z.infer<ReturnType<typeof createFormSchema>>;
@@ -1232,9 +1239,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="isHistoricalRecord" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10"><div className="space-y-0.5"><FormLabel className="text-base">Create record for a past/closed lead</FormLabel><FormDescription>This will allow you to select past dates.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={(d) => d > new Date() && !isHistoricalRecord} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
-                 <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={!isHistoricalRecord && { before: new Date() }} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(d) => d < new Date() && !isHistoricalRecord} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
