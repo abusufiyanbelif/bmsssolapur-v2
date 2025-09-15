@@ -3,7 +3,7 @@
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
-import { getUser, createUser, checkAvailability } from "@/services/user-service";
+import { getUser, createUser, checkAvailability, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
@@ -109,6 +109,7 @@ export async function handleAddLead(
 
     let beneficiaryUser: User | null = null;
     let leadName: string;
+    let wasBeneficiaryCreated = false;
 
     if (rawFormData.linkBeneficiaryLater) {
         if (!rawFormData.manualBeneficiaryName) {
@@ -145,6 +146,7 @@ export async function handleAddLead(
                         country: country
                     }
                 });
+                wasBeneficiaryCreated = true;
             } catch (e) {
                  const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
                  return { success: false, error };
@@ -223,19 +225,24 @@ export async function handleAddLead(
 
     const [aadhaarUrl, ...otherUrls] = await Promise.all(uploadPromises);
     
-    const docUpdates: Partial<Lead> = {};
-    if (aadhaarUrl) docUpdates.aadhaarCardUrl = aadhaarUrl;
+    const leadDocUpdates: Partial<Lead> = {};
+    if (aadhaarUrl) leadDocUpdates.aadhaarCardUrl = aadhaarUrl;
     
     if (otherUrls.length > 0) {
-        docUpdates.otherDocument1Url = otherUrls[0] || undefined;
+        leadDocUpdates.otherDocument1Url = otherUrls[0] || undefined;
         if (otherUrls.length > 1) {
-             docUpdates.otherDocument2Url = otherUrls[1] || undefined;
+             leadDocUpdates.otherDocument2Url = otherUrls[1] || undefined;
         }
     }
     
-    if(Object.keys(docUpdates).length > 0) {
-      await updateLead(newLead.id!, docUpdates);
-      Object.assign(newLead, docUpdates);
+    if(Object.keys(leadDocUpdates).length > 0) {
+      await updateLead(newLead.id!, leadDocUpdates);
+      Object.assign(newLead, leadDocUpdates);
+    }
+    
+    // If a new beneficiary was created and an Aadhaar was uploaded, update the user profile as well.
+    if (wasBeneficiaryCreated && beneficiaryUser && aadhaarUrl) {
+      await updateUser(beneficiaryUser.id!, { aadhaarCardUrl: aadhaarUrl });
     }
     
     revalidatePath("/admin/leads");
@@ -295,3 +302,4 @@ export async function handleGenerateSummaries(rawText: string): Promise<{ succes
     }
 }
     
+
