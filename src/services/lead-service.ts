@@ -37,26 +37,33 @@ const LEADS_COLLECTION = 'leads';
 export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'otherCategoryDetail'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
-    // --- Custom Lead ID Generation ---
-    const beneficiary = await getUser(leadData.beneficiaryId!);
-    if (!beneficiary) throw new Error("Beneficiary not found for lead creation.");
-    if (!beneficiary.userKey) throw new Error("Beneficiary does not have a UserKey. Cannot create lead.");
-
+    let customLeadId: string;
     const leadsCollection = collection(db, LEADS_COLLECTION);
-    const q = query(leadsCollection, where("beneficiaryId", "==", beneficiary.id!));
-    const beneficiaryLeadsSnapshot = await getDocs(q);
-    const leadNumber = beneficiaryLeadsSnapshot.size + 1;
-
     const dateString = format(new Date(), 'ddMMyyyy');
-    const customLeadId = `${beneficiary.userKey}_${leadNumber}_${dateString}`;
+
+    if (leadData.beneficiaryId) {
+        const beneficiary = await getUser(leadData.beneficiaryId);
+        if (!beneficiary) throw new Error("Beneficiary not found for lead creation.");
+        if (!beneficiary.userKey) throw new Error("Beneficiary does not have a UserKey. Cannot create lead.");
+        
+        const q = query(leadsCollection, where("beneficiaryId", "==", beneficiary.id!));
+        const beneficiaryLeadsSnapshot = await getDocs(q);
+        const leadNumber = beneficiaryLeadsSnapshot.size + 1;
+
+        customLeadId = `${beneficiary.userKey}_${leadNumber}_${dateString}`;
+    } else {
+        // Fallback ID generation if no beneficiary is linked
+        const countSnapshot = await getCountFromServer(leadsCollection);
+        const leadNumber = countSnapshot.data().count + 1;
+        customLeadId = `LEAD${leadNumber}_${dateString}`;
+    }
 
     const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
-    // --- End Custom Lead ID Generation ---
 
     const newLead: Partial<Lead> = {
       id: leadRef.id,
       name: leadData.name!,
-      beneficiaryId: leadData.beneficiaryId!,
+      beneficiaryId: leadData.beneficiaryId!, // Can be undefined
       campaignId: leadData.campaignId || undefined,
       campaignName: leadData.campaignName || undefined,
       headline: leadData.headline,
@@ -92,7 +99,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     // Remove undefined fields to prevent Firestore errors
     Object.keys(newLead).forEach(key => {
         const typedKey = key as keyof Lead;
-        if (newLead[typedKey] === undefined) {
+        if ((newLead as any)[typedKey] === undefined) {
             delete (newLead as any)[typedKey];
         }
     });
