@@ -811,7 +811,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     <FormItem className="space-y-3">
                         <FormControl>
                         <RadioGroup
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => field.onChange(value as 'existing' | 'new')}
                             value={field.value}
                             className="grid grid-cols-2 gap-4"
                         >
@@ -983,7 +983,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 )}
                                 />
                         </div>
-                        <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><RadioGroup onValueChange={(v) => setValue('gender', v as 'Male' | 'Female' | 'Other')} value={field.value} className="flex space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male"/></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female"/></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><RadioGroup onValueChange={(v) => field.onChange(v as 'Male' | 'Female' | 'Other')} value={field.value} className="flex space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male"/></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female"/></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup><FormMessage /></FormItem>)} />
                         <h4 className="font-medium pt-2">Address</h4>
                         <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1178,7 +1178,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                 <p className="text-xs text-muted-foreground truncate">{getValues('otherDocuments')?.[index]?.name}</p>
                                                 <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
+                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}}))}><ZoomOut className="h-3 w-3"/></Button>
                                                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
                                                          const currentFiles = getValues('otherDocuments') || [];
                                                          const updatedFiles = currentFiles.filter((_, i) => i !== index);
