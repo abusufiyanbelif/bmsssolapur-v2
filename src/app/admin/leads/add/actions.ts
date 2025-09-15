@@ -119,15 +119,15 @@ export async function handleAddLead(
     } else {
         if (rawFormData.beneficiaryType === 'new') {
             const { newBeneficiaryUserId, newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, gender, addressLine1, city, state, pincode, country } = rawFormData;
+            
             if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone || !gender) {
-                return { success: false, error: "New beneficiary First Name, Last Name, Phone, and Gender are required." };
+                return { success: false, error: "New beneficiary requires First Name, Last Name, Phone, and Gender." };
             }
-            const newBeneficiaryName = `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim();
-
+            
             try {
-                beneficiaryUser = await createUser({
+                const newUserPayload: Partial<User> = {
                     userId: newBeneficiaryUserId,
-                    name: newBeneficiaryName,
+                    name: `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim(),
                     firstName: newBeneficiaryFirstName,
                     middleName: newBeneficiaryMiddleName || '',
                     lastName: newBeneficiaryLastName,
@@ -145,7 +145,9 @@ export async function handleAddLead(
                         pincode: pincode,
                         country: country
                     }
-                });
+                };
+
+                beneficiaryUser = await createUser(newUserPayload);
                 wasBeneficiaryCreated = true;
             } catch (e) {
                  const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
@@ -302,4 +304,5 @@ export async function handleGenerateSummaries(rawText: string): Promise<{ succes
     }
 }
     
+
 
