@@ -1422,7 +1422,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   );
 }
 
-export function AddLeadForm(props: { users: User[]; campaigns: Campaign[]; settings: AppSettings }) {
+export function AddLeadForm(props: AddLeadFormProps) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />
