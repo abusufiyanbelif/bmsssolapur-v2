@@ -983,7 +983,17 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 )}
                                 />
                         </div>
-                        <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><RadioGroup onValueChange={(v) => field.onChange(v as 'Male' | 'Female' | 'Other')} value={field.value} className="flex space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male"/></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female"/></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="gender" render={({ field }) => (
+                            <FormItem className="space-y-3">
+                                <FormLabel>Gender</FormLabel>
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 pt-2">
+                                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>)} />
                         <h4 className="font-medium pt-2">Address</h4>
                         <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1422,7 +1432,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   );
 }
 
-export function AddLeadForm(props: AddLeadFormProps) {
+export function AddLeadForm(props: { settings: AppSettings, users: User[], campaigns: Campaign[] }) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />
