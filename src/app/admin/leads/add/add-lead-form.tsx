@@ -473,32 +473,31 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     });
   }, [debouncedUpiIds, handleAvailabilityCheck]);
     
-const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
-    const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
-    if (validFiles.length === 0) {
-        toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
-        return;
-    }
-    loadingSetter(true);
-    const formData = new FormData();
-    validFiles.forEach((file, index) => {
-        // Use a consistent naming pattern that the server action can find.
-        formData.append(`file_${index}`, file);
-    });
-
-    try {
-        const result = await getRawTextFromImage(formData);
-        if (result.success && result.rawText) {
-            textSetter(result.rawText);
-            toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
-        } else {
-            toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text from the documents.' });
-        }
-    } catch (e) {
-        toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
-    } finally {
-        loadingSetter(false);
-    }
+  const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
+      const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
+      if (validFiles.length === 0) {
+          toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
+          return;
+      }
+      loadingSetter(true);
+      const formData = new FormData();
+      validFiles.forEach((file, index) => {
+          formData.append(`file_${index}`, file);
+      });
+  
+      try {
+          const result = await getRawTextFromImage(formData);
+          if (result.success && result.rawText) {
+              textSetter(result.rawText);
+              toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+          } else {
+              toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text from the documents.' });
+          }
+      } catch (e) {
+          toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
+      } finally {
+          loadingSetter(false);
+      }
   };
     
   const handleFullAutoFill = async () => {
