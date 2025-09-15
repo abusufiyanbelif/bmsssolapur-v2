@@ -43,13 +43,13 @@ const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-function DonorsPageContent() {
+function DonorsPageContent({ initialDonors, error: initialError }: { initialDonors: User[], error?: string }) {
     const searchParams = useSearchParams();
     const nameFromUrl = searchParams.get('name');
 
-    const [donors, setDonors] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [donors, setDonors] = useState<User[]>(initialDonors);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
@@ -102,7 +102,6 @@ function DonorsPageContent() {
 
 
     useEffect(() => {
-        fetchUsers();
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
     }, []);
@@ -562,33 +561,18 @@ function DonorsPageContent() {
 export default function DonorsPage() {
     return (
         <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <DonorsPageContent />
+            <DonorsPageDataLoader />
         </Suspense>
     )
 }
 
-function DonorsPageDataLoader() {
-  const [initialDonors, setInitialDonors] = useState<User[]>([]);
-  const [error, setError] = useState<string | undefined>();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const allUsers = await getAllUsers();
-        setInitialDonors(allUsers.filter(u => u.roles.includes('Donor')));
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "An unknown error occurred.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  if (loading) {
-    return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+async function DonorsPageDataLoader() {
+  try {
+    const allUsers = await getAllUsers();
+    const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
+    return <DonorsPageContent initialDonors={initialDonors} />;
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return <DonorsPageContent initialDonors={[]} error={error} />;
   }
-
-  return <DonorsPageContent />;
 }

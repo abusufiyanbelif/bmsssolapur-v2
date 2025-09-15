@@ -517,13 +517,21 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
 }
 
 // Convert the main page to a Server Component for data fetching
-export default async function ReferralsPage() {
-    try {
-        const allUsers = await getAllUsers();
-        const initialReferrals = allUsers.filter(u => u.roles.includes('Referral'));
-        return <ReferralsPageContent initialReferrals={initialReferrals} />;
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred.";
-        return <ReferralsPageContent initialReferrals={[]} error={error} />;
-    }
+export default function ReferralsPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <ReferralsPageDataLoader />
+        </Suspense>
+    )
+}
+
+async function ReferralsPageDataLoader() {
+  try {
+    const allUsers = await getAllUsers();
+    const initialReferrals = allUsers.filter(u => u.roles.includes('Referral'));
+    return <ReferralsPageContent initialReferrals={initialReferrals} />;
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return <ReferralsPageContent initialReferrals={[]} error={error} />;
+  }
 }
