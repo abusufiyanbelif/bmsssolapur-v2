@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useEffect, useState } from "react";
@@ -11,7 +10,7 @@ import { getAppSettings } from "@/services/app-settings-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { getQuotes } from "@/app/home/actions";
 
-async function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
+function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
   if (!userId) {
     return (
       <Alert variant="destructive">
@@ -22,21 +21,64 @@ async function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
     );
   }
 
-  const [user, cases, quotes, settings] = await Promise.all([
-    getUser(userId),
-    getLeadsByBeneficiaryId(userId),
-    getQuotes(3),
-    getAppSettings(),
-  ]);
+  const [user, setUser] = useState<User | null>(null);
+  const [cases, setCases] = useState<Lead[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!user || !user.roles.includes('Beneficiary')) {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [
+          fetchedUser,
+          userCases,
+          fetchedQuotes,
+          fetchedSettings,
+        ] = await Promise.all([
+          getUser(userId),
+          getLeadsByBeneficiaryId(userId),
+          getQuotes(3),
+          getAppSettings(),
+        ]);
+
+        if (!fetchedUser || !fetchedUser.roles.includes('Beneficiary') || !fetchedSettings) {
+          setError("You do not have permission to view this page or settings could not be loaded.");
+        } else {
+          setUser(fetchedUser);
+          setCases(userCases);
+          setQuotes(fetchedQuotes);
+          setSettings(fetchedSettings);
+        }
+      } catch (e) {
+        setError("An error occurred while fetching dashboard data.");
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [userId]);
+
+
+  if (loading) {
+    return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+  }
+  
+  if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Access Denied</AlertTitle>
-        <AlertDescription>You do not have permission to view this page.</AlertDescription>
-      </Alert>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
     );
+  }
+
+  if (!user || !settings) {
+    return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>Failed to load user data.</AlertDescription></Alert>;
   }
 
   return (

@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/configuration/page.tsx
 
 import { getAppSettings } from "@/services/app-settings-service";
