@@ -474,7 +474,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     });
   }, [debouncedUpiIds, handleAvailabilityCheck]);
     
-  const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
+const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
     const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
     if (validFiles.length === 0) {
         toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
@@ -482,8 +482,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
     loadingSetter(true);
     const formData = new FormData();
-    validFiles.forEach((file, index) => {
-        formData.append(`file_${index}`, file);
+    validFiles.forEach((file) => {
+        formData.append("file", file);
     });
 
     try {
@@ -1422,30 +1422,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 }
 
 export function AddLeadForm(props: { settings: AppSettings }) {
-    const [users, setUsers] = useState<User[]>([]);
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const [fetchedUsers, fetchedCampaigns] = await Promise.all([
-                import('@/services/user-service').then(m => m.getAllUsers()),
-                import('@/services/campaign-service').then(m => m.getAllCampaigns()),
-            ]);
-            setUsers(fetchedUsers);
-            setCampaigns(fetchedCampaigns);
-            setLoading(false);
-        };
-        fetchData();
-    }, []);
-
-    if (loading) {
-        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary"/></div>;
-    }
-
     return (
         <Suspense fallback={<div>Loading form...</div>}>
-            <AddLeadFormContent {...props} users={users} campaigns={campaigns} />
+            <AddUserFormContent {...props} />
         </Suspense>
     )
 }
