@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -12,26 +11,21 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { getQuotes, getOpenGeneralLeads } from "./actions";
 
-function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
-    const [quotes, setQuotes] = useState<Quote[]>(initialQuotes);
-    const [loading, setLoading] = useState(initialQuotes.length === 0);
+function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
+    const [loading, setLoading] = useState(quotes.length === 0);
+    const [_quotes, setQuotes] = useState<Quote[]>(quotes);
 
     useEffect(() => {
-        const fetchQuotes = async () => {
-            try {
-                const fetchedQuotes = await getQuotes(3);
-                setQuotes(fetchedQuotes);
-            } catch (err) {
-                console.error("Failed to fetch quotes on client:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+        if(quotes.length > 0) return;
 
-        if (initialQuotes.length === 0) {
-            fetchQuotes();
+        const fetchQuotes = async () => {
+             setLoading(true);
+             const fetchedQuotes = await getQuotes(3);
+             setQuotes(fetchedQuotes);
+             setLoading(false);
         }
-    }, [initialQuotes]);
+        fetchQuotes();
+    }, [quotes]);
 
 
     if (loading) {
@@ -50,7 +44,7 @@ function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
         )
     }
 
-    if (quotes.length === 0) {
+    if (_quotes.length === 0) {
         return null;
     }
 
@@ -64,7 +58,7 @@ function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    {quotes.map((quote, index) => (
+                    {_quotes.map((quote, index) => (
                         <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
                             <p>&quot;{quote.text}&quot;</p>
                             <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
@@ -76,23 +70,9 @@ function InspirationalQuotes({ quotes: initialQuotes }: { quotes: Quote[] }) {
     );
 }
 
-export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
+export function PublicHomePage({ quotes, initialLeads }: { quotes: Quote[], initialLeads: Lead[] }) {
   const router = useRouter();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [leadsLoading, setLeadsLoading] = useState(true);
   
-  useEffect(() => {
-      const fetchData = async () => {
-          setLeadsLoading(true);
-          const fetchedLeads = await getOpenGeneralLeads();
-          if(fetchedLeads) {
-            setLeads(fetchedLeads);
-          }
-          setLeadsLoading(false);
-      };
-      fetchData();
-  }, []);
-
   const handleDonateClick = () => {
     sessionStorage.setItem('redirectAfterLogin', '/donate');
     router.push('/login');
@@ -126,11 +106,9 @@ export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
               <CardDescription>These are verified, individual cases that need your direct support right now.</CardDescription>
           </CardHeader>
           <CardContent>
-              {leadsLoading ? (
-                  <div className="flex justify-center items-center h-40"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>
-              ) : leads && leads.length > 0 ? (
+              {initialLeads.length > 0 ? (
                   <div className="space-y-4">
-                      {leads.slice(0, 3).map(lead => {
+                      {initialLeads.slice(0, 3).map(lead => {
                           const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
                           const remainingAmount = lead.helpRequested - lead.helpGiven;
                           return (
@@ -159,7 +137,7 @@ export function PublicHomePage({ quotes }: { quotes: Quote[] }) {
                   </div>
               )}
           </CardContent>
-          {leads && leads.length > 0 && (
+          {initialLeads.length > 0 && (
               <CardFooter>
                   <Button asChild variant="secondary" className="w-full">
                       <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
