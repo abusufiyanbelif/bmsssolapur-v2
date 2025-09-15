@@ -1,12 +1,12 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddLeadForm } from "./add-lead-form";
 import { getAllUsers } from "@/services/user-service";
 import { getAllCampaigns } from "@/services/campaign-service";
 import { getAppSettings } from "@/services/app-settings-service";
-import Link from "next/link";
-import { ArrowLeft, AlertCircle } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export default async function AddLeadPage() {
     try {
@@ -38,8 +38,6 @@ export default async function AddLeadPage() {
         );
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
-        // This is a special case to handle the page crashing due to IAM permission issues.
-        // We will render the form but show an error.
         const isPermissionError = error.includes("Permission Denied");
 
         return (

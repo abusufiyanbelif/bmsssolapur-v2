@@ -4,7 +4,7 @@
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { User, getUserByPhone, getUserByEmail, createUser, getUserByName, getUser, getUserByUserId } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, getUser, getUserByUserId } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 import { logActivity } from '@/services/activity-log-service';
@@ -171,6 +171,7 @@ export async function handleGoogleLogin(firebaseUser: {
   }
 
   try {
+    const { createUser } = await import('@/services/user-service');
     let appUser = await getUserByEmail(firebaseUser.email);
     let isNewUser = false;
 

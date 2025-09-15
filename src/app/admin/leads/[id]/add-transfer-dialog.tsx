@@ -109,7 +109,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     if (!file) return;
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append("imageFiles", file);
+    formData.append("file_0", file);
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
       setRawText(result.rawText);

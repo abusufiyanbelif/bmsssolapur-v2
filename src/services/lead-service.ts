@@ -30,7 +30,7 @@ import { format } from 'date-fns';
 
 
 // Re-export types for backward compatibility
-export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
+export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, LeadAction };
 
 const LEADS_COLLECTION = 'leads';
 
@@ -61,41 +61,46 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
 
-    const newLead: Partial<Lead> = {
-      id: leadRef.id,
-      name: leadData.name!,
-      beneficiaryId: leadData.beneficiaryId, // Can be undefined
-      campaignId: leadData.campaignId || undefined,
-      campaignName: leadData.campaignName || undefined,
-      headline: leadData.headline,
-      story: leadData.story,
-      purpose: leadData.purpose!,
-      otherPurposeDetail: leadData.otherPurposeDetail || undefined,
-      donationType: leadData.donationType!,
-      acceptableDonationTypes: leadData.acceptableDonationTypes || [],
-      category: leadData.category,
-      otherCategoryDetail: leadData.otherCategoryDetail || undefined,
-      priority: leadData.priority || 'Medium',
-      helpRequested: leadData.helpRequested!,
-      collectedAmount: 0,
-      helpGiven: 0,
-      caseStatus: 'Pending',
-      caseAction: 'Pending',
-      caseVerification: 'Pending',
-      verifiers: [],
-      donations: [],
-      caseDetails: leadData.caseDetails,
-      verificationDocumentUrl: leadData.verificationDocumentUrl,
-      adminAddedBy: { id: adminUser.id, name: adminUser.name },
-      referredByUserId: leadData.referredByUserId,
-      referredByUserName: leadData.referredByUserName,
-      dateCreated: Timestamp.now(),
-      dueDate: leadData.dueDate ? Timestamp.fromDate(leadData.dueDate) : undefined,
-      closedAt: undefined,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-      isLoan: leadData.isLoan || false,
-      source: 'Manual Entry'
+    const newLead: Lead = { 
+        id: leadRef.id,
+        name: leadData.name!,
+        beneficiaryId: leadData.beneficiaryId,
+        campaignId: leadData.campaignId || undefined,
+        campaignName: leadData.campaignName || undefined,
+        headline: leadData.headline,
+        story: leadData.story,
+        purpose: leadData.purpose!,
+        otherPurposeDetail: leadData.otherPurposeDetail || undefined,
+        donationType: leadData.donationType!,
+        acceptableDonationTypes: leadData.acceptableDonationTypes || [],
+        category: leadData.category,
+        otherCategoryDetail: leadData.otherCategoryDetail || undefined,
+        priority: leadData.priority || 'Medium',
+        helpRequested: leadData.helpRequested!,
+        collectedAmount: leadData.collectedAmount || 0,
+        helpGiven: leadData.helpGiven || 0,
+        caseStatus: leadData.caseStatus || 'Pending',
+        caseAction: leadData.caseAction || 'Pending',
+        caseVerification: leadData.caseVerification || 'Pending',
+        verifiers: leadData.verifiers || [],
+        donations: leadData.donations || [],
+        caseDetails: leadData.caseDetails,
+        verificationDocumentUrl: leadData.verificationDocumentUrl,
+        adminAddedBy: { id: adminUser.id, name: adminUser.name },
+        referredByUserId: leadData.referredByUserId,
+        referredByUserName: leadData.referredByUserName,
+        dateCreated: leadData.dateCreated || Timestamp.now() as any,
+        caseReportedDate: leadData.caseReportedDate,
+        dueDate: leadData.dueDate ? Timestamp.fromDate(leadData.dueDate as any) : undefined,
+        closedAt: undefined,
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
+        isLoan: leadData.isLoan || false,
+        isHistoricalRecord: leadData.isHistoricalRecord || false,
+        source: 'Manual Entry',
+        degree: leadData.degree,
+        year: leadData.year,
+        semester: leadData.semester,
     };
     
     // Remove undefined fields to prevent Firestore errors

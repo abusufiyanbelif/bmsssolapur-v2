@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Lead, LeadAction, AppSettings } from "@/services/types";
-import { getAppSettings } from "@/services/app-settings-service";
+import { getAppSettings } from "@/app/admin/settings/actions";
 
 const statusColors: Record<LeadAction, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -151,7 +151,7 @@ export default function MyCasesPage() {
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                            <TableCell>{format(caseItem.createdAt.toDate(), "dd MMM yyyy")}</TableCell>
+                            <TableCell>{format(caseItem.createdAt, "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>
@@ -252,7 +252,7 @@ export default function MyCasesPage() {
             return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">You have not submitted any help requests.</p>
-                     {settings.leadConfiguration?.allowBeneficiaryRequests && (
+                     {settings?.leadConfiguration?.allowBeneficiaryRequests && (
                         <Button asChild className="mt-4">
                             <Link href="/request-help">Request Help Now</Link>
                         </Button>
@@ -269,7 +269,7 @@ export default function MyCasesPage() {
         )
     }
   
-  const allowBeneficiaryRequests = settings?.leadConfiguration?.allowBeneficiaryRequests ?? true;
+  const allowBeneficiaryRequests = settings?.leadConfiguration?.allowBeneficiaryRequests ?? false;
 
   return (
     <div className="flex-1 space-y-4">

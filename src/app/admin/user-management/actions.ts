@@ -20,7 +20,7 @@ export async function handleDeleteUser(userId: string) {
         
         // This is a placeholder for the admin user performing the action.
         // In a real app, you would get this from the session.
-        const adminUser = await getUser("ADMIN_USER_ID");
+        const adminUser = await getUser("ADMIN_USER_ID"); // This will fail gracefully if not found
         
         if (adminUser) {
              await logActivity({
