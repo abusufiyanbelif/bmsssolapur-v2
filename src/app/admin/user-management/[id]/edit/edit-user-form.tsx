@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -213,7 +214,7 @@ const formSchema = z.object({
   isAnonymousAsBeneficiary: z.boolean().default(false),
   isAnonymousAsDonor: z.boolean().default(false),
   isActive: z.boolean().default(true),
-  gender: z.enum(["Male", "Female"], { required_error: "Please select a gender."}),
+  gender: z.enum(["Male", "Female", "Other"]),
   beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
@@ -226,6 +227,7 @@ const formSchema = z.object({
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
   bankAccountName: z.string().optional(),
+  bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
   upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
@@ -236,7 +238,7 @@ const formSchema = z.object({
   otherDocument2: z.any().optional(),
 });
 
-type EditUserFormValues = z.infer<typeof formSchema>;
+type EditUserFormValues = z.infer<typeof formSchema>>;
 
 interface EditUserFormProps {
     user: User;
@@ -400,7 +402,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     <X className="mr-2 h-4 w-4" />
                                     Cancel
                                 </Button>
-                                <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                                 <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
                                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes
                                 </Button>
@@ -502,7 +504,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 <FormControl>
                                     <RadioGroup
                                     onValueChange={field.onChange}
-                                    defaultValue={field.value}
+                                    value={field.value}
                                     className="flex flex-row space-x-4 pt-2"
                                     disabled={!isEditing}
                                     >
@@ -732,7 +734,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     <FormControl>
                                         <RadioGroup
                                         onValueChange={field.onChange}
-                                        defaultValue={field.value}
+                                        value={field.value}
                                         className="flex flex-row space-x-4 pt-2"
                                         disabled={!isEditing}
                                         >
@@ -937,7 +939,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     )}
                                 </div>
                                 <FormMessage />
-                                </FormItem>
+                            </FormItem>
                             )}
                             />
                         ))}

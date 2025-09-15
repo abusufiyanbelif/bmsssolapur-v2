@@ -387,6 +387,12 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       if (details.beneficiaryPhone) setValue('phone', details.beneficiaryPhone.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true });
       if (details.aadhaarNumber) setValue('aadhaarNumber', details.aadhaarNumber.replace(/\D/g, ''), { shouldDirty: true, shouldValidate: true });
       if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
+      if (details.gender) {
+        const genderValue = details.gender as 'Male' | 'Female' | 'Other';
+        if (['Male', 'Female', 'Other'].includes(genderValue)) {
+          setValue('gender', genderValue, { shouldDirty: true });
+        }
+      }
       toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
     } else {
       toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
@@ -599,23 +605,9 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                 <FormItem className="space-y-3">
                 <FormLabel>Gender</FormLabel>
                 <FormControl>
-                    <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-row space-x-4 pt-2"
-                    >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                        <RadioGroupItem value="Male" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Male</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                        <RadioGroupItem value="Female" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Female</FormLabel>
-                    </FormItem>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2">
+                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem>
                     </RadioGroup>
                 </FormControl>
                 <FormMessage />

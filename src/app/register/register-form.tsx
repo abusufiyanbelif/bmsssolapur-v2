@@ -13,7 +13,7 @@ import { useState } from "react";
 import { handleRegister } from "./actions";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle, UserPlus, PlusCircle, Trash2 } from "lucide-react";
-import type { AppSettings } from "@/services/types";
+import type { AppSettings, UserRole } from "@/services/types";
 
 const createRegisterFormSchema = (isAadhaarMandatory: boolean) => z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
@@ -44,7 +44,7 @@ export function RegisterForm({ settings }: RegisterFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const isAadhaarMandatory = settings.userConfiguration?.isAadhaarMandatory || false;
+  const isAadhaarMandatory = settings?.userConfiguration?.isAadhaarMandatory || false;
   const formSchema = createRegisterFormSchema(isAadhaarMandatory);
 
   const form = useForm<RegisterFormValues>({

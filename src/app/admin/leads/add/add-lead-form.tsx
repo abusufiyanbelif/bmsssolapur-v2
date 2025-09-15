@@ -621,39 +621,47 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const details = extractedBeneficiaryDetails;
     
     // Iterate over the keys to set form values
-    beneficiaryDialogFields.forEach(({ key }) => {
-        const value = details[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
+    Object.entries(details).forEach(([key, value]) => {
         if (value) {
-            if (key === 'beneficiaryFullName') setValue('newBeneficiaryFullName', value, { shouldDirty: true });
-            if (key === 'beneficiaryFirstName') setValue('newBeneficiaryFirstName', value, { shouldDirty: true });
-            if (key === 'beneficiaryMiddleName') setValue('newBeneficiaryMiddleName', value, { shouldDirty: true });
-            if (key === 'beneficiaryLastName') setValue('newBeneficiaryLastName', value, { shouldDirty: true });
-            if (key === 'fatherName') setValue('newBeneficiaryFatherName', value, { shouldDirty: true });
-            if (key === 'beneficiaryPhone') {
-                const phone = value.replace(/\D/g, '').slice(-10);
-                setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
-            }
-            if (key === 'aadhaarNumber') setValue('newBeneficiaryAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
-            if (key === 'address') setValue('addressLine1', value, { shouldDirty: true });
-            if (key === 'city') setValue('city', value, { shouldDirty: true });
-            if (key === 'pincode') setValue('pincode', value, { shouldDirty: true });
-            if (key === 'country') setValue('country', value, { shouldDirty: true });
-            if (key === 'gender') setValue('gender', value as 'Male' | 'Female' | 'Other', { shouldDirty: true });
-            if (key === 'dateOfBirth') {
-                const dateString = value.replace(/\s/g, '');
-                const parts = dateString.split(/[\/\-]/);
-                let date: Date | null = null;
-                if (parts.length === 3) {
-                    const [d, m, y] = parts;
-                    if (y.length === 4) {
-                        date = new Date(`${y}-${m}-${d}`);
-                    } else if (y.length === 2) {
-                        date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
+            switch (key) {
+                case 'beneficiaryFullName': setValue('newBeneficiaryFullName', value, { shouldDirty: true }); break;
+                case 'beneficiaryFirstName': setValue('newBeneficiaryFirstName', value, { shouldDirty: true }); break;
+                case 'beneficiaryMiddleName': setValue('newBeneficiaryMiddleName', value, { shouldDirty: true }); break;
+                case 'beneficiaryLastName': setValue('newBeneficiaryLastName', value, { shouldDirty: true }); break;
+                case 'fatherName': setValue('newBeneficiaryFatherName', value, { shouldDirty: true }); break;
+                case 'beneficiaryPhone':
+                    const phone = value.replace(/\D/g, '').slice(-10);
+                    setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
+                    break;
+                case 'aadhaarNumber':
+                    setValue('newBeneficiaryAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
+                    break;
+                case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
+                case 'city': setValue('city', value, { shouldDirty: true }); break;
+                case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
+                case 'country': setValue('country', value, { shouldDirty: true }); break;
+                case 'gender':
+                    const genderValue = value as 'Male' | 'Female' | 'Other';
+                    if (['Male', 'Female', 'Other'].includes(genderValue)) {
+                        setValue('gender', genderValue, { shouldDirty: true });
                     }
-                }
-                if (date && !isNaN(date.getTime())) {
-                    setValue('dateOfBirth', date, { shouldDirty: true });
-                }
+                    break;
+                case 'dateOfBirth':
+                    const dateString = value.replace(/\s/g, '');
+                    const parts = dateString.split(/[\/\-]/);
+                    let date: Date | null = null;
+                    if (parts.length === 3) {
+                        const [d, m, y] = parts;
+                        if (y.length === 4) {
+                            date = new Date(`${y}-${m}-${d}`);
+                        } else if (y.length === 2) {
+                            date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
+                        }
+                    }
+                    if (date && !isNaN(date.getTime())) {
+                        setValue('dateOfBirth', date, { shouldDirty: true });
+                    }
+                    break;
             }
         }
     });
@@ -1347,7 +1355,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 )}
                 
                 <div className="flex gap-4 pt-6 border-t">
-                    <Button type="submit" disabled={isSubmitting || isAnyFieldInvalid}>
+                    <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isSubmitting ? 'Creating...' : 'Create Lead'}
                     </Button>
