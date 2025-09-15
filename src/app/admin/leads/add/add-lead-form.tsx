@@ -1,4 +1,5 @@
 
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -29,9 +30,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText } from "./actions";
+import { handleAddUser } from "@/app/admin/user-management/add/actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCcw as RefreshIcon, BookOpen } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -170,6 +172,13 @@ type AvailabilityState = {
     existingUserName?: string;
 };
 
+type CreationStatus = 'idle' | 'creating-user' | 'creating-lead' | 'success' | 'error';
+interface CreationStep {
+    name: string;
+    status: 'pending' | 'in-progress' | 'success' | 'error';
+    details?: string;
+}
+
 const initialAvailabilityState: AvailabilityState = {
     isChecking: false,
     isAvailable: null,
@@ -216,7 +225,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
 function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [creationStatus, setCreationStatus] = useState<CreationStep[]>([]);
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<Lead[] | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -341,6 +350,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       setBeneficiaryRawText("");
       setAadhaarPreview(null);
       setOtherDocumentsPreviews([]);
+      setCreationStatus([]);
   };
 
   const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
@@ -647,78 +657,91 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
     if (!adminUser?.id) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not identify the admin performing the update. Please log out and back in.",
-        });
+        toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log out and back in." });
         return;
     }
     
-    const hasFiles = values.aadhaarCard || (values.otherDocuments && values.otherDocuments.length > 0);
-    if(hasFiles) setIsUploading(true);
     setIsSubmitting(true);
-    
-    const formData = new FormData();
-    formData.append("adminUserId", adminUser.id);
-    // Append all form values
-    Object.entries(values).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        if (key === 'otherDocuments' && value.length > 0) {
-            value.forEach((file: File) => {
-                if (file instanceof File) formData.append('otherDocuments', file);
-            });
+    setCreationStatus([]); // Reset status on new submission
+
+    let finalBeneficiaryId = values.beneficiaryId;
+
+    // --- Step 1: Create Beneficiary if 'new' is selected ---
+    if (values.beneficiaryType === 'new') {
+        setCreationStatus([{ name: 'Creating Beneficiary', status: 'in-progress' }]);
+        const userFormData = new FormData();
+        // Append all relevant new user fields
+        Object.keys(values).forEach(key => {
+            if (key.startsWith('newBeneficiary') || ['gender', 'isAnonymousAsBeneficiary', 'aadhaarCard', 'addressLine1', 'city', 'state', 'country', 'pincode'].includes(key)) {
+                const value = values[key as keyof AddLeadFormValues];
+                if (value) {
+                     if (value instanceof File) {
+                         userFormData.append(key, value);
+                     } else {
+                        userFormData.append(key, String(value));
+                     }
+                }
+            }
+        });
+        userFormData.append('roles', 'Beneficiary'); // Always assign Beneficiary role
+
+        const userResult = await handleAddUser(userFormData);
+        
+        if (userResult.success && userResult.user?.id) {
+            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'success', details: `User ID: ${userResult.user?.userId}` } : s));
+            finalBeneficiaryId = userResult.user.id;
         } else {
-          value.forEach(v => formData.append(key, v));
+            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'error', details: userResult.error } : s));
+            toast({ variant: 'destructive', title: 'Beneficiary Creation Failed', description: userResult.error });
+            setIsSubmitting(false);
+            return;
         }
-      } else if (value instanceof File) {
-         formData.append(key, value);
-      } else if (value instanceof Date) {
-        formData.append(key, value.toISOString());
-      } else if (typeof value === 'boolean') {
-        if (value) formData.append(key, 'on');
-      }
-      else if (value) {
-        formData.append(key, String(value));
-      }
+    }
+    
+    // --- Step 2: Create Lead ---
+    setCreationStatus(prev => [...prev, { name: 'Creating Lead', status: 'in-progress' }]);
+    
+    const leadFormData = new FormData();
+    Object.keys(values).forEach(key => {
+        const formKey = key as keyof AddLeadFormValues;
+        const value = values[formKey] as any;
+        if (value && !key.startsWith('newBeneficiary')) {
+            if (Array.isArray(value)) {
+                if(key === 'otherDocuments') value.forEach(f => f instanceof File && leadFormData.append(key, f));
+                else value.forEach(v => leadFormData.append(key, v));
+            }
+            else if (value instanceof Date) leadFormData.append(key, value.toISOString());
+            else if (typeof value === 'boolean') { if (value) leadFormData.append(key, 'on'); }
+            else if (value instanceof File) leadFormData.append(key, value);
+            else leadFormData.append(key, String(value));
+        }
     });
 
-
-    if (forceCreate) {
-        formData.append("forceCreate", "true");
-    }
+    leadFormData.append("adminUserId", adminUser.id);
+    if(finalBeneficiaryId) leadFormData.set("beneficiaryId", finalBeneficiaryId); // Use final ID
+    if(forceCreate) leadFormData.append("forceCreate", "true");
     
-    const result = await handleAddLead(formData);
+    const leadResult = await handleAddLead(leadFormData);
     
-    if(hasFiles) setIsUploading(false);
-    setIsSubmitting(false);
-    
-    if (result.duplicateLeadWarning) {
-        setDuplicateWarning(result.duplicateLeadWarning);
+    if (leadResult.duplicateLeadWarning) {
+        setDuplicateWarning(leadResult.duplicateLeadWarning);
+        setIsSubmitting(false);
+        setCreationStatus([]);
         return;
     }
 
-    if (result.success && result.lead) {
-      toast({
-        variant: "success",
-        title: "Lead Created",
-        description: `Successfully created lead for ${result.lead.name}.`,
-      });
-      if(hasFiles) {
-        toast({
-            variant: 'success',
-            title: "Documents Uploaded",
-            description: "All attached documents have been successfully saved."
-        });
-      }
-      handleCancel();
+    if (leadResult.success && leadResult.lead) {
+        setCreationStatus(prev => prev.map(s => s.name === 'Creating Lead' ? { ...s, status: 'success', details: `Lead ID: ${leadResult.lead?.id}` } : s));
+        toast({ variant: "success", title: "Lead Created Successfully!", duration: 5000 });
+        setTimeout(() => {
+            handleCancel();
+        }, 1000);
     } else {
-      toast({
-        variant: "destructive",
-        title: "Error Creating Lead",
-        description: result.error || "An unknown error occurred. Please check the form and try again.",
-      });
+        setCreationStatus(prev => prev.map(s => s.name === 'Creating Lead' ? { ...s, status: 'error', details: leadResult.error } : s));
+        toast({ variant: "destructive", title: "Error Creating Lead", description: leadResult.error });
     }
+
+    setIsSubmitting(false);
   }
   
   const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
@@ -1228,24 +1251,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="isHistoricalRecord"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10">
-                            <div className="space-y-0.5">
-                                <FormLabel className="text-base">Create record for a past/closed lead</FormLabel>
-                                <FormDescription>This will allow you to select past dates.</FormDescription>
-                            </div>
-                            <FormControl>
-                                <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                            </FormItem>
-                        )}
-                    />
+                    <FormField control={form.control} name="isHistoricalRecord" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10"><div className="space-y-0.5"><FormLabel className="text-base">Create as past/closed lead</FormLabel><FormDescription>This will allow you to select past dates.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                     <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
                  <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={!isHistoricalRecord && { before: new Date() }} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
@@ -1321,10 +1327,28 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                   )}
                 />
                 
+                {creationStatus.length > 0 && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <h4 className="font-semibold">Creation Progress</h4>
+                        {creationStatus.map(step => (
+                            <div key={step.name} className="flex items-center gap-4">
+                                {step.status === 'pending' && <Loader2 className="h-5 w-5 text-muted-foreground" />}
+                                {step.status === 'in-progress' && <Loader2 className="h-5 w-5 text-primary animate-spin" />}
+                                {step.status === 'success' && <CheckCircle className="h-5 w-5 text-green-500" />}
+                                {step.status === 'error' && <XCircle className="h-5 w-5 text-destructive" />}
+                                <div>
+                                    <p className="font-medium">{step.name}</p>
+                                    {step.details && <p className="text-xs text-muted-foreground">{step.details}</p>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                
                 <div className="flex gap-4 pt-6 border-t">
-                    <Button type="submit" disabled={isSubmitting || isUploading || isAnyFieldInvalid}>
-                        {isUploading ? <UploadCloud className="mr-2 h-4 w-4 animate-spin" /> : isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                        {isUploading ? 'Uploading documents...' : isSubmitting ? 'Creating Lead...' : 'Create Lead'}
+                    <Button type="submit" disabled={isSubmitting || isAnyFieldInvalid}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                        {isSubmitting ? 'Creating...' : 'Create Lead'}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
                         <XCircle className="mr-2 h-4 w-4" />
