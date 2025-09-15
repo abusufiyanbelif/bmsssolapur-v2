@@ -482,6 +482,7 @@ const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)
     loadingSetter(true);
     const formData = new FormData();
     validFiles.forEach((file, index) => {
+        // Use a consistent naming pattern that the server action can find.
         formData.append(`file_${index}`, file);
     });
 
@@ -657,7 +658,7 @@ const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
     if (!adminUser?.id) {
-        toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log out and back in." });
+        toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log in again." });
         return;
     }
     
@@ -1414,12 +1415,10 @@ const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)
   );
 }
 
-export function AddLeadForm(props: { settings: AppSettings }) {
+export function AddLeadForm(props: { users: User[]; campaigns: Campaign[]; settings: AppSettings }) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />
         </Suspense>
     )
 }
-
-    

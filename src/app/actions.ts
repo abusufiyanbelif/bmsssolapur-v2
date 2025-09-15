@@ -38,9 +38,15 @@ interface RawTextScanResult {
 
 // This function is now correctly placed in a server context and will be called by client components.
 export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
-    const files = formData.getAll("file") as File[];
+    const files: File[] = [];
+    // Iterate over all entries in the FormData to find the files.
+    for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+            files.push(value);
+        }
+    }
 
-    if (!files || files.length === 0 || files.every(f => f.size === 0)) {
+    if (files.length === 0) {
         return { success: false, error: "No image or PDF file was provided or it was empty." };
     }
     
