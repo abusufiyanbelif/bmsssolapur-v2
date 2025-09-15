@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -238,7 +237,7 @@ const formSchema = z.object({
   otherDocument2: z.any().optional(),
 });
 
-type EditUserFormValues = z.infer<typeof formSchema>>;
+type EditUserFormValues = z.infer<typeof formSchema>;
 
 interface EditUserFormProps {
     user: User;
