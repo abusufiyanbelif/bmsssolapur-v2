@@ -1,5 +1,4 @@
 
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -482,8 +481,8 @@ const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)
     }
     loadingSetter(true);
     const formData = new FormData();
-    validFiles.forEach((file) => {
-        formData.append("file", file);
+    validFiles.forEach((file, index) => {
+        formData.append(`file_${index}`, file);
     });
 
     try {
@@ -1224,13 +1223,7 @@ const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)
                         <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField control={form.control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} /></FormControl></FormItem>)} />
-                            <FormField
-                                control={form.control}
-                                name="diseaseSeriousness"
-                                render={({ field }) => (
-                                    <FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>
-                                )}
-                            />
+                            <FormField control={form.control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>)} />
                         </div>
                     </div>
                 )}
@@ -1424,7 +1417,9 @@ const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)
 export function AddLeadForm(props: { settings: AppSettings }) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
-            <AddUserFormContent {...props} />
+            <AddLeadFormContent {...props} />
         </Suspense>
     )
 }
+
+    
