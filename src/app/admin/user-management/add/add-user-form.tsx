@@ -32,7 +32,7 @@ import { Label } from "@/components/ui/label";
 import { getUserByPhone } from "@/services/user-service";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Image from "next/image";
-import { getRawTextFromImage } from "@/app/actions";
+import { getRawTextFromImage } from '@/app/actions';
 import { handleExtractLeadDetailsFromText } from "../../leads/add/actions";
 
 

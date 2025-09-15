@@ -124,38 +124,35 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>) => {
   
   try {
-    // Generate a new Firestore document reference with a unique ID
-    const userRef = doc(collection(db, USERS_COLLECTION));
-    
     // Standardize phone number
     const standardizedPhone = userData.phone?.replace(/\D/g, '').slice(-10) || '';
     if (standardizedPhone.length !== 10) {
         throw new Error("Invalid phone number provided. Must be 10 digits.");
     }
-
-    // Check for duplicate email if one is provided
+    
+    // --- DUPLICATE CHECKS ---
     if (userData.email) {
       const emailExists = await getUserByEmail(userData.email);
-      if (emailExists) {
-          throw new Error(`A user with the email ${userData.email} already exists (Name: ${emailExists.name}).`);
-      }
+      if (emailExists) throw new Error(`A user with the email ${userData.email} already exists (Name: ${emailExists.name}).`);
     }
-    // Check for duplicate phone number
     const phoneExists = await getUserByPhone(standardizedPhone);
-    if(phoneExists) {
-        throw new Error(`A user with the phone number ${standardizedPhone} already exists (Name: ${phoneExists.name}).`);
-    }
+    if (phoneExists) throw new Error(`A user with the phone number ${standardizedPhone} already exists (Name: ${phoneExists.name}).`);
     
-    // Generate a unique userId if not provided
     let finalUserId = userData.userId;
     if (!finalUserId) {
         finalUserId = `${userData.firstName?.toLowerCase() || 'user'}.${userData.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
     }
     const idExists = await getUserByUserId(finalUserId);
-    if (idExists) {
-        throw new Error(`User ID "${finalUserId}" is already taken.`);
-    }
+    if (idExists) throw new Error(`User ID "${finalUserId}" is already taken.`);
 
+    if (userData.aadhaarNumber) {
+        const aadhaarExists = await getUserByAadhaar(userData.aadhaarNumber);
+        if (aadhaarExists) throw new Error(`A user with this Aadhaar number already exists (Name: ${aadhaarExists.name}).`);
+    }
+    // --- END DUPLICATE CHECKS ---
+
+    const userRef = doc(collection(db, USERS_COLLECTION));
+    
     // Generate a new userKey.
     const usersCollection = collection(db, USERS_COLLECTION);
     const countSnapshot = await getCountFromServer(usersCollection);

@@ -5,7 +5,7 @@
 import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
 import { getUser, createUser, checkAvailability } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
+import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { getAppSettings } from "@/services/app-settings-service";
 import { extractLeadDetailsFromText as extractLeadDetailsFlow } from "@/ai/flows/extract-lead-details-from-text-flow";
@@ -132,7 +132,7 @@ export async function handleAddLead(
                     lastName: newBeneficiaryLastName,
                     fatherName: newBeneficiaryFatherName || undefined,
                     phone: newBeneficiaryPhone,
-                    email: newBeneficiaryEmail || `${newBeneficiaryPhone}@example.com`,
+                    email: newBeneficiaryEmail || undefined,
                     aadhaarNumber: newBeneficiaryAadhaar || undefined,
                     gender: gender,
                     roles: ['Beneficiary'],
