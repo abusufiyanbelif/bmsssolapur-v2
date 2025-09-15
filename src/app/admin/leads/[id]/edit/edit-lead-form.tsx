@@ -427,33 +427,42 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                 )}
                 
                 <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
-                <FormField
-                    control={form.control}
-                    name="helpRequested"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Amount Requested</FormLabel>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <FormField
+                        control={form.control}
+                        name="helpRequested"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Amount Requested</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                     <FormField
+                        control={form.control}
+                        name="fundingGoal"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Fundraising Goal (Target)</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing} />
+                            </FormControl>
+                             <FormDescription>The amount to be displayed on the public page for this case.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    <FormItem>
+                        <FormLabel>Collected Amount</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing} />
+                            <Input type="number" value={lead.collectedAmount || 0} disabled />
                         </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                 <FormField
-                    control={form.control}
-                    name="fundingGoal"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Fundraising Goal (Target)</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="Enter amount" {...field} disabled={!isEditing} />
-                        </FormControl>
-                         <FormDescription>The amount to be displayed on the public page for this case.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                        <FormDescription>Total funds allocated to this lead.</FormDescription>
+                    </FormItem>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField

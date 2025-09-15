@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -34,7 +35,7 @@ export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose };
 const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
-export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'otherCategoryDetail'>>, adminUser: { id: string, name: string }) => {
+export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'collectedAmount' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'otherCategoryDetail'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     let customLeadId: string;
@@ -63,7 +64,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     const newLead: Partial<Lead> = {
       id: leadRef.id,
       name: leadData.name!,
-      beneficiaryId: leadData.beneficiaryId!, // Can be undefined
+      beneficiaryId: leadData.beneficiaryId, // Can be undefined
       campaignId: leadData.campaignId || undefined,
       campaignName: leadData.campaignName || undefined,
       headline: leadData.headline,
@@ -76,6 +77,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
       otherCategoryDetail: leadData.otherCategoryDetail || undefined,
       priority: leadData.priority || 'Medium',
       helpRequested: leadData.helpRequested!,
+      collectedAmount: 0,
       helpGiven: 0,
       caseStatus: 'Pending',
       caseAction: 'Pending',

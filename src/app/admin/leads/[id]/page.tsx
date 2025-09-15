@@ -83,8 +83,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const verifConfig = verificationStatusConfig[lead.verifiedStatus];
     const caseAction = lead.caseAction || 'Pending';
     const StatusIcon = statusIcons[caseAction];
-    const fundingProgress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 0;
-    const pendingAmount = Math.max(0, lead.helpRequested - lead.helpGiven);
+    const fundingProgress = lead.helpRequested > 0 ? ((lead.collectedAmount || lead.helpGiven) / lead.helpRequested) * 100 : 100;
+    const pendingAmount = Math.max(0, lead.helpRequested - (lead.collectedAmount || lead.helpGiven));
     const dueDate = lead.dueDate;
     const closedDate = lead.closedAt;
 
@@ -370,11 +370,15 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                         <CardContent className="space-y-4">
                             <Progress value={fundingProgress} className="h-4" />
                             <div className="grid grid-cols-2 text-sm">
-                                 <div>
-                                    <p className="text-muted-foreground">Raised</p>
-                                    <p className="font-bold text-lg text-primary">₹{lead.helpGiven.toLocaleString()}</p>
+                                <div>
+                                    <p className="text-muted-foreground">Collected</p>
+                                    <p className="font-bold text-lg text-primary">₹{(lead.collectedAmount || 0).toLocaleString()}</p>
                                 </div>
-                                 <div className="text-right">
+                                <div>
+                                    <p className="text-muted-foreground">Transferred</p>
+                                    <p className="font-bold text-lg">₹{lead.helpGiven.toLocaleString()}</p>
+                                </div>
+                                <div className="col-span-2 text-right">
                                     <p className="text-muted-foreground">Goal</p>
                                     <p className="font-bold text-lg">₹{lead.helpRequested.toLocaleString()}</p>
                                 </div>

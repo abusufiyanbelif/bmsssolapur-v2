@@ -230,6 +230,7 @@ export interface Lead {
     otherCategoryDetail?: string;
     priority?: LeadPriority;
     helpRequested: number;
+    collectedAmount?: number;
     fundingGoal?: number; // New field for organization's target
     helpGiven: number;
     caseStatus: LeadStatus;
