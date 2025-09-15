@@ -8,7 +8,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch, PlusCircle
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -83,6 +83,8 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/campaigns", label: "All Campaigns", icon: Megaphone, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/campaigns/add", label: "Create Campaign", icon: PlusCircle, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/campaigns/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
 
@@ -95,7 +97,6 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/leads", label: "All Leads", icon: FileText, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/leads/add", label: "Create Lead", icon: FilePlus2, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/leads/create-from-document", label: "Create from Document", icon: ScanSearch, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/leads/configuration", label: "Configuration", icon: BookText, allowedRoles: ["Super Admin"] },
         ]
     },
@@ -107,6 +108,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/donations", label: "All Donations", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/donations/add", label: "Create Donation", icon: PlusCircle, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/donations/configuration", label: "Configuration", icon: Banknote, allowedRoles: ["Super Admin"] },
         ]
     },
@@ -118,6 +120,7 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/transfers/add", label: "Create Transfer", icon: PlusCircle, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
@@ -129,6 +132,7 @@ const allNavItems: NavItem[] = [
         icon: UserCog, 
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
+            { href: "/admin/user-management/add", label: "Create User", icon: UserPlus, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/user-management", label: "All Users", icon: Users, allowedRoles: ["Super Admin"] },
             { href: "/admin/donors", label: "All Donors", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
