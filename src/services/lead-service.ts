@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -46,7 +45,6 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     if (leadData.beneficiaryId) {
         const beneficiary = await getUser(leadData.beneficiaryId);
         if (!beneficiary) throw new Error("Beneficiary not found for lead creation.");
-        // It's critical that the userKey exists.
         if (!beneficiary.userKey) {
             throw new Error(`Beneficiary "${beneficiary.name}" does not have a UserKey. Please ensure the user profile is complete before creating a lead.`);
         }
@@ -57,7 +55,6 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
         customLeadId = `${beneficiary.userKey}_${leadNumber}_${dateString}`;
     } else {
-        // Fallback ID generation if no beneficiary is linked, e.g., for "Link Later"
         const countSnapshot = await getCountFromServer(leadsCollection);
         const leadNumber = countSnapshot.data().count + 1;
         customLeadId = `LEAD${leadNumber}_${dateString}`;
