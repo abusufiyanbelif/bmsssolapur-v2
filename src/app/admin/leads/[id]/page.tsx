@@ -24,6 +24,7 @@ import { AuditTrail } from "./audit-trail";
 import { VerificationStatusCard } from "./verification-status-card";
 import { getAllUsers } from "@/services/user-service";
 import { AllocateDonationsDialog } from "./allocate-donations-dialog";
+import { getAppSettings } from "@/app/admin/settings/actions";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['caseAction'], string> = {
@@ -69,11 +70,12 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         notFound();
     }
     
-    const [beneficiary, activityLogs, allUsers, allDonations] = await Promise.all([
+    const [beneficiary, activityLogs, allUsers, allDonations, appSettings] = await Promise.all([
         getUser(lead.beneficiaryId),
         getUserActivity(lead.beneficiaryId), // Fetching activity for the beneficiary
         getAllUsers(), // Fetch all users to identify approvers
         getAllDonations(),
+        getAppSettings(),
     ]);
 
     const allocatedDonations = (await Promise.all(
@@ -93,6 +95,12 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
     const leadSpecificActivity = activityLogs.filter(log => log.details.leadId === lead.id || log.details.linkedLeadId === lead.id || log.details.changes?.leadId === lead.id);
 
+    const showVerificationStatusCard = 
+        !lead.isHistoricalRecord &&
+        lead.caseAction !== 'Closed' &&
+        lead.caseAction !== 'Cancelled' &&
+        lead.caseVerification !== 'Verified' &&
+        !appSettings.leadConfiguration?.approvalProcessDisabled;
 
     return (
         <div className="flex-1 space-y-6">
@@ -397,7 +405,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             )}
                         </CardContent>
                     </Card>
-                    <VerificationStatusCard lead={lead} allApprovers={allUsers} />
+                    {showVerificationStatusCard && (
+                         <VerificationStatusCard lead={lead} allApprovers={allUsers} />
+                    )}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
