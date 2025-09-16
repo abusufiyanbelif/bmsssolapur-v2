@@ -6,7 +6,7 @@ import { getDonation, Donation, getAllDonations } from "@/services/donation-serv
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp, Eye, Package, UserSquare, Download } from "lucide-react";
+import { AlertCircle, ArrowLeft, User as UserIcon, HandHeart, FileText, ShieldCheck, ShieldAlert, ShieldX, Banknote, Edit, Megaphone, CalendarIcon, Target, CheckCircle, UserPlus, Coins, MoreHorizontal, Clock, Ban, Paperclip, Upload, History, FileUp, Eye, Package, UserSquare, Download, TrendingUp } from "lucide-react";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -88,8 +88,17 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const verifConfig = verificationStatusConfig[lead.verifiedStatus] || defaultVerificationConfig;
     const caseAction = lead.caseAction || 'Pending';
     const StatusIcon = statusIcons[caseAction];
-    const fundingProgress = lead.helpRequested > 0 ? ((lead.collectedAmount || lead.helpGiven) / lead.helpRequested) * 100 : 100;
-    const pendingAmount = Math.max(0, lead.helpRequested - (lead.collectedAmount || lead.helpGiven));
+    
+    const fundingGoal = lead.fundingGoal || lead.helpRequested;
+    const collectedAmount = lead.collectedAmount || 0;
+    const transferredAmount = lead.helpGiven || 0;
+    const requestedAmount = lead.helpRequested;
+
+    const collectionProgress = fundingGoal > 0 ? (collectedAmount / fundingGoal) * 100 : 0;
+    const transferProgress = fundingGoal > 0 ? (transferredAmount / fundingGoal) * 100 : 0;
+    
+    const isOverfunded = collectedAmount > fundingGoal;
+    
     const dueDate = lead.dueDate;
     const closedDate = lead.closedAt;
 
@@ -379,27 +388,44 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <Progress value={fundingProgress} className="h-4" />
-                            <div className="grid grid-cols-2 text-sm">
+                            <div className="relative h-4 w-full overflow-hidden rounded-full bg-secondary">
+                                <div
+                                    className={cn(
+                                        "h-full w-full flex-1 transition-all",
+                                        isOverfunded ? "bg-green-500" : "bg-amber-500"
+                                    )}
+                                    style={{ transform: `translateX(-${100 - collectionProgress}%)` }}
+                                />
+                                <div
+                                    className="absolute top-0 left-0 h-full bg-primary"
+                                    style={{ width: `${transferProgress}%` }}
+                                    title={`Transferred: ₹${transferredAmount.toLocaleString()}`}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                 <div>
-                                    <p className="text-muted-foreground">Collected</p>
-                                    <p className="font-bold text-lg text-primary">₹{(lead.collectedAmount || 0).toLocaleString()}</p>
+                                    <p className="text-muted-foreground">Requested</p>
+                                    <p className="font-bold text-lg">₹{requestedAmount.toLocaleString()}</p>
                                 </div>
-                                <div>
-                                    <p className="text-muted-foreground">Transferred</p>
-                                    <p className="font-bold text-lg">₹{lead.helpGiven.toLocaleString()}</p>
-                                </div>
-                                <div className="col-span-2 text-right">
+                                <div className="text-right">
                                     <p className="text-muted-foreground">Goal</p>
-                                    <p className="font-bold text-lg">₹{lead.helpRequested.toLocaleString()}</p>
+                                    <p className="font-bold text-lg">₹{fundingGoal.toLocaleString()}</p>
+                                </div>
+                                <div className="text-primary">
+                                    <p className="text-muted-foreground">Transferred</p>
+                                    <p className="font-bold text-lg">₹{transferredAmount.toLocaleString()}</p>
+                                </div>
+                                <div className={cn("text-right", isOverfunded ? "text-green-600" : "text-amber-600")}>
+                                    <p className="text-muted-foreground">Collected</p>
+                                    <p className="font-bold text-lg">₹{collectedAmount.toLocaleString()}</p>
                                 </div>
                             </div>
-                            {pendingAmount > 0 && (
-                                <Alert className="border-amber-500/50 text-amber-900 dark:text-amber-300">
-                                    <AlertCircle className="h-4 w-4 !text-amber-500" />
-                                    <AlertTitle>Pending Amount</AlertTitle>
+                            {isOverfunded && (
+                                <Alert variant="default" className="border-green-500/50 text-green-800">
+                                    <TrendingUp className="h-4 w-4 !text-green-600" />
+                                    <AlertTitle>Overfunded!</AlertTitle>
                                     <AlertDescription>
-                                        <span className="font-bold text-lg">₹{pendingAmount.toLocaleString()}</span> is still needed to complete this case.
+                                        This case has received more funds than the goal.
                                     </AlertDescription>
                                 </Alert>
                             )}
