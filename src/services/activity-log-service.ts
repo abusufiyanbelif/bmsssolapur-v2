@@ -72,9 +72,10 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
 export const getUserActivity = async (userId: string): Promise<ActivityLog[]> => {
     const adminDb = getAdminDb();
     try {
+        // Query only by userId to avoid needing a composite index.
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
-            .where("userId", "==", userId)
-            .orderBy("timestamp", "desc");
+            .where("userId", "==", userId);
+            
         const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
@@ -86,13 +87,12 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
                 timestamp: (data.timestamp as Timestamp).toDate(),
             } as ActivityLog);
         });
+        
+        // Sort in code to avoid needing the index.
+        activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
         return activities;
     } catch (error) {
-        // Gracefully handle missing index error
-        if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'userId' (ascending) and 'timestamp' (descending). The app will continue to function but this feature will be disabled until the index is created.");
-             return [];
-        }
         console.error("Error fetching user activity:", error);
         return [];
     }
@@ -109,8 +109,8 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
     const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
-            .where("details.targetUserId", "==", targetUserId)
-            .orderBy("timestamp", "desc");
+            .where("details.targetUserId", "==", targetUserId);
+
         const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
@@ -121,12 +121,12 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
                 timestamp: (data.timestamp as Timestamp).toDate(),
             } as ActivityLog);
         });
+
+        // Sort in code to avoid needing a composite index
+        activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        
         return activities;
     } catch (error) {
-        if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.targetUserId' (ascending) and 'timestamp' (descending). The app will continue to function but this feature will be disabled until the index is created.");
-             return [];
-        }
         console.error("Error fetching target user activity:", error);
         return [];
     }
@@ -174,8 +174,8 @@ export const getCampaignActivity = async (campaignId: string): Promise<ActivityL
     const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
-            .where("details.linkedCampaignId", "==", campaignId)
-            .orderBy("timestamp", "desc");
+            .where("details.linkedCampaignId", "==", campaignId);
+            
         const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
         querySnapshot.forEach((doc) => {
@@ -186,12 +186,12 @@ export const getCampaignActivity = async (campaignId: string): Promise<ActivityL
                 timestamp: (data.timestamp as Timestamp).toDate(),
             } as ActivityLog);
         });
+        
+        // Sort in code to avoid needing a composite index
+        activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
         return activities;
     } catch (error) {
-        if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'activityLog' collection for 'details.linkedCampaignId' (ascending) and 'timestamp' (descending). The app will continue to function but this feature will be disabled until the index is created.");
-             return [];
-        }
         console.error("Error fetching campaign activity:", error);
         return [];
     }
