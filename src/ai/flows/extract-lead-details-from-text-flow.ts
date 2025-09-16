@@ -33,7 +33,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
         model: googleAI.model('gemini-1.5-flash-latest'),
         prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, PDFs, or handwritten notes. Your task is to carefully extract structured details from the text. Be precise. If you cannot find a valid value for a field, you MUST omit the field entirely from your JSON output. Do not output fields with "null" or "N/A" as their value.
 
-            **IMPORTANT CONTEXT (Prioritize this over the document text for these specific fields):**
+            **IMPORTANT CONTEXT (MUST BE USED FOR STORY/HEADLINE):**
             - **Lead Purpose**: ${input.purpose || 'Not specified'}
             - **Lead Category**: ${input.category || 'Not specified'}
             - **Degree/Class**: ${input.degree || 'Not specified'}
@@ -43,8 +43,8 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             **KEY INSTRUCTIONS:**
 
             **1. Generate a Compelling Story & Headline:**
-            -   **Story**: Based on the document text AND the provided context (Purpose, Category, Degree, Year), synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience. For example, if the purpose is 'Education' and the context says '1st Year B.Pharm', the story should clearly state this, e.g., "This student is in their first year of B.Pharm and needs help...".
-            -   **Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. It MUST be consistent with the provided context. For example, if the context is '1st Year B.Pharm', do NOT say 'final year'.
+            -   **Story**: Based on the document text AND the provided context (Purpose, Category, Degree, Year), synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience. For example, if the context is '1st Year' and 'B.Pharm', the story MUST clearly state this, e.g., "This student is in their first year of B.Pharm and needs help...". DO NOT invent details that contradict the context, such as saying 'final year' if the context says 'first year'.
+            -   **Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. It MUST be consistent with the provided context.
 
             **2. Medical Document Parsing:**
             If the context purpose is 'Medical' or the document contains terms like "Hospital", "Patient", "Doctor", "Report":

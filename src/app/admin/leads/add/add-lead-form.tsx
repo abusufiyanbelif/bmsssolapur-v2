@@ -1,10 +1,12 @@
 
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import * as z from "zod";
+import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,10 +31,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries } from "./actions";
-import { handleAddUser } from "@/app/admin/user-management/add/actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCw as RefreshIcon, BookOpen, Sparkles } from "lucide-react";
-import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, PurposeCategory, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -426,11 +427,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryFullName, setValue]);
 
   useEffect(() => {
-     if (newBeneficiaryFirstName && newBeneficiaryLastName && !form.formState.dirtyFields.newBeneficiaryUserId) {
+     if (beneficiaryType === 'new' && newBeneficiaryFirstName && newBeneficiaryLastName && !form.formState.dirtyFields.newBeneficiaryUserId) {
         const generatedUserId = `${newBeneficiaryFirstName.toLowerCase()}.${newBeneficiaryLastName.toLowerCase()}`.replace(/\s+/g, '');
         setValue('newBeneficiaryUserId', generatedUserId, { shouldValidate: true });
     }
-  }, [newBeneficiaryFirstName, newBeneficiaryLastName, setValue, form.formState.dirtyFields.newBeneficiaryUserId]);
+  }, [beneficiaryType, newBeneficiaryFirstName, newBeneficiaryLastName, setValue, form.formState.dirtyFields.newBeneficiaryUserId]);
 
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
@@ -513,7 +514,16 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return;
     }
     setIsCaseAnalyzing(true);
-    const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+    const result = await handleExtractLeadDetailsFromText(
+        caseRawText,
+        {
+            purpose: selectedPurposeName,
+            category: selectedCategory,
+            degree: selectedDegree,
+            year: getValues('year'),
+            semester: getValues('semester'),
+        }
+    );
     if (result.success && result.details) {
       const details = result.details;
       if (details.headline) setValue('headline', details.headline, { shouldDirty: true });
@@ -544,7 +554,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     setIsRefreshingSummary(true);
-    const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+    const result = await handleExtractLeadDetailsFromText(caseRawText, {
+        purpose: selectedPurposeName,
+        category: selectedCategory,
+        degree: selectedDegree,
+        year: getValues('year'),
+        semester: getValues('semester'),
+    });
      if (result.success && result.details?.headline) {
         setValue('headline', result.details.headline, { shouldDirty: true });
         toast({ variant: 'success', title: 'Case Summary Refreshed' });
@@ -560,7 +576,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         return;
     }
     setIsRefreshingStory(true);
-    const result = await handleExtractLeadDetailsFromText(caseRawText, selectedPurposeName, selectedCategory);
+    const result = await handleExtractLeadDetailsFromText(caseRawText, {
+        purpose: selectedPurposeName,
+        category: selectedCategory,
+        degree: selectedDegree,
+        year: getValues('year'),
+        semester: getValues('semester'),
+    });
     if (result.success && result.details?.story) {
         setValue('story', result.details.story, { shouldDirty: true });
         toast({ variant: 'success', title: 'Story Refreshed' });
@@ -682,32 +704,39 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     let finalBeneficiaryId = values.beneficiaryId;
 
     // --- Step 1: Create Beneficiary if 'new' is selected ---
-    if (values.beneficiaryType === 'new') {
+    if (values.beneficiaryType === 'new' && !linkBeneficiaryLater) {
         setCreationStatus([{ name: 'Creating Beneficiary', status: 'in-progress' }]);
-        const userFormData = new FormData();
-        // Append all relevant new user fields
-        Object.keys(values).forEach(key => {
-            if (key.startsWith('newBeneficiary') || ['gender', 'isAnonymousAsBeneficiary', 'aadhaarCard', 'addressLine1', 'city', 'state', 'country', 'pincode'].includes(key)) {
-                const value = values[key as keyof AddLeadFormValues];
-                if (value) {
-                     if (value instanceof File) {
-                         userFormData.append(key, value);
-                     } else {
-                        userFormData.append(key, String(value));
-                     }
-                }
-            }
-        });
-        userFormData.append('roles', 'Beneficiary'); // Always assign Beneficiary role
-
-        const userResult = await handleAddUser(userFormData);
         
-        if (userResult.success && userResult.user?.id) {
-            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'success', details: `User ID: ${userResult.user?.userId}` } : s));
-            finalBeneficiaryId = userResult.user.id;
-        } else {
-            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'error', details: userResult.error } : s));
-            toast({ variant: 'destructive', title: 'Beneficiary Creation Failed', description: userResult.error });
+        try {
+            const newUserPayload: Partial<User> = {
+                userId: values.newBeneficiaryUserId,
+                name: `${values.newBeneficiaryFirstName} ${values.newBeneficiaryMiddleName || ''} ${values.newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim(),
+                firstName: values.newBeneficiaryFirstName,
+                middleName: values.newBeneficiaryMiddleName || '',
+                lastName: values.newBeneficiaryLastName,
+                fatherName: values.newBeneficiaryFatherName || undefined,
+                phone: values.newBeneficiaryPhone,
+                email: values.newBeneficiaryEmail || undefined,
+                aadhaarNumber: values.newBeneficiaryAadhaar || undefined,
+                gender: values.gender,
+                roles: ['Beneficiary'],
+                isActive: true,
+                address: {
+                    addressLine1: values.addressLine1,
+                    city: values.city,
+                    state: values.state,
+                    pincode: values.pincode,
+                    country: values.country,
+                }
+            };
+            const newUser = await createUser(newUserPayload);
+            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'success', details: `User ID: ${newUser.userId}` } : s));
+            finalBeneficiaryId = newUser.id;
+
+        } catch(e) {
+            const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
+            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'error', details: error } : s));
+            toast({ variant: 'destructive', title: 'Beneficiary Creation Failed', description: error });
             setIsSubmitting(false);
             return;
         }
@@ -825,20 +854,16 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             className="grid grid-cols-2 gap-4"
                         >
                             <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
                                     <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}>
                                         <UserSearch className="h-6 w-6"/>
                                         <span>Search Existing</span>
                                     </Button>
-                                </FormControl>
                             </FormItem>
                              <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
                                      <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
                                         <UserRoundPlus className="h-6 w-6"/>
                                         <span>Create New</span>
                                     </Button>
-                                </FormControl>
                             </FormItem>
                         </RadioGroup>
                         </FormControl>
@@ -1290,7 +1315,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                         </div>
                         </FormItem>
                     )}
-                    />
+                />
                  <FormField
                   control={form.control}
                   name="acceptableDonationTypes"
@@ -1448,3 +1473,4 @@ export function AddLeadForm(props: { settings: AppSettings, users: User[], campa
         </Suspense>
     )
 }
+

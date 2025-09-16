@@ -268,11 +268,11 @@ export async function handleAddLead(
 export async function handleExtractLeadDetailsFromText(
     rawText: string, 
     context: {
-        purpose?: string, 
-        category?: string,
-        degree?: string,
-        year?: string,
-        semester?: string
+        purpose?: string; 
+        category?: string;
+        degree?: string;
+        year?: string;
+        semester?: string;
     }
 ): Promise<{ success: boolean; details?: ExtractLeadDetailsOutput; error?: string }> {
     try {
@@ -312,6 +312,7 @@ export async function handleGenerateSummaries(rawText: string): Promise<{ succes
     }
 }
     
+
 
 
 
