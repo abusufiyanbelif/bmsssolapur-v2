@@ -35,6 +35,7 @@ import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/action
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { updateLeadStatus, updateLeadVerificationStatus, getAllLeads } from "@/services/lead-service";
 import { getUser, getAllUsers } from "@/services/user-service";
+import { getAppSettings } from "@/app/admin/settings/actions";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
@@ -123,7 +124,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     const [leads, setLeads] = useState<EnrichedLead[]>(initialLeads);
     const [users, setUsers] = useState<User[]>(initialUsers);
     const [settings, setSettings] = useState<AppSettings | null>(initialSettings);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
@@ -157,7 +158,8 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     const [itemsPerPage, setItemsPerPage] = useState(10);
     
     const allLeadPurposes = useMemo(() => {
-        return (settings?.leadConfiguration?.purposes || [])
+        if (!settings) return [];
+        return (settings.leadConfiguration?.purposes || [])
             .filter(p => p.enabled)
             .map(p => p.name) || [];
     }, [settings]);
@@ -165,14 +167,14 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     const fetchData = async () => {
         try {
             setLoading(true);
-            const { getAllLeads } = await import('@/services/lead-service');
-            const { getAllUsers } = await import('@/services/user-service');
-            const [fetchedLeads, fetchedUsers] = await Promise.all([
+            const [fetchedLeads, fetchedUsers, fetchedSettings] = await Promise.all([
                 getAllLeads(),
                 getAllUsers(),
+                initialSettings ? Promise.resolve(initialSettings) : getAppSettings(), // Fetch settings only if not provided
             ]);
             setLeads(fetchedLeads);
             setUsers(fetchedUsers);
+            if(fetchedSettings) setSettings(fetchedSettings);
             setError(null);
         } catch (e) {
             setError("Failed to fetch data. Please try again later.");
@@ -186,6 +188,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
         fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const usersById = useMemo(() => {
@@ -225,7 +228,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             const nameMatch = appliedFilters.name === '' || 
                               lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
                               lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
-                              lead.beneficiaryId?.toLowerCase().includes(appliedFilters.name.toLowerCase());
+                              (lead.beneficiaryId && lead.beneficiaryId.toLowerCase().includes(appliedFilters.name.toLowerCase()));
             const statusMatch = appliedFilters.status === 'all' || lead.caseStatus === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.caseVerification === appliedFilters.verification;
             const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
@@ -713,7 +716,7 @@ Referral Phone:
     );
 
     const renderContent = () => {
-        if (loading) {
+        if (loading || !settings) {
             return (
                 <div className="flex items-center justify-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -935,3 +938,5 @@ Referral Phone:
     </div>
   )
 }
+
+    
