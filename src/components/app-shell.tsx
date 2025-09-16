@@ -233,10 +233,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setIsRoleSwitcherOpen(true);
     };
     
-     const handleNotificationClick = (requiredRole: string, href: string) => {
+    const handleNotificationClick = (requiredRole: string, href: string) => {
         if (!user || !user.isLoggedIn) return;
         
-        if(user.activeRole === requiredRole) {
+        const hasSufficientRole = ['Admin', 'Super Admin', 'Finance Admin'].includes(user.activeRole);
+
+        if(hasSufficientRole) {
             router.push(href);
         } else if (user.roles.includes(requiredRole as any)) {
             handleOpenRoleSwitcher(requiredRole, href);

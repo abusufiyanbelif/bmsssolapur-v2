@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
@@ -34,7 +35,7 @@ function CopyButton({ text }: { text: React.ReactNode }) {
     };
 
     return (
-        <Button size="sm" variant="outline" className="h-7" onClick={onCopy}>
+        <Button size="sm" variant="secondary" className="h-7" onClick={onCopy}>
             {hasCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             <span className="sr-only">Copy</span>
         </Button>
@@ -61,7 +62,7 @@ export function Toaster() {
                 )}
                  <div className="flex gap-2 items-center mt-2">
                     {action}
-                    <Button size="sm" variant="outline" className="h-7" onClick={() => dismiss(id)}>
+                    <Button size="sm" variant="secondary" className="h-7" onClick={() => dismiss(id)}>
                         OK
                     </Button>
                     {variant === 'destructive' && description && <CopyButton text={description} />}
