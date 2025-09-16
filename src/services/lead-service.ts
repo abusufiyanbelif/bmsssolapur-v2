@@ -35,7 +35,7 @@ export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, LeadAction 
 const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
-export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'collectedAmount' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'otherCategoryDetail'>>, adminUser: { id: string, name: string }) => {
+export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   if (!adminUser || !adminUser.id) throw new Error('Admin user details are required to create a lead.');
   
@@ -80,6 +80,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         priority: leadData.priority || 'Medium',
         helpRequested: leadData.helpRequested!,
         collectedAmount: leadData.collectedAmount || 0,
+        fundingGoal: leadData.fundingGoal,
         helpGiven: leadData.helpGiven || 0,
         caseStatus: leadData.caseStatus || 'Pending',
         caseAction: leadData.caseAction || 'Pending',
