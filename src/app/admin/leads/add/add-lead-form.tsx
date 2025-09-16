@@ -519,7 +519,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         {
             purpose: selectedPurposeName,
             category: selectedCategory,
-            degree: selectedDegree,
+            degree: getValues('degree'),
             year: getValues('year'),
             semester: getValues('semester'),
         }
@@ -557,7 +557,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const result = await handleExtractLeadDetailsFromText(caseRawText, {
         purpose: selectedPurposeName,
         category: selectedCategory,
-        degree: selectedDegree,
+        degree: getValues('degree'),
         year: getValues('year'),
         semester: getValues('semester'),
     });
@@ -579,7 +579,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     const result = await handleExtractLeadDetailsFromText(caseRawText, {
         purpose: selectedPurposeName,
         category: selectedCategory,
-        degree: selectedDegree,
+        degree: getValues('degree'),
         year: getValues('year'),
         semester: getValues('semester'),
     });
@@ -694,95 +694,57 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
     if (!adminUser?.id) {
-        toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log in again." });
-        return;
+      toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log in again." });
+      return;
     }
     
     setIsSubmitting(true);
     setCreationStatus([]); // Reset status on new submission
 
-    let finalBeneficiaryId = values.beneficiaryId;
-
-    // --- Step 1: Create Beneficiary if 'new' is selected ---
-    if (values.beneficiaryType === 'new' && !linkBeneficiaryLater) {
-        setCreationStatus([{ name: 'Creating Beneficiary', status: 'in-progress' }]);
-        
-        try {
-            const newUserPayload: Partial<User> = {
-                userId: values.newBeneficiaryUserId,
-                name: `${values.newBeneficiaryFirstName} ${values.newBeneficiaryMiddleName || ''} ${values.newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim(),
-                firstName: values.newBeneficiaryFirstName,
-                middleName: values.newBeneficiaryMiddleName || '',
-                lastName: values.newBeneficiaryLastName,
-                fatherName: values.newBeneficiaryFatherName || undefined,
-                phone: values.newBeneficiaryPhone,
-                email: values.newBeneficiaryEmail || undefined,
-                aadhaarNumber: values.newBeneficiaryAadhaar || undefined,
-                gender: values.gender,
-                roles: ['Beneficiary'],
-                isActive: true,
-                address: {
-                    addressLine1: values.addressLine1,
-                    city: values.city,
-                    state: values.state,
-                    pincode: values.pincode,
-                    country: values.country,
-                }
-            };
-            const newUser = await createUser(newUserPayload);
-            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'success', details: `User ID: ${newUser.userId}` } : s));
-            finalBeneficiaryId = newUser.id;
-
-        } catch(e) {
-            const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
-            setCreationStatus(prev => prev.map(s => s.name === 'Creating Beneficiary' ? { ...s, status: 'error', details: error } : s));
-            toast({ variant: 'destructive', title: 'Beneficiary Creation Failed', description: error });
-            setIsSubmitting(false);
-            return;
-        }
-    }
-    
-    // --- Step 2: Create Lead ---
-    setCreationStatus(prev => [...prev, { name: 'Creating Lead', status: 'in-progress' }]);
-    
-    const leadFormData = new FormData();
-    Object.keys(values).forEach(key => {
-        const formKey = key as keyof AddLeadFormValues;
-        const value = values[formKey] as any;
-        if (value && !key.startsWith('newBeneficiary')) {
-            if (Array.isArray(value)) {
-                if(key === 'otherDocuments') value.forEach(f => f instanceof File && leadFormData.append(key, f));
-                else value.forEach(v => leadFormData.append(key, v));
+    // This function now expects all data to be in the `values` object.
+    // The server action will handle user creation if needed.
+    const formData = new FormData();
+    for (const key in values) {
+      const formKey = key as keyof AddLeadFormValues;
+      const value = values[formKey] as any;
+      if (value) {
+        if (Array.isArray(value)) {
+            if (key === 'otherDocuments') {
+                value.forEach(f => { if(f instanceof File) formData.append(key, f) });
+            } else {
+                 value.forEach(v => formData.append(key, v));
             }
-            else if (value instanceof Date) leadFormData.append(key, value.toISOString());
-            else if (typeof value === 'boolean') { if (value) leadFormData.append(key, 'on'); }
-            else if (value instanceof File) leadFormData.append(key, value);
-            else leadFormData.append(key, String(value));
+        } else if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else if (typeof value === 'boolean') {
+          if (value) formData.append(key, 'on');
+        } else if (value instanceof File) {
+            formData.append(key, value);
+        } else {
+          formData.append(key, String(value));
         }
-    });
+      }
+    }
+    formData.append("adminUserId", adminUser.id);
+    if(forceCreate) formData.append("forceCreate", "true");
+    
+    const leadResult = await handleAddLead(formData);
 
-    leadFormData.append("adminUserId", adminUser.id);
-    if(finalBeneficiaryId) leadFormData.set("beneficiaryId", finalBeneficiaryId); // Use final ID
-    if(forceCreate) leadFormData.append("forceCreate", "true");
-    
-    const leadResult = await handleAddLead(leadFormData);
-    
     if (leadResult.duplicateLeadWarning) {
-        setDuplicateWarning(leadResult.duplicateLeadWarning);
-        setIsSubmitting(false);
-        setCreationStatus([]);
-        return;
+      setDuplicateWarning(leadResult.duplicateLeadWarning);
+      setIsSubmitting(false);
+      setCreationStatus([]);
+      return;
     }
 
     if (leadResult.success && leadResult.lead) {
-        setCreationStatus(prev => prev.map(s => s.name === 'Creating Lead' ? { ...s, status: 'success', details: `Lead ID: ${leadResult.lead?.id}` } : s));
-        toast({ variant: "success", title: "Lead Created Successfully!", duration: 5000 });
-        setTimeout(() => {
-            handleCancel();
-        }, 1000);
+      toast({ variant: "success", title: "Lead Created Successfully!", description: `Lead ID: ${leadResult.lead.id}`, duration: 5000 });
+      setTimeout(() => {
+        handleCancel();
+        router.push('/admin/leads');
+      }, 1000);
     } else {
-        setCreationStatus(prev => prev.map(s => s.name === 'Creating Lead' ? { ...s, status: 'error', details: leadResult.error } : s));
-        toast({ variant: "destructive", title: "Error Creating Lead", description: leadResult.error });
+      toast({ variant: "destructive", title: "Error Creating Lead", description: leadResult.error });
     }
 
     setIsSubmitting(false);
@@ -1022,8 +984,8 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 <FormLabel>Gender</FormLabel>
                                 <FormControl>
                                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 pt-2">
-                                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem>
-                                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-2"><RadioGroupItem value="Male" id="male" /><FormLabel htmlFor="male" className="font-normal">Male</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-2"><RadioGroupItem value="Female" id="female" /><FormLabel htmlFor="female" className="font-normal">Female</FormLabel></FormItem>
                                     </RadioGroup>
                                 </FormControl>
                                 <FormMessage />
@@ -1137,7 +1099,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 )}
                             />
                         )}
-                        {showSemesterField && (
+                         {showSemesterField && (
                              <FormField
                                 control={form.control}
                                 name="semester"
@@ -1473,4 +1435,3 @@ export function AddLeadForm(props: { settings: AppSettings, users: User[], campa
         </Suspense>
     )
 }
-
