@@ -1,6 +1,5 @@
 
-
-"use server";
+'use server';
 
 import { createLead } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
@@ -26,7 +25,8 @@ const categoryToPurposeMap: Record<string, 'Education' | 'Medical' | 'Relief Fun
 
 export async function handleRequestHelp(
   formData: FormData,
-  userId: string
+  userId: string,
+  onProgress?: (progress: number) => void
 ): Promise<FormState> {
   const rawFormData = {
       category: formData.get("category") as string, // This is a blended field now
@@ -44,30 +44,39 @@ export async function handleRequestHelp(
     if (!beneficiaryUser) {
         return { success: false, error: "Beneficiary user not found." };
     }
-      
-    let verificationDocumentUrl = "";
-    if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
-        verificationDocumentUrl = await uploadFile(rawFormData.verificationDocument, 'verification-documents/');
-    }
     
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'donations' | 'campaignName' | 'otherCategoryDetail'> = {
+    // Create lead first to get an ID for the file path
+     const leadDataForCreation: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'donations' | 'campaignName' | 'otherCategoryDetail'> = {
         name: beneficiaryUser.name,
         beneficiaryId: userId,
-        donationType: 'Sadaqah', // Defaulting to Sadaqah, can be adjusted
+        donationType: 'Sadaqah',
         purpose: categoryToPurposeMap[rawFormData.category] || 'Relief Fund',
         category: rawFormData.category,
         helpRequested: rawFormData.helpRequested,
         caseDetails: rawFormData.caseDetails,
-        verificationDocumentUrl,
     };
+    const tempLead = await createLead(leadDataForCreation, beneficiaryUser);
 
-    const newLead = await createLead(newLeadData, { id: userId, name: beneficiaryUser.name });
+
+    let verificationDocumentUrl = "";
+    if (rawFormData.verificationDocument && rawFormData.verificationDocument.size > 0) {
+        const uploadPath = `leads/${tempLead.id}/documents/`;
+        verificationDocumentUrl = await uploadFile(
+            rawFormData.verificationDocument, 
+            uploadPath,
+            onProgress
+        );
+        // Update the lead with the new document URL
+        await updateLead(tempLead.id, { verificationDocumentUrl });
+    }
+    
+    const finalLead = { ...tempLead, verificationDocumentUrl };
     
     revalidatePath("/my-cases");
 
     return {
       success: true,
-      lead: newLead,
+      lead: finalLead,
     };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

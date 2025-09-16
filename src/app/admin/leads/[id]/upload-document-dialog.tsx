@@ -19,6 +19,7 @@ import { useState, useRef, useEffect } from "react";
 import { Loader2, Upload } from "lucide-react";
 import { handleUploadVerificationDocument } from "./actions";
 import { useRouter } from "next/navigation";
+import { Progress } from "@/components/ui/progress"; // Import Progress component
 
 interface UploadDocumentDialogProps {
   leadId: string;
@@ -28,14 +29,16 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [open, setOpen] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-      const storedUserId = localStorage.getItem('userId');
-      if(storedUserId) {
-        setAdminUserId(storedUserId);
+      if (open) {
+          const storedUserId = localStorage.getItem('userId');
+          setAdminUserId(storedUserId);
+          setUploadProgress(0); // Reset progress on open
       }
   }, [open]);
   
@@ -52,10 +55,11 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
 
     const formData = new FormData(event.currentTarget);
     formData.append("adminUserId", adminUserId);
-    const result = await handleUploadVerificationDocument(leadId, formData);
+    const result = await handleUploadVerificationDocument(leadId, formData, setUploadProgress);
 
     setIsUploading(false);
 
@@ -66,7 +70,7 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
         description: "The verification document has been attached to the lead.",
       });
       setOpen(false);
-      router.refresh(); // Refresh the page to show the new document and audit trail
+      router.refresh();
     } else {
       toast({
         variant: "destructive",
@@ -94,8 +98,17 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="document">Document File</Label>
-                <Input id="document" name="document" type="file" required accept="image/*,application/pdf" />
+                <Input id="document" name="document" type="file" required accept="image/*,application/pdf" disabled={isUploading} />
             </div>
+
+             {isUploading && (
+              <div className="space-y-2">
+                <Label>Uploading...</Label>
+                <Progress value={uploadProgress} />
+                <p className="text-xs text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+              </div>
+            )}
+
             <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary" disabled={isUploading}>
@@ -104,7 +117,7 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
                 </DialogClose>
                 <Button type="submit" disabled={isUploading}>
                     {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                    Upload
+                    {isUploading ? 'Uploading...' : 'Upload'}
                 </Button>
             </DialogFooter>
         </form>

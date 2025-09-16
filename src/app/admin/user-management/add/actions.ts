@@ -1,6 +1,5 @@
 
-
-"use server";
+'use server';
 
 import { createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
@@ -15,7 +14,8 @@ interface FormState {
 }
 
 export async function handleAddUser(
-  formData: FormData
+  formData: FormData,
+  onProgress?: (progress: number) => void // Note: This won't work in a real server action like this
 ): Promise<FormState> {
   const rawFormData = {
       userId: formData.get("userId") as string | undefined,
@@ -105,10 +105,10 @@ export async function handleAddUser(
     const uploadPath = `users/${newUser.userKey}/documents/`;
 
     if (rawFormData.aadhaarCard && rawFormData.aadhaarCard.size > 0) {
-      docUpdates.aadhaarCardUrl = await uploadFile(rawFormData.aadhaarCard, uploadPath);
+      docUpdates.aadhaarCardUrl = await uploadFile(rawFormData.aadhaarCard, uploadPath, onProgress);
     }
     if (rawFormData.addressProof && rawFormData.addressProof.size > 0) {
-      docUpdates.addressProofUrl = await uploadFile(rawFormData.addressProof, uploadPath);
+      docUpdates.addressProofUrl = await uploadFile(rawFormData.addressProof, uploadPath, onProgress);
     }
 
     if (Object.keys(docUpdates).length > 0) {

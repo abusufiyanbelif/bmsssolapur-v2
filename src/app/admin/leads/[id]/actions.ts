@@ -1,6 +1,5 @@
 
-
-"use server";
+'use server';
 
 import { deleteLead as deleteLeadService, getLead, updateLead } from "@/services/lead-service";
 import { revalidatePath } from "next/cache";
@@ -114,7 +113,11 @@ export async function handleBulkUpdateLeadStatus(
 }
 
 
-export async function handleUploadVerificationDocument(leadId: string, formData: FormData) {
+export async function handleUploadVerificationDocument(
+    leadId: string, 
+    formData: FormData,
+    onProgress?: (progress: number) => void
+): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
         const documentFile = formData.get("document") as File | undefined;
         const adminUserId = formData.get("adminUserId") as string | undefined;
@@ -136,7 +139,7 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
         }
 
         const uploadPath = `leads/${leadId}/documents/`;
-        const verificationDocumentUrl = await uploadFile(documentFile, uploadPath);
+        const verificationDocumentUrl = await uploadFile(documentFile, uploadPath, onProgress);
 
         await updateLead(leadId, { verificationDocumentUrl });
 
@@ -144,7 +147,7 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
             userId: adminUser.id!,
             userName: adminUser.name,
             userEmail: adminUser.email,
-            role: "Admin", // Generic admin role for this action
+            role: "Admin",
             activity: "Document Uploaded",
             details: {
                 leadId: lead.id!,
@@ -165,7 +168,11 @@ export async function handleUploadVerificationDocument(leadId: string, formData:
     }
 }
 
-export async function handleFundTransfer(leadId: string, formData: FormData) {
+export async function handleFundTransfer(
+    leadId: string, 
+    formData: FormData,
+    onProgress?: (progress: number) => void
+): Promise<{success: boolean, error?: string}> {
      try {
         const adminUserId = formData.get("adminUserId") as string;
         const amountStr = formData.get("amount") as string;
@@ -202,7 +209,6 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
              return { success: false, error: "Recipient user could not be found." };
         }
 
-        // --- Structured Transfer ID Generation ---
         const timestamp = Date.now();
         const adminKey = adminUser.userKey || 'ADMIN';
         const recipientKey = recipientUser.userKey || 'RECP';
@@ -212,12 +218,11 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
         if (paymentMethod === 'Online (UPI/Card)') paymentSuffix = '_ONL';
         
         const transferId = scannedTransactionId || `TXN_By${adminKey}_To${recipientKey}_${timestamp}${paymentSuffix}`;
-        // --- End ID Generation ---
 
         let proofUrl = '';
         if (proofFile) {
             const uploadPath = `leads/${leadId}/transfers/${adminKey}/${transferId}/`;
-            proofUrl = await uploadFile(proofFile, uploadPath);
+            proofUrl = await uploadFile(proofFile, uploadPath, onProgress);
         }
 
         const newTransfer: FundTransfer = {
@@ -227,7 +232,7 @@ export async function handleFundTransfer(leadId: string, formData: FormData) {
             transferredAt: new Date() as any,
             proofUrl: proofUrl,
             notes: formData.get("notes") as string | undefined,
-            transactionId: transferId, // Use the new structured ID
+            transactionId: transferId,
             utrNumber: formData.get("utrNumber") as string | undefined,
             googlePayTransactionId: formData.get("googlePayTransactionId") as string | undefined,
             phonePeTransactionId: formData.get("phonePeTransactionId") as string | undefined,

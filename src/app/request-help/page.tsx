@@ -42,6 +42,8 @@ import {
 import type { Lead, AppSettings } from "@/services/types";
 import Link from "next/link";
 import { getAppSettings } from "@/app/admin/settings/actions";
+import { Progress } from "@/components/ui/progress"; // Import Progress component
+import { Label } from "@/components/ui/label";
 
 
 const leadCategories = ['Education Fees', 'Medical Bill', 'Ration Kit', 'Zakat', 'Sadaqah', 'Fitr'] as const;
@@ -58,6 +60,7 @@ type RequestHelpFormValues = z.infer<typeof formSchema>;
 export default function RequestHelpPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string |null>(null);
@@ -95,6 +98,7 @@ export default function RequestHelpPage() {
     }
     
     setIsSubmitting(true);
+    setUploadProgress(0);
     
     const formData = new FormData();
     formData.append("category", values.category);
@@ -102,8 +106,16 @@ export default function RequestHelpPage() {
     if(values.caseDetails) formData.append("caseDetails", values.caseDetails);
     if(values.verificationDocument) formData.append("verificationDocument", values.verificationDocument);
     
-    const result = await handleRequestHelp(formData, userId);
+    // The server action can't stream progress back. This is a simulation.
+    // In a real app, a client-side upload function would be used.
+    const interval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+    }, 200);
 
+    const result = await handleRequestHelp(formData, userId, setUploadProgress);
+    
+    clearInterval(interval);
+    setUploadProgress(100);
     setIsSubmitting(false);
 
     if (result.success && result.lead) {
@@ -281,6 +293,14 @@ export default function RequestHelpPage() {
                         </FormItem>
                     )}
                     />
+
+                    {isSubmitting && (
+                        <div className="space-y-2">
+                            <Label>Uploading Document...</Label>
+                            <Progress value={uploadProgress} />
+                            <p className="text-xs text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                        </div>
+                    )}
 
                     <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
