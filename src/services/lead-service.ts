@@ -71,11 +71,11 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         headline: leadData.headline,
         story: leadData.story,
         purpose: leadData.purpose!,
-        otherPurposeDetail: leadData.otherPurposeDetail || undefined,
+        otherPurposeDetail: leadData.otherPurposeDetail,
         donationType: leadData.donationType!,
         acceptableDonationTypes: leadData.acceptableDonationTypes || [],
         category: leadData.category,
-        otherCategoryDetail: leadData.otherCategoryDetail || undefined,
+        otherCategoryDetail: leadData.otherCategoryDetail,
         priority: leadData.priority || 'Medium',
         helpRequested: leadData.helpRequested!,
         collectedAmount: leadData.collectedAmount || 0,
@@ -118,7 +118,10 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     return newLead as Lead;
   } catch (error) {
     console.error('Error creating lead: ', error);
-    throw new Error('Failed to create lead in Firestore.');
+    if (error instanceof Error) {
+        throw error; // Re-throw the original, specific error
+    }
+    throw new Error('An unknown error occurred while creating the lead in Firestore.');
   }
 };
 
