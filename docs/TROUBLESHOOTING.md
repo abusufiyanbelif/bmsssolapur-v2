@@ -6,7 +6,7 @@ This document provides solutions to common issues encountered during development
 
 ## 1. "API key not valid" for Gemini / Google AI
 
-**Error Message:** `[400 Bad Request] API key not valid. Please pass a valid API key.`
+**Error Message:** `[400 Bad Request] API key not valid. Please pass a valid API key.` or a similar message indicating an authentication failure.
 
 **Cause:**
 This is the most common issue. It means the application is trying to use a generative AI feature (like scanning a receipt or generating text), but it cannot authenticate with the Google AI service. The `GEMINI_API_KEY` is either missing, incorrect, or not properly configured for your project.
@@ -38,7 +38,7 @@ You must obtain a free API key from Google AI Studio and add it as a secret to y
 
 ## 2. "Could not reach Cloud Firestore backend" or "Could not refresh access token"
 
-**Error Message:** `Firestore (11.9.0): Could not reach Cloud Firestore backend.` or `Could not refresh access token`.
+**Error Message:** `Firestore (11.9.0): Could not reach Cloud Firestore backend.`, `Could not refresh access token`, or `7 PERMISSION_DENIED: Missing or insufficient permissions.`
 
 **Cause:**
 This error means the server environment itself (Firebase App Hosting) doesn't have the necessary permission to access the database (Firestore). This is an infrastructure-level permission issue. The App Hosting service account needs to be explicitly granted permission to read from and write to the database.

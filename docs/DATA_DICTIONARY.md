@@ -16,7 +16,7 @@ These cards provide a high-level overview of the entire organization's activity.
 | :--- | :--- | :--- | :--- |
 | **Total Verified Funds** | The total amount of all money successfully received and verified. | `donations` | `SUM(donation.amount)` where `donation.status` is 'Verified' OR 'Allocated'. |
 | **Total Distributed** | The total amount of money that has been transferred to beneficiaries. | `leads` | `SUM(lead.helpGiven)`. This is the sum of all fund transfers made against all leads. |
-| **Total Required** | The total pending amount needed to fully fund all open and published help cases. | `leads` | `SUM(lead.helpRequested - lead.helpGiven)` where `lead.caseStatus` is 'Open' OR 'Partial' OR 'Publish'. |
+| **Total Required** | The total pending amount needed to fully fund all open and published help cases. | `leads` | `SUM(lead.helpRequested - lead.helpGiven)` where `lead.caseAction` is 'Open' OR 'Partial' OR 'Publish'. |
 | **Cases Closed** | The total number of help cases that have been successfully completed and closed. | `leads` | `COUNT(leads)` where `lead.caseAction` is 'Closed'. |
 | **Published Leads** | The number of help cases currently visible to the public for donations. | `leads` | `COUNT(leads)` where `lead.caseAction` is 'Publish'. |
 | **Beneficiaries Helped**| The total number of unique individuals who have received at least some financial aid. | `leads` | `COUNT(UNIQUE lead.beneficiaryId)` where `lead.helpGiven` > 0. |

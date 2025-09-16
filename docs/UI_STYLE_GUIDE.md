@@ -72,7 +72,7 @@ The application's layout is structured using modern card-based design and consis
 
 User feedback is provided through a consistent set of components.
 
-- **Toasts (`Toaster`)**: Non-critical, temporary pop-up notifications that appear at the top-right of the screen for feedback like "Profile Updated". Managed by `src/components/ui/toaster.tsx` and the `useToast` hook.
+- **Toasts (`Toaster`)**: Non-critical, temporary pop-up notifications that appear at the top-right of the screen for feedback like "Profile Updated". Managed by `src/components/ui/toaster.tsx` and the `useToast` hook. All toasts include an "OK" button, and `destructive` (error) toasts also include a "Copy" button.
 
 - **Alerts (`Alert`)**: Inline messages used to convey important, contextual information.
   - **Default**: For informational messages (e.g., "You are editing a user record").

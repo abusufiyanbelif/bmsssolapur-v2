@@ -2,10 +2,6 @@
 
 This document tracks bugs, issues, and their resolution status for the project.
 
-## How to Use
-
-When a new issue is identified, add a new row to the "Open Issues" table. Once the issue is resolved, move it to the "Resolved Issues" table and fill in the resolution details.
-
 ---
 
 ## Open Issues
@@ -29,4 +25,6 @@ When a new issue is identified, add a new row to the "Open Issues" table. Once t
 | 07 | 2024-07-30    | AI Assistant| `use server` files were exporting non-function objects, causing a Next.js runtime error. | Refactored Genkit flows to move Zod schemas into a separate `src/ai/schemas.ts` file, ensuring server files only export async functions. | AI Assistant | 2024-07-30    |
 | 08 | 2024-07-30    | AI Assistant| `ReferenceError` in navigation component because `Database` icon was not imported. | Added the `Database` icon to the `lucide-react` import statement in `src/components/nav.tsx`. | AI Assistant | 2024-07-30    |
 | 09 | 2024-07-30    | User          | Navigating to a donation edit page with an ID containing special characters (e.g., underscores) resulted in a 404 error. | Wrapped the dynamic ID segment in `encodeURIComponent()` when creating the `<Link>` `href`. This ensures Next.js routing handles special characters correctly. | AI Assistant | 2024-07-30    |
-| 10 | 2024-07-31    | AI Assistant| `Cannot read properties of null (reading 'useContext')` in `src/app/services/page.tsx` | The `CardFooter` component was used without being imported. Added it to the import statement. | AI Assistant | 2024-07-31    |
+| 10 | 2024-07-31    | User          | `Cannot read properties of null (reading 'useContext')` in `src/app/services/page.tsx` | The `CardFooter` component was used without being imported. Added it to the import statement. | AI Assistant | 2024-07-31    |
+| 11 | 2024-07-31    | User          | Inconsistent UI/UX, including missing features like linking beneficiaries to existing leads and confusing error messages. | Performed a full-system audit and implemented fixes for UI consistency, error handling, and data models. Added the ability to link beneficiaries on the lead edit page and made error messages more specific. | AI Assistant | 2024-07-31    |
+| 12 | 2024-07-31    | User          | Inconsistent UI for toast notifications and incorrect role-checking logic for header notifications. | Standardized toast UI to always include an OK and a conditional Copy button. Fixed `app-shell` logic to correctly show/hide admin notifications based on the user's *active* role. | AI Assistant | 2024-07-31    |

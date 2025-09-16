@@ -25,7 +25,7 @@ This workflow is designed to take a payment screenshot, automatically find the d
     a.  **AI Processing (Server-Side)**:
         -   The browser sends the image file to the server.
         -   The server calls the `extractDonationDetails` AI flow.
-        -   The AI model scans the image (OCR) and parses the text to extract structured data (e.g., amount, transaction ID, sender's name, sender's UPI/phone number).
+        -   The AI model (`gemini-1.5-flash-latest`) scans the image (OCR) and parses the text to extract structured data (e.g., amount, transaction ID, sender's name, sender's UPI/phone number).
 
     b.  **Donor Matching**:
         -   The system takes the extracted identifiers (UPI ID, phone number, bank account) and queries the user database to find a matching donor profile.
