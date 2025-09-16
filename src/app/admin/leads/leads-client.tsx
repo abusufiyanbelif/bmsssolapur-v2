@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
 import { useSearchParams } from 'next/navigation'
 import {
   Table,
@@ -33,9 +33,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/actions";
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
-import { updateLeadStatus, updateLeadVerificationStatus, getAllLeads } from "@/services/lead-service";
+import { updateLead, getAllLeads } from "@/services/lead-service";
 import { getUser, getAllUsers } from "@/services/user-service";
 import { getAppSettings } from "@/app/admin/settings/actions";
+import { logActivity } from "@/services/activity-log-service";
 
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
@@ -306,7 +307,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
         fetchData();
     }
     
-    const handleBulkStatusUpdate = async (type: 'caseStatus' | 'verificationStatus', newStatus: LeadStatus | LeadVerificationStatus) => {
+    const handleBulkStatusUpdate = async (type: 'caseAction' | 'verificationStatus', newStatus: LeadAction | LeadVerificationStatus) => {
         if (selectedLeads.length === 0 || !adminUserId) return;
         const result = await handleBulkUpdateLeadStatus(selectedLeads, type, newStatus, adminUserId);
         if (result.success) {
@@ -322,7 +323,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
     
-    const handleQuickStatusChange = async (leadId: string, type: 'case' | 'verification', newStatus: LeadStatus | LeadVerificationStatus) => {
+    const handleQuickStatusChange = async (lead: Lead, type: 'caseAction' | 'verificationStatus', newStatus: LeadAction | LeadVerificationStatus) => {
         const adminId = localStorage.getItem('userId');
         if (!adminId) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not identify administrator.' });
@@ -338,11 +339,30 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
 
             const adminDetails = { id: adminUser.id!, name: adminUser.name, email: adminUser.email };
 
-            if (type === 'case') {
-                await updateLeadStatus(leadId, newStatus as LeadStatus, adminDetails);
-            } else {
-                await updateLeadVerificationStatus(leadId, newStatus as LeadVerificationStatus, adminDetails);
+            const updates: Partial<Lead> = { [type]: newStatus };
+            if (type === 'verificationStatus' && newStatus === 'Verified') {
+                updates.caseAction = 'Ready For Help';
             }
+            if (type === 'caseAction' && newStatus === 'Closed') {
+                updates.closedAt = new Date();
+            }
+
+            await updateLead(lead.id!, updates);
+            
+            await logActivity({
+                userId: adminId,
+                userName: adminDetails.name,
+                userEmail: adminDetails.email,
+                role: 'Admin',
+                activity: `Lead ${type === 'caseAction' ? 'Action' : 'Verification'} Changed`,
+                details: {
+                    leadId: lead.id,
+                    leadName: lead.name,
+                    from: lead[type],
+                    to: newStatus,
+                }
+            });
+
             toast({
                 title: "Status Updated",
                 description: `Lead status changed to "${newStatus}".`,
@@ -441,29 +461,29 @@ Referral Phone:
 
                 {lead.caseVerification === 'Pending' && (
                     <>
-                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'verification', 'Verified')}>
+                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'verificationStatus', 'Verified')}>
                             <ShieldCheck className="mr-2 h-4 w-4 text-green-600" /> Quick Verify
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'verification', 'Rejected')} className="text-destructive focus:text-destructive">
+                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'verificationStatus', 'Rejected')} className="text-destructive focus:text-destructive">
                             <ShieldX className="mr-2 h-4 w-4" /> Quick Reject
                         </DropdownMenuItem>
                     </>
                 )}
 
                 {lead.caseVerification === 'Verified' && lead.caseAction === 'Ready For Help' && (
-                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Publish')}>
+                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'caseAction', 'Publish')}>
                         <UploadCloud className="mr-2 h-4 w-4 text-blue-600" /> Publish Lead
                     </DropdownMenuItem>
                 )}
                 
                 {lead.caseAction === 'Publish' && (
-                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Ready For Help')}>
+                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'caseAction', 'Ready For Help')}>
                         <DownloadCloud className="mr-2 h-4 w-4 text-gray-600" /> Unpublish Lead
                     </DropdownMenuItem>
                 )}
                 
                 {lead.caseStatus === 'Complete' && (
-                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead.id!, 'case', 'Closed')}>
+                    <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'caseAction', 'Closed')}>
                         <CheckCircle className="mr-2 h-4 w-4 text-green-600" /> Quick Close Case
                     </DropdownMenuItem>
                 )}
@@ -559,7 +579,7 @@ Referral Phone:
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Change Case Status</DropdownMenuLabel>
                                         {statusOptions.filter(s => s !== 'all').map(s => (
-                                            <DropdownMenuItem key={s} onSelect={() => handleQuickStatusChange(lead.id!, 'case', s)} disabled={lead.caseStatus === s}>
+                                            <DropdownMenuItem key={s} onSelect={() => handleQuickStatusChange(lead, 'caseAction', s as LeadAction)} disabled={lead.caseStatus === s}>
                                                 {lead.caseStatus === s && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
                                                 {s}
                                             </DropdownMenuItem>
@@ -580,7 +600,7 @@ Referral Phone:
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Change Verification</DropdownMenuLabel>
                                         {verificationOptions.filter(v => v !== 'all').map(v => (
-                                            <DropdownMenuItem key={v} onSelect={() => handleQuickStatusChange(lead.id!, 'verification', v)} disabled={lead.caseVerification === v}>
+                                            <DropdownMenuItem key={v} onSelect={() => handleQuickStatusChange(lead, 'verificationStatus', v as LeadVerificationStatus)} disabled={lead.caseVerification === v}>
                                                  {lead.caseVerification === v && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
                                                 {v}
                                             </DropdownMenuItem>
@@ -791,10 +811,10 @@ Referral Phone:
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Case Status</DropdownMenuSubTrigger>
+                                        <DropdownMenuSubTrigger>Case Action</DropdownMenuSubTrigger>
                                         <DropdownMenuContent>
-                                            {statusOptions.filter(s => s !== 'all').map(s => (
-                                                <DropdownMenuItem key={s} onSelect={() => handleBulkStatusUpdate('caseStatus', s)}>{s}</DropdownMenuItem>
+                                            {Object.values(LeadAction).map(s => (
+                                                <DropdownMenuItem key={s} onSelect={() => handleBulkStatusUpdate('caseAction', s)}>{s}</DropdownMenuItem>
                                             ))}
                                         </DropdownMenuContent>
                                     </DropdownMenuSub>
@@ -938,5 +958,3 @@ Referral Phone:
     </div>
   )
 }
-
-    

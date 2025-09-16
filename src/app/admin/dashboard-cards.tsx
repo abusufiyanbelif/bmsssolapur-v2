@@ -26,7 +26,6 @@ export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonat
         const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
         const helpedBeneficiaryIds = new Set(allLeads.filter(l => l.helpGiven > 0).map(l => l.beneficiaryId));
         const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
-        const casesPending = allLeads.filter(l => l.caseStatus === 'Pending' || l.caseStatus === 'Open' || l.caseStatus === 'Partial').length;
         const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
         const totalRequired = allLeads
             .filter(l => l.caseStatus === 'Open' || l.caseStatus === 'Partial' || l.caseAction === 'Publish')
@@ -37,7 +36,6 @@ export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonat
             totalDistributed,
             beneficiariesHelpedCount: helpedBeneficiaryIds.size,
             casesClosed,
-            casesPending,
             casesPublished,
             totalRequired,
         };
@@ -48,7 +46,7 @@ export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonat
         { id: "totalDistributed", title: "Total Distributed", value: `₹${stats.totalDistributed.toLocaleString()}`, icon: HandCoins, href: "/admin/leads" },
         { id: "totalRequired", title: "Total Required", value: `₹${stats.totalRequired.toLocaleString()}`, icon: TargetIcon, description: "Total pending amount for all open leads.", href: "/admin/leads?status=Open" },
         { id: "casesClosed", title: "Cases Closed", value: stats.casesClosed.toString(), icon: CheckCircle, description: "Total leads successfully completed.", href: "/admin/leads?caseAction=Closed" },
-        { id: "openLeads", title: "Open Leads", value: stats.casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/public-leads" },
+        { id: "openLeads", title: "Published Leads", value: stats.casesPublished.toString(), icon: Eye, description: "Cases visible to the public for funding.", href: "/public-leads" },
         { id: "beneficiariesHelped", title: "Beneficiaries Helped", value: stats.beneficiariesHelpedCount.toString(), icon: Users, description: "Total unique beneficiaries supported.", href: "/admin/beneficiaries" },
     ];
     
@@ -258,7 +256,7 @@ export const PendingDonationsCard = ({ allDonations = [] }: { allDonations: Dona
                                         </p>
                                     </div>
                                     <Button asChild size="sm">
-                                        <Link href={`/admin/donations/${donation.id}/edit`}>
+                                        <Link href={`/admin/donations/${encodeURIComponent(donation.id!)}/edit`}>
                                             Review <ArrowRight className="ml-2 h-4 w-4" />
                                         </Link>
                                     </Button>
