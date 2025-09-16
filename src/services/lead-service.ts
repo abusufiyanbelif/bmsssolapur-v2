@@ -37,6 +37,8 @@ const LEADS_COLLECTION = 'leads';
 // Function to create a lead
 export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'collectedAmount' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'donations' | 'otherCategoryDetail'>>, adminUser: { id: string, name: string }) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
+  if (!adminUser || !adminUser.id) throw new Error('Admin user details are required to create a lead.');
+  
   try {
     let customLeadId: string;
     const leadsCollection = collection(db, LEADS_COLLECTION);
