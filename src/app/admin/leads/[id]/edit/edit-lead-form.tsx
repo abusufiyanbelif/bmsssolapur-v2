@@ -30,14 +30,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
 import { useState, useEffect, useMemo } from "react";
-import { Loader2, Info, Edit, Save, X, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Info, Edit, Save, X, ChevronsUpDown, Check, User } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Campaign, getAllCampaigns } from "@/services/campaign-service";
-import type { User, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/types";
+import type { User as UserType, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
 
@@ -65,12 +65,14 @@ const loanCategoryOptions = ['Business Loan', 'Emergency Loan', 'Education Loan'
 
 
 const formSchema = z.object({
+  name: z.string().optional(),
+  beneficiaryId: z.string().optional(),
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
   campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
   referredByUserName: z.string().optional(),
-  caseSummary: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
+  headline: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
   purpose: z.enum(leadPurposes),
   otherPurposeDetail: z.string().optional(),
@@ -120,7 +122,7 @@ type EditLeadFormValues = z.infer<typeof formSchema>;
 interface EditLeadFormProps {
   lead: Lead;
   campaigns: Campaign[];
-  users: User[];
+  users: UserType[];
 }
 
 export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
@@ -128,30 +130,24 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
-  const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
-  const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
+  const [beneficiaryPopoverOpen, setBeneficiaryPopoverOpen] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     setAdminUserId(storedUserId);
-    if (lead.referredByUserId) {
-        const referralUser = users.find(u => u.id === lead.referredByUserId);
-        if (referralUser) setSelectedReferralDetails(referralUser);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
-  const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
+  const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
+  const linkedBeneficiaryDetails = lead.beneficiaryId ? users.find(u => u.id === lead.beneficiaryId) : null;
 
   const form = useForm<EditLeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      hasReferral: !!lead.referredByUserId,
+      name: lead.name,
+      beneficiaryId: lead.beneficiaryId,
       campaignId: lead.campaignId || 'none',
       campaignName: lead.campaignName || '',
-      referredByUserId: lead.referredByUserId || '',
-      referredByUserName: lead.referredByUserName || '',
-      caseSummary: lead.headline || '',
+      headline: lead.headline || '',
       story: lead.story || '',
       purpose: lead.purpose,
       otherPurposeDetail: lead.otherPurposeDetail || '',
@@ -159,7 +155,6 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       otherCategoryDetail: lead.otherCategoryDetail || '',
       degree: lead.degree || '',
       year: lead.year || '',
-      semester: lead.semester || '',
       acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
       fundingGoal: lead.fundingGoal || lead.helpRequested,
@@ -177,18 +172,14 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const selectedPurpose = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
-  const hasReferral = watch("hasReferral");
-  const caseAction = watch("caseAction");
-  const caseVerification = watch("verifiedStatus");
   
   const handleCancel = () => {
     reset({
-        hasReferral: !!lead.referredByUserId,
+        name: lead.name,
+        beneficiaryId: lead.beneficiaryId,
         campaignId: lead.campaignId || 'none',
         campaignName: lead.campaignName || '',
-        referredByUserId: lead.referredByUserId || '',
-        referredByUserName: lead.referredByUserName || '',
-        caseSummary: lead.headline || '',
+        headline: lead.headline || '',
         story: lead.story || '',
         purpose: lead.purpose,
         otherPurposeDetail: lead.otherPurposeDetail || '',
@@ -196,7 +187,6 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         otherCategoryDetail: lead.otherCategoryDetail || '',
         degree: lead.degree || '',
         year: lead.year || '',
-        semester: lead.semester || '',
         acceptableDonationTypes: lead.acceptableDonationTypes || [],
         helpRequested: lead.helpRequested,
         fundingGoal: lead.fundingGoal || lead.helpRequested,
@@ -208,12 +198,6 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         caseAction: lead.caseAction,
         verifiedStatus: lead.caseVerification,
     });
-    if (lead.referredByUserId) {
-        const referralUser = users.find(u => u.id === lead.referredByUserId);
-        if (referralUser) setSelectedReferralDetails(referralUser);
-    } else {
-        setSelectedReferralDetails(null);
-    }
     setIsEditing(false);
   }
 
@@ -238,34 +222,17 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    if(values.campaignId && values.campaignId !== 'none') formData.append("campaignId", values.campaignId);
-    if(values.campaignName) formData.append("campaignName", values.campaignName);
-    if(values.hasReferral && values.referredByUserId) {
-        formData.append("referredByUserId", values.referredByUserId);
-        formData.append("referredByUserName", values.referredByUserName || '');
-    } else {
-        formData.append("referredByUserId", "");
-        formData.append("referredByUserName", "");
-    }
-    if(values.caseSummary) formData.append("headline", values.caseSummary);
-    if(values.story) formData.append("story", values.story);
-    formData.append("purpose", values.purpose);
-    if (values.otherPurposeDetail) formData.append("otherPurposeDetail", values.otherPurposeDetail);
-    formData.append("category", values.category);
-    if (values.otherCategoryDetail) formData.append("otherCategoryDetail", values.otherCategoryDetail);
-    values.acceptableDonationTypes.forEach(type => formData.append("acceptableDonationTypes", type));
-    formData.append("helpRequested", String(values.helpRequested));
-    if (values.fundingGoal) formData.append("fundingGoal", String(values.fundingGoal));
-    if (values.dueDate) formData.append("dueDate", values.dueDate.toISOString());
-    if (values.verificationDueDate) formData.append("verificationDueDate", values.verificationDueDate.toISOString());
-    if(values.isLoan) formData.append("isLoan", "on");
-    formData.append("status", values.status);
-    formData.append("caseAction", values.caseAction || 'Pending');
-    formData.append("verifiedStatus", values.verifiedStatus);
-    if (values.caseDetails) formData.append("caseDetails", values.caseDetails);
-    if (values.degree) formData.append("degree", values.degree);
-    if (values.year) formData.append("year", values.year);
-    if (values.semester) formData.append("semester", values.semester);
+    Object.entries(values).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+        } else if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+        } else if (typeof value === 'boolean') {
+            if(value) formData.append(key, 'on');
+        } else if (value) {
+            formData.append(key, String(value));
+        }
+    });
     
     const result = await handleUpdateLead(lead.id!, formData, adminUserId);
 
@@ -313,6 +280,69 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+                 <h3 className="text-lg font-semibold border-b pb-2">Beneficiary & Campaign</h3>
+                 {linkedBeneficiaryDetails ? (
+                    <div className="space-y-2">
+                        <Label>Beneficiary</Label>
+                        <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                            <User className="h-5 w-5 text-primary" />
+                            <span className="font-semibold">{linkedBeneficiaryDetails.name}</span>
+                            <span className="text-sm text-muted-foreground">({linkedBeneficiaryDetails.phone})</span>
+                        </div>
+                    </div>
+                 ) : (
+                    <FormField
+                        control={form.control}
+                        name="beneficiaryId"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Link to Beneficiary</FormLabel>
+                                <Popover open={beneficiaryPopoverOpen} onOpenChange={setBeneficiaryPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
+                                                disabled={!isEditing}
+                                            >
+                                                {field.value ? users.find(u => u.id === field.value)?.name : "Search for an existing user to link..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search user..." />
+                                            <CommandList>
+                                                <CommandEmpty>No users found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {potentialBeneficiaries.map((user) => (
+                                                        <CommandItem
+                                                            value={user.name}
+                                                            key={user.id}
+                                                            onSelect={() => {
+                                                                field.onChange(user.id!);
+                                                                form.setValue("name", user.name);
+                                                                setBeneficiaryPopoverOpen(false);
+                                                            }}
+                                                        >
+                                                            <Check className={cn("mr-2 h-4 w-4", user.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                            {user.name} ({user.phone})
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormDescription>This lead is not linked to a beneficiary. Select one to associate it.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                 )}
+                 
                  <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField

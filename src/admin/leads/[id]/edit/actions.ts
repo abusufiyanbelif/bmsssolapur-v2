@@ -159,6 +159,7 @@ export async function handleUpdateLead(
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     console.error("Error updating lead:", error);
+    // Return the clean error, not a wrapped one
     return {
       success: false,
       error: error,

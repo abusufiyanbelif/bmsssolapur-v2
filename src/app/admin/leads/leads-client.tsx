@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -184,6 +185,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     useEffect(() => {
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
+        fetchData();
     }, []);
 
     const usersById = useMemo(() => {
@@ -219,7 +221,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
 
     const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
-            const beneficiary = usersById[lead.beneficiaryId];
+            const beneficiary = lead.beneficiaryId ? usersById[lead.beneficiaryId] : null;
             const nameMatch = appliedFilters.name === '' || 
                               lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
                               lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
@@ -237,6 +239,9 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
                 } else {
                     typeMatch = beneficiary.beneficiaryType === appliedFilters.beneficiaryType;
                 }
+            } else if (appliedFilters.beneficiaryType !== 'all' && !beneficiary) {
+                // If filtering by a type, but the lead has no beneficiary, it shouldn't match.
+                typeMatch = false;
             }
 
             return nameMatch && statusMatch && verificationMatch && typeMatch && purposeMatch && categoryMatch;
@@ -255,7 +260,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
             }
-            else if (String(aValue) > String(bValue)) {
+             else if (String(aValue) > String(bValue)) {
                 comparison = 1;
             } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
