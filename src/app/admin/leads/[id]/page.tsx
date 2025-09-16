@@ -57,6 +57,9 @@ const verificationStatusConfig: Record<Lead['verifiedStatus'], { color: string; 
     "Other": { color: "bg-gray-500/20 text-gray-700 border-gray-500/30", icon: MoreHorizontal },
 };
 
+const defaultVerificationConfig = { color: "bg-gray-500/20 text-gray-700 border-gray-500/30", icon: AlertCircle };
+
+
 type AllocatedDonation = Donation & { amountAllocated: number, allocatedByUserName: string, allocatedAt: any };
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
@@ -80,7 +83,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         })
     )).filter(d => d !== null) as AllocatedDonation[];
     
-    const verifConfig = verificationStatusConfig[lead.verifiedStatus];
+    const verifConfig = verificationStatusConfig[lead.verifiedStatus] || defaultVerificationConfig;
     const caseAction = lead.caseAction || 'Pending';
     const StatusIcon = statusIcons[caseAction];
     const fundingProgress = lead.helpRequested > 0 ? ((lead.collectedAmount || lead.helpGiven) / lead.helpRequested) * 100 : 100;
