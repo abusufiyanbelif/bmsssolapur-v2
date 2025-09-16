@@ -41,21 +41,15 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     let customLeadId: string;
     const leadsCollection = collection(db, LEADS_COLLECTION);
     const dateString = format(new Date(), 'ddMMyyyy');
-
-    if (leadData.beneficiaryId) {
-        const beneficiary = await getUser(leadData.beneficiaryId);
-        if (!beneficiary) throw new Error("Beneficiary not found for lead creation.");
-        if (!beneficiary.userKey) {
-            throw new Error(`Beneficiary "${beneficiary.name}" does not have a UserKey. Please ensure the user profile is complete before creating a lead.`);
-        }
-        
-        const q = query(leadsCollection, where("beneficiaryId", "==", beneficiary.id!));
+    const beneficiaryUser = leadData.beneficiaryId ? await getUser(leadData.beneficiaryId) : null;
+    
+    if (beneficiaryUser && beneficiaryUser.userKey) {
+        const q = query(leadsCollection, where("beneficiaryId", "==", beneficiaryUser.id!));
         const beneficiaryLeadsSnapshot = await getDocs(q);
         const leadNumber = beneficiaryLeadsSnapshot.size + 1;
 
-        customLeadId = `${beneficiary.userKey}_${leadNumber}_${dateString}`;
+        customLeadId = `${beneficiaryUser.userKey}_${leadNumber}_${dateString}`;
     } else {
-        // If no beneficiary is linked, create a generic lead ID
         const countSnapshot = await getCountFromServer(leadsCollection);
         const leadNumber = countSnapshot.data().count + 1;
         customLeadId = `LEAD${leadNumber}_${dateString}`;
@@ -92,12 +86,12 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         adminAddedBy: { id: adminUser.id, name: adminUser.name },
         referredByUserId: leadData.referredByUserId,
         referredByUserName: leadData.referredByUserName,
-        dateCreated: leadData.dateCreated || Timestamp.now(),
-        caseReportedDate: leadData.caseReportedDate,
-        dueDate: leadData.dueDate ? Timestamp.fromDate(leadData.dueDate as any) : undefined,
+        dateCreated: (leadData.dateCreated as Timestamp)?.toDate() || new Date(),
+        caseReportedDate: (leadData.caseReportedDate as Timestamp)?.toDate(),
+        dueDate: leadData.dueDate ? (leadData.dueDate as any).toDate() : undefined,
         closedAt: undefined,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any, // Will be converted on fetch
+        updatedAt: Timestamp.now() as any, // Will be converted on fetch
         isLoan: leadData.isLoan || false,
         isHistoricalRecord: leadData.isHistoricalRecord || false,
         source: 'Manual Entry',
@@ -107,14 +101,23 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     };
     
     // Remove undefined fields to prevent Firestore errors
-    Object.keys(newLead).forEach(key => {
+    const cleanedLeadData: Record<string, any> = {};
+    for (const key in newLead) {
         const typedKey = key as keyof Lead;
-        if ((newLead as any)[typedKey] === undefined) {
-            delete (newLead as any)[typedKey];
+        if ((newLead as any)[typedKey] !== undefined) {
+             cleanedLeadData[typedKey] = (newLead as any)[typedKey];
         }
-    });
+    }
+    
+    // Convert Dates to Timestamps for writing
+    if (cleanedLeadData.dateCreated) cleanedLeadData.dateCreated = Timestamp.fromDate(cleanedLeadData.dateCreated);
+    if (cleanedLeadData.createdAt) cleanedLeadData.createdAt = Timestamp.fromDate(cleanedLeadData.createdAt);
+    if (cleanedLeadData.updatedAt) cleanedLeadData.updatedAt = Timestamp.fromDate(cleanedLeadData.updatedAt);
+    if (cleanedLeadData.caseReportedDate) cleanedLeadData.caseReportedDate = Timestamp.fromDate(cleanedLeadData.caseReportedDate);
+    if (cleanedLeadData.dueDate) cleanedLeadData.dueDate = Timestamp.fromDate(cleanedLeadData.dueDate);
 
-    await setDoc(leadRef, newLead);
+
+    await setDoc(leadRef, cleanedLeadData);
 
     return newLead as Lead;
   } catch (error) {
@@ -318,7 +321,7 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
     } catch (error) {
         console.error("Error fetching beneficiary leads:", error);
          if (error instanceof Error && error.message.includes('requires an index')) {
-            const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'beneficiaryId' in the 'leads' collection. Full error: ${error.message}`;
+            const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'beneficiaryId' in the 'leads' collection. Full error: ${detailedError}`;
             console.error(detailedError);
             return []; // Return empty array to prevent crash
         }

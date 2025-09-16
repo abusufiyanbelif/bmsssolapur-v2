@@ -257,9 +257,17 @@ export async function handleAddLead(
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     console.error("Error adding lead:", error);
+    // Suggest possible fixes based on common error messages
+    let helpfulError = `Failed to create lead: ${error}`;
+    if (error.includes('already exists')) {
+        helpfulError += "\n\nPossible fix: Please check if a user with the same phone number, email, or User ID already exists. Use the search on the user management page to verify."
+    }
+     if (error.includes('UserKey')) {
+        helpfulError += "\n\nPossible fix: Go to the selected beneficiary's profile and ensure their 'User Key' field is populated. If not, please contact a Super Admin."
+    }
     return {
       success: false,
-      error: `Failed to create lead: ${error}`,
+      error: helpfulError,
     };
   }
 }
