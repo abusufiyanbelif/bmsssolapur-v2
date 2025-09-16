@@ -173,7 +173,7 @@ export const getLead = async (id: string): Promise<Lead | null> => {
         beneficiary: beneficiary || undefined,
         dateCreated: data.dateCreated ? (data.dateCreated as Timestamp).toDate() : new Date(),
         createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
-        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
+        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
         closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
         dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
         caseReportedDate: data.caseReportedDate ? (data.caseReportedDate as Timestamp).toDate() : undefined,
@@ -209,7 +209,11 @@ export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 
 
   } catch (error) {
     console.error("Error updating lead: ", error);
-    throw new Error('Failed to update lead.');
+    if (error instanceof Error) {
+        // Return the specific Firestore error message
+        throw new Error(error.message);
+    }
+    throw new Error('An unknown error occurred while updating the lead.');
   }
 };
 
