@@ -1,5 +1,3 @@
-
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -69,17 +67,15 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   manualBeneficiaryName: z.string().optional(),
   
   // New beneficiary fields
-  newBeneficiaryUserId: z.string().min(3, "User ID must be at least 3 characters."),
-  newBeneficiaryFirstName: z.string().min(2, "First name must be at least 2 characters."),
+  newBeneficiaryUserId: z.string().optional(),
+  newBeneficiaryFirstName: z.string().optional(),
   newBeneficiaryMiddleName: z.string().optional(),
-  newBeneficiaryLastName: z.string().min(1, "Last name is required."),
+  newBeneficiaryLastName: z.string().optional(),
   newBeneficiaryFullName: z.string().optional(),
   newBeneficiaryFatherName: z.string().optional(),
-  newBeneficiaryPhone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
+  newBeneficiaryPhone: z.string().optional(),
   newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
-  newBeneficiaryAadhaar: isAadhaarMandatory
-    ? z.string().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits.")
-    : z.string().optional(),
+  newBeneficiaryAadhaar: z.string().optional(),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -87,7 +83,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   pincode: z.string().optional(),
   aadhaarCard: z.any().optional(),
   dateOfBirth: z.date().optional(),
-  gender: z.enum(['Male', 'Female', 'Other'], { required_error: "Gender is required."}),
+  gender: z.enum(['Male', 'Female', 'Other']).optional(),
   isAnonymousAsBeneficiary: z.boolean().default(false),
 
   hasReferral: z.boolean().default(false),
@@ -122,28 +118,34 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   otherDocuments: z.array(z.any()).optional(),
 })
 .superRefine((data, ctx) => {
-    // Beneficiary linking logic
-    if (!data.linkBeneficiaryLater) {
-        if (data.beneficiaryType === 'existing' && (!data.beneficiaryId || data.beneficiaryId.trim() === '')) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select an existing beneficiary.", path: ["beneficiaryId"] });
-        } else if (data.beneficiaryType === 'new') {
-            if (!data.newBeneficiaryFirstName || data.newBeneficiaryFirstName.trim() === '') {
-                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "First name is required.", path: ["newBeneficiaryFirstName"] });
-            }
-            if (!data.newBeneficiaryLastName || data.newBeneficiaryLastName.trim() === '') {
-                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Last name is required.", path: ["newBeneficiaryLastName"] });
-            }
-             if (!data.newBeneficiaryPhone || !/^[0-9]{10}$/.test(data.newBeneficiaryPhone)) {
-                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A valid 10-digit phone number is required.", path: ["newBeneficiaryPhone"] });
-            }
-        }
-    } else {
+    // ---- Beneficiary Linking Logic ----
+    if (data.linkBeneficiaryLater) {
         if (!data.manualBeneficiaryName || data.manualBeneficiaryName.trim() === '') {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Beneficiary Name is required when linking later.", path: ["manualBeneficiaryName"] });
         }
+    } else if (data.beneficiaryType === 'existing') {
+        if (!data.beneficiaryId || data.beneficiaryId.trim() === '') {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select an existing beneficiary.", path: ["beneficiaryId"] });
+        }
+    } else if (data.beneficiaryType === 'new') {
+        if (!data.newBeneficiaryFirstName || data.newBeneficiaryFirstName.trim() === '') {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "First name is required.", path: ["newBeneficiaryFirstName"] });
+        }
+        if (!data.newBeneficiaryLastName || data.newBeneficiaryLastName.trim() === '') {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Last name is required.", path: ["newBeneficiaryLastName"] });
+        }
+         if (!data.newBeneficiaryPhone || !/^[0-9]{10}$/.test(data.newBeneficiaryPhone)) {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A valid 10-digit phone number is required.", path: ["newBeneficiaryPhone"] });
+        }
+        if(!data.gender){
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Gender is required for new beneficiaries.", path: ["gender"] });
+        }
+        if (!data.newBeneficiaryUserId || data.newBeneficiaryUserId.length < 3) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "User ID must be at least 3 characters.", path: ["newBeneficiaryUserId"] });
+        }
     }
 
-    // Purpose and Category 'Other' logic
+    // ---- 'Other' Field Logic ----
     if (data.purpose === 'Other' && (!data.otherPurposeDetail || data.otherPurposeDetail.length === 0)) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify details for the 'Other' purpose.", path: ["otherPurposeDetail"] });
     }
@@ -151,17 +153,13 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please specify details for the 'Other' category.", path: ["otherCategoryDetail"] });
     }
 
-    // Conditional Date Validation for Historical Records
+    // ---- Historical Record Date Logic ----
     if (data.isHistoricalRecord) {
         if (!data.caseReportedDate) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Case Reported Date is required for historical records.", path: ["caseReportedDate"] });
-        } else if (data.caseReportedDate > new Date()) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Case Reported Date must be in the past.", path: ["caseReportedDate"] });
         }
-        if (!data.dueDate) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Due Date is required for historical records.", path: ["dueDate"] });
-        } else if (data.dueDate > new Date()) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Due Date must be in the past.", path: ["dueDate"] });
+        if (data.dueDate && data.dueDate > new Date()) {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Due Date for historical records must be in the past.", path: ["dueDate"] });
         }
     } else {
         if (data.dueDate && data.dueDate < new Date()) {
