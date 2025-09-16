@@ -69,6 +69,10 @@ export async function handleUpdateLead(
     const status = rawFormData.status as LeadStatus;
     const caseAction = rawFormData.caseAction as LeadAction;
     const verifiedStatus = rawFormData.verifiedStatus as LeadVerificationStatus;
+    
+    // Linking a new beneficiary
+    const beneficiaryId = rawFormData.beneficiaryId as string | undefined;
+    
     const campaignId = rawFormData.campaignId as string | undefined;
     const campaignName = rawFormData.campaignName as string | undefined;
     const dueDateRaw = rawFormData.dueDate as string | undefined;
@@ -77,6 +81,8 @@ export async function handleUpdateLead(
     const verificationDueDate = verificationDueDateRaw ? new Date(verificationDueDateRaw) : undefined;
 
     const updates: Partial<Lead> = {
+        name: rawFormData.name as string | undefined,
+        beneficiaryId: beneficiaryId || undefined,
         campaignId: campaignId,
         campaignName: campaignName,
         headline: rawFormData.headline as string | undefined,
@@ -87,7 +93,7 @@ export async function handleUpdateLead(
         otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
         acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
         helpRequested: parseFloat(rawFormData.helpRequested as string),
-        fundingGoal: rawFormData.fundingGoal ? parseFloat(rawFormData.fundingGoal as string) : undefined,
+        fundingGoal: parseFloat(rawFormData.fundingGoal as string),
         dueDate: dueDate,
         verificationDueDate: verificationDueDate,
         caseDetails: rawFormData.caseDetails as string | undefined,
@@ -98,6 +104,13 @@ export async function handleUpdateLead(
         degree: rawFormData.degree as string | undefined,
         year: rawFormData.year as string | undefined,
     };
+    
+    if (beneficiaryId && !lead.beneficiaryId) {
+        const newBeneficiary = await getUser(beneficiaryId);
+        if (newBeneficiary) {
+            updates.name = newBeneficiary.name;
+        }
+    }
     
     const changes = getChangedFields(lead, updates);
     
@@ -148,7 +161,7 @@ export async function handleUpdateLead(
     console.error("Error updating lead:", error);
     return {
       success: false,
-      error: `Failed to update lead: ${error}`,
+      error: error,
     };
   }
 }

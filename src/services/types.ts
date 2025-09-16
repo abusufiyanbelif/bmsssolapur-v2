@@ -187,7 +187,7 @@ export interface FundTransfer {
     googlePayTransactionId?: string;
     phonePeTransactionId?: string;
     paytmUpiReferenceNo?: string;
-    senderName?: string; // General sender name
+    senderName?: string;
     senderPhone?: string;
     phonePeSenderName?: string;
     googlePaySenderName?: string;
@@ -196,7 +196,7 @@ export interface FundTransfer {
     senderBankName?: string;
     senderIfscCode?: string;
     senderUpiId?: string;
-    recipientName?: string; // General recipient name
+    recipientName?: string;
     phonePeRecipientName?: string;
     googlePayRecipientName?: string;
     paytmRecipientName?: string;

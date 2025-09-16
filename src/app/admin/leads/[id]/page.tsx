@@ -71,8 +71,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     }
     
     const [beneficiary, activityLogs, allUsers, allDonations, appSettings] = await Promise.all([
-        getUser(lead.beneficiaryId),
-        getUserActivity(lead.beneficiaryId), // Fetching activity for the beneficiary
+        lead.beneficiaryId ? getUser(lead.beneficiaryId) : Promise.resolve(null),
+        lead.beneficiaryId ? getUserActivity(lead.beneficiaryId) : Promise.resolve([]),
         getAllUsers(), // Fetch all users to identify approvers
         getAllDonations(),
         getAppSettings(),
@@ -389,16 +389,17 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="relative h-4 w-full overflow-hidden rounded-full bg-secondary">
-                                <div
+                                 <div
                                     className={cn(
-                                        "h-full w-full flex-1 transition-all",
+                                        "absolute top-0 left-0 h-full transition-all",
                                         isOverfunded ? "bg-green-500" : "bg-amber-500"
                                     )}
-                                    style={{ transform: `translateX(-${100 - collectionProgress}%)` }}
+                                    style={{ width: `${Math.min(100, collectionProgress)}%` }}
+                                    title={`Collected: ₹${collectedAmount.toLocaleString()}`}
                                 />
                                 <div
                                     className="absolute top-0 left-0 h-full bg-primary"
-                                    style={{ width: `${transferProgress}%` }}
+                                    style={{ width: `${Math.min(100, transferProgress)}%` }}
                                     title={`Transferred: ₹${transferredAmount.toLocaleString()}`}
                                 />
                             </div>
@@ -464,8 +465,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             ) : (
                                  <Alert variant="destructive">
                                     <AlertCircle className="h-4 w-4" />
-                                    <AlertTitle>Error</AlertTitle>
-                                    <AlertDescription>Could not load beneficiary details.</AlertDescription>
+                                    <AlertTitle>No Beneficiary Linked</AlertTitle>
+                                    <AlertDescription>
+                                        This lead was created without a linked beneficiary. You can link one by editing the lead.
+                                    </AlertDescription>
                                 </Alert>
                             )}
                         </CardContent>
