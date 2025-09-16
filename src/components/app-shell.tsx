@@ -31,6 +31,7 @@ import { AppSettings, getAppSettings, getCurrentOrganization } from "@/app/admin
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { performPermissionCheck } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
 
 const PermissionErrorState = ({ error }: { error: string }) => {
     const isPermissionDenied = error === 'permission-denied';
@@ -92,6 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
     const pathname = usePathname();
     const router = useRouter();
+    const { toast } = useToast();
 
     const guestUser: UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } = {
         isLoggedIn: false,
@@ -284,7 +286,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const activeRole = user.activeRole;
-    const isAdmin = ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole);
     const hasAdminAccess = user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r));
     const leadsNotificationCount = hasAdminAccess ? (pendingLeads.length + readyToPublishLeads.length) : 0;
     const donationsNotificationCount = hasAdminAccess ? pendingDonations.length : 0;
