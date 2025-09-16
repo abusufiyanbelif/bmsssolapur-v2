@@ -221,7 +221,9 @@ export async function handleAddLead(
 
     if (rawFormData.otherDocuments && rawFormData.otherDocuments.length > 0) {
         rawFormData.otherDocuments.forEach(file => {
-            uploadPromises.push(uploadFile(file, `leads/${newLead.id}/documents/`));
+            if(file && file.size > 0) {
+              uploadPromises.push(uploadFile(file, `leads/${newLead.id}/documents/`));
+            }
         });
     }
 
@@ -312,10 +314,3 @@ export async function handleGenerateSummaries(rawText: string): Promise<{ succes
     }
 }
     
-
-
-
-
-
-
-
