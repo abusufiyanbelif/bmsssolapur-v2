@@ -203,7 +203,7 @@ export async function handleAddLead(
         referredByUserName: rawFormData.referredByUserName || undefined,
         dateCreated: Timestamp.now(),
         caseReportedDate: rawFormData.caseReportedDate ? Timestamp.fromDate(rawFormData.caseReportedDate) : undefined,
-        dueDate: rawFormData.dueDate ? Timestamp.fromDate(rawFormData.dueDate) : undefined,
+        dueDate: rawFormData.dueDate ? Timestamp.fromDate(rawFormData.dueDate as any) : undefined,
         isLoan: rawFormData.isLoan,
         isHistoricalRecord: rawFormData.isHistoricalRecord,
         source: 'Manual Entry',
@@ -267,11 +267,19 @@ export async function handleAddLead(
 
 export async function handleExtractLeadDetailsFromText(
     rawText: string, 
-    purpose?: string, 
-    category?: string
+    context: {
+        purpose?: string, 
+        category?: string,
+        degree?: string,
+        year?: string,
+        semester?: string
+    }
 ): Promise<{ success: boolean; details?: ExtractLeadDetailsOutput; error?: string }> {
     try {
-        const extractedDetails = await extractLeadDetailsFlow({ rawText, purpose, category });
+        const extractedDetails = await extractLeadDetailsFlow({ 
+            rawText, 
+            ...context
+        });
         return { success: true, details: extractedDetails };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
@@ -304,5 +312,6 @@ export async function handleGenerateSummaries(rawText: string): Promise<{ succes
     }
 }
     
+
 
 

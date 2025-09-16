@@ -93,6 +93,9 @@ export const ExtractLeadDetailsFromTextInputSchema = z.object({
   rawText: z.string().describe("A block of raw text containing lead details to be parsed."),
   purpose: z.string().optional().describe("The user-selected purpose to give context to the AI."),
   category: z.string().optional().describe("The user-selected category to give context to the AI."),
+  degree: z.string().optional().describe("The user-selected degree/class to give context to the AI."),
+  year: z.string().optional().describe("The user-selected year to give context to the AI."),
+  semester: z.string().optional().describe("The user-selected semester to give context to the AI."),
 });
 export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsFromTextInputSchema>;
 
