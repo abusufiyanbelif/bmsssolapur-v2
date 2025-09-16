@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 const formSchema = z.object({
   name: z.string().min(1, "Organization name is required."),
   logoUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+  logoFile: z.any().optional(),
   address: z.string().min(1, "Address is required."),
   city: z.string().min(1, "City is required."),
   registrationNumber: z.string().min(1, "Registration number is required."),
@@ -51,7 +52,8 @@ interface EditOrganizationFormProps {
 export function EditOrganizationForm({ organization }: EditOrganizationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(organization.qrCodeUrl || '');
+  const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
   const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<FormValues>({
@@ -59,6 +61,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
     defaultValues: {
       name: organization.name,
       logoUrl: organization.logoUrl || '',
+      logoFile: null,
       address: organization.address,
       city: organization.city,
       registrationNumber: organization.registrationNumber,
@@ -77,26 +80,12 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
 
   const { formState: { isDirty }, reset, watch } = form;
   const qrCodeUrlValue = watch('qrCodeUrl');
+  const logoUrlValue = watch('logoUrl');
   
   const handleCancel = () => {
-    reset({
-      name: organization.name,
-      logoUrl: organization.logoUrl || '',
-      address: organization.address,
-      city: organization.city,
-      registrationNumber: organization.registrationNumber,
-      panNumber: organization.panNumber || '',
-      contactEmail: organization.contactEmail,
-      contactPhone: organization.contactPhone,
-      website: organization.website || '',
-      bankAccountName: organization.bankAccountName || '',
-      bankAccountNumber: organization.bankAccountNumber || '',
-      bankIfscCode: organization.bankIfscCode || '',
-      upiId: organization.upiId || '',
-      qrCodeUrl: organization.qrCodeUrl || '',
-      qrCodeFile: null,
-    });
-    setPreviewUrl(organization.qrCodeUrl || '');
+    reset(); // Reset to the original default values
+    setQrCodePreviewUrl(organization.qrCodeUrl || '');
+    setLogoPreviewUrl(organization.logoUrl || '');
     setIsEditing(false);
   }
 
@@ -152,249 +141,249 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="grid md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-8">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Organization Name</FormLabel>
+                <fieldset disabled={!isEditing} className="space-y-8">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="md:col-span-2 space-y-8">
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Organization Name</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="logoFile"
+                                render={({ field: { onChange, value, ...rest } }) => (
+                                    <FormItem>
+                                    <FormLabel>Upload New Logo</FormLabel>
                                     <FormControl>
-                                        <Input {...field} disabled={!isEditing} />
+                                        <Input 
+                                            type="file" 
+                                            accept="image/png, image/jpeg, image/jpg"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                onChange(file);
+                                                setLogoPreviewUrl(file ? URL.createObjectURL(file) : (organization.logoUrl || ''));
+                                            }}
+                                            {...rest}
+                                        />
                                     </FormControl>
+                                    <FormDescription>Upload a new logo. This will replace the existing one.</FormDescription>
                                     <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="logoUrl"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Logo URL</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={!isEditing} placeholder="https://storage.googleapis.com/..." />
-                                    </FormControl>
-                                    <FormDescription>Paste the public URL of your logo from Firebase Storage.</FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="address"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Address</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={!isEditing} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="registrationNumber"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Registration Number</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={!isEditing} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="panNumber"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>PAN Number</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={!isEditing} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                    <div className="md:col-span-1 space-y-4">
-                        <Label>QR Code Preview</Label>
-                        <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                            {(previewUrl || qrCodeUrlValue) ? (
-                                <div className="relative w-48 h-48">
-                                    <Image src={previewUrl || qrCodeUrlValue} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
-                                </div>
-                            ): (
-                                <p className="text-sm text-muted-foreground text-center p-8">
-                                Upload a QR code image below or paste a URL to see a preview.
-                                </p>
-                            )}
-                             {isEditing && (previewUrl || qrCodeUrlValue) && (
-                                <Button type="button" size="sm" variant="destructive" onClick={() => {
-                                    form.setValue('qrCodeFile', null, { shouldDirty: true });
-                                    form.setValue('qrCodeUrl', '', { shouldDirty: true });
-                                    setPreviewUrl('');
-                                }}>
-                                    Remove QR Code
-                                </Button>
-                             )}
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Address</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="registrationNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Registration Number</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="panNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>PAN Number</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="md:col-span-1 space-y-4">
+                            <Label>Logo Preview</Label>
+                            <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
+                                {(logoPreviewUrl || logoUrlValue) ? (
+                                    <div className="relative w-48 h-48">
+                                        <Image src={logoPreviewUrl || logoUrlValue} alt="Logo Preview" fill className="object-contain rounded-md" data-ai-hint="logo" />
+                                    </div>
+                                ): (
+                                    <p className="text-sm text-muted-foreground text-center p-8">
+                                    Upload a logo image to see a preview.
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <h3 className="text-lg font-semibold border-b pb-2">Contact & Payment Details</h3>
+                    <h3 className="text-lg font-semibold border-b pb-2">Contact & Payment Details</h3>
 
-                <div className="grid md:grid-cols-2 gap-8">
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <FormField
+                            control={form.control}
+                            name="contactEmail"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Contact Email</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="contactPhone"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Contact Phone</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="website"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Website URL</FormLabel>
+                                    <FormControl>
+                                        <Input type="url" {...field} placeholder="https://example.com" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    
+                    <h4 className="text-md font-semibold border-b pb-2">Bank Account</h4>
                     <FormField
                         control={form.control}
-                        name="contactEmail"
+                        name="bankAccountName"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Contact Email</FormLabel>
+                                <FormLabel>Account Holder Name</FormLabel>
                                 <FormControl>
-                                    <Input type="email" {...field} disabled={!isEditing} />
+                                    <Input {...field} placeholder="e.g., BAITULMAL SAMAJIK SANSTHA" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="contactPhone"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Contact Phone</FormLabel>
-                                <FormControl>
-                                    <Input {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="website"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Website URL</FormLabel>
-                                <FormControl>
-                                    <Input type="url" {...field} placeholder="https://example.com" disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                
-                 <h4 className="text-md font-semibold border-b pb-2">Bank Account</h4>
-                 <FormField
-                    control={form.control}
-                    name="bankAccountName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Account Holder Name</FormLabel>
-                            <FormControl>
-                                <Input {...field} placeholder="e.g., BAITULMAL SAMAJIK SANSTHA" disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <div className="grid md:grid-cols-2 gap-8">
-                     <FormField
-                        control={form.control}
-                        name="bankAccountNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Account Number</FormLabel>
-                                <FormControl>
-                                    <Input {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="bankIfscCode"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>IFSC Code</FormLabel>
-                                <FormControl>
-                                    <Input {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                
-                <h4 className="text-md font-semibold border-b pb-2">UPI / QR Code</h4>
-                <div className="grid md:grid-cols-2 gap-8 items-start">
-                     <FormField
-                        control={form.control}
-                        name="upiId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>UPI ID</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="yourname@okhdfcbank" disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="qrCodeUrl"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>QR Code URL</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="https://storage.googleapis.com/..." disabled={!isEditing} />
-                                </FormControl>
-                                <FormDescription>Paste the public URL of your QR code image.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                    control={form.control}
-                    name="qrCodeFile"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Or Upload New QR Code</FormLabel>
-                        <FormControl>
-                            <Input 
-                            type="file" 
-                            accept="image/png, image/jpeg, image/jpg"
-                            disabled={!isEditing}
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                field.onChange(file);
-                                if (file) {
-                                    setPreviewUrl(URL.createObjectURL(file));
-                                } else {
-                                    setPreviewUrl(organization.qrCodeUrl || '');
-                                }
-                            }}
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <FormField
+                            control={form.control}
+                            name="bankAccountNumber"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Account Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="bankIfscCode"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>IFSC Code</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    
+                    <h4 className="text-md font-semibold border-b pb-2">UPI / QR Code</h4>
+                    <div className="grid md:grid-cols-2 gap-8 items-start">
+                        <div className="space-y-8">
+                            <FormField
+                                control={form.control}
+                                name="upiId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>UPI ID</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="yourname@okhdfcbank" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
-                        </FormControl>
-                        <FormDescription>
-                            This will replace the existing QR code.
-                        </FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </div>
-
+                            <FormField
+                                control={form.control}
+                                name="qrCodeFile"
+                                render={({ field: { onChange, value, ...rest } }) => (
+                                    <FormItem>
+                                    <FormLabel>Upload New QR Code</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            type="file" 
+                                            accept="image/png, image/jpeg, image/jpg"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                onChange(file);
+                                                setQrCodePreviewUrl(file ? URL.createObjectURL(file) : (organization.qrCodeUrl || ''));
+                                            }}
+                                            {...rest}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        This will replace the existing QR code.
+                                    </FormDescription>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                         <div className="space-y-4">
+                            <Label>QR Code Preview</Label>
+                            <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
+                                {(qrCodePreviewUrl || qrCodeUrlValue) ? (
+                                    <div className="relative w-48 h-48">
+                                        <Image src={qrCodePreviewUrl || qrCodeUrlValue} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" />
+                                    </div>
+                                ): (
+                                    <p className="text-sm text-muted-foreground text-center p-8">
+                                    Upload a QR code image to see a preview.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                
                 {isEditing && (
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 border-t pt-6">
                         <Button type="submit" disabled={isSubmitting || !isDirty} size="lg">
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Save Changes

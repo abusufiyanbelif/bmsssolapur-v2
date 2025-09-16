@@ -3,18 +3,12 @@
 
 import { updateOrganization, Organization } from "@/services/organization-service";
 import { revalidatePath } from "next/cache";
+import { uploadFile } from "@/services/storage-service";
+
 
 interface FormState {
     success: boolean;
     error?: string;
-}
-
-// In a real app, you would upload the file to a storage service like Firebase Storage
-// and get a URL. For this prototype, we'll just acknowledge the file was received.
-async function handleFileUpload(file: File): Promise<string> {
-    console.log(`Received QR Code file: ${file.name}, size: ${file.size} bytes`);
-    // Placeholder for file upload logic
-    return `https://placehold.co/400x400.png?text=qr-code`;
 }
 
 
@@ -27,13 +21,24 @@ export async function handleUpdateOrganization(
     const qrCodeFile = formData.get("qrCodeFile") as File | null;
     let qrCodeUrl = formData.get('qrCodeUrl') as string;
     
+    // The logo is handled as a URL for now, but if we add an upload field for it,
+    // the logic would be identical to the QR code handling below.
+    const logoFile = formData.get("logoFile") as File | null;
+    let logoUrl = formData.get('logoUrl') as string;
+
+    if (logoFile && logoFile.size > 0) {
+        const uploadPath = `organization/assets/logo/`;
+        logoUrl = await uploadFile(logoFile, uploadPath);
+    }
+    
     if (qrCodeFile && qrCodeFile.size > 0) {
-        qrCodeUrl = await handleFileUpload(qrCodeFile);
+        const uploadPath = `organization/assets/qr-codes/`;
+        qrCodeUrl = await uploadFile(qrCodeFile, uploadPath);
     }
 
     const updates: Partial<Organization> = {
         name: formData.get('name') as string,
-        logoUrl: formData.get('logoUrl') as string,
+        logoUrl: logoUrl,
         address: formData.get('address') as string,
         city: formData.get('city') as string,
         registrationNumber: formData.get('registrationNumber') as string,
@@ -64,3 +69,4 @@ export async function handleUpdateOrganization(
     };
   }
 }
+
