@@ -358,7 +358,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       setOtherDocumentsPreviews([]);
   };
 
-  const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
+  const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset } = form;
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
@@ -457,7 +457,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
   // Debounced values
   const debouncedUserId = useDebounce(watch('newBeneficiaryUserId'), 500);
-  const debouncedEmail = useDebounce(watch('newBeneficiaryEmail'), 500);
+  const debouncedEmail = useDebounce(watch('email'), 500);
   const debouncedPhone = useDebounce(watch('newBeneficiaryPhone'), 500);
   const debouncedPan = useDebounce(watch('panNumber'), 500);
   const debouncedAadhaar = useDebounce(watch('newBeneficiaryAadhaar'), 500);
