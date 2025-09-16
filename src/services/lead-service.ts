@@ -53,7 +53,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         customLeadId = `${beneficiaryUser.userKey}_${leadNumber}_${dateString}`;
     } else if (beneficiaryUser && !beneficiaryUser.userKey) {
         // This is a critical check to prevent errors.
-        throw new Error(`Beneficiary "${beneficiaryUser.name}" does not have a UserKey. Cannot create lead.`);
+        throw new Error(`Beneficiary "${beneficiaryUser.name}" does not have a UserKey. Please ensure the user profile is complete.`);
     }
     else {
         // Case where we are linking the beneficiary later
@@ -63,7 +63,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     }
 
     const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
-
+    
     const newLead: Lead = { 
         id: leadRef.id,
         name: leadData.name!,

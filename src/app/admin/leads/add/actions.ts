@@ -188,7 +188,7 @@ export async function handleAddLead(
         caseStatus: rawFormData.isHistoricalRecord ? 'Closed' : (approvalProcessDisabled ? 'Open' : 'Pending'),
         caseAction: rawFormData.isHistoricalRecord ? 'Closed' : (approvalProcessDisabled ? 'Ready For Help' : 'Pending'),
         caseVerification: approvalProcessDisabled ? 'Verified' : 'Pending',
-        verifiers: approvalProcessDisabled ? [{ verifierId: adminUser.id!, verifierName: adminUser.name, verifiedAt: Timestamp.now(), notes: 'Auto-verified (approval process disabled).' }] : [],
+        verifiers: approvalProcessDisabled ? [{ verifierId: adminUser.id!, verifierName: adminUser.name, verifiedAt: new Date(), notes: 'Auto-verified (approval process disabled).' }] : [],
         donations: [],
         caseDetails: rawFormData.caseDetails,
         adminAddedBy: { id: adminUser.id!, name: adminUser.name },
@@ -261,6 +261,8 @@ export async function handleAddLead(
         helpfulError += `\n\nPossible fix: Go to the selected beneficiary's profile and ensure their 'User Key' field is populated, or contact a Super Admin.`
     } else if (error.includes('permission-denied') || error.includes(' Firestore ')){
         helpfulError += `\n\nThis is likely a database permission issue. Please refer to the TROUBLESHOOTING.md guide.`
+    } else if (error.includes('date.getTime is not a function')) {
+        helpfulError = 'Failed to create lead: A date value was not handled correctly on the server. This is a system bug. Please report it.';
     }
 
     return {
