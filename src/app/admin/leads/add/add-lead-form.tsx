@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -804,7 +805,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     <FormItem className="space-y-3">
                         <FormControl>
                         <RadioGroup
-                            onValueChange={(value) => field.onChange(value as 'existing' | 'new')}
+                            onValueChange={(value) => {
+                                field.onChange(value as 'existing' | 'new');
+                                // Reset other fields when switching
+                                setValue('beneficiaryId', undefined);
+                                setValue('newBeneficiaryFirstName', '');
+                                setValue('newBeneficiaryLastName', '');
+                                setValue('newBeneficiaryPhone', '');
+                            }}
                             value={field.value}
                             className="grid grid-cols-2 gap-4"
                         >
@@ -1410,5 +1418,3 @@ export function AddLeadForm(props: { settings: AppSettings, users: User[], campa
         </Suspense>
     )
 }
-
-    

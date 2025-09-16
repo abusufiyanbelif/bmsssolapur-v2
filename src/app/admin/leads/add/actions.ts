@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/lead-service";
@@ -313,6 +312,3 @@ export async function handleGenerateSummaries(rawText: string): Promise<{ succes
         return { success: false, error };
     }
 }
-    
-
-    
