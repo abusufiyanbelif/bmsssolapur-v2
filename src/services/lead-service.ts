@@ -55,6 +55,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
         customLeadId = `${beneficiary.userKey}_${leadNumber}_${dateString}`;
     } else {
+        // If no beneficiary is linked, create a generic lead ID
         const countSnapshot = await getCountFromServer(leadsCollection);
         const leadNumber = countSnapshot.data().count + 1;
         customLeadId = `LEAD${leadNumber}_${dateString}`;
@@ -74,7 +75,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         otherPurposeDetail: leadData.otherPurposeDetail,
         donationType: leadData.donationType!,
         acceptableDonationTypes: leadData.acceptableDonationTypes || [],
-        category: leadData.category,
+        category: leadData.category!,
         otherCategoryDetail: leadData.otherCategoryDetail,
         priority: leadData.priority || 'Medium',
         helpRequested: leadData.helpRequested!,

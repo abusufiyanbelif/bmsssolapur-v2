@@ -20,7 +20,7 @@ interface FormState {
     duplicateLeadWarning?: Lead[];
 }
 
-const purposeCategoryMap: Record<LeadPurpose, DonationType> = {
+const purposeCategoryMap: Record<string, DonationType> = {
     'Education': 'Sadaqah',
     'Medical': 'Sadaqah',
     'Relief Fund': 'Lillah',
@@ -78,7 +78,6 @@ export async function handleAddLead(
       degree: formData.get("degree") as string | undefined,
       year: formData.get("year") as string | undefined,
       semester: formData.get("semester") as string | undefined,
-      // Address fields for new user
       addressLine1: formData.get("addressLine1") as string | undefined,
       city: formData.get("city") as string | undefined,
       state: formData.get("state") as string | undefined,
@@ -165,7 +164,6 @@ export async function handleAddLead(
         }
         leadName = beneficiaryUser.name;
         
-        // Duplicate Lead Check only if a beneficiary is linked
         if (!rawFormData.forceCreate) {
             const openLeads = await getOpenLeadsByBeneficiaryId(beneficiaryUser.id!);
             if (openLeads.length > 0) {
@@ -244,7 +242,6 @@ export async function handleAddLead(
       Object.assign(newLead, leadDocUpdates);
     }
     
-    // If a new beneficiary was created and an Aadhaar was uploaded, update the user profile as well.
     if (wasBeneficiaryCreated && beneficiaryUser && aadhaarUrl) {
       await updateUser(beneficiaryUser.id!, { aadhaarCardUrl: aadhaarUrl });
     }
