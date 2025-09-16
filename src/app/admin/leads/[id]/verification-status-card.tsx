@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { ShieldCheck, UserCheck, UserX, Clock, Users, CheckCircle } from "lucide-react";
+import { ShieldCheck, UserCheck, UserX, Clock, Users, CheckCircle, Info } from "lucide-react";
 import type { Lead, User } from "@/services/types";
 import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -55,18 +54,36 @@ export function VerificationStatusCard({ lead, allApprovers }: VerificationStatu
         };
     }, [lead, allApprovers]);
 
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <ShieldCheck />
-                    Verification Status
-                </CardTitle>
-                <CardDescription>
-                    Tracking approvals from mandatory and optional approvers.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+    // New logic to determine what to display inside the card
+    const isClosedOrCancelled = lead.caseAction === 'Closed' || lead.caseAction === 'Cancelled';
+    const wasAutoVerified = lead.caseVerification === 'Verified' && lead.verifiers?.some(v => v.notes?.includes('auto-verified'));
+
+    const renderCardContent = () => {
+        if (lead.isHistoricalRecord || isClosedOrCancelled) {
+            return (
+                 <div className="text-center py-4 px-2 space-y-2">
+                    <Info className="mx-auto h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                        The verification process is not applicable for historical or closed leads.
+                    </p>
+                </div>
+            );
+        }
+
+        if (wasAutoVerified) {
+             return (
+                 <div className="text-center py-4 px-2 space-y-2">
+                    <ShieldCheck className="mx-auto h-8 w-8 text-green-500" />
+                    <p className="text-sm text-muted-foreground">
+                        N/A - This lead was auto-verified as the approval process was disabled at the time of creation.
+                    </p>
+                </div>
+            );
+        }
+        
+        // Default view for leads pending verification
+        return (
+            <div className="space-y-4">
                  <div>
                     <div className="text-xs text-muted-foreground flex justify-between mb-1">
                         <span>
@@ -153,6 +170,24 @@ export function VerificationStatusCard({ lead, allApprovers }: VerificationStatu
                         </ul>
                     </div>
                 )}
+            </div>
+        );
+    }
+
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <ShieldCheck />
+                    Verification Status
+                </CardTitle>
+                <CardDescription>
+                    Tracking approvals from mandatory and optional approvers.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {renderCardContent()}
             </CardContent>
         </Card>
     );
