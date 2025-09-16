@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     };
                     setUser(userData);
                     
-                    if (userData.roles.includes("Admin") || userData.roles.includes("Super Admin")) {
+                    if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
                         const [allLeads, allDonations] = await Promise.all([
                             getAllLeads(),
                             getAllDonations()
