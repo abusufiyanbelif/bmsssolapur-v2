@@ -42,7 +42,6 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     const leadsCollection = collection(db, LEADS_COLLECTION);
     const dateString = format(new Date(), 'ddMMyyyy');
     
-    // Fetch the full beneficiary user object to ensure we have the userKey
     const beneficiaryUser = leadData.beneficiaryId ? await getUser(leadData.beneficiaryId) : null;
     
     if (beneficiaryUser && beneficiaryUser.userKey) {
@@ -51,11 +50,10 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         const leadNumber = beneficiaryLeadsSnapshot.size + 1;
 
         customLeadId = `${beneficiaryUser.userKey}_${leadNumber}_${dateString}`;
-    } else if (beneficiaryUser && !beneficiaryUser.userKey) {
-        // This is a critical check to prevent errors.
-        throw new Error(`Beneficiary "${beneficiaryUser.name}" does not have a UserKey. Please ensure the user profile is complete.`);
-    }
-    else {
+    } else if (leadData.beneficiaryId) {
+        // If there's a beneficiaryId but we can't find the user or their key
+        throw new Error(`Beneficiary does not have a UserKey. Please ensure the user profile is complete.`);
+    } else {
         // Case where we are linking the beneficiary later
         const countSnapshot = await getCountFromServer(leadsCollection);
         const leadNumber = countSnapshot.data().count + 1;
@@ -64,6 +62,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
     
+    // Create a new lead object with all fields defined.
     const newLead: Lead = { 
         id: leadRef.id,
         name: leadData.name!,
@@ -126,13 +125,36 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     await setDoc(leadRef, dataToWrite);
 
+    // Log the activity after successful creation
+    await logActivity({
+        userId: adminUser.id,
+        userName: adminUser.name,
+        userEmail: adminUser.email,
+        role: "Admin",
+        activity: "Lead Created",
+        details: { 
+            leadId: newLead.id,
+            leadName: newLead.name,
+            amount: newLead.helpRequested,
+            purpose: newLead.purpose
+        }
+    });
+
     return newLead;
+
   } catch (error) {
     console.error('Error creating lead in Firestore: ', error);
     if (error instanceof Error) {
-        throw error;
+        // More descriptive error messages
+        if (error.message.includes('UserKey')) {
+            throw new Error(`Failed to create lead: ${error.message}. Possible fix: Go to the user's profile and ensure their 'User Key' field is populated, or contact a Super Admin.`);
+        }
+         if (error.message.includes('permission-denied')) {
+             throw new Error("Failed to create lead: Firestore permission denied. Please check server logs and IAM permissions.");
+        }
+        throw new Error(`Failed to create lead: ${error.message}`);
     }
-    throw new Error('An unknown error occurred while creating the lead in Firestore.');
+    throw new Error('An unknown error occurred while creating the lead.');
   }
 };
 
@@ -154,6 +176,7 @@ export const getLead = async (id: string): Promise<Lead | null> => {
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
         closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
         dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
+        caseReportedDate: data.caseReportedDate ? (data.caseReportedDate as Timestamp).toDate() : undefined,
         verificationDueDate: data.verificationDueDate ? (data.verificationDueDate as any).toDate() : undefined,
         verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
         donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
@@ -274,9 +297,10 @@ export const getAllLeads = async (): Promise<Lead[]> => {
               ...data,
               dateCreated: data.dateCreated ? (data.dateCreated as Timestamp).toDate() : new Date(),
               createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
-              updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : new Date(),
+              updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
               closedAt: data.closedAt ? (data.closedAt as Timestamp).toDate() : undefined,
               dueDate: data.dueDate ? (data.dueDate as any).toDate() : undefined,
+              caseReportedDate: data.caseReportedDate ? (data.caseReportedDate as Timestamp).toDate() : undefined,
               verificationDueDate: data.verificationDueDate ? (data.verificationDueDate as any).toDate() : undefined,
               verifiers: (data.verifiers || []).map((v: Verifier) => ({...v, verifiedAt: (v.verifiedAt as Timestamp).toDate() })),
               donations: (data.donations || []).map((d: LeadDonationAllocation) => ({...d, allocatedAt: (d.allocatedAt as Timestamp).toDate() })),
