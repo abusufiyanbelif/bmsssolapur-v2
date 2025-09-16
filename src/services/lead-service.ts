@@ -41,6 +41,8 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     let customLeadId: string;
     const leadsCollection = collection(db, LEADS_COLLECTION);
     const dateString = format(new Date(), 'ddMMyyyy');
+    
+    // Fetch the full beneficiary user object to ensure we have the userKey
     const beneficiaryUser = leadData.beneficiaryId ? await getUser(leadData.beneficiaryId) : null;
     
     if (beneficiaryUser && beneficiaryUser.userKey) {
@@ -49,7 +51,12 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         const leadNumber = beneficiaryLeadsSnapshot.size + 1;
 
         customLeadId = `${beneficiaryUser.userKey}_${leadNumber}_${dateString}`;
-    } else {
+    } else if (beneficiaryUser && !beneficiaryUser.userKey) {
+        // This is a critical check to prevent errors.
+        throw new Error(`Beneficiary "${beneficiaryUser.name}" does not have a UserKey. Cannot create lead.`);
+    }
+    else {
+        // Case where we are linking the beneficiary later
         const countSnapshot = await getCountFromServer(leadsCollection);
         const leadNumber = countSnapshot.data().count + 1;
         customLeadId = `LEAD${leadNumber}_${dateString}`;
@@ -72,7 +79,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         category: leadData.category!,
         otherCategoryDetail: leadData.otherCategoryDetail,
         priority: leadData.priority || 'Medium',
-        helpRequested: leadData.helpRequested!,
+        helpRequested: leadData.helpRequested || 0,
         collectedAmount: leadData.collectedAmount || 0,
         fundingGoal: leadData.fundingGoal,
         helpGiven: leadData.helpGiven || 0,
@@ -86,12 +93,12 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         adminAddedBy: { id: adminUser.id, name: adminUser.name },
         referredByUserId: leadData.referredByUserId,
         referredByUserName: leadData.referredByUserName,
-        dateCreated: (leadData.dateCreated as Timestamp)?.toDate() || new Date(),
-        caseReportedDate: (leadData.caseReportedDate as Timestamp)?.toDate(),
-        dueDate: leadData.dueDate ? (leadData.dueDate as any).toDate() : undefined,
+        dateCreated: (leadData.dateCreated as Date) || new Date(),
+        caseReportedDate: (leadData.caseReportedDate as Date) || undefined,
+        dueDate: leadData.dueDate ? (leadData.dueDate as Date) : undefined,
         closedAt: undefined,
-        createdAt: Timestamp.now() as any, // Will be converted on fetch
-        updatedAt: Timestamp.now() as any, // Will be converted on fetch
+        createdAt: new Date(),
+        updatedAt: new Date(),
         isLoan: leadData.isLoan || false,
         isHistoricalRecord: leadData.isHistoricalRecord || false,
         source: 'Manual Entry',
@@ -100,30 +107,30 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         semester: leadData.semester,
     };
     
-    // Remove undefined fields to prevent Firestore errors
-    const cleanedLeadData: Record<string, any> = {};
-    for (const key in newLead) {
-        const typedKey = key as keyof Lead;
-        if ((newLead as any)[typedKey] !== undefined) {
-             cleanedLeadData[typedKey] = (newLead as any)[typedKey];
-        }
-    }
-    
     // Convert Dates to Timestamps for writing
-    if (cleanedLeadData.dateCreated) cleanedLeadData.dateCreated = Timestamp.fromDate(cleanedLeadData.dateCreated);
-    if (cleanedLeadData.createdAt) cleanedLeadData.createdAt = Timestamp.fromDate(cleanedLeadData.createdAt);
-    if (cleanedLeadData.updatedAt) cleanedLeadData.updatedAt = Timestamp.fromDate(cleanedLeadData.updatedAt);
-    if (cleanedLeadData.caseReportedDate) cleanedLeadData.caseReportedDate = Timestamp.fromDate(cleanedLeadData.caseReportedDate);
-    if (cleanedLeadData.dueDate) cleanedLeadData.dueDate = Timestamp.fromDate(cleanedLeadData.dueDate);
+    const dataToWrite = {
+        ...newLead,
+        dateCreated: Timestamp.fromDate(newLead.dateCreated),
+        createdAt: Timestamp.fromDate(newLead.createdAt),
+        updatedAt: Timestamp.fromDate(newLead.updatedAt),
+        caseReportedDate: newLead.caseReportedDate ? Timestamp.fromDate(newLead.caseReportedDate) : undefined,
+        dueDate: newLead.dueDate ? Timestamp.fromDate(newLead.dueDate) : undefined,
+    };
+    
+    // Remove undefined fields to prevent Firestore errors
+    Object.keys(dataToWrite).forEach(key => {
+        if ((dataToWrite as any)[key] === undefined) {
+            delete (dataToWrite as any)[key];
+        }
+    });
 
+    await setDoc(leadRef, dataToWrite);
 
-    await setDoc(leadRef, cleanedLeadData);
-
-    return newLead as Lead;
+    return newLead;
   } catch (error) {
-    console.error('Error creating lead: ', error);
+    console.error('Error creating lead in Firestore: ', error);
     if (error instanceof Error) {
-        throw error; // Re-throw the original, specific error
+        throw error;
     }
     throw new Error('An unknown error occurred while creating the lead in Firestore.');
   }

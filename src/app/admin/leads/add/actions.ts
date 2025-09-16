@@ -123,35 +123,30 @@ export async function handleAddLead(
                 return { success: false, error: "New beneficiary requires First Name, Last Name, Phone, and Gender." };
             }
             
-            try {
-                const newUserPayload: Partial<User> = {
-                    userId: newBeneficiaryUserId,
-                    name: `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim(),
-                    firstName: newBeneficiaryFirstName,
-                    middleName: newBeneficiaryMiddleName || '',
-                    lastName: newBeneficiaryLastName,
-                    fatherName: newBeneficiaryFatherName || undefined,
-                    phone: newBeneficiaryPhone,
-                    email: newBeneficiaryEmail || undefined,
-                    aadhaarNumber: newBeneficiaryAadhaar || undefined,
-                    gender: gender,
-                    roles: ['Beneficiary'],
-                    isActive: true,
-                    address: {
-                        addressLine1: addressLine1,
-                        city: city,
-                        state: state,
-                        pincode: pincode,
-                        country: country
-                    }
-                };
+            const newUserPayload: Partial<User> = {
+                userId: newBeneficiaryUserId,
+                name: `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim(),
+                firstName: newBeneficiaryFirstName,
+                middleName: newBeneficiaryMiddleName || '',
+                lastName: newBeneficiaryLastName,
+                fatherName: newBeneficiaryFatherName || undefined,
+                phone: newBeneficiaryPhone,
+                email: newBeneficiaryEmail || undefined,
+                aadhaarNumber: newBeneficiaryAadhaar || undefined,
+                gender: gender,
+                roles: ['Beneficiary'],
+                isActive: true,
+                address: {
+                    addressLine1: addressLine1,
+                    city: city,
+                    state: state,
+                    pincode: pincode,
+                    country: country
+                }
+            };
 
-                beneficiaryUser = await createUser(newUserPayload);
-                wasBeneficiaryCreated = true;
-            } catch (e) {
-                 const error = e instanceof Error ? e.message : "An unknown error occurred while creating the new beneficiary.";
-                 return { success: false, error };
-            }
+            beneficiaryUser = await createUser(newUserPayload);
+            wasBeneficiaryCreated = true;
         } else {
             if (!rawFormData.beneficiaryId) {
                  return { success: false, error: "Please select an existing beneficiary." };
@@ -199,9 +194,9 @@ export async function handleAddLead(
         adminAddedBy: { id: adminUser.id!, name: adminUser.name },
         referredByUserId: rawFormData.referredByUserId || undefined,
         referredByUserName: rawFormData.referredByUserName || undefined,
-        dateCreated: Timestamp.now(),
-        caseReportedDate: rawFormData.caseReportedDate ? Timestamp.fromDate(rawFormData.caseReportedDate) : undefined,
-        dueDate: rawFormData.dueDate ? Timestamp.fromDate(rawFormData.dueDate as any) : undefined,
+        dateCreated: new Date(),
+        caseReportedDate: rawFormData.caseReportedDate,
+        dueDate: rawFormData.dueDate,
         isLoan: rawFormData.isLoan,
         isHistoricalRecord: rawFormData.isHistoricalRecord,
         source: 'Manual Entry',
@@ -257,14 +252,17 @@ export async function handleAddLead(
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     console.error("Error adding lead:", error);
-    // Suggest possible fixes based on common error messages
+
+    // Provide more specific, actionable error messages
     let helpfulError = `Failed to create lead: ${error}`;
     if (error.includes('already exists')) {
-        helpfulError += "\n\nPossible fix: Please check if a user with the same phone number, email, or User ID already exists. Use the search on the user management page to verify."
+        helpfulError += `\n\nPossible fix: Use the "Search Existing" option to find this user instead of creating a new one.`
+    } else if (error.includes('UserKey')) {
+        helpfulError += `\n\nPossible fix: Go to the selected beneficiary's profile and ensure their 'User Key' field is populated, or contact a Super Admin.`
+    } else if (error.includes('permission-denied') || error.includes(' Firestore ')){
+        helpfulError += `\n\nThis is likely a database permission issue. Please refer to the TROUBLESHOOTING.md guide.`
     }
-     if (error.includes('UserKey')) {
-        helpfulError += "\n\nPossible fix: Go to the selected beneficiary's profile and ensure their 'User Key' field is populated. If not, please contact a Super Admin."
-    }
+
     return {
       success: false,
       error: helpfulError,

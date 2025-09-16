@@ -61,7 +61,6 @@ export function Toaster() {
                 )}
                  <div className="flex gap-2 items-center mt-2">
                     {action}
-                    {/* OK Button to dismiss */}
                     <Button size="sm" variant="outline" className="h-7" onClick={() => dismiss(id)}>
                         OK
                     </Button>
