@@ -212,7 +212,7 @@ export async function handleAddLead(
         semester: rawFormData.semester,
     };
 
-    const newLead = await createLead(newLeadData, { id: adminUser.id!, name: adminUser.name });
+    const newLead = await createLead(newLeadData, adminUser);
     
     // Now upload files with the new lead's ID
     const uploadPromises: Promise<string | null>[] = [

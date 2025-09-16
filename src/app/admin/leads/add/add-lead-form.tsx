@@ -126,8 +126,16 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
     if (!data.linkBeneficiaryLater) {
         if (data.beneficiaryType === 'existing' && (!data.beneficiaryId || data.beneficiaryId.trim() === '')) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select an existing beneficiary.", path: ["beneficiaryId"] });
-        } else if (data.beneficiaryType === 'new' && (!data.newBeneficiaryFirstName || !data.newBeneficiaryLastName || !data.newBeneficiaryPhone || !data.gender)) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "New beneficiary requires First Name, Last Name, Phone, and Gender.", path: ["newBeneficiaryFirstName"] });
+        } else if (data.beneficiaryType === 'new') {
+            if (!data.newBeneficiaryFirstName || data.newBeneficiaryFirstName.trim() === '') {
+                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "First name is required.", path: ["newBeneficiaryFirstName"] });
+            }
+            if (!data.newBeneficiaryLastName || data.newBeneficiaryLastName.trim() === '') {
+                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Last name is required.", path: ["newBeneficiaryLastName"] });
+            }
+             if (!data.newBeneficiaryPhone || !/^[0-9]{10}$/.test(data.newBeneficiaryPhone)) {
+                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A valid 10-digit phone number is required.", path: ["newBeneficiaryPhone"] });
+            }
         }
     } else {
         if (!data.manualBeneficiaryName || data.manualBeneficiaryName.trim() === '') {
@@ -179,13 +187,6 @@ type AvailabilityState = {
     existingUserName?: string;
 };
 
-type CreationStatus = 'idle' | 'creating-user' | 'creating-lead' | 'success' | 'error';
-interface CreationStep {
-    name: string;
-    status: 'pending' | 'in-progress' | 'success' | 'error';
-    details?: string;
-}
-
 const initialAvailabilityState: AvailabilityState = {
     isChecking: false,
     isAvailable: null,
@@ -232,7 +233,6 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
 function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [creationStatus, setCreationStatus] = useState<CreationStep[]>([]);
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<Lead[] | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -358,7 +358,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       setBeneficiaryRawText("");
       setAadhaarPreview(null);
       setOtherDocumentsPreviews([]);
-      setCreationStatus([]);
   };
 
   const { formState: { isValid }, setValue, watch, getValues, control, trigger } = form;
@@ -699,10 +698,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     }
     
     setIsSubmitting(true);
-    setCreationStatus([]); // Reset status on new submission
 
-    // This function now expects all data to be in the `values` object.
-    // The server action will handle user creation if needed.
     const formData = new FormData();
     for (const key in values) {
       const formKey = key as keyof AddLeadFormValues;
@@ -733,7 +729,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     if (leadResult.duplicateLeadWarning) {
       setDuplicateWarning(leadResult.duplicateLeadWarning);
       setIsSubmitting(false);
-      setCreationStatus([]);
       return;
     }
 
@@ -1323,24 +1318,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </FormItem>
                   )}
                 />
-                
-                {creationStatus.length > 0 && (
-                    <div className="space-y-4 rounded-lg border p-4">
-                        <h4 className="font-semibold">Creation Progress</h4>
-                        {creationStatus.map(step => (
-                            <div key={step.name} className="flex items-center gap-4">
-                                {step.status === 'pending' && <Loader2 className="h-5 w-5 text-muted-foreground" />}
-                                {step.status === 'in-progress' && <Loader2 className="h-5 w-5 text-primary animate-spin" />}
-                                {step.status === 'success' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                                {step.status === 'error' && <XCircle className="h-5 w-5 text-destructive" />}
-                                <div>
-                                    <p className="font-medium">{step.name}</p>
-                                    {step.details && <p className="text-xs text-muted-foreground">{step.details}</p>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
                 
                 <div className="flex gap-4 pt-6 border-t">
                     <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
