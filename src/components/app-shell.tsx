@@ -89,6 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const [readyToPublishLeads, setReadyToPublishLeads] = useState<LeadType[]>([]);
     const [pendingDonations, setPendingDonations] = useState<DonationType[]>([]);
     const [organization, setOrganization] = useState<Organization | null>(null);
+    const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -146,7 +147,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     };
                     setUser(userData);
                     
-                    if (['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole)) {
+                    // Always fetch admin notifications if user has any admin role
+                    if (fetchedUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
                         const [allLeads, allDonations] = await Promise.all([
                             getAllLeads(),
                             getAllDonations()
@@ -190,10 +192,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         if (!user || !user.isLoggedIn) return;
 
         const previousRole = user.activeRole;
-        if (previousRole === newRole && isSessionReady) {
-            setIsRoleSwitcherOpen(false);
-            return;
-        }
         
         localStorage.setItem('activeRole', newRole);
 
@@ -208,7 +206,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
         
-        window.location.href = '/home';
+        if(redirectUrl) {
+            // If we have a pending redirect, go there after the switch
+            window.location.href = redirectUrl;
+        } else {
+            // Otherwise, go to the standard home/dashboard for that role
+            window.location.href = '/home';
+        }
     };
     
     const handleLogout = (shouldRedirect = true) => {
@@ -221,10 +225,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     }
 
-    const handleOpenRoleSwitcher = (requiredRoleName: string | null = null) => {
+    const handleOpenRoleSwitcher = (requiredRoleName: string | null = null, redirect?: string) => {
         setRequiredRole(requiredRoleName);
+        setRedirectUrl(redirect || null); // Store the URL to redirect to after switch
         setIsRoleSwitcherOpen(true);
     };
+    
+     const handleNotificationClick = (requiredRole: string, href: string) => {
+        if (!user || !user.isLoggedIn) return;
+        
+        if(user.activeRole === requiredRole) {
+            router.push(href);
+        } else if (user.roles.includes(requiredRole as any)) {
+            handleOpenRoleSwitcher(requiredRole, href);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Permission Denied',
+                description: `You need the ${requiredRole} role to access this.`,
+            });
+        }
+    }
 
     const handleOpenChange = (open: boolean) => {
         if (!open && isMandatory) {
@@ -263,8 +284,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const activeRole = user.activeRole;
-    const leadsNotificationCount = pendingLeads.length + readyToPublishLeads.length;
-    const donationsNotificationCount = pendingDonations.length;
+    const isAdmin = ['Admin', 'Super Admin', 'Finance Admin'].includes(activeRole);
+    const hasAdminAccess = user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r));
+    const leadsNotificationCount = hasAdminAccess ? (pendingLeads.length + readyToPublishLeads.length) : 0;
+    const donationsNotificationCount = hasAdminAccess ? pendingDonations.length : 0;
     const transfersNotificationCount = 0; // Placeholder for now
 
     const HeaderTitle = () => (
@@ -290,7 +313,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <Nav 
                                 userRoles={user.roles} 
                                 activeRole={activeRole}
-                                onRoleSwitchRequired={handleOpenRoleSwitcher}
+                                onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
                             />
                         </div>
                     )}
@@ -320,7 +343,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 <Nav 
                                     userRoles={user.roles} 
                                     activeRole={activeRole}
-                                    onRoleSwitchRequired={handleOpenRoleSwitcher}
+                                    onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
                                 />
                              </div>
                            )}
@@ -332,116 +355,77 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                      <div className="w-full flex-1 flex justify-end items-center gap-4">
                         {user.isLoggedIn ? (
                             <>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="relative">
-                                        <HandCoins className="h-5 w-5 text-green-600" />
-                                        {donationsNotificationCount > 0 && (
-                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                                                {donationsNotificationCount}
-                                            </span>
-                                        )}
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-80" align="end">
-                                    <DropdownMenuLabel>Pending Donations ({donationsNotificationCount})</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {donationsNotificationCount > 0 ? (
-                                        pendingDonations.slice(0, 5).map(donation => (
-                                            <DropdownMenuItem key={donation.id} asChild>
-                                                 <Link href={`/admin/donations/${donation.id!}/edit`} className="flex flex-col items-start w-full">
+                            {hasAdminAccess && (
+                                <>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="relative">
+                                            <HandCoins className="h-5 w-5 text-green-600" />
+                                            {donationsNotificationCount > 0 && (
+                                                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                                    {donationsNotificationCount}
+                                                </span>
+                                            )}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-80" align="end">
+                                        <DropdownMenuLabel>Pending Donations ({donationsNotificationCount})</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {donationsNotificationCount > 0 ? (
+                                            pendingDonations.slice(0, 5).map(donation => (
+                                                <DropdownMenuItem key={donation.id} onSelect={() => handleNotificationClick('Admin', `/admin/donations/${donation.id!}/edit`)}>
                                                     <p className="font-semibold text-destructive">Verify: ₹{donation.amount.toLocaleString()} from {donation.donorName}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Received {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
+                                                    <p className="text-xs text-muted-foreground ml-4">
+                                                        {formatDistanceToNow(donation.createdAt as Date, { addSuffix: true })}
                                                     </p>
-                                                 </Link>
-                                            </DropdownMenuItem>
-                                        ))
-                                    ) : (
-                                        <div className="px-2 py-4 text-center text-sm text-muted-foreground">No pending donations.</div>
-                                    )}
-                                    {donationsNotificationCount > 0 && <DropdownMenuSeparator />}
-                                    <DropdownMenuItem asChild><Link href="/admin/donations?status=Pending+verification">View All Pending Donations</Link></DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                                </DropdownMenuItem>
+                                            ))
+                                        ) : (
+                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">No pending donations.</div>
+                                        )}
+                                        {donationsNotificationCount > 0 && <DropdownMenuSeparator />}
+                                        <DropdownMenuItem onSelect={() => handleNotificationClick('Admin', '/admin/donations?status=Pending+verification')}>View All Pending Donations</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
 
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="relative">
-                                        <ArrowRightLeft className="h-5 w-5 text-gray-500" />
-                                        {transfersNotificationCount > 0 && (
-                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                                                {transfersNotificationCount}
-                                            </span>
-                                        )}
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-80" align="end">
-                                    <DropdownMenuLabel>Transfer Updates ({transfersNotificationCount})</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">No transfer updates.</div>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="relative">
-                                        <FileUp className="h-5 w-5 text-blue-600" />
-                                        {leadsNotificationCount > 0 && (
-                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                                                {leadsNotificationCount}
-                                            </span>
-                                        )}
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-80" align="end">
-                                    <DropdownMenuLabel>Pending Lead Actions ({leadsNotificationCount})</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                     {leadsNotificationCount > 0 ? (
-                                        <>
-                                            {pendingLeads.slice(0, 3).map(lead => (
-                                                <DropdownMenuItem key={lead.id} asChild>
-                                                     <Link href={`/admin/leads/${lead.id}`} className="flex flex-col items-start w-full">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="relative">
+                                            <FileUp className="h-5 w-5 text-blue-600" />
+                                            {leadsNotificationCount > 0 && (
+                                                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                                    {leadsNotificationCount}
+                                                </span>
+                                            )}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-80" align="end">
+                                        <DropdownMenuLabel>Pending Lead Actions ({leadsNotificationCount})</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {leadsNotificationCount > 0 ? (
+                                            <>
+                                                {pendingLeads.slice(0, 3).map(lead => (
+                                                    <DropdownMenuItem key={lead.id} onSelect={() => handleNotificationClick('Admin', `/admin/leads/${lead.id}`)}>
                                                         <p className="font-semibold text-destructive">Verify: {lead.name}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Requested ₹{lead.helpRequested.toLocaleString()} &middot; {formatDistanceToNow(lead.dateCreated as Date, { addSuffix: true })}
-                                                        </p>
-                                                     </Link>
-                                                </DropdownMenuItem>
-                                            ))}
-                                            {readyToPublishLeads.slice(0, 2).map(lead => (
-                                                 <DropdownMenuItem key={lead.id} asChild>
-                                                     <Link href={`/admin/leads/${lead.id}/edit`} className="flex flex-col items-start w-full">
+                                                    </DropdownMenuItem>
+                                                ))}
+                                                {readyToPublishLeads.slice(0, 2).map(lead => (
+                                                    <DropdownMenuItem key={lead.id} onSelect={() => handleNotificationClick('Admin', `/admin/leads/${lead.id}/edit`)}>
                                                         <p className="font-semibold text-blue-600">Publish: {lead.name}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Verified {formatDistanceToNow(lead.dateCreated as Date, { addSuffix: true })}
-                                                        </p>
-                                                     </Link>
-                                                </DropdownMenuItem>
-                                            ))}
-                                        </>
-                                    ) : (
-                                        <div className="px-2 py-4 text-center text-sm text-muted-foreground">No pending lead actions.</div>
-                                    )}
-                                    {leadsNotificationCount > 0 && <DropdownMenuSeparator />}
-                                    <DropdownMenuItem asChild><Link href="/admin/leads?verification=Pending">View All Pending Leads</Link></DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </>
+                                        ) : (
+                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">No pending lead actions.</div>
+                                        )}
+                                        {leadsNotificationCount > 0 && <DropdownMenuSeparator />}
+                                        <DropdownMenuItem onSelect={() => handleNotificationClick('Admin', '/admin/leads?verification=Pending')}>View All Pending Leads</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                </>
+                            )}
                             
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="relative">
-                                        <Megaphone className="h-5 w-5 text-gray-500" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-80" align="end">
-                                    <DropdownMenuLabel>Campaign Updates</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">No campaign updates.</div>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                         <Avatar className="h-9 w-9">
