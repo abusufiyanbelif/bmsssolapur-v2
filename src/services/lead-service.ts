@@ -50,9 +50,9 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         const leadNumber = beneficiaryLeadsSnapshot.size + 1;
 
         customLeadId = `${beneficiaryUser.userKey}_${leadNumber}_${dateString}`;
-    } else if (leadData.beneficiaryId) {
+    } else if (leadData.beneficiaryId && (!beneficiaryUser || !beneficiaryUser.userKey)) {
         // If there's a beneficiaryId but we can't find the user or their key
-        throw new Error(`Beneficiary does not have a UserKey. Please ensure the user profile is complete.`);
+        throw new Error(`The selected beneficiary ("${leadData.name}") does not have a valid UserKey. Please ensure the user profile is complete.`);
     } else {
         // Case where we are linking the beneficiary later
         const countSnapshot = await getCountFromServer(leadsCollection);

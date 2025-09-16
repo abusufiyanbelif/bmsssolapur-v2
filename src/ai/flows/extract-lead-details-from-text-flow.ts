@@ -43,7 +43,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             **KEY INSTRUCTIONS:**
 
             **1. Generate a Compelling Story & Headline:**
-            -   **Story**: Based on the document text AND the provided context (Purpose, Category, Degree, Year), synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience. For example, if the context is '1st Year' and 'B.Pharm', the story MUST clearly state this, e.g., "This student is in their first year of B.Pharm and needs help...". DO NOT invent details that contradict the context, such as saying 'final year' if the context says 'first year'.
+            -   **Story**: Based on the document text AND the provided context (Purpose, Category, Degree, Year, Semester), synthesize a detailed narrative for the 'story' field. This should be suitable for a public audience. For example, if the context is '1st Year' and 'B.Pharm', the story MUST clearly state this, e.g., "This student is in their first year of B.Pharm and needs help...". DO NOT invent details that contradict the context, such as saying 'final year' if the context says 'first year'.
             -   **Headline**: Create a short, one-sentence summary for the 'headline' field based on the story and context. It MUST be consistent with the provided context.
 
             **2. Medical Document Parsing:**
