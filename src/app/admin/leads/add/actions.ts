@@ -262,7 +262,7 @@ export async function handleAddLead(
     console.error("Error adding lead:", error);
     return {
       success: false,
-      error: error,
+      error: `Failed to create lead: ${error}`,
     };
   }
 }
@@ -313,4 +313,6 @@ export async function handleGenerateSummaries(rawText: string): Promise<{ succes
         return { success: false, error };
     }
 }
+    
+
     

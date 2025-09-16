@@ -35,7 +35,7 @@ export type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, LeadAction 
 const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
-export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>>, adminUser: { id: string, name: string }) => {
+export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>>, adminUser: User) => {
   if (!isConfigValid) throw new Error('Firebase is not configured.');
   if (!adminUser || !adminUser.id) throw new Error('Admin user details are required to create a lead.');
   
@@ -47,7 +47,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     if (leadData.beneficiaryId) {
         const beneficiary = await getUser(leadData.beneficiaryId);
         if (!beneficiary) throw new Error("Beneficiary not found for lead creation.");
-        if (!beneficiary.userKey) throw new Error("Beneficiary does not have a UserKey. Cannot create lead.");
+        if (!beneficiary.userKey) throw new Error("Beneficiary does not have a UserKey. Please ensure the user profile is complete before creating a lead.");
         
         const q = query(leadsCollection, where("beneficiaryId", "==", beneficiary.id!));
         const beneficiaryLeadsSnapshot = await getDocs(q);
@@ -376,3 +376,5 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         return [];
     }
 }
+
+    
