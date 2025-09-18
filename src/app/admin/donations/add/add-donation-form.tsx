@@ -26,9 +26,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon } from "lucide-react";
-import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput } from "@/services/types";
-import { getUser } from "@/services/user-service";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch } from "lucide-react";
+import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
+import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -44,6 +44,9 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { handleExtractLeadBeneficiaryDetailsFromText } from "../../leads/add/actions";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
@@ -52,7 +55,20 @@ const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', '
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'] as const;
 
 const formSchema = z.object({
-  donorId: z.string().min(1, "Please select a donor."),
+  donorType: z.enum(['existing', 'new']).default('existing'),
+  donorId: z.string().optional(),
+  
+  // New Donor Fields
+  newDonorUserId: z.string().optional(),
+  newDonorFirstName: z.string().optional(),
+  newDonorMiddleName: z.string().optional(),
+  newDonorLastName: z.string().optional(),
+  newDonorFatherName: z.string().optional(),
+  newDonorPhone: z.string().optional(),
+  newDonorEmail: z.string().email().optional().or(z.literal('')),
+  newDonorAadhaar: z.string().optional(),
+  gender: z.enum(['Male', 'Female', 'Other']).optional(),
+
   paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
   
   isAnonymous: z.boolean().default(false),
@@ -148,12 +164,14 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
   
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
 
 
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
@@ -186,6 +204,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         campaignId: existingDonation?.campaignId || 'none',
     } : {
         donorId: '',
+        donorType: 'existing',
         paymentMethod: 'Online (UPI/Card)',
         isAnonymous: false,
         totalTransactionAmount: 0,
@@ -213,6 +232,16 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const debouncedTransactionId = useDebounce(transactionId, 500);
   const includePledge = watch("includePledge");
   const paymentMethod = watch("paymentMethod");
+  const donorType = watch("donorType");
+  const newDonorFirstName = watch("newDonorFirstName");
+  const newDonorLastName = watch("newDonorLastName");
+  
+  useEffect(() => {
+    if (donorType === 'new' && newDonorFirstName && newDonorLastName && !form.formState.dirtyFields.newDonorUserId) {
+        const generatedUserId = `${newDonorFirstName.toLowerCase()}.${newDonorLastName.toLowerCase()}`.replace(/\s+/g, '');
+        setValue('newDonorUserId', generatedUserId, { shouldValidate: true });
+    }
+  }, [donorType, newDonorFirstName, newDonorLastName, setValue, form.formState.dirtyFields.newDonorUserId]);
   
   const handleTxnIdCheck = useCallback(async (txnId: string) => {
     if (!txnId || (isEditing && txnId === existingDonation?.transactionId)) {
@@ -398,126 +427,78 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
   };
 
+  const handleBeneficiaryAutoFill = async () => {
+    const aadhaarFile = getValues('aadhaarCard');
+    if (!aadhaarFile) {
+        toast({ variant: 'destructive', title: 'No File', description: 'Please upload an Aadhaar card to scan.' });
+        return;
+    }
+    
+    setIsScanning(true);
+    const formData = new FormData();
+    formData.append("file_0", aadhaarFile);
+    const textResult = await getRawTextFromImage(formData);
+
+    if (textResult.success && textResult.rawText) {
+      const detailsResult = await handleExtractLeadBeneficiaryDetailsFromText(textResult.rawText);
+      if (detailsResult.success && detailsResult.details) {
+        const details = detailsResult.details;
+        if (details.beneficiaryFirstName) setValue('newDonorFirstName', details.beneficiaryFirstName, { shouldDirty: true });
+        if (details.beneficiaryLastName) setValue('newDonorLastName', details.beneficiaryLastName, { shouldDirty: true });
+        if (details.beneficiaryPhone) setValue('newDonorPhone', details.beneficiaryPhone.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true });
+        if (details.aadhaarNumber) setValue('newDonorAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
+        if (details.gender) setValue('gender', details.gender, { shouldDirty: true });
+        toast({ variant: 'success', title: 'Auto-fill Complete!', description: 'Donor details have been populated from the Aadhaar card.' });
+      } else {
+        toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error });
+      }
+    } else {
+      toast({ variant: 'destructive', title: 'Scan Failed', description: textResult.error });
+    }
+    setIsScanning(false);
+  }
 
   return (
     <>
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a method" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {paymentMethods.map(method => (
-                                <SelectItem key={method} value={method}>{method}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="paymentScreenshot"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Payment Proof</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                {paymentMethod === 'Online (UPI/Card)' && (
-                    <FormField
-                        control={form.control}
-                        name="paymentApp"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Payment App</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select an app" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {paymentApps.map(app => (
-                                    <SelectItem key={app} value={app}>{app}</SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-                
-                 {filePreview && (
-                    <div className="relative group">
-                        <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
-                             {file?.type.startsWith('image/') ? (
-                                <Image 
-                                    src={filePreview} 
-                                    alt="Screenshot Preview"
-                                    width={800 * zoom}
-                                    height={800 * zoom}
-                                    className="object-contain transition-transform duration-100"
-                                    style={{ transform: `scale(${zoom})` }}
-                                />
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                    <FileIcon className="h-16 w-16" />
-                                    <span className="text-sm font-semibold">{file?.name}</span>
-                                </div>
-                            )}
-                        </div>
-                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
-                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
-                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                            <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
-                        </div>
-                    </div>
-                )}
-                {file && (
-                   <div className="flex flex-col sm:flex-row gap-2">
-                      <Button type="button" variant="outline" onClick={handleScanText} disabled={isScanning} className="w-full">
-                          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
-                          {isScanning ? 'Scanning...' : 'Get Text from Document'}
-                      </Button>
-                      {rawText && (
-                          <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
-                              {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                              Auto-fill Form
-                          </Button>
-                      )}
-                   </div>
-                )}
-                {rawText && (
-                  <div className="space-y-2">
-                      <Label>Extracted Text</Label>
-                      <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
-                  </div>
-                )}
-              </div>
-              
               <FormField
+                control={form.control}
+                name="donorType"
+                render={({ field }) => (
+                <FormItem className="space-y-3">
+                    <FormLabel>Select Donor</FormLabel>
+                    <FormControl>
+                    <RadioGroup
+                        onValueChange={(value) => {
+                            field.onChange(value as 'existing' | 'new');
+                            setValue('donorId', undefined);
+                        }}
+                        value={field.value}
+                        className="grid grid-cols-2 gap-4"
+                        disabled={isEditing}
+                    >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}>
+                                    <UserSearch className="h-6 w-6"/>
+                                    <span>Search Existing</span>
+                                </Button>
+                        </FormItem>
+                         <FormItem className="flex items-center space-x-3 space-y-0">
+                                 <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
+                                    <UserPlus className="h-6 w-6"/>
+                                    <span>Create New</span>
+                                </Button>
+                        </FormItem>
+                    </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+              
+            {donorType === 'existing' ? (
+                <FormField
                   control={form.control}
                   name="donorId"
                   render={({ field }) => (
@@ -530,6 +511,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                               variant="outline"
                               role="combobox"
                               className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
+                              disabled={isEditing}
                               >
                               {selectedDonor?.name || "Search by name, phone, Aadhaar..."}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -566,6 +548,72 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       </FormItem>
                   )}
                   />
+            ) : (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <Accordion type="single" collapsible>
+                            <AccordionItem value="scan-beneficiary-docs">
+                                <AccordionTrigger>
+                                     <div className="flex items-center gap-2 text-primary">
+                                        <ScanEye className="h-5 w-5" />
+                                        Scan Aadhaar Card (Optional)
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-4">
+                                     <div className="space-y-4 p-4 border rounded-lg bg-background">
+                                         <p className="text-sm text-muted-foreground">Upload an Aadhaar card to auto-fill the new donor&apos;s details.</p>
+                                          <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange, value, ...rest } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { const file = e.target.files?.[0]; onChange(file); setAadhaarPreview(file ? URL.createObjectURL(file) : null); }} /></FormControl><FormMessage /></FormItem>)} />
+                                          {aadhaarPreview && (
+                                            <div className="relative group p-2 border rounded-lg">
+                                                <Image src={aadhaarPreview} alt="Aadhaar Preview" width={200} height={120} className="rounded-md object-cover"/>
+                                                 <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => { form.setValue('aadhaarCard', null); setAadhaarPreview(null); if(aadhaarInputRef.current) aadhaarInputRef.current.value = ""; }}><X className="h-4 w-4"/></Button>
+                                            </div>
+                                          )}
+                                         <div className="flex gap-2">
+                                            <Button type="button" className="w-full" onClick={handleBeneficiaryAutoFill} disabled={isScanning}>
+                                                {isScanning ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                                Auto-fill from Aadhaar
+                                            </Button>
+                                         </div>
+                                     </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                        <h3 className="font-medium pt-4">New Donor Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField control={form.control} name="newDonorFirstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="First Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="newDonorMiddleName" render={({ field }) => (<FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="newDonorLastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Last Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        </div>
+                         <FormField
+                            control={form.control}
+                            name="newDonorUserId"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>User ID</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="auto-generated or custom" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="newDonorPhone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" maxLength={10} placeholder="Enter 10-digit phone number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="newDonorAadhaar" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input placeholder="Enter 12-digit Aadhaar number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        </div>
+                        <FormField control={form.control} name="gender" render={({ field }) => (
+                            <FormItem className="space-y-3">
+                                <FormLabel>Gender</FormLabel>
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 pt-2">
+                                        <FormItem className="flex items-center space-x-2"><RadioGroupItem value="Male" id="male" /><FormLabel htmlFor="male" className="font-normal">Male</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-2"><RadioGroupItem value="Female" id="female" /><FormLabel htmlFor="female" className="font-normal">Female</FormLabel></FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>)} />
+                </div>
+            )}
               
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
@@ -715,28 +763,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                   )}
                 />
                </div>
-
-               {extractedDetails && (
-                <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
-                    <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Transaction ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />
-                        {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                        {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.googlePaySenderName && <FormField control={form.control} name="googlePaySenderName" render={({field}) => (<FormItem><FormLabel>GPay Sender</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.phonePeSenderName && <FormField control={form.control} name="phonePeSenderName" render={({field}) => (<FormItem><FormLabel>PhonePe Sender</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.paytmSenderName && <FormField control={form.control} name="paytmSenderName" render={({field}) => (<FormItem><FormLabel>Paytm Sender</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.googlePayRecipientName && <FormField control={form.control} name="googlePayRecipientName" render={({field}) => (<FormItem><FormLabel>GPay Recipient</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.phonePeRecipientName && <FormField control={form.control} name="phonePeRecipientName" render={({field}) => (<FormItem><FormLabel>PhonePe Recipient</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.paytmRecipientName && <FormField control={form.control} name="paytmRecipientName" render={({field}) => (<FormItem><FormLabel>Paytm Recipient</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.googlePayTransactionId && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.phonePeTransactionId && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                        {extractedDetails.paytmUpiReferenceNo && <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm Ref No</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                    </div>
-                </div>
-               )}
 
                <div className="flex gap-4">
                   <Button type="submit" disabled={isSubmitting || isFormInvalid}>

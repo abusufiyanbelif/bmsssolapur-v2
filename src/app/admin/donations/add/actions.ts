@@ -3,7 +3,7 @@
 "use server";
 
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
-import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone } from "@/services/user-service";
+import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone, createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User, ExtractDonationDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
@@ -33,13 +33,42 @@ export async function handleAddDonation(
         return { success: false, error: "Admin user not found for logging." };
     }
     
-    const donorId = formData.get("donorId") as string;
-    if (!donorId) {
-        return { success: false, error: "Donor ID is missing." };
+    let donor: User | null = null;
+    const donorType = formData.get('donorType');
+
+    if (donorType === 'new') {
+        const newUserPayload: Partial<User> = {
+            userId: formData.get("newDonorUserId") as string | undefined,
+            name: `${formData.get("newDonorFirstName") as string} ${formData.get("newDonorMiddleName") || ''} ${formData.get("newDonorLastName") as string}`.replace(/\s+/g, ' ').trim(),
+            firstName: formData.get("newDonorFirstName") as string,
+            middleName: formData.get("newDonorMiddleName") as string || '',
+            lastName: formData.get("newDonorLastName") as string,
+            fatherName: formData.get("newDonorFatherName") as string || undefined,
+            phone: formData.get("newDonorPhone") as string,
+            email: formData.get("newDonorEmail") as string || undefined,
+            aadhaarNumber: formData.get("newDonorAadhaar") as string || undefined,
+            gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
+            roles: ['Donor'],
+            isActive: true,
+            source: 'Manual Entry'
+        };
+        
+        if (!newUserPayload.firstName || !newUserPayload.lastName || !newUserPayload.phone || !newUserPayload.gender) {
+            return { success: false, error: "New donor requires First Name, Last Name, Phone, and Gender." };
+        }
+        
+        donor = await createUser(newUserPayload);
+
+    } else {
+        const donorId = formData.get("donorId") as string;
+        if (!donorId) {
+            return { success: false, error: "An existing donor must be selected." };
+        }
+        donor = await getUser(donorId);
     }
-    const donor = await getUser(donorId);
+    
     if (!donor || !donor.userKey) {
-        return { success: false, error: "Selected donor user not found or is missing a User Key." };
+        return { success: false, error: "Selected or created donor user not found or is missing a User Key." };
     }
 
     const transactionId = formData.get("transactionId") as string | undefined;
@@ -67,8 +96,8 @@ export async function handleAddDonation(
         // Create a temporary donation record to get an ID for the upload path
         const tempDonation = await createDonation({
             ...data,
-            donorId: donor.id!,
-            donorName: donor.name,
+            donorId: donor!.id!,
+            donorName: donor!.name,
             status: "Pending verification",
             donationDate: donationDate,
             leadId: formData.get("leadId") === 'none' ? undefined : formData.get("leadId") as string | undefined,
@@ -77,7 +106,7 @@ export async function handleAddDonation(
         }, adminUserId, adminUser.name, adminUser.email);
 
         if(screenshotFile && screenshotFile.size > 0) {
-            const uploadPath = `donations/${donor.userKey}/${tempDonation.id}/proofs/`;
+            const uploadPath = `donations/${donor!.userKey}/${tempDonation.id}/proofs/`;
             proofUrl = await uploadFile(screenshotFile, uploadPath);
             await updateDonation(tempDonation.id!, { paymentScreenshotUrls: [proofUrl] });
         }
