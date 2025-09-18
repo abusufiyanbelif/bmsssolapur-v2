@@ -47,7 +47,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
 
             **Google Pay (GPay) Rules:**
             - Look for "From:" and "To:" labels to identify sender and recipient blocks.
-            - The sender's name might be split across multiple lines. Find the line starting with "From:". Combine the text on that line (after "From:") and the text on the immediately following line to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(ICICI Bank)"). Use this for 'googlePaySenderName' and 'senderName'.
+            - The sender's name is likely on the lines following "From:". Combine text to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(ICICI Bank)"). Use this for 'googlePaySenderName' and 'senderName'.
             - The sender's bank name is often inside the parentheses next to their name in the "From:" section. Extract it for 'senderBankName'.
             - The sender's UPI ID is on the line immediately following the full sender name block and contains an '@' symbol. Use this for 'senderUpiId'.
             - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName' and 'recipientName'.

@@ -180,6 +180,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const [donorPopoverOpen, setDonorPopoverOpen] = useState(false);
   const [transactionIdState, setTransactionIdState] = useState<AvailabilityState>(initialAvailabilityState);
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -370,6 +371,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
       setFilePreview(preview);
       setRawText(null); // Clear old text on new file
       setExtractedDetails(null);
+      setAutoFilledFields(new Set());
       setZoom(1);
     } else {
       clearFile();
@@ -382,6 +384,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setFilePreview(null);
     setRawText(null);
     setExtractedDetails(null);
+    setAutoFilledFields(new Set());
     if(fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -392,6 +395,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setIsScanning(true);
     setRawText(null);
     setExtractedDetails(null);
+    setAutoFilledFields(new Set());
     try {
         const formData = new FormData();
         formData.append("file_0", file);
@@ -418,21 +422,24 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         const { details } = result;
         setExtractedDetails(details);
         
+        const newAutoFilledFields = new Set<string>();
         Object.entries(details).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
+                 newAutoFilledFields.add(key);
                  if (key === 'amount') {
-                    setValue('totalTransactionAmount', value as number);
+                    setValue('totalTransactionAmount', value as number, { shouldDirty: true });
                  } else if (key === 'date' && typeof value === 'string') {
-                    setValue('donationDate', new Date(value));
+                    setValue('donationDate', new Date(value), { shouldDirty: true });
                  } else if (key === 'type' && donationTypes.includes(value as any)) {
-                    setValue('type', value as any);
+                    setValue('type', value as any, { shouldDirty: true });
                  } else if (key === 'purpose' && donationPurposes.includes(value as any)) {
-                    setValue('purpose', value as any);
+                    setValue('purpose', value as any, { shouldDirty: true });
                  } else {
-                    setValue(key as any, value);
+                    setValue(key as any, value, { shouldDirty: true });
                  }
             }
         });
+        setAutoFilledFields(newAutoFilledFields);
         toast({ variant: "success", title: "Auto-fill Complete!", description: "Form has been populated. Please review." });
     } else {
         toast({ variant: "destructive", title: "Extraction Failed", description: result.error || "Could not extract details from text." });
@@ -509,6 +516,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         setBeneficiaryRawText('');
         setExtractedBeneficiaryDetails(null);
     }
+    
+     const getFieldClass = (fieldName: string) => {
+        return autoFilledFields.has(fieldName) ? "bg-green-100 dark:bg-green-900/50" : "";
+    };
 
 
   return (
@@ -735,7 +746,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                           <FormItem>
                           <FormLabel>Total Transaction Amount</FormLabel>
                           <FormControl>
-                              <Input type="number" placeholder="Enter full amount from receipt" {...field} />
+                              <Input type="number" placeholder="Enter full amount from receipt" {...field} className={getFieldClass('amount')} />
                           </FormControl>
                           <FormMessage />
                           </FormItem>
@@ -752,7 +763,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                   <FormControl>
                                       <Button
                                       variant={"outline"}
-                                      className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
+                                      className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground", getFieldClass('date'))}
                                       >
                                       {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
                                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -776,7 +787,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
               
                 <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-medium">Transaction Details</h3>
-                    <FormField
+                     <FormField
                         control={form.control}
                         name="paymentApp"
                         render={({ field }) => (
@@ -784,14 +795,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                 <FormLabel>Payment App</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select the app used" />
-                                        </SelectTrigger>
+                                        <SelectTrigger className={getFieldClass('paymentApp')}><SelectValue placeholder="Select the app used" /></SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {paymentApps.map(app => (
-                                            <SelectItem key={app} value={app}>{app}</SelectItem>
-                                        ))}
+                                        {paymentApps.map(app => ( <SelectItem key={app} value={app}>{app}</SelectItem>))}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -800,31 +807,31 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     />
 
                     <div className="space-y-4">
-                        <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('transactionId')} /></FormControl><FormMessage /></FormItem>)} />
                         {paymentApp === 'Google Pay' && (
                             <>
-                                <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (<FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (<FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePayTransactionId')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (<FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePaySenderName')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (<FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePayRecipientName')} /></FormControl></FormItem>)} />
                             </>
                         )}
                          {paymentApp === 'PhonePe' && (
                             <>
-                                <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="phonePeSenderName" render={({field}) => (<FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="phonePeRecipientName" render={({field}) => (<FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeTransactionId')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="phonePeSenderName" render={({field}) => (<FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeSenderName')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="phonePeRecipientName" render={({field}) => (<FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeRecipientName')} /></FormControl></FormItem>)} />
                             </>
                         )}
                          {paymentApp === 'Paytm' && (
                              <>
-                                <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="paytmSenderName" render={({field}) => (<FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="paytmRecipientName" render={({field}) => (<FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmUpiReferenceNo')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="paytmSenderName" render={({field}) => (<FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmSenderName')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="paytmRecipientName" render={({field}) => (<FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmRecipientName')} /></FormControl></FormItem>)} />
                             </>
                         )}
-                        {(extractedDetails?.utrNumber || paymentMethod === 'Bank Transfer') && <FormField control={form.control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                         <FormField control={form.control} name="time" render={({ field }) => (<FormItem><FormLabel>Time</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                         <FormField control={form.control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Sender Bank</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && paymentApp !== 'Google Pay')) && <FormField control={form.control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} className={getFieldClass('utrNumber')} /></FormControl></FormItem>)} />}
+                         <FormField control={form.control} name="time" render={({ field }) => (<FormItem><FormLabel>Time</FormLabel><FormControl><Input {...field} className={getFieldClass('time')} /></FormControl></FormItem>)} />
+                         <FormField control={form.control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Sender Bank</FormLabel><FormControl><Input {...field} className={getFieldClass('senderBankName')} /></FormControl></FormItem>)} />
                     </div>
 
                     {transactionIdState.isChecking && <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin" />Checking for duplicates...</p>}
@@ -840,9 +847,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                           <FormLabel>Primary Donation Category</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
+                              <SelectTrigger className={getFieldClass('type')}><SelectValue placeholder="Select a category" /></SelectTrigger>
                               </FormControl>
                               <SelectContent>
                               {donationTypes.map(type => (
@@ -862,9 +867,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                           <FormLabel>Purpose</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="Select a purpose" />
-                              </SelectTrigger>
+                              <SelectTrigger className={getFieldClass('purpose')}><SelectValue placeholder="Select a purpose" /></SelectTrigger>
                               </FormControl>
                               <SelectContent>
                               {donationPurposes.map(purpose => (

@@ -30,6 +30,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import type { PaymentMethod } from "@/services/types";
 import { getRawTextFromImage } from "@/app/actions";
 import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
+import { cn } from "@/lib/utils";
 
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'] as const;
 
@@ -50,6 +51,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [rawText, setRawText] = useState<string | null>(null);
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   const [zoom, setZoom] = useState(1);
   
   const form = useForm();
@@ -102,6 +104,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     }
      setRawText(null);
      setExtractedDetails(null);
+     setAutoFilledFields(new Set());
      setZoom(1);
   };
   
@@ -125,12 +128,14 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     setIsScanning(true);
     const result = await handleExtractDonationDetails(rawText);
     if (result.success && result.details) {
-        setExtractedDetails(result.details);
+        const newAutoFilledFields = new Set<string>();
         Object.entries(result.details).forEach(([key, value]) => {
             if (value && key !== 'rawText') {
+                newAutoFilledFields.add(key);
                 setValue(key as any, value);
             }
         });
+        setAutoFilledFields(newAutoFilledFields);
         toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review all fields.' });
     } else {
         toast({ variant: 'destructive', title: 'Auto-fill Failed' });
@@ -142,7 +147,10 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     e.preventDefault();
     setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
   };
-
+  
+   const getFieldClass = (fieldName: string) => {
+        return autoFilledFields.has(fieldName) ? "bg-green-100 dark:bg-green-900/50" : "";
+    };
 
 
   return (
@@ -153,6 +161,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         setPreviewUrl(null);
         setRawText(null);
         setExtractedDetails(null);
+        setAutoFilledFields(new Set());
         setZoom(1);
       }
       setOpen(isOpen)
@@ -189,7 +198,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <div className="space-y-2">
                         <Label htmlFor="paymentApp">Payment App</Label>
                         <Select onValueChange={(v) => setValue('paymentApp', v)} defaultValue={getValues('paymentApp')}>
-                           <SelectTrigger><SelectValue placeholder="Select UPI app..." /></SelectTrigger>
+                           <SelectTrigger className={getFieldClass('paymentApp')}><SelectValue placeholder="Select UPI app..." /></SelectTrigger>
                            <SelectContent>
                                {paymentApps.map(app => <SelectItem key={app} value={app}>{app}</SelectItem>)}
                            </SelectContent>
@@ -216,7 +225,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setZoom(1); }}><X className="h-4 w-4"/></Button>
+                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setAutoFilledFields(new Set()); setZoom(1); }}><X className="h-4 w-4"/></Button>
                       </div>
                   </div>
                 )}
@@ -246,61 +255,41 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="amount">Amount (₹)</Label>
-                        <Input id="amount" {...register("amount")} type="number" required placeholder="e.g., 5000" />
+                        <Input id="amount" {...register("amount")} type="number" required placeholder="e.g., 5000" className={getFieldClass('amount')} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="status">Status</Label>
-                        <Input id="status" {...register("status")} type="text" placeholder="e.g., Successful" />
+                        <Input id="status" {...register("status")} type="text" placeholder="e.g., Successful" className={getFieldClass('status')} />
                     </div>
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="transactionId">Main Transaction ID</Label>
-                    <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" />
+                    <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" className={getFieldClass('transactionId')} />
                 </div>
                 
                  {paymentApp === 'Google Pay' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label>
-                        <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} />
+                    <div className="space-y-4 p-2 border-l-2 border-blue-500">
+                        <h4 className="font-semibold text-sm text-blue-600">Google Pay Details</h4>
+                        <div className="space-y-2"><Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label><Input id="googlePayTransactionId" {...register("googlePayTransactionId")} className={getFieldClass('googlePayTransactionId')} /></div>
+                        <div className="space-y-2"><Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label><Input id="googlePaySenderName" {...register("googlePaySenderName")} className={getFieldClass('googlePaySenderName')} /></div>
                     </div>
                 )}
-                {extractedDetails?.utrNumber && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} /></div>}
-                {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} /></div>}
-                {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label><Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} /></div>}
+                {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && paymentApp !== 'Google Pay')) && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} className={getFieldClass('utrNumber')} /></div>}
+                {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} className={getFieldClass('phonePeTransactionId')} /></div>}
+                {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label><Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} className={getFieldClass('paytmUpiReferenceNo')} /></div>}
             </div>
 
             {/* Right Column - Participant Details */}
             <div className="space-y-4">
                  <h3 className="font-semibold text-lg border-b pb-2">Participant Details</h3>
-                 {paymentApp === 'Google Pay' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label>
-                        <Input id="googlePaySenderName" {...register("googlePaySenderName")} />
-                    </div>
-                )}
-                 {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} /></div>}
-                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmSenderName">Paytm Sender Name</Label><Input id="paytmSenderName" {...register("paytmSenderName")} /></div>}
-                 
-                 {extractedDetails?.senderUpiId && <div className="space-y-2"><Label htmlFor="senderUpiId">Sender UPI ID</Label><Input id="senderUpiId" {...register("senderUpiId")} /></div>}
-                 {extractedDetails?.senderAccountNumber && <div className="space-y-2"><Label htmlFor="senderAccountNumber">Sender Account Number</Label><Input id="senderAccountNumber" {...register("senderAccountNumber")} /></div>}
-                 
-                 {paymentApp === 'Google Pay' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label>
-                        <Input id="googlePayRecipientName" {...register("googlePayRecipientName")} />
-                    </div>
-                )}
-                 {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label><Input id="phonePeRecipientName" {...register("phonePeRecipientName")} /></div>}
-                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label><Input id="paytmRecipientName" {...register("paytmRecipientName")} /></div>}
-                 
-                 {extractedDetails?.recipientAccountNumber && <div className="space-y-2"><Label htmlFor="recipientAccountNumber">Recipient Account Number</Label><Input id="recipientAccountNumber" {...register("recipientAccountNumber")} /></div>}
-                 {extractedDetails?.recipientUpiId && <div className="space-y-2"><Label htmlFor="recipientUpiId">Recipient UPI ID</Label><Input id="recipientUpiId" {...register("recipientUpiId")} /></div>}
-                 {extractedDetails?.recipientPhone && <div className="space-y-2"><Label htmlFor="recipientPhone">Recipient Phone</Label><Input id="recipientPhone" {...register("recipientPhone")} /></div>}
+                 <div className="space-y-2"><Label htmlFor="senderName">Sender Name</Label><Input id="senderName" {...register("senderName")} className={getFieldClass('senderName')} /></div>
+                 <div className="space-y-2"><Label htmlFor="senderBankName">Sender Bank</Label><Input id="senderBankName" {...register("senderBankName")} className={getFieldClass('senderBankName')} /></div>
+                 <div className="space-y-2"><Label htmlFor="senderUpiId">Sender UPI ID</Label><Input id="senderUpiId" {...register("senderUpiId")} className={getFieldClass('senderUpiId')} /></div>
 
                  <h3 className="font-semibold text-lg border-b pb-2 pt-4">Additional Info</h3>
                  <div className="space-y-2">
                     <Label htmlFor="notes">Notes</Label>
-                    <Textarea id="notes" {...register("notes")} placeholder="e.g., Bank transfer reference, payment details..." />
+                    <Textarea id="notes" {...register("notes")} placeholder="e.g., Bank transfer reference, payment details..." className={getFieldClass('notes')} />
                 </div>
             </div>
             
