@@ -9,6 +9,7 @@ const nextConfig = {
     if (isServer) {
       config.externals = [...config.externals, "handlebars"];
     }
+    config.experiments = { ...config.experiments, asyncWebAssembly: true };
     return config;
   },
   images: {
