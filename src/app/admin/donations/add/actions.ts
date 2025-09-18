@@ -103,7 +103,7 @@ export async function handleAddDonation(
             leadId: formData.get("leadId") === 'none' ? undefined : formData.get("leadId") as string | undefined,
             campaignId: campaignId === 'none' ? undefined : campaignId,
             campaignName: campaignName,
-        }, adminUserId, adminUser.name, adminUser.email);
+        }, adminUser.id!, adminUser.name, adminUser.email);
 
         if(screenshotFile && screenshotFile.size > 0) {
             const uploadPath = `donations/${donor!.userKey}/${tempDonation.id}/proofs/`;

@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch } from "lucide-react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -47,6 +47,16 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { handleExtractLeadBeneficiaryDetailsFromText } from "../../leads/add/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
@@ -67,6 +77,7 @@ const formSchema = z.object({
   newDonorPhone: z.string().optional(),
   newDonorEmail: z.string().email().optional().or(z.literal('')),
   newDonorAadhaar: z.string().optional(),
+  aadhaarCard: z.any().optional(),
   gender: z.enum(['Male', 'Female', 'Other']).optional(),
 
   paymentMethod: z.enum(paymentMethods, { required_error: "Please select a payment method." }),
@@ -172,6 +183,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
+  const [beneficiaryRawText, setBeneficiaryRawText] = useState<string>('');
+  const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
+  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
+  const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
 
 
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
@@ -440,15 +455,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     const textResult = await getRawTextFromImage(formData);
 
     if (textResult.success && textResult.rawText) {
+      setBeneficiaryRawText(textResult.rawText);
       const detailsResult = await handleExtractLeadBeneficiaryDetailsFromText(textResult.rawText);
       if (detailsResult.success && detailsResult.details) {
-        const details = detailsResult.details;
-        if (details.beneficiaryFirstName) setValue('newDonorFirstName', details.beneficiaryFirstName, { shouldDirty: true });
-        if (details.beneficiaryLastName) setValue('newDonorLastName', details.beneficiaryLastName, { shouldDirty: true });
-        if (details.beneficiaryPhone) setValue('newDonorPhone', details.beneficiaryPhone.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true });
-        if (details.aadhaarNumber) setValue('newDonorAadhaar', details.aadhaarNumber.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
-        if (details.gender) setValue('gender', details.gender, { shouldDirty: true });
-        toast({ variant: 'success', title: 'Auto-fill Complete!', description: 'Donor details have been populated from the Aadhaar card.' });
+        setExtractedBeneficiaryDetails(detailsResult.details);
       } else {
         toast({ variant: 'destructive', title: 'Analysis Failed', description: detailsResult.error });
       }
@@ -457,6 +467,35 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     }
     setIsScanning(false);
   }
+  
+    const applyExtractedBeneficiaryDetails = () => {
+        if (!extractedBeneficiaryDetails) return;
+        const details = extractedBeneficiaryDetails;
+        Object.entries(details).forEach(([key, value]) => {
+            if (value) {
+                switch(key) {
+                    case 'beneficiaryFirstName': setValue('newDonorFirstName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('newDonorLastName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryPhone': setValue('newDonorPhone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'aadhaarNumber': setValue('newDonorAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'gender': setValue('gender', value as any, { shouldDirty: true }); break;
+                }
+            }
+        });
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Donor details have been populated from the Aadhaar card.' });
+        setExtractedBeneficiaryDetails(null);
+    }
+    
+    const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+        { key: 'beneficiaryFirstName', label: 'First Name' },
+        { key: 'beneficiaryLastName', label: 'Last Name' },
+        { key: 'fatherName', label: "Father's Name" },
+        { key: 'dateOfBirth', label: 'Date of Birth' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'beneficiaryPhone', label: 'Phone' },
+        { key: 'aadhaarNumber', label: 'Aadhaar Number' },
+    ];
+
 
   return (
     <>
@@ -554,7 +593,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                             <AccordionItem value="scan-beneficiary-docs">
                                 <AccordionTrigger>
                                      <div className="flex items-center gap-2 text-primary">
-                                        <ScanEye className="h-5 w-5" />
+                                        <ScanSearch className="h-5 w-5" />
                                         Scan Aadhaar Card (Optional)
                                     </div>
                                 </AccordionTrigger>
@@ -772,6 +811,40 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                </div>
           </form>
         </Form>
+        <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                       <Bot className="h-6 w-6 text-primary" />
+                        Confirm Auto-fill Details
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        The AI has extracted the following details from the document. Please review them before applying to the form.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+                    {beneficiaryDialogFields.map(({ key, label }) => {
+                        const value = extractedBeneficiaryDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
+                        return (
+                            <div key={key} className="flex justify-between border-b pb-1">
+                                <span className="text-muted-foreground capitalize">{label}</span>
+                                {value ? (
+                                     <span className="font-semibold text-right">{value}</span>
+                                ) : (
+                                    <span className="text-destructive font-normal text-right">Not Found</span>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+                <AlertDialogFooter>
+                    <div className='flex gap-2'>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={applyExtractedBeneficiaryDetails}>Apply & Fill Form</AlertDialogAction>
+                    </div>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </>
   );
 }
