@@ -81,6 +81,7 @@ const formSchema = z.object({
   recipientIfscCode: z.string().optional(),
   recipientUpiId: z.string().optional(),
   status: z.string().optional(),
+  time: z.string().optional(),
 }).refine(data => {
     if (['Online (UPI/Card)', 'Bank Transfer'].includes(data.paymentMethod)) {
         return !!data.proof;
@@ -580,19 +581,13 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 <FormField control={form.control} name="transactionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Transaction Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
             </div>
 
-            {extractedDetails ? (
-              <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
-                  <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Transaction ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />
-                      {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                      {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                      {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                  </div>
-              </div>
-             ) : (
-                <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input placeholder={`Enter ${transactionIdLabel}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
-             )}
+            <div className="space-y-4">
+              <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+              {paymentApp === 'Google Pay' && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+              {paymentApp === 'PhonePe' && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+              {paymentApp === 'Paytm' && <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm UPI Ref. No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+              {(extractedDetails?.utrNumber || paymentMethod === 'Bank Transfer') && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+            </div>
 
             <div className="flex gap-4">
               <Button type="submit" disabled={isSubmitting}>

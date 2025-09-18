@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting donation details from raw text.
@@ -36,9 +37,9 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             **Primary Goal: Find UPI IDs. A UPI ID is any string containing an '@' symbol (e.g., username@okaxis).**
 
             **PhonePe Rules:**
-            - The overall app is likely PhonePe if you see "पे" at the top or "PhonePe" text. This should be set as the 'senderPaymentApp'.
+            - The overall app is likely PhonePe if you see "पे" at the top or "PhonePe" text. This should be set as the 'senderPaymentApp' and 'paymentApp'.
             - The sender's name is usually NOT shown on PhonePe receipts. Do not extract it from the "Debited from" section. Do not guess it.
-            - The recipient's name is under the "Paid to" section. Use this for 'phonePeRecipientName'.
+            - The recipient's name is under the "Paid to" section. Use this for 'phonePeRecipientName' and 'recipientName'.
             - The recipient's UPI ID is often on the line directly below their name, or next to it.
             - "Transaction ID" should be mapped to 'phonePeTransactionId'. The primary 'transactionId' should also be set to this value.
             - "UTR" or "UTR No" should be mapped to 'utrNumber'. A UTR is a long alphanumeric string.
@@ -46,21 +47,22 @@ const extractDetailsFromTextFlow = ai.defineFlow(
 
             **Google Pay (GPay) Rules:**
             - Look for "From:" and "To:" labels to identify sender and recipient blocks.
-            - The sender's name might be split across multiple lines. Find the line starting with "From:". Combine the text on that line (after "From:") and the text on the immediately following line to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(ICICI Bank)"). Use this for 'googlePaySenderName'.
+            - The sender's name might be split across multiple lines. Find the line starting with "From:". Combine the text on that line (after "From:") and the text on the immediately following line to get the full name. Clean it up by removing any bank name in parentheses (e.g., "(ICICI Bank)"). Use this for 'googlePaySenderName' and 'senderName'.
+            - The sender's bank name is often inside the parentheses next to their name in the "From:" section. Extract it for 'senderBankName'.
             - The sender's UPI ID is on the line immediately following the full sender name block and contains an '@' symbol. Use this for 'senderUpiId'.
-            - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName'.
+            - The recipient's name is on the first line of the "To:" block. Clean it up by removing any bank name in parentheses. Use this for 'googlePayRecipientName' and 'recipientName'.
             - The recipient's phone number is sometimes shown near their name. Capture it for 'recipientPhone'.
             - **CRITICAL: The "UPI transaction ID" is the most important ID. You MUST map its value to the main 'transactionId' field. This is the primary transaction identifier.**
             - If you see "Google transaction ID", map its value ONLY to the 'googlePayTransactionId' field. **DO NOT map the "Google transaction ID" to the 'utrNumber' or 'transactionId' field.**
             - **DO NOT capture a 'utrNumber' for Google Pay unless you see the explicit text "UTR" or "UTR No".**
-            - Set both 'senderPaymentApp' and 'recipientPaymentApp' to "Google Pay" unless there's evidence of another app being involved.
+            - Set 'paymentApp', 'senderPaymentApp', and 'recipientPaymentApp' to "Google Pay" unless there's evidence of another app being involved.
             
             **Paytm Rules:**
             - Look for "From" and "To" sections.
-            - The sender's name is usually next to "From". Use this for 'paytmSenderName'.
-            - The recipient's name is usually next to "To". Use this for 'paytmRecipientName'.
+            - The sender's name is usually next to "From". Use this for 'paytmSenderName' and 'senderName'.
+            - The recipient's name is usually next to "To". Use this for 'paytmRecipientName' and 'recipientName'.
             - The "UPI Reference No." is the most important transaction identifier. Prioritize this for the 'transactionId' and 'paytmUpiReferenceNo' fields.
-            - Set both 'senderPaymentApp' and 'recipientPaymentApp' to "Paytm".
+            - Set 'paymentApp', 'senderPaymentApp', and 'recipientPaymentApp' to "Paytm".
 
             **General Fields to Extract:**
             - paymentApp: The primary app used for the transaction. Prefer 'senderPaymentApp' if available.
@@ -80,6 +82,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - senderName: The generic sender name. If possible, prefer the app-specific name.
             - senderUpiId: The sender's UPI ID (contains '@').
             - senderAccountNumber: The sender's bank account number, even if partial.
+            - senderBankName: The name of the sender's bank.
             - recipientName: The generic recipient name. If possible, prefer the app-specific name.
             - recipientPhone: The recipient's phone number if it is shown near their name.
             - recipientUpiId: The recipient's UPI ID (contains '@').

@@ -774,50 +774,37 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
               
               <div className="p-4 border rounded-lg space-y-4">
                   <h3 className="font-medium">Transaction Details</h3>
-                  <FormField
-                    control={form.control}
-                    name="paymentApp"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Payment App</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select the app used" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {paymentApps.map(app => (
-                                <SelectItem key={app} value={app}>{app}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                   <FormField
+                      control={form.control}
+                      name="paymentApp"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Payment App</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select the app used" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                              {paymentApps.map(app => (
+                                  <SelectItem key={app} value={app}>{app}</SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
                     />
-                  {extractedDetails || paymentApp ? (
-                      <div className="space-y-4">
-                        <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>{paymentApp === 'Paytm' ? 'Paytm UPI Reference No.' : paymentApp === 'Google Pay' ? 'UPI Transaction ID' : 'Primary Transaction ID'}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+
+                    <div className="space-y-4">
+                        <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         {paymentApp === 'Google Pay' && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
                         {paymentApp === 'PhonePe' && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                        {(extractedDetails?.utrNumber || paymentApp === 'Bank Transfer') && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                      </div>
-                  ) : (
-                      <FormField
-                          control={form.control}
-                          name="transactionId"
-                          render={({ field }) => (
-                              <FormItem>
-                              <FormLabel>Primary Transaction ID</FormLabel>
-                              <FormControl>
-                                  <Input placeholder="Enter the main transaction or reference ID" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                              </FormItem>
-                          )}
-                      />
-                  )}
+                        {paymentApp === 'Paytm' && <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+                        {(extractedDetails?.utrNumber || paymentMethod === 'Bank Transfer') && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+                    </div>
+
                   {transactionIdState.isChecking && <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin"/>Checking for duplicates...</p>}
                   {transactionIdState.isAvailable === false && <p className="text-xs text-destructive flex items-center mt-2"><AlertTriangle className="mr-2 h-3 w-3"/> A donation with this ID already exists. <Link href={`/admin/donations/${transactionIdState.existingDonationId}/edit`} className="ml-1 underline">View it.</Link></p>}
               </div>
