@@ -57,7 +57,13 @@ export async function handleAddDonation(
             return { success: false, error: "New donor requires First Name, Last Name, Phone, and Gender." };
         }
         
-        donor = await createUser(newUserPayload);
+        try {
+            donor = await createUser(newUserPayload);
+        } catch (e) {
+            const error = e instanceof Error ? e.message : "An unknown error occurred creating the donor.";
+            console.error("Error creating new donor from donation form:", error);
+            return { success: false, error: `Failed to create donor: ${error}` };
+        }
 
     } else {
         const donorId = formData.get("donorId") as string;
