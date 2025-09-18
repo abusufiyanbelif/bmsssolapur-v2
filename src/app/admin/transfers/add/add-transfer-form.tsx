@@ -149,6 +149,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
   const [transferMethod, setTransferMethod] = useState<'record' | 'scan'>('record');
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   
   const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
 
@@ -185,6 +186,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     setRawText(null);
     setBeneficiaryDetails(null);
     setRecipientDetails(null);
+    setAutoFilledFields(new Set());
     setZoom(1);
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -258,13 +260,16 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     const result = await handleExtractDonationDetails(rawText);
     if (result.success && result.details) {
         setExtractedDetails(result.details);
+        const newAutoFilledFields = new Set<string>();
         Object.entries(result.details).forEach(([key, value]) => {
             if (value && key !== 'rawText') {
+                newAutoFilledFields.add(key);
                 if (key === 'date') setValue('transactionDate', new Date(value as string));
                 else if (key === 'amount') setValue('amount', value as number);
                 else setValue(key as any, value);
             }
         });
+        setAutoFilledFields(newAutoFilledFields);
         toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Please review all fields.' });
     } else {
         toast({ variant: 'destructive', title: 'Auto-fill Failed' });
@@ -311,6 +316,10 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     e.preventDefault();
     setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
   };
+  
+   const getFieldClass = (fieldName: string) => {
+        return autoFilledFields.has(fieldName) ? "bg-green-100 dark:bg-green-900/50" : "";
+    };
 
 
 

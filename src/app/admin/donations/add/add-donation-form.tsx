@@ -192,6 +192,16 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     recipientName: '',
     recipientUpiId: '',
     time: '',
+    utrNumber: '',
+    googlePayTransactionId: '',
+    phonePeTransactionId: '',
+    paytmUpiReferenceNo: '',
+    googlePaySenderName: '',
+    googlePayRecipientName: '',
+    phonePeSenderName: '',
+    phonePeRecipientName: '',
+    paytmSenderName: '',
+    paytmRecipientName: '',
 };
 
 function AddDonationFormContent({ users, leads, campaigns, existingDonation }: AddDonationFormProps) {
@@ -249,6 +259,12 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         googlePayTransactionId: existingDonation?.googlePayTransactionId,
         phonePeTransactionId: existingDonation?.phonePeTransactionId,
         paytmUpiReferenceNo: existingDonation?.paytmUpiReferenceNo,
+        googlePaySenderName: existingDonation?.googlePaySenderName,
+        googlePayRecipientName: existingDonation?.googlePayRecipientName,
+        phonePeSenderName: existingDonation?.phonePeSenderName,
+        phonePeRecipientName: existingDonation?.phonePeRecipientName,
+        paytmSenderName: existingDonation?.paytmSenderName,
+        paytmRecipientName: existingDonation?.paytmRecipientName,
         leadId: existingDonation?.leadId || 'none',
         campaignId: existingDonation?.campaignId || 'none',
         time: existingDonation?.time,
@@ -409,6 +425,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setBeneficiaryRawText('');
     setExtractedBeneficiaryDetails(null);
     setSelectedDonor(null);
+    setAutoFilledFields(new Set());
   }
 
  const handleScanText = async () => {
@@ -874,7 +891,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                 <FormField control={form.control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('recipientUpiId')} /></FormControl></FormItem>)} />
                             </div>
                         )}
-                        {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && !['Google Pay', 'PhonePe', 'Paytm'].includes(paymentApp || ''))) && <FormField control={form.control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} className={getFieldClass('utrNumber')} /></FormControl></FormItem>)} />}
+                        {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && paymentApp !== 'Google Pay')) && <FormField control={form.control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} className={getFieldClass('utrNumber')} /></FormControl></FormItem>)} />}
                          <FormField control={form.control} name="time" render={({ field }) => (<FormItem><FormLabel>Time</FormLabel><FormControl><Input {...field} className={getFieldClass('time')} /></FormControl></FormItem>)} />
                          <FormField control={form.control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Sender Bank</FormLabel><FormControl><Input {...field} className={getFieldClass('senderBankName')} /></FormControl></FormItem>)} />
                     </div>
