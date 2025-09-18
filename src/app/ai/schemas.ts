@@ -93,6 +93,9 @@ export const ExtractLeadDetailsFromTextInputSchema = z.object({
   rawText: z.string().describe("A block of raw text containing lead details to be parsed."),
   purpose: z.string().optional().describe("The user-selected purpose to give context to the AI."),
   category: z.string().optional().describe("The user-selected category to give context to the AI."),
+  degree: z.string().optional().describe("The user-selected degree/class to give context to the AI."),
+  year: z.string().optional().describe("The user-selected year to give context to the AI."),
+  semester: z.string().optional().describe("The user-selected semester to give context to the AI."),
 });
 export type ExtractLeadDetailsFromTextInput = z.infer<typeof ExtractLeadDetailsFromTextInputSchema>;
 
@@ -206,6 +209,7 @@ export const ExtractDonationDetailsOutputSchema = z.object({
 
   senderUpiId: z.string().optional().describe("The sender's UPI ID if visible (e.g., 'username@okaxis'). This is often found directly under or on the next line after the sender's name and contains an '@' symbol."),
   senderAccountNumber: z.string().optional().describe("The sender's bank account number, even if partial. Look for labels like 'A/c No.', 'From account ...1234', or a phone number explicitly linked to the account like '...linked to 1234567890'. Do NOT extract a standalone phone number here."),
+  senderBankName: z.string().optional().describe("The name of the sender's bank."),
   
   recipientName: z.string().optional().describe("The full name of the person who received the money, often found under a 'TO' heading."),
   phonePeRecipientName: z.string().optional().describe("The recipient's name specifically from a PhonePe receipt."),
