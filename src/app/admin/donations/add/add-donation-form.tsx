@@ -109,7 +109,9 @@ const formSchema = z.object({
 
   // Extracted details
   paymentApp: z.string().optional(),
+  time: z.string().optional(),
   senderName: z.string().optional(),
+  senderBankName: z.string().optional(),
   phonePeSenderName: z.string().optional(),
   googlePaySenderName: z.string().optional(),
   paytmSenderName: z.string().optional(),
@@ -496,6 +498,15 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         { key: 'beneficiaryPhone', label: 'Phone' },
         { key: 'aadhaarNumber', label: 'Aadhaar Number' },
     ];
+    
+    const clearForm = () => {
+        reset();
+        clearFile();
+        if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";
+        setAadhaarPreview(null);
+        setBeneficiaryRawText('');
+        setExtractedBeneficiaryDetails(null);
+    }
 
 
   return (
@@ -763,12 +774,34 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
               
               <div className="p-4 border rounded-lg space-y-4">
                   <h3 className="font-medium">Transaction Details</h3>
-                  {extractedDetails ? (
+                  <FormField
+                    control={form.control}
+                    name="paymentApp"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Payment App</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select the app used" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {paymentApps.map(app => (
+                                <SelectItem key={app} value={app}>{app}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                  {extractedDetails || paymentApp ? (
                       <div className="space-y-4">
                         <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>{paymentApp === 'Paytm' ? 'Paytm UPI Reference No.' : paymentApp === 'Google Pay' ? 'UPI Transaction ID' : 'Primary Transaction ID'}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         {paymentApp === 'Google Pay' && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
                         {paymentApp === 'PhonePe' && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                        {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
+                        {(extractedDetails?.utrNumber || paymentApp === 'Bank Transfer') && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
                       </div>
                   ) : (
                       <FormField
@@ -891,11 +924,15 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 />
                </div>
 
-               <div className="flex gap-4">
+               <div className="flex items-center gap-4">
                   <Button type="submit" disabled={isSubmitting || isFormInvalid}>
                       {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       {isEditing ? 'Save Changes' : 'Add Donation'}
                   </Button>
+                   <Button type="button" variant="outline" onClick={clearForm} disabled={isSubmitting}>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Clear Form
+                    </Button>
                </div>
           </form>
         </Form>
