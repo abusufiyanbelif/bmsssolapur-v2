@@ -145,6 +145,7 @@ export interface Donation {
   recipientBankName?: string;
   recipientIfscCode?: string;
   paymentMethod?: PaymentMethod;
+  time?: string;
   createdAt: Date;
   verifiedAt?: Date;
   allocations?: Allocation[];
@@ -208,6 +209,7 @@ export interface FundTransfer {
     paymentApp?: string;
     paymentMethod?: string;
     status?: string;
+    time?: string;
 }
 
 export interface Lead {

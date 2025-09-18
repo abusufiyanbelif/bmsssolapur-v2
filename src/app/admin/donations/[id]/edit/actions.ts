@@ -108,11 +108,13 @@ export async function handleUpdateDonation(
       paytmUpiReferenceNo:
         formData.get("paytmUpiReferenceNo") as string | undefined,
       donationDate: donationDate,
+      time: formData.get("time") as string | undefined,
       paymentApp: formData.get("paymentApp") as string | undefined,
       donorUpiId: formData.get("donorUpiId") as string | undefined,
       donorPhone: formData.get("donorPhone") as string | undefined,
       donorBankAccount: formData.get("donorBankAccount") as string | undefined,
       senderName: formData.get("senderName") as string | undefined,
+      senderBankName: formData.get("senderBankName") as string | undefined,
       phonePeSenderName: formData.get("phonePeSenderName") as string | undefined,
       googlePaySenderName: formData.get("googlePaySenderName") as string | undefined,
       paytmSenderName: formData.get("paytmSenderName") as string | undefined,
