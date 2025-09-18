@@ -3,10 +3,10 @@
 "use server";
 
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
-import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone, createUser } from "@/services/user-service";
+import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone, createUser, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User, ExtractDonationDetailsOutput } from "@/services/types";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, arrayUnion } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 import { getCampaign } from "@/services/campaign-service";
@@ -76,6 +76,22 @@ export async function handleAddDonation(
     if (!donor || !donor.userKey) {
         return { success: false, error: "Selected or created donor user not found or is missing a User Key." };
     }
+    
+    // --- Post-creation Profile Updates ---
+    const updateDonorPhone = formData.get('updateDonorPhone') === 'on' && formData.get('donorPhone');
+    const updateDonorUpiId = formData.get('updateDonorUpiId') === 'on' && formData.get('senderUpiId');
+
+    if(updateDonorPhone || updateDonorUpiId) {
+        const profileUpdates: Partial<User> = {};
+        if (updateDonorPhone) {
+            profileUpdates.upiPhoneNumbers = arrayUnion(formData.get('donorPhone')) as any;
+        }
+        if (updateDonorUpiId) {
+            profileUpdates.upiIds = arrayUnion(formData.get('senderUpiId')) as any;
+        }
+        await updateUser(donor.id!, profileUpdates);
+    }
+    // --- End Profile Updates ---
 
     const transactionId = formData.get("transactionId") as string | undefined;
     if (transactionId) {

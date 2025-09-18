@@ -127,6 +127,9 @@ const formSchema = z.object({
   senderAccountNumber: z.string().optional(),
   recipientAccountNumber: z.string().optional(),
   
+  // Profile update flags
+  updateDonorPhone: z.boolean().default(false),
+  updateDonorUpiId: z.boolean().default(false),
 }).refine(data => {
     if (data.includeTip) {
         return !!data.tipAmount && data.tipAmount > 0;
@@ -202,6 +205,8 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     phonePeRecipientName: '',
     paytmSenderName: '',
     paytmRecipientName: '',
+    updateDonorPhone: false,
+    updateDonorUpiId: false,
 };
 
 function AddDonationFormContent({ users, leads, campaigns, existingDonation }: AddDonationFormProps) {
@@ -228,6 +233,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
   const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
+
+  // Mismatch state
+  const [showPhoneUpdate, setShowPhoneUpdate] = useState(false);
+  const [showUpiUpdate, setShowUpiUpdate] = useState(false);
 
 
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
@@ -356,6 +365,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         } else if (key === 'paymentScreenshot' && value instanceof File) {
             formData.append('paymentScreenshot', value);
         }
+        else if (typeof value === 'boolean') {
+          if (value) formData.append(key, 'on');
+        }
         else {
           formData.append(key, String(value));
         }
@@ -426,6 +438,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setExtractedBeneficiaryDetails(null);
     setSelectedDonor(null);
     setAutoFilledFields(new Set());
+    setShowPhoneUpdate(false);
+    setShowUpiUpdate(false);
   }
 
  const handleScanText = async () => {
@@ -492,12 +506,25 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         phone: details.donorPhone,
         name: details.senderName,
     });
+    
+    setShowPhoneUpdate(false);
+    setShowUpiUpdate(false);
 
     if (donor) {
         setValue('donorType', 'existing');
         setValue('donorId', donor.id, { shouldDirty: true });
         setSelectedDonor(donor);
         toast({ variant: "success", title: "Donor Found!", description: `Automatically selected existing donor: ${donor.name}` });
+
+        // Check for new phone number
+        if(details.donorPhone && !donor.upiPhoneNumbers?.includes(details.donorPhone) && donor.phone !== details.donorPhone) {
+            setShowPhoneUpdate(true);
+        }
+        // Check for new UPI ID
+        if(details.senderUpiId && !donor.upiIds?.includes(details.senderUpiId)) {
+            setShowUpiUpdate(true);
+        }
+
     } else {
         setValue('donorType', 'new');
         setValue('newDonorFirstName', details.senderName?.split(' ')[0] || '');
@@ -894,6 +921,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                         {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && paymentApp !== 'Google Pay')) && <FormField control={form.control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} className={getFieldClass('utrNumber')} /></FormControl></FormItem>)} />}
                          <FormField control={form.control} name="time" render={({ field }) => (<FormItem><FormLabel>Time</FormLabel><FormControl><Input {...field} className={getFieldClass('time')} /></FormControl></FormItem>)} />
                          <FormField control={form.control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Sender Bank</FormLabel><FormControl><Input {...field} className={getFieldClass('senderBankName')} /></FormControl></FormItem>)} />
+                          {showUpiUpdate && <FormField control={form.control} name="updateDonorUpiId" render={({field}) => (<FormItem className="flex items-center gap-2 rounded-md border p-3 bg-blue-50"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Add new UPI ID <span className="font-semibold">{getValues('senderUpiId')}</span> to <span className="font-semibold">{selectedDonor?.name}</span>'s profile?</FormLabel></FormItem>)} />}
+                          {showPhoneUpdate && <FormField control={form.control} name="updateDonorPhone" render={({field}) => (<FormItem className="flex items-center gap-2 rounded-md border p-3 bg-blue-50"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="text-sm font-normal">Add new Phone <span className="font-semibold">{getValues('donorPhone')}</span> to <span className="font-semibold">{selectedDonor?.name}</span>'s profile?</FormLabel></FormItem>)} />}
                     </div>
 
                     {transactionIdState.isChecking && <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin" />Checking for duplicates...</p>}
