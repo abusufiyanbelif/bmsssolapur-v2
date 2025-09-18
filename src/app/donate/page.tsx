@@ -1,3 +1,4 @@
+
 // src/app/donate/page.tsx
 "use client";
 
@@ -81,6 +82,7 @@ const recordDonationSchema = z.object({
   phonePeSenderName: z.string().optional(),
   paytmSenderName: z.string().optional(),
   senderUpiId: z.string().optional(),
+  senderBankName: z.string().optional(),
   senderAccountNumber: z.string().optional(),
   recipientName: z.string().optional(),
   googlePayRecipientName: z.string().optional(),
@@ -110,6 +112,7 @@ const initialRecordFormValues: Partial<RecordDonationFormValues> = {
     phonePeSenderName: '',
     paytmSenderName: '',
     senderUpiId: '',
+    senderBankName: '',
     senderAccountNumber: '',
     recipientName: '',
     googlePayRecipientName: '',
