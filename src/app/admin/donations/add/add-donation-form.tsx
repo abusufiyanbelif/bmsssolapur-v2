@@ -207,6 +207,16 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     paytmRecipientName: '',
     updateDonorPhone: false,
     updateDonorUpiId: false,
+    newDonorUserId: '',
+    newDonorFirstName: '',
+    newDonorMiddleName: '',
+    newDonorLastName: '',
+    newDonorFatherName: '',
+    newDonorPhone: '',
+    newDonorEmail: '',
+    newDonorAadhaar: '',
+    aadhaarCard: null,
+    gender: undefined,
 };
 
 function AddDonationFormContent({ users, leads, campaigns, existingDonation }: AddDonationFormProps) {
@@ -700,7 +710,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 )}
             />
               
-            {donorType === 'existing' ? (
+            {donorType === 'existing' && (
                 <FormField
                   control={form.control}
                   name="donorId"
@@ -751,7 +761,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       </FormItem>
                   )}
                   />
-            ) : (
+            )}
+            
+            {donorType === 'new' && (
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <Accordion type="single" collapsible>
                             <AccordionItem value="scan-beneficiary-docs">
@@ -895,7 +907,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                 <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePayTransactionId')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePaySenderName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('senderUpiId')} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="recipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePayRecipientName')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePayRecipientName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('recipientUpiId')} /></FormControl></FormItem>)} />
                             </div>
                         )}
@@ -904,7 +916,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                 <h4 className="font-semibold text-sm text-purple-600">PhonePe Details</h4>
                                 <FormField control={form.control} name="phonePeSenderName" render={({field}) => (<FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeSenderName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeTransactionId')} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeRecipientName')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="phonePeRecipientName" render={({field}) => (<FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeRecipientName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('senderUpiId')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('recipientUpiId')} /></FormControl></FormItem>)} />
                             </div>
@@ -913,8 +925,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                              <div className="space-y-4 p-2 border-l-2 border-sky-500">
                                 <h4 className="font-semibold text-sm text-sky-600">Paytm Details</h4>
                                 <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmUpiReferenceNo')} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmSenderName')} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmRecipientName')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="paytmSenderName" render={({field}) => (<FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmSenderName')} /></FormControl></FormItem>)} />
+                                <FormField control={form.control} name="paytmRecipientName" render={({field}) => (<FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmRecipientName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('senderUpiId')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('recipientUpiId')} /></FormControl></FormItem>)} />
                             </div>
