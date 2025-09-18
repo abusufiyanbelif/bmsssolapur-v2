@@ -250,6 +250,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   const donorType = watch("donorType");
   const newDonorFirstName = watch("newDonorFirstName");
   const newDonorLastName = watch("newDonorLastName");
+  const paymentApp = watch("paymentApp");
   
   useEffect(() => {
     if (donorType === 'new' && newDonorFirstName && newDonorLastName && !form.formState.dirtyFields.newDonorUserId) {
@@ -759,6 +760,34 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                       )}
                   />
                 </div>
+              
+              <div className="p-4 border rounded-lg space-y-4">
+                    <h3 className="font-medium">Transaction Details</h3>
+                     <FormField
+                        control={form.control}
+                        name="transactionId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Primary Transaction ID</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter the main transaction or reference ID" {...field} />
+                            </FormControl>
+                             {transactionIdState.isChecking && <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin"/>Checking for duplicates...</p>}
+                             {transactionIdState.isAvailable === false && <p className="text-xs text-destructive flex items-center mt-2"><AlertTriangle className="mr-2 h-3 w-3"/> A donation with this ID already exists. <Link href={`/admin/donations/${transactionIdState.existingDonationId}/edit`} className="ml-1 underline">View it.</Link></p>}
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    {paymentApp === 'Google Pay' && (
+                        <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                    )}
+                     {paymentApp === 'PhonePe' && (
+                        <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                    )}
+                    {paymentApp === 'Paytm' && (
+                        <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                    )}
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
