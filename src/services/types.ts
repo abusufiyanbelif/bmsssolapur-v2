@@ -124,6 +124,7 @@ export interface Donation {
   paymentApp?: string;
   senderPaymentApp?: string;
   recipientPaymentApp?: string;
+  senderUpiId?: string;
   donorUpiId?: string;
   donorPhone?: string;
   donorBankAccount?: string;

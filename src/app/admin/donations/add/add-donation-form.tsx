@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -186,6 +185,12 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     paymentScreenshot: null,
     leadId: 'none',
     campaignId: 'none',
+    senderName: '',
+    senderBankName: '',
+    senderUpiId: '',
+    recipientName: '',
+    recipientUpiId: '',
+    time: '',
 };
 
 function AddDonationFormContent({ users, leads, campaigns, existingDonation }: AddDonationFormProps) {
@@ -236,7 +241,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         paymentApp: existingDonation?.paymentApp,
         senderName: existingDonation?.senderName,
         senderBankName: existingDonation?.senderBankName,
+        senderUpiId: existingDonation?.senderUpiId,
         recipientName: existingDonation?.recipientName,
+        recipientUpiId: existingDonation?.recipientUpiId,
         utrNumber: existingDonation?.utrNumber,
         googlePayTransactionId: existingDonation?.googlePayTransactionId,
         phonePeTransactionId: existingDonation?.phonePeTransactionId,
@@ -839,6 +846,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                         {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && paymentApp !== 'Google Pay')) && <FormField control={form.control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} className={getFieldClass('utrNumber')} /></FormControl></FormItem>)} />}
                          <FormField control={form.control} name="time" render={({ field }) => (<FormItem><FormLabel>Time</FormLabel><FormControl><Input {...field} className={getFieldClass('time')} /></FormControl></FormItem>)} />
                          <FormField control={form.control} name="senderBankName" render={({ field }) => (<FormItem><FormLabel>Sender Bank</FormLabel><FormControl><Input {...field} className={getFieldClass('senderBankName')} /></FormControl></FormItem>)} />
+                         <FormField control={form.control} name="senderUpiId" render={({ field }) => (<FormItem><FormLabel>Sender UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('senderUpiId')} /></FormControl></FormItem>)} />
+                         <FormField control={form.control} name="recipientUpiId" render={({ field }) => (<FormItem><FormLabel>Recipient UPI ID</FormLabel><FormControl><Input {...field} className={getFieldClass('recipientUpiId')} /></FormControl></FormItem>)} />
                     </div>
 
                     {transactionIdState.isChecking && <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin" />Checking for duplicates...</p>}

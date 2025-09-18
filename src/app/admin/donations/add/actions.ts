@@ -154,6 +154,13 @@ export async function handleAddDonation(
         paymentMethod: formData.get("paymentMethod") as PaymentMethod,
         isAnonymous: formData.get("isAnonymous") === 'on',
         notes: formData.get("notes") as string | undefined,
+        paymentApp: formData.get("paymentApp") as string | undefined,
+        time: formData.get("time") as string | undefined,
+        senderName: formData.get("senderName") as string | undefined,
+        senderBankName: formData.get("senderBankName") as string | undefined,
+        senderUpiId: formData.get("senderUpiId") as string | undefined,
+        recipientName: formData.get("recipientName") as string | undefined,
+        recipientUpiId: formData.get("recipientUpiId") as string | undefined,
     });
 
     revalidatePath("/admin/donations");
