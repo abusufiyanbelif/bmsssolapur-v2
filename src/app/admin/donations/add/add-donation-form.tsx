@@ -532,7 +532,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                               role="combobox"
                               className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
                               >
-                              {selectedDonor?.name || "Select a donor"}
+                              {selectedDonor?.name || "Search by name, phone, Aadhaar..."}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                           </FormControl>
@@ -545,7 +545,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                                   <CommandGroup>
                                   {donorUsers.map((user) => (
                                       <CommandItem
-                                      value={user.name}
+                                      value={`${user.name} ${user.phone} ${user.aadhaarNumber}`}
                                       key={user.id}
                                       onSelect={async () => {
                                           field.onChange(user.id!);
