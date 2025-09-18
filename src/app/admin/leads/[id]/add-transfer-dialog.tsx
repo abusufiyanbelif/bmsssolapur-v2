@@ -258,25 +258,26 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" />
                 </div>
                 
-                 {extractedDetails?.googlePayTransactionId && <div className="space-y-2"><Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label><Input id="googlePayTransactionId" {...register("googlePayTransactionId")} /></div>}
-                 {extractedDetails?.utrNumber && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} /></div>}
-                 {extractedDetails?.phonePeTransactionId && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} /></div>}
-                 {extractedDetails?.paytmUpiReferenceNo && <div className="space-y-2"><Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label><Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} /></div>}
+                {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label><Input id="googlePayTransactionId" {...register("googlePayTransactionId")} /></div>}
+                {extractedDetails?.utrNumber && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} /></div>}
+                {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} /></div>}
+                {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label><Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} /></div>}
             </div>
 
             {/* Right Column - Participant Details */}
             <div className="space-y-4">
                  <h3 className="font-semibold text-lg border-b pb-2">Participant Details</h3>
-                 {extractedDetails?.senderName && <div className="space-y-2"><Label htmlFor="senderName">Sender Name</Label><Input id="senderName" {...register("senderName")} /></div>}
-                 {extractedDetails?.googlePaySenderName && <div className="space-y-2"><Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label><Input id="googlePaySenderName" {...register("googlePaySenderName")} /></div>}
-                 {extractedDetails?.phonePeSenderName && <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} /></div>}
-                 {extractedDetails?.paytmSenderName && <div className="space-y-2"><Label htmlFor="paytmSenderName">Paytm Sender Name</Label><Input id="paytmSenderName" {...register("paytmSenderName")} /></div>}
+                 {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label><Input id="googlePaySenderName" {...register("googlePaySenderName")} /></div>}
+                 {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} /></div>}
+                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmSenderName">Paytm Sender Name</Label><Input id="paytmSenderName" {...register("paytmSenderName")} /></div>}
+                 
                  {extractedDetails?.senderUpiId && <div className="space-y-2"><Label htmlFor="senderUpiId">Sender UPI ID</Label><Input id="senderUpiId" {...register("senderUpiId")} /></div>}
                  {extractedDetails?.senderAccountNumber && <div className="space-y-2"><Label htmlFor="senderAccountNumber">Sender Account Number</Label><Input id="senderAccountNumber" {...register("senderAccountNumber")} /></div>}
-                 {extractedDetails?.recipientName && <div className="space-y-2"><Label htmlFor="recipientName">Recipient Name</Label><Input id="recipientName" {...register("recipientName")} /></div>}
-                 {extractedDetails?.googlePayRecipientName && <div className="space-y-2"><Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label><Input id="googlePayRecipientName" {...register("googlePayRecipientName")} /></div>}
-                 {extractedDetails?.phonePeRecipientName && <div className="space-y-2"><Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label><Input id="phonePeRecipientName" {...register("phonePeRecipientName")} /></div>}
-                 {extractedDetails?.paytmRecipientName && <div className="space-y-2"><Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label><Input id="paytmRecipientName" {...register("paytmRecipientName")} /></div>}
+                 
+                 {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label><Input id="googlePayRecipientName" {...register("googlePayRecipientName")} /></div>}
+                 {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label><Input id="phonePeRecipientName" {...register("phonePeRecipientName")} /></div>}
+                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label><Input id="paytmRecipientName" {...register("paytmRecipientName")} /></div>}
+                 
                  {extractedDetails?.recipientAccountNumber && <div className="space-y-2"><Label htmlFor="recipientAccountNumber">Recipient Account Number</Label><Input id="recipientAccountNumber" {...register("recipientAccountNumber")} /></div>}
                  {extractedDetails?.recipientUpiId && <div className="space-y-2"><Label htmlFor="recipientUpiId">Recipient UPI ID</Label><Input id="recipientUpiId" {...register("recipientUpiId")} /></div>}
                  {extractedDetails?.recipientPhone && <div className="space-y-2"><Label htmlFor="recipientPhone">Recipient Phone</Label><Input id="recipientPhone" {...register("recipientPhone")} /></div>}
