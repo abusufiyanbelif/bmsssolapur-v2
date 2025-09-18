@@ -31,7 +31,7 @@ import type { PaymentMethod } from "@/services/types";
 import { getRawTextFromImage } from "@/app/actions";
 import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
 
-const paymentApps = ['Google Pay', 'PhonePe', 'Paytm'] as const;
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'] as const;
 
 interface AddTransferDialogProps {
   leadId: string;
@@ -109,7 +109,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     if (!file) return;
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append("file_0", file);
+    formData.append("proof", file);
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
       setRawText(result.rawText);
@@ -258,7 +258,12 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <Input id="transactionId" {...register("transactionId")} type="text" placeholder="Enter primary reference" />
                 </div>
                 
-                {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label><Input id="googlePayTransactionId" {...register("googlePayTransactionId")} /></div>}
+                 {paymentApp === 'Google Pay' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="googlePayTransactionId">Google Pay Transaction ID</Label>
+                        <Input id="googlePayTransactionId" {...register("googlePayTransactionId")} />
+                    </div>
+                )}
                 {extractedDetails?.utrNumber && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} /></div>}
                 {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} /></div>}
                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label><Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} /></div>}
@@ -267,14 +272,24 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
             {/* Right Column - Participant Details */}
             <div className="space-y-4">
                  <h3 className="font-semibold text-lg border-b pb-2">Participant Details</h3>
-                 {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label><Input id="googlePaySenderName" {...register("googlePaySenderName")} /></div>}
+                 {paymentApp === 'Google Pay' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="googlePaySenderName">Google Pay Sender Name</Label>
+                        <Input id="googlePaySenderName" {...register("googlePaySenderName")} />
+                    </div>
+                )}
                  {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} /></div>}
                  {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmSenderName">Paytm Sender Name</Label><Input id="paytmSenderName" {...register("paytmSenderName")} /></div>}
                  
                  {extractedDetails?.senderUpiId && <div className="space-y-2"><Label htmlFor="senderUpiId">Sender UPI ID</Label><Input id="senderUpiId" {...register("senderUpiId")} /></div>}
                  {extractedDetails?.senderAccountNumber && <div className="space-y-2"><Label htmlFor="senderAccountNumber">Sender Account Number</Label><Input id="senderAccountNumber" {...register("senderAccountNumber")} /></div>}
                  
-                 {paymentApp === 'Google Pay' && <div className="space-y-2"><Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label><Input id="googlePayRecipientName" {...register("googlePayRecipientName")} /></div>}
+                 {paymentApp === 'Google Pay' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="googlePayRecipientName">Google Pay Recipient Name</Label>
+                        <Input id="googlePayRecipientName" {...register("googlePayRecipientName")} />
+                    </div>
+                )}
                  {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeRecipientName">PhonePe Recipient Name</Label><Input id="phonePeRecipientName" {...register("phonePeRecipientName")} /></div>}
                  {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmRecipientName">Paytm Recipient Name</Label><Input id="paytmRecipientName" {...register("paytmRecipientName")} /></div>}
                  
