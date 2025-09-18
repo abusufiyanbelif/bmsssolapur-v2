@@ -88,7 +88,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - recipientPhone: The recipient's phone number if it is shown near their name.
             - recipientUpiId: The recipient's UPI ID (contains '@').
             - recipientAccountNumber: The recipient's bank account number, even if partial.
-            - status: The transaction status (e.g., Successful, Completed).
+            - status: The transaction status (e.g., Successful, Completed, Received).
             - notes: Any user-added comments, remarks, or descriptions found in the payment details.
             - phonePeSenderName: The sender's name if it appears on a PhonePe receipt (rare).
             - phonePeRecipientName: The recipient's name from a PhonePe receipt.
