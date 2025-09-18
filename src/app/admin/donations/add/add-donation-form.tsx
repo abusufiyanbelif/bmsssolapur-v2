@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -166,6 +167,27 @@ const initialAvailabilityState: AvailabilityState = {
     isAvailable: null,
 };
 
+const initialFormValues: Partial<AddDonationFormValues> = {
+    donorId: '',
+    donorType: 'existing',
+    paymentMethod: 'Online (UPI/Card)',
+    isAnonymous: false,
+    totalTransactionAmount: 0,
+    amount: 0,
+    donationDate: new Date(),
+    type: 'Sadaqah',
+    purpose: 'To Organization Use',
+    status: 'Pending verification',
+    transactionId: '',
+    notes: '',
+    includeTip: false,
+    tipAmount: 0,
+    includePledge: false,
+    paymentScreenshot: null,
+    leadId: 'none',
+    campaignId: 'none',
+};
+
 function AddDonationFormContent({ users, leads, campaigns, existingDonation }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -222,26 +244,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         leadId: existingDonation?.leadId || 'none',
         campaignId: existingDonation?.campaignId || 'none',
         time: existingDonation?.time,
-    } : {
-        donorId: '',
-        donorType: 'existing',
-        paymentMethod: 'Online (UPI/Card)',
-        isAnonymous: false,
-        totalTransactionAmount: 0,
-        amount: 0,
-        donationDate: new Date(),
-        type: 'Sadaqah',
-        purpose: 'To Organization Use',
-        status: 'Pending verification',
-        transactionId: '',
-        notes: '',
-        includeTip: false,
-        tipAmount: 0,
-        includePledge: false,
-        paymentScreenshot: null,
-        leadId: 'none',
-        campaignId: 'none',
-    },
+    } : initialFormValues,
   });
   
   const { watch, setValue, reset, getValues, control, trigger } = form;
@@ -389,6 +392,16 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         fileInputRef.current.value = "";
     }
   }
+  
+  const clearForm = () => {
+    reset(initialFormValues);
+    clearFile();
+    if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";
+    setAadhaarPreview(null);
+    setBeneficiaryRawText('');
+    setExtractedBeneficiaryDetails(null);
+    setSelectedDonor(null);
+  }
 
  const handleScanText = async () => {
     if (!file) return;
@@ -507,15 +520,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         { key: 'beneficiaryPhone', label: 'Phone' },
         { key: 'aadhaarNumber', label: 'Aadhaar Number' },
     ];
-    
-    const clearForm = () => {
-        reset();
-        clearFile();
-        if(aadhaarInputRef.current) aadhaarInputRef.current.value = "";
-        setAadhaarPreview(null);
-        setBeneficiaryRawText('');
-        setExtractedBeneficiaryDetails(null);
-    }
     
      const getFieldClass = (fieldName: string) => {
         return autoFilledFields.has(fieldName) ? "bg-green-100 dark:bg-green-900/50" : "";
@@ -809,25 +813,28 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     <div className="space-y-4">
                         <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('transactionId')} /></FormControl><FormMessage /></FormItem>)} />
                         {paymentApp === 'Google Pay' && (
-                            <>
+                            <div className="space-y-4 p-2 border-l-2 border-blue-500">
+                                <h4 className="font-semibold text-sm text-blue-600">Google Pay Details</h4>
                                 <FormField control={form.control} name="googlePayTransactionId" render={({ field }) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePayTransactionId')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="googlePaySenderName" render={({ field }) => (<FormItem><FormLabel>Google Pay Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePaySenderName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="googlePayRecipientName" render={({ field }) => (<FormItem><FormLabel>Google Pay Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('googlePayRecipientName')} /></FormControl></FormItem>)} />
-                            </>
+                            </div>
                         )}
                          {paymentApp === 'PhonePe' && (
-                            <>
+                            <div className="space-y-4 p-2 border-l-2 border-purple-500">
+                                <h4 className="font-semibold text-sm text-purple-600">PhonePe Details</h4>
                                 <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeTransactionId')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="phonePeSenderName" render={({field}) => (<FormItem><FormLabel>PhonePe Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeSenderName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="phonePeRecipientName" render={({field}) => (<FormItem><FormLabel>PhonePe Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('phonePeRecipientName')} /></FormControl></FormItem>)} />
-                            </>
+                            </div>
                         )}
                          {paymentApp === 'Paytm' && (
-                             <>
+                             <div className="space-y-4 p-2 border-l-2 border-sky-500">
+                                <h4 className="font-semibold text-sm text-sky-600">Paytm Details</h4>
                                 <FormField control={form.control} name="paytmUpiReferenceNo" render={({field}) => (<FormItem><FormLabel>Paytm UPI Reference No.</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmUpiReferenceNo')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="paytmSenderName" render={({field}) => (<FormItem><FormLabel>Paytm Sender Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmSenderName')} /></FormControl></FormItem>)} />
                                 <FormField control={form.control} name="paytmRecipientName" render={({field}) => (<FormItem><FormLabel>Paytm Recipient Name</FormLabel><FormControl><Input {...field} className={getFieldClass('paytmRecipientName')} /></FormControl></FormItem>)} />
-                            </>
+                            </div>
                         )}
                         {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && paymentApp !== 'Google Pay')) && <FormField control={form.control} name="utrNumber" render={({ field }) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} className={getFieldClass('utrNumber')} /></FormControl></FormItem>)} />}
                          <FormField control={form.control} name="time" render={({ field }) => (<FormItem><FormLabel>Time</FormLabel><FormControl><Input {...field} className={getFieldClass('time')} /></FormControl></FormItem>)} />
@@ -936,7 +943,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                 />
                </div>
 
-               <div className="flex items-center gap-4">
+               <div className="flex gap-4">
                   <Button type="submit" disabled={isSubmitting || isFormInvalid}>
                       {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       {isEditing ? 'Save Changes' : 'Add Donation'}
