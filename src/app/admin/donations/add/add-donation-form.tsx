@@ -499,6 +499,65 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
 
   return (
     <>
+      <Accordion type="single" collapsible className="w-full mb-8">
+            <AccordionItem value="scan-payment-proof">
+                <AccordionTrigger>
+                    <div className="flex items-center gap-2 text-primary">
+                        <ScanEye className="h-5 w-5" />
+                        Scan Payment Proof (Optional)
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                        <p className="text-sm text-muted-foreground">Upload a payment screenshot to automatically fill in the donation details.</p>
+                        <div className="grid w-full max-w-sm items-center gap-1.5">
+                            <Label htmlFor="paymentScreenshotFile">Screenshot File</Label>
+                            <Input id="paymentScreenshotFile" name="paymentScreenshot" type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,application/pdf" />
+                        </div>
+                        {filePreview && (
+                            <div className="relative group p-2 border rounded-lg">
+                                <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                                     {file?.type.startsWith('image/') ? (
+                                        <Image src={filePreview} alt="Proof preview" width={800 * zoom} height={800 * zoom} className="object-contain transition-transform duration-100" style={{ transform: `scale(${zoom})` }} />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
+                                            <FileIcon className="h-16 w-16" />
+                                            <span className="text-sm font-semibold">{file?.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                    <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
+                                </div>
+                            </div>
+                        )}
+                        {file && (
+                           <div className="flex flex-col sm:flex-row gap-2">
+                              <Button type="button" variant="outline" className="w-full" onClick={handleScanText} disabled={isScanning}>
+                                  {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Text className="mr-2 h-4 w-4" />}
+                                  Get Text from Image
+                              </Button>
+                              {rawText && (
+                                  <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
+                                      {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                      Auto-fill Form
+                                  </Button>
+                              )}
+                           </div>
+                        )}
+                        {rawText && (
+                            <div className="space-y-2">
+                                <Label>Extracted Text</Label>
+                                <Textarea value={rawText} readOnly rows={5} className="text-xs font-mono" />
+                            </div>
+                        )}
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+
       <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
