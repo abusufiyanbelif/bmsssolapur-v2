@@ -263,13 +263,12 @@ export interface Lead {
     lastAllocatedAt?: Date; // Date of the latest donation allocation
     isLoan: boolean;
     isHistoricalRecord?: boolean;
-    // New fields for Education
+    source?: 'Seeded' | 'Manual Entry';
     degree?: string;
     year?: string;
     semester?: string;
     createdAt: Date;
     updatedAt?: Date;
-    source?: 'Seeded' | 'Manual Entry';
 }
 
 export type CampaignStatus = 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';

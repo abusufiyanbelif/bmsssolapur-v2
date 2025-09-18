@@ -275,7 +275,13 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     </div>
                 )}
                 {(extractedDetails?.utrNumber || (paymentMethod === 'Bank Transfer' && paymentApp !== 'Google Pay')) && <div className="space-y-2"><Label htmlFor="utrNumber">UTR Number</Label><Input id="utrNumber" {...register("utrNumber")} className={getFieldClass('utrNumber')} /></div>}
-                {paymentApp === 'PhonePe' && <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} className={getFieldClass('phonePeTransactionId')} /></div>}
+                {paymentApp === 'PhonePe' && (
+                    <div className="space-y-4 p-2 border-l-2 border-purple-500">
+                        <h4 className="font-semibold text-sm text-purple-600">PhonePe Details</h4>
+                        <div className="space-y-2"><Label htmlFor="phonePeSenderName">PhonePe Sender Name</Label><Input id="phonePeSenderName" {...register("phonePeSenderName")} className={getFieldClass('phonePeSenderName')} /></div>
+                        <div className="space-y-2"><Label htmlFor="phonePeTransactionId">PhonePe Transaction ID</Label><Input id="phonePeTransactionId" {...register("phonePeTransactionId")} className={getFieldClass('phonePeTransactionId')} /></div>
+                    </div>
+                )}
                 {paymentApp === 'Paytm' && <div className="space-y-2"><Label htmlFor="paytmUpiReferenceNo">Paytm UPI Reference No.</Label><Input id="paytmUpiReferenceNo" {...register("paytmUpiReferenceNo")} className={getFieldClass('paytmUpiReferenceNo')} /></div>}
             </div>
 

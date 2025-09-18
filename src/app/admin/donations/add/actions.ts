@@ -183,6 +183,7 @@ export async function handleAddDonation(
         senderUpiId: formData.get("senderUpiId") as string | undefined,
         recipientName: formData.get("recipientName") as string | undefined,
         recipientUpiId: formData.get("recipientUpiId") as string | undefined,
+        phonePeSenderName: formData.get("phonePeSenderName") as string | undefined,
     });
 
     revalidatePath("/admin/donations");

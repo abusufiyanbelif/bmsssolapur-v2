@@ -38,7 +38,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
 
             **PhonePe Rules:**
             - The overall app is likely PhonePe if you see "पे" at the top or "PhonePe" text. This should be set as the 'senderPaymentApp' and 'paymentApp'.
-            - The sender's name is usually NOT shown on PhonePe receipts. Do not extract it from the "Debited from" section. Do not guess it.
+            - The sender's name might appear under "Debited from". Extract it for 'phonePeSenderName' and 'senderName'.
             - The recipient's name is under the "Paid to" section. Use this for 'phonePeRecipientName' and 'recipientName'.
             - The recipient's UPI ID is often on the line directly below their name, or next to it. Capture this for 'recipientUpiId'.
             - "Transaction ID" should be mapped to 'phonePeTransactionId'. The primary 'transactionId' should also be set to this value.
@@ -88,7 +88,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - recipientPhone: The recipient's phone number if it is shown near their name.
             - recipientUpiId: The recipient's UPI ID (contains '@').
             - recipientAccountNumber: The recipient's bank account number, even if partial.
-            - status: The transaction status (e.g., Successful, Completed).
+            - status: The transaction status (e.g., Successful, Completed, Received).
             - notes: Any user-added comments, remarks, or descriptions found in the payment details.
             - phonePeSenderName: The sender's name if it appears on a PhonePe receipt (rare).
             - phonePeRecipientName: The recipient's name from a PhonePe receipt.
