@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -20,27 +19,17 @@ import type { Donation, User, Organization } from "@/services/types";
 import { DonationReceipt } from "./donation-receipt";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { getCurrentOrganization } from "@/services/organization-service";
 
 interface DonationReceiptDialogProps {
   donation: Donation;
   user: User;
+  organization: Organization | null;
 }
 
-export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogProps) {
+export function DonationReceiptDialog({ donation, user, organization }: DonationReceiptDialogProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
-  const [organization, setOrganization] = useState<Organization | null>(null);
-
-  useEffect(() => {
-    // Fetch organization details when dialog is opened
-    const fetchOrg = async () => {
-        const org = await getCurrentOrganization();
-        setOrganization(org);
-    }
-    fetchOrg();
-  }, []);
 
   const handleDownload = async () => {
     if (!receiptRef.current) return;
@@ -88,7 +77,7 @@ export function DonationReceiptDialog({ donation, user }: DonationReceiptDialogP
     }
   };
   
-  const canDownload = donation.status === 'Verified' || donation.status === 'Allocated';
+  const canDownload = (donation.status === 'Verified' || donation.status === 'Allocated') && !!organization;
 
   return (
     <Dialog>

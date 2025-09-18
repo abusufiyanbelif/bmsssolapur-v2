@@ -18,7 +18,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose, type PaymentMethod } from "@/services/donation-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
-import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
+import { getAllCampaigns, type Campaign, type Organization } from "@/services/types";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronUp, Download, Check, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -65,10 +65,11 @@ interface DonationsPageClientProps {
   initialUsers: User[];
   initialLeads: Lead[];
   initialCampaigns: Campaign[];
+  organization: Organization | null;
   error?: string;
 }
 
-export function DonationsPageClient({ initialDonations, initialUsers, initialLeads, initialCampaigns, error: initialError }: DonationsPageClientProps) {
+export function DonationsPageClient({ initialDonations, initialUsers, initialLeads, initialCampaigns, organization, error: initialError }: DonationsPageClientProps) {
     const searchParams = useSearchParams();
     const statusFromUrl = searchParams.get('status');
     const typeFromUrl = searchParams.get('type');
@@ -144,7 +145,13 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
     useEffect(() => {
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
-        fetchData();
+        // Initial data is passed as props, so we don't need an initial fetch unless those are empty
+        if (initialDonations.length === 0 && !initialError) {
+             fetchData();
+        } else {
+            setLoading(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSearch = () => {
@@ -641,7 +648,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                     </UploadProofDialog>
 
                     {donorUser && (
-                         <DonationReceiptDialog donation={donation} user={donorUser} />
+                         <DonationReceiptDialog donation={donation} user={donorUser} organization={organization} />
                     )}
                     
                     <DropdownMenuSeparator />
