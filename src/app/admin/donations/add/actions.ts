@@ -1,4 +1,4 @@
-
+// src/app/admin/donations/add/actions.ts
 
 "use server";
 
@@ -123,7 +123,7 @@ export async function handleAddDonation(
         status: formData.get("status") as DonationStatus,
         transactionId: transactionId,
         paymentMethod: formData.get("paymentMethod") as PaymentMethod,
-        isAnonymous: formData.get("isAnonymous") === 'true',
+        isAnonymous: formData.get("isAnonymous") === 'on',
         notes: formData.get("notes") as string | undefined,
     });
 
