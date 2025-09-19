@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -27,7 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser, handleExtractUserDetailsFromText } from "./actions";
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2 } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2 } from "lucide-react";
 import type { User, UserRole, AppSettings, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -52,6 +53,7 @@ import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
+
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -308,6 +310,15 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   }, [firstName, middleName, lastName, fullName, setValue]);
 
 
+  useEffect(() => {
+    if (firstName && lastName) {
+        const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
+        if (!form.formState.dirtyFields.userId) {
+            form.setValue('userId', generatedUserId);
+        }
+    }
+  }, [firstName, lastName, form]);
+
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
     if (!value) {
         setState(initialAvailabilityState);
@@ -341,15 +352,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     });
   }, [debouncedUpiIds, handleAvailabilityCheck]);
 
-
-  useEffect(() => {
-    if (firstName && lastName) {
-        const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
-        if (!form.formState.dirtyFields.userId) {
-            form.setValue('userId', generatedUserId);
-        }
-    }
-  }, [firstName, lastName, form]);
 
   const handleGetTextFromDocuments = async () => {
     const filesToScan: File[] = [];
@@ -516,616 +518,616 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
 
   return (
     <>
-      <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
-         <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="scan-docs">
-                <AccordionTrigger>
-                    <div className="flex items-center gap-2 text-primary">
-                        <ScanSearch className="h-5 w-5" />
-                        Scan ID Card (Optional)
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                        <p className="text-sm text-muted-foreground">Upload documents like Aadhaar card to auto-fill the user&apos;s details.</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
-                            <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+      <Form {...form}>
+        <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
+            <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="scan-docs">
+                    <AccordionTrigger>
+                        <div className="flex items-center gap-2 text-primary">
+                            <ScanSearch className="h-5 w-5" />
+                            Scan ID Card (Optional)
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isTextExtracting}>
-                                {isTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                Get Text from Documents
-                            </Button>
-                            <Button type="button" className="w-full" onClick={() => handleFetchUserData()} disabled={!rawText || isAnalyzing}>
-                                {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                Fetch User Data
-                            </Button>
-                        </div>
-                         {rawText && (
-                            <div className="space-y-2 pt-4">
-                                <Label>Extracted Text</Label>
-                                <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                        <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                            <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the user&apos;s details.</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                                <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
                             </div>
-                        )}
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-        <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-        <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/>
-                </FormControl>
-                 <FormDescription>The fields below will be auto-populated from this.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                        <Input type="text" placeholder="Enter your first name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isTextExtracting}>
+                                    {isTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                    Get Text from Documents
+                                </Button>
+                                <Button type="button" className="w-full" onClick={() => handleFetchUserData()} disabled={!rawText || isAnalyzing}>
+                                    {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                    Fetch User Data
+                                </Button>
+                            </div>
+                            {rawText && (
+                                <div className="space-y-2 pt-4">
+                                    <Label>Extracted Text</Label>
+                                    <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
+                                </div>
+                            )}
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+            <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
             <FormField
                 control={form.control}
-                name="middleName"
+                name="fullName"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Middle Name</FormLabel>
+                    <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                        <Input type="text" placeholder="Enter your middle name" {...field} />
+                        <Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/>
                     </FormControl>
+                    <FormDescription>The fields below will be auto-populated from this.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
             />
-             <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                    <Input type="text" placeholder="Enter your last name" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-         <FormField
-            control={form.control}
-            name="fatherName"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Father&apos;s Name (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter father's name" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-         <FormField
-          control={form.control}
-          name="userId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>User ID</FormLabel>
-              <FormControl>
-                <Input type="text" placeholder="Create a custom user ID" {...field} />
-              </FormControl>
-              <AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email Address (Optional)</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="you@example.com" {...field} />
-              </FormControl>
-               <AvailabilityFeedback state={emailState} fieldName="email" />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="10-digit number" maxLength={10} {...field} />
-              </FormControl>
-              <AvailabilityFeedback state={phoneState} fieldName="phone number" />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        </div>
-        
-         <FormField
-            control={form.control}
-            name="gender"
-            render={({ field }) => (
-                <FormItem className="space-y-3">
-                <FormLabel>Gender</FormLabel>
-                <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2">
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem>
-                    </RadioGroup>
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-
-        <h3 className="text-lg font-semibold border-b pb-2">Address Details</h3>
-         <FormField
-            control={form.control}
-            name="addressLine1"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Address Line 1 (Street, Area)</FormLabel>
-                <FormControl>
-                    <Textarea placeholder="Enter user's full address" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <Select onValueChange={(value) => { field.onChange(value); setValue('city', undefined); }} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a state" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {states.map(state => <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>City</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={!selectedState}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a city" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {states.find(s => s.name === selectedState)?.cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField
-                control={form.control}
-                name="pincode"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Pincode</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., 413001" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-             <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Country</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., India" {...field} disabled />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-        </div>
-
-
-        <h3 className="text-lg font-semibold border-b pb-2">Family &amp; Occupation</h3>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField
-                control={form.control}
-                name="occupation"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Occupation</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Daily wage worker, Unemployed" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-             <FormField
-                control={form.control}
-                name="familyMembers"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Number of Family Members</FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="e.g., 5" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-        </div>
-        
-        {selectedGender === 'Female' && selectedRoles.includes('Beneficiary') && (
-            <FormField
-                control={form.control}
-                name="isWidow"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                        <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                        <FormLabel>
-                        Is the Beneficiary a Widow?
-                        </FormLabel>
-                        <FormDescription>
-                        Check this box if the user is a widow. This helps in prioritizing cases.
-                        </FormDescription>
-                    </div>
-                    </FormItem>
-                )}
-            />
-        )}
-
-
-        <h3 className="text-lg font-semibold border-b pb-2">Account Settings &amp; Roles</h3>
-        <FormField
-          control={form.control}
-          name="roles"
-          render={() => (
-            <FormItem>
-              <div className="mb-4">
-                <FormLabel className="text-base">User Roles</FormLabel>
-                <FormDescription>
-                  Select all roles that apply to this user.
-                </FormDescription>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {availableRoles.map((role) => (
-                    <FormField
-                    key={role}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
                     control={form.control}
-                    name="roles"
-                    render={({ field }) => {
-                        return (
-                        <FormItem
-                            key={role}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                            <FormControl>
-                            <Checkbox
-                                checked={field.value?.includes(role)}
-                                onCheckedChange={(checked) => {
-                                return checked
-                                    ? field.onChange([...field.value, role])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                        (value) => value !== role
-                                        )
-                                    )
-                                }}
-                            />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                                {role}
-                            </FormLabel>
+                    name="firstName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                            <Input type="text" placeholder="Enter your first name" {...field} />
+                        </FormControl>
+                        <FormMessage />
                         </FormItem>
-                        )
-                    }}
-                    />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {selectedRoles.includes("Beneficiary") && (
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="middleName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Middle Name</FormLabel>
+                        <FormControl>
+                            <Input type="text" placeholder="Enter your middle name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                        <Input type="text" placeholder="Enter your last name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
             <FormField
                 control={form.control}
-                name="isAnonymousAsBeneficiary"
+                name="fatherName"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem>
+                    <FormLabel>Father&apos;s Name (Optional)</FormLabel>
                     <FormControl>
-                        <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        />
+                        <Input placeholder="Enter father's name" {...field} />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                        <FormLabel>
-                        Mark as Anonymous Beneficiary
-                        </FormLabel>
-                        <FormDescription>
-                        If checked, their name will be hidden from public view and a system-generated ID will be used instead.
-                        </FormDescription>
-                    </div>
+                    <FormMessage />
                     </FormItem>
                 )}
             />
-        )}
-
-        {selectedRoles.includes("Donor") && (
             <FormField
-                control={form.control}
-                name="isAnonymousAsDonor"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                        <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                        <FormLabel>
-                        Mark as Anonymous Donor
-                        </FormLabel>
-                        <FormDescription>
-                        If checked, their name will be hidden from public view for all their donations.
-                        </FormDescription>
-                    </div>
-                    </FormItem>
-                )}
+            control={form.control}
+            name="userId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>User ID</FormLabel>
+                <FormControl>
+                    <Input type="text" placeholder="Create a custom user ID" {...field} />
+                </FormControl>
+                <AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} />
+                <FormMessage />
+                </FormItem>
+            )}
             />
-        )}
-
-        {selectedRoles.includes("Beneficiary") && (
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Email Address (Optional)</FormLabel>
+                <FormControl>
+                    <Input type="email" placeholder="you@example.com" {...field} />
+                </FormControl>
+                <AvailabilityFeedback state={emailState} fieldName="email" />
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                    <Input type="tel" placeholder="10-digit number" maxLength={10} {...field} />
+                </FormControl>
+                <AvailabilityFeedback state={phoneState} fieldName="phone number" />
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            </div>
+            
             <FormField
                 control={form.control}
-                name="beneficiaryType"
+                name="gender"
                 render={({ field }) => (
                     <FormItem className="space-y-3">
-                    <FormLabel>Beneficiary Type</FormLabel>
-                    <FormDescription>Categorize the beneficiary for reporting and aid purposes.</FormDescription>
+                    <FormLabel>Gender</FormLabel>
                     <FormControl>
-                        <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-row space-x-4 pt-2"
-                        >
-                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2">
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem>
                         </RadioGroup>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
             />
-        )}
 
-        <h3 className="text-lg font-semibold border-b pb-2">Verification &amp; Payment Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField
-            control={form.control}
-            name="panNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>PAN Number (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter PAN number" {...field} />
-                </FormControl>
-                 <AvailabilityFeedback state={panState} fieldName="PAN Number" />
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
-            control={form.control}
-            name="aadhaarNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Aadhaar Number {isAadhaarMandatory && <span className="text-destructive">*</span>}</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
-                </FormControl>
-                <AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar Number" />
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-         <FormField
-            control={form.control}
-            name="bankAccountName"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Full Name as per Bank Account</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter full name" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className="text-lg font-semibold border-b pb-2">Address Details</h3>
             <FormField
                 control={form.control}
-                name="bankAccountNumber"
+                name="addressLine1"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Bank Account Number (Optional)</FormLabel>
+                    <FormLabel>Address Line 1 (Street, Area)</FormLabel>
                     <FormControl>
-                        <Input placeholder="Enter bank account number" {...field} />
-                    </FormControl>
-                    <AvailabilityFeedback state={bankAccountState} fieldName="Bank Account" />
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="bankIfscCode"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>IFSC Code (Optional)</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Enter IFSC code" {...field} />
+                        <Textarea placeholder="Enter user's full address" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
-            />
-        </div>
-        <FormField
+                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <Select onValueChange={(value) => { field.onChange(value); setValue('city', undefined); }} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a state" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {states.map(state => <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={!selectedState}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a city" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {states.find(s => s.name === selectedState)?.cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="pincode"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Pincode</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., 413001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., India" {...field} disabled />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+            </div>
+
+
+            <h3 className="text-lg font-semibold border-b pb-2">Family &amp; Occupation</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="occupation"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Occupation</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Daily wage worker, Unemployed" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                    control={form.control}
+                    name="familyMembers"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Number of Family Members</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="e.g., 5" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+            </div>
+            
+            {selectedGender === 'Female' && selectedRoles.includes('Beneficiary') && (
+                <FormField
+                    control={form.control}
+                    name="isWidow"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                            <FormLabel>
+                            Is the Beneficiary a Widow?
+                            </FormLabel>
+                            <FormDescription>
+                            Check this box if the user is a widow. This helps in prioritizing cases.
+                            </FormDescription>
+                        </div>
+                        </FormItem>
+                    )}
+                />
+            )}
+
+
+            <h3 className="text-lg font-semibold border-b pb-2">Account Settings &amp; Roles</h3>
+            <FormField
             control={form.control}
-            name="bankName"
-            render={({ field }) => (
+            name="roles"
+            render={() => (
                 <FormItem>
-                <FormLabel>Bank Name (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Enter bank name" {...field} />
-                </FormControl>
+                <div className="mb-4">
+                    <FormLabel className="text-base">User Roles</FormLabel>
+                    <FormDescription>
+                    Select all roles that apply to this user.
+                    </FormDescription>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {availableRoles.map((role) => (
+                        <FormField
+                        key={role}
+                        control={form.control}
+                        name="roles"
+                        render={({ field }) => {
+                            return (
+                            <FormItem
+                                key={role}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                                <FormControl>
+                                <Checkbox
+                                    checked={field.value?.includes(role)}
+                                    onCheckedChange={(checked) => {
+                                    return checked
+                                        ? field.onChange([...field.value, role])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                            (value) => value !== role
+                                            )
+                                        )
+                                    }}
+                                />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                    {role}
+                                </FormLabel>
+                            </FormItem>
+                            )
+                        }}
+                        />
+                    ))}
+                </div>
                 <FormMessage />
                 </FormItem>
             )}
-        />
-         <div className="space-y-4">
-            <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
-            <FormDescription>Add one or more UPI-linked phone numbers.</FormDescription>
-            {upiPhoneFields.map((field, index) => (
-            <FormField
-              control={form.control}
-              key={field.id}
-              name={`upiPhoneNumbers.${index}.value`}
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input {...field} type="tel" maxLength={10} placeholder="10-digit UPI linked phone" />
-                    </FormControl>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
             />
-          ))}
-            <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendUpiPhone({ value: "" })}
-            >
-                <PlusCircle className="mr-2" />
-                Add Phone Number
-            </Button>
-         </div>
-         <div className="space-y-4">
-            <FormLabel>UPI IDs (Optional)</FormLabel>
-            <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
-            {upiIdFields.map((field, index) => (
-            <FormField
-              control={form.control}
-              key={field.id}
-              name={`upiIds.${index}.value`}
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center gap-2">
+            
+            {selectedRoles.includes("Beneficiary") && (
+                <FormField
+                    control={form.control}
+                    name="isAnonymousAsBeneficiary"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                            <FormLabel>
+                            Mark as Anonymous Beneficiary
+                            </FormLabel>
+                            <FormDescription>
+                            If checked, their name will be hidden from public view and a system-generated ID will be used instead.
+                            </FormDescription>
+                        </div>
+                        </FormItem>
+                    )}
+                />
+            )}
+
+            {selectedRoles.includes("Donor") && (
+                <FormField
+                    control={form.control}
+                    name="isAnonymousAsDonor"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                            <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                            <FormLabel>
+                            Mark as Anonymous Donor
+                            </FormLabel>
+                            <FormDescription>
+                            If checked, their name will be hidden from public view for all their donations.
+                            </FormDescription>
+                        </div>
+                        </FormItem>
+                    )}
+                />
+            )}
+
+            {selectedRoles.includes("Beneficiary") && (
+                <FormField
+                    control={form.control}
+                    name="beneficiaryType"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                        <FormLabel>Beneficiary Type</FormLabel>
+                        <FormDescription>Categorize the beneficiary for reporting and aid purposes.</FormDescription>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-row space-x-4 pt-2"
+                            >
+                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+
+            <h3 className="text-lg font-semibold border-b pb-2">Verification &amp; Payment Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                control={form.control}
+                name="panNumber"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>PAN Number (Optional)</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., username@okhdfc" />
+                        <Input placeholder="Enter PAN number" {...field} />
                     </FormControl>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                   <AvailabilityFeedback state={upiIdStates[index] || initialAvailabilityState} fieldName="UPI ID" />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
-            <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendUpiId({ value: "" })}
-            >
-                <PlusCircle className="mr-2" />
-                Add UPI ID
-            </Button>
-         </div>
-        
-        <div className="flex items-center gap-4">
-            <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
-                {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    <UserPlus className="mr-2 h-4 w-4" />
+                    <AvailabilityFeedback state={panState} fieldName="PAN Number" />
+                    <FormMessage />
+                    </FormItem>
                 )}
-                {isSubmitting ? 'Creating User...' : 'Create User'}
-            </Button>
-            {!isSubForm && (
-                 <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Clear Form
+                />
+                <FormField
+                control={form.control}
+                name="aadhaarNumber"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Aadhaar Number {isAadhaarMandatory && <span className="text-destructive">*</span>}</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
+                    </FormControl>
+                    <AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar Number" />
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            <FormField
+                control={form.control}
+                name="bankAccountName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Full Name as per Bank Account</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter full name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="bankAccountNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Bank Account Number (Optional)</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Enter bank account number" {...field} />
+                        </FormControl>
+                        <AvailabilityFeedback state={bankAccountState} fieldName="Bank Account" />
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="bankIfscCode"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>IFSC Code (Optional)</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Enter IFSC code" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+            <FormField
+                control={form.control}
+                name="bankName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Bank Name (Optional)</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter bank name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <div className="space-y-4">
+                <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
+                <FormDescription>Add one or more UPI-linked phone numbers.</FormDescription>
+                {upiPhoneFields.map((field, index) => (
+                <FormField
+                control={form.control}
+                key={field.id}
+                name={`upiPhoneNumbers.${index}.value`}
+                render={({ field }) => (
+                    <FormItem>
+                    <div className="flex items-center gap-2">
+                        <FormControl>
+                        <Input {...field} type="tel" maxLength={10} placeholder="10-digit UPI linked phone" />
+                        </FormControl>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            ))}
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendUpiPhone({ value: "" })}
+                >
+                    <PlusCircle className="mr-2" />
+                    Add Phone Number
                 </Button>
-            )}
-        </div>
-
-      </form>
+            </div>
+            <div className="space-y-4">
+                <FormLabel>UPI IDs (Optional)</FormLabel>
+                <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
+                {upiIdFields.map((field, index) => (
+                <FormField
+                control={form.control}
+                key={field.id}
+                name={`upiIds.${index}.value`}
+                render={({ field }) => (
+                    <FormItem>
+                    <div className="flex items-center gap-2">
+                        <FormControl>
+                        <Input {...field} placeholder="e.g., username@okhdfc" />
+                        </FormControl>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                    <AvailabilityFeedback state={upiIdStates[index] || initialAvailabilityState} fieldName="UPI ID" />
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            ))}
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendUpiId({ value: "" })}
+                >
+                    <PlusCircle className="mr-2" />
+                    Add UPI ID
+                </Button>
+            </div>
+            
+            <div className="flex items-center gap-4">
+                <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
+                    {isSubmitting ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <UserPlus className="mr-2 h-4 w-4" />
+                    )}
+                    {isSubmitting ? 'Creating User...' : 'Create User'}
+                </Button>
+                {!isSubForm && (
+                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Clear Form
+                    </Button>
+                )}
+            </div>
+        </form>
     </Form>
     <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
             <AlertDialogContent>
@@ -1155,7 +1157,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                 </div>
                 <AlertDialogFooter>
                      <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
-                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
                         Refresh
                     </Button>
                     <div className='flex gap-2'>
