@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,12 +17,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddUser } from "./actions";
+import { handleAddUser, handleExtractUserDetailsFromText } from "./actions";
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot, ScanSearch } from "lucide-react";
+import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot, ScanSearch, FileIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { User, UserRole, AppSettings } from "@/services/types";
+import type { User, UserRole, AppSettings, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from "@/hooks/use-debounce";
@@ -33,7 +32,17 @@ import { getUserByPhone } from "@/services/user-service";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Image from "next/image";
 import { getRawTextFromImage } from '@/app/actions';
-import { handleExtractLeadDetailsFromText } from "../../leads/add/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { RefreshCw } from "lucide-react";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
@@ -194,6 +203,8 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   const [isTextExtracting, setIsTextExtracting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [rawText, setRawText] = useState<string | null>(null);
+  const [extractedDetails, setExtractedDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
+  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
@@ -363,7 +374,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       const result = await getRawTextFromImage(formData);
       if (result.success && result.rawText) {
         setRawText(result.rawText);
-        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available. Click "Fetch User Data" to analyze.' });
       } else {
         toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text.' });
       }
@@ -373,32 +384,75 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
       setIsTextExtracting(false);
     }
   };
-
-  const handleAutoFillFromText = async () => {
-    if (!rawText) return;
-    setIsAnalyzing(true);
-    const result = await handleExtractLeadDetailsFromText(rawText);
-    if (result.success && result.details) {
-      const details = result.details;
-      if (details.beneficiaryFirstName) setValue('firstName', details.beneficiaryFirstName, { shouldDirty: true });
-      if (details.beneficiaryMiddleName) setValue('middleName', details.beneficiaryMiddleName, { shouldDirty: true });
-      if (details.beneficiaryLastName) setValue('lastName', details.beneficiaryLastName, { shouldDirty: true });
-      if (details.fatherName) setValue('fatherName', details.fatherName, { shouldDirty: true });
-      if (details.beneficiaryPhone) setValue('phone', details.beneficiaryPhone.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true });
-      if (details.aadhaarNumber) setValue('aadhaarNumber', details.aadhaarNumber.replace(/\D/g, ''), { shouldDirty: true, shouldValidate: true });
-      if (details.address) setValue('addressLine1', details.address, { shouldDirty: true });
-      if (details.gender) {
-        const genderValue = details.gender as 'Male' | 'Female' | 'Other';
-        if (['Male', 'Female', 'Other'].includes(genderValue)) {
-          setValue('gender', genderValue, { shouldDirty: true });
+  
+    const handleFetchUserData = async (isRefresh = false) => {
+        if (!rawText) return;
+        
+        const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsAnalyzing;
+        loadingSetter(true);
+        
+        let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
+        if (isRefresh && extractedDetails) {
+            missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
         }
-      }
-      toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
-    } else {
-      toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
+
+        const result = await handleExtractUserDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
+
+        if (result.success && result.details) {
+            if (isRefresh && extractedDetails) {
+                // Merge new results with existing ones
+                const mergedDetails = { ...extractedDetails, ...result.details };
+                setExtractedDetails(mergedDetails);
+                toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
+            } else {
+                setExtractedDetails(result.details);
+            }
+        } else {
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
+        }
+        loadingSetter(false);
+    };
+
+    const applyExtractedDetails = () => {
+        if (!extractedDetails) return;
+        const details = extractedDetails;
+        Object.entries(details).forEach(([key, value]) => {
+            if (value) {
+                switch(key) {
+                    case 'beneficiaryFirstName': setValue('firstName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true }); break;
+                    case 'fatherName': setValue('fatherName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryPhone': setValue('phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'aadhaarNumber': setValue('aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
+                    case 'city': setValue('city', value, { shouldDirty: true }); break;
+                    case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
+                    case 'country': setValue('country', value, { shouldDirty: true }); break;
+                    case 'gender':
+                        const genderValue = value as 'Male' | 'Female' | 'Other';
+                        if (['Male', 'Female', 'Other'].includes(genderValue)) {
+                            setValue('gender', genderValue, { shouldDirty: true });
+                        }
+                        break;
+                }
+            }
+        });
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
+        setExtractedDetails(null);
     }
-    setIsAnalyzing(false);
-  };
+    
+    const dialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+        { key: 'beneficiaryFullName', label: 'Full Name' },
+        { key: 'fatherName', label: "Father's Name" },
+        { key: 'dateOfBirth', label: 'Date of Birth' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'beneficiaryPhone', label: 'Phone' },
+        { key: 'aadhaarNumber', label: 'Aadhaar Number' },
+        { key: 'address', label: 'Address' },
+        { key: 'city', label: 'City' },
+        { key: 'pincode', label: 'Pincode' },
+        { key: 'country', label: 'Country' },
+    ];
 
 
   async function onSubmit(values: AddUserFormValues) {
@@ -455,20 +509,10 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
 
   return (
     <>
-    {rawText && (
-        <div className="mb-6 space-y-2">
-            <Label htmlFor="rawTextOutput" className="flex items-center gap-2 font-semibold text-base">
-                <Text className="h-5 w-5 text-primary"/>
-                Extracted Text from Screenshot
-            </Label>
-            <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono bg-muted" />
-            <FormDescription>Review the text extracted from the screenshot to help fill out the form accurately.</FormDescription>
-        </div>
-    )}
     <Form {...form}>
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
-        <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1">
+         <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="scan-docs">
                 <AccordionTrigger>
                     <div className="flex items-center gap-2 text-primary">
                         <ScanSearch className="h-5 w-5" />
@@ -479,24 +523,29 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                     <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm text-muted-foreground">Upload documents like Aadhaar card to auto-fill the user&apos;s details.</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
-                            <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
                             <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isTextExtracting}>
                                 {isTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                 Get Text from Documents
                             </Button>
-                            <Button type="button" className="w-full" onClick={handleAutoFillFromText} disabled={!rawText || isAnalyzing}>
+                            <Button type="button" className="w-full" onClick={() => handleFetchUserData()} disabled={!rawText || isAnalyzing}>
                                 {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                Auto-fill from Text
+                                Fetch User Data
                             </Button>
                         </div>
+                         {rawText && (
+                            <div className="space-y-2 pt-4">
+                                <Label>Extracted Text from Screenshot</Label>
+                                <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
+                            </div>
+                        )}
                     </div>
                 </AccordionContent>
             </AccordionItem>
         </Accordion>
-
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <FormField
@@ -1056,6 +1105,44 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
 
       </form>
     </Form>
+    <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                       <Bot className="h-6 w-6 text-primary" />
+                        Confirm Auto-fill Details
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        The AI has extracted the following details from the document. Please review them before applying to the form.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+                    {dialogFields.map(({ key, label }) => {
+                        const value = extractedDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
+                        return (
+                            <div key={key} className="flex justify-between border-b pb-1">
+                                <span className="text-muted-foreground capitalize">{label}</span>
+                                {value ? (
+                                     <span className="font-semibold text-right">{value}</span>
+                                ) : (
+                                    <span className="text-destructive font-normal text-right">Not Found</span>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+                <AlertDialogFooter>
+                     <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
+                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                        Refresh
+                    </Button>
+                    <div className='flex gap-2'>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                    </div>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </>
   );
 }

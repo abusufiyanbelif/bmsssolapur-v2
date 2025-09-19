@@ -3,9 +3,10 @@
 
 import { createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { User, UserRole } from "@/services/types";
+import type { User, UserRole, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { Timestamp } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
+import { extractBeneficiaryDetails } from "@/ai/flows/extract-beneficiary-details-flow";
 
 interface FormState {
     success: boolean;
@@ -134,4 +135,18 @@ export async function handleAddUser(
       error: `Failed to create user: ${error}`,
     };
   }
+}
+
+export async function handleExtractUserDetailsFromText(
+    rawText: string,
+    fieldsToFind?: (keyof ExtractBeneficiaryDetailsOutput)[]
+): Promise<{ success: boolean; details?: ExtractBeneficiaryDetailsOutput; error?: string }> {
+    try {
+        const extractedDetails = await extractBeneficiaryDetails({ rawText, fieldsToFind });
+        return { success: true, details: extractedDetails };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown AI error occurred.";
+        console.error("Error extracting beneficiary details from text:", error);
+        return { success: false, error };
+    }
 }

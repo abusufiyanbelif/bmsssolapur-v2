@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddUserForm } from "./add-user-form";
 import { getAppSettings } from "@/services/app-settings-service";
@@ -38,7 +37,7 @@ export default async function AddUserPage() {
                 <CardHeader>
                     <CardTitle>User Details</CardTitle>
                     <CardDescription>
-                        Fill in the form below to create a new user account. If you were redirected from a donation scan, some details may be pre-filled.
+                        Fill in the form below to create a new user account. You can also scan an ID document to auto-fill the form.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
