@@ -908,7 +908,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                 <FormItem>
                 <FormLabel>Aadhaar Number {isAadhaarMandatory && <span className="text-destructive">*</span>}</FormLabel>
                 <FormControl>
-                    <Input placeholder="Enter Aadhaar number" {...field} />
+                    <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
                 </FormControl>
                 <AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar Number" />
                 <FormMessage />

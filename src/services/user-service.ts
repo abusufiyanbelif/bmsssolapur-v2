@@ -149,6 +149,15 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         const aadhaarExists = await getUserByAadhaar(userData.aadhaarNumber);
         if (aadhaarExists) throw new Error(`A user with this Aadhaar number already exists (Name: ${aadhaarExists.name}).`);
     }
+
+    if (userData.upiIds && userData.upiIds.length > 0) {
+        for (const upiId of userData.upiIds) {
+            const upiExists = await getUserByUpiId(upiId);
+            if (upiExists) {
+                throw new Error(`The UPI ID "${upiId}" is already associated with another user (Name: ${upiExists.name}).`);
+            }
+        }
+    }
     // --- END DUPLICATE CHECKS ---
 
     const userRef = doc(collection(db, USERS_COLLECTION));
