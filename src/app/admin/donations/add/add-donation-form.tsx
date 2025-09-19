@@ -57,40 +57,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
+import { AddUserForm } from "@/app/admin/user-management/add/add-user-form";
 
 
 const donationTypes = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'] as const;
 const donationPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'To Organization Use', 'Loan Repayment', 'Other'] as const;
 const paymentMethods: PaymentMethod[] = ['Online (UPI/Card)', 'Bank Transfer', 'Cash', 'Other'];
 const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'] as const;
-
-const newUserSchema = z.object({
-    newDonorUserId: z.string().min(3, "User ID must be at least 3 characters."),
-    newDonorFirstName: z.string().min(2, "First name is required."),
-    newDonorMiddleName: z.string().optional(),
-    newDonorLastName: z.string().min(1, "Last name is required."),
-    newDonorFatherName: z.string().optional(),
-    newDonorPhone: z.string().regex(/^[0-9]{10}$/, "A valid 10-digit phone number is required."),
-    newDonorEmail: z.string().email("Invalid email address.").optional().or(z.literal('')),
-    gender: z.enum(['Male', 'Female', 'Other']),
-    // Address
-    addressLine1: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    country: z.string().optional(),
-    pincode: z.string().optional(),
-    // Verification
-    panNumber: z.string().optional(),
-    newDonorAadhaar: z.string().optional(),
-    // Bank
-    bankAccountName: z.string().optional(),
-    bankName: z.string().optional(),
-    bankAccountNumber: z.string().optional(),
-    bankIfscCode: z.string().optional(),
-    // UPI
-    upiIds: z.array(z.object({ value: z.string() })).optional(),
-});
-
 
 const formSchema = z.object({
   donorType: z.enum(['existing', 'new']).default('existing'),
@@ -145,7 +119,7 @@ const formSchema = z.object({
   // Profile update flags
   updateDonorPhone: z.boolean().default(false),
   updateDonorUpiId: z.boolean().default(false),
-}).merge(newUserSchema.partial()).refine(data => {
+}).refine(data => {
     if (data.includeTip) {
         return !!data.tipAmount && data.tipAmount > 0;
     }
@@ -161,21 +135,7 @@ const formSchema = z.object({
 }, {
     message: "Support amount cannot be greater than or equal to the total amount.",
     path: ["tipAmount"],
-}).superRefine((data, ctx) => {
-    if (data.donorType === 'existing' && !data.donorId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please select an existing donor.",
-        path: ["donorId"],
-      });
-    }
-    if (data.donorType === 'new') {
-      if (!data.newDonorFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "First name is required.", path: ["newDonorFirstName"] });
-      if (!data.newDonorLastName) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Last name is required.", path: ["newDonorLastName"] });
-      if (!data.newDonorPhone) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Phone number is required.", path: ["newDonorPhone"] });
-      if (!data.gender) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Gender is required.", path: ["gender"] });
-    }
-  });
+});
 
 
 type AddDonationFormValues = z.infer<typeof formSchema>;
@@ -186,6 +146,7 @@ interface AddDonationFormProps {
   campaigns: Campaign[];
   currentUser?: User | null;
   existingDonation?: Donation;
+  settings: AppSettings;
 }
 
 type AvailabilityState = {
@@ -237,7 +198,7 @@ const initialFormValues: Partial<AddDonationFormValues> = {
     updateDonorUpiId: false,
 };
 
-function AddDonationFormContent({ users, leads, campaigns, existingDonation }: AddDonationFormProps) {
+function AddDonationFormContent({ users, leads, campaigns, existingDonation, settings }: AddDonationFormProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -302,7 +263,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   });
   
   const { watch, setValue, reset, getValues, control, handleSubmit } = form;
-  const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
   const includeTip = watch("includeTip");
   const totalTransactionAmount = watch("totalTransactionAmount");
   const tipAmount = watch("tipAmount");
@@ -363,7 +323,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
   
   const donorUsers = users.filter(u => u.roles.includes('Donor'));
 
-  async function onSubmit(values: AddDonationFormValues) {
+  async function onSubmit(values: AddDonationFormValues, isNewDonor: boolean, newUserPayload?: any) {
     if (!adminUserId) {
         toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log in again." });
         return;
@@ -371,24 +331,25 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     setIsSubmitting(true);
     
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (value instanceof Date) {
-          formData.append(key, value.toISOString());
-        } else if (key === 'paymentScreenshot' && value instanceof File) {
-            formData.append('paymentScreenshot', value);
-        } else if (key === 'upiIds' && Array.isArray(value)) {
-          value.forEach(item => item.value && formData.append('upiIds', item.value));
-        }
-        else if (typeof value === 'boolean') {
-          if (value) formData.append(key, 'on');
-        }
-        else {
-          formData.append(key, String(value));
-        }
-      }
-    });
+     // Append all form values
+    for (const [key, value] of Object.entries(values)) {
+        if (value instanceof Date) formData.append(key, value.toISOString());
+        else if (value !== undefined && value !== null) formData.append(key, String(value));
+    }
     
+    // Handle file
+    const proofFile = getValues('paymentScreenshot');
+    if (proofFile instanceof File) {
+        formData.append('paymentScreenshot', proofFile);
+    }
+
+    if (isNewDonor && newUserPayload) {
+        formData.set('donorType', 'new');
+        Object.entries(newUserPayload).forEach(([key, value]) => {
+            if (value) formData.append(key, value as string);
+        });
+    }
+
     formData.append('adminUserId', adminUserId);
 
 
@@ -538,13 +499,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
     } else {
         toast({ variant: "default", title: "New Donor", description: `No existing donor found. Please create one.` });
         setValue('donorType', 'new');
-        if (details.senderName) {
-            const nameParts = details.senderName.split(' ');
-            setValue('newDonorFirstName', nameParts[0] || '');
-            setValue('newDonorLastName', nameParts.slice(1).join(' ') || '');
-        }
-        if (details.donorPhone) setValue('newDonorPhone', details.donorPhone);
-        if (details.senderUpiId) setValue('upiIds', [{ value: details.senderUpiId }]);
     }
 
     setIsExtracting(false);
@@ -624,7 +578,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
         </Accordion>
 
       <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={handleSubmit((values) => onSubmit(values, donorType === 'new'))} className="space-y-8">
                {!isEditing && (
                  <FormField
                     control={control}
@@ -700,54 +654,14 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation }: A
                     )}
                     />
               ) : (
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                 <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-medium">New Donor Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormField control={form.control} name="newDonorFirstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="newDonorMiddleName" render={({ field }) => (<FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="newDonorLastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
-                     <FormField control={form.control} name="newDonorPhone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel>Gender</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
-                    {/* Add other new user fields here as needed */}
-                     <Accordion type="single" collapsible className="w-full">
-                        <AccordionItem value="item-1">
-                            <AccordionTrigger>Optional Details</AccordionTrigger>
-                            <AccordionContent className="pt-4 space-y-6">
-                               <FormField control={form.control} name="newDonorAadhaar" render={({ field }) => (<FormItem><FormLabel>Aadhaar</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                     <FormField control={form.control} name="city" render={({field}) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                     <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                     <FormField control={form.control} name="state" render={({field}) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                     <FormField control={form.control} name="country" render={({field}) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                </div>
-                                <FormField control={form.control} name="panNumber" render={({field}) => (<FormItem><FormLabel>PAN</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <FormField control={form.control} name="bankAccountNumber" render={({field}) => (<FormItem><FormLabel>Bank Account No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                                <div className="space-y-4">
-                                    <Label>UPI IDs</Label>
-                                    {upiIdFields.map((field, index) => (
-                                        <FormField
-                                        control={form.control}
-                                        key={field.id}
-                                        name={`upiIds.${index}.value`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <div className="flex items-center gap-2">
-                                                <FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl>
-                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                            </div><FormMessage />
-                                            </FormItem>
-                                        )}
-                                        />
-                                    ))}
-                                    <Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
+                    <AddUserForm settings={settings} prefilledData={extractedDetails || undefined} isSubForm={true} onUserCreate={(user) => {
+                        setValue('donorId', user.id, { shouldDirty: true });
+                        setSelectedDonor(user);
+                        setValue('donorType', 'existing');
+                        toast({ variant: "success", title: "Donor Created & Selected", description: `${user.name} is now ready.` });
+                    }} />
                 </div>
               )}
               

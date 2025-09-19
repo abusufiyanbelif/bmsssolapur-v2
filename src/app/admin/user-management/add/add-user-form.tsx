@@ -1,9 +1,10 @@
-
+// src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import * as z from "zod";
+import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,23 +16,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddUser, handleExtractUserDetailsFromText } from "./actions";
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
-import { Loader2, CheckCircle, Trash2, PlusCircle, UserPlus, XCircle, X, Text, Bot, ScanSearch, FileIcon } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2 } from "lucide-react";
+import type { User, UserRole, AppSettings, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { User, UserRole, AppSettings, ExtractBeneficiaryDetailsOutput } from "@/services/types";
-import { getUser, checkAvailability } from "@/services/user-service";
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useDebounce } from "@/hooks/use-debounce";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { getUserByPhone } from "@/services/user-service";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import Image from "next/image";
-import { getRawTextFromImage } from '@/app/actions';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,8 +44,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { RefreshCw } from "lucide-react";
-
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getRawTextFromImage } from '@/app/actions';
+import Image from "next/image";
+import { getUser, checkAvailability } from "@/services/user-service";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Separator } from "@/components/ui/separator";
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -68,26 +76,9 @@ const states = [
     { name: "Telangana", cities: ["Hyderabad", "Warangal", "Nizamabad"] },
 ];
 
-const createRegisterFormSchema = (isAadhaarMandatory: boolean) => z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters."),
-  lastName: z.string().min(1, "Last name is required."),
-  email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
-  password: z.string().optional(),
-  aadhaarNumber: isAadhaarMandatory
-    ? z.string().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits.")
-    : z.string().optional(),
-  bankAccountName: z.string().optional(),
-  bankName: z.string().optional(),
-  bankAccountNumber: z.string().optional(),
-  bankIfscCode: z.string().optional(),
-  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
-  upiIds: z.array(z.object({ value: z.string() })).optional(),
-});
-
-
 const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   userId: z.string().min(3, "User ID must be at least 3 characters."),
+  fullName: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
@@ -180,12 +171,14 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
 
 interface AddUserFormProps {
     settings: AppSettings;
+    isSubForm?: boolean;
+    prefilledData?: ExtractBeneficiaryDetailsOutput;
+    onUserCreate?: (user: User) => void;
 }
 
 
-function AddUserFormContent({ settings }: AddUserFormProps) {
+function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUserCreate }: AddUserFormProps) {
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
@@ -210,7 +203,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   const addressProofInputRef = useRef<HTMLInputElement>(null);
 
   
-  const isAadhaarMandatory = settings.userConfiguration?.isAadhaarMandatory || false;
+  const isAadhaarMandatory = settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory || false;
   const formSchema = createFormSchema(isAadhaarMandatory);
 
   useEffect(() => {
@@ -218,18 +211,18 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     if (adminId) {
       getUser(adminId).then(setCurrentAdmin);
     }
-    const rawTextParam = searchParams.get('rawText');
-    if (rawTextParam) {
-        setRawText(decodeURIComponent(rawTextParam));
+    
+    if(prefilledData) {
+        setExtractedDetails(prefilledData);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [prefilledData]);
 
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onBlur',
     defaultValues: {
       userId: "",
+      fullName: "",
       firstName: "",
       middleName: "",
       lastName: "",
@@ -290,6 +283,30 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   const selectedState = watch("state");
   const selectedRoles = watch("roles");
   const selectedGender = watch("gender");
+  const firstName = watch("firstName");
+  const middleName = watch("middleName");
+  const lastName = watch("lastName");
+  const fullName = watch("fullName");
+
+  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFullName = e.target.value;
+    setValue('fullName', newFullName, { shouldDirty: true });
+    const nameParts = newFullName.split(' ').filter(Boolean);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+    const middleName = nameParts.slice(1, -1).join(' ');
+    setValue('firstName', firstName, { shouldDirty: true });
+    setValue('middleName', middleName, { shouldDirty: true });
+    setValue('lastName', lastName, { shouldDirty: true });
+  }
+
+  useEffect(() => {
+    const fullNameFromParts = `${firstName || ''} ${middleName || ''} ${lastName || ''}`.replace(/\s+/g, ' ').trim();
+    if (fullNameFromParts !== fullName) {
+        setValue('fullName', fullNameFromParts, { shouldDirty: true });
+    }
+  }, [firstName, middleName, lastName, fullName, setValue]);
+
 
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
     if (!value) {
@@ -325,26 +342,6 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   }, [debouncedUpiIds, handleAvailabilityCheck]);
 
 
-  useEffect(() => {
-    const prefillFromScan = () => {
-        const nameParam = searchParams.get('name');
-        const phoneParam = searchParams.get('phone');
-        const upiIdParam = searchParams.get('upiId');
-
-        if (nameParam) {
-            const nameParts = nameParam.split(' ');
-            setValue('firstName', nameParts[0] || '');
-            setValue('lastName', nameParts.slice(1).join(' ') || '');
-        }
-        if(phoneParam) setValue('phone', phoneParam);
-        if(upiIdParam) setValue('upiIds', [{value: upiIdParam}]);
-    }
-    prefillFromScan();
-  }, [searchParams, setValue]);
-
-  const firstName = form.watch("firstName");
-  const lastName = form.watch("lastName");
-  
   useEffect(() => {
     if (firstName && lastName) {
         const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
@@ -399,7 +396,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
         const result = await handleExtractUserDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
 
         if (result.success && result.details) {
-            if (isRefresh && extractedDetails) {
+             if (isRefresh && extractedDetails) {
                 // Merge new results with existing ones
                 const mergedDetails = { ...extractedDetails, ...result.details };
                 setExtractedDetails(mergedDetails);
@@ -419,7 +416,9 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
         Object.entries(details).forEach(([key, value]) => {
             if (value) {
                 switch(key) {
+                    case 'beneficiaryFullName': setValue('fullName', value, { shouldDirty: true }); break;
                     case 'beneficiaryFirstName': setValue('firstName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryMiddleName': setValue('middleName', value, { shouldDirty: true }); break;
                     case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true }); break;
                     case 'fatherName': setValue('fatherName', value, { shouldDirty: true }); break;
                     case 'beneficiaryPhone': setValue('phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
@@ -460,10 +459,12 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
     
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-          if (key === 'roles') value.forEach(role => formData.append('roles', role));
-          else if (key === 'upiIds') value.forEach(item => item.value && formData.append('upiIds', item.value));
-          else if (key === 'upiPhoneNumbers') value.forEach(item => item.value && formData.append('upiPhoneNumbers', item.value));
+      if (key === 'roles' && Array.isArray(value)) {
+        value.forEach(role => formData.append('roles', role));
+      } else if (key === 'upiIds' && Array.isArray(value)) {
+        value.forEach(item => item.value && formData.append('upiIds', item.value));
+      } else if (key === 'upiPhoneNumbers' && Array.isArray(value)) {
+        value.forEach(item => item.value && formData.append('upiPhoneNumbers', item.value));
       } else if (typeof value === 'boolean') {
         if(value) formData.append(key, 'on');
       } else if (value instanceof File) {
@@ -482,23 +483,29 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
         description: `Successfully created user ${result.user.name}.`,
         icon: <CheckCircle />,
       });
-      const redirectUrlParam = searchParams.get('redirect_url');
-      if (redirectUrlParam) {
-          const newParams = new URLSearchParams(searchParams.toString());
-          newParams.set('donorId', result.user.id!);
-          newParams.delete('redirect_url');
-          router.push(`${redirectUrlParam}?${newParams.toString()}`);
+      
+      if (onUserCreate) {
+          onUserCreate(result.user);
       } else {
-        handleCancel();
+        const redirectUrlParam = new URLSearchParams(window.location.search).get('redirect_url');
+        if (redirectUrlParam) {
+            const newParams = new URLSearchParams(window.location.search);
+            newParams.set('donorId', result.user.id!);
+            newParams.delete('redirect_url');
+            router.push(`${redirectUrlParam}?${newParams.toString()}`);
+        } else {
+            handleCancel();
+        }
       }
+
     } else {
       toast({
         variant: "destructive",
         title: "Error Creating User",
         description: result.error || "An unknown error occurred. Please check the form and try again.",
       });
-      setIsSubmitting(false);
     }
+     setIsSubmitting(false);
   }
   
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
@@ -509,14 +516,13 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
 
   return (
     <>
-    <Form {...form}>
       <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
          <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="scan-docs">
                 <AccordionTrigger>
                     <div className="flex items-center gap-2 text-primary">
                         <ScanSearch className="h-5 w-5" />
-                        Scan Documents (Optional)
+                        Scan ID Card (Optional)
                     </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4">
@@ -538,7 +544,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                         </div>
                          {rawText && (
                             <div className="space-y-2 pt-4">
-                                <Label>Extracted Text from Screenshot</Label>
+                                <Label>Extracted Text</Label>
                                 <Textarea value={rawText} readOnly rows={8} className="text-xs font-mono bg-background" />
                             </div>
                         )}
@@ -547,6 +553,20 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
             </AccordionItem>
         </Accordion>
         <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+        <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                    <Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/>
+                </FormControl>
+                 <FormDescription>The fields below will be auto-populated from this.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <FormField
                 control={form.control}
@@ -1097,10 +1117,12 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
                 )}
                 {isSubmitting ? 'Creating User...' : 'Create User'}
             </Button>
-            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                <XCircle className="mr-2 h-4 w-4" />
-                Clear Form
-            </Button>
+            {!isSubForm && (
+                 <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Clear Form
+                </Button>
+            )}
         </div>
 
       </form>
@@ -1147,7 +1169,7 @@ function AddUserFormContent({ settings }: AddUserFormProps) {
   );
 }
 
-export function AddUserForm(props: { settings: AppSettings }) {
+export function AddUserForm(props: AddUserFormProps) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddUserFormContent {...props} />
