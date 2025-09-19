@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCw as RefreshIcon, BookOpen, Sparkles } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -54,6 +54,7 @@ import Image from "next/image";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Separator } from "@/components/ui/separator";
 
 
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
@@ -82,9 +83,21 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   country: z.string().optional(),
   pincode: z.string().optional(),
   aadhaarCard: z.any().optional(),
+  addressProof: z.any().optional(),
   dateOfBirth: z.date().optional(),
   gender: z.enum(['Male', 'Female', 'Other']).optional(),
   isAnonymousAsBeneficiary: z.boolean().default(false),
+  occupation: z.string().optional(),
+  familyMembers: z.coerce.number().optional(),
+  isWidow: z.boolean().default(false),
+  panNumber: z.string().optional(),
+  bankAccountName: z.string().optional(),
+  bankName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankIfscCode: z.string().optional(),
+  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
+  upiIds: z.array(z.object({ value: z.string() })).optional(),
+
 
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
@@ -252,10 +265,12 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
 
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
+  const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
   const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
   const [zoomLevels, setZoomLevels] = useState<Record<string, {zoom: number, rotation: number}>>({});
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
+  const addressProofInputRef = useRef<HTMLInputElement>(null);
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
 
   const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
@@ -316,6 +331,17 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       dateOfBirth: undefined,
       gender: undefined,
       aadhaarCard: null,
+      addressProof: null,
+      occupation: '',
+      familyMembers: 0,
+      isWidow: false,
+      panNumber: '',
+      bankAccountName: '',
+      bankName: '',
+      bankAccountNumber: '',
+      bankIfscCode: '',
+      upiPhoneNumbers: [{value:''}],
+      upiIds: [{value:''}],
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -355,10 +381,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       setCaseRawText("");
       setBeneficiaryRawText("");
       setAadhaarPreview(null);
+      setAddressProofPreview(null);
       setOtherDocumentsPreviews([]);
   };
 
   const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset } = form;
+  
+  const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
+  const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
+
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
@@ -621,9 +652,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
 
   const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
     { key: 'beneficiaryFullName', label: 'Full Name' },
-    { key: 'beneficiaryFirstName', label: 'First Name' },
-    { key: 'beneficiaryMiddleName', label: 'Middle Name' },
-    { key: 'beneficiaryLastName', label: 'Last Name' },
     { key: 'fatherName', label: "Father's Name" },
     { key: 'dateOfBirth', label: 'Date of Birth' },
     { key: 'gender', label: 'Gender' },
@@ -705,7 +733,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         if (Array.isArray(value)) {
             if (key === 'otherDocuments') {
                 value.forEach(f => { if(f instanceof File) formData.append(key, f) });
-            } else {
+            } else if (key === 'upiIds' || key === 'upiPhoneNumbers') {
+                value.forEach(item => item.value && formData.append(key, item.value));
+            }
+             else {
                  value.forEach(v => formData.append(key, v));
             }
         } else if (value instanceof Date) {
@@ -990,7 +1021,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>)} />
-                        <h4 className="font-medium pt-2">Address</h4>
+                        
+                        <Separator className="my-6" />
+                        <h4 className="font-medium">Address Details</h4>
                         <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField control={form.control} name="city" render={({field}) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
@@ -998,6 +1031,37 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                         </div>
                          <FormField control={form.control} name="country" render={({field}) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+
+                        <Separator className="my-6" />
+                        <h4 className="font-medium">Verification & Payment Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="panNumber" render={({field}) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={panState} fieldName="PAN" /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="bankAccountNumber" render={({field}) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={bankAccountState} fieldName="Bank Account" /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="bankAccountName" render={({field}) => (<FormItem><FormLabel>Account Holder Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="bankIfscCode" render={({field}) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        </div>
+
+                        <Separator className="my-6" />
+                        <h4 className="font-medium">UPI Details</h4>
+                        {upiIdFields.map((field, index) => (
+                           <FormField
+                              control={form.control}
+                              key={field.id}
+                              name={`upiIds.${index}.value`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <div className="flex items-center gap-2">
+                                    <FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl>
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                  </div>
+                                   <AvailabilityFeedback state={upiIdStates[index] || initialAvailabilityState} fieldName="UPI ID" />
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                        ))}
+                         <Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" /> Add UPI ID</Button>
+
                     </div>
                 )}
                 </>
@@ -1396,7 +1460,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 </div>
                 <AlertDialogFooter>
                      <Button variant="outline" onClick={() => handleBeneficiaryAutoFill(true)} disabled={isRefreshingDetails}>
-                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
+                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
                         Refresh
                     </Button>
                     <div className='flex gap-2'>
