@@ -235,9 +235,11 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
             <CardContent>
                  <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
-                            <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
-                        </Button>
+                        {!targetLead && !targetCampaignId && (
+                             <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
+                                <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
+                            </Button>
+                        )}
                         {(linkedLead || linkedCampaign) && (
                             <div className="p-2 border rounded-md bg-muted/50 flex items-center justify-between">
                                 <div className="text-sm font-medium">
@@ -280,7 +282,7 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
     )
 }
 
-function RecordPastDonationForm({ user, openLeads, activeCampaigns }: { user: User, openLeads: Lead[], activeCampaigns: Campaign[] }) {
+function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads, activeCampaigns }: { user: User, targetLead: Lead | null, targetCampaignId: string | null, openLeads: Lead[], activeCampaigns: Campaign[] }) {
     const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -297,7 +299,11 @@ function RecordPastDonationForm({ user, openLeads, activeCampaigns }: { user: Us
 
     const form = useForm<RecordDonationFormValues>({
         resolver: zodResolver(recordDonationSchema),
-        defaultValues: initialRecordFormValues
+        defaultValues: {
+            ...initialRecordFormValues,
+            leadId: targetLead?.id || undefined,
+            campaignId: targetCampaignId || undefined,
+        },
     });
     
     const { control, handleSubmit, setValue, watch } = form;
@@ -420,9 +426,11 @@ function RecordPastDonationForm({ user, openLeads, activeCampaigns }: { user: Us
             <CardContent>
                  <Form {...form}>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                        <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
-                            <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
-                        </Button>
+                        {!targetLead && !targetCampaignId && (
+                            <Button type="button" variant="outline" className="w-full" onClick={() => setIsLinkDialogOpen(true)}>
+                                <Link2 className="mr-2 h-4 w-4" /> Link to a Specific Cause (Optional)
+                            </Button>
+                        )}
                         {(linkedLead || linkedCampaign) && (
                             <div className="p-2 border rounded-md bg-muted/50 flex items-center justify-between">
                                 <div className="text-sm font-medium">
@@ -696,7 +704,13 @@ function DonatePageContent() {
         )}
         
         {donationMethod === 'record' && allowRecordDonation && (
-            <RecordPastDonationForm user={user} openLeads={openLeads} activeCampaigns={activeCampaigns} />
+            <RecordPastDonationForm 
+                user={user} 
+                targetLead={targetLead}
+                targetCampaignId={targetCampaignId}
+                openLeads={openLeads} 
+                activeCampaigns={activeCampaigns} 
+            />
         )}
      </div>
   );

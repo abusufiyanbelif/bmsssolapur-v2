@@ -19,6 +19,13 @@ export async function handleManualDonation(userId: string, formData: FormData): 
         formData.append("adminUserId", userId); // The user is acting as their own admin here
         formData.append("donorId", userId);
         formData.append("status", "Pending verification");
+        
+        // Pass leadId and campaignId if they exist
+        const leadId = formData.get('leadId');
+        if (leadId) formData.append('leadId', leadId);
+        
+        const campaignId = formData.get('campaignId');
+        if (campaignId) formData.append('campaignId', campaignId);
 
         const result = await recordDonationService(formData);
 
