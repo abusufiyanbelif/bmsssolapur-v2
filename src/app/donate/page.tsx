@@ -97,6 +97,8 @@ const recordDonationSchema = z.object({
   paytmUpiReferenceNo: z.string().optional(),
   leadId: z.string().optional(),
   campaignId: z.string().optional(),
+  time: z.string().optional(),
+  status: z.string().optional(),
 });
 export type RecordDonationFormValues = z.infer<typeof recordDonationSchema>;
 
@@ -306,10 +308,11 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
         },
     });
     
-    const { control, handleSubmit, setValue, watch } = form;
+    const { control, handleSubmit, setValue, watch, register } = form;
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
     const paymentApp = watch("paymentApp");
+    const paymentMethod = watch("paymentMethod");
     
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
@@ -390,6 +393,9 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
             if (value instanceof Date) formData.append(key, value.toISOString());
             else if (value) formData.append(key, value);
         });
+        if (file) {
+            formData.append('paymentScreenshot', file);
+        }
 
         const result = await handleManualDonation(user.id!, formData);
 
@@ -417,6 +423,17 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
         setValue('leadId', undefined);
         setValue('campaignId', undefined);
     };
+    
+    const transactionIdLabel = useMemo(() => {
+        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
+        switch (paymentApp) {
+            case 'PhonePe': return 'Transaction ID';
+            case 'Paytm': return 'UPI Ref. No';
+            case 'Google Pay': return 'UPI Transaction ID';
+            default: return 'Primary Transaction ID';
+        }
+    }, [paymentApp, paymentMethod]);
+
 
     return (
         <Card>
@@ -534,19 +551,20 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                             )}
                         />
                         
-                         {extractedDetails ? (
+                         <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field}/></FormControl><FormMessage/></FormItem>)} />
+                        
+                        {extractedDetails && (
                            <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
                                 <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>Transaction ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />
                                     {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
                                     {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                                     {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
                                     {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.googlePayTransactionId && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
+                                    {extractedDetails.phonePeTransactionId && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
                                 </div>
                             </div>
-                        ) : (
-                            <FormField control={control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Transaction ID / UTR</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         )}
                         
                         <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
