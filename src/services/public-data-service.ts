@@ -132,18 +132,15 @@ export const getPublicStats = async (): Promise<PublicStats | null> => {
 };
 
 /**
- * Updates a public-facing campaign document.
+ * Updates a public-facing campaign document. If a campaign is cancelled, its
+ * status is updated in the public collection instead of being deleted.
  * @param campaign - The full campaign object with calculated stats.
  */
 export const updatePublicCampaign = async (campaign: Campaign & { raisedAmount: number; fundingProgress: number; }): Promise<void> => {
     const adminDb = getAdminDb();
     const publicCampaignRef = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).doc(campaign.id!);
 
-     if (campaign.status === 'Cancelled') {
-        await publicCampaignRef.delete().catch(() => {});
-        return;
-    }
-
+    // Always set/update the document. Don't delete on cancel.
     await publicCampaignRef.set(campaign, { merge: true });
 };
 
@@ -163,7 +160,7 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
                 startDate: (data.startDate as Timestamp)?.toDate(),
                 endDate: (data.endDate as Timestamp)?.toDate(),
                 createdAt: (data.createdAt as Timestamp)?.toDate(),
-                updatedAt: (data.updatedAt as Timestamp)?.toDate(),
+                updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as (Campaign & { raisedAmount: number, fundingProgress: number });
         });
     } catch (e) {

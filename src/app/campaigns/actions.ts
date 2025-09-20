@@ -18,11 +18,11 @@ export interface EnrichedLead extends Lead {
  */
 export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> {
     if (!isConfigValid) {
-        console.warn("Firebase not configured. Skipping fetching active campaigns.");
+        console.warn("Firebase not configured. Skipping fetching all campaigns.");
         return [];
     }
     try {
-        // This now correctly fetches from the public, sanitized collection.
+        // This now correctly fetches all campaigns from the public, sanitized collection, including completed/cancelled ones.
         const publicCampaigns = await getPublicCampaigns();
         
         return publicCampaigns.map(c => ({
