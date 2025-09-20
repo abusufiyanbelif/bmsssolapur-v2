@@ -8,6 +8,7 @@ import { getAdminDb } from './firebase-admin';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
 import { getLeadsByCampaignId } from './lead-service';
+import { Timestamp } from 'firebase-admin/firestore';
 
 
 const PUBLIC_LEADS_COLLECTION = 'publicLeads';
@@ -155,7 +156,16 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
     try {
         const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
         const snapshot = await q.get();
-        return snapshot.docs.map(doc => doc.data() as (Campaign & { raisedAmount: number, fundingProgress: number }));
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                startDate: (data.startDate as Timestamp)?.toDate(),
+                endDate: (data.endDate as Timestamp)?.toDate(),
+                createdAt: (data.createdAt as Timestamp)?.toDate(),
+                updatedAt: (data.updatedAt as Timestamp)?.toDate(),
+            } as (Campaign & { raisedAmount: number, fundingProgress: number });
+        });
     } catch (e) {
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
             console.warn("Firestore permission error in getPublicCampaigns. Returning empty array. Please check IAM roles.");
