@@ -240,9 +240,9 @@ function OnlineDonationForm({ user, targetLead, targetCampaignId, openLeads, act
                         </Button>
                         {(linkedLead || linkedCampaign) && (
                             <div className="p-2 border rounded-md bg-muted/50 flex items-center justify-between">
-                                <p className="text-sm font-medium">
+                                <div className="text-sm font-medium">
                                     Linked to: <Badge variant="secondary">{linkedLead?.name || linkedCampaign?.name}</Badge>
-                                </p>
+                                </div>
                                 <Button type="button" variant="ghost" size="icon" onClick={clearLink} className="h-6 w-6">
                                     <XCircle className="h-4 w-4" />
                                 </Button>
@@ -425,9 +425,9 @@ function RecordPastDonationForm({ user, openLeads, activeCampaigns }: { user: Us
                         </Button>
                         {(linkedLead || linkedCampaign) && (
                             <div className="p-2 border rounded-md bg-muted/50 flex items-center justify-between">
-                                <p className="text-sm font-medium">
+                                <div className="text-sm font-medium">
                                     Linked to: <Badge variant="secondary">{linkedLead?.name || linkedCampaign?.name}</Badge>
-                                </p>
+                                </div>
                                 <Button type="button" variant="ghost" size="icon" onClick={clearLink} className="h-6 w-6">
                                     <XCircle className="h-4 w-4" />
                                 </Button>

@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -652,7 +653,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-medium">New Donor Details</h3>
                     {settings && (
-                       <AddUserForm settings={settings} prefilledData={extractedDetails || undefined} isSubForm={true} onUserCreate={(user) => {
+                       <AddUserForm settings={settings} isSubForm={true} prefilledData={extractedDetails || undefined} onUserCreate={(user) => {
                           setValue('donorId', user.id, { shouldDirty: true });
                           setSelectedDonor(user);
                           setValue('donorType', 'existing');
