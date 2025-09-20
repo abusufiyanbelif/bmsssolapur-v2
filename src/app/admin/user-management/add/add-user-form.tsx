@@ -53,6 +53,7 @@ import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
@@ -518,7 +519,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
 
   return (
     <>
-      <Form {...form}>
+      <FormProvider {...form}>
         <form className="space-y-6 pt-4" onSubmit={form.handleSubmit(onSubmit)}>
             <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="scan-docs">
@@ -1128,7 +1129,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                 )}
             </div>
         </form>
-    </Form>
+      </FormProvider>
     <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
