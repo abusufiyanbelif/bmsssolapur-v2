@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useRouter } from 'next/navigation';
@@ -35,7 +34,13 @@ export function CampaignList({ campaigns }: CampaignListProps) {
     const { toast } = useToast();
     
     const handleDonateClick = (campaignId: string) => {
-        router.push(`/donate?campaignId=${campaignId}`);
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+            router.push(`/donate?campaignId=${campaignId}`);
+        } else {
+            sessionStorage.setItem('redirectAfterLogin', `/donate?campaignId=${campaignId}`);
+            router.push('/login');
+        }
     }
 
     const handleShare = (campaign: CampaignWithStats) => {

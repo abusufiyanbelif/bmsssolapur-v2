@@ -75,9 +75,15 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
 export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads }: { quotes: Quote[], initialLeads: Lead[], campaigns: Campaign[], allLeads: Lead[] }) {
   const router = useRouter();
   
-  const handleDonateClick = () => {
-    sessionStorage.setItem('redirectAfterLogin', '/donate');
-    router.push('/login');
+  const handleDonateClick = (leadId?: string) => {
+    const userId = localStorage.getItem('userId');
+    const path = leadId ? `/donate?leadId=${leadId}` : '/donate';
+    if (userId) {
+        router.push(path);
+    } else {
+        sessionStorage.setItem('redirectAfterLogin', path);
+        router.push('/login');
+    }
   }
 
   return (
@@ -92,7 +98,7 @@ export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads }: { 
         </CardHeader>
         <CardContent>
         <div className="flex justify-center gap-4">
-            <Button size="lg" onClick={handleDonateClick}>
+            <Button size="lg" onClick={() => handleDonateClick()}>
             Donate Now <HandHeart className="ml-2" />
             </Button>
         </div>
@@ -133,7 +139,7 @@ export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads }: { 
               ) : (
                   <div className="text-center py-6">
                       <p className="text-muted-foreground">All general cases are currently funded. Please check back soon!</p>
-                      <Button className="mt-4" onClick={handleDonateClick}>
+                      <Button className="mt-4" onClick={() => handleDonateClick()}>
                           Donate to Organization
                       </Button>
                   </div>
