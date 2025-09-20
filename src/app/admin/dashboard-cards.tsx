@@ -1,12 +1,11 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { User, Lead, Campaign, Donation, DonationType, LeadPurpose } from "@/services/types";
-import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText, ChevronLeft, ChevronRight, Target as TargetIcon } from "lucide-react";
+import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText, ChevronLeft, ChevronRight, Target as TargetIcon, Image as ImageIcon } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +16,7 @@ import { useState, useMemo } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import Image from "next/image";
 
 
 export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonations: Donation[], allLeads: Lead[] }) => {
@@ -417,7 +417,7 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
         <Card>
         <CardHeader>
             <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="text-primary"/>
+                <Megaphone className="text-primary"/>
                 Active &amp; Recent Campaigns
             </CardTitle>
             <CardDescription>
@@ -426,49 +426,52 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
         </CardHeader>
         <CardContent>
             {allCampaigns.length > 0 ? (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Campaign</TableHead>
-                            <TableHead>Dates</TableHead>
-                            <TableHead className="w-[30%]">Funding Goal</TableHead>
-                            <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {allCampaigns.slice(0, 5).map((campaign) => {
-                            const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
-                            const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
-                            const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
-                            return (
-                                <TableRow key={campaign.id}>
-                                    <TableCell>
-                                        <div className="font-medium">{campaign.name}</div>
-                                        <div className="text-xs text-muted-foreground">{campaign.description.substring(0, 50)}...</div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {format(new Date(campaign.startDate), "dd MMM yyyy")} - {format(new Date(campaign.endDate), "dd MMM yyyy")}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col gap-2">
-                                            <Progress value={progress} />
-                                            <span className="text-xs text-muted-foreground">
-                                                ₹{raisedAmount.toLocaleString()} / ₹{campaign.goal.toLocaleString()}
-                                            </span>
+                <div className="space-y-4">
+                    {allCampaigns.slice(0, 3).map((campaign) => {
+                        const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
+                        const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+                        const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+                        return (
+                             <Link key={campaign.id} href={`/admin/campaigns/${campaign.id}/edit`}>
+                                <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                    <div className="relative h-24 w-24 rounded-md overflow-hidden flex-shrink-0">
+                                        {campaign.imageUrl ? (
+                                            <Image src={campaign.imageUrl} alt={campaign.name} fill className="object-cover" />
+                                        ) : (
+                                            <div className="bg-secondary h-full w-full flex items-center justify-center">
+                                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-grow">
+                                        <div className="flex justify-between items-start">
+                                            <p className="font-semibold">{campaign.name}</p>
+                                            <Badge variant="outline" className={cn("capitalize text-xs", campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
                                         </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={cn(campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        })}
-                    </TableBody>
-                </Table>
+                                        <p className="text-xs text-muted-foreground">{format(new Date(campaign.startDate), "dd MMM")} - {format(new Date(campaign.endDate), "dd MMM yyyy")}</p>
+                                        <div className="mt-2 space-y-1">
+                                            <Progress value={progress} />
+                                            <p className="text-xs text-muted-foreground">
+                                                <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span> raised of ₹{campaign.goal.toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        )
+                    })}
+                </div>
             ) : (
                 <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
             )}
         </CardContent>
+        {allCampaigns.length > 3 && (
+            <CardFooter>
+                 <Button asChild variant="secondary" className="w-full">
+                    <Link href="/admin/campaigns">View All Campaigns</Link>
+                </Button>
+            </CardFooter>
+        )}
     </Card>
     )
 }
@@ -808,3 +811,5 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
+
+    
