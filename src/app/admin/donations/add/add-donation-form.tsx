@@ -27,7 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2 } from "lucide-react";
-import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput } from "@/services/types";
+import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput, AppSettings } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
@@ -146,7 +146,7 @@ interface AddDonationFormProps {
   campaigns: Campaign[];
   currentUser?: User | null;
   existingDonation?: Donation;
-  settings: AppSettings;
+  settings?: AppSettings;
 }
 
 type AvailabilityState = {
@@ -323,7 +323,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
   
   const donorUsers = users.filter(u => u.roles.includes('Donor'));
 
-  async function onSubmit(values: AddDonationFormValues, isNewDonor: boolean, newUserPayload?: any) {
+  async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
         toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log in again." });
         return;
@@ -337,17 +337,12 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
         else if (value !== undefined && value !== null) formData.append(key, String(value));
     }
     
+    formData.append('donorType', donorType);
+
     // Handle file
     const proofFile = getValues('paymentScreenshot');
     if (proofFile instanceof File) {
         formData.append('paymentScreenshot', proofFile);
-    }
-
-    if (isNewDonor && newUserPayload) {
-        formData.set('donorType', 'new');
-        Object.entries(newUserPayload).forEach(([key, value]) => {
-            if (value) formData.append(key, value as string);
-        });
     }
 
     formData.append('adminUserId', adminUserId);
@@ -578,7 +573,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
         </Accordion>
 
       <Form {...form}>
-          <form onSubmit={handleSubmit((values) => onSubmit(values, donorType === 'new'))} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                {!isEditing && (
                  <FormField
                     control={control}
@@ -656,12 +651,14 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
               ) : (
                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-medium">New Donor Details</h3>
-                    <AddUserForm settings={settings} prefilledData={extractedDetails || undefined} isSubForm={true} onUserCreate={(user) => {
-                        setValue('donorId', user.id, { shouldDirty: true });
-                        setSelectedDonor(user);
-                        setValue('donorType', 'existing');
-                        toast({ variant: "success", title: "Donor Created & Selected", description: `${user.name} is now ready.` });
-                    }} />
+                    {settings && (
+                       <AddUserForm settings={settings} prefilledData={extractedDetails || undefined} isSubForm={true} onUserCreate={(user) => {
+                          setValue('donorId', user.id, { shouldDirty: true });
+                          setSelectedDonor(user);
+                          setValue('donorType', 'existing');
+                          toast({ variant: "success", title: "Donor Created & Selected", description: `${user.name} is now ready.` });
+                      }} />
+                    )}
                 </div>
               )}
               
