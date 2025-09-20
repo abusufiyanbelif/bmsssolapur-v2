@@ -1,12 +1,11 @@
 
-
 'use client';
 
 import { Suspense, useEffect, useState } from "react";
 import { PublicHomePage } from "./public-home-page";
 import { Loader2 } from "lucide-react";
-import type { Quote } from "@/services/types";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import type { Quote, Lead, Campaign } from "@/services/types";
+import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./home/actions";
 import { useRouter } from 'next/navigation';
 
 
@@ -21,24 +20,42 @@ export default function Page() {
     const [activeRole, setActiveRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [openLeads, setOpenLeads] = useState<Lead[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [allLeads, setAllLeads] = useState<Lead[]>([]); // For campaign stats
     const router = useRouter();
 
     useEffect(() => {
-        const role = localStorage.getItem('activeRole');
-        const userId = localStorage.getItem('userId');
+        const initializeSession = async () => {
+            setLoading(true);
+            const role = localStorage.getItem('activeRole');
+            const userId = localStorage.getItem('userId');
 
-        if (!role || !userId) {
-            setActiveRole('Guest');
-        } else {
-            setActiveRole(role);
-        }
+            if (!role || !userId) {
+                setActiveRole('Guest');
+                // Fetch public data if guest
+                const [quotesData, leadsData, publicData] = await Promise.all([
+                    getQuotes(3),
+                    getOpenGeneralLeads(),
+                    getPublicDashboardData(),
+                ]);
+                setQuotes(quotesData);
+                setOpenLeads(leadsData);
+                if (publicData && !publicData.error) {
+                    setCampaigns(publicData.campaigns || []);
+                    setAllLeads(publicData.leads || []);
+                }
+
+            } else {
+                setActiveRole(role);
+            }
+            setLoading(false);
+        };
         
-        getInspirationalQuotes(3).then(setQuotes);
-        setLoading(false);
+        initializeSession();
     }, []);
 
     useEffect(() => {
-        // This effect handles the redirection after the role has been determined.
         if (activeRole && activeRole !== 'Guest') {
             switch (activeRole) {
                 case 'Donor':
@@ -66,12 +83,9 @@ export default function Page() {
         return <LoadingState />;
     }
 
-    // Only render the PublicHomePage if the role is definitively 'Guest'.
-    // Other roles will be caught by the loading state above while they are redirecting.
     if (activeRole === 'Guest') {
-        return <PublicHomePage quotes={quotes} />;
+        return <PublicHomePage quotes={quotes} initialLeads={openLeads} campaigns={campaigns} allLeads={allLeads} />;
     }
 
-    // Fallback loading state
     return <LoadingState />;
 }

@@ -5,11 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon } from "lucide-react";
-import type { Quote, Lead } from "@/services/types";
+import type { Quote, Lead, Campaign } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { getQuotes, getOpenGeneralLeads } from "./actions";
+import { RecentCampaignsCard } from "@/app/admin/dashboard-cards";
+
 
 function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     const [loading, setLoading] = useState(quotes.length === 0);
@@ -70,7 +72,7 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     );
 }
 
-export function PublicHomePage({ quotes, initialLeads }: { quotes: Quote[], initialLeads: Lead[] }) {
+export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads }: { quotes: Quote[], initialLeads: Lead[], campaigns: Campaign[], allLeads: Lead[] }) {
   const router = useRouter();
   
   const handleDonateClick = () => {
@@ -145,6 +147,9 @@ export function PublicHomePage({ quotes, initialLeads }: { quotes: Quote[], init
               </CardFooter>
           )}
       </Card>
+      
+      <RecentCampaignsCard allCampaigns={campaigns} allLeads={allLeads} />
+
     </div>
   );
 }
