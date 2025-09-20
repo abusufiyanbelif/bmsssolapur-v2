@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -31,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, UploadCloud, CheckCircle, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2 } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2 } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -56,6 +55,7 @@ import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
+import { AddUserForm } from "@/app/admin/user-management/add/add-user-form";
 
 
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
@@ -68,38 +68,6 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   linkBeneficiaryLater: z.boolean().default(false),
   manualBeneficiaryName: z.string().optional(),
   
-  // New beneficiary fields
-  newBeneficiaryUserId: z.string().optional(),
-  newBeneficiaryFirstName: z.string().optional(),
-  newBeneficiaryMiddleName: z.string().optional(),
-  newBeneficiaryLastName: z.string().optional(),
-  newBeneficiaryFullName: z.string().optional(),
-  newBeneficiaryFatherName: z.string().optional(),
-  newBeneficiaryPhone: z.string().optional(),
-  newBeneficiaryEmail: z.string().email().optional().or(z.literal('')),
-  newBeneficiaryAadhaar: z.string().optional(),
-  addressLine1: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  pincode: z.string().optional(),
-  aadhaarCard: z.any().optional(),
-  addressProof: z.any().optional(),
-  dateOfBirth: z.date().optional(),
-  gender: z.enum(['Male', 'Female', 'Other']).optional(),
-  isAnonymousAsBeneficiary: z.boolean().default(false),
-  occupation: z.string().optional(),
-  familyMembers: z.coerce.number().optional(),
-  isWidow: z.boolean().default(false),
-  panNumber: z.string().optional(),
-  bankAccountName: z.string().optional(),
-  bankName: z.string().optional(),
-  bankAccountNumber: z.string().optional(),
-  bankIfscCode: z.string().optional(),
-  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
-  upiIds: z.array(z.object({ value: z.string() })).optional(),
-
-
   hasReferral: z.boolean().default(false),
   campaignId: z.string().optional(),
   campaignName: z.string().optional(),
@@ -140,22 +108,6 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
     } else if (data.beneficiaryType === 'existing') {
         if (!data.beneficiaryId || data.beneficiaryId.trim() === '') {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please select an existing beneficiary.", path: ["beneficiaryId"] });
-        }
-    } else if (data.beneficiaryType === 'new') {
-        if (!data.newBeneficiaryFirstName || data.newBeneficiaryFirstName.trim() === '') {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "First name is required.", path: ["newBeneficiaryFirstName"] });
-        }
-        if (!data.newBeneficiaryLastName || data.newBeneficiaryLastName.trim() === '') {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Last name is required.", path: ["newBeneficiaryLastName"] });
-        }
-         if (!data.newBeneficiaryPhone || !/^[0-9]{10}$/.test(data.newBeneficiaryPhone)) {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A valid 10-digit phone number is required.", path: ["newBeneficiaryPhone"] });
-        }
-        if(!data.gender){
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Gender is required for new beneficiaries.", path: ["gender"] });
-        }
-        if (!data.newBeneficiaryUserId || data.newBeneficiaryUserId.length < 3) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "User ID must be at least 3 characters.", path: ["newBeneficiaryUserId"] });
         }
     }
 
@@ -259,33 +211,10 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [isRefreshingSummary, setIsRefreshingSummary] = useState(false);
   const [caseRawText, setCaseRawText] = useState<string>('');
   
-  const [isBeneficiaryTextExtracting, setIsBeneficiaryTextExtracting] = useState(false);
-  const [isBeneficiaryAnalyzing, setIsBeneficiaryAnalyzing] = useState(false);
-  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
-  const [beneficiaryRawText, setBeneficiaryRawText] = useState<string>('');
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
-
-  const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
-  const [addressProofPreview, setAddressProofPreview] = useState<string | null>(null);
-  const [otherDocumentsPreviews, setOtherDocumentsPreviews] = useState<string[]>([]);
-  const [zoomLevels, setZoomLevels] = useState<Record<string, {zoom: number, rotation: number}>>({});
-
-  const aadhaarInputRef = useRef<HTMLInputElement>(null);
-  const addressProofInputRef = useRef<HTMLInputElement>(null);
+  
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
 
-  const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
-  const [emailState, setEmailState] = useState<AvailabilityState>(initialAvailabilityState);
-  const [phoneState, setPhoneState] = useState<AvailabilityState>(initialAvailabilityState);
-  const [panState, setPanState] = useState<AvailabilityState>(initialAvailabilityState);
-  const [aadhaarState, setAadhaarState] = useState<AvailabilityState>(initialAvailabilityState);
-  const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
-  const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
-
-
-  const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
-  const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
-  
   const leadConfiguration = settings.leadConfiguration || {};
   const approvalProcessDisabled = leadConfiguration.approvalProcessDisabled || false;
   
@@ -314,35 +243,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     defaultValues: {
       beneficiaryType: 'existing',
       beneficiaryId: '',
-      newBeneficiaryUserId: '',
-      newBeneficiaryFirstName: '',
-      newBeneficiaryMiddleName: '',
-      newBeneficiaryLastName: '',
-      newBeneficiaryFullName: '',
-      newBeneficiaryFatherName: '',
-      newBeneficiaryPhone: '',
-      newBeneficiaryEmail: '',
-      newBeneficiaryAadhaar: '',
-      addressLine1: '',
-      city: 'Solapur',
-      state: 'Maharashtra',
-      country: 'India',
-      pincode: '',
-      isAnonymousAsBeneficiary: false,
-      dateOfBirth: undefined,
-      gender: undefined,
-      aadhaarCard: null,
-      addressProof: null,
-      occupation: '',
-      familyMembers: 0,
-      isWidow: false,
-      panNumber: '',
-      bankAccountName: '',
-      bankName: '',
-      bankAccountNumber: '',
-      bankIfscCode: '',
-      upiPhoneNumbers: [{value:''}],
-      upiIds: [{value:''}],
       hasReferral: false,
       referredByUserId: '',
       referredByUserName: '',
@@ -380,27 +280,16 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     form.reset();
       setSelectedReferralDetails(null);
       setCaseRawText("");
-      setBeneficiaryRawText("");
-      setAadhaarPreview(null);
-      setAddressProofPreview(null);
-      setOtherDocumentsPreviews([]);
   };
 
   const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset } = form;
   
-  const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
-  const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
-
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
   const beneficiaryType = watch("beneficiaryType");
   const linkBeneficiaryLater = watch("linkBeneficiaryLater");
   const hasReferral = watch("hasReferral");
-  const newBeneficiaryFirstName = watch("newBeneficiaryFirstName");
-  const newBeneficiaryMiddleName = watch("newBeneficiaryMiddleName");
-  const newBeneficiaryLastName = watch("newBeneficiaryLastName");
-  const newBeneficiaryFullName = watch("newBeneficiaryFullName");
   const isHistoricalRecord = watch("isHistoricalRecord");
   
   const dynamicText = useMemo(() => {
@@ -436,31 +325,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     };
   }, [selectedPurposeName]);
   
-  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fullName = e.target.value;
-    setValue('newBeneficiaryFullName', fullName, { shouldDirty: true });
-    const nameParts = fullName.split(' ').filter(Boolean);
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts[nameParts.length - 1] || '';
-    const middleName = nameParts.slice(1, -1).join(' ');
-    setValue('newBeneficiaryFirstName', firstName, { shouldDirty: true });
-    setValue('newBeneficiaryMiddleName', middleName, { shouldDirty: true });
-    setValue('newBeneficiaryLastName', lastName, { shouldDirty: true });
-  }
-
-  useEffect(() => {
-    const fullNameFromParts = `${newBeneficiaryFirstName || ''} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName || ''}`.replace(/\s+/g, ' ').trim();
-    if (fullNameFromParts !== newBeneficiaryFullName) {
-        setValue('newBeneficiaryFullName', fullNameFromParts, { shouldDirty: true });
-    }
-  }, [newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryFullName, setValue]);
-
-  useEffect(() => {
-     if (beneficiaryType === 'new' && newBeneficiaryFirstName && newBeneficiaryLastName && !form.formState.dirtyFields.newBeneficiaryUserId) {
-        const generatedUserId = `${newBeneficiaryFirstName.toLowerCase()}.${newBeneficiaryLastName.toLowerCase()}`.replace(/\s+/g, '');
-        setValue('newBeneficiaryUserId', generatedUserId, { shouldValidate: true });
-    }
-  }, [beneficiaryType, newBeneficiaryFirstName, newBeneficiaryLastName, setValue, form.formState.dirtyFields.newBeneficiaryUserId]);
 
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
@@ -476,68 +340,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
         form.setValue('isLoan', false, { shouldDirty: true });
     }
   }, [selectedPurposeName, form]);
-    
-  const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
-    if (!value) {
-        setState(initialAvailabilityState);
-        return;
-    }
-    setState({ isChecking: true, isAvailable: null });
-    const result = await checkAvailability(field, value);
-    setState({ isChecking: false, ...result });
-  }, []);
 
-  // Debounced values
-  const debouncedUserId = useDebounce(watch('newBeneficiaryUserId'), 500);
-  const debouncedEmail = useDebounce(watch('email'), 500);
-  const debouncedPhone = useDebounce(watch('newBeneficiaryPhone'), 500);
-  const debouncedPan = useDebounce(watch('panNumber'), 500);
-  const debouncedAadhaar = useDebounce(watch('newBeneficiaryAadhaar'), 500);
-  const debouncedBankAccount = useDebounce(watch('bankAccountNumber'), 500);
-  const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
-
-  // Effects for debounced checks
-  useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedEmail) handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
-
-  useEffect(() => {
-    debouncedUpiIds?.forEach((upi, index) => {
-        if(upi.value) handleAvailabilityCheck('upiId', upi.value, (state) => setUpiIdStates(prev => ({...prev, [index]: state})));
-    });
-  }, [debouncedUpiIds, handleAvailabilityCheck]);
-
-
-  const handleGetTextFromDocuments = async (filesToScan: (File | null | undefined)[], textSetter: React.Dispatch<React.SetStateAction<string>>, loadingSetter: React.Dispatch<React.SetStateAction<boolean>>) => {
-      const validFiles = filesToScan.filter((file): file is File => file instanceof File && file.size > 0);
-      if (validFiles.length === 0) {
-          toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
-          return;
-      }
-      loadingSetter(true);
-      const formData = new FormData();
-      validFiles.forEach((file, index) => {
-          formData.append(`file_${index}`, file);
-      });
-  
-      try {
-          const result = await getRawTextFromImage(formData);
-          if (result.success && result.rawText) {
-              textSetter(result.rawText);
-              toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
-          } else {
-              toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text from the documents.' });
-          }
-      } catch (e) {
-          toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
-      } finally {
-          loadingSetter(false);
-      }
-  };
-    
   const handleFullAutoFill = async () => {
     if (!caseRawText) {
       toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from documents first.' });
@@ -622,103 +425,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     setIsRefreshingStory(false);
   }
 
-  const handleBeneficiaryAutoFill = async (isRefresh = false) => {
-    if (!beneficiaryRawText) {
-         toast({ variant: 'destructive', title: 'No Text', description: 'Please extract text from beneficiary documents first.' });
-        return;
-    }
-    
-    const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsBeneficiaryAnalyzing;
-    loadingSetter(true);
-
-    let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
-    if (isRefresh && extractedBeneficiaryDetails) {
-        missingFields = Object.keys(extractedBeneficiaryDetails).filter(key => !extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
-    }
-    const analysisResult = await handleExtractLeadBeneficiaryDetailsFromText(beneficiaryRawText, missingFields.length > 0 ? missingFields : undefined);
-            
-    if (analysisResult.success && analysisResult.details) {
-         if (isRefresh && extractedBeneficiaryDetails) {
-            // Merge new results with existing ones
-            const mergedDetails = { ...extractedBeneficiaryDetails, ...analysisResult.details };
-            setExtractedBeneficiaryDetails(mergedDetails);
-            toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
-        } else {
-            setExtractedBeneficiaryDetails(analysisResult.details);
-        }
-    } else {
-        toast({ variant: 'destructive', title: 'Analysis Failed', description: analysisResult.error || "Could not extract structured details from text." });
-    }
-    loadingSetter(false);
-  }
-
-  const beneficiaryDialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
-    { key: 'beneficiaryFullName', label: 'Full Name' },
-    { key: 'fatherName', label: "Father's Name" },
-    { key: 'dateOfBirth', label: 'Date of Birth' },
-    { key: 'gender', label: 'Gender' },
-    { key: 'beneficiaryPhone', label: 'Phone' },
-    { key: 'aadhaarNumber', label: 'Aadhaar Number' },
-    { key: 'address', label: 'Address' },
-    { key: 'city', label: 'City' },
-    { key: 'pincode', label: 'Pincode' },
-    { key: 'country', label: 'Country' },
-];
-
-  const applyExtractedBeneficiaryDetails = () => {
-    if (!extractedBeneficiaryDetails) return;
-    const details = extractedBeneficiaryDetails;
-    
-    // Iterate over the keys to set form values
-    Object.entries(details).forEach(([key, value]) => {
-        if (value) {
-            switch (key) {
-                case 'beneficiaryFullName': setValue('newBeneficiaryFullName', value, { shouldDirty: true }); break;
-                case 'beneficiaryFirstName': setValue('newBeneficiaryFirstName', value, { shouldDirty: true }); break;
-                case 'beneficiaryMiddleName': setValue('newBeneficiaryMiddleName', value, { shouldDirty: true }); break;
-                case 'beneficiaryLastName': setValue('newBeneficiaryLastName', value, { shouldDirty: true }); break;
-                case 'fatherName': setValue('newBeneficiaryFatherName', value, { shouldDirty: true }); break;
-                case 'beneficiaryPhone':
-                    const phone = value.replace(/\D/g, '').slice(-10);
-                    setValue('newBeneficiaryPhone', phone, { shouldDirty: true, shouldValidate: true });
-                    break;
-                case 'aadhaarNumber':
-                    setValue('newBeneficiaryAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true });
-                    break;
-                case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
-                case 'city': setValue('city', value, { shouldDirty: true }); break;
-                case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
-                case 'country': setValue('country', value, { shouldDirty: true }); break;
-                case 'gender':
-                    const genderValue = value as 'Male' | 'Female' | 'Other';
-                    if (['Male', 'Female', 'Other'].includes(genderValue)) {
-                        setValue('gender', genderValue, { shouldDirty: true });
-                    }
-                    break;
-                case 'dateOfBirth':
-                    const dateString = value.replace(/\s/g, '');
-                    const parts = dateString.split(/[\/\-]/);
-                    let date: Date | null = null;
-                    if (parts.length === 3) {
-                        const [d, m, y] = parts;
-                        if (y.length === 4) {
-                            date = new Date(`${y}-${m}-${d}`);
-                        } else if (y.length === 2) {
-                            date = new Date(`${parseInt(y) > 50 ? '19' : '20'}${y}-${m}-${d}`);
-                        }
-                    }
-                    if (date && !isNaN(date.getTime())) {
-                        setValue('dateOfBirth', date, { shouldDirty: true });
-                    }
-                    break;
-            }
-        }
-    });
-
-    toast({ variant: 'success', title: 'Auto-fill Complete', description: 'Beneficiary details have been populated. Please review.' });
-    setExtractedBeneficiaryDetails(null);
-  }
-
   async function onSubmit(values: AddLeadFormValues, forceCreate: boolean = false) {
     if (!adminUser?.id) {
       toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log in again." });
@@ -733,20 +439,15 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       const value = values[formKey] as any;
       if (value) {
         if (Array.isArray(value)) {
-            if (key === 'otherDocuments') {
+             if (key === 'otherDocuments') {
                 value.forEach(f => { if(f instanceof File) formData.append(key, f) });
-            } else if (key === 'upiIds' || key === 'upiPhoneNumbers') {
-                value.forEach(item => item.value && formData.append(key, item.value));
-            }
-             else {
+            } else {
                  value.forEach(v => formData.append(key, v));
             }
         } else if (value instanceof Date) {
           formData.append(key, value.toISOString());
         } else if (typeof value === 'boolean') {
           if (value) formData.append(key, 'on');
-        } else if (value instanceof File) {
-            formData.append(key, value);
         } else {
           formData.append(key, String(value));
         }
@@ -784,10 +485,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       if (selectedCategory === 'College Fees') return leadConfiguration.collegeYearOptions || [];
       return [];
   }, [selectedCategory, leadConfiguration]);
-
-  const isAnyFieldChecking = userIdState.isChecking || emailState.isChecking || phoneState.isChecking || panState.isChecking || aadhaarState.isChecking || bankAccountState.isChecking || Object.values(upiIdStates).some(s => s.isChecking);
-  const isAnyFieldInvalid = userIdState.isAvailable === false || emailState.isAvailable === false || phoneState.isAvailable === false || panState.isAvailable === false || aadhaarState.isAvailable === false || bankAccountState.isAvailable === false || Object.values(upiIdStates).some(s => s.isAvailable === false);
-
 
   return (
     <>
@@ -841,9 +538,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 field.onChange(value as 'existing' | 'new');
                                 // Reset other fields when switching
                                 setValue('beneficiaryId', undefined);
-                                setValue('newBeneficiaryFirstName', '');
-                                setValue('newBeneficiaryLastName', '');
-                                setValue('newBeneficiaryPhone', '');
                             }}
                             value={field.value}
                             className="grid grid-cols-2 gap-4"
@@ -883,7 +577,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 className={cn("w-full justify-between", !field.value && "text-muted-foreground" )}
                                 >
                                 {field.value
-                                    ? potentialBeneficiaries.find(
+                                    ? users.find(
                                         (user) => user.id === field.value
                                     )?.name
                                     : "Search by name, phone, Aadhaar..."}
@@ -893,13 +587,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                             </PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
-                                <CommandInput placeholder="Search by name, phone, Aadhaar, PAN, UPI..." />
+                                <CommandInput placeholder="Search user..." />
                                 <CommandList>
                                     <CommandEmpty>No beneficiaries found.</CommandEmpty>
                                     <CommandGroup>
-                                    {potentialBeneficiaries.map((user) => (
+                                    {users.filter(u => u.roles.includes('Beneficiary')).map((user) => (
                                         <CommandItem
-                                        value={`${user.name} ${user.phone} ${user.aadhaarNumber} ${user.panNumber} ${user.upiIds?.join(' ')}`}
+                                        value={`${user.name} ${user.phone} ${user.aadhaarNumber}`}
                                         key={user.id}
                                         onSelect={() => {
                                             form.setValue("beneficiaryId", user.id!);
@@ -921,144 +615,11 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     />
                 ) : (
                     <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                        <Accordion type="single" collapsible>
-                            <AccordionItem value="scan-beneficiary-docs">
-                                <AccordionTrigger>
-                                     <div className="flex items-center gap-2 text-primary">
-                                        <ScanSearch className="h-5 w-5" />
-                                        Scan Beneficiary ID Card (Optional)
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent className="pt-4">
-                                     <div className="space-y-4 p-4 border rounded-lg bg-background">
-                                         <p className="text-sm text-muted-foreground">Upload an Aadhaar card to auto-fill the new beneficiary's details.</p>
-                                          <FormField control={form.control} name="aadhaarCard" render={({ field: { onChange, value, ...fieldProps } }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" accept="image/*,application/pdf" ref={aadhaarInputRef} onChange={e => { onChange(e.target.files?.[0]); }} /></FormControl><FormMessage /></FormItem>)} />
-                                          
-                                         <div className="flex flex-col sm:flex-row gap-2">
-                                             <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromDocuments([getValues('aadhaarCard')], setBeneficiaryRawText, setIsBeneficiaryTextExtracting)} disabled={isBeneficiaryTextExtracting}>
-                                                {isBeneficiaryTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                                Scan Aadhaar
-                                            </Button>
-                                            <Button type="button" className="w-full" onClick={() => handleBeneficiaryAutoFill()} disabled={!beneficiaryRawText || isBeneficiaryAnalyzing}>
-                                                {isBeneficiaryAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                                Fetch Beneficiary Details
-                                            </Button>
-                                         </div>
-                                         {beneficiaryRawText && (
-                                            <div className="space-y-2 pt-4">
-                                                <Label>Extracted Text</Label>
-                                                <Textarea value={beneficiaryRawText} readOnly rows={8} className="text-xs font-mono bg-background" />
-                                            </div>
-                                        )}
-                                     </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                        <h3 className="font-medium pt-4">New Beneficiary Details</h3>
-                        <FormField control={form.control} name="newBeneficiaryFullName" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Full Name" {...field} onChange={handleFullNameChange} /></FormControl><FormDescription>Edit this to automatically update the fields below.</FormDescription><FormMessage /></FormItem>)} />
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField control={form.control} name="newBeneficiaryFirstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="First Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="newBeneficiaryMiddleName" render={({ field }) => (<FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="newBeneficiaryLastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Last Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        </div>
-                        
-                        <FormField
-                            control={form.control}
-                            name="newBeneficiaryUserId"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>User ID</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="auto-generated or custom" {...field} />
-                                </FormControl>
-                                <AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('newBeneficiaryUserId', s, { shouldValidate: true })} />
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField control={form.control} name="newBeneficiaryFatherName" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Name</FormLabel><FormControl><Input placeholder="Father's Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="newBeneficiaryPhone"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Phone Number</FormLabel>
-                                    <FormControl>
-                                        <Input type="tel" maxLength={10} placeholder="Enter 10-digit phone number" {...field} />
-                                    </FormControl>
-                                    <AvailabilityFeedback state={phoneState} fieldName="phone number" />
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="newBeneficiaryAadhaar"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Aadhaar Number {isAadhaarMandatory && <span className="text-destructive">*</span>}</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
-                                    </FormControl>
-                                     <AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar number" />
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                        </div>
-                        <FormField control={form.control} name="gender" render={({ field }) => (
-                            <FormItem className="space-y-3">
-                                <FormLabel>Gender</FormLabel>
-                                <FormControl>
-                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 pt-2">
-                                        <FormItem className="flex items-center space-x-2"><RadioGroupItem value="Male" id="male" /><FormLabel htmlFor="male" className="font-normal">Male</FormLabel></FormItem>
-                                        <FormItem className="flex items-center space-x-2"><RadioGroupItem value="Female" id="female" /><FormLabel htmlFor="female" className="font-normal">Female</FormLabel></FormItem>
-                                    </RadioGroup>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>)} />
-                        
-                        <Separator className="my-6" />
-                        <h4 className="font-medium">Address Details</h4>
-                        <FormField control={form.control} name="addressLine1" render={({field}) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField control={form.control} name="city" render={({field}) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="state" render={({field}) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pincode" render={({field}) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        </div>
-                         <FormField control={form.control} name="country" render={({field}) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-
-                        <Separator className="my-6" />
-                        <h4 className="font-medium">Verification & Payment Details</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="panNumber" render={({field}) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={panState} fieldName="PAN" /><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="bankAccountNumber" render={({field}) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={bankAccountState} fieldName="Bank Account" /><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="bankAccountName" render={({field}) => (<FormItem><FormLabel>Account Holder Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="bankIfscCode" render={({field}) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                        </div>
-
-                        <Separator className="my-6" />
-                        <h4 className="font-medium">UPI Details</h4>
-                        {upiIdFields.map((field, index) => (
-                           <FormField
-                              control={form.control}
-                              key={field.id}
-                              name={`upiIds.${index}.value`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <div className="flex items-center gap-2">
-                                    <FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl>
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                  </div>
-                                   <AvailabilityFeedback state={upiIdStates[index] || initialAvailabilityState} fieldName="UPI ID" />
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                        ))}
-                         <Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" /> Add UPI ID</Button>
-
+                       <AddUserForm settings={settings} isSubForm={true} prefilledData={extractedBeneficiaryDetails || undefined} onUserCreate={(user) => {
+                          setValue('beneficiaryId', user.id, { shouldDirty: true });
+                          setValue('beneficiaryType', 'existing');
+                          toast({ variant: "success", title: "Beneficiary Created & Selected", description: `${user.name} is now ready.` });
+                       }} />
                     </div>
                 )}
                 </>
@@ -1211,7 +772,6 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                         const currentFiles = getValues('otherDocuments') || [];
                                                         const updatedFiles = [...currentFiles, ...newFiles];
                                                         field.onChange(updatedFiles);
-                                                        setOtherDocumentsPreviews(urls => [...urls, ...newFiles.map(file => URL.createObjectURL(file))]);
                                                     }}
                                                 />
                                             </FormControl>
@@ -1219,57 +779,9 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                         </FormItem>
                                     )}
                                 />
-                                {otherDocumentsPreviews.length > 0 && (
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                        {otherDocumentsPreviews.map((url, index) => {
-                                             const files = getValues('otherDocuments') || [];
-                                             const zoom = zoomLevels[String(index)]?.zoom || 1;
-                                             const rotation = zoomLevels[String(index)]?.rotation || 0;
-                                             const isImage = files[index]?.type.startsWith('image/');
-                                            return (
-                                            <div key={url} className="relative group p-1 border rounded-lg bg-background space-y-2">
-                                                 <div className="w-full h-24 overflow-auto flex items-center justify-center">
-                                                    {isImage ? (
-                                                        <Image
-                                                            src={url}
-                                                            alt={`Preview ${index + 1}`}
-                                                            width={100 * zoom}
-                                                            height={100 * zoom}
-                                                            className="object-contain transition-transform"
-                                                            style={{transform: `rotate(${rotation}deg) scale(${zoom})`}}
-                                                        />
-                                                    ) : (
-                                                        <FileIcon className="w-12 h-12 text-muted-foreground" />
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground truncate">{getValues('otherDocuments')?.[index]?.name}</p>
-                                                <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-0.5 rounded-md">
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), zoom: (z[String(index)]?.zoom || 1) * 1.2}}))}><ZoomIn className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: Math.max(0.5, (z[String(index)]?.zoom || 1) / 1.2)}))}><ZoomOut className="h-3 w-3"/></Button>
-                                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [String(index)]: {...(z[String(index)] || {zoom:1, rotation: 0}), rotation: ((z[String(index)]?.rotation || 0) + 90) % 360}}))}><RotateCw className="h-3 w-3"/></Button>
-                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
-                                                         const currentFiles = getValues('otherDocuments') || [];
-                                                         const updatedFiles = currentFiles.filter((_, i) => i !== index);
-                                                         setValue('otherDocuments', updatedFiles, { shouldDirty: true });
-                                                         setOtherDocumentsPreviews(prev => prev.filter((_, i) => i !== index));
-                                                    }}><XCircle className="h-4 w-4 text-destructive"/></Button>
-                                                </div>
-                                            </div>
-                                        )})}
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="h-full flex-col gap-2 border-dashed min-h-28"
-                                            onClick={() => otherDocsInputRef.current?.click()}
-                                        >
-                                            <PlusCircle className="h-8 w-8 text-muted-foreground" />
-                                            <span className="text-xs text-muted-foreground">Add More Files</span>
-                                        </Button>
-                                    </div>
-                                )}
                                 
                                 <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleGetTextFromDocuments(getValues('otherDocuments'), setCaseRawText, setIsCaseTextExtracting)} disabled={isCaseTextExtracting}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => {}} disabled={isCaseTextExtracting}>
                                         {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Case Details
                                     </Button>
@@ -1386,7 +898,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                 />
                 
                 <div className="flex gap-4 pt-6 border-t">
-                    <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
+                    <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isSubmitting ? 'Creating...' : 'Create Lead'}
                     </Button>
@@ -1441,7 +953,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
-                    {beneficiaryDialogFields.map(({ key, label }) => {
+                    {dialogFields.map(({ key, label }) => {
                         const value = extractedBeneficiaryDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
                         return (
                             <div key={key} className="flex justify-between border-b pb-1">
@@ -1456,13 +968,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     })}
                 </div>
                 <AlertDialogFooter>
-                     <Button variant="outline" onClick={() => handleBeneficiaryAutoFill(true)} disabled={isRefreshingDetails}>
+                     <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
                         {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
                         Refresh
                     </Button>
                     <div className='flex gap-2'>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={applyExtractedBeneficiaryDetails}>Apply & Fill Form</AlertDialogAction>
+                        <AlertDialogAction onClick={()=>{}}>Apply & Fill Form</AlertDialogAction>
                     </div>
                 </AlertDialogFooter>
             </AlertDialogContent>
