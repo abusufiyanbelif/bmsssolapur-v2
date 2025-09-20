@@ -370,8 +370,7 @@ export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> 
     try {
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION), 
-            where("campaignId", "==", campaignId),
-            orderBy("dateCreated", "desc")
+            where("campaignId", "==", campaignId)
         );
         const querySnapshot = await getDocs(leadsQuery);
         const leads: Lead[] = [];
@@ -384,12 +383,11 @@ export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> 
                 createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
             } as Lead);
         });
+        // Sort in memory instead of requiring a composite index
+        leads.sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime());
         return leads;
     } catch (error) {
         console.error("Error fetching campaign leads:", error);
-        if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'campaignId' (ascending) and 'dateCreated' (descending).");
-        }
         return [];
     }
 };
