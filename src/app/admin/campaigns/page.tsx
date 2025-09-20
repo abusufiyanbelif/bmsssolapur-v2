@@ -1,3 +1,4 @@
+
 // src/app/admin/campaigns/page.tsx
 "use client";
 
@@ -9,7 +10,7 @@ import { getAllCampaigns, type Campaign, type CampaignStatus } from "@/services/
 import { handleBulkDeleteCampaigns } from "./actions";
 import { getAllLeads, Lead } from "@/services/lead-service";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle, Check, Share2, Info, TrendingUp } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle, Check, Share2, Info, TrendingUp, Image as ImageIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -21,8 +22,9 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { getQuotes } from "@/app/home/actions";
+import { getInspirationalQuotes as getQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import type { Quote } from "@/services/types";
+import Image from "next/image";
 
 
 const statusColors: Record<CampaignStatus, string> = {
@@ -253,22 +255,26 @@ function CampaignsPageContent() {
                      const isOverfunded = campaign.fundingProgress > 100;
                      const isUnfunded = campaign.raisedAmount === 0 && campaign.status !== 'Upcoming';
                      return (
-                        <Card key={campaign.id} className={cn("flex flex-col h-full hover:shadow-lg transition-shadow rounded-lg", selectedCampaigns.includes(campaign.id!) && "ring-2 ring-primary")}>
-                            <div className="flex items-start p-4 gap-4">
-                            {isMobile && <Checkbox className="mt-1.5" checked={selectedCampaigns.includes(campaign.id!)} onCheckedChange={checked => {
-                                    setSelectedCampaigns(prev => checked ? [...prev, campaign.id!] : prev.filter(id => id !== campaign.id!))
-                            }} />}
-                                <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex flex-col h-full flex-grow">
+                        <Card key={campaign.id} className={cn("flex flex-col h-full hover:shadow-lg transition-shadow rounded-lg overflow-hidden", selectedCampaigns.includes(campaign.id!) && "ring-2 ring-primary")}>
+                            <div className="relative">
+                               {campaign.imageUrl ? (
+                                    <Image src={campaign.imageUrl} alt={campaign.name} width={400} height={200} className="w-full h-40 object-cover" />
+                               ) : (
+                                    <div className="h-40 bg-muted/50 flex items-center justify-center">
+                                        <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                                    </div>
+                               )}
+                                <div className="absolute top-2 right-2 flex items-center gap-2">
+                                     <Badge variant="outline" className={cn("capitalize backdrop-blur-sm", statusColors[campaign.status])}>
+                                        {campaign.status}
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="p-4 flex flex-col flex-grow">
+                                <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex-grow">
                                     <CardHeader className="p-0">
-                                        <div className="flex justify-between items-start gap-4">
-                                            <div>
-                                                <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                                                <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
-                                            </div>
-                                            <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
-                                                {campaign.status}
-                                            </Badge>
-                                        </div>
+                                        <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                                        <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4 flex-grow p-0 pt-4">
                                         <div>
@@ -314,15 +320,15 @@ function CampaignsPageContent() {
                                             </div>
                                         </div>
                                     </CardContent>
-                                    <CardFooter className="flex justify-between items-center bg-muted/50 p-4 -mx-4 -mb-4 mt-4">
-                                        <div className="text-xs text-muted-foreground">
-                                            <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
-                                        </div>
-                                    </CardFooter>
                                 </Link>
-                                <div className="flex-shrink-0" onClick={(e) => e.preventDefault()}>
-                                    {renderActions(campaign)}
-                                </div>
+                                <CardFooter className="flex justify-between items-center bg-muted/50 p-4 -mx-4 -mb-4 mt-4">
+                                    <div className="text-xs text-muted-foreground">
+                                        <span className="font-semibold text-yellow-600">{campaign.statusCounts.Pending || 0}</span> Pending, <span className="font-semibold text-blue-600">{campaign.statusCounts.Partial || 0}</span> Partial
+                                    </div>
+                                     <div className="flex-shrink-0">
+                                        {renderActions(campaign)}
+                                    </div>
+                                </CardFooter>
                             </div>
                         </Card>
                     );

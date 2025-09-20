@@ -9,6 +9,7 @@ import { Timestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { doc } from "firebase/firestore";
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from '@/services/public-data-service';
+import { uploadFile } from "@/services/storage-service";
 
 
 interface FormState {
@@ -16,36 +17,36 @@ interface FormState {
     error?: string;
 }
 
-interface CampaignFormData {
-    name: string;
-    description: string;
-    goal: number;
-    startDate: Date;
-    endDate: Date;
-    status: CampaignStatus;
-    acceptableDonationTypes: DonationType[];
-    linkedLeadIds?: string[];
-    linkedDonationIds?: string[];
-}
-
-export async function handleCreateCampaign(formData: CampaignFormData): Promise<FormState> {
+export async function handleCreateCampaign(formData: FormData): Promise<FormState> {
   try {
-    const campaignId = formData.name.toLowerCase().replace(/\s+/g, '-');
+    const name = formData.get('name') as string;
+    const campaignId = name.toLowerCase().replace(/\s+/g, '-');
+    let imageUrl: string | undefined;
+
+    const imageFile = formData.get('image') as File | null;
+    if (imageFile && imageFile.size > 0) {
+        const uploadPath = `campaigns/${campaignId}/images/`;
+        imageUrl = await uploadFile(imageFile, uploadPath);
+    }
     
     // Create the campaign first
     const newCampaign = await createCampaign({
         id: campaignId,
-        name: formData.name,
-        description: formData.description,
-        goal: formData.goal,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        status: formData.status,
-        acceptableDonationTypes: formData.acceptableDonationTypes,
+        name: name,
+        description: formData.get('description') as string,
+        goal: parseFloat(formData.get('goal') as string),
+        startDate: new Date(formData.get('startDate') as string),
+        endDate: new Date(formData.get('endDate') as string),
+        status: formData.get('status') as CampaignStatus,
+        imageUrl: imageUrl,
+        acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
     });
     
+    const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];
+    const linkedDonationIds = formData.getAll('linkedDonationIds') as string[];
+
     // If there are linked items, update them in a batch
-    if (formData.linkedLeadIds?.length || formData.linkedDonationIds?.length) {
+    if (linkedLeadIds.length > 0 || linkedDonationIds.length > 0) {
         const batch = writeBatch(db);
         const updatePayload = {
             campaignId: newCampaign.id,
@@ -53,13 +54,13 @@ export async function handleCreateCampaign(formData: CampaignFormData): Promise<
         };
 
         // Update leads
-        formData.linkedLeadIds?.forEach(leadId => {
+        linkedLeadIds.forEach(leadId => {
             const leadRef = doc(db, 'leads', leadId);
             batch.update(leadRef, updatePayload);
         });
 
         // Update donations
-        formData.linkedDonationIds?.forEach(donationId => {
+        linkedDonationIds.forEach(donationId => {
             const donationRef = doc(db, 'donations', donationId);
             batch.update(donationRef, updatePayload);
         });

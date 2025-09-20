@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,11 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Loader2, Save, X, Edit } from "lucide-react";
+import { CalendarIcon, Loader2, Save, X, Edit, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { handleUpdateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
 import { Campaign, CampaignStatus } from "@/services/campaign-service";
@@ -30,6 +31,7 @@ import type { DonationType } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import Image from "next/image";
 
 const campaignStatuses = ['Upcoming', 'Active', 'Completed', 'Cancelled'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
@@ -38,6 +40,7 @@ const formSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters."),
   description: z.string().min(10, "Description must be at least 10 characters."),
   goal: z.coerce.number().min(1, "Goal must be a positive number."),
+  image: z.any().optional(),
   dates: z.object({
     from: z.date({ required_error: "A start date is required."}),
     to: z.date({ required_error: "An end date is required."}),
@@ -59,6 +62,8 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(campaign.imageUrl || null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(formSchema),
@@ -66,6 +71,7 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
         name: campaign.name,
         description: campaign.description,
         goal: campaign.goal,
+        image: null,
         dates: {
             from: campaign.startDate,
             to: campaign.endDate,
@@ -75,13 +81,14 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
     },
   });
 
-  const { formState: { isDirty }, reset, handleSubmit } = form;
+  const { formState: { isDirty }, reset, handleSubmit, setValue } = form;
 
   const handleCancel = () => {
     reset({
         name: campaign.name,
         description: campaign.description,
         goal: campaign.goal,
+        image: null,
         dates: {
             from: campaign.startDate,
             to: campaign.endDate,
@@ -89,20 +96,40 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
         status: campaign.status,
         acceptableDonationTypes: campaign.acceptableDonationTypes || [],
     });
+    setImagePreview(campaign.imageUrl || null);
     setIsEditing(false);
   }
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        setValue('image', file);
+        setImagePreview(URL.createObjectURL(file));
+    } else {
+        setValue('image', null);
+        setImagePreview(campaign.imageUrl || null);
+    }
+  };
 
   async function onSubmit(values: CampaignFormValues) {
     setIsSubmitting(true);
-    const result = await handleUpdateCampaign(campaign.id!, {
-      name: values.name,
-      description: values.description,
-      goal: values.goal,
-      startDate: values.dates.from,
-      endDate: values.dates.to,
-      status: values.status,
-      acceptableDonationTypes: values.acceptableDonationTypes as DonationType[],
-    });
+    
+    const formData = new FormData();
+    formData.append('name', values.name);
+    formData.append('description', values.description);
+    formData.append('goal', String(values.goal));
+    formData.append('startDate', values.dates.from.toISOString());
+    formData.append('endDate', values.dates.to.toISOString());
+    formData.append('status', values.status);
+    values.acceptableDonationTypes.forEach(dt => formData.append('acceptableDonationTypes', dt));
+    if (values.image) {
+      formData.append('image', values.image);
+    }
+    if (campaign.imageUrl) {
+        formData.append('existingImageUrl', campaign.imageUrl);
+    }
+
+    const result = await handleUpdateCampaign(campaign.id!, formData);
     setIsSubmitting(false);
 
     if (result.success) {
@@ -172,6 +199,25 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
                     <FormMessage />
                     </FormItem>
                 )}
+                />
+                <FormField
+                    control={form.control}
+                    name="image"
+                    render={() => (
+                        <FormItem>
+                            <FormLabel>Campaign Image</FormLabel>
+                            <FormControl>
+                                <Input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} disabled={!isEditing} />
+                            </FormControl>
+                            {imagePreview && (
+                                <div className="mt-4 relative w-full h-48">
+                                    <Image src={imagePreview} alt="Campaign image preview" fill className="rounded-md object-cover" />
+                                </div>
+                            )}
+                            <FormDescription>Upload a new background image to replace the current one.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField

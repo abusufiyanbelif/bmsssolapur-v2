@@ -19,11 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Loader2, X, Check, ChevronsUpDown, XCircle } from "lucide-react";
+import { CalendarIcon, Loader2, X, Check, ChevronsUpDown, XCircle, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { handleCreateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
 import { CampaignStatus, DonationType, Lead, Donation } from "@/services/types";
@@ -31,15 +31,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 const campaignStatuses = ['Upcoming', 'Active', 'Completed', 'Cancelled'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
-
 
 const formSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters."),
   description: z.string().min(10, "Description must be at least 10 characters."),
   goal: z.coerce.number().min(1, "Goal must be a positive number."),
+  image: z.any().optional(),
   dates: z.object({
     from: z.date({ required_error: "A start date is required."}),
     to: z.date({ required_error: "An end date is required."}),
@@ -65,6 +66,8 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
   const [donationPopoverOpen, setDonationPopoverOpen] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(formSchema),
@@ -72,6 +75,7 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
         name: "",
         description: "",
         goal: 0,
+        image: null,
         status: "Upcoming",
         acceptableDonationTypes: [],
         linkedLeadIds: [],
@@ -82,6 +86,17 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
   const { watch, setValue } = form;
   const linkedLeadIds = watch('linkedLeadIds') || [];
   const linkedDonationIds = watch('linkedDonationIds') || [];
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        setValue('image', file);
+        setImagePreview(URL.createObjectURL(file));
+    } else {
+        setValue('image', null);
+        setImagePreview(null);
+    }
+  };
 
   
   const handleCancel = () => {
@@ -95,16 +110,29 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
         linkedLeadIds: [],
         linkedDonationIds: [],
     });
+    setImagePreview(null);
+    if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+    }
   }
 
   async function onSubmit(values: CampaignFormValues) {
     setIsSubmitting(true);
-    const result = await handleCreateCampaign({
-      ...values,
-      startDate: values.dates.from,
-      endDate: values.dates.to,
-      acceptableDonationTypes: values.acceptableDonationTypes as DonationType[],
-    });
+    const formData = new FormData();
+    formData.append('name', values.name);
+    formData.append('description', values.description);
+    formData.append('goal', String(values.goal));
+    formData.append('startDate', values.dates.from.toISOString());
+    formData.append('endDate', values.dates.to.toISOString());
+    formData.append('status', values.status);
+    values.acceptableDonationTypes.forEach(dt => formData.append('acceptableDonationTypes', dt));
+    values.linkedLeadIds?.forEach(id => formData.append('linkedLeadIds', id));
+    values.linkedDonationIds?.forEach(id => formData.append('linkedDonationIds', id));
+    if (values.image) {
+      formData.append('image', values.image);
+    }
+
+    const result = await handleCreateCampaign(formData);
     setIsSubmitting(false);
 
     if (result.success) {
@@ -155,6 +183,25 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
               <FormMessage />
             </FormItem>
           )}
+        />
+        <FormField
+            control={form.control}
+            name="image"
+            render={() => (
+                <FormItem>
+                    <FormLabel>Campaign Image</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} />
+                    </FormControl>
+                     {imagePreview && (
+                        <div className="mt-4 relative w-full h-48">
+                            <Image src={imagePreview} alt="Campaign image preview" fill className="rounded-md object-cover" />
+                        </div>
+                    )}
+                    <FormDescription>Upload a background image for the campaign card.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FormField

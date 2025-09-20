@@ -6,6 +6,7 @@ import { updateCampaign, getCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
 import { CampaignStatus, DonationType } from "@/services/types";
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from "@/services/public-data-service";
+import { uploadFile } from "@/services/storage-service";
 
 
 interface FormState {
@@ -13,26 +14,25 @@ interface FormState {
     error?: string;
 }
 
-interface CampaignFormData {
-    name: string;
-    description: string;
-    goal: number;
-    startDate: Date;
-    endDate: Date;
-    status: CampaignStatus;
-    acceptableDonationTypes: DonationType[];
-}
-
-export async function handleUpdateCampaign(campaignId: string, formData: CampaignFormData): Promise<FormState> {
+export async function handleUpdateCampaign(campaignId: string, formData: FormData): Promise<FormState> {
   try {
+    let imageUrl: string | undefined = formData.get('existingImageUrl') as string | undefined;
+
+    const imageFile = formData.get('image') as File | null;
+    if (imageFile && imageFile.size > 0) {
+        const uploadPath = `campaigns/${campaignId}/images/`;
+        imageUrl = await uploadFile(imageFile, uploadPath);
+    }
+    
     await updateCampaign(campaignId, {
-        name: formData.name,
-        description: formData.description,
-        goal: formData.goal,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        status: formData.status,
-        acceptableDonationTypes: formData.acceptableDonationTypes,
+        name: formData.get('name') as string,
+        description: formData.get('description') as string,
+        goal: parseFloat(formData.get('goal') as string),
+        startDate: new Date(formData.get('startDate') as string),
+        endDate: new Date(formData.get('endDate') as string),
+        status: formData.get('status') as CampaignStatus,
+        imageUrl: imageUrl,
+        acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
     });
     
     const updatedCampaign = await getCampaign(campaignId);

@@ -278,6 +278,7 @@ export interface Campaign {
     name: string;
     description: string;
     goal: number;
+    imageUrl?: string;
     startDate: Date;
     endDate: Date;
     status: CampaignStatus;
