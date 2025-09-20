@@ -50,7 +50,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
-import { QrCodeDialog } from "@/app/organization/qr-code-dialog";
+import { QrCodeDialog } from "@/components/qr-code-dialog";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
@@ -309,6 +309,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
     const { control, handleSubmit, setValue, watch } = form;
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
+    const paymentApp = watch("paymentApp");
     
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
@@ -441,7 +442,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                                 </Button>
                             </div>
                         )}
-                        <FormField control={control} name="proof" render={({ field }) => (
+                         <FormField control={control} name="proof" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Proof of Donation</FormLabel>
                                 <FormControl>
@@ -533,7 +534,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                             )}
                         />
                         
-                        {extractedDetails ? (
+                         {extractedDetails ? (
                            <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
                                 <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
