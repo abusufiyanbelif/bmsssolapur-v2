@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useRouter } from 'next/navigation';
@@ -97,7 +98,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                     <Card key={campaign.id} className="flex flex-col">
                         <CardHeader>
                             <div className="flex justify-between items-start gap-4">
-                                <CardTitle>{campaign.name}</CardTitle>
+                                <CardTitle className="line-clamp-2">{campaign.name}</CardTitle>
                                  <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
                                     {campaign.status}
                                 </Badge>
@@ -107,7 +108,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow space-y-4">
-                            <p className="text-sm text-muted-foreground line-clamp-3">{campaign.description || "No details provided."}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-3 h-[60px]">{campaign.description || "No details provided."}</p>
                             <div>
                                 <div className="text-xs text-muted-foreground flex justify-between mb-1">
                                     <span>
