@@ -1,4 +1,3 @@
-
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -27,6 +26,7 @@ import { db } from './firebase';
 import { logActivity } from './activity-log-service';
 import type { Donation, DonationStatus, DonationType, DonationPurpose, User, LeadDonationAllocation, Lead, Allocation } from './types';
 import { format } from 'date-fns';
+import { getUser } from './user-service';
 
 // Re-export types for backward compatibility if other services import from here
 export type { Donation, DonationStatus, DonationType, DonationPurpose };
@@ -300,7 +300,7 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
     } catch (error) {
         console.error("Error fetching user donations:", error);
          if (error instanceof Error && error.message.includes('requires an index')) {
-            const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'donorId' in the 'donations' collection. Full error: ${error.message}`;
+            const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'donorId' in the 'donations' collection. Full error: ${detailedError}`;
             console.error(detailedError);
             return []; // Return empty array to prevent crash
         }
@@ -313,8 +313,7 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
     try {
         const donationsQuery = query(
             collection(db, DONATIONS_COLLECTION), 
-            where("campaignId", "==", campaignId),
-            orderBy("donationDate", "desc")
+            where("campaignId", "==", campaignId)
         );
         const querySnapshot = await getDocs(donationsQuery);
         const donations: Donation[] = [];
@@ -329,6 +328,8 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as Donation);
         });
+        // Sort in memory to avoid needing a composite index
+        donations.sort((a,b) => (b.donationDate as Date).getTime() - (a.donationDate as Date).getTime());
         return donations;
     } catch (error) {
         console.error("Error fetching campaign donations: ", error);
