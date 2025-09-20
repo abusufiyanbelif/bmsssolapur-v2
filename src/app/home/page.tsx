@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import { PublicHomePage } from "./public-home-page";
 import { Loader2 } from "lucide-react";
 import type { Quote, Lead, Campaign } from "@/services/types";
-import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./home/actions";
+import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./actions";
 import { useRouter } from 'next/navigation';
 
 
@@ -42,7 +42,10 @@ export default function Page() {
                 setQuotes(quotesData);
                 setOpenLeads(leadsData);
                 if (publicData && !publicData.error) {
-                    setCampaigns(publicData.campaigns || []);
+                    const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
+                        c => c.status === 'Active' || c.status === 'Upcoming'
+                    );
+                    setCampaigns(activeAndUpcomingCampaigns);
                     setAllLeads(publicData.leads || []);
                 }
 
