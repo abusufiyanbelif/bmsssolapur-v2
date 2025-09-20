@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useRouter } from 'next/navigation';
@@ -11,6 +10,7 @@ import { HandHeart, Target, CheckCircle, XCircle, Share2 } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import type { Campaign } from '@/services/types';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface CampaignWithStats extends Campaign {
     raisedAmount: number;
@@ -31,6 +31,7 @@ const statusColors: Record<string, string> = {
 
 export function CampaignList({ campaigns }: CampaignListProps) {
     const router = useRouter();
+    const { toast } = useToast();
     
     const handleDonateClick = (campaignId: string) => {
         router.push(`/donate?campaignId=${campaignId}`);
@@ -39,8 +40,23 @@ export function CampaignList({ campaigns }: CampaignListProps) {
     const handleShare = (campaign: CampaignWithStats) => {
         const campaignUrl = `${window.location.origin}/campaigns`;
         const message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        
+        if (navigator.share) {
+             navigator.share({
+                title: `Support Our Campaign: ${campaign.name}`,
+                text: message,
+                url: campaignUrl,
+            }).catch((error) => console.log('Error sharing', error));
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(message);
+            toast({
+                title: "Copied to Clipboard",
+                description: "Campaign message copied! You can now paste it to share.",
+            });
+        } else {
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
     };
 
     if (campaigns.length === 0) {

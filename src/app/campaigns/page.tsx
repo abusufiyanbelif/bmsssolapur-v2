@@ -1,42 +1,29 @@
 
-
-"use client";
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllCampaigns } from "./actions";
 import { CampaignList } from "./campaign-list";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { Campaign } from "@/services/types";
+import { Suspense } from "react";
+
+async function CampaignsData() {
+    try {
+        const campaigns = await getAllCampaigns();
+        return <CampaignList campaigns={campaigns} />;
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown server error occurred.";
+        return (
+            <Alert variant="destructive" className="my-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading Campaigns</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
+}
+
 
 export default function CampaignsPage() {
-    const [campaigns, setCampaigns] = useState<(Campaign & { raisedAmount: number; fundingProgress: number; })[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                setLoading(true);
-                setError(null);
-                const fetchedCampaigns = await getAllCampaigns();
-                if (fetchedCampaigns) {
-                    setCampaigns(fetchedCampaigns);
-                } else {
-                    setError("The campaigns list could not be retrieved from the server.");
-                }
-            } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "An unknown server error occurred.";
-                setError(`Failed to load campaign data: ${errorMessage}`);
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchData();
-    }, []);
-    
     return (
         <div className="flex-1 space-y-4">
             <h2 id="page-header" className="text-3xl font-bold tracking-tight font-headline text-primary scroll-mt-20">Fundraising Campaigns</h2>
@@ -49,20 +36,14 @@ export default function CampaignsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {loading ? (
+                    <Suspense fallback={
                         <div className="flex items-center justify-center py-10">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             <p className="ml-2">Loading campaigns...</p>
                         </div>
-                    ) : error ? (
-                         <Alert variant="destructive" className="my-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Error Loading Campaigns</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    ) : (
-                        <CampaignList campaigns={campaigns} />
-                    )}
+                    }>
+                        <CampaignsData />
+                    </Suspense>
                 </CardContent>
             </Card>
         </div>
