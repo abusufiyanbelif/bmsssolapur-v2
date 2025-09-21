@@ -26,7 +26,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useMemo } from "react";
 import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot, ZoomIn, ZoomOut, X, FileIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
