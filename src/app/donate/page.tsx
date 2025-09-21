@@ -51,9 +51,11 @@ import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
 import { QrCodeDialog } from "@/components/qr-code-dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 const donationPurposes = ['Zakat', 'Sadaqah', 'Fitr', 'Relief Fund'] as const;
+const paymentApps = ['Google Pay', 'PhonePe', 'Paytm', 'Other'] as const;
 
 // Schema for making a new online donation
 const onlineDonationSchema = z.object({
@@ -76,7 +78,7 @@ const recordDonationSchema = z.object({
   notes: z.string().optional(),
   proof: z.any().optional(), // No longer mandatory as it can be uploaded after
   // Extracted fields
-  paymentApp: z.string().optional(),
+  paymentApp: z.enum(paymentApps).optional(),
   senderName: z.string().optional(),
   googlePaySenderName: z.string().optional(),
   phonePeSenderName: z.string().optional(),
@@ -108,7 +110,7 @@ const initialRecordFormValues: Partial<RecordDonationFormValues> = {
     notes: '',
     proof: undefined,
     donationDate: new Date(),
-    paymentApp: '',
+    paymentApp: undefined,
     senderName: '',
     googlePaySenderName: '',
     phonePeSenderName: '',
@@ -317,6 +319,16 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
 
+    const transactionIdLabel = useMemo(() => {
+        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
+        switch (paymentApp) {
+            case 'PhonePe': return 'Transaction ID';
+            case 'Paytm': return 'UPI Ref. No';
+            case 'Google Pay': return 'UPI Transaction ID';
+            default: return 'Primary Transaction ID';
+        }
+    }, [paymentApp, paymentMethod]);
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0] || null;
@@ -364,7 +376,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
     const handleAutoFill = async () => {
         if (!rawText) return;
         setIsAnalyzing(true);
-        const result = await handleExtractDonationDetails(rawText);
+        const result = await handleExtractDonationDetails({ rawText });
         if (result.success && result.details) {
             const details = result.details;
             setExtractedDetails(details);
@@ -374,7 +386,10 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                         setValue('donationDate', new Date(value));
                     } else if (key === 'amount' && typeof value === 'number') {
                         setValue('amount', value);
-                    } else {
+                    } else if (key === 'paymentApp' && paymentApps.includes(value as any)) {
+                        setValue('paymentApp', value as any);
+                    }
+                    else {
                         setValue(key as any, value);
                     }
                 }
@@ -391,7 +406,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
         const formData = new FormData();
         Object.entries(values).forEach(([key, value]) => {
             if (value instanceof Date) formData.append(key, value.toISOString());
-            else if (value) formData.append(key, value);
+            else if (value) formData.append(key, String(value));
         });
         if (file) {
             formData.append('paymentScreenshot', file);
@@ -423,16 +438,6 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
         setValue('leadId', undefined);
         setValue('campaignId', undefined);
     };
-    
-    const transactionIdLabel = useMemo(() => {
-        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
-        switch (paymentApp) {
-            case 'PhonePe': return 'Transaction ID';
-            case 'Paytm': return 'UPI Ref. No';
-            case 'Google Pay': return 'UPI Transaction ID';
-            default: return 'Primary Transaction ID';
-        }
-    }, [paymentApp, paymentMethod]);
 
 
     return (
@@ -550,22 +555,20 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                                 </FormItem>
                             )}
                         />
-                        
-                         <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field}/></FormControl><FormMessage/></FormItem>)} />
-                        
-                        {extractedDetails && (
-                           <div className="space-y-4 p-4 border rounded-lg bg-green-500/10">
-                                <h3 className="font-semibold text-lg">Extracted Details (Review & Edit)</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {extractedDetails.paymentApp && <FormField control={form.control} name="paymentApp" render={({field}) => (<FormItem><FormLabel>Payment App</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                                    {extractedDetails.utrNumber && <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                                    {extractedDetails.senderName && <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />}
-                                    {extractedDetails.recipientName && <FormField control={form.control} name="recipientName" render={({field}) => (<FormItem><FormLabel>Recipient Name</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                                    {extractedDetails.googlePayTransactionId && <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                                    {extractedDetails.phonePeTransactionId && <FormField control={form.control} name="phonePeTransactionId" render={({field}) => (<FormItem><FormLabel>PhonePe ID</FormLabel><FormControl><Input {...field}/></FormControl></FormItem>)} />}
-                                </div>
-                            </div>
-                        )}
+
+                         <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger>Additional Transaction Details</AccordionTrigger>
+                                <AccordionContent className="pt-4 space-y-4">
+                                     <FormField control={form.control} name="paymentApp" render={({ field }) => ( <FormItem><FormLabel>Payment App</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an app" /></SelectTrigger></FormControl><SelectContent>{paymentApps.map(app => ( <SelectItem key={app} value={app}>{app}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                                     <FormField control={form.control} name="transactionId" render={({field}) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field}/></FormControl><FormMessage/></FormItem>)} />
+                                     <FormField control={form.control} name="utrNumber" render={({field}) => (<FormItem><FormLabel>UTR Number</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                     <FormField control={form.control} name="senderName" render={({field}) => (<FormItem><FormLabel>Sender Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                     <FormField control={form.control} name="senderUpiId" render={({field}) => (<FormItem><FormLabel>Sender UPI ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                     <FormField control={form.control} name="googlePayTransactionId" render={({field}) => (<FormItem><FormLabel>Google Pay Transaction ID</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                         
                         <FormField control={control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notes (Optional)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         
@@ -682,7 +685,7 @@ function DonatePageContent() {
         {!donationMethod && (
             <Card>
                 <CardHeader>
-                    <CardTitle>How would you like to donate?</CardTitle>
+                    <CardTitle>How would you like to contribute?</CardTitle>
                     <CardDescription>Please select one of the options below to proceed.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
