@@ -4,7 +4,50 @@ This document explains the step-by-step processes for key features in the applic
 
 ---
 
-## "Scan Screenshot" Donation Workflow
+## 1. Lead/Case Management Workflow
+
+This workflow details the lifecycle of a help request, from creation to closure.
+
+**Actors**: Administrator, Beneficiary
+
+---
+
+### Step-by-Step Process:
+
+1.  **Creation**:
+    *   **By Beneficiary**: A logged-in beneficiary navigates to `/request-help` and fills out a form detailing their need.
+    *   **By Admin**: An admin navigates to `/admin/leads/add`, selects or creates a beneficiary, and fills out the lead details, potentially using AI to scan documents and pre-fill the form.
+
+2.  **Initial Status**:
+    *   Upon creation, the lead's `caseVerification` status is set to **"Pending"**.
+    *   The `caseAction` status is also set to **"Pending"**.
+    *   The lead now appears in the **"Pending Lead Verifications"** section of the Admin Dashboard.
+
+3.  **Verification**:
+    *   An Administrator reviews the lead on its detail page (`/admin/leads/[id]`).
+    *   The admin verifies the details, checks any uploaded documents, and decides on the next step.
+    *   **If Approved**: The admin changes the `caseVerification` status to **"Verified"**. The `caseAction` status is automatically updated to **"Ready For Help"**.
+    *   **If Rejected**: The status is changed to **"Rejected"**, and the lead is removed from active queues.
+
+4.  **Publishing**:
+    *   A lead with the status **"Ready For Help"** now appears in the **"Leads Ready for Publishing"** section on the Admin Dashboard.
+    *   An admin can click "Publish" on the dashboard or edit the lead and set the `caseAction` to **"Publish"**.
+    *   This action triggers a server-side process that creates a sanitized, public-facing copy of the lead in the `publicLeads` collection, making it visible on the `/public-leads` page for donors.
+
+5.  **Funding & Allocation**:
+    *   Donors can view published leads and make donations towards them.
+    *   Admins can allocate general (unassigned) verified donations to a lead.
+    *   As funds are allocated, the `helpGiven` amount on the lead increases. The `caseStatus` may change to **"Partial"** if it's partially funded.
+    *   This continues until `helpGiven` equals or exceeds `helpRequested`.
+
+6.  **Closure**:
+    *   When a lead is fully funded, its `caseStatus` is automatically updated to **"Complete"**.
+    *   After an admin has facilitated the physical transfer of funds to the beneficiary, they manually change the `caseStatus` to **"Closed"**.
+    *   A closed lead is considered successfully resolved and contributes to the organization's impact metrics.
+
+---
+
+## 2. "Scan Screenshot" Donation Workflow
 
 This workflow is designed to take a payment screenshot, automatically find the donor (or help you create one), and pre-fill the donation form, saving significant manual data entry.
 
@@ -49,7 +92,7 @@ This workflow is designed to take a payment screenshot, automatically find the d
 
 ---
 
-## Manual Donation Creation Workflow
+## 3. Manual Donation Creation Workflow
 
 This workflow is for administrators to manually record donations received outside the app's online payment system (e.g., direct bank transfer, cash). It can be done with or without an accompanying payment proof.
 

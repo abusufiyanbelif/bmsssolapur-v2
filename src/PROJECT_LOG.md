@@ -28,8 +28,8 @@ This document tracks the features and changes requested for the project.
 
 ### Core Features (Complete)
 - **User Management**: Admins can create, view, and manage users with multiple roles from the `/admin/user-management` dashboard.
-- **Lead/Case Management**: Admins can create new help cases (leads) for beneficiaries from the `/admin/leads` dashboard. Beneficiaries can submit their own help requests from the `/request-help` page.
-- **Donation Management**: Admins can manually record new donations from the `/admin/donations` dashboard.
+- **Lead/Case Management**: Admins can create new help cases (leads) for beneficiaries from the `/admin/leads` dashboard. Beneficiaries can submit their own help requests from the `/request-help` page. The full lead lifecycle (create, verify, publish, fund, close) is implemented.
+- **Donation Management**: Admins can manually record new donations from the `/admin/donations` dashboard, including using AI to scan payment screenshots.
 - **Dynamic User Dashboards**: The user home page (`/home`) and specific pages like `/my-donations` and `/my-cases` now dynamically load and display data relevant to the logged-in user's active role.
 - **Authentication**: A robust login system is in place, supporting both password and OTP methods. A role-switcher dialog correctly prompts users with multiple roles to select a profile for their session.
 
@@ -58,6 +58,7 @@ This document tracks the features and changes requested for the project.
 
 - **Email**: Created a Genkit flow (`send-email-flow.ts`) using Nodemailer to send emails.
 - **OTP**: Created Genkit flows for sending (`send-otp-flow.ts`) and verifying (`verify-otp-flow.ts`) one-time passwords via Twilio.
+- **Document Scanning**: Implemented AI flows to extract text from images/PDFs (`extract-raw-text-flow.ts`) and parse that text into structured data for donation forms (`extract-donation-details-flow.ts`) and lead forms (`extract-lead-details-from-text-flow.ts`).
 
 ### User Interface
 - **Role-Based Navigation**: Implemented a dynamic navigation menu that displays different modules based on the logged-in user's role (Guest, Super Admin, Admin, Donor, Beneficiary).
