@@ -312,7 +312,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
     const linkedLeadId = watch("leadId");
     const linkedCampaignId = watch("campaignId");
     const paymentApp = watch("paymentApp");
-    const paymentMethod = watch("paymentMethod");
+    const paymentMethod = "Online (UPI/Card)";
     
     const linkedLead = linkedLeadId ? openLeads.find(l => l.id === linkedLeadId) : null;
     const linkedCampaign = linkedCampaignId ? activeCampaigns.find(c => c.id === linkedCampaignId) : null;
@@ -364,7 +364,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
     const handleAutoFill = async () => {
         if (!rawText) return;
         setIsAnalyzing(true);
-        const result = await handleExtractDonationDetails(rawText);
+        const result = await handleExtractDonationDetails({rawText});
         if (result.success && result.details) {
             const details = result.details;
             setExtractedDetails(details);
