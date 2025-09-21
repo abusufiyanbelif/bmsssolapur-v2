@@ -376,7 +376,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
     const handleAutoFill = async () => {
         if (!rawText) return;
         setIsAnalyzing(true);
-        const result = await handleExtractDonationDetails({ rawText });
+        const result = await handleExtractDonationDetails(rawText);
         if (result.success && result.details) {
             const details = result.details;
             setExtractedDetails(details);
