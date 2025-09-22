@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -486,6 +487,21 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       return [];
   }, [selectedCategory, leadConfiguration]);
 
+  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
+
+  const dialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+    { key: 'beneficiaryFullName', label: 'Full Name' },
+    { key: 'fatherName', label: "Father's Name" },
+    { key: 'dateOfBirth', label: 'Date of Birth' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'beneficiaryPhone', label: 'Phone' },
+    { key: 'aadhaarNumber', label: 'Aadhaar Number' },
+    { key: 'address', label: 'Address' },
+    { key: 'city', label: 'City' },
+    { key: 'pincode', label: 'Pincode' },
+    { key: 'country', label: 'Country' },
+  ];
+
   return (
     <>
         {isFormDisabled && (
@@ -968,7 +984,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     })}
                 </div>
                 <AlertDialogFooter>
-                     <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
+                     <Button variant="outline" onClick={() => {}} disabled={isRefreshingDetails}>
                         {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
                         Refresh
                     </Button>
