@@ -9,6 +9,7 @@ import { getUser } from "@/services/user-service";
 import { logActivity } from "@/services/activity-log-service";
 import { updatePublicLead } from "@/services/public-data-service";
 import { getCampaign } from "@/services/campaign-service";
+import { EditLeadFormValues } from "./edit-lead-form";
 
 
 interface FormState {
@@ -54,11 +55,9 @@ const getChangedFields = (original: Lead, updates: Partial<Lead>) => {
 
 export async function handleUpdateLead(
   leadId: string,
-  formData: FormData,
+  values: EditLeadFormValues,
   adminUserId: string,
 ): Promise<FormState> {
-  const rawFormData = Object.fromEntries(formData.entries());
-
   try {
     const lead = await getLead(leadId);
     if (!lead) {
@@ -70,60 +69,46 @@ export async function handleUpdateLead(
         return { success: false, error: "Admin user not found." };
     }
 
-    const purpose = rawFormData.purpose as LeadPurpose;
-    const status = rawFormData.status as LeadStatus;
-    const caseAction = rawFormData.caseAction as LeadAction;
-    const verifiedStatus = rawFormData.verifiedStatus as LeadVerificationStatus;
-    
-    const beneficiaryId = rawFormData.beneficiaryId as string | undefined;
-    const referredByUserId = rawFormData.referredByUserId as string | undefined;
-
-    const campaignId = rawFormData.campaignId as string | undefined;
     let campaignName: string | undefined;
-    if (campaignId && campaignId !== 'none') {
-        const campaign = await getCampaign(campaignId);
+    if (values.campaignId && values.campaignId !== 'none') {
+        const campaign = await getCampaign(values.campaignId);
         campaignName = campaign?.name;
     }
 
-    const dueDateRaw = rawFormData.dueDate as string | undefined;
-    const verificationDueDateRaw = rawFormData.verificationDueDate as string | undefined;
-    const dueDate = dueDateRaw ? new Date(dueDateRaw) : undefined;
-    const verificationDueDate = verificationDueDateRaw ? new Date(verificationDueDateRaw) : undefined;
-
     const updates: Partial<Lead> = {
-        name: rawFormData.name as string | undefined,
-        beneficiaryId: beneficiaryId || undefined,
-        referredByUserId: referredByUserId || undefined,
-        campaignId: campaignId === 'none' ? undefined : campaignId,
-        campaignName: campaignId === 'none' ? undefined : campaignName,
-        headline: rawFormData.headline as string | undefined,
-        story: rawFormData.story as string | undefined,
-        purpose: purpose,
-        otherPurposeDetail: rawFormData.otherPurposeDetail as string | undefined,
-        category: rawFormData.category as string | undefined,
-        otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
-        acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
-        helpRequested: parseFloat(rawFormData.helpRequested as string),
-        fundingGoal: parseFloat(rawFormData.fundingGoal as string),
-        dueDate: dueDate,
-        verificationDueDate: verificationDueDate,
-        caseDetails: rawFormData.caseDetails as string | undefined,
-        isLoan: rawFormData.isLoan === 'on',
-        status: status,
-        caseAction: caseAction,
-        verifiedStatus: verifiedStatus,
-        degree: rawFormData.degree as string | undefined,
-        year: rawFormData.year as string | undefined,
-        semester: rawFormData.semester as string | undefined,
-        priority: rawFormData.priority as Lead['priority'],
-        diseaseIdentified: rawFormData.diseaseIdentified as string | undefined,
-        diseaseStage: rawFormData.diseaseStage as string | undefined,
-        diseaseSeriousness: rawFormData.diseaseSeriousness as Lead['diseaseSeriousness'],
+        name: values.name,
+        beneficiaryId: values.beneficiaryId || undefined,
+        referredByUserId: values.referredByUserId || undefined,
+        campaignId: values.campaignId === 'none' ? undefined : values.campaignId,
+        campaignName: values.campaignId === 'none' ? undefined : campaignName,
+        headline: values.headline,
+        story: values.story,
+        purpose: values.purpose,
+        otherPurposeDetail: values.otherPurposeDetail,
+        category: values.category,
+        otherCategoryDetail: values.otherCategoryDetail,
+        acceptableDonationTypes: values.acceptableDonationTypes,
+        helpRequested: values.helpRequested,
+        fundingGoal: values.fundingGoal,
+        dueDate: values.dueDate,
+        verificationDueDate: values.verificationDueDate,
+        caseDetails: values.caseDetails,
+        isLoan: values.isLoan,
+        status: values.status,
+        caseAction: values.caseAction,
+        verifiedStatus: values.verifiedStatus,
+        degree: values.degree,
+        year: values.year,
+        semester: values.semester,
+        priority: values.priority,
+        diseaseIdentified: values.diseaseIdentified,
+        diseaseStage: values.diseaseStage,
+        diseaseSeriousness: values.diseaseSeriousness,
     };
     
     // If a beneficiary is being linked for the first time, update the lead name
-    if (beneficiaryId && !lead.beneficiaryId) {
-        const newBeneficiary = await getUser(beneficiaryId);
+    if (values.beneficiaryId && !lead.beneficiaryId) {
+        const newBeneficiary = await getUser(values.beneficiaryId);
         if (newBeneficiary) {
             updates.name = newBeneficiary.name;
         }
@@ -131,11 +116,11 @@ export async function handleUpdateLead(
     
     const changes = getChangedFields(lead, updates);
     
-    if (caseAction === 'Closed' && lead.caseAction !== 'Closed') {
+    if (values.caseAction === 'Closed' && lead.caseAction !== 'Closed') {
         updates.closedAt = Timestamp.now();
     }
     
-    if (verifiedStatus === 'Verified' && lead.verifiedStatus !== 'Verified') {
+    if (values.verifiedStatus === 'Verified' && lead.verifiedStatus !== 'Verified') {
         const newVerifier: Verifier = {
             verifierId: adminUser.id!,
             verifierName: adminUser.name,
