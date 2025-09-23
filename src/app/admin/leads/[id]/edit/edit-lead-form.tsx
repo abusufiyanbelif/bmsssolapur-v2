@@ -168,7 +168,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     },
   });
 
-  const { formState: { isDirty }, reset, watch } = form;
+  const { formState: { isDirty }, reset, watch, setValue, control } = form;
   const selectedPurpose = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
