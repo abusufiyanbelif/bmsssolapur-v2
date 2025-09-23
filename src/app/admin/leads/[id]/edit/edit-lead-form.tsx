@@ -30,19 +30,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateLead } from "./actions";
 import { useState, useEffect, useMemo } from "react";
-import { Loader2, Info, Edit, Save, X, ChevronsUpDown, Check, User } from "lucide-react";
+import { Loader2, Info, Edit, Save, X, ChevronsUpDown, Check, User as UserIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Campaign, getAllCampaigns } from "@/services/campaign-service";
-import type { User as UserType, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/types";
+import type { User as UserType, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction, LeadPriority } from "@/services/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
 
 
 const leadPurposes = ['Education', 'Medical', 'Relief Fund', 'Deen', 'Loan', 'Other'] as const;
+const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 const leadStatuses: LeadStatus[] = ["Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
 const leadActions: LeadAction[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
@@ -67,17 +68,18 @@ const loanCategoryOptions = ['Business Loan', 'Emergency Loan', 'Education Loan'
 const formSchema = z.object({
   name: z.string().optional(),
   beneficiaryId: z.string().optional(),
-  hasReferral: z.boolean().default(false),
-  campaignId: z.string().optional(),
-  campaignName: z.string().optional(),
   referredByUserId: z.string().optional(),
-  referredByUserName: z.string().optional(),
+  campaignId: z.string().optional(),
   headline: z.string().min(10, "Case Summary must be at least 10 characters.").max(100, "Case Summary cannot exceed 100 characters.").optional().or(z.literal('')),
   story: z.string().optional(),
   purpose: z.enum(leadPurposes),
   otherPurposeDetail: z.string().optional(),
   category: z.string().min(1, "Category is required."),
   otherCategoryDetail: z.string().optional(),
+  priority: z.enum(leadPriorities),
+  diseaseIdentified: z.string().optional(),
+  diseaseStage: z.string().optional(),
+  diseaseSeriousness: z.enum(['High', 'Moderate', 'Low']).optional(),
   degree: z.string().optional(),
   year: z.string().optional(),
   semester: z.string().optional(),
@@ -131,6 +133,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const [beneficiaryPopoverOpen, setBeneficiaryPopoverOpen] = useState(false);
+  const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -138,6 +141,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   }, []);
   
   const potentialBeneficiaries = users.filter(u => u.roles.includes("Beneficiary"));
+  const potentialReferrals = users.filter(u => u.roles.includes("Referral"));
   const linkedBeneficiaryDetails = lead.beneficiaryId ? users.find(u => u.id === lead.beneficiaryId) : null;
 
   const form = useForm<EditLeadFormValues>({
@@ -145,16 +149,21 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     defaultValues: {
       name: lead.name,
       beneficiaryId: lead.beneficiaryId,
+      referredByUserId: lead.referredByUserId || undefined,
       campaignId: lead.campaignId || 'none',
-      campaignName: lead.campaignName || '',
       headline: lead.headline || '',
       story: lead.story || '',
       purpose: lead.purpose,
       otherPurposeDetail: lead.otherPurposeDetail || '',
       category: lead.category || '',
       otherCategoryDetail: lead.otherCategoryDetail || '',
+      priority: lead.priority || 'Medium',
+      diseaseIdentified: lead.diseaseIdentified || '',
+      diseaseStage: lead.diseaseStage || '',
+      diseaseSeriousness: lead.diseaseSeriousness,
       degree: lead.degree || '',
       year: lead.year || '',
+      semester: lead.semester || '',
       acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
       fundingGoal: lead.fundingGoal || lead.helpRequested,
@@ -174,30 +183,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const selectedDegree = watch("degree");
   
   const handleCancel = () => {
-    reset({
-        name: lead.name,
-        beneficiaryId: lead.beneficiaryId,
-        campaignId: lead.campaignId || 'none',
-        campaignName: lead.campaignName || '',
-        headline: lead.headline || '',
-        story: lead.story || '',
-        purpose: lead.purpose,
-        otherPurposeDetail: lead.otherPurposeDetail || '',
-        category: lead.category || '',
-        otherCategoryDetail: lead.otherCategoryDetail || '',
-        degree: lead.degree || '',
-        year: lead.year || '',
-        acceptableDonationTypes: lead.acceptableDonationTypes || [],
-        helpRequested: lead.helpRequested,
-        fundingGoal: lead.fundingGoal || lead.helpRequested,
-        dueDate: lead.dueDate ? lead.dueDate : undefined,
-        verificationDueDate: lead.verificationDueDate ? lead.verificationDueDate : undefined,
-        caseDetails: lead.caseDetails || '',
-        isLoan: lead.isLoan,
-        status: lead.caseStatus,
-        caseAction: lead.caseAction,
-        verifiedStatus: lead.caseVerification,
-    });
+    reset(); // Re-sets form to the initial default values from `lead`
     setIsEditing(false);
   }
 
@@ -285,7 +271,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                     <div className="space-y-2">
                         <Label>Beneficiary</Label>
                         <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-                            <User className="h-5 w-5 text-primary" />
+                            <UserIcon className="h-5 w-5 text-primary" />
                             <span className="font-semibold">{linkedBeneficiaryDetails.name}</span>
                             <span className="text-sm text-muted-foreground">({linkedBeneficiaryDetails.phone})</span>
                         </div>
@@ -342,7 +328,6 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         )}
                     />
                  )}
-                 
                  <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
@@ -393,6 +378,17 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                     )}
                  </div>
                  
+                 {selectedPurpose === 'Medical' && (
+                     <div className="p-4 border rounded-lg space-y-4">
+                        <h4 className="font-semibold text-md">Medical Details</h4>
+                        <FormField control={control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} disabled={!isEditing} /></FormControl></FormItem>)} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} disabled={!isEditing} /></FormControl></FormItem>)} />
+                            <FormField control={control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>)} />
+                        </div>
+                    </div>
+                 )}
+
                 {showEducationFields && (
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
@@ -486,9 +482,9 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         )}
                         />
                     <FormItem>
-                        <FormLabel>Collected Amount</FormLabel>
+                        <FormLabel>Help Given</FormLabel>
                         <FormControl>
-                            <Input type="number" value={lead.collectedAmount || 0} disabled />
+                            <Input type="number" value={lead.helpGiven || 0} disabled />
                         </FormControl>
                         <FormDescription>Total funds allocated to this lead.</FormDescription>
                     </FormItem>

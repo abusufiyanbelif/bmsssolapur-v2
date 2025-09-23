@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/lead-service";
@@ -9,6 +8,7 @@ import type { User, Verifier } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { logActivity } from "@/services/activity-log-service";
 import { updatePublicLead } from "@/services/public-data-service";
+import { getCampaign } from "@/services/campaign-service";
 
 
 interface FormState {
@@ -21,31 +21,36 @@ const getChangedFields = (original: Lead, updates: Partial<Lead>) => {
     const changes: Record<string, { from: any; to: any }> = {};
     for (const key in updates) {
         const typedKey = key as keyof Lead;
-        // Simple comparison; for deep objects, a more robust solution might be needed
-        if (original[typedKey] !== updates[typedKey]) {
-            // Special handling for array of objects like 'acceptableDonationTypes'
-            if (Array.isArray(original[typedKey]) && Array.isArray(updates[typedKey])) {
-                if (JSON.stringify(original[typedKey]) !== JSON.stringify(updates[typedKey])) {
+        const originalValue = original[typedKey];
+        const updatedValue = updates[typedKey];
+
+        // Simple comparison for most fields
+        if (String(originalValue) !== String(updatedValue)) {
+            if (originalValue instanceof Date && updatedValue instanceof Date) {
+                if (originalValue?.getTime() !== updatedValue?.getTime()) {
                     changes[typedKey] = {
-                        from: (original[typedKey] as any[]).join(', '),
-                        to: (updates[typedKey] as any[]).join(', ')
+                        from: originalValue?.toISOString().split('T')[0] || 'N/A',
+                        to: updatedValue?.toISOString().split('T')[0] || 'N/A',
                     };
                 }
-            } else if (original[typedKey] instanceof Date && updates[typedKey] instanceof Date) {
-                 if (original[typedKey]?.getTime() !== updates[typedKey]?.getTime()) {
-                      changes[typedKey] = {
-                        from: original[typedKey]?.toISOString().split('T')[0],
-                        to: updates[typedKey]?.toISOString().split('T')[0]
+            } else if (Array.isArray(originalValue) && Array.isArray(updatedValue)) {
+                 if (JSON.stringify(originalValue.sort()) !== JSON.stringify(updatedValue.sort())) {
+                    changes[typedKey] = {
+                        from: originalValue.join(', ') || '[]',
+                        to: updatedValue.join(', ') || '[]'
                     };
-                 }
+                }
             }
-            else if (original[typedKey] !== updates[typedKey]) {
-                 changes[typedKey] = { from: original[typedKey] || 'N/A', to: updates[typedKey] };
+            else {
+                changes[typedKey] = {
+                    from: originalValue || "N/A",
+                    to: updatedValue,
+                };
             }
         }
     }
     return changes;
-}
+};
 
 export async function handleUpdateLead(
   leadId: string,
@@ -70,11 +75,16 @@ export async function handleUpdateLead(
     const caseAction = rawFormData.caseAction as LeadAction;
     const verifiedStatus = rawFormData.verifiedStatus as LeadVerificationStatus;
     
-    // Linking a new beneficiary
     const beneficiaryId = rawFormData.beneficiaryId as string | undefined;
-    
+    const referredByUserId = rawFormData.referredByUserId as string | undefined;
+
     const campaignId = rawFormData.campaignId as string | undefined;
-    const campaignName = rawFormData.campaignName as string | undefined;
+    let campaignName: string | undefined;
+    if (campaignId && campaignId !== 'none') {
+        const campaign = await getCampaign(campaignId);
+        campaignName = campaign?.name;
+    }
+
     const dueDateRaw = rawFormData.dueDate as string | undefined;
     const verificationDueDateRaw = rawFormData.verificationDueDate as string | undefined;
     const dueDate = dueDateRaw ? new Date(dueDateRaw) : undefined;
@@ -83,8 +93,9 @@ export async function handleUpdateLead(
     const updates: Partial<Lead> = {
         name: rawFormData.name as string | undefined,
         beneficiaryId: beneficiaryId || undefined,
-        campaignId: campaignId,
-        campaignName: campaignName,
+        referredByUserId: referredByUserId || undefined,
+        campaignId: campaignId === 'none' ? undefined : campaignId,
+        campaignName: campaignId === 'none' ? undefined : campaignName,
         headline: rawFormData.headline as string | undefined,
         story: rawFormData.story as string | undefined,
         purpose: purpose,
@@ -103,8 +114,14 @@ export async function handleUpdateLead(
         verifiedStatus: verifiedStatus,
         degree: rawFormData.degree as string | undefined,
         year: rawFormData.year as string | undefined,
+        semester: rawFormData.semester as string | undefined,
+        priority: rawFormData.priority as Lead['priority'],
+        diseaseIdentified: rawFormData.diseaseIdentified as string | undefined,
+        diseaseStage: rawFormData.diseaseStage as string | undefined,
+        diseaseSeriousness: rawFormData.diseaseSeriousness as Lead['diseaseSeriousness'],
     };
     
+    // If a beneficiary is being linked for the first time, update the lead name
     if (beneficiaryId && !lead.beneficiaryId) {
         const newBeneficiary = await getUser(beneficiaryId);
         if (newBeneficiary) {
