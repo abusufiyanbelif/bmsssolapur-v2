@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,7 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Campaign, getAllCampaigns } from "@/services/campaign-service";
+import { Campaign } from "@/services/campaign-service";
 import type { User as UserType, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction, LeadPriority } from "@/services/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
@@ -119,7 +118,7 @@ const formSchema = z.object({
 });
 
 
-type EditLeadFormValues = z.infer<typeof formSchema>;
+export type EditLeadFormValues = z.infer<typeof formSchema>;
 
 interface EditLeadFormProps {
   lead: Lead;
@@ -167,8 +166,8 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
       acceptableDonationTypes: lead.acceptableDonationTypes || [],
       helpRequested: lead.helpRequested,
       fundingGoal: lead.fundingGoal || lead.helpRequested,
-      dueDate: lead.dueDate ? lead.dueDate : undefined,
-      verificationDueDate: lead.verificationDueDate ? lead.verificationDueDate : undefined,
+      dueDate: lead.dueDate ? new Date(lead.dueDate) : undefined,
+      verificationDueDate: lead.verificationDueDate ? new Date(lead.verificationDueDate) : undefined,
       caseDetails: lead.caseDetails || '',
       isLoan: lead.isLoan,
       status: lead.caseStatus,
@@ -207,20 +206,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
 
     setIsSubmitting(true);
     
-    const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-            value.forEach(v => formData.append(key, v));
-        } else if (value instanceof Date) {
-            formData.append(key, value.toISOString());
-        } else if (typeof value === 'boolean') {
-            if(value) formData.append(key, 'on');
-        } else if (value) {
-            formData.append(key, String(value));
-        }
-    });
-    
-    const result = await handleUpdateLead(lead.id!, formData, adminUserId);
+    const result = await handleUpdateLead(lead.id!, values, adminUserId);
 
     setIsSubmitting(false);
 
@@ -255,17 +241,28 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         Update the details for the case from <span className="font-semibold">{lead.name}</span>.
                     </CardDescription>
                 </div>
-                 {!isEditing && (
+                 {!isEditing ? (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                     </Button>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={handleCancel}>
+                             <X className="mr-2 h-4 w-4" /> Cancel
+                        </Button>
+                        <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
+                    </div>
                 )}
             </div>
         </CardHeader>
         <CardContent>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+            <form className="space-y-8 max-w-2xl">
+                <fieldset disabled={!isEditing}>
                  <h3 className="text-lg font-semibold border-b pb-2">Beneficiary & Campaign</h3>
                  {linkedBeneficiaryDetails ? (
                     <div className="space-y-2">
@@ -534,19 +531,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         )}
                     />
                 </div>
-
-                {isEditing && (
-                    <div className="flex gap-4">
-                        <Button type="submit" disabled={isSubmitting || !isDirty}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
-                        </Button>
-                        <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                             <X className="mr-2 h-4 w-4" />
-                            Cancel
-                        </Button>
-                    </div>
-                )}
+                </fieldset>
             </form>
             </Form>
         </CardContent>

@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { getLead, updateLead, Lead, LeadPurpose, LeadStatus, LeadVerificationStatus, DonationType, LeadAction } from "@/services/lead-service";
@@ -9,6 +8,8 @@ import type { User, Verifier } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import { logActivity } from "@/services/activity-log-service";
 import { updatePublicLead } from "@/services/public-data-service";
+import { getCampaign } from "@/services/campaign-service";
+import { EditLeadFormValues } from "./edit-lead-form";
 
 
 interface FormState {
@@ -21,39 +22,42 @@ const getChangedFields = (original: Lead, updates: Partial<Lead>) => {
     const changes: Record<string, { from: any; to: any }> = {};
     for (const key in updates) {
         const typedKey = key as keyof Lead;
-        // Simple comparison; for deep objects, a more robust solution might be needed
-        if (original[typedKey] !== updates[typedKey]) {
-            // Special handling for array of objects like 'acceptableDonationTypes'
-            if (Array.isArray(original[typedKey]) && Array.isArray(updates[typedKey])) {
-                if (JSON.stringify(original[typedKey]) !== JSON.stringify(updates[typedKey])) {
+        const originalValue = original[typedKey];
+        const updatedValue = updates[typedKey];
+
+        // Simple comparison for most fields
+        if (String(originalValue) !== String(updatedValue)) {
+            if (originalValue instanceof Date && updatedValue instanceof Date) {
+                if (originalValue?.getTime() !== updatedValue?.getTime()) {
                     changes[typedKey] = {
-                        from: (original[typedKey] as any[]).join(', '),
-                        to: (updates[typedKey] as any[]).join(', ')
+                        from: originalValue?.toISOString().split('T')[0] || 'N/A',
+                        to: updatedValue?.toISOString().split('T')[0] || 'N/A',
                     };
                 }
-            } else if (original[typedKey] instanceof Date && updates[typedKey] instanceof Date) {
-                 if (original[typedKey]?.getTime() !== updates[typedKey]?.getTime()) {
-                      changes[typedKey] = {
-                        from: original[typedKey]?.toISOString().split('T')[0],
-                        to: updates[typedKey]?.toISOString().split('T')[0]
+            } else if (Array.isArray(originalValue) && Array.isArray(updatedValue)) {
+                 if (JSON.stringify(originalValue.sort()) !== JSON.stringify(updatedValue.sort())) {
+                    changes[typedKey] = {
+                        from: originalValue.join(', ') || '[]',
+                        to: updatedValue.join(', ') || '[]'
                     };
-                 }
+                }
             }
-            else if (original[typedKey] !== updates[typedKey]) {
-                 changes[typedKey] = { from: original[typedKey] || 'N/A', to: updates[typedKey] };
+            else {
+                changes[typedKey] = {
+                    from: originalValue || "N/A",
+                    to: updatedValue,
+                };
             }
         }
     }
     return changes;
-}
+};
 
 export async function handleUpdateLead(
   leadId: string,
-  formData: FormData,
+  values: EditLeadFormValues,
   adminUserId: string,
 ): Promise<FormState> {
-  const rawFormData = Object.fromEntries(formData.entries());
-
   try {
     const lead = await getLead(leadId);
     if (!lead) {
@@ -65,47 +69,58 @@ export async function handleUpdateLead(
         return { success: false, error: "Admin user not found." };
     }
 
-    const purpose = rawFormData.purpose as LeadPurpose;
-    const status = rawFormData.status as LeadStatus;
-    const caseAction = rawFormData.caseAction as LeadAction;
-    const verifiedStatus = rawFormData.verifiedStatus as LeadVerificationStatus;
-    const campaignId = rawFormData.campaignId as string | undefined;
-    const campaignName = rawFormData.campaignName as string | undefined;
-    const dueDateRaw = rawFormData.dueDate as string | undefined;
-    const verificationDueDateRaw = rawFormData.verificationDueDate as string | undefined;
-    const dueDate = dueDateRaw ? new Date(dueDateRaw) : undefined;
-    const verificationDueDate = verificationDueDateRaw ? new Date(verificationDueDateRaw) : undefined;
+    let campaignName: string | undefined;
+    if (values.campaignId && values.campaignId !== 'none') {
+        const campaign = await getCampaign(values.campaignId);
+        campaignName = campaign?.name;
+    }
 
     const updates: Partial<Lead> = {
-        campaignId: campaignId,
-        campaignName: campaignName,
-        headline: rawFormData.headline as string | undefined,
-        story: rawFormData.story as string | undefined,
-        purpose: purpose,
-        otherPurposeDetail: rawFormData.otherPurposeDetail as string | undefined,
-        category: rawFormData.category as string | undefined,
-        otherCategoryDetail: rawFormData.otherCategoryDetail as string | undefined,
-        acceptableDonationTypes: formData.getAll("acceptableDonationTypes") as DonationType[],
-        helpRequested: parseFloat(rawFormData.helpRequested as string),
-        fundingGoal: parseFloat(rawFormData.fundingGoal as string),
-        dueDate: dueDate,
-        verificationDueDate: verificationDueDate,
-        caseDetails: rawFormData.caseDetails as string | undefined,
-        isLoan: rawFormData.isLoan === 'on',
-        status: status,
-        caseAction: caseAction,
-        verifiedStatus: verifiedStatus,
-        degree: rawFormData.degree as string | undefined,
-        year: rawFormData.year as string | undefined,
+        name: values.name,
+        beneficiaryId: values.beneficiaryId || undefined,
+        referredByUserId: values.referredByUserId || undefined,
+        campaignId: values.campaignId === 'none' ? undefined : values.campaignId,
+        campaignName: values.campaignId === 'none' ? undefined : campaignName,
+        headline: values.headline,
+        story: values.story,
+        purpose: values.purpose,
+        otherPurposeDetail: values.otherPurposeDetail,
+        category: values.category,
+        otherCategoryDetail: values.otherCategoryDetail,
+        acceptableDonationTypes: values.acceptableDonationTypes,
+        helpRequested: values.helpRequested,
+        fundingGoal: values.fundingGoal,
+        dueDate: values.dueDate,
+        verificationDueDate: values.verificationDueDate,
+        caseDetails: values.caseDetails,
+        isLoan: values.isLoan,
+        status: values.status,
+        caseAction: values.caseAction,
+        verifiedStatus: values.verifiedStatus,
+        degree: values.degree,
+        year: values.year,
+        semester: values.semester,
+        priority: values.priority,
+        diseaseIdentified: values.diseaseIdentified,
+        diseaseStage: values.diseaseStage,
+        diseaseSeriousness: values.diseaseSeriousness,
     };
+    
+    // If a beneficiary is being linked for the first time, update the lead name
+    if (values.beneficiaryId && !lead.beneficiaryId) {
+        const newBeneficiary = await getUser(values.beneficiaryId);
+        if (newBeneficiary) {
+            updates.name = newBeneficiary.name;
+        }
+    }
     
     const changes = getChangedFields(lead, updates);
     
-    if (caseAction === 'Closed' && lead.caseAction !== 'Closed') {
+    if (values.caseAction === 'Closed' && lead.caseAction !== 'Closed') {
         updates.closedAt = Timestamp.now();
     }
     
-    if (verifiedStatus === 'Verified' && lead.verifiedStatus !== 'Verified') {
+    if (values.verifiedStatus === 'Verified' && lead.verifiedStatus !== 'Verified') {
         const newVerifier: Verifier = {
             verifierId: adminUser.id!,
             verifierName: adminUser.name,
@@ -146,9 +161,10 @@ export async function handleUpdateLead(
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     console.error("Error updating lead:", error);
+    // Return the clean error, not a wrapped one
     return {
       success: false,
-      error: `Failed to update lead: ${error}`,
+      error: error,
     };
   }
 }
