@@ -26,28 +26,26 @@ const getChangedFields = (original: Lead, updates: Partial<Lead>) => {
         const updatedValue = updates[typedKey];
 
         // Simple comparison for most fields
-        if (String(originalValue) !== String(updatedValue)) {
-            if (originalValue instanceof Date && updatedValue instanceof Date) {
-                if (originalValue?.getTime() !== updatedValue?.getTime()) {
-                    changes[typedKey] = {
-                        from: originalValue?.toISOString().split('T')[0] || 'N/A',
-                        to: updatedValue?.toISOString().split('T')[0] || 'N/A',
-                    };
-                }
-            } else if (Array.isArray(originalValue) && Array.isArray(updatedValue)) {
-                 if (JSON.stringify(originalValue.sort()) !== JSON.stringify(updatedValue.sort())) {
-                    changes[typedKey] = {
-                        from: originalValue.join(', ') || '[]',
-                        to: updatedValue.join(', ') || '[]'
-                    };
-                }
-            }
-            else {
+        if (originalValue instanceof Date && updatedValue instanceof Date) {
+            if (originalValue?.getTime() !== updatedValue?.getTime()) {
                 changes[typedKey] = {
-                    from: originalValue || "N/A",
-                    to: updatedValue,
+                    from: originalValue?.toISOString().split('T')[0] || 'N/A',
+                    to: updatedValue?.toISOString().split('T')[0] || 'N/A',
                 };
             }
+        } else if (Array.isArray(originalValue) && Array.isArray(updatedValue)) {
+            if (JSON.stringify(originalValue.sort()) !== JSON.stringify(updatedValue.sort())) {
+                changes[typedKey] = {
+                    from: originalValue.join(', ') || '[]',
+                    to: updatedValue.join(', ') || '[]'
+                };
+            }
+        }
+        else if (String(originalValue) !== String(updatedValue)) {
+             changes[typedKey] = {
+                from: originalValue || "N/A",
+                to: updatedValue,
+            };
         }
     }
     return changes;
@@ -117,14 +115,14 @@ export async function handleUpdateLead(
     const changes = getChangedFields(lead, updates);
     
     if (values.caseAction === 'Closed' && lead.caseAction !== 'Closed') {
-        updates.closedAt = Timestamp.now();
+        updates.closedAt = new Date();
     }
     
     if (values.verifiedStatus === 'Verified' && lead.verifiedStatus !== 'Verified') {
         const newVerifier: Verifier = {
             verifierId: adminUser.id!,
             verifierName: adminUser.name,
-            verifiedAt: Timestamp.now(),
+            verifiedAt: Timestamp.now() as any,
             notes: "Verified through edit form."
         };
         updates.verifiers = arrayUnion(newVerifier) as any;
@@ -156,6 +154,9 @@ export async function handleUpdateLead(
     revalidatePath("/admin/leads");
     revalidatePath(`/admin/leads/${leadId}`);
     revalidatePath(`/admin/leads/${leadId}/edit`);
+    revalidatePath("/public-leads");
+    revalidatePath("/");
+
 
     return { success: true };
   } catch (e) {
@@ -168,3 +169,5 @@ export async function handleUpdateLead(
     };
   }
 }
+
+    
