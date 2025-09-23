@@ -59,7 +59,9 @@ export async function handleBulkDeleteTransfers(uniqueIds: string[]) {
         await batch.commit();
         
         revalidatePath("/admin/transfers");
-        revalidatePath("/admin/leads"); // Revalidate leads page too as helpGiven changes
+        revalidatePath("/admin/leads");
+        revalidatePath("/admin");
+        revalidatePath("/");
 
         return { success: true };
     } catch (e) {

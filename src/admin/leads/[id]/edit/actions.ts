@@ -151,11 +151,16 @@ export async function handleUpdateLead(
         await updatePublicLead(updatedLead);
     }
 
+    // Revalidate all paths that might show lead data
     revalidatePath("/admin/leads");
     revalidatePath(`/admin/leads/${leadId}`);
     revalidatePath(`/admin/leads/${leadId}/edit`);
     revalidatePath("/public-leads");
-    revalidatePath("/");
+    revalidatePath("/admin"); // Admin dashboard
+    revalidatePath("/"); // Public dashboard
+    revalidatePath("/home"); // User dashboard
+    revalidatePath("/beneficiary"); // Beneficiary dashboard
+    revalidatePath("/my-cases");
 
 
     return { success: true };
@@ -169,5 +174,3 @@ export async function handleUpdateLead(
     };
   }
 }
-
-    

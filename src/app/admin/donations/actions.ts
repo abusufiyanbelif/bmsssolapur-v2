@@ -23,6 +23,8 @@ export async function handleDeleteDonation(donationId: string, adminUserId: stri
 
         await deleteDonationService(donationId, adminUser);
         revalidatePath("/admin/donations");
+        revalidatePath("/admin");
+        revalidatePath("/");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred while deleting the donation.";
@@ -64,6 +66,8 @@ export async function handleBulkDeleteDonations(donationIds: string[], adminUser
         await Promise.all([batch.commit(), ...logPromises]);
         
         revalidatePath("/admin/donations");
+        revalidatePath("/admin");
+        revalidatePath("/");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred during bulk deletion.";
@@ -81,6 +85,8 @@ export async function handleUpdateDonationStatus(donationId: string, status: Don
         await updateStatusService(donationId, status, adminUser);
         revalidatePath("/admin/donations");
         revalidatePath(`/admin/donations/${donationId}/edit`);
+        revalidatePath("/admin");
+        revalidatePath("/");
         return { success: true };
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred while updating status.";
@@ -124,6 +130,8 @@ export async function handleAllocateDonation(
         }
        
         revalidatePath("/admin/donations");
+        revalidatePath("/admin");
+        revalidatePath("/");
         if(campaignId) revalidatePath(`/admin/campaigns/${campaignId}/edit`);
         
         return { success: true };
@@ -171,7 +179,6 @@ export async function handleUploadDonationProof(
         const paymentScreenshotUrl = await uploadFile(screenshotFile, uploadPath, onProgress);
 
         // Add the new URL to the existing array without overwriting
-        const existingUrls = donation.paymentScreenshotUrls || [];
         await updateDonation(donationId, { paymentScreenshotUrls: arrayUnion(paymentScreenshotUrl) as any }, adminUser, 'Proof Uploaded');
         
         revalidatePath("/admin/donations");

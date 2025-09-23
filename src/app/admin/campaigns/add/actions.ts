@@ -78,6 +78,8 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     revalidatePath("/admin/campaigns");
     revalidatePath("/admin/leads");
     revalidatePath("/admin/donations");
+    revalidatePath("/admin");
+    revalidatePath("/");
 
     return { success: true };
   } catch (e) {

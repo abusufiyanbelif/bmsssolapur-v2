@@ -25,6 +25,8 @@ export async function handleDeleteLead(leadId: string, adminUserId: string) {
         
         await deleteLeadService(leadId, adminUser);
         revalidatePath("/admin/leads");
+        revalidatePath("/admin");
+        revalidatePath("/");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred while deleting the lead.";
@@ -63,6 +65,8 @@ export async function handleBulkDeleteLeads(leadIds: string[], adminUserId: stri
         }
         await Promise.all([batch.commit(), ...logPromises]);
         revalidatePath("/admin/leads");
+        revalidatePath("/admin");
+        revalidatePath("/");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred during bulk deletion.";
@@ -105,6 +109,7 @@ export async function handleBulkUpdateLeadStatus(
         await Promise.all([batch.commit(), ...logPromises]);
         
         revalidatePath("/admin/leads");
+        revalidatePath("/admin");
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred during bulk status update.";
@@ -277,6 +282,9 @@ export async function handleFundTransfer(
         });
 
         revalidatePath(`/admin/leads/${leadId}`);
+        revalidatePath("/admin/transfers");
+        revalidatePath("/admin");
+        revalidatePath("/home");
         return { success: true };
 
     } catch (e) {
@@ -345,6 +353,9 @@ export async function handleAllocateDonationsToLead(leadId: string, donationIds:
         await batch.commit();
 
         revalidatePath(`/admin/leads/${leadId}`);
+        revalidatePath("/admin/leads");
+        revalidatePath("/admin");
+        revalidatePath("/");
         donationIds.forEach(id => revalidatePath(`/admin/donations/${id}/edit`));
         revalidatePath("/admin/donations");
 
