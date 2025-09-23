@@ -68,13 +68,13 @@ export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAlloc
     const openLeads = useMemo(() => {
         // If donation is linked to a campaign, only show leads from that campaign.
         if (donation.campaignId) {
-            return allLeads.filter(lead => lead.campaignId === donation.campaignId && lead.helpGiven < lead.helpRequested && lead.status !== 'Closed' && lead.status !== 'Cancelled');
+            return allLeads.filter(lead => lead.campaignId === donation.campaignId && lead.helpGiven < lead.helpRequested && lead.caseStatus !== 'Closed' && lead.caseStatus !== 'Cancelled');
         }
         // Otherwise, show general, unassigned leads.
         return allLeads.filter(lead => 
             !lead.campaignId &&
-            lead.status !== 'Closed' && 
-            lead.status !== 'Cancelled' &&
+            lead.caseStatus !== 'Closed' && 
+            lead.caseStatus !== 'Cancelled' &&
             lead.helpGiven < lead.helpRequested
         );
     }, [allLeads, donation.campaignId]);
@@ -83,9 +83,9 @@ export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAlloc
         return openLeads.filter(lead => {
             const searchMatch = searchTerm === '' || 
                                 lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                lead.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (lead.id && lead.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
                                 lead.purpose.toLowerCase().includes(searchTerm.toLowerCase());
-            const statusMatch = statusFilter === 'all' || lead.status === statusFilter;
+            const statusMatch = statusFilter === 'all' || lead.caseStatus === statusFilter;
             return searchMatch && statusMatch;
         });
     }, [openLeads, searchTerm, statusFilter]);
@@ -103,7 +103,7 @@ export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAlloc
             } else {
                 // Add new selection
                 return [...prev, {
-                    id: lead.id,
+                    id: lead.id!,
                     name: lead.name,
                     pendingAmount: pendingAmount,
                     amountToAllocate: 0
@@ -207,7 +207,7 @@ export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAlloc
                                             <div className="flex-grow space-y-1">
                                                 <div className="flex justify-between items-start">
                                                     <p className="font-semibold">{lead.name}</p>
-                                                    <Badge variant="secondary">{lead.status}</Badge>
+                                                    <Badge variant="secondary">{lead.caseAction || lead.caseStatus}</Badge>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground font-mono">{lead.id}</p>
                                                 <p className="text-xs text-muted-foreground">{lead.purpose} - {lead.category}</p>

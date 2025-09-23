@@ -14,12 +14,13 @@ import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Donation, DonationStatus, User } from "@/services/types";
+import type { Donation, DonationStatus, User, Organization } from "@/services/types";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
+import { getCurrentOrganization } from "@/app/admin/settings/actions";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -33,6 +34,7 @@ const statusColors: Record<DonationStatus, string> = {
 export default function MyDonationsPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -56,13 +58,14 @@ export default function MyDonationsPage() {
       if (!userId) return;
       try {
         setLoading(true);
-        const [userDonations, fetchedUser] = await Promise.all([
+        const [userDonations, fetchedUser, fetchedOrg] = await Promise.all([
           getDonationsByUserId(userId),
-          getUser(userId)
+          getUser(userId),
+          getCurrentOrganization()
         ]);
         
         if (userDonations) {
-            userDonations.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
+            userDonations.sort((a, b) => (b.donationDate as Date).getTime() - (a.donationDate as Date).getTime());
             setDonations(userDonations);
         } else {
             setError("Could not retrieve your donation history.");
@@ -74,7 +77,11 @@ export default function MyDonationsPage() {
              setError("Could not retrieve your user profile.");
         }
         
-        if (!userDonations || !fetchedUser) {
+        if(fetchedOrg) {
+            setOrganization(fetchedOrg);
+        }
+        
+        if (!userDonations || !fetchedUser || !fetchedOrg) {
             setError(prev => prev || "An error occurred while loading your data.");
         } else {
             setError(null);
@@ -123,7 +130,7 @@ export default function MyDonationsPage() {
             {paginatedDonations.map((donation, index) => (
                 <TableRow key={donation.id}>
                     <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                    <TableCell>{format(donation.createdAt as Date, "dd MMM yyyy")}</TableCell>
+                    <TableCell>{format(donation.donationDate, "dd MMM yyyy")}</TableCell>
                     <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
                     <TableCell>{donation.type}</TableCell>
                     <TableCell>{donation.purpose || 'N/A'}</TableCell>
@@ -133,7 +140,7 @@ export default function MyDonationsPage() {
                         </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                        <DonationReceiptDialog donation={donation} user={user!} />
+                        <DonationReceiptDialog donation={donation} user={user!} organization={organization} />
                     </TableCell>
                 </TableRow>
             ))}
@@ -196,7 +203,7 @@ export default function MyDonationsPage() {
 
 
   const renderContent = () => {
-    if (loading && !user) {
+    if (loading || !user || !organization) {
       return (
           <div className="flex items-center justify-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -242,7 +249,7 @@ export default function MyDonationsPage() {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Donations</h2>
              <Button asChild>
-                <Link href="/campaigns">
+                <Link href="/donate">
                     <HandHeart className="mr-2 h-4 w-4" />
                     Donate Now
                 </Link>

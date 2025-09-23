@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +71,7 @@ export function LinkedLeads({ donation, leads }: LinkedLeadsProps) {
                                     </TableCell>
                                     <TableCell className="font-semibold">₹{alloc.amount.toLocaleString()}</TableCell>
                                     <TableCell>{alloc.allocatedByUserName}</TableCell>
-                                    <TableCell>{format(alloc.allocatedAt as Date, "dd MMM yyyy, p")}</TableCell>
+                                    <TableCell>{format(alloc.allocatedAt, "dd MMM yyyy, p")}</TableCell>
                                     <TableCell className="text-right">
                                         <Button asChild variant="outline" size="sm">
                                             <Link href={`/admin/leads/${alloc.leadId}`}>

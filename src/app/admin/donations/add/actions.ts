@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/add/actions.ts
 
 "use server";
@@ -104,7 +105,7 @@ export async function handleAddDonation(
     const screenshotFile = formData.get("paymentScreenshot") as File | null;
     
     const donationDateStr = formData.get("donationDate") as string;
-    const donationDate = donationDateStr ? Timestamp.fromDate(new Date(donationDateStr)) : Timestamp.now();
+    const donationDate = donationDateStr ? new Date(donationDateStr) : new Date();
     
     const campaignId = formData.get("campaignId") as string | undefined;
     let campaignName: string | undefined;

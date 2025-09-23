@@ -230,7 +230,7 @@ export async function handleFundTransfer(
             transferredByUserId: adminUserId,
             transferredByUserName: adminUser.name,
             amount: amount,
-            transferredAt: new Date() as any,
+            transferredAt: new Date(),
             proofUrl: proofUrl,
             notes: formData.get("notes") as string | undefined,
             transactionId: transferId,
@@ -323,7 +323,7 @@ export async function handleAllocateDonationsToLead(leadId: string, donationIds:
             const newAllocationForDonation: Allocation = {
                 leadId: leadId,
                 amount: amountToAllocate,
-                allocatedAt: Timestamp.now(),
+                allocatedAt: new Date(),
                 allocatedByUserId: adminUser.id!,
                 allocatedByUserName: adminUser.name,
             };

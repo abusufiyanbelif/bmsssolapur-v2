@@ -151,7 +151,7 @@ export default function MyCasesPage() {
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                            <TableCell>{format(caseItem.createdAt, "dd MMM yyyy")}</TableCell>
+                            <TableCell>{format(caseItem.dateCreated, "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>

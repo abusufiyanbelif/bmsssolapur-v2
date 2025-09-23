@@ -1,7 +1,8 @@
 
+
 'use server';
 
-import { createLead } from "@/services/lead-service";
+import { createLead, updateLead } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, DonationType } from "@/services/types";
@@ -46,7 +47,7 @@ export async function handleRequestHelp(
     }
     
     // Create lead first to get an ID for the file path
-     const leadDataForCreation: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'helpGiven' | 'status' | 'verifiedStatus' | 'verifiers' | 'dateCreated' | 'adminAddedBy' | 'isLoan' | 'donations' | 'campaignName' | 'otherCategoryDetail'> = {
+     const leadDataForCreation: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>> = {
         name: beneficiaryUser.name,
         beneficiaryId: userId,
         donationType: 'Sadaqah',
@@ -67,7 +68,7 @@ export async function handleRequestHelp(
             onProgress
         );
         // Update the lead with the new document URL
-        await updateLead(tempLead.id, { verificationDocumentUrl });
+        await updateLead(tempLead.id!, { verificationDocumentUrl });
     }
     
     const finalLead = { ...tempLead, verificationDocumentUrl };

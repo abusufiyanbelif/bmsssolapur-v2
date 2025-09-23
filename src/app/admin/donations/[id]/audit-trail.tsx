@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +16,9 @@ const ActivityItem = ({ log }: ActivityItemProps) => {
   let timeAgo = "Just now";
   let fullDate = "Pending timestamp...";
 
-  if (log.timestamp instanceof Timestamp) {
-    timeAgo = formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true });
-    fullDate = format(log.timestamp.toDate(), 'PPP p');
-  }
+  const logTimestamp = log.timestamp instanceof Timestamp ? log.timestamp.toDate() : new Date(log.timestamp);
+  timeAgo = formatDistanceToNow(logTimestamp, { addSuffix: true });
+  fullDate = format(logTimestamp, 'PPP p');
 
   const renderDetails = () => {
     let icon = <ListChecks className="h-4 w-4 text-primary" />;
