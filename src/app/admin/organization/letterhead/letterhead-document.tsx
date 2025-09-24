@@ -21,9 +21,9 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
   
   const letterheadRef = useRef<HTMLDivElement>(null);
-  const letterheadContentRef = useRef<HTMLDivElement>(null); // Ref for text content only
+  const letterheadContentRef = useRef<HTMLDivElement>(null);
   const templateRef = useRef<HTMLDivElement>(null);
-  const templateContentRef = useRef<HTMLDivElement>(null); // Ref for template text content
+  const templateContentRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -57,12 +57,10 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
       // --- 2. Header ---
-      // Logo
       const logoWidth = 96;
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
       pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
 
-      // Organization Title
       const textX = margin + logoWidth + 20;
       const orgInfo = organization.footer!.organizationInfo;
       pdf.setFont('Helvetica', 'bold');
@@ -77,24 +75,26 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(22);
       pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
       
-      // Address and Contact under title
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(100, 100, 100);
       pdf.setFontSize(9);
-      pdf.text(`${organization.address}, ${organization.city}`, textX, 145);
-      pdf.text(`Email: ${organization.contactEmail} | Phone: ${organization.contactPhone}`, textX, 158);
 
-      // Header Line
+      if (isTemplate) {
+        pdf.text('Address: ', textX, 145);
+        pdf.text('Email: | Phone: ', textX, 158);
+      } else {
+        pdf.text(`${organization.address}, ${organization.city}`, textX, 145);
+        pdf.text(`Email: ${organization.contactEmail} | Phone: ${organization.contactPhone}`, textX, 158);
+      }
+
       pdf.setDrawColor(150, 150, 150);
       pdf.setLineWidth(1.5);
       pdf.line(margin, 180, A4_WIDTH_PT - margin, 180);
 
       // --- 3. Body Content ---
-      if (!isTemplate) {
-        pdf.setTextColor(50, 50, 50);
-        pdf.setFontSize(11);
-        pdf.text('Date: ', margin, 220);
-      }
+      pdf.setTextColor(50, 50, 50);
+      pdf.setFontSize(11);
+      pdf.text('Date: ', margin, 220);
       
       // --- 4. Footer ---
       const footerY = A4_HEIGHT_PT - 40;
@@ -102,8 +102,14 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
       
-      const footerLine1 = `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`;
-      const footerLine2 = `${organization.website}`;
+      let footerLine1, footerLine2;
+      if (isTemplate) {
+          footerLine1 = "Reg No: | PAN:";
+          footerLine2 = "URL:";
+      } else {
+          footerLine1 = `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`;
+          footerLine2 = `${organization.website}`;
+      }
       
       pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
       pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
@@ -161,14 +167,11 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <>
-                             {/* Visible preview */}
-                            <Letterhead 
-                                ref={letterheadRef}
-                                organization={organization}
-                                logoDataUri={logoDataUri}
-                            />
-                        </>
+                        <Letterhead 
+                            ref={letterheadRef}
+                            organization={organization}
+                            logoDataUri={logoDataUri}
+                        />
                     )}
                 </div>
             </CardContent>
