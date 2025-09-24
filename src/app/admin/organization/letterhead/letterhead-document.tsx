@@ -61,7 +61,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       const A4_HEIGHT_PT = pdf.internal.pageSize.getHeight();
       const margin = 45;
 
-      // --- 1. Watermark (Faint, Background) ---
+      // --- Watermark ---
       const watermarkProps = pdf.getImageProperties(logoDataUri);
       const watermarkWidth = 400;
       const watermarkHeight = (watermarkProps.height * watermarkWidth) / watermarkProps.width;
@@ -72,8 +72,8 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.addImage(logoDataUri, 'PNG', watermarkX, watermarkY, watermarkWidth, watermarkHeight);
       pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
-      // --- 2. Header ---
-      const logoWidth = 128;
+      // --- Header ---
+      const logoWidth = 150;
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
       pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
 
@@ -81,14 +81,14 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       const orgInfo = organization.footer!.organizationInfo;
       
       pdf.setFont('Helvetica', 'bold');
-      pdf.setTextColor('#16a34a');
+      pdf.setTextColor('#16a34a'); // Primary Green
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
-      pdf.setTextColor("#FFC107");
+      pdf.setTextColor("#FFC107"); // Accent Gold/Yellow
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
-      pdf.setTextColor('#16a34a');
+      pdf.setTextColor('#16a34a'); // Primary Green
       pdf.setFontSize(22);
       pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
       
@@ -97,10 +97,8 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(9);
       
       const emailPhoneText = [
-        (!isTemplate && inclusions.includeEmail) && `Email: ${organization.contactEmail}`,
-        (isTemplate && inclusions.includeEmail) && 'Email:',
-        (!isTemplate && inclusions.includePhone) && `Phone: ${organization.contactPhone}`,
-        (isTemplate && inclusions.includePhone) && 'Phone:',
+        (inclusions.includeEmail) && `Email: ${isTemplate ? '' : organization.contactEmail}`,
+        (inclusions.includePhone) && `Phone: ${isTemplate ? '' : organization.contactPhone}`,
       ].filter(Boolean).join(isTemplate ? '          |   ' : '  |  ');
       
       if (inclusions.includeAddress) {
@@ -114,12 +112,12 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setLineWidth(1.5);
       pdf.line(margin, 180, A4_WIDTH_PT - margin, 180);
 
-      // --- 3. Body Content ---
+      // --- Body ---
       pdf.setTextColor(50, 50, 50);
       pdf.setFontSize(11);
       pdf.text('Date: ', margin, 220);
       
-      // --- 4. Signature ---
+      // --- Signature ---
       const signatureY = A4_HEIGHT_PT - 120;
       const signatureLineX2 = A4_WIDTH_PT - margin;
       const signatureLineX1 = signatureLineX2 - 200;
@@ -128,26 +126,24 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.line(signatureLineX1, signatureY, signatureLineX2, signatureY);
       pdf.text('(Signature / Stamp)', signatureLineX1 + 100, signatureY + 15, { align: 'center' });
 
-
-      // --- 5. Footer ---
+      // --- Footer ---
       const footerY = A4_HEIGHT_PT - 45;
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
 
       const regPanText = [
-        (!isTemplate && inclusions.includeRegNo) && `Reg No: ${organization.registrationNumber}`,
-        (isTemplate && inclusions.includeRegNo) && 'Reg No.:',
-        (!isTemplate && inclusions.includePan) && `PAN: ${organization.panNumber || 'N/A'}`,
-        (isTemplate && inclusions.includePan) && 'PAN:',
+        (inclusions.includeRegNo) && `Reg No: ${isTemplate ? '' : organization.registrationNumber}`,
+        (inclusions.includePan) && `PAN: ${isTemplate ? '' : (organization.panNumber || 'N/A')}`,
       ].filter(Boolean).join(isTemplate ? '          |   ' : ' | ');
       
-      if(regPanText) {
-          pdf.text(regPanText, A4_WIDTH_PT / 2, footerY - (isTemplate ? 50 : 15), { align: 'center' });
+      let currentFooterY = footerY;
+      if (inclusions.includeUrl) {
+           pdf.text(`URL: ${isTemplate ? '' : organization.website}`, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
+           currentFooterY -= (isTemplate ? 50 : 15);
       }
-
-      if(inclusions.includeUrl) {
-           pdf.text(`URL: ${isTemplate ? '' : organization.website}`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+      if(regPanText) {
+          pdf.text(regPanText, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
       }
 
       const fileName = isTemplate 
