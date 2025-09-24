@@ -55,9 +55,9 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                     </div>
                                     </td>
                                     <td className="pl-4 align-top">
-                                        <h1 className="text-3xl font-bold text-primary" style={textStyle}>{organization.name}</h1>
-                                        <h2 className="text-3xl font-bold text-accent" style={textStyle}>SOLAPUR</h2>
-                                        <p className="text-lg font-bold text-primary" style={textStyle}>({organization.city})</p>
+                                        <h1 className="text-3xl font-bold text-primary" style={textStyle}>{organization.footer?.organizationInfo.titleLine1 || 'Baitul Mal'}</h1>
+                                        <h2 className="text-3xl font-bold text-accent" style={textStyle}>{organization.footer?.organizationInfo.titleLine2 || 'Samajik Sanstha'}</h2>
+                                        <p className="text-lg font-bold text-primary" style={textStyle}>{organization.footer?.organizationInfo.titleLine3 || '(Solapur)'}</p>
                                         <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organization.address}</p>
                                         <p className="text-sm text-gray-600" style={textStyle}>Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
                                     </td>
