@@ -107,7 +107,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     city: "Solapur",
     address: "123 Muslim Peth, Solapur, Maharashtra 413001",
     registrationNumber: "MAHA/123/2024",
-    panNumber: "AAFTB9401P",
+    panNumber: "AAPAB1213J",
     contactEmail: "contact@baitulmalsolapur.org",
     contactPhone: "919372145889",
     website: "https://baitulmalsolapur.org",
