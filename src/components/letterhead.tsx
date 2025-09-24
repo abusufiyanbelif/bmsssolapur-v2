@@ -7,13 +7,13 @@ import type { Organization } from '@/services/types';
 
 interface LetterheadProps {
     organization: Organization;
-    // Base64 data URIs are passed to ensure they are rendered in the PDF
     logoDataUri?: string;
     watermarkDataUri?: string;
+    isTemplate?: boolean; // New prop
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
-    ({ organization, logoDataUri, watermarkDataUri }, ref) => {
+    ({ organization, logoDataUri, watermarkDataUri, isTemplate = false }, ref) => {
 
         const organizationDetails = {
             name: organization?.name || "Baitul Mal Samajik Sanstha (Solapur)",
@@ -31,13 +31,11 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
         return (
              <div className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative shadow-lg">
-                 {/* This div is the one that gets screenshotted. We leave the logo and watermark out of it. */}
                 <div ref={ref} className="relative z-10 flex flex-col h-full">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    {/* Empty cell to reserve space for the logo that will be added by jsPDF */}
                                     <td style={{ width: '128px', verticalAlign: 'top' }}></td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
@@ -60,23 +58,28 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     <main className="flex-grow pt-8">
                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
                             <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
-                            <br />
-                            <p>To,</p>
-                            <p>[Recipient Name]</p>
-                            <p>[Recipient Address]</p>
-                            <br />
-                            <p><span className="font-bold">Subject:</span> [Subject of the Letter]</p>
-                            <br />
-                            <p>Respected Sir/Madam,</p>
-                            <br />
-                            <p>
-                                [Start writing the body of your letter here...]
-                            </p>
-                            <br />
-                            <p>Thank you for your consideration.</p>
-                            <br />
-                            <br />
-                            <p className="font-bold">[Your Name/Organization Name]</p>
+                            
+                            {!isTemplate && (
+                                <>
+                                    <br />
+                                    <p>To,</p>
+                                    <p>[Recipient Name]</p>
+                                    <p>[Recipient Address]</p>
+                                    <br />
+                                    <p><span className="font-bold">Subject:</span> [Subject of the Letter]</p>
+                                    <br />
+                                    <p>Respected Sir/Madam,</p>
+                                    <br />
+                                    <p>
+                                        [Start writing the body of your letter here...]
+                                    </p>
+                                    <br />
+                                    <p>Thank you for your consideration.</p>
+                                    <br />
+                                    <br />
+                                    <p className="font-bold">[Your Name/Organization Name]</p>
+                                </>
+                            )}
                         </div>
                     </main>
                     
@@ -86,7 +89,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </footer>
                 </div>
 
-                 {/* These are for visual preview only and are not part of the `ref` passed to html2canvas */}
                 {watermarkDataUri && (
                     <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
                         <img
@@ -107,7 +109,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </div>
                     </div>
                 )}
-
             </div>
         );
     }
