@@ -21,8 +21,6 @@ export async function handleUpdateOrganization(
     const qrCodeFile = formData.get("qrCodeFile") as File | null;
     let qrCodeUrl = formData.get('qrCodeUrl') as string;
     
-    // The logo is handled as a URL for now, but if we add an upload field for it,
-    // the logic would be identical to the QR code handling below.
     const logoFile = formData.get("logoFile") as File | null;
     let logoUrl = formData.get('logoUrl') as string;
 
@@ -58,6 +56,10 @@ export async function handleUpdateOrganization(
     revalidatePath("/admin/organization");
     revalidatePath("/organization");
     revalidatePath("/campaigns");
+    // Also revalidate pages that use the logo in the header/footer
+    revalidatePath("/");
+    revalidatePath("/home", "layout");
+
 
     return { success: true };
   } catch (e) {
@@ -69,4 +71,3 @@ export async function handleUpdateOrganization(
     };
   }
 }
-
