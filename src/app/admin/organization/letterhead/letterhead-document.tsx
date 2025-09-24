@@ -67,7 +67,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
-      pdf.setTextColor("#FFC107"); // Accent Gold
+      pdf.setTextColor("#FFC107");
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
       pdf.setTextColor('#16a34a'); // Primary Green
@@ -112,11 +112,11 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(8);
       
       if (isTemplate) {
-          pdf.text("Reg No.:                    |   PAN:", A4_WIDTH_PT / 2, footerY, { align: 'center' });
-          pdf.text("URL:", A4_WIDTH_PT / 2, footerY + 15, { align: 'center' });
+          pdf.text("Reg No.:                    |   PAN:", A4_WIDTH_PT / 2, footerY - 35, { align: 'center' });
+          pdf.text("URL:", A4_WIDTH_PT / 2, footerY, { align: 'center' });
       } else {
-          pdf.text(`Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-          pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
+          pdf.text(`Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`, A4_WIDTH_PT / 2, footerY - 15, { align: 'center' });
+          pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
       }
 
       const fileName = isTemplate 
