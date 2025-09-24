@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,8 +15,8 @@ interface LetterheadDocumentProps {
   organization: Organization;
 }
 
-// Helper function to fetch an image and convert it to a base64 data URI
-const toDataURL = async (url: string): Promise<string> => {
+// Helper to convert image URL to Base64
+async function getBase64FromUrl(url: string): Promise<string> {
     const response = await fetch(url);
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
@@ -25,13 +25,35 @@ const toDataURL = async (url: string): Promise<string> => {
         reader.onerror = reject;
         reader.readAsDataURL(blob);
     });
-};
+}
 
 export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [embeddedImages, setEmbeddedImages] = useState<{logoDataUri?: string, watermarkDataUri?: string}>({});
   const letterheadRef = useRef<HTMLDivElement>(null);
+  const [logoDataUri, setLogoDataUri] = useState<string | undefined>(undefined);
+  const [loadingLogo, setLoadingLogo] = useState(true);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      if (organization.logoUrl) {
+        try {
+          const dataUri = await getBase64FromUrl(organization.logoUrl);
+          setLogoDataUri(dataUri);
+        } catch (error) {
+          console.error("Failed to fetch and convert logo:", error);
+          toast({
+            variant: "destructive",
+            title: "Could not load logo",
+            description: "There was an error loading the organization's logo for the preview."
+          });
+        }
+      }
+      setLoadingLogo(false);
+    };
+    fetchLogo();
+  }, [organization.logoUrl, toast]);
+
 
   const handleDownload = async () => {
     if (!letterheadRef.current) return;
@@ -39,44 +61,35 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
     setIsGenerating(true);
 
     try {
-        // Fetch images and convert to base64 data URIs
-        const logoDataUri = organization.logoUrl ? await toDataURL(organization.logoUrl) : undefined;
-        // Assuming watermark is the same as the logo
-        const watermarkDataUri = organization.logoUrl ? await toDataURL(organization.logoUrl) : undefined;
-        setEmbeddedImages({ logoDataUri, watermarkDataUri });
-
-        // Allow a brief moment for React to re-render with the new base64 URIs
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        const canvas = await html2canvas(letterheadRef.current, {
-            scale: 3,
-            useCORS: true, 
-            logging: false,
-            backgroundColor: '#ffffff',
-        });
+      const canvas = await html2canvas(letterheadRef.current, {
+          scale: 3,
+          useCORS: true, 
+          logging: false,
+          backgroundColor: '#ffffff',
+      });
       
-        const imgData = canvas.toDataURL('image/png');
-        
-        const A4_WIDTH_PT = 595.28;
-
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'pt',
-            format: 'a4'
-        });
+      const imgData = canvas.toDataURL('image/png');
       
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = A4_WIDTH_PT;
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const A4_WIDTH_PT = 595.28;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
+      });
       
-        toast({
-            variant: 'success',
-            title: "Download Started",
-            description: "Your letterhead is being downloaded."
-        });
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = A4_WIDTH_PT;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`);
+      
+      toast({
+          variant: 'success',
+          title: "Download Started",
+          description: "Your letterhead is being downloaded."
+      });
     } catch (e) {
       console.error("Error generating PDF", e);
       toast({
@@ -86,7 +99,6 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       });
     } finally {
         setIsGenerating(false);
-        setEmbeddedImages({}); // Clear embedded images after generation
     }
   };
 
@@ -94,7 +106,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
-             <Button onClick={handleDownload} disabled={isGenerating}>
+             <Button onClick={handleDownload} disabled={isGenerating || loadingLogo}>
                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 Download as PDF
             </Button>
@@ -108,7 +120,18 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
             </CardHeader>
             <CardContent className="bg-gray-200 p-8 flex justify-center">
                 <div className="transform scale-90 origin-top">
-                    <Letterhead ref={letterheadRef} organization={organization} {...embeddedImages} />
+                    {loadingLogo ? (
+                        <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                        <Letterhead 
+                            ref={letterheadRef} 
+                            organization={organization}
+                            logoDataUri={logoDataUri}
+                            watermarkDataUri={logoDataUri} // Use the same fetched logo for the watermark
+                        />
+                    )}
                 </div>
             </CardContent>
         </Card>
