@@ -19,7 +19,10 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
             pan: organization?.panNumber || "AAFTB9401P",
             email: organization?.contactEmail || "contact@baitulmalsolapur.org",
             phone: organization?.contactPhone || "+91 9372145889",
-            logoUrl: organization?.logoUrl || "https://picsum.photos/seed/logo/128/128"
+            logoUrl: organization?.logoUrl || "https://picsum.photos/seed/logo/128/128",
+            titleLine1: organization.footer?.organizationInfo.titleLine1 || 'Baitul Mal',
+            titleLine2: organization.footer?.organizationInfo.titleLine2 || 'Samajik Sanstha',
+            titleLine3: organization.footer?.organizationInfo.titleLine3 || '(Solapur)',
         };
         
         const textStyle = { letterSpacing: '0.5px' };
@@ -38,28 +41,20 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                 </div>
 
                 {/* Content Layer */}
-                <div className="relative z-10 flex flex-col flex-grow">
+                <div className="relative z-10 flex flex-col h-full">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '128px', verticalAlign: 'top' }}>
-                                         <div className="relative w-32 h-32">
-                                        <img
-                                            src={organizationDetails.logoUrl}
-                                            alt="Organization Logo"
-                                            crossOrigin="anonymous"
-                                            className="w-full h-full object-contain"
-                                            data-ai-hint="logo"
-                                        />
-                                    </div>
-                                    </td>
-                                    <td className="pl-4 align-top">
-                                        <h1 className="text-3xl font-bold text-primary" style={textStyle}>{organization.footer?.organizationInfo.titleLine1 || 'Baitul Mal'}</h1>
-                                        <h2 className="text-3xl font-bold text-accent" style={textStyle}>{organization.footer?.organizationInfo.titleLine2 || 'Samajik Sanstha'}</h2>
-                                        <p className="text-lg font-bold text-primary" style={textStyle}>{organization.footer?.organizationInfo.titleLine3 || '(Solapur)'}</p>
-                                        <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organization.address}</p>
-                                        <p className="text-sm text-gray-600" style={textStyle}>Email: {organization.contactEmail} | Phone: {organization.contactPhone}</p>
+                                    <td className="align-top">
+                                        <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--foreground))'}}>
+                                            {organizationDetails.titleLine1.toUpperCase()} {organizationDetails.titleLine2.toUpperCase()}
+                                        </h1>
+                                        <h2 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--primary))'}}>
+                                            {organizationDetails.titleLine3.toUpperCase()}
+                                        </h2>
+                                        <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organizationDetails.address}</p>
+                                        <p className="text-sm text-gray-600" style={textStyle}>Email: {organizationDetails.email} | Phone: {organizationDetails.phone}</p>
                                     </td>
                                 </tr>
                             </tbody>
