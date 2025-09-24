@@ -38,7 +38,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '128px' }}></td>
+                                    <td style={{ width: '160px' }}></td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                             {organizationDetails.titleLine1.toUpperCase()}
@@ -59,7 +59,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
                     <main className="flex-grow pt-8" style={{minHeight: '650px'}}>
                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
-                            <p>Date: </p>
+                           {!isTemplate && <p>Date: </p>}
                         </div>
                     </main>
                     
@@ -73,7 +73,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     jsPDF will handle the actual placement in the PDF. */}
                 {logoDataUri && (
                     <div className="absolute top-12 left-12 z-20 pointer-events-none">
-                        <div className="relative w-36 h-36">
+                        <div className="relative w-40 h-40">
                              <img
                                 src={logoDataUri}
                                 alt="Organization Logo"

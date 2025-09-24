@@ -73,7 +73,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.addImage(contentImgData, 'PNG', 0, 0, contentWidth, contentHeight);
 
       // Step 4: Add the logo on top
-      const logoWidth = 100; // Increased logo size
+      const logoWidth = 120; // Increased logo size
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
       pdf.addImage(logoDataUri, 'PNG', 45, 40, logoWidth, logoHeight);
 
