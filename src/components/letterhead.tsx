@@ -13,6 +13,7 @@ export interface LetterheadInclusionOptions {
     includeRegNo?: boolean;
     includePan?: boolean;
     includeUrl?: boolean;
+    includeDate?: boolean;
     includeRecipient?: boolean;
     includeSubject?: boolean;
     includeBody?: boolean;
@@ -20,6 +21,7 @@ export interface LetterheadInclusionOptions {
 }
 
 export interface LetterContentOptions {
+    date: Date;
     recipientName: string;
     recipientAddress: string;
     subject: string;
@@ -45,6 +47,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
             includeRegNo = true,
             includePan = true,
             includeUrl = true,
+            includeDate = true,
             includeRecipient = true,
             includeSubject = true,
             includeBody = true,
@@ -52,6 +55,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         } = inclusions;
         
         const defaultContent: LetterContentOptions = {
+            date: new Date(),
             recipientName: '[Recipient Name]',
             recipientAddress: '[Recipient Address,\nCity, State, Pincode]',
             subject: '[Subject Line]',
@@ -142,7 +146,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </header>
                     <ScrollArea className="flex-grow my-8">
                         <main className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap" style={textStyle}>
-                           <p>Date: {format(new Date(), 'dd MMM, yyyy')}</p>
+                           {includeDate && <p>Date: {isTemplate ? '' : format(content.date, 'dd MMM, yyyy')}</p>}
                            {includeRecipient && (
                                <div className="pt-8">
                                    <p>To,</p>

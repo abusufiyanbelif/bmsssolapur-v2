@@ -527,3 +527,27 @@ export interface PublicStats {
     fundsInHand: number;
 }
 export type { ExtractDonationDetailsOutput, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from '@/ai/schemas';
+
+// --- Letterhead Related Types
+export interface LetterheadInclusionOptions {
+    includeAddress?: boolean;
+    includeEmail?: boolean;
+    includePhone?: boolean;
+    includeRegNo?: boolean;
+    includePan?: boolean;
+    includeUrl?: boolean;
+    includeDate?: boolean;
+    includeRecipient?: boolean;
+    includeSubject?: boolean;
+    includeBody?: boolean;
+    includeClosing?: boolean;
+}
+
+export interface LetterContentOptions {
+    date: Date;
+    recipientName: string;
+    recipientAddress: string;
+    subject: string;
+    body: string;
+    closingName: string;
+}

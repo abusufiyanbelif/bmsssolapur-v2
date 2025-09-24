@@ -3,7 +3,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, FileText, Settings, Type, Milestone } from "lucide-react";
+import { Download, Loader2, FileText, Settings, Type, Milestone, CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization, LetterheadInclusionOptions, LetterContentOptions } from "@/services/types";
 import { Letterhead } from "@/components/letterhead";
@@ -14,24 +14,37 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from 'date-fns';
+import { cn } from "@/lib/utils";
+
 
 interface LetterheadDocumentProps {
   organization: Organization;
   logoDataUri?: string;
 }
 
-const inclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
+const headerInclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
     { id: 'includeAddress', label: 'Address' },
     { id: 'includeEmail', label: 'Email' },
     { id: 'includePhone', label: 'Phone' },
+];
+
+const footerInclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
     { id: 'includeRegNo', label: 'Registration No.' },
     { id: 'includePan', label: 'PAN Number' },
     { id: 'includeUrl', label: 'Website URL' },
-    { id: 'includeRecipient', label: 'Recipient Block' },
-    { id: 'includeSubject', label: 'Subject Line' },
-    { id: 'includeBody', label: 'Letter Body' },
-    { id: 'includeClosing', label: 'Signature Block' },
 ];
+
+const letterSectionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
+    { id: 'includeDate', label: 'Date' },
+    { id: 'includeRecipient', label: 'Recipient' },
+    { id: 'includeSubject', label: 'Subject Line' },
+    { id: 'includeBody', label: 'Body Text' },
+    { id: 'includeClosing', label: 'Closing/Signature' },
+]
+
 
 export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
@@ -46,6 +59,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       includeRegNo: true,
       includePan: true,
       includeUrl: true,
+      includeDate: true,
       includeRecipient: true,
       includeSubject: true,
       includeBody: true,
@@ -54,16 +68,17 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   
   // State for the *content* of the letterhead
   const [letterContent, setLetterContent] = useState<LetterContentOptions>({
+      date: new Date(),
       recipientName: 'The Manager',
       recipientAddress: '[Bank Name]\n[Branch Address]',
       subject: 'Request to Open a Bank Account for Baitul Mal Samajik Sanstha (Solapur)',
       body: `Dear Sir/Madam,
 
-This letter serves as a formal request to open a bank account on behalf of **Baitul Mal Samajik Sanstha (Solapur)**, a registered charitable organization dedicated to providing educational and medical support to underprivileged communities.
+This letter serves as a formal request to open a bank account on behalf of **Baitul Mal Samajik Sanstha (Solapur)**, a registered charitable organization dedicated to **providing educational and medical support to underprivileged communities**.
 
 We believe that opening an account with your esteemed bank will enable us to manage our finances transparently and efficiently, supporting our mission and ensuring proper accountability.
 
-We are prepared to submit all necessary documents and fulfill the requirements for opening a bank account for a non-profit organization. We have attached a copy of the resolution passed by our Governing Body authorizing the opening of this account and designating the authorized signatories.
+We are prepared to submit all necessary documents and fulfill the requirements for opening a bank account for a non-profit organization. We have attached a copy of the resolution passed by our Governing Body/Board of Trustees authorizing the opening of this account and designating the authorized signatories.
 
 We kindly request you to provide us with the necessary application forms and details regarding the required documentation and procedures to complete the account opening process.
 
@@ -118,10 +133,10 @@ Thank you for your time and consideration. We look forward to establishing a ban
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
-      pdf.setTextColor('#FFC107'); // Accent Gold/Yellow
+      pdf.setTextColor('#FFC107');
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
-      pdf.setTextColor('#16a34a'); // Primary Green
+      pdf.setTextColor('#16a34a');
       pdf.setFontSize(22);
       pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
       
@@ -132,16 +147,16 @@ Thank you for your time and consideration. We look forward to establishing a ban
       let headerTextY = 145;
       if (inclusions.includeAddress) {
           pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, headerTextY);
-          headerTextY += 13;
+          headerTextY += 15;
       }
-
-      if (isTemplate) {
+      
+       if (isTemplate) {
           const emailX = textX;
           const phoneX = emailX + 150; 
           if (inclusions.includeEmail) pdf.text('Email:', emailX, headerTextY);
           if (inclusions.includePhone) pdf.text('Phone:', phoneX, headerTextY);
       } else {
-          const emailPhoneText = [
+           const emailPhoneText = [
               inclusions.includeEmail && `Email: ${organization.contactEmail}`,
               inclusions.includePhone && `Phone: ${organization.contactPhone}`,
           ].filter(Boolean).join('  |  ');
@@ -156,7 +171,10 @@ Thank you for your time and consideration. We look forward to establishing a ban
       pdf.setTextColor(50, 50, 50);
       pdf.setFontSize(11);
       let bodyY = 220;
-      pdf.text('Date: ', margin, bodyY);
+      
+      if (inclusions.includeDate) {
+        pdf.text(`Date: ${isTemplate ? '' : format(letterContent.date, 'dd MMM, yyyy')}`, margin, bodyY);
+      }
       
       if (inclusions.includeRecipient) {
           bodyY += 40;
@@ -179,6 +197,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
         pdf.text('Subject: ', margin, bodyY);
         pdf.setFont('Helvetica', 'normal');
         pdf.text(isTemplate ? '' : letterContent.subject, margin + 50, bodyY);
+        bodyY += 15;
       }
       
        if (inclusions.includeBody) {
@@ -192,8 +211,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
       let signatureY = A4_HEIGHT_PT - 150;
       if (inclusions.includeClosing) {
           pdf.setFont('Helvetica', 'normal');
-          pdf.text('Sincerely,', margin, signatureY);
-          signatureY += 30; // More space for signature
+          pdf.text('Sincerely,', margin, signatureY - 30);
           const closingName = isTemplate ? '[Sender Name]' : letterContent.closingName;
           pdf.text(closingName, margin, signatureY);
       }
@@ -218,7 +236,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
           if(inclusions.includeRegNo) pdf.text('Reg No:', regX, currentY);
           if(inclusions.includePan) pdf.text('PAN:', panX, currentY);
           
-          currentY += 15; // Increased spacing for the next line
+          currentY += 15;
           if (inclusions.includeUrl) pdf.text('URL:', regX, currentY);
 
       } else {
@@ -319,14 +337,24 @@ Thank you for your time and consideration. We look forward to establishing a ban
                         <div>
                             <h4 className="font-semibold text-sm mb-2">Header & Footer Details</h4>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                {inclusionOptions.slice(0, 6).map(option => (
+                                {headerInclusionOptions.map(option => (
                                     <div key={option.id} className="flex items-center space-x-2">
                                         <Checkbox
-                                            id={option.id}
+                                            id={`inc-${option.id}`}
                                             checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
                                             onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
                                         />
-                                        <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
+                                        <Label htmlFor={`inc-${option.id}`} className="font-normal">{option.label}</Label>
+                                    </div>
+                                ))}
+                                 {footerInclusionOptions.map(option => (
+                                    <div key={option.id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`inc-${option.id}`}
+                                            checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
+                                            onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
+                                        />
+                                        <Label htmlFor={`inc-${option.id}`} className="font-normal">{option.label}</Label>
                                     </div>
                                 ))}
                             </div>
@@ -335,14 +363,14 @@ Thank you for your time and consideration. We look forward to establishing a ban
                          <div>
                             <h4 className="font-semibold text-sm mb-2">Letter Sections</h4>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                {inclusionOptions.slice(6).map(option => (
+                                {letterSectionOptions.map(option => (
                                     <div key={option.id} className="flex items-center space-x-2">
                                         <Checkbox
-                                            id={option.id}
+                                            id={`inc-${option.id}`}
                                             checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
                                             onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
                                         />
-                                        <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
+                                        <Label htmlFor={`inc-${option.id}`} className="font-normal">{option.label}</Label>
                                     </div>
                                 ))}
                             </div>
@@ -361,6 +389,31 @@ Thank you for your time and consideration. We look forward to establishing a ban
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="date">Date</Label>
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !letterContent.date && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {letterContent.date ? format(letterContent.date, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={letterContent.date}
+                                    onSelect={(date) => setLetterContent(prev => ({...prev, date: date || new Date()}))}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="recipientName">Recipient Name</Label>
                             <Input id="recipientName" value={letterContent.recipientName} onChange={e => setLetterContent(prev => ({...prev, recipientName: e.target.value}))} />
