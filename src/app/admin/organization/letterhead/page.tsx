@@ -5,30 +5,6 @@ import { LetterheadDocument } from "./letterhead-document";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-/**
- * Fetches an image from a URL and converts it to a Base64 data URI.
- * This is done on the server to avoid client-side CORS issues.
- * @param url The public URL of the image to fetch.
- * @returns A promise that resolves with the Base64 data URI or undefined.
- */
-async function getImageAsBase64(url?: string): Promise<string | undefined> {
-  if (!url) return undefined;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-    }
-    const blob = await response.blob();
-    const buffer = Buffer.from(await blob.arrayBuffer());
-    const base64 = buffer.toString('base64');
-    return `data:${blob.type};base64,${base64}`;
-  } catch (error) {
-    console.error("Error converting image to Base64:", error);
-    // Return undefined instead of throwing to allow the page to render without the image
-    return undefined;
-  }
-}
-
 
 export default async function LetterheadPage() {
     const organization = await getCurrentOrganization();
@@ -47,8 +23,6 @@ export default async function LetterheadPage() {
         );
     }
     
-    // Fetch and convert the logo on the server before rendering the client component
-    const logoDataUri = await getImageAsBase64(organization.logoUrl);
-
-    return <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />;
+    return <LetterheadDocument organization={organization} />;
 }
+

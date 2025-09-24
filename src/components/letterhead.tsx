@@ -30,37 +30,15 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         const textStyle = { letterSpacing: '0.5px' };
 
         return (
-            <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative shadow-lg">
-                {/* Watermark Layer */}
-                {watermarkDataUri && (
-                    <div className="absolute inset-0 z-0 flex items-center justify-center">
-                        <img
-                            src={watermarkDataUri}
-                            alt="Watermark"
-                            className="w-3/4 h-3/4 object-contain opacity-5"
-                            data-ai-hint="logo watermark"
-                        />
-                    </div>
-                )}
-
-                {/* Content Layer */}
-                <div className="relative z-10 flex flex-col h-full">
+             <div className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative shadow-lg">
+                 {/* This div is the one that gets screenshotted. We leave the logo and watermark out of it. */}
+                <div ref={ref} className="relative z-10 flex flex-col h-full">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '128px', verticalAlign: 'top' }}>
-                                        {logoDataUri && (
-                                            <div className="relative w-28 h-28">
-                                                <img
-                                                    src={logoDataUri}
-                                                    alt="Organization Logo"
-                                                    className="w-full h-full object-contain"
-                                                    data-ai-hint="logo"
-                                                />
-                                            </div>
-                                        )}
-                                    </td>
+                                    {/* Empty cell to reserve space for the logo that will be added by jsPDF */}
+                                    <td style={{ width: '128px', verticalAlign: 'top' }}></td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                             {organizationDetails.titleLine1.toUpperCase()}
@@ -107,6 +85,29 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <p>{organization.website}</p>
                     </footer>
                 </div>
+
+                 {/* These are for visual preview only and are not part of the `ref` passed to html2canvas */}
+                {watermarkDataUri && (
+                    <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+                        <img
+                            src={watermarkDataUri}
+                            alt="Watermark"
+                            className="w-3/4 h-3/4 object-contain opacity-5"
+                        />
+                    </div>
+                )}
+                 {logoDataUri && (
+                    <div className="absolute top-12 left-12 z-20 pointer-events-none">
+                        <div className="relative w-28 h-28">
+                             <img
+                                src={logoDataUri}
+                                alt="Organization Logo"
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                    </div>
+                )}
+
             </div>
         );
     }
