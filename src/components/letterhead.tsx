@@ -39,7 +39,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                 <tr>
                                     <td style={{ width: '128px', verticalAlign: 'top' }}>
                                          {logoDataUri && (
-                                            <div className="relative w-28 h-28">
+                                            <div className="relative w-32 h-32">
                                                 <img
                                                     src={logoDataUri}
                                                     alt="Organization Logo"
@@ -52,7 +52,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                         <h1 className="text-4xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                             {organizationDetails.titleLine1.toUpperCase()}
                                         </h1>
-                                        <h2 className="text-4xl font-bold font-headline" style={{...textStyle, color: '#ca8a04'}}>
+                                        <h2 className="text-4xl font-bold font-headline" style={{...textStyle, color: '#FFC107'}}>
                                             {organizationDetails.titleLine2.toUpperCase()}
                                         </h2>
                                         <h3 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
@@ -62,7 +62,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                             Address: {isTemplate ? '' : `${organizationDetails.address}`}
                                         </p>
                                         <p className="text-sm text-gray-600" style={textStyle}>
-                                            Email: {isTemplate ? '' : organizationDetails.email}  |  Phone: {isTemplate ? '' : organizationDetails.phone}
+                                            Email: {isTemplate ? ' ' : organizationDetails.email}  |  Phone: {isTemplate ? '' : organizationDetails.phone}
                                         </p>
                                     </td>
                                 </tr>
@@ -76,12 +76,12 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </div>
                     </main>
                     
-                    <footer className="mt-auto pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
+                    <footer className="mt-auto pt-4 border-t text-xs text-center text-muted-foreground" style={textStyle}>
                          <p>
-                            Reg No.: {isTemplate ? '          |   PAN:' : `${organization.registrationNumber} | PAN: ${organization.panNumber}`}
+                            {isTemplate ? 'Reg No.:          |   PAN:' : `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`}
                          </p>
                          <p className='mt-2'>
-                            URL: {isTemplate ? '' : organization.website}
+                            {isTemplate ? 'URL:' : `URL: ${organization.website}`}
                          </p>
                     </footer>
                 </div>

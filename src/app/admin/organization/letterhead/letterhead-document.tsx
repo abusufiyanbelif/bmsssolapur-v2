@@ -69,7 +69,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
-      pdf.setTextColor('#ca8a04'); // Accent Gold
+      pdf.setTextColor('#FFC107'); // Accent Gold
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
       pdf.setTextColor('#16a34a'); // Primary Green
@@ -168,11 +168,23 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <Letterhead 
-                            ref={letterheadRef}
-                            organization={organization}
-                            logoDataUri={logoDataUri}
-                        />
+                        <>
+                             {/* Visible preview */}
+                            <Letterhead 
+                                ref={letterheadRef}
+                                organization={organization}
+                                logoDataUri={logoDataUri}
+                            />
+                             {/* Hidden template for PDF generation */}
+                            <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+                                <Letterhead
+                                    ref={templateRef}
+                                    organization={organization}
+                                    logoDataUri={logoDataUri}
+                                    isTemplate={true}
+                                />
+                            </div>
+                        </>
                     )}
                 </div>
             </CardContent>
