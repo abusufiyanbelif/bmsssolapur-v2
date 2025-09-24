@@ -61,7 +61,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     <main className="flex-grow pt-8" style={{minHeight: '550px'}}>
                         {!isTemplate && (
                             <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
-                                <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
+                                <p>Date: </p>
                             </div>
                         )}
                     </main>
