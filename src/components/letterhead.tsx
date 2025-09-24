@@ -21,6 +21,8 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
             registration: organization?.registrationNumber || "MAHA/123/2024",
             email: organization?.contactEmail || "contact@baitulmalsolapur.org",
             phone: organization?.contactPhone || "+91 9372145889",
+            website: organization?.website || 'https://baitulmalsolapur.org',
+            pan: organization?.panNumber || 'AAFSB9401P',
             titleLine1: organization.footer?.organizationInfo.titleLine1 || 'BAITUL MAL',
             titleLine2: organization.footer?.organizationInfo.titleLine2 || 'SAMAJIK SANSTHA',
             titleLine3: organization.footer?.organizationInfo.titleLine3 || '(SOLAPUR)',
@@ -57,7 +59,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </table>
                     </header>
 
-                    <main className="flex-grow pt-8">
+                    <main className="flex-grow pt-8 min-h-[550px]">
                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
                             <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
                             
