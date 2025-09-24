@@ -18,16 +18,25 @@ export interface LetterheadInclusionOptions {
     includeClosing?: boolean;
 }
 
+export interface LetterContentOptions {
+    recipientName: string;
+    recipientAddress: string;
+    subject: string;
+    body: string;
+    closingName: string;
+}
+
 interface LetterheadProps {
     organization: Organization;
     logoDataUri?: string;
     isTemplate?: boolean;
     inclusions?: LetterheadInclusionOptions;
+    letterContent?: LetterContentOptions;
     contentRef?: React.Ref<HTMLDivElement>;
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
-    ({ organization, logoDataUri, isTemplate = false, inclusions = {}, contentRef }, ref) => {
+    ({ organization, logoDataUri, isTemplate = false, inclusions = {}, letterContent, contentRef }, ref) => {
 
         const {
             includeAddress = true,
@@ -41,6 +50,17 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
             includeBody = true,
             includeClosing = true,
         } = inclusions;
+        
+        const defaultContent: LetterContentOptions = {
+            recipientName: '[Recipient Name]',
+            recipientAddress: '[Recipient Address,\nCity, State, Pincode]',
+            subject: '[Subject Line]',
+            body: '[Main body of the letter...]',
+            closingName: '[Sender Name]',
+        };
+        
+        const content = isTemplate ? defaultContent : letterContent || defaultContent;
+
 
         const organizationDetails = {
             name: organization?.name || "Baitul Mal Samajik Sanstha (Solapur)",
@@ -58,15 +78,14 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         const textStyle = { letterSpacing: '0.5px' };
 
         const emailPhoneText = [
-            (isTemplate || includeEmail) && `Email:${isTemplate ? '          ' : ` ${organizationDetails.email}`}`,
-            (isTemplate || includePhone) && `Phone:${isTemplate ? '          ' : ` ${organizationDetails.phone}`}`
+            (includeEmail) && `Email: ${isTemplate ? '' : organizationDetails.email}`,
+            (includePhone) && `Phone: ${isTemplate ? '' : organizationDetails.phone}`
         ].filter(Boolean).join(isTemplate ? '          ' : '  |  ');
         
         const regPanText = [
-            (isTemplate || includeRegNo) && `Reg No:${isTemplate ? '' : ` ${organization.registrationNumber}`}`,
-            (isTemplate || includePan) && `PAN:${isTemplate ? '' : ` ${organization.panNumber || 'N/A'}`}`
-        ].filter(Boolean).join('          |   ');
-
+            (includeRegNo) && `Reg No: ${isTemplate ? '' : organizationDetails.registration}`,
+            (includePan) && `PAN: ${isTemplate ? '' : organizationDetails.pan}`
+        ].filter(Boolean).join(' | ');
 
         return (
              <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative shadow-lg">
@@ -123,20 +142,20 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </header>
 
                     <main className="flex-grow pt-8" style={{minHeight: '450px'}}>
-                        <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
-                           <p>Date: </p>
+                        <div className="space-y-4 text-gray-800 text-base leading-relaxed whitespace-pre-wrap" style={textStyle}>
+                           <p>Date: {format(new Date(), 'dd MMM, yyyy')}</p>
                            {includeRecipient && (
                                <div className="pt-8">
                                    <p>To,</p>
-                                   <p>{isTemplate ? 'Recipient Name' : '[Recipient Name]'}</p>
-                                   <p>{isTemplate ? 'Recipient Address' : '[Recipient Address]'}</p>
+                                   <p className='font-bold'>{content.recipientName}</p>
+                                   <p>{content.recipientAddress}</p>
                                </div>
                            )}
                             {includeSubject && (
-                                <p className="pt-8"><span className="font-bold">Subject:</span> </p>
+                                <p className="pt-8"><span className="font-bold">Subject:</span> {content.subject}</p>
                             )}
                             {includeBody && (
-                               <p className="pt-8">Thank you for your consideration.</p>
+                               <p className="pt-8">{content.body}</p>
                             )}
                         </div>
                     </main>
@@ -145,7 +164,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         {includeClosing && (
                             <div className="space-y-1 mb-12">
                                 <p className="text-gray-800" style={textStyle}>Sincerely,</p>
-                                <p className="text-gray-800" style={textStyle}>{isTemplate ? 'Recipient Name' : '[Recipient Name]'}</p>
+                                <p className="text-gray-800" style={textStyle}>{content.closingName}</p>
                             </div>
                         )}
                         <p className="text-gray-800" style={textStyle}>_________________________</p>

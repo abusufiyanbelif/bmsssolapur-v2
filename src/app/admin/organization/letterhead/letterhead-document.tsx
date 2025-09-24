@@ -3,15 +3,17 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, FileText, Settings } from "lucide-react";
+import { Download, Loader2, FileText, Settings, Type, Milestone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization } from "@/services/types";
-import { Letterhead, LetterheadInclusionOptions } from "@/components/letterhead";
+import { Letterhead, LetterheadInclusionOptions, LetterContentOptions } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface LetterheadDocumentProps {
   organization: Organization;
@@ -27,17 +29,12 @@ const inclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[
     { id: 'includeUrl', label: 'Website URL' },
 ];
 
-const contentInclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
-    { id: 'includeRecipient', label: 'Recipient Block (To, Name, Address)' },
-    { id: 'includeSubject', label: 'Subject Line' },
-    { id: 'includeBody', label: 'Body ("Thank you...")' },
-    { id: 'includeClosing', label: 'Closing ("Sincerely,...")' },
-];
-
 export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
+
+  // State for what to *include* in the letterhead
   const [inclusions, setInclusions] = useState<LetterheadInclusionOptions>({
       includeAddress: true,
       includeEmail: true,
@@ -50,6 +47,17 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       includeBody: true,
       includeClosing: true,
   });
+  
+  // State for the *content* of the letterhead
+  const [letterContent, setLetterContent] = useState<LetterContentOptions>({
+      recipientName: 'Recipient Name',
+      recipientAddress: 'Recipient Address,\nCity, State, Pincode',
+      subject: 'Regarding the subject matter',
+      body: 'This is the main body of the letter. You can write multiple paragraphs here, and the PDF will handle the line breaks automatically.',
+      closingName: 'Your Name',
+  });
+
+  const letterheadRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -68,8 +76,8 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       });
       
       const A4_WIDTH_PT = pdf.internal.pageSize.getWidth();
-      const A4_HEIGHT_PT = pdf.internal.pageSize.getHeight();
       const margin = 45;
+      const contentWidth = A4_WIDTH_PT - (margin * 2);
       const logoWidth = 150;
 
       // --- Watermark ---
@@ -111,14 +119,12 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
           pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, headerTextY);
           headerTextY += 13;
       }
-      
+
       if (isTemplate) {
-          const x1 = textX;
-          const x2 = x1 + 65;
-          const x3 = x2 + 10;
-          if (inclusions.includeEmail) pdf.text('Email:', x1, headerTextY);
-          if (inclusions.includeEmail && inclusions.includePhone) pdf.text('|', x2, headerTextY);
-          if (inclusions.includePhone) pdf.text('Phone:', x3, headerTextY);
+          const emailX = textX;
+          const phoneX = emailX + 80; // Increased spacing
+          if (inclusions.includeEmail) pdf.text('Email:', emailX, headerTextY);
+          if (inclusions.includePhone) pdf.text('Phone:', phoneX, headerTextY);
       } else {
           const emailPhoneText = [
               inclusions.includeEmail && `Email: ${organization.contactEmail}`,
@@ -126,7 +132,6 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
           ].filter(Boolean).join('  |  ');
           if (emailPhoneText) pdf.text(emailPhoneText, textX, headerTextY);
       }
-      
 
       pdf.setDrawColor(150, 150, 150);
       pdf.setLineWidth(1.5);
@@ -142,21 +147,27 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
           bodyY += 40;
           pdf.text('To,', margin, bodyY);
           bodyY += 15;
-          pdf.text(isTemplate ? 'Recipient Name' : '[Recipient Name]', margin, bodyY);
-          bodyY += 15;
-          pdf.text(isTemplate ? 'Recipient Address' : '[Recipient Address]', margin, bodyY);
+          const recipientLines = pdf.splitTextToSize(isTemplate ? "Recipient Name" : letterContent.recipientName, contentWidth);
+          pdf.text(recipientLines, margin, bodyY);
+          bodyY += (recipientLines.length * 15);
+          
+          const addressLines = pdf.splitTextToSize(isTemplate ? 'Recipient Address' : letterContent.recipientAddress, contentWidth);
+          pdf.text(addressLines, margin, bodyY);
+          bodyY += (addressLines.length * 15);
       }
 
       if(inclusions.includeSubject) {
         bodyY += 40;
         pdf.setFont('Helvetica', 'bold');
         pdf.text('Subject: ', margin, bodyY);
+        pdf.setFont('Helvetica', 'normal');
+        pdf.text(isTemplate ? '' : letterContent.subject, margin + 50, bodyY);
       }
       
        if (inclusions.includeBody) {
         bodyY += 40;
-        pdf.setFont('Helvetica', 'normal');
-        pdf.text('Thank you for your consideration.', margin, bodyY);
+        const bodyLines = pdf.splitTextToSize(isTemplate ? '' : letterContent.body, contentWidth);
+        pdf.text(bodyLines, margin, bodyY);
       }
 
       // --- Signature ---
@@ -164,9 +175,9 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       if (inclusions.includeClosing) {
           pdf.setFont('Helvetica', 'normal');
           pdf.text('Sincerely,', margin, signatureY);
-          signatureY += 15;
-          pdf.text(isTemplate ? 'Sender Name' : '[Sender Name]', margin, signatureY);
-          signatureY += 30; // More space before signature line
+          signatureY += 30; // More space for signature
+          const closingName = isTemplate ? 'Sender Name' : letterContent.closingName;
+          pdf.text(closingName, margin, signatureY);
       }
 
       const signatureLineX2 = A4_WIDTH_PT - margin;
@@ -181,25 +192,22 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
-
-      const footerLineX1 = textX;
       
       if (isTemplate) {
-          const regX = footerLineX1 - 100;
-          const panX = regX + 110;
-          const separatorX = regX + 90;
-          if (inclusions.includeRegNo) pdf.text('Reg No:', regX, footerY);
-          if (inclusions.includeRegNo && inclusions.includePan) pdf.text('|', separatorX, footerY);
-          if (inclusions.includePan) pdf.text('PAN:', panX, footerY);
-          if (inclusions.includeUrl) pdf.text(`URL:`, footerLineX1 + 120, footerY);
+          const regX = margin;
+          const panX = regX + 150; // Increased spacing
+          const urlX = panX + 150;
+          if(inclusions.includeRegNo) pdf.text('Reg No:', regX, footerY);
+          if(inclusions.includePan) pdf.text('PAN:', panX, footerY);
+          if(inclusions.includeUrl) pdf.text('URL:', urlX, footerY);
       } else {
           const regPanText = [
             inclusions.includeRegNo && `Reg No: ${organization.registrationNumber}`,
             inclusions.includePan && `PAN: ${organization.panNumber || 'N/A'}`,
           ].filter(Boolean).join(' | ');
           
-          if(regPanText) pdf.text(regPanText, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-          if (inclusions.includeUrl) pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, footerY - (regPanText ? 15 : 0), { align: 'center' });
+          if(regPanText) pdf.text(regPanText, margin, footerY);
+          if (inclusions.includeUrl) pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT - margin, footerY, { align: 'right' });
       }
 
       const fileName = isTemplate 
@@ -262,9 +270,11 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                                 </div>
                             ) : (
                                 <Letterhead 
+                                    ref={letterheadRef}
                                     organization={organization}
                                     logoDataUri={logoDataUri}
                                     inclusions={inclusions}
+                                    letterContent={letterContent}
                                 />
                             )}
                         </div>
@@ -287,7 +297,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                     <CardContent className="space-y-4">
                         <div>
                             <h4 className="font-semibold text-sm mb-2">Header & Footer Details</h4>
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                                 {inclusionOptions.map(option => (
                                     <div key={option.id} className="flex items-center space-x-2">
                                         <Checkbox
@@ -300,21 +310,39 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                                 ))}
                             </div>
                         </div>
-                        <Separator />
-                        <div>
-                            <h4 className="font-semibold text-sm mb-2">Letter Content</h4>
-                            <div className="space-y-2">
-                                {contentInclusionOptions.map(option => (
-                                    <div key={option.id} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={option.id}
-                                            checked={inclusions[option.id]}
-                                            onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
-                                        />
-                                        <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
-                                    </div>
-                                ))}
-                            </div>
+                    </CardContent>
+                </Card>
+
+                 <Card className="mt-6">
+                     <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                           <Type className="h-5 w-5" />
+                           Letter Editor
+                        </CardTitle>
+                        <CardDescription>
+                            Edit the content of your letter here.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="recipientName">Recipient Name</Label>
+                            <Input id="recipientName" value={letterContent.recipientName} onChange={e => setLetterContent(prev => ({...prev, recipientName: e.target.value}))} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="recipientAddress">Recipient Address</Label>
+                            <Textarea id="recipientAddress" value={letterContent.recipientAddress} onChange={e => setLetterContent(prev => ({...prev, recipientAddress: e.target.value}))} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="subject">Subject</Label>
+                            <Input id="subject" value={letterContent.subject} onChange={e => setLetterContent(prev => ({...prev, subject: e.target.value}))} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="body">Body</Label>
+                            <Textarea id="body" value={letterContent.body} onChange={e => setLetterContent(prev => ({...prev, body: e.target.value}))} rows={8} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="closingName">Closing Name</Label>
+                            <Input id="closingName" value={letterContent.closingName} onChange={e => setLetterContent(prev => ({...prev, closingName: e.target.value}))} />
                         </div>
                     </CardContent>
                 </Card>
