@@ -21,9 +21,6 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
   
   const letterheadRef = useRef<HTMLDivElement>(null);
-  const letterheadContentRef = useRef<HTMLDivElement>(null);
-  const templateRef = useRef<HTMLDivElement>(null);
-  const templateContentRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -57,12 +54,13 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
       // --- 2. Header ---
-      const logoWidth = 96;
+      const logoWidth = 110;
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
       pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
 
       const textX = margin + logoWidth + 20;
       const orgInfo = organization.footer!.organizationInfo;
+      
       pdf.setFont('Helvetica', 'bold');
       pdf.setTextColor('#16a34a'); // Primary Green
       pdf.setFontSize(28);
@@ -78,13 +76,13 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(100, 100, 100);
       pdf.setFontSize(9);
-
+      
       if (isTemplate) {
         pdf.text('Address: ', textX, 145);
-        pdf.text('Email: | Phone: ', textX, 158);
+        pdf.text('Email:  |  Phone: ', textX, 158);
       } else {
-        pdf.text(`${organization.address}, ${organization.city}`, textX, 145);
-        pdf.text(`Email: ${organization.contactEmail} | Phone: ${organization.contactPhone}`, textX, 158);
+        pdf.text(`Address: ${organization.address}, ${organization.city}`, textX, 145);
+        pdf.text(`Email: ${organization.contactEmail}  |  Phone: ${organization.contactPhone}`, textX, 158);
       }
 
       pdf.setDrawColor(150, 150, 150);
@@ -97,18 +95,18 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.text('Date: ', margin, 220);
       
       // --- 4. Footer ---
-      const footerY = A4_HEIGHT_PT - 40;
+      const footerY = A4_HEIGHT_PT - 45;
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
       
       let footerLine1, footerLine2;
       if (isTemplate) {
-          footerLine1 = "Reg No: | PAN:";
-          footerLine2 = "URL:";
+          footerLine1 = "Reg No.:  |  PAN:";
+          footerLine2 = "URL: ";
       } else {
           footerLine1 = `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`;
-          footerLine2 = `${organization.website}`;
+          footerLine2 = `URL: ${organization.website}`;
       }
       
       pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });

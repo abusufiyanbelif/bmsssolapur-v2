@@ -69,8 +69,12 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                         <h3 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                              {organizationDetails.titleLine3.toUpperCase()}
                                         </h3>
-                                        <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organizationDetails.address}</p>
-                                        <p className="text-sm text-gray-600" style={textStyle}>Email: {organizationDetails.email} | Phone: {organizationDetails.phone}</p>
+                                        <p className="text-sm text-gray-600 mt-2" style={textStyle}>
+                                            Address: {isTemplate ? '' : `${organizationDetails.address}`}
+                                        </p>
+                                        <p className="text-sm text-gray-600" style={textStyle}>
+                                            Email: {isTemplate ? '' : organizationDetails.email}  |  Phone: {isTemplate ? '' : organizationDetails.phone}
+                                        </p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -84,8 +88,12 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </main>
                     
                     <footer className="mt-auto pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
-                        <p>Reg No: {organization.registrationNumber} | PAN: {organization.panNumber}</p>
-                        <p>{organization.website}</p>
+                         <p>
+                            Reg No.: {isTemplate ? ' |  PAN:' : `${organization.registrationNumber} | PAN: ${organization.panNumber}`}
+                         </p>
+                         <p>
+                            URL: {isTemplate ? '' : organization.website}
+                         </p>
                     </footer>
                 </div>
             </div>
