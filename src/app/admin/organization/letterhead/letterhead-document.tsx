@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, FileText, Settings, Type, Milestone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -54,11 +54,21 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   
   // State for the *content* of the letterhead
   const [letterContent, setLetterContent] = useState<LetterContentOptions>({
-      recipientName: 'Recipient Name',
-      recipientAddress: 'Recipient Address,\nCity, State, Pincode',
-      subject: 'Regarding the subject matter',
-      body: 'This is the main body of the letter. You can write multiple paragraphs here, and the PDF will handle the line breaks automatically.',
-      closingName: 'Your Name',
+      recipientName: 'The Manager',
+      recipientAddress: '[Bank Name]\n[Branch Address]',
+      subject: 'Request to Open a Bank Account for Baitul Mal Samajik Sanstha (Solapur)',
+      body: `Dear Sir/Madam,
+
+This letter serves as a formal request to open a bank account on behalf of **Baitul Mal Samajik Sanstha (Solapur)**, a registered charitable organization dedicated to providing educational and medical support to underprivileged communities.
+
+We believe that opening an account with your esteemed bank will enable us to manage our finances transparently and efficiently, supporting our mission and ensuring proper accountability.
+
+We are prepared to submit all necessary documents and fulfill the requirements for opening a bank account for a non-profit organization. We have attached a copy of the resolution passed by our Governing Body authorizing the opening of this account and designating the authorized signatories.
+
+We kindly request you to provide us with the necessary application forms and details regarding the required documentation and procedures to complete the account opening process.
+
+Thank you for your time and consideration. We look forward to establishing a banking relationship with you.`,
+      closingName: 'Abusufiyan Belif',
   });
 
   const letterheadRef = useRef<HTMLDivElement>(null);
@@ -127,7 +137,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
 
       if (isTemplate) {
           const emailX = textX;
-          const phoneX = emailX + 150; // Increased spacing
+          const phoneX = emailX + 150; 
           if (inclusions.includeEmail) pdf.text('Email:', emailX, headerTextY);
           if (inclusions.includePhone) pdf.text('Phone:', phoneX, headerTextY);
       } else {
@@ -173,7 +183,8 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       
        if (inclusions.includeBody) {
         bodyY += 40;
-        const bodyLines = pdf.splitTextToSize(isTemplate ? '' : letterContent.body, contentWidth);
+        const bodyText = isTemplate ? '[Main body of the letter...]' : letterContent.body;
+        const bodyLines = pdf.splitTextToSize(bodyText, contentWidth);
         pdf.text(bodyLines, margin, bodyY);
       }
 
@@ -183,7 +194,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
           pdf.setFont('Helvetica', 'normal');
           pdf.text('Sincerely,', margin, signatureY);
           signatureY += 30; // More space for signature
-          const closingName = isTemplate ? '' : letterContent.closingName;
+          const closingName = isTemplate ? '[Sender Name]' : letterContent.closingName;
           pdf.text(closingName, margin, signatureY);
       }
 
@@ -203,9 +214,13 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       if (isTemplate) {
           const regX = margin;
           const panX = regX + 150;
-          if(inclusions.includeRegNo) pdf.text('Reg No:', regX, footerY);
-          if(inclusions.includePan) pdf.text('PAN:', panX, footerY);
-          if (inclusions.includeUrl) pdf.text('URL:', A4_WIDTH_PT - margin, footerY, { align: 'right' });
+          let currentY = footerY;
+          if(inclusions.includeRegNo) pdf.text('Reg No:', regX, currentY);
+          if(inclusions.includePan) pdf.text('PAN:', panX, currentY);
+          
+          currentY += 15; // Increased spacing for the next line
+          if (inclusions.includeUrl) pdf.text('URL:', regX, currentY);
+
       } else {
           const regPanText = [
             inclusions.includeRegNo && `Reg No: ${organization.registrationNumber}`,
@@ -271,7 +286,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                     <CardContent className="bg-gray-200 p-8 flex justify-center">
                         <div className="transform scale-90 origin-top">
                             {!logoDataUri ? (
-                                <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
+                                <div className="w-[210mm] h-[297mm] bg-white flex items-center justify-center shadow-lg">
                                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
                                 </div>
                             ) : (
@@ -308,8 +323,8 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                                     <div key={option.id} className="flex items-center space-x-2">
                                         <Checkbox
                                             id={option.id}
-                                            checked={inclusions[option.id]}
-                                            onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
+                                            checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
+                                            onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
                                         />
                                         <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
                                     </div>
@@ -324,8 +339,8 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                                     <div key={option.id} className="flex items-center space-x-2">
                                         <Checkbox
                                             id={option.id}
-                                            checked={inclusions[option.id]}
-                                            onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
+                                            checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
+                                            onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
                                         />
                                         <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
                                     </div>

@@ -4,6 +4,7 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Organization } from '@/services/types';
+import { ScrollArea } from './ui/scroll-area';
 
 export interface LetterheadInclusionOptions {
     includeAddress?: boolean;
@@ -32,11 +33,10 @@ interface LetterheadProps {
     isTemplate?: boolean;
     inclusions?: LetterheadInclusionOptions;
     letterContent?: LetterContentOptions;
-    contentRef?: React.Ref<HTMLDivElement>;
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
-    ({ organization, logoDataUri, isTemplate = false, inclusions = {}, letterContent, contentRef }, ref) => {
+    ({ organization, logoDataUri, isTemplate = false, inclusions = {}, letterContent }, ref) => {
 
         const {
             includeAddress = true,
@@ -80,7 +80,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         const emailPhoneText = [
             (includeEmail) && `Email: ${isTemplate ? '' : organizationDetails.email}`,
             (includePhone) && `Phone: ${isTemplate ? '' : organizationDetails.phone}`
-        ].filter(Boolean).join(isTemplate ? '          ' : '  |  ');
+        ].filter(Boolean).join('  |  ');
         
         const regPanText = [
             (includeRegNo) && `Reg No: ${isTemplate ? '' : organizationDetails.registration}`,
@@ -88,7 +88,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         ].filter(Boolean).join(' | ');
 
         return (
-             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative shadow-lg">
+             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] h-[297mm] flex flex-col relative shadow-lg overflow-hidden">
                 {/* Watermark */}
                 {logoDataUri && (
                     <div className="absolute inset-0 flex items-center justify-center z-0">
@@ -99,7 +99,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         />
                     </div>
                 )}
-                <div ref={contentRef} className="relative z-10 flex flex-col flex-grow">
+                <div className="relative z-10 flex flex-col flex-grow">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
@@ -140,9 +140,8 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                             </tbody>
                         </table>
                     </header>
-
-                    <main className="flex-grow pt-8" style={{minHeight: '450px'}}>
-                        <div className="space-y-4 text-gray-800 text-base leading-relaxed whitespace-pre-wrap" style={textStyle}>
+                    <ScrollArea className="flex-grow my-8">
+                        <main className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap" style={textStyle}>
                            <p>Date: {format(new Date(), 'dd MMM, yyyy')}</p>
                            {includeRecipient && (
                                <div className="pt-8">
@@ -157,17 +156,17 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                             {includeBody && (
                                <p className="pt-8">{content.body}</p>
                             )}
-                        </div>
-                    </main>
+                        </main>
+                    </ScrollArea>
 
-                     <div className="mt-auto text-right">
+                     <div className="mt-auto pt-8 text-right">
                         {includeClosing && (
                             <div className="space-y-1 mb-12">
                                 <p className="text-gray-800" style={textStyle}>Sincerely,</p>
                                 <p className="text-gray-800" style={textStyle}>{content.closingName}</p>
                             </div>
                         )}
-                        <p className="text-gray-800" style={textStyle}>_________________________</p>
+                        <p className="text-gray-800 inline-block" style={textStyle}>_________________________</p>
                         <p className="text-sm text-gray-600 pr-4" style={textStyle}>(Signature / Stamp)</p>
                     </div>
                     
