@@ -5,29 +5,8 @@ import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Organization } from '@/services/types';
 import { ScrollArea } from './ui/scroll-area';
+import type { LetterheadInclusionOptions, LetterContentOptions } from '@/app/admin/organization/letterhead/letterhead-document';
 
-export interface LetterheadInclusionOptions {
-    includeAddress?: boolean;
-    includeEmail?: boolean;
-    includePhone?: boolean;
-    includeRegNo?: boolean;
-    includePan?: boolean;
-    includeUrl?: boolean;
-    includeDate?: boolean;
-    includeRecipient?: boolean;
-    includeSubject?: boolean;
-    includeBody?: boolean;
-    includeClosing?: boolean;
-}
-
-export interface LetterContentOptions {
-    date: Date;
-    recipientName: string;
-    recipientAddress: string;
-    subject: string;
-    body: string;
-    closingName: string;
-}
 
 interface LetterheadProps {
     organization: Organization;
@@ -35,10 +14,11 @@ interface LetterheadProps {
     isTemplate?: boolean;
     inclusions?: LetterheadInclusionOptions;
     letterContent?: LetterContentOptions;
+    contentRef?: React.Ref<HTMLDivElement>;
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
-    ({ organization, logoDataUri, isTemplate = false, inclusions = {}, letterContent }, ref) => {
+    ({ organization, logoDataUri, isTemplate = false, inclusions = {}, letterContent, contentRef }, ref) => {
 
         const {
             includeAddress = true,
@@ -103,7 +83,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         />
                     </div>
                 )}
-                <div className="relative z-10 flex flex-col flex-grow">
+                <div ref={contentRef} className="relative z-10 flex flex-col flex-grow h-full">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
@@ -144,8 +124,8 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                             </tbody>
                         </table>
                     </header>
-                    <ScrollArea className="flex-grow my-8">
-                        <main className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap" style={textStyle}>
+                    <ScrollArea className="flex-grow my-4">
+                        <main className="text-gray-800 text-base leading-normal whitespace-pre-wrap" style={textStyle}>
                            {includeDate && <p>Date: {isTemplate ? '' : format(content.date, 'dd MMM, yyyy')}</p>}
                            {includeRecipient && (
                                <div className="pt-8">
@@ -163,7 +143,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </main>
                     </ScrollArea>
 
-                     <div className="mt-auto pt-8 text-right">
+                     <div className="mt-auto pt-4 text-right">
                         {includeClosing && (
                             <div className="space-y-1 mb-12">
                                 <p className="text-gray-800" style={textStyle}>Sincerely,</p>
@@ -174,7 +154,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <p className="text-sm text-gray-600 pr-4" style={textStyle}>(Signature / Stamp)</p>
                     </div>
                     
-                    <footer className="mt-8 pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
+                    <footer className="mt-4 pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
                          {regPanText && (
                             <p>{regPanText}</p>
                          )}
