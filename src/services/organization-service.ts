@@ -163,3 +163,4 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         return null;
     }
 }
+

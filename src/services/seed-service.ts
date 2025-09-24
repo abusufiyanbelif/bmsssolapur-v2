@@ -106,7 +106,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=c19733a0-f567-4335-8531-15b41951b6a7",
     city: "Solapur",
     address: "123 Muslim Peth, Solapur, Maharashtra 413001",
-    registrationNumber: "MAHA/123/2024",
+    registrationNumber: "Solapur/0000373/2025",
     panNumber: "AAPAB1213J",
     contactEmail: "contact@baitulmalsolapur.org",
     contactPhone: "919372145889",
@@ -697,3 +697,4 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
         details: details,
     };
 };
+
