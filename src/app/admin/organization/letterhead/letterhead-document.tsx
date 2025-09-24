@@ -9,13 +9,6 @@ import type { Organization } from "@/services/types";
 import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
-import { Space_Grotesk, Inter } from 'next/font/google';
-
-// We need to import the font files for jsPDF to embed them.
-// This is a simplified approach; a real implementation would use local font files.
-const spaceGroteskNormal = 'https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIA.ttf';
-const spaceGroteskBold = 'https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIA.ttf'; // Placeholder
-const interNormal = 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boK2s5z.woff2';
 
 interface LetterheadDocumentProps {
   organization: Organization;
@@ -27,6 +20,11 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
   
+  const letterheadRef = useRef<HTMLDivElement>(null);
+  const letterheadContentRef = useRef<HTMLDivElement>(null); // Ref for text content only
+  const templateRef = useRef<HTMLDivElement>(null);
+  const templateContentRef = useRef<HTMLDivElement>(null); // Ref for template text content
+
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
         toast({ variant: 'destructive', title: "Error", description: "Letterhead logo is not ready. The logo URL might be invalid or inaccessible." });
@@ -46,12 +44,6 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       const A4_WIDTH_PT = pdf.internal.pageSize.getWidth();
       const A4_HEIGHT_PT = pdf.internal.pageSize.getHeight();
       const margin = 45;
-
-      // Add fonts - this is crucial for custom fonts in jsPDF
-      // Note: This might not work perfectly without local ttf files, but it's the right direction.
-      pdf.addFont(spaceGroteskNormal, 'SpaceGrotesk', 'normal');
-      pdf.addFont(spaceGroteskBold, 'SpaceGrotesk', 'bold');
-      pdf.addFont(interNormal, 'Inter', 'normal');
 
       // --- 1. Watermark (Faint, Background) ---
       const watermarkProps = pdf.getImageProperties(logoDataUri);
@@ -73,7 +65,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       // Organization Title
       const textX = margin + logoWidth + 20;
       const orgInfo = organization.footer!.organizationInfo;
-      pdf.setFont('SpaceGrotesk', 'bold');
+      pdf.setFont('Helvetica', 'bold');
       pdf.setTextColor('#16a34a'); // Primary Green
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
@@ -86,7 +78,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
       
       // Address and Contact under title
-      pdf.setFont('Inter', 'normal');
+      pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(100, 100, 100);
       pdf.setFontSize(9);
       pdf.text(`${organization.address}, ${organization.city}`, textX, 145);
@@ -106,7 +98,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       
       // --- 4. Footer ---
       const footerY = A4_HEIGHT_PT - 40;
-      pdf.setFont('Inter', 'normal');
+      pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
       
@@ -169,10 +161,14 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <Letterhead 
-                            organization={organization}
-                            logoDataUri={logoDataUri}
-                        />
+                        <>
+                             {/* Visible preview */}
+                            <Letterhead 
+                                ref={letterheadRef}
+                                organization={organization}
+                                logoDataUri={logoDataUri}
+                            />
+                        </>
                     )}
                 </div>
             </CardContent>
