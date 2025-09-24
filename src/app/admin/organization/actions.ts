@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { updateOrganization, Organization } from "@/services/organization-service";
@@ -54,6 +55,7 @@ export async function handleUpdateOrganization(
     await updateOrganization(orgId, updates);
     
     revalidatePath("/admin/organization");
+    revalidatePath("/admin/organization/letterhead"); // This is the fix
     revalidatePath("/organization");
     revalidatePath("/campaigns");
     // Also revalidate pages that use the logo in the header/footer
