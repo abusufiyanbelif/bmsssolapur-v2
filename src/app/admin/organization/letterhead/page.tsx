@@ -24,7 +24,6 @@ export default async function LetterheadPage() {
         );
     }
     
-    // Fetch and convert the logo on the server before rendering the client component
     const logoDataUri = await getImageAsBase64(organization.logoUrl);
 
     return <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />;

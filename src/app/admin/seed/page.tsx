@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { handleSeedAction, handleEraseAction } from "./actions";
+import { useRouter } from "next/navigation";
 
 type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData';
@@ -17,6 +18,7 @@ type SeedResult = {
 };
 
 export default function SeedPage() {
+    const router = useRouter();
     const [statuses, setStatuses] = useState<Record<SeedTask, SeedStatus>>({
         initial: 'idle',
         coreTeam: 'idle',
@@ -49,6 +51,7 @@ export default function SeedPage() {
             if(result.success && result.data){
                 setResults(prev => ({ ...prev, [task]: result.data }));
                 setStatuses(prev => ({ ...prev, [task]: 'success' }));
+                if (task === 'organization') router.refresh(); // Refresh on org change
             } else {
                  setResults(prev => ({ ...prev, [task]: { message: 'Seeding Failed', details: [result.error || 'An unknown error occurred.'] } }));
                  setStatuses(prev => ({ ...prev, [task]: 'error' }));
@@ -70,6 +73,7 @@ export default function SeedPage() {
             if (result.success && result.data) {
                 setResults(prev => ({ ...prev, [task]: result.data }));
                 setEraseStatuses(prev => ({ ...prev, [task]: 'success' }));
+                if (task === 'organization') router.refresh(); // Refresh on org change
             } else {
                 setResults(prev => ({ ...prev, [task]: { message: 'Erase Failed', details: [result.error || 'An unknown error occurred.'] } }));
                 setEraseStatuses(prev => ({ ...prev, [task]: 'error' }));
