@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -9,26 +10,10 @@ import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { getImageAsBase64 } from "./actions";
 
 interface LetterheadDocumentProps {
   organization: Organization;
-}
-
-// Helper to convert image URL to Base64
-async function getBase64FromUrl(url: string): Promise<string> {
-  // We use a proxy or serverless function if direct fetch is blocked by CORS.
-  // For this context, we assume a direct fetch can work if CORS is configured on Firebase Storage.
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-  }
-  const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
 }
 
 export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
@@ -43,14 +28,15 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       setLoadingLogo(true);
       if (organization.logoUrl) {
         try {
-          const dataUri = await getBase64FromUrl(organization.logoUrl);
+          // Use the server action to fetch and convert the image
+          const dataUri = await getImageAsBase64(organization.logoUrl);
           setLogoDataUri(dataUri);
         } catch (error) {
           console.error("Failed to fetch and convert logo:", error);
           toast({
             variant: "destructive",
             title: "Could not load logo",
-            description: "There was an error loading the organization's logo for the preview. The downloaded PDF may be affected."
+            description: error instanceof Error ? error.message : "An unknown error occurred."
           });
         }
       }
@@ -67,8 +53,8 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
 
     try {
       const canvas = await html2canvas(letterheadRef.current, {
-          scale: 3, // Increase scale for better resolution
-          useCORS: true, // Crucial for external images
+          scale: 3, 
+          useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
       });
@@ -126,7 +112,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
             <CardContent className="bg-gray-200 p-8 flex justify-center">
                 <div className="transform scale-90 origin-top">
                     {loadingLogo ? (
-                        <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center">
+                        <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
                     ) : (
