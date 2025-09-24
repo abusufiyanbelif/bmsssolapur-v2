@@ -9,6 +9,7 @@ interface LetterheadProps {
     organization: Organization;
     logoDataUri?: string;
     isTemplate?: boolean;
+    contentRef?: React.Ref<HTMLDivElement>;
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
@@ -31,18 +32,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
         return (
              <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative shadow-lg">
-                 {/* Watermark for preview only */}
-                {logoDataUri && (
-                    <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-                        <img
-                            src={logoDataUri}
-                            alt="Watermark"
-                            className="w-3/4 h-3/4 object-contain opacity-5"
-                        />
-                    </div>
-                )}
-                
-                {/* Real content */}
                 <div className="relative z-10 flex flex-col flex-grow">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
@@ -89,9 +78,9 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     
                     <footer className="mt-auto pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
                          <p>
-                            Reg No.: {isTemplate ? ' |  PAN:' : `${organization.registrationNumber} | PAN: ${organization.panNumber}`}
+                            Reg No.: {isTemplate ? '          |   PAN:' : `${organization.registrationNumber} | PAN: ${organization.panNumber}`}
                          </p>
-                         <p>
+                         <p className='mt-2'>
                             URL: {isTemplate ? '' : organization.website}
                          </p>
                     </footer>

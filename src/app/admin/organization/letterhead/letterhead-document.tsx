@@ -21,6 +21,9 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
   
   const letterheadRef = useRef<HTMLDivElement>(null);
+  const letterheadContentRef = useRef<HTMLDivElement>(null); // Ref for text content only
+  const templateRef = useRef<HTMLDivElement>(null);
+  const templateContentRef = useRef<HTMLDivElement>(null); // Ref for template text content
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -79,7 +82,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       
       if (isTemplate) {
         pdf.text('Address: ', textX, 145);
-        pdf.text('Email:  |  Phone: ', textX, 158);
+        pdf.text('Email:          |   Phone: ', textX, 158);
       } else {
         pdf.text(`Address: ${organization.address}, ${organization.city}`, textX, 145);
         pdf.text(`Email: ${organization.contactEmail}  |  Phone: ${organization.contactPhone}`, textX, 158);
@@ -102,16 +105,16 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       
       let footerLine1, footerLine2;
       if (isTemplate) {
-          footerLine1 = "Reg No.:  |  PAN:";
+          footerLine1 = "Reg No.:          |   PAN:";
           footerLine2 = "URL: ";
+           pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+           pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
       } else {
           footerLine1 = `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`;
           footerLine2 = `URL: ${organization.website}`;
+           pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+           pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
       }
-      
-      pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-      pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
-
 
       const fileName = isTemplate 
         ? `Letterhead-Template-${organization.name.replace(/\s/g, '-')}.pdf`
