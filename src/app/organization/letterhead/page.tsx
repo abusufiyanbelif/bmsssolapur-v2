@@ -14,7 +14,7 @@ import { AlertCircle } from "lucide-react";
 async function getImageAsBase64(url?: string): Promise<string | undefined> {
   if (!url) return undefined;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: 'no-store' }); // Disable cache for this fetch
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
     }
@@ -24,11 +24,9 @@ async function getImageAsBase64(url?: string): Promise<string | undefined> {
     return `data:${blob.type};base64,${base64}`;
   } catch (error) {
     console.error("Error converting image to Base64:", error);
-    // Return undefined instead of throwing to allow the page to render without the image
     return undefined;
   }
 }
-
 
 export default async function LetterheadPage() {
     const organization = await getCurrentOrganization();

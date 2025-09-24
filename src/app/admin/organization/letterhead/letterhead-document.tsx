@@ -13,52 +13,13 @@ import html2canvas from "html2canvas";
 
 interface LetterheadDocumentProps {
   organization: Organization;
+  logoDataUri?: string;
 }
 
-// Helper to convert image URL to Base64
-async function getBase64FromUrl(url: string): Promise<string> {
-  // Use a CORS proxy if direct fetch is blocked. For Firebase Storage, ensure CORS is configured.
-  // A simple proxy could be `https://cors-anywhere.herokuapp.com/${url}` but it's better to configure Firebase.
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-  }
-  const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
+export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const letterheadRef = useRef<HTMLDivElement>(null);
-  const [logoDataUri, setLogoDataUri] = useState<string | undefined>(undefined);
-  const [loadingLogo, setLoadingLogo] = useState(true);
-
-  useEffect(() => {
-    const fetchAndConvertLogo = async () => {
-      setLoadingLogo(true);
-      if (organization.logoUrl) {
-        try {
-          const dataUri = await getBase64FromUrl(organization.logoUrl);
-          setLogoDataUri(dataUri);
-        } catch (error) {
-          console.error("Failed to fetch and convert logo:", error);
-          toast({
-            variant: "destructive",
-            title: "Could not load logo",
-            description: "There was an error loading the organization's logo for the preview. The downloaded PDF may be affected."
-          });
-        }
-      }
-      setLoadingLogo(false);
-    };
-    fetchAndConvertLogo();
-  }, [organization.logoUrl, toast]);
 
 
   const handleDownload = async () => {
@@ -68,8 +29,8 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
 
     try {
       const canvas = await html2canvas(letterheadRef.current, {
-          scale: 3, // Increase scale for better resolution
-          useCORS: true, // Crucial for external images
+          scale: 3, 
+          useCORS: true, // This is still important
           logging: false,
           backgroundColor: '#ffffff',
       });
@@ -112,7 +73,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
-             <Button onClick={handleDownload} disabled={isGenerating || loadingLogo}>
+             <Button onClick={handleDownload} disabled={isGenerating}>
                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 Download as PDF
             </Button>
@@ -126,18 +87,12 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
             </CardHeader>
             <CardContent className="bg-gray-200 p-8 flex justify-center">
                 <div className="transform scale-90 origin-top">
-                    {loadingLogo ? (
-                        <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                        <Letterhead 
-                            ref={letterheadRef} 
-                            organization={organization}
-                            logoDataUri={logoDataUri}
-                            watermarkDataUri={logoDataUri} // Use the same fetched logo for the watermark
-                        />
-                    )}
+                    <Letterhead 
+                        ref={letterheadRef} 
+                        organization={organization}
+                        logoDataUri={logoDataUri}
+                        watermarkDataUri={logoDataUri} // Use the same fetched logo for the watermark
+                    />
                 </div>
             </CardContent>
         </Card>

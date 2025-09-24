@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,41 +10,16 @@ import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { getImageAsBase64 } from "./actions";
 
 interface LetterheadDocumentProps {
   organization: Organization;
+  logoDataUri?: string;
 }
 
-export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
+export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const letterheadRef = useRef<HTMLDivElement>(null);
-  const [logoDataUri, setLogoDataUri] = useState<string | undefined>(undefined);
-  const [loadingLogo, setLoadingLogo] = useState(true);
-
-  useEffect(() => {
-    const fetchAndConvertLogo = async () => {
-      setLoadingLogo(true);
-      if (organization.logoUrl) {
-        try {
-          // Use the server action to fetch and convert the image
-          const dataUri = await getImageAsBase64(organization.logoUrl);
-          setLogoDataUri(dataUri);
-        } catch (error) {
-          console.error("Failed to fetch and convert logo:", error);
-          toast({
-            variant: "destructive",
-            title: "Could not load logo",
-            description: error instanceof Error ? error.message : "An unknown error occurred."
-          });
-        }
-      }
-      setLoadingLogo(false);
-    };
-    fetchAndConvertLogo();
-  }, [organization.logoUrl, toast]);
-
 
   const handleDownload = async () => {
     if (!letterheadRef.current) return;
@@ -97,7 +72,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
-             <Button onClick={handleDownload} disabled={isGenerating || loadingLogo}>
+             <Button onClick={handleDownload} disabled={isGenerating || !logoDataUri}>
                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 Download as PDF
             </Button>
@@ -111,7 +86,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
             </CardHeader>
             <CardContent className="bg-gray-200 p-8 flex justify-center">
                 <div className="transform scale-90 origin-top">
-                    {loadingLogo ? (
+                    {!logoDataUri ? (
                         <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
