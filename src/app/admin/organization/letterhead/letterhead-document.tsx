@@ -60,6 +60,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       const A4_WIDTH_PT = pdf.internal.pageSize.getWidth();
       const A4_HEIGHT_PT = pdf.internal.pageSize.getHeight();
       const margin = 45;
+      const logoWidth = 150;
 
       // --- Watermark ---
       const watermarkProps = pdf.getImageProperties(logoDataUri);
@@ -73,7 +74,6 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
       // --- Header ---
-      const logoWidth = 150;
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
       pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
 
@@ -96,16 +96,34 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setTextColor(100, 100, 100);
       pdf.setFontSize(9);
       
-      const emailPhoneText = [
-        (inclusions.includeEmail) && `Email: ${isTemplate ? '' : organization.contactEmail}`,
-        (inclusions.includePhone) && `Phone: ${isTemplate ? '' : organization.contactPhone}`,
-      ].filter(Boolean).join(isTemplate ? '          |   ' : '  |  ');
-      
-      if (inclusions.includeAddress) {
-          pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, 145);
-      }
-      if (emailPhoneText) {
-          pdf.text(emailPhoneText, textX, 158);
+      let headerTextY = 145;
+      if (isTemplate) {
+          if (inclusions.includeAddress) {
+              pdf.text('Address:', textX, headerTextY);
+              headerTextY += 13;
+          }
+          if (inclusions.includeEmail) {
+             pdf.text('Email:', textX, headerTextY);
+          }
+          if (inclusions.includeEmail && inclusions.includePhone) {
+              pdf.text('|', textX + 60, headerTextY); // Separator
+          }
+          if (inclusions.includePhone) {
+             pdf.text('Phone:', textX + 70, headerTextY);
+          }
+      } else {
+        const emailPhoneText = [
+            (inclusions.includeEmail) && `Email: ${organization.contactEmail}`,
+            (inclusions.includePhone) && `Phone: ${organization.contactPhone}`,
+        ].filter(Boolean).join('  |  ');
+        
+        if (inclusions.includeAddress) {
+            pdf.text(`Address: ${organization.address}, ${organization.city}`, textX, headerTextY);
+            headerTextY += 13;
+        }
+        if (emailPhoneText) {
+            pdf.text(emailPhoneText, textX, headerTextY);
+        }
       }
 
       pdf.setDrawColor(150, 150, 150);
@@ -127,23 +145,39 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.text('(Signature / Stamp)', signatureLineX1 + 100, signatureY + 15, { align: 'center' });
 
       // --- Footer ---
-      const footerY = A4_HEIGHT_PT - 45;
+      let footerY = A4_HEIGHT_PT - 45;
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
 
-      const regPanText = [
-        (inclusions.includeRegNo) && `Reg No: ${isTemplate ? '' : organization.registrationNumber}`,
-        (inclusions.includePan) && `PAN: ${isTemplate ? '' : (organization.panNumber || 'N/A')}`,
-      ].filter(Boolean).join(isTemplate ? '          |   ' : ' | ');
-      
-      let currentFooterY = footerY;
-      if (inclusions.includeUrl) {
-           pdf.text(`URL: ${isTemplate ? '' : organization.website}`, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
-           currentFooterY -= (isTemplate ? 50 : 15);
-      }
-      if(regPanText) {
-          pdf.text(regPanText, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
+      if (isTemplate) {
+          const templateRegPanText = [
+            inclusions.includeRegNo && `Reg No:`,
+            inclusions.includePan && `PAN:`
+          ].filter(Boolean).join('          |   ');
+
+          if (inclusions.includeUrl) {
+              pdf.text(`URL:`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+              footerY -= 50; 
+          }
+           if (templateRegPanText) {
+              pdf.text(templateRegPanText, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+           }
+
+      } else {
+          const regPanText = [
+            (inclusions.includeRegNo) && `Reg No: ${organization.registrationNumber}`,
+            (inclusions.includePan) && `PAN: ${organization.panNumber || 'N/A'}`,
+          ].filter(Boolean).join(' | ');
+          
+          let currentFooterY = footerY;
+          if (inclusions.includeUrl) {
+              pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
+              currentFooterY -= 15;
+          }
+          if(regPanText) {
+              pdf.text(regPanText, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
+          }
       }
 
       const fileName = isTemplate 
