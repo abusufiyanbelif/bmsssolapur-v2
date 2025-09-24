@@ -35,7 +35,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
     try {
       const canvas = await html2canvas(letterheadRef.current, {
           scale: 3, // Increase scale for better resolution
-          useCORS: true,
+          useCORS: true, // Allow loading cross-origin images
           logging: false,
           backgroundColor: '#ffffff', // Ensure a solid background
       });
