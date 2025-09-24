@@ -22,15 +22,15 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
             pan: organization?.panNumber || "AAFTB9401P",
             email: organization?.contactEmail || "contact@baitulmalsolapur.org",
             phone: organization?.contactPhone || "+91 9372145889",
-            titleLine1: organization.footer?.organizationInfo.titleLine1 || 'Baitul Mal',
-            titleLine2: organization.footer?.organizationInfo.titleLine2 || 'Samajik Sanstha',
-            titleLine3: organization.footer?.organizationInfo.titleLine3 || '(Solapur)',
+            titleLine1: organization.footer?.organizationInfo.titleLine1 || 'BAITUL MAL',
+            titleLine2: organization.footer?.organizationInfo.titleLine2 || 'SAMAJIK SANSTHA',
+            titleLine3: organization.footer?.organizationInfo.titleLine3 || '(SOLAPUR)',
         };
         
         const textStyle = { letterSpacing: '0.5px' };
 
         return (
-            <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative">
+            <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative shadow-lg">
                 {/* Watermark Layer */}
                 {watermarkDataUri && (
                     <div className="absolute inset-0 z-0 flex items-center justify-center">
@@ -51,7 +51,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                 <tr>
                                     <td style={{ width: '128px', verticalAlign: 'top' }}>
                                         {logoDataUri && (
-                                            <div className="relative w-32 h-32">
+                                            <div className="relative w-28 h-28">
                                                 <img
                                                     src={logoDataUri}
                                                     alt="Organization Logo"
@@ -62,13 +62,13 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                         )}
                                     </td>
                                     <td className="pl-4 align-top">
-                                        <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--primary))'}}>
+                                        <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                             {organizationDetails.titleLine1.toUpperCase()}
                                         </h1>
-                                        <h2 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--accent))'}}>
+                                        <h2 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#ca8a04'}}>
                                             {organizationDetails.titleLine2.toUpperCase()}
                                         </h2>
-                                        <h3 className="text-2xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--primary))'}}>
+                                        <h3 className="text-2xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                              {organizationDetails.titleLine3.toUpperCase()}
                                         </h3>
                                         <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organizationDetails.address}</p>
@@ -80,8 +80,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </header>
 
                     <main className="flex-grow pt-8">
-                        {/* The content of the letter will be placed here by the user */}
-                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
+                        <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
                             <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
                             <br />
                             <p>To,</p>

@@ -15,7 +15,7 @@ export default async function LetterheadPage() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Organization Found</AlertTitle>
                     <AlertDescription>
-                        Organization details must be configured before a letterhead can be generated.
+                        Organization details must be configured before a letterhead can be generated. Please set up the organization profile first.
                     </AlertDescription>
                 </Alert>
             </div>
