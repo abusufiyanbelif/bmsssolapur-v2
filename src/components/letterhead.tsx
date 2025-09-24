@@ -62,28 +62,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     <main className="flex-grow pt-8 min-h-[550px]">
                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
                             <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
-                            
-                            {!isTemplate && (
-                                <>
-                                    <br />
-                                    <p>To,</p>
-                                    <p>[Recipient Name]</p>
-                                    <p>[Recipient Address]</p>
-                                    <br />
-                                    <p><span className="font-bold">Subject:</span> [Subject of the Letter]</p>
-                                    <br />
-                                    <p>Respected Sir/Madam,</p>
-                                    <br />
-                                    <p>
-                                        [Start writing the body of your letter here...]
-                                    </p>
-                                    <br />
-                                    <p>Thank you for your consideration.</p>
-                                    <br />
-                                    <br />
-                                    <p className="font-bold">[Your Name/Organization Name]</p>
-                                </>
-                            )}
                         </div>
                     </main>
                     
