@@ -57,7 +57,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
       // --- 2. Header ---
-      const logoWidth = 110;
+      const logoWidth = 128; // Increased logo size
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
       pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
 
@@ -69,7 +69,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
-      pdf.setTextColor('#FFC107'); // Accent Gold
+      pdf.setTextColor("#FFC107"); // Accent Gold
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
       pdf.setTextColor('#16a34a'); // Primary Green
@@ -108,7 +108,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
           footerLine1 = "Reg No.:          |   PAN:";
           footerLine2 = "URL: ";
            pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-           pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
+           pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 15, { align: 'center' }); // Increased spacing to 15
       } else {
           footerLine1 = `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`;
           footerLine2 = `URL: ${organization.website}`;
