@@ -38,12 +38,6 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'baitul-mal-connect.firebasestorage.app',
-        port: '',
-        pathname: '/**',
-      }
     ],
   },
 };
