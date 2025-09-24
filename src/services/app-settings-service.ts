@@ -241,7 +241,7 @@ export const getAppSettings = async (): Promise<AppSettings> => {
   } catch (error) {
     if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
         const permissionError = new Error("Permission Denied: The server's service account does not have permission to access Firestore. Please grant the 'Cloud Datastore User' role in IAM. Refer to TROUBLESHOOTING.md for details.");
-        console.error(permissionError.message);
+        console.warn(permissionError.message);
         // Instead of throwing, return default settings to prevent a hard crash
         // This allows the UI to render a helpful error message.
         return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings, updatedAt: new Date() } as AppSettings;
