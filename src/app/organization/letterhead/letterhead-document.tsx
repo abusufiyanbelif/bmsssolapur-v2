@@ -2,13 +2,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -22,9 +15,22 @@ interface LetterheadDocumentProps {
   organization: Organization;
 }
 
+// Helper function to fetch an image and convert it to a base64 data URI
+const toDataURL = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+};
+
 export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [embeddedImages, setEmbeddedImages] = useState<{logoDataUri?: string, watermarkDataUri?: string}>({});
   const letterheadRef = useRef<HTMLDivElement>(null);
 
   const handleDownload = async () => {
@@ -33,46 +39,54 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
     setIsGenerating(true);
 
     try {
-      const canvas = await html2canvas(letterheadRef.current, {
-          scale: 3, // Increase scale for better resolution
-          useCORS: true, // Allow loading cross-origin images
-          logging: false,
-          backgroundColor: '#ffffff', // Ensure a solid background
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      
-      // Standard A4 dimensions in points (pt)
-      const A4_WIDTH_PT = 595.28;
+        // Fetch images and convert to base64 data URIs
+        const logoDataUri = organization.logoUrl ? await toDataURL(organization.logoUrl) : undefined;
+        // Assuming watermark is the same as the logo
+        const watermarkDataUri = organization.logoUrl ? await toDataURL(organization.logoUrl) : undefined;
+        setEmbeddedImages({ logoDataUri, watermarkDataUri });
 
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'pt',
-        format: 'a4'
-      });
-      
-      // Scale image to fit A4 page width
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = A4_WIDTH_PT;
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        // Allow a brief moment for React to re-render with the new base64 URIs
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`);
+        const canvas = await html2canvas(letterheadRef.current, {
+            scale: 3,
+            useCORS: true, 
+            logging: false,
+            backgroundColor: '#ffffff',
+        });
       
-      toast({
-          variant: 'success',
-          title: "Download Started",
-          description: "Your letterhead is being downloaded."
-      });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const A4_WIDTH_PT = 595.28;
+
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4'
+        });
+      
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = A4_WIDTH_PT;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`Letterhead-${organization.name.replace(/\s/g, '-')}.pdf`);
+      
+        toast({
+            variant: 'success',
+            title: "Download Started",
+            description: "Your letterhead is being downloaded."
+        });
     } catch (e) {
       console.error("Error generating PDF", e);
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: "An error occurred while generating the PDF.",
+        description: "An error occurred while generating the PDF. Please check the console for details.",
       });
     } finally {
         setIsGenerating(false);
+        setEmbeddedImages({}); // Clear embedded images after generation
     }
   };
 
@@ -94,7 +108,7 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
             </CardHeader>
             <CardContent className="bg-gray-200 p-8 flex justify-center">
                 <div className="transform scale-90 origin-top">
-                    <Letterhead ref={letterheadRef} organization={organization} />
+                    <Letterhead ref={letterheadRef} organization={organization} {...embeddedImages} />
                 </div>
             </CardContent>
         </Card>
