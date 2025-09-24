@@ -46,13 +46,27 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td className="align-top">
-                                        <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--foreground))'}}>
-                                            {organizationDetails.titleLine1.toUpperCase()} {organizationDetails.titleLine2.toUpperCase()}
+                                    <td style={{ width: '128px', verticalAlign: 'top' }}>
+                                        <div className="relative w-32 h-32">
+                                            <img
+                                                src={organizationDetails.logoUrl}
+                                                alt="Organization Logo"
+                                                crossOrigin="anonymous"
+                                                className="w-full h-full object-contain"
+                                                data-ai-hint="logo"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="pl-4 align-top">
+                                        <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--primary))'}}>
+                                            {organizationDetails.titleLine1.toUpperCase()}
                                         </h1>
-                                        <h2 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--primary))'}}>
-                                            {organizationDetails.titleLine3.toUpperCase()}
+                                        <h2 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--accent))'}}>
+                                            {organizationDetails.titleLine2.toUpperCase()}
                                         </h2>
+                                        <h3 className="text-2xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--primary))'}}>
+                                             {organizationDetails.titleLine3.toUpperCase()}
+                                        </h3>
                                         <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organizationDetails.address}</p>
                                         <p className="text-sm text-gray-600" style={textStyle}>Email: {organizationDetails.email} | Phone: {organizationDetails.phone}</p>
                                     </td>
