@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, FileText, Settings, Check, X } from "lucide-react";
+import { Download, Loader2, FileText, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization } from "@/services/types";
 import { Letterhead, LetterheadInclusionOptions } from "@/components/letterhead";
@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import jsPDF from "jspdf";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 interface LetterheadDocumentProps {
   organization: Organization;
@@ -26,6 +27,13 @@ const inclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[
     { id: 'includeUrl', label: 'Website URL' },
 ];
 
+const contentInclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
+    { id: 'includeRecipient', label: 'Recipient Block (To, Name, Address)' },
+    { id: 'includeSubject', label: 'Subject Line' },
+    { id: 'includeBody', label: 'Body ("Thank you...")' },
+    { id: 'includeClosing', label: 'Closing ("Sincerely,...")' },
+];
+
 export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -37,9 +45,11 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       includeRegNo: true,
       includePan: true,
       includeUrl: true,
+      includeRecipient: true,
+      includeSubject: true,
+      includeBody: true,
+      includeClosing: true,
   });
-
-  const letterheadRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -85,7 +95,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
-      pdf.setTextColor("#FFC107"); // Accent Gold/Yellow
+      pdf.setTextColor('#FFC107'); // Accent Gold/Yellow
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
       pdf.setTextColor('#16a34a'); // Primary Green
@@ -97,34 +107,26 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(9);
       
       let headerTextY = 145;
-      if (isTemplate) {
-          if (inclusions.includeAddress) {
-              pdf.text('Address:', textX, headerTextY);
-              headerTextY += 13;
-          }
-          if (inclusions.includeEmail) {
-             pdf.text('Email:', textX, headerTextY);
-          }
-          if (inclusions.includeEmail && inclusions.includePhone) {
-              pdf.text('|', textX + 60, headerTextY); // Separator
-          }
-          if (inclusions.includePhone) {
-             pdf.text('Phone:', textX + 70, headerTextY);
-          }
-      } else {
-        const emailPhoneText = [
-            (inclusions.includeEmail) && `Email: ${organization.contactEmail}`,
-            (inclusions.includePhone) && `Phone: ${organization.contactPhone}`,
-        ].filter(Boolean).join('  |  ');
-        
-        if (inclusions.includeAddress) {
-            pdf.text(`Address: ${organization.address}, ${organization.city}`, textX, headerTextY);
-            headerTextY += 13;
-        }
-        if (emailPhoneText) {
-            pdf.text(emailPhoneText, textX, headerTextY);
-        }
+      if (inclusions.includeAddress) {
+          pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, headerTextY);
+          headerTextY += 13;
       }
+      
+      if (isTemplate) {
+          const x1 = textX;
+          const x2 = x1 + 65;
+          const x3 = x2 + 10;
+          if (inclusions.includeEmail) pdf.text('Email:', x1, headerTextY);
+          if (inclusions.includeEmail && inclusions.includePhone) pdf.text('|', x2, headerTextY);
+          if (inclusions.includePhone) pdf.text('Phone:', x3, headerTextY);
+      } else {
+          const emailPhoneText = [
+              inclusions.includeEmail && `Email: ${organization.contactEmail}`,
+              inclusions.includePhone && `Phone: ${organization.contactPhone}`,
+          ].filter(Boolean).join('  |  ');
+          if (emailPhoneText) pdf.text(emailPhoneText, textX, headerTextY);
+      }
+      
 
       pdf.setDrawColor(150, 150, 150);
       pdf.setLineWidth(1.5);
@@ -133,10 +135,40 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       // --- Body ---
       pdf.setTextColor(50, 50, 50);
       pdf.setFontSize(11);
-      pdf.text('Date: ', margin, 220);
+      let bodyY = 220;
+      pdf.text('Date: ', margin, bodyY);
       
+      if (inclusions.includeRecipient) {
+          bodyY += 40;
+          pdf.text('To,', margin, bodyY);
+          bodyY += 15;
+          pdf.text(isTemplate ? 'Recipient Name' : '[Recipient Name]', margin, bodyY);
+          bodyY += 15;
+          pdf.text(isTemplate ? 'Recipient Address' : '[Recipient Address]', margin, bodyY);
+      }
+
+      if(inclusions.includeSubject) {
+        bodyY += 40;
+        pdf.setFont('Helvetica', 'bold');
+        pdf.text('Subject: ', margin, bodyY);
+      }
+      
+       if (inclusions.includeBody) {
+        bodyY += 40;
+        pdf.setFont('Helvetica', 'normal');
+        pdf.text('Thank you for your consideration.', margin, bodyY);
+      }
+
       // --- Signature ---
-      const signatureY = A4_HEIGHT_PT - 120;
+      let signatureY = A4_HEIGHT_PT - 150;
+      if (inclusions.includeClosing) {
+          pdf.setFont('Helvetica', 'normal');
+          pdf.text('Sincerely,', margin, signatureY);
+          signatureY += 15;
+          pdf.text(isTemplate ? 'Sender Name' : '[Sender Name]', margin, signatureY);
+          signatureY += 30; // More space before signature line
+      }
+
       const signatureLineX2 = A4_WIDTH_PT - margin;
       const signatureLineX1 = signatureLineX2 - 200;
       pdf.setDrawColor(50, 50, 50);
@@ -150,34 +182,24 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
 
+      const footerLineX1 = textX;
+      
       if (isTemplate) {
-          const templateRegPanText = [
-            inclusions.includeRegNo && `Reg No:`,
-            inclusions.includePan && `PAN:`
-          ].filter(Boolean).join('          |   ');
-
-          if (inclusions.includeUrl) {
-              pdf.text(`URL:`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-              footerY -= 50; 
-          }
-           if (templateRegPanText) {
-              pdf.text(templateRegPanText, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-           }
-
+          const regX = footerLineX1 - 100;
+          const panX = regX + 110;
+          const separatorX = regX + 90;
+          if (inclusions.includeRegNo) pdf.text('Reg No:', regX, footerY);
+          if (inclusions.includeRegNo && inclusions.includePan) pdf.text('|', separatorX, footerY);
+          if (inclusions.includePan) pdf.text('PAN:', panX, footerY);
+          if (inclusions.includeUrl) pdf.text(`URL:`, footerLineX1 + 120, footerY);
       } else {
           const regPanText = [
-            (inclusions.includeRegNo) && `Reg No: ${organization.registrationNumber}`,
-            (inclusions.includePan) && `PAN: ${organization.panNumber || 'N/A'}`,
+            inclusions.includeRegNo && `Reg No: ${organization.registrationNumber}`,
+            inclusions.includePan && `PAN: ${organization.panNumber || 'N/A'}`,
           ].filter(Boolean).join(' | ');
           
-          let currentFooterY = footerY;
-          if (inclusions.includeUrl) {
-              pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
-              currentFooterY -= 15;
-          }
-          if(regPanText) {
-              pdf.text(regPanText, A4_WIDTH_PT / 2, currentFooterY, { align: 'center' });
-          }
+          if(regPanText) pdf.text(regPanText, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+          if (inclusions.includeUrl) pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, footerY - (regPanText ? 15 : 0), { align: 'center' });
       }
 
       const fileName = isTemplate 
@@ -240,7 +262,6 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                                 </div>
                             ) : (
                                 <Letterhead 
-                                    ref={letterheadRef}
                                     organization={organization}
                                     logoDataUri={logoDataUri}
                                     inclusions={inclusions}
@@ -264,16 +285,37 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {inclusionOptions.map(option => (
-                            <div key={option.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                    id={option.id}
-                                    checked={inclusions[option.id]}
-                                    onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
-                                />
-                                <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
+                        <div>
+                            <h4 className="font-semibold text-sm mb-2">Header & Footer Details</h4>
+                            <div className="space-y-2">
+                                {inclusionOptions.map(option => (
+                                    <div key={option.id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={option.id}
+                                            checked={inclusions[option.id]}
+                                            onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
+                                        />
+                                        <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </div>
+                        <Separator />
+                        <div>
+                            <h4 className="font-semibold text-sm mb-2">Letter Content</h4>
+                            <div className="space-y-2">
+                                {contentInclusionOptions.map(option => (
+                                    <div key={option.id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={option.id}
+                                            checked={inclusions[option.id]}
+                                            onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
+                                        />
+                                        <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
