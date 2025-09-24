@@ -38,9 +38,8 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '128px', verticalAlign: 'top' }}>
-                                        {/* Logo is now outside the captured content, will be added by jsPDF */}
-                                    </td>
+                                    {/* This TD is now just a spacer, the logo is added by jsPDF */}
+                                    <td style={{ width: '128px' }}></td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                             {organizationDetails.titleLine1.toUpperCase()}
@@ -59,10 +58,12 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </table>
                     </header>
 
-                    <main className="flex-grow pt-8 min-h-[550px]">
-                        <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
-                            <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
-                        </div>
+                    <main className="flex-grow pt-8" style={{minHeight: '550px'}}>
+                        {!isTemplate && (
+                            <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
+                                <p>Date: {format(new Date(), 'MMMM dd, yyyy')}</p>
+                            </div>
+                        )}
                     </main>
                     
                     <footer className="mt-12 pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
@@ -71,8 +72,8 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </footer>
                 </div>
 
-                {/* Logo and Watermark are now siblings to the content, not parents/children.
-                    This makes them visible in the preview but separate from the html2canvas capture. */}
+                {/* Logo and Watermark are now siblings to the content for preview purposes.
+                    jsPDF will handle the actual placement in the PDF. */}
                 {logoDataUri && (
                     <div className="absolute top-12 left-12 z-20 pointer-events-none">
                         <div className="relative w-28 h-28">

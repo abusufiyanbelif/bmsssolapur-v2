@@ -10,43 +10,21 @@ import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { getImageAsBase64 } from "./actions";
 
 interface LetterheadDocumentProps {
   organization: Organization;
+  logoDataUri?: string;
 }
 
-export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
+export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
-  const [logoDataUri, setLogoDataUri] = useState<string | undefined>(undefined);
-  const [loadingLogo, setLoadingLogo] = useState(true);
+  
   const letterheadRef = useRef<HTMLDivElement>(null);
   const letterheadContentRef = useRef<HTMLDivElement>(null); // Ref for text content only
   const templateRef = useRef<HTMLDivElement>(null);
   const templateContentRef = useRef<HTMLDivElement>(null); // Ref for template text content
-
-  useEffect(() => {
-    const fetchAndConvertLogo = async () => {
-      setLoadingLogo(true);
-      if (organization.logoUrl) {
-        try {
-          const base64 = await getImageAsBase64(organization.logoUrl);
-          setLogoDataUri(base64);
-        } catch (e) {
-          console.error("Failed to load logo for letterhead:", e);
-          toast({
-              variant: "destructive",
-              title: "Logo Load Failed",
-              description: "Could not load the organization logo. Please check the URL and CORS settings.",
-          });
-        }
-      }
-      setLoadingLogo(false);
-    };
-    fetchAndConvertLogo();
-  }, [organization.logoUrl, toast]);
 
   const generatePdf = async (contentElement: HTMLElement | null, isTemplate: boolean = false) => {
     if (!contentElement || !logoDataUri) {
@@ -69,6 +47,8 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       const contentImgData = canvas.toDataURL('image/png');
       
       const A4_WIDTH_PT = 595.28;
+      const A4_HEIGHT_PT = 841.89;
+      
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'pt',
@@ -80,13 +60,11 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
       const watermarkWidth = 400;
       const watermarkHeight = (watermarkProps.height * watermarkWidth) / watermarkProps.width;
       const watermarkX = (A4_WIDTH_PT - watermarkWidth) / 2;
-      const watermarkY = (pdf.internal.pageSize.getHeight() - watermarkHeight) / 2;
+      const watermarkY = (A4_HEIGHT_PT - watermarkHeight) / 2;
       
-      // Set low opacity for the watermark
-      (pdf as any).setGState(new (pdf as any).GState({ opacity: 0.1 }));
+      pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
       pdf.addImage(logoDataUri, 'PNG', watermarkX, watermarkY, watermarkWidth, watermarkHeight);
-      // Reset opacity for subsequent content
-      (pdf as any).setGState(new (pdf as any).GState({ opacity: 1 }));
+      pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
       // Step 3: Add the captured HTML content on top of the watermark
       const contentImgProps = pdf.getImageProperties(contentImgData);
@@ -122,12 +100,12 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
              <div className="flex gap-2">
-                <Button onClick={() => generatePdf(templateContentRef.current, true)} disabled={isTemplateGenerating || loadingLogo}>
-                    {isTemplateGenerating || loadingLogo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                <Button onClick={() => generatePdf(templateContentRef.current, true)} disabled={isTemplateGenerating || !logoDataUri}>
+                    {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                     Download Template
                 </Button>
-                <Button onClick={() => generatePdf(letterheadContentRef.current, false)} disabled={isGenerating || loadingLogo}>
-                    {isGenerating || loadingLogo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                <Button onClick={() => generatePdf(letterheadContentRef.current, false)} disabled={isGenerating || !logoDataUri}>
+                    {isGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     Download as PDF
                 </Button>
             </div>
@@ -136,12 +114,12 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
             <CardHeader>
                 <CardTitle>Letterhead Preview</CardTitle>
                 <CardDescription>
-                    This is a preview of the official organization letterhead. Click the download button to save it as a PDF. The content inside the letter is placeholder text.
+                    This is a preview of the official organization letterhead. Click the download button to save it as a PDF.
                 </CardDescription>
             </CardHeader>
             <CardContent className="bg-gray-200 p-8 flex justify-center">
                 <div className="transform scale-90 origin-top">
-                    {loadingLogo ? (
+                    {!logoDataUri ? (
                          <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
