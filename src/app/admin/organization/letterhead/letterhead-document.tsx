@@ -5,8 +5,8 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, FileText, Settings, Type, Milestone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Organization } from "@/services/types";
-import { Letterhead, LetterheadInclusionOptions, LetterContentOptions } from "@/components/letterhead";
+import type { Organization, LetterheadInclusionOptions, LetterContentOptions } from "@/services/types";
+import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +27,10 @@ const inclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[
     { id: 'includeRegNo', label: 'Registration No.' },
     { id: 'includePan', label: 'PAN Number' },
     { id: 'includeUrl', label: 'Website URL' },
+    { id: 'includeRecipient', label: 'Recipient Block' },
+    { id: 'includeSubject', label: 'Subject Line' },
+    { id: 'includeBody', label: 'Letter Body' },
+    { id: 'includeClosing', label: 'Signature Block' },
 ];
 
 export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
@@ -76,6 +80,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       });
       
       const A4_WIDTH_PT = pdf.internal.pageSize.getWidth();
+      const A4_HEIGHT_PT = pdf.internal.pageSize.getHeight();
       const margin = 45;
       const contentWidth = A4_WIDTH_PT - (margin * 2);
       const logoWidth = 150;
@@ -122,7 +127,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
 
       if (isTemplate) {
           const emailX = textX;
-          const phoneX = emailX + 80; // Increased spacing
+          const phoneX = emailX + 150; // Increased spacing
           if (inclusions.includeEmail) pdf.text('Email:', emailX, headerTextY);
           if (inclusions.includePhone) pdf.text('Phone:', phoneX, headerTextY);
       } else {
@@ -147,11 +152,13 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
           bodyY += 40;
           pdf.text('To,', margin, bodyY);
           bodyY += 15;
-          const recipientLines = pdf.splitTextToSize(isTemplate ? "Recipient Name" : letterContent.recipientName, contentWidth);
+          const recipientLines = pdf.splitTextToSize(isTemplate ? "" : letterContent.recipientName, contentWidth);
+          pdf.setFont('Helvetica', 'bold');
           pdf.text(recipientLines, margin, bodyY);
           bodyY += (recipientLines.length * 15);
           
-          const addressLines = pdf.splitTextToSize(isTemplate ? 'Recipient Address' : letterContent.recipientAddress, contentWidth);
+          pdf.setFont('Helvetica', 'normal');
+          const addressLines = pdf.splitTextToSize(isTemplate ? '' : letterContent.recipientAddress, contentWidth);
           pdf.text(addressLines, margin, bodyY);
           bodyY += (addressLines.length * 15);
       }
@@ -176,7 +183,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
           pdf.setFont('Helvetica', 'normal');
           pdf.text('Sincerely,', margin, signatureY);
           signatureY += 30; // More space for signature
-          const closingName = isTemplate ? 'Sender Name' : letterContent.closingName;
+          const closingName = isTemplate ? '' : letterContent.closingName;
           pdf.text(closingName, margin, signatureY);
       }
 
@@ -195,11 +202,10 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       
       if (isTemplate) {
           const regX = margin;
-          const panX = regX + 150; // Increased spacing
-          const urlX = panX + 150;
+          const panX = regX + 150;
           if(inclusions.includeRegNo) pdf.text('Reg No:', regX, footerY);
           if(inclusions.includePan) pdf.text('PAN:', panX, footerY);
-          if(inclusions.includeUrl) pdf.text('URL:', urlX, footerY);
+          if (inclusions.includeUrl) pdf.text('URL:', A4_WIDTH_PT - margin, footerY, { align: 'right' });
       } else {
           const regPanText = [
             inclusions.includeRegNo && `Reg No: ${organization.registrationNumber}`,
@@ -298,7 +304,23 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                         <div>
                             <h4 className="font-semibold text-sm mb-2">Header & Footer Details</h4>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                {inclusionOptions.map(option => (
+                                {inclusionOptions.slice(0, 6).map(option => (
+                                    <div key={option.id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={option.id}
+                                            checked={inclusions[option.id]}
+                                            onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
+                                        />
+                                        <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <Separator />
+                         <div>
+                            <h4 className="font-semibold text-sm mb-2">Letter Sections</h4>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                {inclusionOptions.slice(6).map(option => (
                                     <div key={option.id} className="flex items-center space-x-2">
                                         <Checkbox
                                             id={option.id}
