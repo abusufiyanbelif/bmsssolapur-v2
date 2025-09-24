@@ -5,14 +5,34 @@ import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Organization } from '@/services/types';
 
+export interface LetterheadInclusionOptions {
+    includeAddress?: boolean;
+    includeEmail?: boolean;
+    includePhone?: boolean;
+    includeRegNo?: boolean;
+    includePan?: boolean;
+    includeUrl?: boolean;
+}
+
 interface LetterheadProps {
     organization: Organization;
     logoDataUri?: string;
     isTemplate?: boolean;
+    inclusions?: LetterheadInclusionOptions;
+    contentRef?: React.Ref<HTMLDivElement>;
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
-    ({ organization, logoDataUri, isTemplate = false }, ref) => {
+    ({ organization, logoDataUri, isTemplate = false, inclusions = {}, contentRef }, ref) => {
+
+        const {
+            includeAddress = true,
+            includeEmail = true,
+            includePhone = true,
+            includeRegNo = true,
+            includePan = true,
+            includeUrl = true,
+        } = inclusions;
 
         const organizationDetails = {
             name: organization?.name || "Baitul Mal Samajik Sanstha (Solapur)",
@@ -29,6 +49,17 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         
         const textStyle = { letterSpacing: '0.5px' };
 
+        const emailPhoneText = [
+            (isTemplate || includeEmail) && `Email: ${isTemplate ? '' : organizationDetails.email}`,
+            (isTemplate || includePhone) && `Phone: ${isTemplate ? '' : organizationDetails.phone}`
+        ].filter(Boolean).join(isTemplate ? '          |   ' : '  |  ');
+        
+        const regPanText = [
+            (isTemplate || includeRegNo) && `Reg No: ${isTemplate ? '' : organization.registrationNumber}`,
+            (isTemplate || includePan) && `PAN: ${isTemplate ? '' : (organization.panNumber || 'N/A')}`
+        ].filter(Boolean).join(isTemplate ? '          |   ' : ' | ');
+
+
         return (
              <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative shadow-lg">
                 {/* Watermark */}
@@ -41,14 +72,14 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         />
                     </div>
                 )}
-                <div className="relative z-10 flex flex-col flex-grow">
+                <div ref={contentRef} className="relative z-10 flex flex-col flex-grow">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '128px', verticalAlign: 'top' }}>
+                                    <td style={{ width: '150px', verticalAlign: 'top' }}>
                                          {logoDataUri && (
-                                            <div className="relative w-32 h-32">
+                                            <div className="relative w-36 h-36">
                                                 <img
                                                     src={logoDataUri}
                                                     alt="Organization Logo"
@@ -67,12 +98,16 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                         <h3 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                              {organizationDetails.titleLine3.toUpperCase()}
                                         </h3>
-                                        <p className="text-sm text-gray-600 mt-2" style={textStyle}>
-                                            Address: {isTemplate ? '' : `${organizationDetails.address}`}
-                                        </p>
-                                        <p className="text-sm text-gray-600" style={textStyle}>
-                                            Email: {isTemplate ? '' : organizationDetails.email}  |  Phone: {isTemplate ? '' : organizationDetails.phone}
-                                        </p>
+                                        {(isTemplate || includeAddress) && (
+                                            <p className="text-sm text-gray-600 mt-2" style={textStyle}>
+                                                Address: {isTemplate ? '' : `${organizationDetails.address}`}
+                                            </p>
+                                        )}
+                                        {emailPhoneText && (
+                                            <p className="text-sm text-gray-600" style={textStyle}>
+                                                {emailPhoneText}
+                                            </p>
+                                        )}
                                     </td>
                                 </tr>
                             </tbody>
@@ -91,12 +126,14 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </div>
                     
                     <footer className="mt-auto pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
-                         <p>
-                            {isTemplate ? 'Reg No.:          |   PAN:' : `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`}
-                         </p>
-                         <p className='mt-2'>
-                            {isTemplate ? 'URL:' : `URL: ${organization.website}`}
-                         </p>
+                         {regPanText && (
+                            <p>{regPanText}</p>
+                         )}
+                         {(isTemplate || includeUrl) && (
+                            <p className='mt-2'>
+                                URL: {isTemplate ? '' : organization.website}
+                            </p>
+                         )}
                     </footer>
                 </div>
             </div>

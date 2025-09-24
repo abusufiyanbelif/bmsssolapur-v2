@@ -3,25 +3,43 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, FileText } from "lucide-react";
+import { Download, Loader2, FileText, Settings, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization } from "@/services/types";
-import { Letterhead } from "@/components/letterhead";
+import { Letterhead, LetterheadInclusionOptions } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface LetterheadDocumentProps {
   organization: Organization;
   logoDataUri?: string;
 }
 
+const inclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
+    { id: 'includeAddress', label: 'Address' },
+    { id: 'includeEmail', label: 'Email' },
+    { id: 'includePhone', label: 'Phone' },
+    { id: 'includeRegNo', label: 'Registration No.' },
+    { id: 'includePan', label: 'PAN Number' },
+    { id: 'includeUrl', label: 'Website URL' },
+];
+
 export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
-  
+  const [inclusions, setInclusions] = useState<LetterheadInclusionOptions>({
+      includeAddress: true,
+      includeEmail: true,
+      includePhone: true,
+      includeRegNo: true,
+      includePan: true,
+      includeUrl: true,
+  });
+
   const letterheadRef = useRef<HTMLDivElement>(null);
-  const templateRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -63,14 +81,14 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       const orgInfo = organization.footer!.organizationInfo;
       
       pdf.setFont('Helvetica', 'bold');
-      pdf.setTextColor('#16a34a'); // Primary Green
+      pdf.setTextColor('#16a34a');
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
       pdf.setTextColor("#FFC107");
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
-      pdf.setTextColor('#16a34a'); // Primary Green
+      pdf.setTextColor('#16a34a');
       pdf.setFontSize(22);
       pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
       
@@ -78,12 +96,18 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setTextColor(100, 100, 100);
       pdf.setFontSize(9);
       
-      if (isTemplate) {
-        pdf.text('Address: ', textX, 145);
-        pdf.text('Email:          |   Phone: ', textX, 158);
-      } else {
-        pdf.text(`Address: ${organization.address}, ${organization.city}`, textX, 145);
-        pdf.text(`Email: ${organization.contactEmail}  |  Phone: ${organization.contactPhone}`, textX, 158);
+      const emailPhoneText = [
+        (!isTemplate && inclusions.includeEmail) && `Email: ${organization.contactEmail}`,
+        (isTemplate && inclusions.includeEmail) && 'Email:',
+        (!isTemplate && inclusions.includePhone) && `Phone: ${organization.contactPhone}`,
+        (isTemplate && inclusions.includePhone) && 'Phone:',
+      ].filter(Boolean).join(isTemplate ? '          |   ' : '  |  ');
+      
+      if (inclusions.includeAddress) {
+          pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, 145);
+      }
+      if (emailPhoneText) {
+          pdf.text(emailPhoneText, textX, 158);
       }
 
       pdf.setDrawColor(150, 150, 150);
@@ -98,7 +122,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       // --- 4. Signature ---
       const signatureY = A4_HEIGHT_PT - 120;
       const signatureLineX2 = A4_WIDTH_PT - margin;
-      const signatureLineX1 = signatureLineX2 - 200; // Line length
+      const signatureLineX1 = signatureLineX2 - 200;
       pdf.setDrawColor(50, 50, 50);
       pdf.setLineWidth(0.5);
       pdf.line(signatureLineX1, signatureY, signatureLineX2, signatureY);
@@ -110,13 +134,20 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
+
+      const regPanText = [
+        (!isTemplate && inclusions.includeRegNo) && `Reg No: ${organization.registrationNumber}`,
+        (isTemplate && inclusions.includeRegNo) && 'Reg No.:',
+        (!isTemplate && inclusions.includePan) && `PAN: ${organization.panNumber || 'N/A'}`,
+        (isTemplate && inclusions.includePan) && 'PAN:',
+      ].filter(Boolean).join(isTemplate ? '          |   ' : ' | ');
       
-      if (isTemplate) {
-          pdf.text("Reg No.:                    |   PAN:", A4_WIDTH_PT / 2, footerY - 35, { align: 'center' });
-          pdf.text("URL:", A4_WIDTH_PT / 2, footerY, { align: 'center' });
-      } else {
-          pdf.text(`Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`, A4_WIDTH_PT / 2, footerY - 15, { align: 'center' });
-          pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+      if(regPanText) {
+          pdf.text(regPanText, A4_WIDTH_PT / 2, footerY - (isTemplate ? 50 : 15), { align: 'center' });
+      }
+
+      if(inclusions.includeUrl) {
+           pdf.text(`URL: ${isTemplate ? '' : organization.website}`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
       }
 
       const fileName = isTemplate 
@@ -142,56 +173,81 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
     }
   };
 
+  const handleInclusionChange = (field: keyof LetterheadInclusionOptions, checked: boolean) => {
+    setInclusions(prev => ({ ...prev, [field]: checked }));
+  }
+
   return (
     <div className="flex-1 space-y-4">
-        <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
-             <div className="flex gap-2">
-                <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
-                    {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                    Download Template
-                </Button>
-                <Button onClick={() => generatePdf(false)} disabled={isGenerating || !logoDataUri}>
-                    {isGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                    Download as PDF
-                </Button>
-            </div>
-        </div>
-        <Card>
-            <CardHeader>
-                <CardTitle>Letterhead Preview</CardTitle>
-                <CardDescription>
-                    This is a preview of the official organization letterhead. Click the download button to save it as a PDF.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="bg-gray-200 p-8 flex justify-center">
-                <div className="transform scale-90 origin-top">
-                    {!logoDataUri ? (
-                         <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                        <>
-                             {/* Visible preview */}
-                            <Letterhead 
-                                ref={letterheadRef}
-                                organization={organization}
-                                logoDataUri={logoDataUri}
-                            />
-                             {/* Hidden template for PDF generation */}
-                            <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-                                <Letterhead
-                                    ref={templateRef}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column for Preview */}
+            <div className="lg:col-span-2 space-y-6">
+                 <div className="flex items-center justify-between">
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
+                    <div className="flex gap-2">
+                        <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
+                            {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                            Download Template
+                        </Button>
+                        <Button onClick={() => generatePdf(false)} disabled={isGenerating || !logoDataUri}>
+                            {isGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                            Download as PDF
+                        </Button>
+                    </div>
+                </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Letterhead Preview</CardTitle>
+                        <CardDescription>
+                            This is a preview of the official organization letterhead, reflecting your selections.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="bg-gray-200 p-8 flex justify-center">
+                        <div className="transform scale-90 origin-top">
+                            {!logoDataUri ? (
+                                <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
+                                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                                </div>
+                            ) : (
+                                <Letterhead 
+                                    ref={letterheadRef}
                                     organization={organization}
                                     logoDataUri={logoDataUri}
-                                    isTemplate={true}
+                                    inclusions={inclusions}
                                 />
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+            
+            {/* Right Column for Settings */}
+            <div className="lg:col-span-1">
+                <Card>
+                     <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                           <Settings className="h-5 w-5" />
+                           PDF Content
+                        </CardTitle>
+                        <CardDescription>
+                            Select the fields to include in the downloaded PDF.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {inclusionOptions.map(option => (
+                            <div key={option.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={option.id}
+                                    checked={inclusions[option.id]}
+                                    onCheckedChange={(checked) => handleInclusionChange(option.id, !!checked)}
+                                />
+                                <Label htmlFor={option.id} className="font-normal">{option.label}</Label>
                             </div>
-                        </>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     </div>
   );
 }
