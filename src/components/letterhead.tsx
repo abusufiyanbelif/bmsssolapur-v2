@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { forwardRef } from 'react';
@@ -6,7 +7,7 @@ import type { Organization } from '@/services/types';
 
 interface LetterheadProps {
     organization: Organization;
-    // Allow passing base64 data URIs for PDF generation
+    // Base64 data URIs are passed to ensure they are rendered in the PDF
     logoDataUri?: string;
     watermarkDataUri?: string;
 }
@@ -21,7 +22,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
             pan: organization?.panNumber || "AAFTB9401P",
             email: organization?.contactEmail || "contact@baitulmalsolapur.org",
             phone: organization?.contactPhone || "+91 9372145889",
-            logoUrl: organization?.logoUrl || "https://picsum.photos/seed/logo/128/128",
             titleLine1: organization.footer?.organizationInfo.titleLine1 || 'Baitul Mal',
             titleLine2: organization.footer?.organizationInfo.titleLine2 || 'Samajik Sanstha',
             titleLine3: organization.footer?.organizationInfo.titleLine3 || '(Solapur)',
@@ -32,15 +32,16 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         return (
             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative">
                 {/* Watermark Layer */}
-                <div className="absolute inset-0 z-0 flex items-center justify-center">
-                    <img
-                        src={watermarkDataUri || organizationDetails.logoUrl}
-                        alt="Watermark"
-                        crossOrigin="anonymous"
-                        className="w-3/4 h-3/4 object-contain opacity-5"
-                        data-ai-hint="logo watermark"
-                    />
-                </div>
+                {watermarkDataUri && (
+                    <div className="absolute inset-0 z-0 flex items-center justify-center">
+                        <img
+                            src={watermarkDataUri}
+                            alt="Watermark"
+                            className="w-3/4 h-3/4 object-contain opacity-5"
+                            data-ai-hint="logo watermark"
+                        />
+                    </div>
+                )}
 
                 {/* Content Layer */}
                 <div className="relative z-10 flex flex-col h-full">
@@ -49,15 +50,16 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                             <tbody>
                                 <tr>
                                     <td style={{ width: '128px', verticalAlign: 'top' }}>
-                                        <div className="relative w-32 h-32">
-                                            <img
-                                                src={logoDataUri || organizationDetails.logoUrl}
-                                                alt="Organization Logo"
-                                                crossOrigin="anonymous"
-                                                className="w-full h-full object-contain"
-                                                data-ai-hint="logo"
-                                            />
-                                        </div>
+                                        {logoDataUri && (
+                                            <div className="relative w-32 h-32">
+                                                <img
+                                                    src={logoDataUri}
+                                                    alt="Organization Logo"
+                                                    className="w-full h-full object-contain"
+                                                    data-ai-hint="logo"
+                                                />
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: 'hsl(var(--primary))'}}>

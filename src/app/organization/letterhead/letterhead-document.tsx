@@ -16,14 +16,19 @@ interface LetterheadDocumentProps {
 
 // Helper to convert image URL to Base64
 async function getBase64FromUrl(url: string): Promise<string> {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-    });
+  // We use a proxy or serverless function if direct fetch is blocked by CORS.
+  // For this context, we assume a direct fetch can work if CORS is configured on Firebase Storage.
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+  }
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
@@ -34,7 +39,8 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
   const [loadingLogo, setLoadingLogo] = useState(true);
 
   useEffect(() => {
-    const fetchLogo = async () => {
+    const fetchAndConvertLogo = async () => {
+      setLoadingLogo(true);
       if (organization.logoUrl) {
         try {
           const dataUri = await getBase64FromUrl(organization.logoUrl);
@@ -44,13 +50,13 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
           toast({
             variant: "destructive",
             title: "Could not load logo",
-            description: "There was an error loading the organization's logo for the preview."
+            description: "There was an error loading the organization's logo for the preview. The downloaded PDF may be affected."
           });
         }
       }
       setLoadingLogo(false);
     };
-    fetchLogo();
+    fetchAndConvertLogo();
   }, [organization.logoUrl, toast]);
 
 
@@ -61,8 +67,8 @@ export function LetterheadDocument({ organization }: LetterheadDocumentProps) {
 
     try {
       const canvas = await html2canvas(letterheadRef.current, {
-          scale: 3,
-          useCORS: true, 
+          scale: 3, // Increase scale for better resolution
+          useCORS: true, // Crucial for external images
           logging: false,
           backgroundColor: '#ffffff',
       });
