@@ -9,11 +9,10 @@ interface LetterheadProps {
     organization: Organization;
     logoDataUri?: string;
     isTemplate?: boolean;
-    contentRef: React.Ref<HTMLDivElement>; // Ref for the content area
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
-    ({ organization, logoDataUri, isTemplate = false, contentRef }, ref) => {
+    ({ organization, logoDataUri, isTemplate = false }, ref) => {
 
         const organizationDetails = {
             name: organization?.name || "Baitul Mal Samajik Sanstha (Solapur)",
@@ -32,21 +31,42 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
         return (
              <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative shadow-lg">
-                {/* This div will be captured by html2canvas */}
-                <div ref={contentRef} className="relative z-10 flex flex-col flex-grow bg-transparent">
+                 {/* Watermark for preview only */}
+                {logoDataUri && (
+                    <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+                        <img
+                            src={logoDataUri}
+                            alt="Watermark"
+                            className="w-3/4 h-3/4 object-contain opacity-5"
+                        />
+                    </div>
+                )}
+                
+                {/* Real content */}
+                <div className="relative z-10 flex flex-col flex-grow">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '160px' }}></td>
+                                    <td style={{ width: '128px', verticalAlign: 'top' }}>
+                                         {logoDataUri && (
+                                            <div className="relative w-28 h-28">
+                                                <img
+                                                    src={logoDataUri}
+                                                    alt="Organization Logo"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                         )}
+                                    </td>
                                     <td className="pl-4 align-top">
-                                        <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
+                                        <h1 className="text-4xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                             {organizationDetails.titleLine1.toUpperCase()}
                                         </h1>
-                                        <h2 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#ca8a04'}}>
+                                        <h2 className="text-4xl font-bold font-headline" style={{...textStyle, color: '#ca8a04'}}>
                                             {organizationDetails.titleLine2.toUpperCase()}
                                         </h2>
-                                        <h3 className="text-2xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
+                                        <h3 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
                                              {organizationDetails.titleLine3.toUpperCase()}
                                         </h3>
                                         <p className="text-sm text-gray-600 mt-2" style={textStyle}>{organizationDetails.address}</p>
@@ -59,7 +79,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
                     <main className="flex-grow pt-8" style={{minHeight: '650px'}}>
                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
-                           {!isTemplate && <p>Date: </p>}
+                           <p>Date: </p>
                         </div>
                     </main>
                     
@@ -68,29 +88,6 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <p>{organization.website}</p>
                     </footer>
                 </div>
-
-                {/* Logo and Watermark are now siblings to the content for preview purposes.
-                    jsPDF will handle the actual placement in the PDF. */}
-                {logoDataUri && (
-                    <div className="absolute top-12 left-12 z-20 pointer-events-none">
-                        <div className="relative w-40 h-40">
-                             <img
-                                src={logoDataUri}
-                                alt="Organization Logo"
-                                className="w-full h-full object-contain"
-                            />
-                        </div>
-                    </div>
-                )}
-                 {logoDataUri && (
-                    <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-                        <img
-                            src={logoDataUri}
-                            alt="Watermark"
-                            className="w-3/4 h-3/4 object-contain opacity-5"
-                        />
-                    </div>
-                )}
             </div>
         );
     }

@@ -9,7 +9,13 @@ import type { Organization } from "@/services/types";
 import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { Space_Grotesk, Inter } from 'next/font/google';
+
+// We need to import the font files for jsPDF to embed them.
+// This is a simplified approach; a real implementation would use local font files.
+const spaceGroteskNormal = 'https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIA.ttf';
+const spaceGroteskBold = 'https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIA.ttf'; // Placeholder
+const interNormal = 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boK2s5z.woff2';
 
 interface LetterheadDocumentProps {
   organization: Organization;
@@ -21,14 +27,9 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
   
-  const letterheadRef = useRef<HTMLDivElement>(null);
-  const letterheadContentRef = useRef<HTMLDivElement>(null); // Ref for text content only
-  const templateRef = useRef<HTMLDivElement>(null);
-  const templateContentRef = useRef<HTMLDivElement>(null); // Ref for template text content
-
-  const generatePdf = async (contentElement: HTMLElement | null, isTemplate: boolean = false) => {
-    if (!contentElement || !logoDataUri) {
-        toast({ variant: 'destructive', title: "Error", description: "Letterhead content or logo is not ready. The logo URL might be invalid or inaccessible." });
+  const generatePdf = async (isTemplate: boolean = false) => {
+    if (!logoDataUri) {
+        toast({ variant: 'destructive', title: "Error", description: "Letterhead logo is not ready. The logo URL might be invalid or inaccessible." });
         return;
     }
     
@@ -36,46 +37,85 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
     setLoading(true);
 
     try {
-      // Step 1: Capture the letter content only using html2canvas
-      const canvas = await html2canvas(contentElement, {
-          scale: 3, 
-          useCORS: true,
-          logging: false,
-          backgroundColor: null, // Transparent background
-      });
-      
-      const contentImgData = canvas.toDataURL('image/png');
-      
-      const A4_WIDTH_PT = 595.28;
-      const A4_HEIGHT_PT = 841.89;
-      
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'pt',
         format: 'a4'
       });
+      
+      const A4_WIDTH_PT = pdf.internal.pageSize.getWidth();
+      const A4_HEIGHT_PT = pdf.internal.pageSize.getHeight();
+      const margin = 45;
 
-      // Step 2: Add watermark faintly BEFORE text
+      // Add fonts - this is crucial for custom fonts in jsPDF
+      // Note: This might not work perfectly without local ttf files, but it's the right direction.
+      pdf.addFont(spaceGroteskNormal, 'SpaceGrotesk', 'normal');
+      pdf.addFont(spaceGroteskBold, 'SpaceGrotesk', 'bold');
+      pdf.addFont(interNormal, 'Inter', 'normal');
+
+      // --- 1. Watermark (Faint, Background) ---
       const watermarkProps = pdf.getImageProperties(logoDataUri);
       const watermarkWidth = 400;
       const watermarkHeight = (watermarkProps.height * watermarkWidth) / watermarkProps.width;
       const watermarkX = (A4_WIDTH_PT - watermarkWidth) / 2;
       const watermarkY = (A4_HEIGHT_PT - watermarkHeight) / 2;
       
-      pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
+      pdf.setGState(new (pdf as any).GState({ opacity: 0.08 }));
       pdf.addImage(logoDataUri, 'PNG', watermarkX, watermarkY, watermarkWidth, watermarkHeight);
       pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
-      // Step 3: Add the captured HTML content on top of the watermark
-      const contentImgProps = pdf.getImageProperties(contentImgData);
-      const contentWidth = A4_WIDTH_PT;
-      const contentHeight = (contentImgProps.height * contentWidth) / contentImgProps.width;
-      pdf.addImage(contentImgData, 'PNG', 0, 0, contentWidth, contentHeight);
-
-      // Step 4: Add the logo on top
-      const logoWidth = 120; // Increased logo size
+      // --- 2. Header ---
+      // Logo
+      const logoWidth = 96;
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
-      pdf.addImage(logoDataUri, 'PNG', 45, 40, logoWidth, logoHeight);
+      pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
+
+      // Organization Title
+      const textX = margin + logoWidth + 20;
+      const orgInfo = organization.footer!.organizationInfo;
+      pdf.setFont('SpaceGrotesk', 'bold');
+      pdf.setTextColor('#16a34a'); // Primary Green
+      pdf.setFontSize(28);
+      pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
+      
+      pdf.setTextColor('#ca8a04'); // Accent Gold
+      pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
+
+      pdf.setTextColor('#16a34a'); // Primary Green
+      pdf.setFontSize(22);
+      pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
+      
+      // Address and Contact under title
+      pdf.setFont('Inter', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(9);
+      pdf.text(`${organization.address}, ${organization.city}`, textX, 145);
+      pdf.text(`Email: ${organization.contactEmail} | Phone: ${organization.contactPhone}`, textX, 158);
+
+      // Header Line
+      pdf.setDrawColor(150, 150, 150);
+      pdf.setLineWidth(1.5);
+      pdf.line(margin, 180, A4_WIDTH_PT - margin, 180);
+
+      // --- 3. Body Content ---
+      if (!isTemplate) {
+        pdf.setTextColor(50, 50, 50);
+        pdf.setFontSize(11);
+        pdf.text('Date: ', margin, 220);
+      }
+      
+      // --- 4. Footer ---
+      const footerY = A4_HEIGHT_PT - 40;
+      pdf.setFont('Inter', 'normal');
+      pdf.setTextColor(150, 150, 150);
+      pdf.setFontSize(8);
+      
+      const footerLine1 = `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`;
+      const footerLine2 = `${organization.website}`;
+      
+      pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+      pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
+
 
       const fileName = isTemplate 
         ? `Letterhead-Template-${organization.name.replace(/\s/g, '-')}.pdf`
@@ -105,11 +145,11 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
              <div className="flex gap-2">
-                <Button onClick={() => generatePdf(templateContentRef.current, true)} disabled={isTemplateGenerating || !logoDataUri}>
+                <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
                     {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                     Download Template
                 </Button>
-                <Button onClick={() => generatePdf(letterheadContentRef.current, false)} disabled={isGenerating || !logoDataUri}>
+                <Button onClick={() => generatePdf(false)} disabled={isGenerating || !logoDataUri}>
                     {isGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     Download as PDF
                 </Button>
@@ -129,25 +169,10 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <>
-                             {/* Visible preview */}
-                            <Letterhead 
-                                ref={letterheadRef} 
-                                contentRef={letterheadContentRef}
-                                organization={organization}
-                                logoDataUri={logoDataUri}
-                            />
-                             {/* Hidden template for PDF generation */}
-                            <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-                                <Letterhead
-                                    ref={templateRef}
-                                    contentRef={templateContentRef}
-                                    organization={organization}
-                                    logoDataUri={logoDataUri}
-                                    isTemplate={true}
-                                />
-                            </div>
-                        </>
+                        <Letterhead 
+                            organization={organization}
+                            logoDataUri={logoDataUri}
+                        />
                     )}
                 </div>
             </CardContent>
