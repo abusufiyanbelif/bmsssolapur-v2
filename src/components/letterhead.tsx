@@ -9,7 +9,6 @@ interface LetterheadProps {
     organization: Organization;
     logoDataUri?: string;
     isTemplate?: boolean;
-    contentRef?: React.Ref<HTMLDivElement>;
 }
 
 export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
@@ -32,6 +31,16 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
         return (
              <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative shadow-lg">
+                {/* Watermark */}
+                {logoDataUri && (
+                    <div className="absolute inset-0 flex items-center justify-center z-0">
+                        <img
+                            src={logoDataUri}
+                            alt="Watermark"
+                            className="w-2/3 h-2/3 object-contain opacity-5"
+                        />
+                    </div>
+                )}
                 <div className="relative z-10 flex flex-col flex-grow">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
@@ -62,7 +71,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                             Address: {isTemplate ? '' : `${organizationDetails.address}`}
                                         </p>
                                         <p className="text-sm text-gray-600" style={textStyle}>
-                                            Email: {isTemplate ? ' ' : organizationDetails.email}  |  Phone: {isTemplate ? '' : organizationDetails.phone}
+                                            Email: {isTemplate ? '' : organizationDetails.email}  |  Phone: {isTemplate ? '' : organizationDetails.phone}
                                         </p>
                                     </td>
                                 </tr>
@@ -70,13 +79,18 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </table>
                     </header>
 
-                    <main className="flex-grow pt-8" style={{minHeight: '650px'}}>
+                    <main className="flex-grow pt-8" style={{minHeight: '450px'}}>
                         <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
                            <p>Date: </p>
                         </div>
                     </main>
+
+                     <div className="mt-24 text-right">
+                        <p className="text-gray-800" style={textStyle}>_________________________</p>
+                        <p className="text-sm text-gray-600 pr-4" style={textStyle}>(Signature / Stamp)</p>
+                    </div>
                     
-                    <footer className="mt-auto pt-4 border-t text-xs text-center text-muted-foreground" style={textStyle}>
+                    <footer className="mt-auto pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
                          <p>
                             {isTemplate ? 'Reg No.:          |   PAN:' : `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`}
                          </p>

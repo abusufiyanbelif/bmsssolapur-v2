@@ -21,9 +21,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
   
   const letterheadRef = useRef<HTMLDivElement>(null);
-  const letterheadContentRef = useRef<HTMLDivElement>(null); // Ref for text content only
   const templateRef = useRef<HTMLDivElement>(null);
-  const templateContentRef = useRef<HTMLDivElement>(null); // Ref for template text content
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -57,7 +55,7 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
 
       // --- 2. Header ---
-      const logoWidth = 128; // Increased logo size
+      const logoWidth = 128;
       const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
       pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
 
@@ -97,23 +95,28 @@ export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocu
       pdf.setFontSize(11);
       pdf.text('Date: ', margin, 220);
       
-      // --- 4. Footer ---
+      // --- 4. Signature ---
+      const signatureY = A4_HEIGHT_PT - 120;
+      const signatureLineX2 = A4_WIDTH_PT - margin;
+      const signatureLineX1 = signatureLineX2 - 200; // Line length
+      pdf.setDrawColor(50, 50, 50);
+      pdf.setLineWidth(0.5);
+      pdf.line(signatureLineX1, signatureY, signatureLineX2, signatureY);
+      pdf.text('(Signature / Stamp)', signatureLineX1 + 100, signatureY + 15, { align: 'center' });
+
+
+      // --- 5. Footer ---
       const footerY = A4_HEIGHT_PT - 45;
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(150, 150, 150);
       pdf.setFontSize(8);
       
-      let footerLine1, footerLine2;
       if (isTemplate) {
-          footerLine1 = "Reg No.:          |   PAN:";
-          footerLine2 = "URL: ";
-           pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-           pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 15, { align: 'center' }); // Increased spacing to 15
+          pdf.text("Reg No.:                    |   PAN:", A4_WIDTH_PT / 2, footerY, { align: 'center' });
+          pdf.text("URL:", A4_WIDTH_PT / 2, footerY + 15, { align: 'center' });
       } else {
-          footerLine1 = `Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`;
-          footerLine2 = `URL: ${organization.website}`;
-           pdf.text(footerLine1, A4_WIDTH_PT / 2, footerY, { align: 'center' });
-           pdf.text(footerLine2, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
+          pdf.text(`Reg No: ${organization.registrationNumber} | PAN: ${organization.panNumber}`, A4_WIDTH_PT / 2, footerY, { align: 'center' });
+          pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT / 2, footerY + 12, { align: 'center' });
       }
 
       const fileName = isTemplate 
