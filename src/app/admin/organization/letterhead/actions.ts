@@ -20,7 +20,7 @@ export async function getImageAsBase64(url?: string): Promise<string | undefined
     return `data:${blob.type};base64,${base64}`;
   } catch (error) {
     console.error("Error converting image to Base64:", error);
-    // Re-throw the error so the client component can handle it
-    throw error;
+    // Instead of throwing, return undefined so the client can handle it.
+    return undefined;
   }
 }
