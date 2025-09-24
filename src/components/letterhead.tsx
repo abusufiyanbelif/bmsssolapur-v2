@@ -22,7 +22,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
             email: organization?.contactEmail || "contact@baitulmalsolapur.org",
             phone: organization?.contactPhone || "+91 9372145889",
             website: organization?.website || 'https://baitulmalsolapur.org',
-            pan: organization?.panNumber || 'AAFSB9401P',
+            pan: organization?.panNumber || 'AAPAB1213J',
             titleLine1: organization.footer?.organizationInfo.titleLine1 || 'BAITUL MAL',
             titleLine2: organization.footer?.organizationInfo.titleLine2 || 'SAMAJIK SANSTHA',
             titleLine3: organization.footer?.organizationInfo.titleLine3 || '(SOLAPUR)',
@@ -31,14 +31,13 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         const textStyle = { letterSpacing: '0.5px' };
 
         return (
-             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] relative shadow-lg">
+             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] min-h-[297mm] flex flex-col relative shadow-lg">
                 {/* This div will be captured by html2canvas */}
-                <div ref={contentRef} className="relative z-10 flex flex-col h-full bg-transparent">
+                <div ref={contentRef} className="relative z-10 flex flex-col flex-grow bg-transparent">
                      <header className="pb-4 border-b-2 border-gray-800">
                         <table className="w-full">
                             <tbody>
                                 <tr>
-                                    {/* This TD is now just a spacer, the logo is added by jsPDF */}
                                     <td style={{ width: '128px' }}></td>
                                     <td className="pl-4 align-top">
                                         <h1 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
@@ -58,15 +57,13 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </table>
                     </header>
 
-                    <main className="flex-grow pt-8" style={{minHeight: '550px'}}>
-                        {!isTemplate && (
-                            <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
-                                <p>Date: </p>
-                            </div>
-                        )}
+                    <main className="flex-grow pt-8" style={{minHeight: '650px'}}>
+                        <div className="space-y-4 text-gray-800 text-base leading-relaxed" style={textStyle}>
+                            <p>Date: </p>
+                        </div>
                     </main>
                     
-                    <footer className="mt-12 pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
+                    <footer className="mt-auto pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
                         <p>Reg No: {organization.registrationNumber} | PAN: {organization.panNumber}</p>
                         <p>{organization.website}</p>
                     </footer>
@@ -76,7 +73,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     jsPDF will handle the actual placement in the PDF. */}
                 {logoDataUri && (
                     <div className="absolute top-12 left-12 z-20 pointer-events-none">
-                        <div className="relative w-28 h-28">
+                        <div className="relative w-36 h-36">
                              <img
                                 src={logoDataUri}
                                 alt="Organization Logo"
