@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { updateCampaign, getCampaign } from "@/services/campaign-service";
@@ -24,21 +23,33 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
         imageUrl = await uploadFile(imageFile, uploadPath);
     }
     
+    const goalCalculationMethod = formData.get('goalCalculationMethod') as 'manual' | 'auto';
+    let goal = parseFloat(formData.get('goal') as string);
+    const fixedAmountPerBeneficiary = parseFloat(formData.get('fixedAmountPerBeneficiary') as string);
+    const targetBeneficiaries = parseInt(formData.get('targetBeneficiaries') as string, 10);
+    
+    if (goalCalculationMethod === 'auto' && fixedAmountPerBeneficiary > 0 && targetBeneficiaries > 0) {
+        goal = fixedAmountPerBeneficiary * targetBeneficiaries;
+    }
+    
     await updateCampaign(campaignId, {
         name: formData.get('name') as string,
         description: formData.get('description') as string,
-        goal: parseFloat(formData.get('goal') as string),
+        goal: goal,
         startDate: new Date(formData.get('startDate') as string),
         endDate: new Date(formData.get('endDate') as string),
         status: formData.get('status') as CampaignStatus,
         imageUrl: imageUrl,
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
+        linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
+        fixedAmountPerBeneficiary: goalCalculationMethod === 'auto' ? fixedAmountPerBeneficiary : undefined,
+        targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
     });
     
     const updatedCampaign = await getCampaign(campaignId);
     if(updatedCampaign) {
       const enrichedCampaign = await enrichCampaignWithPublicStats(updatedCampaign);
-      await updatePublicCampaign(enrichedCampaign);
+      await updatePublicCampaign(enrichedCampaign, updatedCampaign.status === 'Cancelled');
     }
     
     revalidatePath("/admin/campaigns");

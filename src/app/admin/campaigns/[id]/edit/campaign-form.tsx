@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,11 +18,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Loader2, Save, X, Edit, Image as ImageIcon, ChevronsUpDown, Check, XCircle } from "lucide-react";
+import { CalendarIcon, Loader2, Save, X, Edit, ImageIcon, ChevronsUpDown, Check, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { handleUpdateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
 import { Campaign, CampaignStatus } from "@/services/campaign-service";
@@ -35,6 +34,7 @@ import Image from "next/image";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // All statuses are available when editing
 const campaignStatuses: CampaignStatus[] = ['Upcoming', 'Active', 'Completed', 'Cancelled'];
@@ -43,7 +43,10 @@ const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fi
 const formSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters."),
   description: z.string().min(10, "Description must be at least 10 characters."),
-  goal: z.coerce.number().min(1, "Goal must be a positive number."),
+  goalCalculationMethod: z.enum(['manual', 'auto']).default('manual'),
+  goal: z.coerce.number().optional(),
+  fixedAmountPerBeneficiary: z.coerce.number().optional(),
+  targetBeneficiaries: z.coerce.number().optional(),
   image: z.any().optional(),
   dates: z.object({
     from: z.date({ required_error: "A start date is required."}),
@@ -54,7 +57,20 @@ const formSchema = z.object({
     message: "You have to select at least one donation type.",
   }),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+    if (data.goalCalculationMethod === 'manual' && (!data.goal || data.goal <= 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Goal must be a positive number for manual calculation.", path: ["goal"] });
+    }
+    if (data.goalCalculationMethod === 'auto') {
+        if (!data.fixedAmountPerBeneficiary || data.fixedAmountPerBeneficiary <= 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount per beneficiary must be a positive number.", path: ["fixedAmountPerBeneficiary"] });
+        }
+        if (!data.targetBeneficiaries || data.targetBeneficiaries <= 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Number of beneficiaries must be a positive number.", path: ["targetBeneficiaries"] });
+        }
+    }
 });
+
 
 type CampaignFormValues = z.infer<typeof formSchema>;
 
@@ -77,7 +93,10 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
     defaultValues: {
         name: campaign.name,
         description: campaign.description,
+        goalCalculationMethod: campaign.fixedAmountPerBeneficiary ? 'auto' : 'manual',
         goal: campaign.goal,
+        fixedAmountPerBeneficiary: campaign.fixedAmountPerBeneficiary || 0,
+        targetBeneficiaries: campaign.targetBeneficiaries || 0,
         image: null,
         dates: {
             from: campaign.startDate,
@@ -89,8 +108,17 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
     },
   });
 
-  const { formState: { isDirty }, reset, handleSubmit, setValue, watch } = form;
+  const { formState: { isDirty }, reset, handleSubmit, setValue, watch, control } = form;
   const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
+  const goalCalculationMethod = watch('goalCalculationMethod');
+  const fixedAmount = watch('fixedAmountPerBeneficiary');
+  const targetBeneficiaries = watch('targetBeneficiaries');
+
+  useEffect(() => {
+    if (goalCalculationMethod === 'auto' && fixedAmount && targetBeneficiaries) {
+        setValue('goal', fixedAmount * targetBeneficiaries);
+    }
+  }, [goalCalculationMethod, fixedAmount, targetBeneficiaries, setValue]);
 
   const handleCancel = () => {
     reset(); // Resets to the initial default values
@@ -113,14 +141,24 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append('name', values.name);
-    formData.append('description', values.description);
-    formData.append('goal', String(values.goal));
-    formData.append('startDate', values.dates.from.toISOString());
-    formData.append('endDate', values.dates.to.toISOString());
-    formData.append('status', values.status);
-    values.acceptableDonationTypes.forEach(dt => formData.append('acceptableDonationTypes', dt));
-    values.linkedCompletedCampaignIds?.forEach(id => formData.append('linkedCompletedCampaignIds', id));
+    // Append all form values
+    for (const key in values) {
+      const formKey = key as keyof CampaignFormValues;
+      const value = values[formKey] as any;
+      if (value !== null && value !== undefined) {
+        if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+        } else if (key === 'dates' && typeof value === 'object') {
+            formData.append('startDate', value.from.toISOString());
+            formData.append('endDate', value.to.toISOString());
+        }
+        else if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+        } else {
+            formData.append(key, String(value));
+        }
+      }
+    }
 
     if (values.image) {
       formData.append('image', values.image);
@@ -183,66 +221,33 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
             </div>
             <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Campaign Name</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Ramadan 2025 Zakat Drive" {...field} disabled={!isEditing} />
-                    </FormControl>
-                    <FormDescription>A short, descriptive name for the campaign.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                        <Textarea
-                        placeholder="Describe the purpose and goals of this campaign."
-                        className="resize-y min-h-[100px]"
-                        {...field}
-                        disabled={!isEditing}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                    control={form.control}
-                    name="image"
-                    render={() => (
-                        <FormItem>
-                            <FormLabel>Campaign Image</FormLabel>
-                            <FormControl>
-                                <Input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} disabled={!isEditing} />
-                            </FormControl>
-                            {imagePreview && (
-                                <div className="mt-4 relative w-full h-48">
-                                    <Image src={imagePreview} alt="Campaign image preview" fill className="rounded-md object-cover" />
-                                </div>
-                            )}
-                            <FormDescription>Upload a new background image to replace the current one.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <fieldset disabled={!isEditing} className="space-y-8">
                     <FormField
                     control={form.control}
-                    name="goal"
+                    name="name"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Fundraising Goal (₹)</FormLabel>
+                        <FormLabel>Campaign Name</FormLabel>
                         <FormControl>
-                            <Input type="number" {...field} disabled={!isEditing} />
+                            <Input placeholder="e.g., Ramadan 2025 Zakat Drive" {...field} />
+                        </FormControl>
+                        <FormDescription>A short, descriptive name for the campaign.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                            <Textarea
+                            placeholder="Describe the purpose and goals of this campaign."
+                            className="resize-y min-h-[100px]"
+                            {...field}
+                            />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -250,189 +255,254 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
                     />
                     <FormField
                         control={form.control}
-                        name="status"
+                        name="image"
+                        render={() => (
+                            <FormItem>
+                                <FormLabel>Campaign Image</FormLabel>
+                                <FormControl>
+                                    <Input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} />
+                                </FormControl>
+                                {imagePreview && (
+                                    <div className="mt-4 relative w-full h-48">
+                                        <Image src={imagePreview} alt="Campaign image preview" fill className="rounded-md object-cover" />
+                                    </div>
+                                )}
+                                <FormDescription>Upload a new background image to replace the current one.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={control}
+                        name="goalCalculationMethod"
+                        render={({ field }) => (
+                            <FormItem className="space-y-3">
+                                <FormLabel>Fundraising Goal Method</FormLabel>
+                                <FormControl>
+                                <RadioGroup
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    className="flex space-x-4"
+                                >
+                                    <FormItem className="flex items-center space-x-2">
+                                    <FormControl><RadioGroupItem value="manual" /></FormControl>
+                                    <FormLabel className="font-normal">Manual Goal</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2">
+                                    <FormControl><RadioGroupItem value="auto" /></FormControl>
+                                    <FormLabel className="font-normal">Calculate from Fixed Amount</FormLabel>
+                                    </FormItem>
+                                </RadioGroup>
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    
+                    {goalCalculationMethod === 'auto' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end p-4 border rounded-lg">
+                            <FormField control={form.control} name="fixedAmountPerBeneficiary" render={({ field }) => ( <FormItem><FormLabel>Amount Per Beneficiary (₹)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="targetBeneficiaries" render={({ field }) => ( <FormItem><FormLabel>Number of Beneficiaries</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField
+                        control={form.control}
+                        name="goal"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a status" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {campaignStatuses.map(status => (
-                                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                            <FormLabel>Fundraising Goal (₹)</FormLabel>
+                            <FormControl>
+                                <Input type="number" {...field} disabled={goalCalculationMethod === 'auto'} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="status"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Status</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} >
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a status" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {campaignStatuses.map(status => (
+                                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <FormField
+                        control={form.control}
+                        name="dates"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Campaign Dates</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                                id="date"
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-full justify-start text-left font-normal",
+                                                    !field.value?.from && "text-muted-foreground"
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {field.value?.from ? (
+                                                    field.value.to ? (
+                                                        <>
+                                                            {format(field.value.from, "LLL dd, y")} -{" "}
+                                                            {format(field.value.to, "LLL dd, y")}
+                                                        </>
+                                                    ) : (
+                                                        format(field.value.from, "LLL dd, y")
+                                                    )
+                                                ) : (
+                                                    <span>Pick a start and end date</span>
+                                                )}
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={field.value?.from}
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            numberOfMonths={2}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormDescription>The start and end date for this campaign.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="acceptableDonationTypes"
+                        render={() => (
+                            <FormItem className="space-y-3 p-4 border rounded-lg">
+                            <div className="mb-4">
+                                <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                                <FormDescription>
+                                    Select which types of donations can be allocated to this campaign.
+                                </FormDescription>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {donationTypes.map((type) => (
+                                <FormField
+                                    key={type}
+                                    control={form.control}
+                                    name="acceptableDonationTypes"
+                                    render={({ field }) => {
+                                    return (
+                                        <FormItem
+                                        key={type}
+                                        className="flex flex-row items-start space-x-3 space-y-0"
+                                        >
+                                        <FormControl>
+                                            <Checkbox
+                                            checked={field.value?.includes(type)}
+                                            onCheckedChange={(checked) => {
+                                                return checked
+                                                ? field.onChange([...field.value, type])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                        (value) => value !== type
+                                                    )
+                                                    )
+                                            }}
+                                            />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">
+                                            {type}
+                                        </FormLabel>
+                                        </FormItem>
+                                    )
+                                    }}
+                                />
                                 ))}
-                                </SelectContent>
-                            </Select>
+                            </div>
                             <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div>
-                <FormField
-                    control={form.control}
-                    name="dates"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Campaign Dates</FormLabel>
-                            <Popover>
+
+                    <FormField
+                        control={form.control}
+                        name="linkedCompletedCampaignIds"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Link Past Successes (Optional)</FormLabel>
+                            <Popover open={completedCampaignPopoverOpen} onOpenChange={setCompletedCampaignPopoverOpen}>
                                 <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                            id="date"
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal",
-                                                !field.value?.from && "text-muted-foreground"
-                                            )}
-                                            disabled={!isEditing}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {field.value?.from ? (
-                                                field.value.to ? (
-                                                    <>
-                                                        {format(field.value.from, "LLL dd, y")} -{" "}
-                                                        {format(field.value.to, "LLL dd, y")}
-                                                    </>
-                                                ) : (
-                                                    format(field.value.from, "LLL dd, y")
-                                                )
-                                            ) : (
-                                                <span>Pick a start and end date</span>
-                                            )}
-                                        </Button>
-                                    </FormControl>
+                                <FormControl>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn("w-full justify-between min-h-10 h-auto", linkedCompletedCampaignIds.length === 0 && "text-muted-foreground")}
+                                    >
+                                    {linkedCompletedCampaignIds.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                        {linkedCompletedCampaignIds.map(id => {
+                                            const campaign = completedCampaigns.find(c => c.id === id);
+                                            return <Badge key={id} variant="secondary">{campaign?.name}</Badge>
+                                        })}
+                                        </div>
+                                    ) : "Select completed campaigns..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        initialFocus
-                                        mode="range"
-                                        defaultMonth={field.value?.from}
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        numberOfMonths={2}
-                                    />
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search campaign..." />
+                                    <CommandList>
+                                    <CommandEmpty>No completed campaigns found.</CommandEmpty>
+                                    <CommandGroup>
+                                        {completedCampaigns.map((campaign) => (
+                                        <CommandItem
+                                            value={campaign.name}
+                                            key={campaign.id}
+                                            onSelect={() => {
+                                                const isSelected = linkedCompletedCampaignIds.includes(campaign.id!);
+                                                if (isSelected) {
+                                                    setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(id => id !== campaign.id!));
+                                                } else {
+                                                    setValue('linkedCompletedCampaignIds', [...linkedCompletedCampaignIds, campaign.id!]);
+                                                }
+                                            }}
+                                        >
+                                            <Check className={cn("mr-2 h-4 w-4", linkedCompletedCampaignIds.includes(campaign.id!) ? "opacity-100" : "opacity-0")} />
+                                            <span>{campaign.name} (Goal: ₹{campaign.goal})</span>
+                                        </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                    </CommandList>
+                                </Command>
                                 </PopoverContent>
                             </Popover>
-                            <FormDescription>The start and end date for this campaign.</FormDescription>
                             <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="acceptableDonationTypes"
-                    render={() => (
-                        <FormItem className="space-y-3 p-4 border rounded-lg">
-                        <div className="mb-4">
-                            <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
-                            <FormDescription>
-                                Select which types of donations can be allocated to this campaign.
-                            </FormDescription>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {donationTypes.map((type) => (
-                            <FormField
-                                key={type}
-                                control={form.control}
-                                name="acceptableDonationTypes"
-                                render={({ field }) => {
-                                return (
-                                    <FormItem
-                                    key={type}
-                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                    >
-                                    <FormControl>
-                                        <Checkbox
-                                        checked={field.value?.includes(type)}
-                                        onCheckedChange={(checked) => {
-                                            return checked
-                                            ? field.onChange([...field.value, type])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                    (value) => value !== type
-                                                )
-                                                )
-                                        }}
-                                        disabled={!isEditing}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                        {type}
-                                    </FormLabel>
-                                    </FormItem>
-                                )
-                                }}
-                            />
-                            ))}
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="linkedCompletedCampaignIds"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Link Past Successes (Optional)</FormLabel>
-                        <Popover open={completedCampaignPopoverOpen} onOpenChange={setCompletedCampaignPopoverOpen}>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn("w-full justify-between min-h-10 h-auto", linkedCompletedCampaignIds.length === 0 && "text-muted-foreground")}
-                                disabled={!isEditing}
-                                >
-                                {linkedCompletedCampaignIds.length > 0 ? (
-                                    <div className="flex flex-wrap gap-1">
-                                    {linkedCompletedCampaignIds.map(id => {
-                                        const campaign = completedCampaigns.find(c => c.id === id);
-                                        return <Badge key={id} variant="secondary">{campaign?.name}</Badge>
-                                    })}
-                                    </div>
-                                ) : "Select completed campaigns..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                                <CommandInput placeholder="Search campaign..." />
-                                <CommandList>
-                                <CommandEmpty>No completed campaigns found.</CommandEmpty>
-                                <CommandGroup>
-                                    {completedCampaigns.map((campaign) => (
-                                    <CommandItem
-                                        value={campaign.name}
-                                        key={campaign.id}
-                                        onSelect={() => {
-                                            const isSelected = linkedCompletedCampaignIds.includes(campaign.id!);
-                                            if (isSelected) {
-                                                setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(id => id !== campaign.id!));
-                                            } else {
-                                                setValue('linkedCompletedCampaignIds', [...linkedCompletedCampaignIds, campaign.id!]);
-                                            }
-                                        }}
-                                    >
-                                        <Check className={cn("mr-2 h-4 w-4", linkedCompletedCampaignIds.includes(campaign.id!) ? "opacity-100" : "opacity-0")} />
-                                        <span>{campaign.name} (Goal: ₹{campaign.goal})</span>
-                                    </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                                </CommandList>
-                            </Command>
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
+                            </FormItem>
+                        )}
+                    />
+                </fieldset>
+                
                 {isEditing && (
                      <div className="flex gap-4">
                         <Button type="submit" disabled={isSubmitting || !isDirty}>

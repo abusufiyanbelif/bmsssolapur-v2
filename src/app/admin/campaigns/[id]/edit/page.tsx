@@ -28,7 +28,7 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
     }
     
     // Calculate collected amount for the specific campaign
-    const collectedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+    const collectedAmount = linkedDonations.filter(d => d.status === 'Verified' || d.status === 'Allocated').reduce((sum, d) => sum + d.amount, 0);
     const campaignWithStats = { ...campaign, collectedAmount };
 
     const completedCampaigns = allCampaigns.filter(c => c.status === 'Completed' && c.id !== campaign.id);
