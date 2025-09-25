@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Campaign service for interacting with Firestore.
  */
@@ -47,20 +48,23 @@ export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'id' |
     const newCampaignData: Partial<Campaign> = {
       ...campaignData,
       id: campaignRef.id,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     // Firestore does not accept 'undefined' values.
     // We must clean the object before sending it.
-    Object.keys(newCampaignData).forEach(key => {
+    const dataToWrite: any = { ...newCampaignData };
+    Object.keys(dataToWrite).forEach(key => {
         const typedKey = key as keyof Campaign;
-        if (newCampaignData[typedKey] === undefined) {
-            delete (newCampaignData as any)[typedKey];
+        if (dataToWrite[typedKey] === undefined) {
+            delete (dataToWrite as any)[typedKey];
+        } else if (dataToWrite[typedKey] instanceof Date) {
+            dataToWrite[typedKey] = Timestamp.fromDate(dataToWrite[typedKey]);
         }
     });
     
-    await setDoc(campaignRef, newCampaignData);
+    await setDoc(campaignRef, dataToWrite);
     
     // We fetch the document again to get the server-generated timestamps as Date objects
     const newDoc = await getDoc(campaignRef);
@@ -105,10 +109,10 @@ export const getCampaign = async (id: string): Promise<Campaign | null> => {
       const campaign: Campaign = {
         id: campaignDoc.id,
         ...data,
-        startDate: (data.startDate as Timestamp).toDate(),
-        endDate: (data.endDate as Timestamp).toDate(),
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
+        startDate: (data.startDate as Timestamp)?.toDate(),
+        endDate: (data.endDate as Timestamp)?.toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
+        updatedAt: (data.updatedAt as Timestamp)?.toDate(),
       } as Campaign;
       return campaign;
     }
@@ -134,10 +138,10 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
        const campaign: Campaign = {
         id: doc.id,
         ...data,
-        startDate: (data.startDate as Timestamp).toDate(),
-        endDate: (data.endDate as Timestamp).toDate(),
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
+        startDate: (data.startDate as Timestamp)?.toDate(),
+        endDate: (data.endDate as Timestamp)?.toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
+        updatedAt: (data.updatedAt as Timestamp)?.toDate(),
       } as Campaign;
       campaigns.push(campaign);
     });
@@ -155,9 +159,9 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 campaigns.push({
-                    id: doc.id, ...data, startDate: (data.startDate as Timestamp).toDate(),
-                    endDate: (data.endDate as Timestamp).toDate(), createdAt: (data.createdAt as Timestamp).toDate(),
-                    updatedAt: (data.updatedAt as Timestamp).toDate(),
+                    id: doc.id, ...data, startDate: (data.startDate as Timestamp)?.toDate(),
+                    endDate: (data.endDate as Timestamp)?.toDate(), createdAt: (data.createdAt as Timestamp)?.toDate(),
+                    updatedAt: (data.updatedAt as Timestamp)?.toDate(),
                 } as Campaign);
             });
             return campaigns;

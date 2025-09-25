@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -91,9 +92,9 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         adminAddedBy: { id: adminUser.id, name: adminUser.name },
         referredByUserId: leadData.referredByUserId,
         referredByUserName: leadData.referredByUserName,
-        dateCreated: (leadData.dateCreated as Date) || new Date(),
-        caseReportedDate: (leadData.caseReportedDate as Date) || undefined,
-        dueDate: leadData.dueDate ? (leadData.dueDate as Date) : undefined,
+        dateCreated: leadData.dateCreated instanceof Date ? leadData.dateCreated : new Date(),
+        caseReportedDate: (leadData.caseReportedDate instanceof Date) ? leadData.caseReportedDate : undefined,
+        dueDate: leadData.dueDate instanceof Date ? leadData.dueDate : undefined,
         closedAt: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),

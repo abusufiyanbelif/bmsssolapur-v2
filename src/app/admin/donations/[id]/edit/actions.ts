@@ -75,9 +75,11 @@ export async function handleUpdateDonation(
     }
 
     const donationDateStr = formData.get("donationDate") as string;
-    const donationDate = donationDateStr
+    // Ensure we handle the date correctly
+    const donationDate = donationDateStr && !isNaN(new Date(donationDateStr).getTime())
       ? new Date(donationDateStr)
       : originalDonation.donationDate;
+
 
     const campaignId = formData.get("campaignId") as string | undefined;
     let campaignName: string | undefined;

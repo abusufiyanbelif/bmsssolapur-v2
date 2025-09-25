@@ -50,7 +50,7 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
             activities.push({
                 id: doc.id,
                 ...data,
-                timestamp: (data.timestamp as Timestamp).toDate(),
+                timestamp: (data.timestamp as Timestamp)?.toDate(),
             } as ActivityLog);
         });
         return activities;
@@ -85,7 +85,7 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
                 id: doc.id,
                 ...data,
                 // Ensure timestamp is a plain JS Date object for serialization
-                timestamp: (data.timestamp as Timestamp).toDate(),
+                timestamp: (data.timestamp as Timestamp)?.toDate(),
             } as ActivityLog);
         });
         
@@ -119,7 +119,7 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
             activities.push({
                 id: doc.id,
                 ...data,
-                timestamp: (data.timestamp as Timestamp).toDate(),
+                timestamp: (data.timestamp as Timestamp)?.toDate(),
             } as ActivityLog);
         });
 
@@ -152,7 +152,7 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
             activities.push({
                 id: doc.id,
                 ...data,
-                timestamp: (data.timestamp as Timestamp).toDate(),
+                timestamp: (data.timestamp as Timestamp)?.toDate(),
             } as ActivityLog);
         });
         
@@ -172,8 +172,8 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
  * @returns An array of activity log objects.
  */
 export const getCampaignActivity = async (campaignId: string): Promise<ActivityLog[]> => {
-    const adminDb = getAdminDb();
     try {
+        const adminDb = getAdminDb();
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("details.linkedCampaignId", "==", campaignId);
             
@@ -184,7 +184,7 @@ export const getCampaignActivity = async (campaignId: string): Promise<ActivityL
             activities.push({
                 id: doc.id,
                 ...data,
-                timestamp: (data.timestamp as Timestamp).toDate(),
+                timestamp: (data.timestamp as Timestamp)?.toDate(),
             } as ActivityLog);
         });
         
@@ -192,12 +192,12 @@ export const getCampaignActivity = async (campaignId: string): Promise<ActivityL
         activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
         return activities;
-    } catch (error) {
-        if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token'))) {
-             console.warn(`Permission Denied: The server environment lacks the 'Cloud Datastore User' role needed to read campaign activity. Returning empty array. Refer to TROUBLESHOOTING.md to fix this.`);
-             return [];
+    } catch (e) {
+        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
+            console.warn(`Permission Denied: The server environment lacks permissions to read campaign activity. Refer to TROUBLESHOOTING.md.`, e);
+            return []; // Gracefully fail
         }
-        console.error("Error fetching campaign activity:", error);
-        return [];
+        console.error("Error fetching campaign activity:", e);
+        return []; // Return empty for other errors as well
     }
 }

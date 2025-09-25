@@ -1,3 +1,4 @@
+
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -79,19 +80,22 @@ export const createDonation = async (
     const newDonation: Partial<Donation> = {
         ...donation,
         id: donationRef.id,
-        createdAt: Timestamp.now(),
+        createdAt: new Date(),
         source: donation.source || 'Manual Entry', // Default source
     };
     
     // Remove undefined fields to prevent Firestore errors
-    Object.keys(newDonation).forEach(key => {
+    const dataToWrite: any = { ...newDonation };
+    Object.keys(dataToWrite).forEach(key => {
         const typedKey = key as keyof Donation;
-        if (newDonation[typedKey] === undefined) {
-            delete (newDonation as any)[typedKey];
+        if (dataToWrite[typedKey] === undefined) {
+            delete (dataToWrite as any)[typedKey];
+        } else if (dataToWrite[typedKey] instanceof Date) {
+            dataToWrite[typedKey] = Timestamp.fromDate(dataToWrite[typedKey]);
         }
     });
 
-    await setDoc(donationRef, newDonation);
+    await setDoc(donationRef, dataToWrite);
     
     await logActivity({
         userId: adminUserId,
@@ -127,12 +131,12 @@ export const getDonation = async (id: string): Promise<Donation | null> => {
       const data = doc.data();
       const allocations = (data.allocations || []).map((alloc: Allocation) => ({
         ...alloc,
-        allocatedAt: (alloc.allocatedAt as Timestamp).toDate(),
+        allocatedAt: (alloc.allocatedAt as Timestamp)?.toDate(),
       }));
       return { 
         id: donationDoc.id, 
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
         donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
         verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
@@ -252,12 +256,12 @@ export const getAllDonations = async (): Promise<Donation[]> => {
             const data = doc.data();
             const allocations = (data.allocations || []).map((alloc: Allocation) => ({
                 ...alloc,
-                allocatedAt: (alloc.allocatedAt as Timestamp).toDate(),
+                allocatedAt: (alloc.allocatedAt as Timestamp)?.toDate(),
             }));
             donations.push({ 
               id: doc.id, 
               ...data,
-              createdAt: (data.createdAt as Timestamp).toDate(),
+              createdAt: (data.createdAt as Timestamp)?.toDate(),
               donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
               verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
@@ -288,7 +292,7 @@ export const getDonationsByUserId = async (userId: string): Promise<Donation[]> 
             donations.push({
               id: doc.id,
               ...data,
-              createdAt: (data.createdAt as Timestamp).toDate(),
+              createdAt: (data.createdAt as Timestamp)?.toDate(),
               donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
               verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
@@ -322,7 +326,7 @@ export const getDonationsByCampaignId = async (campaignId: string): Promise<Dona
             donations.push({
               id: doc.id,
               ...data,
-              createdAt: (data.createdAt as Timestamp).toDate(),
+              createdAt: (data.createdAt as Timestamp)?.toDate(),
               donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
               verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
               updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
@@ -350,12 +354,12 @@ export const getDonationByTransactionId = async (transactionId: string): Promise
       const data = doc.data();
       const allocations = (data.allocations || []).map((alloc: Allocation) => ({
         ...alloc,
-        allocatedAt: (alloc.allocatedAt as Timestamp).toDate(),
+        allocatedAt: (alloc.allocatedAt as Timestamp)?.toDate(),
       }));
       return { 
         id: doc.id, 
         ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate(),
         donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
         verifiedAt: data.verifiedAt ? (data.verifiedAt as Timestamp).toDate() : undefined,
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
@@ -384,7 +388,7 @@ export const handleUpdateDonationStatus = async (donationId: string, newStatus: 
 
     const updates: Partial<Donation> = { status: newStatus };
     if (newStatus === 'Verified' && originalDonation.status !== 'Verified') {
-        updates.verifiedAt = Timestamp.now();
+        updates.verifiedAt = new Date();
     }
     
     await updateDonation(donationId, updates, adminUser);
@@ -397,7 +401,7 @@ export const allocateDonationToLeads = async (
 ) => {
 
   const batch = writeBatch(db);
-  const now = Timestamp.now();
+  const now = new Date();
   
   const currentTotalAllocated = (donation.allocations || []).reduce((sum, alloc) => sum + alloc.amount, 0);
   const newAllocationTotal = allocations.reduce((sum, alloc) => sum + alloc.amount, 0);
