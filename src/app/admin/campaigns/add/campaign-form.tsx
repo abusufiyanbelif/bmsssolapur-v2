@@ -1,4 +1,4 @@
-
+// src/app/admin/campaigns/add/campaign-form.tsx
 
 "use client";
 
@@ -54,6 +54,14 @@ const formSchema = z.object({
   linkedLeadIds: z.array(z.string()).optional(),
   linkedDonationIds: z.array(z.string()).optional(),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
+}).refine(data => {
+    if (data.isHistoricalRecord) {
+        return !!data.collectedAmount && data.collectedAmount > 0;
+    }
+    return true;
+}, {
+    message: "Collected amount is required for historical records and must be greater than 0.",
+    path: ["collectedAmount"],
 });
 
 type CampaignFormValues = z.infer<typeof formSchema>;
@@ -401,9 +409,16 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                         <Button
                         variant="outline"
                         role="combobox"
-                        className={cn("w-full justify-between", linkedLeadIds.length === 0 && "text-muted-foreground")}
+                        className={cn("w-full justify-between min-h-10 h-auto", linkedLeadIds.length === 0 && "text-muted-foreground")}
                         >
-                        {linkedLeadIds.length > 0 ? `${linkedLeadIds.length} lead(s) selected` : "Select leads..."}
+                        {linkedLeadIds.length > 0 ? (
+                             <div className="flex flex-wrap gap-1">
+                                {linkedLeadIds.map(id => {
+                                    const lead = leads.find(l => l.id === id);
+                                    return <Badge key={id} variant="secondary">{lead?.name}</Badge>
+                                })}
+                            </div>
+                        ) : "Select leads..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </FormControl>
@@ -436,21 +451,6 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                     </Command>
                     </PopoverContent>
                 </Popover>
-                 {linkedLeadIds.length > 0 && (
-                    <div className="pt-2 flex flex-wrap gap-2">
-                        {linkedLeadIds.map(id => {
-                            const lead = leads.find(l => l.id === id);
-                            return (
-                                <Badge key={id} variant="secondary">
-                                    {lead?.name}
-                                    <button onClick={() => setValue('linkedLeadIds', linkedLeadIds.filter(lid => lid !== id))} className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20">
-                                        <XCircle className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            );
-                        })}
-                    </div>
-                 )}
                 <FormMessage />
                 </FormItem>
             )}
@@ -468,9 +468,16 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                         <Button
                         variant="outline"
                         role="combobox"
-                        className={cn("w-full justify-between", linkedDonationIds.length === 0 && "text-muted-foreground")}
+                        className={cn("w-full justify-between min-h-10 h-auto", linkedDonationIds.length === 0 && "text-muted-foreground")}
                         >
-                        {linkedDonationIds.length > 0 ? `${linkedDonationIds.length} donation(s) selected` : "Select donations..."}
+                        {linkedDonationIds.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                                {linkedDonationIds.map(id => {
+                                    const donation = donations.find(d => d.id === id);
+                                    return <Badge key={id} variant="secondary">{donation?.donorName} (₹{donation?.amount})</Badge>
+                                })}
+                            </div>
+                        ) : "Select donations..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </FormControl>
@@ -503,21 +510,6 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                     </Command>
                     </PopoverContent>
                 </Popover>
-                 {linkedDonationIds.length > 0 && (
-                    <div className="pt-2 flex flex-wrap gap-2">
-                        {linkedDonationIds.map(id => {
-                            const donation = donations.find(d => d.id === id);
-                            return (
-                                <Badge key={id} variant="secondary">
-                                    {donation?.donorName} (₹{donation?.amount})
-                                    <button onClick={() => setValue('linkedDonationIds', linkedDonationIds.filter(lid => lid !== id))} className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20">
-                                        <XCircle className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            );
-                        })}
-                    </div>
-                 )}
                 <FormMessage />
                 </FormItem>
             )}
@@ -535,9 +527,16 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                         <Button
                         variant="outline"
                         role="combobox"
-                        className={cn("w-full justify-between", linkedCompletedCampaignIds.length === 0 && "text-muted-foreground")}
+                        className={cn("w-full justify-between min-h-10 h-auto", linkedCompletedCampaignIds.length === 0 && "text-muted-foreground")}
                         >
-                        {linkedCompletedCampaignIds.length > 0 ? `${linkedCompletedCampaignIds.length} campaign(s) selected` : "Select completed campaigns..."}
+                        {linkedCompletedCampaignIds.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                                {linkedCompletedCampaignIds.map(id => {
+                                    const campaign = completedCampaigns.find(c => c.id === id);
+                                    return <Badge key={id} variant="secondary">{campaign?.name}</Badge>
+                                })}
+                            </div>
+                        ) : "Select completed campaigns..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </FormControl>
@@ -570,21 +569,6 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                     </Command>
                     </PopoverContent>
                 </Popover>
-                 {linkedCompletedCampaignIds.length > 0 && (
-                    <div className="pt-2 flex flex-wrap gap-2">
-                        {linkedCompletedCampaignIds.map(id => {
-                            const campaign = completedCampaigns.find(c => c.id === id);
-                            return (
-                                <Badge key={id} variant="secondary">
-                                    {campaign?.name}
-                                    <button onClick={() => setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(cid => cid !== id))} className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20">
-                                        <XCircle className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            );
-                        })}
-                    </div>
-                 )}
                  <FormDescription>Link to similar, successfully completed campaigns to motivate donors.</FormDescription>
                 <FormMessage />
                 </FormItem>
