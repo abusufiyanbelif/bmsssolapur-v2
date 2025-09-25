@@ -1,3 +1,4 @@
+
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -36,6 +37,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     let imageUrl: string | undefined;
     
     const status = formData.get('status') as CampaignStatus;
+    const goalCalculationMethod = formData.get('goalCalculationMethod') as 'manual' | 'auto';
     
     const imageFile = formData.get('image') as File | null;
     if (imageFile && imageFile.size > 0) {
@@ -43,14 +45,22 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl = await uploadFile(imageFile, uploadPath);
     }
     
-    const isHistorical = status === 'Completed';
-    const collectedAmount = isHistorical ? parseFloat(formData.get("collectedAmount") as string) : 0;
+    const collectedAmount = status === 'Completed' ? parseFloat(formData.get("collectedAmount") as string) : 0;
+    
+    let goal = parseFloat(formData.get('goal') as string);
+    const fixedAmountPerBeneficiary = parseFloat(formData.get('fixedAmountPerBeneficiary') as string);
+    const targetBeneficiaries = parseInt(formData.get('targetBeneficiaries') as string, 10);
+
+    if (goalCalculationMethod === 'auto' && fixedAmountPerBeneficiary > 0 && targetBeneficiaries > 0) {
+        goal = fixedAmountPerBeneficiary * targetBeneficiaries;
+    }
+
 
     const newCampaignData = {
         id: campaignId,
         name: name,
         description: formData.get('description') as string,
-        goal: parseFloat(formData.get('goal') as string),
+        goal: goal,
         startDate: new Date(formData.get('startDate') as string),
         endDate: new Date(formData.get('endDate') as string),
         status: status,
@@ -58,8 +68,10 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
         collectedAmount: collectedAmount,
-        isHistoricalRecord: isHistorical,
-        source: 'Manual Entry'
+        isHistoricalRecord: status === 'Completed',
+        source: 'Manual Entry',
+        fixedAmountPerBeneficiary: goalCalculationMethod === 'auto' ? fixedAmountPerBeneficiary : undefined,
+        targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
     };
 
     // Create the campaign first

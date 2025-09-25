@@ -27,6 +27,10 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
         notFound();
     }
     
+    // Calculate collected amount for the specific campaign
+    const collectedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+    const campaignWithStats = { ...campaign, collectedAmount };
+
     const completedCampaigns = allCampaigns.filter(c => c.status === 'Completed' && c.id !== campaign.id);
 
     return (
@@ -38,7 +42,7 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
             
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    <CampaignForm campaign={campaign} completedCampaigns={completedCampaigns} />
+                    <CampaignForm campaign={campaignWithStats} completedCampaigns={completedCampaigns} />
                     <LinkedLeadsCard leads={linkedLeads} />
                     <LinkedDonationsCard donations={linkedDonations} />
                 </div>

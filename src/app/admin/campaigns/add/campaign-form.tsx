@@ -1,3 +1,4 @@
+
 // src/app/admin/campaigns/add/campaign-form.tsx
 
 "use client";
@@ -32,6 +33,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const createCampaignStatuses = ['Upcoming', 'Active', 'Completed'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
@@ -39,7 +42,10 @@ const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fi
 const formSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters."),
   description: z.string().min(10, "Description must be at least 10 characters."),
-  goal: z.coerce.number().min(1, "Goal must be a positive number."),
+  goalCalculationMethod: z.enum(['manual', 'auto']).default('manual'),
+  goal: z.coerce.number().optional(),
+  fixedAmountPerBeneficiary: z.coerce.number().optional(),
+  targetBeneficiaries: z.coerce.number().optional(),
   image: z.any().optional(),
   dates: z.object({
     from: z.date({ required_error: "A start date is required."}),
@@ -54,14 +60,23 @@ const formSchema = z.object({
   linkedDonationIds: z.array(z.string()).optional(),
   linkedBeneficiaryIds: z.array(z.string()).optional(),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
-}).refine(data => {
+}).superRefine((data, ctx) => {
     if (data.status === 'Completed') {
-        return data.collectedAmount !== undefined && data.collectedAmount > 0;
+        if (!data.collectedAmount || data.collectedAmount <= 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required and must be greater than 0 for 'Completed' campaigns.", path: ["collectedAmount"] });
+        }
     }
-    return true;
-}, {
-    message: "Amount Collected is required and must be greater than 0 for 'Completed' campaigns.",
-    path: ["collectedAmount"],
+    if (data.goalCalculationMethod === 'manual' && (!data.goal || data.goal <= 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Goal must be a positive number for manual calculation.", path: ["goal"] });
+    }
+    if (data.goalCalculationMethod === 'auto') {
+        if (!data.fixedAmountPerBeneficiary || data.fixedAmountPerBeneficiary <= 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount per beneficiary must be a positive number.", path: ["fixedAmountPerBeneficiary"] });
+        }
+        if (!data.targetBeneficiaries || data.targetBeneficiaries <= 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Number of beneficiaries must be a positive number.", path: ["targetBeneficiaries"] });
+        }
+    }
 });
 
 
@@ -96,7 +111,10 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
     defaultValues: {
         name: "",
         description: "",
+        goalCalculationMethod: 'manual',
         goal: 0,
+        fixedAmountPerBeneficiary: 0,
+        targetBeneficiaries: 0,
         image: null,
         status: "Upcoming",
         acceptableDonationTypes: [],
@@ -108,12 +126,21 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
     },
   });
   
-  const { watch, setValue } = form;
+  const { watch, setValue, control } = form;
   const linkedLeadIds = watch('linkedLeadIds') || [];
   const linkedDonationIds = watch('linkedDonationIds') || [];
   const linkedBeneficiaryIds = watch('linkedBeneficiaryIds') || [];
   const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
   const campaignStatus = watch('status');
+  const goalCalculationMethod = watch('goalCalculationMethod');
+  const fixedAmount = watch('fixedAmountPerBeneficiary');
+  const targetBeneficiaries = watch('targetBeneficiaries');
+
+  useEffect(() => {
+    if (goalCalculationMethod === 'auto' && fixedAmount && targetBeneficiaries) {
+        setValue('goal', fixedAmount * targetBeneficiaries);
+    }
+  }, [goalCalculationMethod, fixedAmount, targetBeneficiaries, setValue]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,19 +155,7 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
 
   
   const handleCancel = () => {
-    form.reset({
-        name: "",
-        description: "",
-        goal: 0,
-        status: "Upcoming",
-        dates: undefined,
-        acceptableDonationTypes: [],
-        collectedAmount: 0,
-        linkedLeadIds: [],
-        linkedDonationIds: [],
-        linkedBeneficiaryIds: [],
-        linkedCompletedCampaignIds: [],
-    });
+    form.reset();
     setImagePreview(null);
     if (imageInputRef.current) {
         imageInputRef.current.value = "";
@@ -154,22 +169,23 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
     }
     setIsSubmitting(true);
     const formData = new FormData();
-    formData.append('name', values.name);
-    formData.append('description', values.description);
-    formData.append('goal', String(values.goal));
-    formData.append('startDate', values.dates.from.toISOString());
-    formData.append('endDate', values.dates.to.toISOString());
-    formData.append('status', values.status);
-    values.acceptableDonationTypes.forEach(dt => formData.append('acceptableDonationTypes', dt));
-    values.linkedLeadIds?.forEach(id => formData.append('linkedLeadIds', id));
-    values.linkedDonationIds?.forEach(id => formData.append('linkedDonationIds', id));
-    values.linkedBeneficiaryIds?.forEach(id => formData.append('linkedBeneficiaryIds', id));
-    values.linkedCompletedCampaignIds?.forEach(id => formData.append('linkedCompletedCampaignIds', id));
+    // Append all form values
+    for (const key in values) {
+      const formKey = key as keyof CampaignFormValues;
+      const value = values[formKey] as any;
+      if (value !== null && value !== undefined) {
+        if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+        } else if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+        } else {
+            formData.append(key, String(value));
+        }
+      }
+    }
+    
     if (values.image) {
       formData.append('image', values.image);
-    }
-    if (values.status === 'Completed' && values.collectedAmount) {
-        formData.append('collectedAmount', String(values.collectedAmount));
     }
     formData.append('adminUserId', adminUserId);
 
@@ -246,19 +262,53 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
                 </FormItem>
             )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <FormField
+        
+         <FormField
             control={form.control}
-            name="goal"
+            name="goalCalculationMethod"
             render={({ field }) => (
-                <FormItem>
-                <FormLabel>Fundraising Goal (₹)</FormLabel>
-                <FormControl>
-                    <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
+                <FormItem className="space-y-3">
+                    <FormLabel>Fundraising Goal Method</FormLabel>
+                    <FormControl>
+                    <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-4"
+                    >
+                        <FormItem className="flex items-center space-x-2">
+                        <FormControl><RadioGroupItem value="manual" /></FormControl>
+                        <FormLabel className="font-normal">Manual Goal</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2">
+                        <FormControl><RadioGroupItem value="auto" /></FormControl>
+                        <FormLabel className="font-normal">Calculate from Fixed Amount</FormLabel>
+                        </FormItem>
+                    </RadioGroup>
+                    </FormControl>
                 </FormItem>
             )}
+        />
+        
+        {goalCalculationMethod === 'auto' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end p-4 border rounded-lg">
+                <FormField control={form.control} name="fixedAmountPerBeneficiary" render={({ field }) => ( <FormItem><FormLabel>Amount Per Beneficiary (₹)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="targetBeneficiaries" render={({ field }) => ( <FormItem><FormLabel>Number of Beneficiaries</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+        ): null}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <FormField
+                control={form.control}
+                name="goal"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Fundraising Goal (₹)</FormLabel>
+                    <FormControl>
+                        <Input type="number" {...field} disabled={goalCalculationMethod === 'auto'} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
              <FormField
                 control={form.control}
@@ -290,7 +340,7 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
                 name="collectedAmount"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Amount Collected (for completed campaigns)</FormLabel>
+                        <FormLabel>Amount Collected</FormLabel>
                         <FormControl>
                             <Input type="number" {...field} />
                         </FormControl>

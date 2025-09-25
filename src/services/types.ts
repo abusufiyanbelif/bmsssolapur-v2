@@ -289,6 +289,9 @@ export interface Campaign {
     createdAt: Date;
     updatedAt: Date;
     source?: 'Seeded' | 'Manual Entry';
+    // New fields for fixed amount distribution
+    fixedAmountPerBeneficiary?: number;
+    targetBeneficiaries?: number;
 }
 
 export interface OrganizationFooter {
