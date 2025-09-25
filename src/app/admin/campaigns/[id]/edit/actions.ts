@@ -4,7 +4,7 @@
 
 import { updateCampaign, getCampaign, createCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
-import { CampaignStatus, DonationType, Lead, User } from "@/services/types";
+import { CampaignStatus, DonationType, Lead, User, Campaign } from "@/services/types";
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from "@/services/public-data-service";
 import { uploadFile } from "@/services/storage-service";
 import { createLead } from "@/services/lead-service";
@@ -44,6 +44,7 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
     
     const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];
     const linkedBeneficiaryIds = formData.getAll('linkedBeneficiaryIds') as string[];
+    const status = formData.get('status') as CampaignStatus;
 
     const campaignUpdateData: Partial<Campaign> = {
         name: formData.get('name') as string,
@@ -51,14 +52,20 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
         goal: goal,
         startDate: new Date(formData.get('startDate') as string),
         endDate: new Date(formData.get('endDate') as string),
-        status: formData.get('status') as CampaignStatus,
+        status: status,
         imageUrl: imageUrl,
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
         fixedAmountPerBeneficiary: goalCalculationMethod === 'auto' ? fixedAmountPerBeneficiary : undefined,
         targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
         leads: linkedLeadIds,
+        isHistoricalRecord: status === 'Completed', // Set based on status
     };
+    
+    // Only include collectedAmount if the status is Completed
+    if (status === 'Completed') {
+        campaignUpdateData.collectedAmount = parseFloat(formData.get('collectedAmount') as string) || 0;
+    }
 
     await updateCampaign(campaignId, campaignUpdateData);
     

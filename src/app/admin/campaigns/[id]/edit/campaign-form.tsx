@@ -46,6 +46,7 @@ const formSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters."),
   goalCalculationMethod: z.enum(['manual', 'auto']).default('manual'),
   goal: z.coerce.number().optional(),
+  collectedAmount: z.coerce.number().optional(),
   fixedAmountPerBeneficiary: z.coerce.number().optional(),
   targetBeneficiaries: z.coerce.number().optional(),
   image: z.any().optional(),
@@ -61,6 +62,11 @@ const formSchema = z.object({
   linkedLeadIds: z.array(z.string()).optional(),
   linkedBeneficiaryIds: z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
+    if (data.status === 'Completed') {
+        if (!data.collectedAmount || data.collectedAmount <= 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required for 'Completed' campaigns.", path: ["collectedAmount"] });
+        }
+    }
     if (data.goalCalculationMethod === 'manual' && (!data.goal || data.goal <= 0)) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Goal must be a positive number for manual calculation.", path: ["goal"] });
     }
@@ -94,6 +100,12 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
   const [completedCampaignPopoverOpen, setCompletedCampaignPopoverOpen] = useState(false);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
   const [beneficiaryPopoverOpen, setBeneficiaryPopoverOpen] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    setAdminUserId(storedUserId);
+  }, []);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(formSchema),
@@ -102,12 +114,13 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
         description: campaign.description,
         goalCalculationMethod: campaign.fixedAmountPerBeneficiary ? 'auto' : 'manual',
         goal: campaign.goal,
+        collectedAmount: campaign.collectedAmount || 0,
         fixedAmountPerBeneficiary: campaign.fixedAmountPerBeneficiary || 0,
         targetBeneficiaries: campaign.targetBeneficiaries || 0,
         image: null,
         dates: {
-            from: campaign.startDate,
-            to: campaign.endDate,
+            from: new Date(campaign.startDate),
+            to: new Date(campaign.endDate),
         },
         status: campaign.status,
         acceptableDonationTypes: campaign.acceptableDonationTypes || [],
@@ -124,6 +137,7 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
   const goalCalculationMethod = watch('goalCalculationMethod');
   const fixedAmount = watch('fixedAmountPerBeneficiary');
   const targetBeneficiaries = watch('targetBeneficiaries');
+  const campaignStatus = watch('status');
 
   useEffect(() => {
     if (goalCalculationMethod === 'auto' && fixedAmount && targetBeneficiaries) {
@@ -149,6 +163,10 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
   };
 
   async function onSubmit(values: CampaignFormValues) {
+    if (!adminUserId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Admin user not found. Please log in again.' });
+        return;
+    }
     setIsSubmitting(true);
     
     const formData = new FormData();
@@ -157,9 +175,7 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
       const formKey = key as keyof CampaignFormValues;
       const value = values[formKey] as any;
       if (value !== null && value !== undefined) {
-        if (value instanceof Date) {
-            formData.append(key, value.toISOString());
-        } else if (key === 'dates' && typeof value === 'object') {
+        if (key === 'dates' && typeof value === 'object') {
             formData.append('startDate', value.from.toISOString());
             formData.append('endDate', value.to.toISOString());
         }
@@ -177,6 +193,8 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
     if (campaign.imageUrl) {
         formData.append('existingImageUrl', campaign.imageUrl);
     }
+
+    formData.append('adminUserId', adminUserId);
 
     const result = await handleUpdateCampaign(campaign.id!, formData);
     setIsSubmitting(false);
@@ -331,7 +349,7 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
                             </FormItem>
                         )}
                         />
-                        <FormField
+                         <FormField
                             control={form.control}
                             name="status"
                             render={({ field }) => (
@@ -354,6 +372,24 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
                             )}
                         />
                     </div>
+                    
+                    {campaignStatus === 'Completed' && (
+                         <FormField
+                            control={form.control}
+                            name="collectedAmount"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Amount Collected</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" {...field} />
+                                    </FormControl>
+                                    <FormDescription>Enter the total amount that was collected for this past campaign.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+
                     <FormField
                         control={form.control}
                         name="dates"

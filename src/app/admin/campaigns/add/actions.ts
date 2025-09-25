@@ -1,4 +1,5 @@
 
+
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -45,8 +46,6 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl = await uploadFile(imageFile, uploadPath);
     }
     
-    const collectedAmount = status === 'Completed' ? parseFloat(formData.get("collectedAmount") as string) : 0;
-    
     let goal = parseFloat(formData.get('goal') as string);
     const fixedAmountPerBeneficiary = parseFloat(formData.get('fixedAmountPerBeneficiary') as string);
     const targetBeneficiaries = parseInt(formData.get('targetBeneficiaries') as string, 10);
@@ -56,7 +55,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     }
 
 
-    const newCampaignData = {
+    const newCampaignData: Partial<Campaign> = {
         id: campaignId,
         name: name,
         description: formData.get('description') as string,
@@ -67,12 +66,16 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl: imageUrl,
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
-        collectedAmount: collectedAmount,
-        isHistoricalRecord: status === 'Completed',
+        isHistoricalRecord: status === 'Completed', // Set based on status
         source: 'Manual Entry',
         fixedAmountPerBeneficiary: goalCalculationMethod === 'auto' ? fixedAmountPerBeneficiary : undefined,
         targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
     };
+    
+    // Only include collectedAmount if the status is Completed
+    if (status === 'Completed') {
+        newCampaignData.collectedAmount = parseFloat(formData.get("collectedAmount") as string) || 0;
+    }
 
     // Create the campaign first
     const newCampaign = await createCampaign(newCampaignData);

@@ -178,10 +178,16 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
 export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign, 'id' | 'createdAt'>>): Promise<void> => {
   try {
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, id);
-    await updateDoc(campaignRef, {
-      ...updates,
-      updatedAt: serverTimestamp(),
+    const updateData = { ...updates, updatedAt: serverTimestamp()};
+
+    // Firestore does not accept 'undefined' values.
+    Object.keys(updateData).forEach(key => {
+        if ((updateData as any)[key] === undefined) {
+            delete (updateData as any)[key];
+        }
     });
+
+    await updateDoc(campaignRef, updateData);
   } catch (error) {
     console.error("Error updating campaign: ", error);
     throw new Error('Failed to update campaign.');

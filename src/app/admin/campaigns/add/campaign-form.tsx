@@ -1,4 +1,5 @@
 
+
 // src/app/admin/campaigns/add/campaign-form.tsx
 
 "use client";
@@ -174,8 +175,9 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
       const formKey = key as keyof CampaignFormValues;
       const value = values[formKey] as any;
       if (value !== null && value !== undefined) {
-        if (value instanceof Date) {
-            formData.append(key, value.toISOString());
+        if (key === 'dates' && typeof value === 'object') {
+            formData.append('startDate', value.from.toISOString());
+            formData.append('endDate', value.to.toISOString());
         } else if (Array.isArray(value)) {
             value.forEach(v => formData.append(key, v));
         } else {
@@ -391,6 +393,7 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 numberOfMonths={2}
+                                disabled={(date) => campaignStatus !== 'Completed' && date < new Date(new Date().setHours(0,0,0,0))}
                             />
                         </PopoverContent>
                     </Popover>
