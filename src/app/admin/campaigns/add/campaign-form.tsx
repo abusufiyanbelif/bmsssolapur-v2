@@ -26,14 +26,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useRef } from "react";
 import { handleCreateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
-import { CampaignStatus, DonationType, Lead, Donation, Campaign } from "@/services/types";
+import { CampaignStatus, DonationType, Lead, Donation, Campaign, User } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 
-// Only allow these statuses when creating a new campaign
 const createCampaignStatuses = ['Upcoming', 'Active', 'Completed'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
@@ -53,6 +52,7 @@ const formSchema = z.object({
   collectedAmount: z.coerce.number().optional(),
   linkedLeadIds: z.array(z.string()).optional(),
   linkedDonationIds: z.array(z.string()).optional(),
+  linkedBeneficiaryIds: z.array(z.string()).optional(),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
 }).refine(data => {
     if (data.status === 'Completed') {
@@ -71,17 +71,25 @@ interface CampaignFormProps {
     leads: Lead[];
     donations: Donation[];
     completedCampaigns: Campaign[];
+    users: User[];
 }
 
-export function CampaignForm({ leads, donations, completedCampaigns }: CampaignFormProps) {
+export function CampaignForm({ leads, donations, completedCampaigns, users }: CampaignFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
   const [donationPopoverOpen, setDonationPopoverOpen] = useState(false);
+  const [beneficiaryPopoverOpen, setBeneficiaryPopoverOpen] = useState(false);
   const [completedCampaignPopoverOpen, setCompletedCampaignPopoverOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    setAdminUserId(storedUserId);
+  }, []);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(formSchema),
@@ -95,6 +103,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
         collectedAmount: 0,
         linkedLeadIds: [],
         linkedDonationIds: [],
+        linkedBeneficiaryIds: [],
         linkedCompletedCampaignIds: [],
     },
   });
@@ -102,6 +111,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
   const { watch, setValue } = form;
   const linkedLeadIds = watch('linkedLeadIds') || [];
   const linkedDonationIds = watch('linkedDonationIds') || [];
+  const linkedBeneficiaryIds = watch('linkedBeneficiaryIds') || [];
   const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
   const campaignStatus = watch('status');
 
@@ -128,6 +138,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
         collectedAmount: 0,
         linkedLeadIds: [],
         linkedDonationIds: [],
+        linkedBeneficiaryIds: [],
         linkedCompletedCampaignIds: [],
     });
     setImagePreview(null);
@@ -137,6 +148,10 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
   }
 
   async function onSubmit(values: CampaignFormValues) {
+    if (!adminUserId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Admin user not found. Please log in again.' });
+        return;
+    }
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append('name', values.name);
@@ -148,6 +163,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
     values.acceptableDonationTypes.forEach(dt => formData.append('acceptableDonationTypes', dt));
     values.linkedLeadIds?.forEach(id => formData.append('linkedLeadIds', id));
     values.linkedDonationIds?.forEach(id => formData.append('linkedDonationIds', id));
+    values.linkedBeneficiaryIds?.forEach(id => formData.append('linkedBeneficiaryIds', id));
     values.linkedCompletedCampaignIds?.forEach(id => formData.append('linkedCompletedCampaignIds', id));
     if (values.image) {
       formData.append('image', values.image);
@@ -155,6 +171,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
     if (values.status === 'Completed' && values.collectedAmount) {
         formData.append('collectedAmount', String(values.collectedAmount));
     }
+    formData.append('adminUserId', adminUserId);
 
     const result = await handleCreateCampaign(formData);
     setIsSubmitting(false);
@@ -173,6 +190,8 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
       });
     }
   }
+
+  const beneficiaryUsers = users.filter(u => u.roles.includes('Beneficiary'));
 
   return (
     <Form {...form}>
@@ -381,6 +400,66 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
             )}
         />
 
+        <FormField
+            control={form.control}
+            name="linkedBeneficiaryIds"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Link Existing Beneficiaries (Optional)</FormLabel>
+                <Popover open={beneficiaryPopoverOpen} onOpenChange={setBeneficiaryPopoverOpen}>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn("w-full justify-between min-h-10 h-auto", linkedBeneficiaryIds.length === 0 && "text-muted-foreground")}
+                        >
+                        {linkedBeneficiaryIds.length > 0 ? (
+                             <div className="flex flex-wrap gap-1">
+                                {linkedBeneficiaryIds.map(id => {
+                                    const user = users.find(u => u.id === id);
+                                    return <Badge key={id} variant="secondary">{user?.name}</Badge>
+                                })}
+                            </div>
+                        ) : "Select beneficiaries..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search beneficiary..." />
+                        <CommandList>
+                        <CommandEmpty>No beneficiaries found.</CommandEmpty>
+                        <CommandGroup>
+                            {beneficiaryUsers.map((user) => (
+                            <CommandItem
+                                value={`${user.name} ${user.id}`}
+                                key={user.id}
+                                onSelect={() => {
+                                    const isSelected = linkedBeneficiaryIds.includes(user.id!);
+                                    if (isSelected) {
+                                        setValue('linkedBeneficiaryIds', linkedBeneficiaryIds.filter(id => id !== user.id!));
+                                    } else {
+                                        setValue('linkedBeneficiaryIds', [...linkedBeneficiaryIds, user.id!]);
+                                    }
+                                }}
+                            >
+                                <Check className={cn("mr-2 h-4 w-4", linkedBeneficiaryIds.includes(user.id!) ? "opacity-100" : "opacity-0")} />
+                                <span>{user.name} ({user.phone})</span>
+                            </CommandItem>
+                            ))}
+                        </CommandGroup>
+                        </CommandList>
+                    </Command>
+                    </PopoverContent>
+                </Popover>
+                 <FormDescription>Automatically creates a new lead for each selected beneficiary and links it to this campaign.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+        
         <FormField
             control={form.control}
             name="linkedLeadIds"

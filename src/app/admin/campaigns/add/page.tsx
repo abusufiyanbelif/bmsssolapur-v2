@@ -5,12 +5,14 @@ import { CampaignForm } from "./campaign-form";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllCampaigns } from "@/services/campaign-service";
+import { getAllUsers } from "@/services/user-service";
 
 export default async function AddCampaignPage() {
-    const [allLeads, allDonations, allCampaigns] = await Promise.all([
+    const [allLeads, allDonations, allCampaigns, allUsers] = await Promise.all([
         getAllLeads(),
         getAllDonations(),
         getAllCampaigns(),
+        getAllUsers(),
     ]);
 
     // Filter for leads that can be assigned to a campaign
@@ -36,7 +38,12 @@ export default async function AddCampaignPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <CampaignForm leads={assignableLeads} donations={assignableDonations} completedCampaigns={completedCampaigns} />
+                    <CampaignForm 
+                        leads={assignableLeads} 
+                        donations={assignableDonations} 
+                        completedCampaigns={completedCampaigns}
+                        users={allUsers}
+                    />
                 </CardContent>
             </Card>
         </div>

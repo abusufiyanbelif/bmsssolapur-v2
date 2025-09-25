@@ -4,12 +4,14 @@
 
 import { createCampaign, getCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
-import { CampaignStatus, DonationType, Lead, Donation, Campaign } from "@/services/types";
+import { CampaignStatus, DonationType, Lead, Donation, Campaign, User } from "@/services/types";
 import { Timestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { doc } from "firebase/firestore";
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from '@/services/public-data-service';
 import { uploadFile } from "@/services/storage-service";
+import { createLead } from "@/services/lead-service";
+import { getUser } from "@/services/user-service";
 
 
 interface FormState {
@@ -18,7 +20,17 @@ interface FormState {
 }
 
 export async function handleCreateCampaign(formData: FormData): Promise<FormState> {
+  const adminUserId = formData.get('adminUserId') as string;
+  if (!adminUserId) {
+    return { success: false, error: 'Admin user not found.' };
+  }
+
   try {
+    const adminUser = await getUser(adminUserId);
+    if (!adminUser) {
+        return { success: false, error: 'Admin user details could not be loaded.' };
+    }
+
     const name = formData.get('name') as string;
     const campaignId = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     let imageUrl: string | undefined;
@@ -55,6 +67,30 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     
     const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];
     const linkedDonationIds = formData.getAll('linkedDonationIds') as string[];
+    const linkedBeneficiaryIds = formData.getAll('linkedBeneficiaryIds') as string[];
+
+    // --- Automatically create leads for linked beneficiaries ---
+    if (linkedBeneficiaryIds.length > 0) {
+      for (const beneficiaryId of linkedBeneficiaryIds) {
+          const beneficiary = await getUser(beneficiaryId);
+          if (!beneficiary) continue;
+
+          // Create a simple lead associated with this campaign
+          const leadData: Partial<Lead> = {
+              name: beneficiary.name,
+              beneficiaryId: beneficiary.id,
+              campaignId: newCampaign.id,
+              campaignName: newCampaign.name,
+              purpose: newCampaign.acceptableDonationTypes?.[0] as any || 'Relief Fund',
+              category: 'Campaign Default',
+              helpRequested: 0, // Set to 0, can be updated later
+              caseDetails: `This case was automatically generated for the "${newCampaign.name}" campaign.`,
+          };
+          const newLead = await createLead(leadData, adminUser);
+          linkedLeadIds.push(newLead.id); // Add the new lead to the list to be linked
+      }
+    }
+    // --- End auto lead creation ---
 
     // If there are linked items, update them in a batch
     if (linkedLeadIds.length > 0 || linkedDonationIds.length > 0) {
