@@ -33,7 +33,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 
-const campaignStatuses = ['Upcoming', 'Active', 'Completed', 'Cancelled'] as const;
+// Only allow these statuses when creating a new campaign
+const createCampaignStatuses = ['Upcoming', 'Active', 'Completed'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
 const formSchema = z.object({
@@ -45,7 +46,7 @@ const formSchema = z.object({
     from: z.date({ required_error: "A start date is required."}),
     to: z.date({ required_error: "An end date is required."}),
   }),
-  status: z.enum(campaignStatuses),
+  status: z.enum(createCampaignStatuses),
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
@@ -253,7 +254,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {campaignStatuses.map(status => (
+                        {createCampaignStatuses.map(status => (
                             <SelectItem key={status} value={status}>{status}</SelectItem>
                         ))}
                         </SelectContent>
