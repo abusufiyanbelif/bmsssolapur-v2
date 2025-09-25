@@ -1,3 +1,4 @@
+
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -79,6 +80,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];
     const linkedDonationIds = formData.getAll('linkedDonationIds') as string[];
     const linkedBeneficiaryIds = formData.getAll('linkedBeneficiaryIds') as string[];
+    const batch = writeBatch(db);
 
     // --- Automatically create leads for linked beneficiaries ---
     if (linkedBeneficiaryIds.length > 0) {
@@ -97,15 +99,15 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
               helpRequested: fixedAmountPerBeneficiary > 0 ? fixedAmountPerBeneficiary : 0,
               caseDetails: `This case was automatically generated for the "${newCampaign.name}" campaign.`,
           };
-          const newLead = await createLead(leadData, adminUser);
-          linkedLeadIds.push(newLead.id); // Add the new lead to the list to be linked
+          const newLeadRef = doc(collection(db, "leads"));
+          batch.set(newLeadRef, leadData);
+          linkedLeadIds.push(newLeadRef.id);
       }
     }
     // --- End auto lead creation ---
 
     // If there are linked items, update them in a batch
     if (linkedLeadIds.length > 0 || linkedDonationIds.length > 0) {
-        const batch = writeBatch(db);
         const updatePayload = {
             campaignId: newCampaign.id,
             campaignName: newCampaign.name,

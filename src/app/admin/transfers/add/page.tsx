@@ -1,11 +1,8 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddTransferForm } from "./add-transfer-form";
-import { getAllLeads } from "@/services/lead-service";
 import Link from "next/link";
 import { ArrowLeft, Ban } from "lucide-react";
-import { getAllCampaigns } from "@/services/campaign-service";
-import { getAllUsers } from "@/services/user-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 

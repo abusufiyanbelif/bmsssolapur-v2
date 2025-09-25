@@ -121,7 +121,6 @@ const allNavItems: NavItem[] = [
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
             { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/transfers/add", label: "Create Transfer", icon: PlusCircle, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
