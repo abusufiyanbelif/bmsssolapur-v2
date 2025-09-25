@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { User, Lead, Campaign, Donation, DonationType, LeadPurpose } from "@/services/types";
-import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText, ChevronLeft, ChevronRight, Target as TargetIcon, Image as ImageIcon } from "lucide-react";
+import { HandHeart, HeartHandshake, Baby, PersonStanding, HomeIcon, Users, Megaphone, DollarSign, Wheat, Gift, Building, Shield, TrendingUp, HandCoins, CheckCircle, Hourglass, Eye, Banknote, Repeat, AlertTriangle, UploadCloud, ArrowRight, Award, FileText, ChevronLeft, ChevronRight, Target as TargetIcon, Image as ImageIcon, Info } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -431,6 +431,8 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
                         const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
                         const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
                         const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+                        const isOverfunded = progress > 100;
+                        const isUnfunded = raisedAmount === 0 && campaign.status === 'Active';
                         return (
                              <Link key={campaign.id} href={`/admin/campaigns/${campaign.id}/edit`}>
                                 <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -450,10 +452,26 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
                                         </div>
                                         <p className="text-xs text-muted-foreground">{format(new Date(campaign.startDate), "dd MMM")} - {format(new Date(campaign.endDate), "dd MMM yyyy")}</p>
                                         <div className="mt-2 space-y-1">
-                                            <Progress value={progress} />
-                                            <p className="text-xs text-muted-foreground">
-                                                <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span> raised of ₹{campaign.goal.toLocaleString()}
-                                            </p>
+                                            <Progress value={Math.min(100, progress)} className={cn(isOverfunded && '[&>div]:bg-amber-500')} />
+                                            <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                                <p>
+                                                    <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span> raised of ₹{campaign.goal.toLocaleString()}
+                                                </p>
+                                                 {(isOverfunded || isUnfunded) && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger>
+                                                                {isOverfunded && <TrendingUp className="h-4 w-4 text-green-600" />}
+                                                                {isUnfunded && <Info className="h-4 w-4 text-amber-600" />}
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                {isOverfunded && <p>This campaign is overfunded!</p>}
+                                                                {isUnfunded && <p>This active campaign has not received funds yet.</p>}
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -811,5 +829,3 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
-
-    
