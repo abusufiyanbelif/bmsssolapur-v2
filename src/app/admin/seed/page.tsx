@@ -123,7 +123,7 @@ export default function SeedPage() {
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
                                 <h3 className="font-semibold flex items-center gap-2"><Database className="h-5 w-5 text-primary" />Initial Users &amp; Quotes</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Creates the Super Admin user and populates inspirational quotes. Run this first.</p>
+                                <p className="text-sm text-muted-foreground mt-1">Creates the Super Admin user (`admin`/`admin`) and populates the database with inspirational quotes. **Run this first.**</p>
                              </div>
                              <div className="flex items-center gap-2">
                                 <Button variant="destructive" onClick={() => handleErase('initial')} disabled={eraseStatuses.initial === 'loading'}>
@@ -144,7 +144,7 @@ export default function SeedPage() {
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
                                 <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Organization Profile</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Creates the public-facing profile for your organization.</p>
+                                <p className="text-sm text-muted-foreground mt-1">Creates the public-facing profile for your organization, including address, contact info, and bank details.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                 <Button variant="destructive" onClick={() => handleErase('organization')} disabled={eraseStatuses.organization === 'loading'}>
@@ -165,7 +165,7 @@ export default function SeedPage() {
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
                                 <h3 className="font-semibold flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" />Core Team Members</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Seeds the accounts for Founders, Co-Founders, and other Admins.</p>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds the user accounts for the organization's Founders, Co-Founders, and other Admins.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                  <Button variant="destructive" onClick={() => handleErase('coreTeam')} disabled={eraseStatuses.coreTeam === 'loading'}>
@@ -186,7 +186,7 @@ export default function SeedPage() {
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
                                 <h3 className="font-semibold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" />Payment Gateways</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Seeds placeholder credentials for the Razorpay payment gateway.</p>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds placeholder credentials for the Razorpay payment gateway to enable online donations in test mode.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                  <Button variant="destructive" onClick={() => handleErase('paymentGateways')} disabled={eraseStatuses.paymentGateways === 'loading'}>
@@ -207,7 +207,7 @@ export default function SeedPage() {
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
                                 <h3 className="font-semibold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Sample Campaigns &amp; Leads</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Creates sample campaigns, beneficiaries, leads, and donations for demonstration.</p>
+                                <p className="text-sm text-muted-foreground mt-1">Creates sample campaigns, beneficiaries, leads, and donations for demonstration purposes.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                  <Button variant="destructive" onClick={() => handleErase('sampleData')} disabled={eraseStatuses.sampleData === 'loading'}>
