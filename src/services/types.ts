@@ -274,10 +274,11 @@ export interface Lead {
 export type CampaignStatus = 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
 
 export interface Campaign {
-    id: string;
+    id?: string;
     name: string;
     description: string;
     goal: number;
+    collectedAmount?: number;
     imageUrl?: string;
     startDate: Date;
     endDate: Date;

@@ -199,6 +199,7 @@ export const enrichCampaignWithPublicStats = async (campaign: Campaign): Promise
     
     return {
         ...campaign,
+        collectedAmount: raisedAmount, // Storing calculated amount
         raisedAmount,
         fundingProgress,
     };
