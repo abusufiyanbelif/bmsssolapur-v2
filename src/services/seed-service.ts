@@ -138,11 +138,29 @@ const generalLeadsData = [
 
 
 // RAMADAN 2025 CAMPAIGN DATA
+const reliefBeneficiaries: Omit<User, 'id' | 'createdAt'>[] = Array.from({ length: 7 }, (_, i) => ({
+    userKey: `USR${106 + i}`,
+    name: `Relief Beneficiary ${i + 1}`,
+    userId: `relief.beneficiary.${i + 1}`,
+    firstName: `Relief${i+1}`,
+    lastName: "Family",
+    fatherName: `Father ${i+1}`,
+    email: `relief${i+1}@example.com`,
+    phone: `98765433${i.toString().padStart(2, '0')}`,
+    password: "admin",
+    roles: ["Beneficiary"] as UserRole[],
+    isActive: true,
+    gender: 'Other' as 'Other',
+    beneficiaryType: 'Family' as 'Family',
+    source: 'Seeded'
+}));
+
 const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
     { userKey: "USR17", name: "Salim Operation", userId: "salim.operation", firstName: "Salim", lastName: "Operation", fatherName: "Anwar Operation", email: "salim.op@example.com", phone: "4444444401", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
     { userKey: "USR18", name: "Salim Baig", userId: "salim.baig", firstName: "Salim", lastName: "Baig", fatherName: "Anwar Baig", email: "salim.baig@example.com", phone: "4444444402", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
+    ...reliefBeneficiaries,
     ...Array.from({ length: 10 }, (_, i) => ({
-        userKey: `USR${19 + i}`,
+        userKey: `USR${113 + i}`, // Adjusted start index
         name: `Ration Family ${i + 1}`,
         userId: `ration.family.${i + 1}`,
         firstName: `RationFamily${i+1}`,
@@ -159,21 +177,21 @@ const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
     }))
 ];
 
-
 const ramadan2025Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "Ramadan 2025 Zakat Drive",
     description: "A campaign to collect Zakat during Ramadan 2025 to help with critical operations and provide ration kits to families in need.",
-    goal: 150000,
+    goal: 200000,
     status: 'Completed',
     startDate: Timestamp.fromDate(new Date("2025-03-01")),
     endDate: Timestamp.fromDate(new Date("2025-03-30")),
     source: 'Seeded',
 };
 
+
 // WINTER CAMPAIGN DATA
 const winterCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR29", name: "Winter Beneficiary A", userId: "winter.beneficiary.a", firstName: "Winter", lastName: "Beneficiary A", fatherName: "Father A", email: "winter.a@example.com", phone: "8888888801", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
-    { userKey: "USR30", name: "Winter Beneficiary B", userId: "winter.beneficiary.b", firstName: "Winter", lastName: "Beneficiary B", fatherName: "Father B", email: "winter.b@example.com", phone: "8888888802", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { userKey: "USR123", name: "Winter Beneficiary A", userId: "winter.beneficiary.a", firstName: "Winter", lastName: "Beneficiary A", fatherName: "Father A", email: "winter.a@example.com", phone: "8888888801", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { userKey: "USR124", name: "Winter Beneficiary B", userId: "winter.beneficiary.b", firstName: "Winter", lastName: "Beneficiary B", fatherName: "Father B", email: "winter.b@example.com", phone: "8888888802", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
 ];
 
 const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -188,8 +206,8 @@ const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
 
 // RAMADAN 2026 CAMPAIGN DATA
 const ramadan2026CampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR31", name: "Future Ration Family 1", userId: "future.ration.1", firstName: "Future", lastName: "Family 1", fatherName: "Future Father 1", email: "future1@example.com", phone: "6666666601", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
-    { userKey: "USR32", name: "Future Ration Family 2", userId: "future.ration.2", firstName: "Future", lastName: "Family 2", fatherName: "Future Father 2", email: "future2@example.com", phone: "6666666602", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { userKey: "USR125", name: "Future Ration Family 1", userId: "future.ration.1", firstName: "Future", lastName: "Family 1", fatherName: "Future Father 1", email: "future1@example.com", phone: "6666666601", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { userKey: "USR126", name: "Future Ration Family 2", userId: "future.ration.2", firstName: "Future", lastName: "Family 2", fatherName: "Future Father 2", email: "future2@example.com", phone: "6666666602", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
 ];
 
 const ramadan2026Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -454,6 +472,70 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     return results;
 }
 
+const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => {
+    let results: string[] = [];
+    await seedUsers(reliefBeneficiaries);
+    
+    const donorsToCreate: Omit<User, 'id'|'createdAt'>[] = Array.from({length: 20}, (_, i) => ({
+        userKey: `DNR${130+i}`, name: `Zakat Donor ${i+1}`, userId: `zakat.donor.${i+1}`, firstName: 'Zakat', lastName: `Donor ${i+1}`,
+        email: `donor${i+1}@example.com`, phone: `77777777${i.toString().padStart(2, '0')}`, password: 'password',
+        roles: ['Donor'], isActive: true, gender: 'Other', source: 'Seeded'
+    }));
+    await seedUsers(donorsToCreate);
+    const donors = await Promise.all(donorsToCreate.map(d => getUserByPhone(d.phone!)));
+
+    const campaign = await getCampaign("ramadan-2025-zakat-drive");
+    if (!campaign) throw new Error("Ramadan 2025 campaign not found.");
+
+    const leadData = [
+        { phone: '9876543300', amount: 10000, category: 'Shelter Assistance' },
+        { phone: '9876543301', amount: 10000, category: 'Shelter Assistance' },
+        { phone: '9876543302', amount: 6000, category: 'Ration Kit' },
+        { phone: '9876543303', amount: 6000, category: 'Ration Kit' },
+        { phone: '9876543304', amount: 6000, category: 'Ration Kit' },
+        { phone: '9876543305', amount: 6000, category: 'Other' },
+        { phone: '9876543306', amount: 6000, category: 'Other' },
+    ];
+
+    const batch = writeBatch(db);
+    for (const data of leadData) {
+        const beneficiary = await getUserByPhone(data.phone);
+        if (!beneficiary) continue;
+
+        const leadId = `${campaign.id}_${beneficiary.userKey}`;
+        const newLead: Partial<Lead> = {
+            id: leadId, name: beneficiary.name, beneficiaryId: beneficiary.id!,
+            campaignId: campaign.id, campaignName: campaign.name,
+            purpose: 'Relief Fund', category: data.category,
+            helpRequested: data.amount, helpGiven: data.amount, caseAction: 'Closed',
+            caseVerification: 'Verified', verifiers: [{ verifierId: adminUser.id, verifierName: adminUser.name, verifiedAt: Timestamp.now(), notes: "Seeded" }],
+            dateCreated: Timestamp.now(), adminAddedBy: { id: adminUser.id, name: adminUser.name }, source: 'Seeded'
+        };
+        const leadRef = doc(db, 'leads', leadId);
+        batch.set(leadRef, newLead);
+        results.push(`Seeded Relief Lead for ${beneficiary.name}`);
+    }
+
+    let donationTotal = 50000;
+    for (let i = 0; i < donors.length; i++) {
+        if (donationTotal <= 0) break;
+        const donor = donors[i];
+        if (!donor) continue;
+        const amount = i < 19 ? Math.floor(50000 / 20) : donationTotal;
+        donationTotal -= amount;
+        
+        await createDonation({
+            donorId: donor.id!, donorName: donor.name, amount: amount,
+            type: 'Zakat', purpose: 'Relief Fund', status: 'Verified',
+            donationDate: Timestamp.now(), campaignId: campaign.id, source: 'Seeded'
+        }, adminUser.id!, adminUser.name, adminUser.email);
+    }
+    results.push('Seeded 20 Zakat donations for Relief Fund.');
+
+    await batch.commit();
+    return results;
+}
+
 function getRandomDate(start: Date, end: Date): Date {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
@@ -548,13 +630,16 @@ export const seedSampleData = async (): Promise<SeedResult> => {
     // Seed General Leads
     details.push(...await seedGeneralLeads(superAdmin));
 
-    // Seed Ramadan 2025 Campaign
+    // Seed Ramadan 2025 Campaign and its main leads
     const ramadanLeads = [
         { phone: "4444444401", amount: 60000, isFunded: true, isLoan: true, purpose: 'Medical', category: 'Surgical Procedure', donationType: 'Zakat', details: 'Assistance for a major operation, as part of Ramadan drive.' },
         { phone: "4444444402", amount: 100000, isFunded: true, isLoan: true, purpose: 'Loan', category: 'Business Loan', donationType: 'Any', details: 'Business expansion loan for Salim Baig.' },
-        ...ramadanCampaignUsers.slice(2).map(u => ({ phone: u.phone, amount: 4000, isFunded: true, isLoan: false, purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat', details: 'Ramadan ration kit for a family in need.' }))
+        ...ramadanCampaignUsers.slice(2, 12).map(u => ({ phone: u.phone, amount: 4000, isFunded: true, isLoan: false, purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat', details: 'Ramadan ration kit for a family in need.' }))
     ];
     details.push(...await seedCampaignAndData(ramadan2025Campaign, ramadanCampaignUsers, ramadanLeads));
+    
+    // Seed new relief leads and donations for Ramadan 2025 campaign
+    details.push(...await seedRamadan2025ReliefData(superAdmin));
 
     // Seed Winter Campaign
     const winterLeads = [
