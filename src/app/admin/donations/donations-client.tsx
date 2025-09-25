@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
@@ -18,7 +17,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose, type PaymentMethod } from "@/services/donation-service";
 import { getAllUsers, type User } from "@/services/user-service";
 import { getAllLeads, type Lead } from "@/services/lead-service";
-import { getAllCampaigns, type Campaign, type Organization } from "@/services/types";
+import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronUp, Download, Check, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -38,6 +37,7 @@ import { AllocateToLeadDialog } from './allocate-to-lead-dialog';
 import { AllocateToCampaignDialog } from './allocate-to-campaign-dialog';
 import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import type { Organization } from "@/services/types";
 
 
 const statusOptions: (DonationStatus | 'all')[] = ["all", "Pending verification", "Verified", "Partially Allocated", "Allocated", "Failed/Incomplete"];
@@ -592,7 +592,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                                      <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{format(new Date(donation.donationDate), "dd MMM yyyy")}</span></div>
                                      <div className="flex justify-between"><span className="text-muted-foreground">Category</span><span>{donation.type}</span></div>
                                      <div>
-                                        <span className="text-muted-foreground">Linked To: </span>
+                                        <span className="text-muted-foreground">Linked To: </span> 
                                         {hasAllocations ? <Badge variant="outline">{donation.allocations!.length} Allocation(s)</Badge> : 
                                          donation.campaignId ? <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700">Campaign</Badge>
                                         : <Badge variant="destructive" className="text-xs font-normal">Unallocated</Badge>}
@@ -773,7 +773,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
 
         return (
             <>
-                {selectedDonations.length > 0 && (
+                {selectedDonations.length > 0 && adminUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedDonations.length} item(s) selected.
@@ -898,3 +898,5 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
     </div>
   )
 }
+
+    
