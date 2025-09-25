@@ -23,7 +23,7 @@ import { CalendarIcon, Loader2, X, Check, ChevronsUpDown, XCircle, Image as Imag
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { handleCreateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
 import { CampaignStatus, DonationType, Lead, Donation, Campaign, User } from "@/services/types";
