@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { History, ListChecks, Trash2, Upload } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { ActivityLog } from "@/services/types";
-import { Timestamp } from "firebase/firestore";
 
 interface ActivityItemProps {
   log: ActivityLog;
@@ -16,7 +15,7 @@ const ActivityItem = ({ log }: ActivityItemProps) => {
   let timeAgo = "Just now";
   let fullDate = "Pending timestamp...";
 
-  const logTimestamp = log.timestamp instanceof Timestamp ? log.timestamp.toDate() : new Date(log.timestamp);
+  const logTimestamp = log.timestamp instanceof Date ? log.timestamp : new Date(log.timestamp);
   timeAgo = formatDistanceToNow(logTimestamp, { addSuffix: true });
   fullDate = format(logTimestamp, 'PPP p');
 

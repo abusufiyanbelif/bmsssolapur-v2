@@ -90,7 +90,7 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
         });
         
         // Sort in code to avoid needing the index.
-        activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        activities.sort((a, b) => (b.timestamp as Date).getTime() - (a.timestamp as Date).getTime());
 
         return activities;
     } catch (error) {
@@ -124,7 +124,7 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
         });
 
         // Sort in code to avoid needing a composite index
-        activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        activities.sort((a, b) => (b.timestamp as Date).getTime() - (a.timestamp as Date).getTime());
         
         return activities;
     } catch (error) {
@@ -157,7 +157,7 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
         });
         
         // Sort in code to avoid needing a composite index
-        activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        activities.sort((a, b) => (b.timestamp as Date).getTime() - (a.timestamp as Date).getTime());
 
         return activities;
     } catch (error) {
@@ -189,7 +189,7 @@ export const getCampaignActivity = async (campaignId: string): Promise<ActivityL
         });
         
         // Sort in code to avoid needing a composite index
-        activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        activities.sort((a, b) => (b.timestamp as Date).getTime() - (a.timestamp as Date).getTime());
 
         return activities;
     } catch (e) {

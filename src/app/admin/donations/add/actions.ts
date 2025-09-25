@@ -1,4 +1,5 @@
 
+
 // src/app/admin/donations/add/actions.ts
 
 "use server";
@@ -32,6 +33,14 @@ export async function handleAddDonation(
     const adminUser = await getUser(adminUserId); // Fetch admin user details for logging
     if (!adminUser) {
         return { success: false, error: "Admin user not found for logging." };
+    }
+    
+    const transactionId = formData.get("transactionId") as string | undefined;
+    if (transactionId) {
+        const existingDonation = await getDonationByTransactionId(transactionId);
+        if (existingDonation) {
+            return { success: false, error: `A donation with Transaction ID "${transactionId}" already exists.` };
+        }
     }
     
     let donor: User | null = null;
@@ -93,14 +102,6 @@ export async function handleAddDonation(
         await updateUser(donor.id!, profileUpdates);
     }
     // --- End Profile Updates ---
-
-    const transactionId = formData.get("transactionId") as string | undefined;
-    if (transactionId) {
-        const existingDonation = await getDonationByTransactionId(transactionId);
-        if (existingDonation) {
-            return { success: false, error: `A donation with Transaction ID "${transactionId}" already exists.` };
-        }
-    }
 
     const screenshotFile = formData.get("paymentScreenshot") as File | null;
     

@@ -29,6 +29,8 @@ export type Privilege =
   | 'canExportData'
   | 'canManageSettings';
 
+export type BeneficiaryType = 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow';
+
 export interface User {
   id?: string;
   userKey?: string; // e.g., USR01, USR02
@@ -51,7 +53,7 @@ export interface User {
   };
   gender: 'Male' | 'Female' | 'Other';
   dateOfBirth?: Date;
-  beneficiaryType?: 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow';
+  beneficiaryType?: BeneficiaryType;
   isAnonymousAsBeneficiary?: boolean;
   isAnonymousAsDonor?: boolean;
   anonymousBeneficiaryId?: string; // e.g. BENFCRY01
@@ -108,7 +110,6 @@ export interface Donation {
   amount: number;
   type: DonationType;
   purpose?: DonationPurpose;
-  category?: string;
   status: DonationStatus;
   isAnonymous?: boolean;
   leadId?: string;
@@ -292,6 +293,7 @@ export interface Campaign {
     // New fields for fixed amount distribution
     fixedAmountPerBeneficiary?: number;
     targetBeneficiaries?: number;
+    leads?: string[];
 }
 
 export interface OrganizationFooter {
@@ -557,3 +559,4 @@ export interface LetterContentOptions {
     body: string;
     closingName: string;
 }
+
