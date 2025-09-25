@@ -64,6 +64,7 @@ const formSchema = z.object({
     path: ["collectedAmount"],
 });
 
+
 type CampaignFormValues = z.infer<typeof formSchema>;
 
 interface CampaignFormProps {
@@ -581,7 +582,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
               Create Campaign
             </Button>
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                <X className="mr-2 h-4 w-4" />
+                <XCircle className="mr-2 h-4 w-4" />
                 Cancel
             </Button>
         </div>
