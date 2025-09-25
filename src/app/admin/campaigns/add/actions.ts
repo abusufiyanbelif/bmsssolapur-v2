@@ -4,7 +4,7 @@
 
 import { createCampaign, getCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
-import { CampaignStatus, DonationType, Lead, Donation } from "@/services/types";
+import { CampaignStatus, DonationType, Lead, Donation, Campaign } from "@/services/types";
 import { Timestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { doc } from "firebase/firestore";
@@ -90,9 +90,10 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred while creating the campaign.";
     console.error("Error creating campaign:", error);
+    // Return the clean, specific error message from the service
     return {
       success: false,
-      error: `Failed to create campaign: ${error}`,
+      error: error,
     };
   }
 }
