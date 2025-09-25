@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
@@ -41,6 +40,7 @@ import { logActivity } from "@/services/activity-log-service";
 
 const statusOptions: (LeadStatus | 'all')[] = ["all", "Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 const verificationOptions: (LeadVerificationStatus | 'all')[] = ["all", "Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
+const leadActions: LeadAction[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
 
 const categoryOptions: Record<string, string[]> = {
     'Education': ['School Fees', 'College Fees', 'Tuition Fees', 'Exam Fees', 'Hostel Fees', 'Books & Uniforms', 'Educational Materials', 'Other'],
@@ -307,7 +307,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
         fetchData();
     }
     
-    const handleBulkStatusUpdate = async (type: 'caseAction' | 'verificationStatus', newStatus: LeadAction | LeadVerificationStatus) => {
+    const handleBulkStatusUpdate = async (type: 'caseAction' | 'caseVerification', newStatus: LeadAction | LeadVerificationStatus) => {
         if (selectedLeads.length === 0 || !adminUserId) return;
         const result = await handleBulkUpdateLeadStatus(selectedLeads, type, newStatus, adminUserId);
         if (result.success) {
@@ -323,7 +323,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
     
-    const handleQuickStatusChange = async (lead: Lead, type: 'caseAction' | 'verificationStatus', newStatus: LeadAction | LeadVerificationStatus) => {
+    const handleQuickStatusChange = async (lead: Lead, type: 'caseAction' | 'caseVerification', newStatus: LeadAction | LeadVerificationStatus) => {
         const adminId = localStorage.getItem('userId');
         if (!adminId) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not identify administrator.' });
@@ -340,7 +340,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             const adminDetails = { id: adminUser.id!, name: adminUser.name, email: adminUser.email };
 
             const updates: Partial<Lead> = { [type]: newStatus };
-            if (type === 'verificationStatus' && newStatus === 'Verified') {
+            if (type === 'caseVerification' && newStatus === 'Verified') {
                 updates.caseAction = 'Ready For Help';
             }
             if (type === 'caseAction' && newStatus === 'Closed') {
@@ -461,10 +461,10 @@ Referral Phone:
 
                 {lead.caseVerification === 'Pending' && (
                     <>
-                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'verificationStatus', 'Verified')}>
+                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'caseVerification', 'Verified')}>
                             <ShieldCheck className="mr-2 h-4 w-4 text-green-600" /> Quick Verify
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'verificationStatus', 'Rejected')} className="text-destructive focus:text-destructive">
+                        <DropdownMenuItem onSelect={() => handleQuickStatusChange(lead, 'caseVerification', 'Rejected')} className="text-destructive focus:text-destructive">
                             <ShieldX className="mr-2 h-4 w-4" /> Quick Reject
                         </DropdownMenuItem>
                     </>
@@ -600,7 +600,7 @@ Referral Phone:
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Change Verification</DropdownMenuLabel>
                                         {verificationOptions.filter(v => v !== 'all').map(v => (
-                                            <DropdownMenuItem key={v} onSelect={() => handleQuickStatusChange(lead, 'verificationStatus', v as LeadVerificationStatus)} disabled={lead.caseVerification === v}>
+                                            <DropdownMenuItem key={v} onSelect={() => handleQuickStatusChange(lead, 'caseVerification', v as LeadVerificationStatus)} disabled={lead.caseVerification === v}>
                                                  {lead.caseVerification === v && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
                                                 {v}
                                             </DropdownMenuItem>
@@ -813,7 +813,7 @@ Referral Phone:
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger>Case Action</DropdownMenuSubTrigger>
                                         <DropdownMenuContent>
-                                            {Object.values(LeadAction).map(s => (
+                                            {leadActions.map(s => (
                                                 <DropdownMenuItem key={s} onSelect={() => handleBulkStatusUpdate('caseAction', s)}>{s}</DropdownMenuItem>
                                             ))}
                                         </DropdownMenuContent>
@@ -822,7 +822,7 @@ Referral Phone:
                                         <DropdownMenuSubTrigger>Verification Status</DropdownMenuSubTrigger>
                                         <DropdownMenuContent>
                                              {verificationOptions.filter(v => v !== 'all').map(v => (
-                                                <DropdownMenuItem key={v} onSelect={() => handleBulkStatusUpdate('verificationStatus', v)}>{v}</DropdownMenuItem>
+                                                <DropdownMenuItem key={v} onSelect={() => handleBulkStatusUpdate('caseVerification', v as LeadVerificationStatus)}>{v}</DropdownMenuItem>
                                             ))}
                                         </DropdownMenuContent>
                                     </DropdownMenuSub>
@@ -958,3 +958,5 @@ Referral Phone:
     </div>
   )
 }
+
+    
