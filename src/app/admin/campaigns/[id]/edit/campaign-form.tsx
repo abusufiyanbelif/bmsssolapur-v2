@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { handleUpdateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
-import { Campaign, CampaignStatus } from "@/services/campaign-service";
+import { Campaign, CampaignStatus, Lead, User } from "@/services/types";
 import type { DonationType } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -57,6 +58,8 @@ const formSchema = z.object({
     message: "You have to select at least one donation type.",
   }),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
+  linkedLeadIds: z.array(z.string()).optional(),
+  linkedBeneficiaryIds: z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
     if (data.goalCalculationMethod === 'manual' && (!data.goal || data.goal <= 0)) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Goal must be a positive number for manual calculation.", path: ["goal"] });
@@ -77,9 +80,11 @@ type CampaignFormValues = z.infer<typeof formSchema>;
 interface CampaignFormProps {
     campaign: Campaign & { collectedAmount?: number };
     completedCampaigns: Campaign[];
+    unassignedLeads: Lead[];
+    beneficiaryUsers: User[];
 }
 
-export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps) {
+export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, beneficiaryUsers }: CampaignFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,6 +92,8 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
   const [imagePreview, setImagePreview] = useState<string | null>(campaign.imageUrl || null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [completedCampaignPopoverOpen, setCompletedCampaignPopoverOpen] = useState(false);
+  const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
+  const [beneficiaryPopoverOpen, setBeneficiaryPopoverOpen] = useState(false);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(formSchema),
@@ -105,18 +112,22 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
         status: campaign.status,
         acceptableDonationTypes: campaign.acceptableDonationTypes || [],
         linkedCompletedCampaignIds: campaign.linkedCompletedCampaignIds || [],
+        linkedLeadIds: campaign.leads || [], // Assuming leads are linked via an array of IDs on the campaign
+        linkedBeneficiaryIds: [], // This would need to be populated if campaigns directly link beneficiaries
     },
   });
 
   const { formState: { isDirty }, reset, handleSubmit, setValue, watch, control } = form;
   const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
+  const linkedLeadIds = watch('linkedLeadIds') || [];
+  const linkedBeneficiaryIds = watch('linkedBeneficiaryIds') || [];
   const goalCalculationMethod = watch('goalCalculationMethod');
   const fixedAmount = watch('fixedAmountPerBeneficiary');
   const targetBeneficiaries = watch('targetBeneficiaries');
 
   useEffect(() => {
     if (goalCalculationMethod === 'auto' && fixedAmount && targetBeneficiaries) {
-        setValue('goal', fixedAmount * targetBeneficiaries);
+        setValue('goal', fixedAmount * targetBeneficiaries, { shouldDirty: true });
     }
   }, [goalCalculationMethod, fixedAmount, targetBeneficiaries, setValue]);
 
@@ -420,7 +431,7 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
                                             checked={field.value?.includes(type)}
                                             onCheckedChange={(checked) => {
                                                 return checked
-                                                ? field.onChange([...field.value, type])
+                                                ? field.onChange([...(field.value || []), type])
                                                 : field.onChange(
                                                     field.value?.filter(
                                                         (value) => value !== type
@@ -438,6 +449,125 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
                                 />
                                 ))}
                             </div>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    
+                    <FormField
+                        control={form.control}
+                        name="linkedBeneficiaryIds"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Link Existing Beneficiaries (Optional)</FormLabel>
+                            <Popover open={beneficiaryPopoverOpen} onOpenChange={setBeneficiaryPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn("w-full justify-between min-h-10 h-auto", linkedBeneficiaryIds.length === 0 && "text-muted-foreground")}
+                                    >
+                                    {linkedBeneficiaryIds.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                        {linkedBeneficiaryIds.map(id => {
+                                            const user = beneficiaryUsers.find(u => u.id === id);
+                                            return <Badge key={id} variant="secondary">{user?.name}</Badge>
+                                        })}
+                                        </div>
+                                    ) : "Select beneficiaries..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search beneficiary..." />
+                                    <CommandList>
+                                    <CommandEmpty>No beneficiaries found.</CommandEmpty>
+                                    <CommandGroup>
+                                        {beneficiaryUsers.map((user) => (
+                                        <CommandItem
+                                            value={`${user.name} ${user.id}`}
+                                            key={user.id}
+                                            onSelect={() => {
+                                                const isSelected = linkedBeneficiaryIds.includes(user.id!);
+                                                if (isSelected) {
+                                                    setValue('linkedBeneficiaryIds', linkedBeneficiaryIds.filter(id => id !== user.id!), { shouldDirty: true });
+                                                } else {
+                                                    setValue('linkedBeneficiaryIds', [...linkedBeneficiaryIds, user.id!], { shouldDirty: true });
+                                                }
+                                            }}
+                                        >
+                                            <Check className={cn("mr-2 h-4 w-4", linkedBeneficiaryIds.includes(user.id!) ? "opacity-100" : "opacity-0")} />
+                                            <span>{user.name} ({user.phone})</span>
+                                        </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                                </PopoverContent>
+                            </Popover>
+                             <FormDescription>Automatically creates a new lead for each selected beneficiary and links it to this campaign.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    
+                     <FormField
+                        control={form.control}
+                        name="linkedLeadIds"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Link Existing Leads (Optional)</FormLabel>
+                            <Popover open={leadPopoverOpen} onOpenChange={setLeadPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn("w-full justify-between min-h-10 h-auto", linkedLeadIds.length === 0 && "text-muted-foreground")}
+                                    >
+                                    {linkedLeadIds.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                        {linkedLeadIds.map(id => {
+                                            const lead = unassignedLeads.find(l => l.id === id);
+                                            return <Badge key={id} variant="secondary">{lead?.name}</Badge>
+                                        })}
+                                        </div>
+                                    ) : "Select leads..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search lead..." />
+                                    <CommandList>
+                                    <CommandEmpty>No unassigned leads found.</CommandEmpty>
+                                    <CommandGroup>
+                                        {unassignedLeads.map((lead) => (
+                                        <CommandItem
+                                            value={`${lead.name} ${lead.id}`}
+                                            key={lead.id}
+                                            onSelect={() => {
+                                                const isSelected = linkedLeadIds.includes(lead.id!);
+                                                if (isSelected) {
+                                                    setValue('linkedLeadIds', linkedLeadIds.filter(id => id !== lead.id!), { shouldDirty: true });
+                                                } else {
+                                                    setValue('linkedLeadIds', [...linkedLeadIds, lead.id!], { shouldDirty: true });
+                                                }
+                                            }}
+                                        >
+                                            <Check className={cn("mr-2 h-4 w-4", linkedLeadIds.includes(lead.id!) ? "opacity-100" : "opacity-0")} />
+                                            <span>{lead.name} (Req: ₹{lead.helpRequested})</span>
+                                        </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                                </PopoverContent>
+                            </Popover>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -482,9 +612,9 @@ export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps
                                             onSelect={() => {
                                                 const isSelected = linkedCompletedCampaignIds.includes(campaign.id!);
                                                 if (isSelected) {
-                                                    setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(id => id !== campaign.id!));
+                                                    setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(id => id !== campaign.id!), { shouldDirty: true });
                                                 } else {
-                                                    setValue('linkedCompletedCampaignIds', [...linkedCompletedCampaignIds, campaign.id!]);
+                                                    setValue('linkedCompletedCampaignIds', [...linkedCompletedCampaignIds, campaign.id!], { shouldDirty: true });
                                                 }
                                             }}
                                         >

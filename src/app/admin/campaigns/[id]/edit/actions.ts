@@ -1,11 +1,17 @@
 
+
 "use server";
 
-import { updateCampaign, getCampaign } from "@/services/campaign-service";
+import { updateCampaign, getCampaign, createCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
-import { CampaignStatus, DonationType } from "@/services/types";
+import { CampaignStatus, DonationType, Lead, User } from "@/services/types";
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from "@/services/public-data-service";
 import { uploadFile } from "@/services/storage-service";
+import { createLead } from "@/services/lead-service";
+import { getUser } from "@/services/user-service";
+import { writeBatch } from "firebase/firestore";
+import { db } from "@/services/firebase";
+import { doc } from "firebase/firestore";
 
 
 interface FormState {
@@ -14,7 +20,11 @@ interface FormState {
 }
 
 export async function handleUpdateCampaign(campaignId: string, formData: FormData): Promise<FormState> {
+  const adminUserId = formData.get('adminUserId') as string;
+
   try {
+    const adminUser = adminUserId ? await getUser(adminUserId) : null;
+
     let imageUrl: string | undefined = formData.get('existingImageUrl') as string | undefined;
 
     const imageFile = formData.get('image') as File | null;
@@ -32,7 +42,10 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
         goal = fixedAmountPerBeneficiary * targetBeneficiaries;
     }
     
-    await updateCampaign(campaignId, {
+    const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];
+    const linkedBeneficiaryIds = formData.getAll('linkedBeneficiaryIds') as string[];
+
+    const campaignUpdateData: Partial<Campaign> = {
         name: formData.get('name') as string,
         description: formData.get('description') as string,
         goal: goal,
@@ -44,7 +57,47 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
         fixedAmountPerBeneficiary: goalCalculationMethod === 'auto' ? fixedAmountPerBeneficiary : undefined,
         targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
-    });
+        leads: linkedLeadIds,
+    };
+
+    await updateCampaign(campaignId, campaignUpdateData);
+    
+    // --- Post-update linking logic ---
+    if (adminUser) {
+        const batch = writeBatch(db);
+        const campaignPayload = {
+            campaignId: campaignId,
+            campaignName: campaignUpdateData.name,
+        };
+
+        // Link existing leads
+        linkedLeadIds.forEach(leadId => {
+            const leadRef = doc(db, 'leads', leadId);
+            batch.update(leadRef, campaignPayload);
+        });
+
+        // Create and link new leads for beneficiaries
+        for (const beneficiaryId of linkedBeneficiaryIds) {
+            const beneficiary = await getUser(beneficiaryId);
+            if (!beneficiary) continue;
+
+            const newLeadData: Partial<Lead> = {
+                name: beneficiary.name,
+                beneficiaryId: beneficiary.id,
+                ...campaignPayload,
+                purpose: (campaignUpdateData.acceptableDonationTypes?.[0] as any) || 'Relief Fund',
+                category: 'Campaign Default',
+                helpRequested: fixedAmountPerBeneficiary > 0 ? fixedAmountPerBeneficiary : 0,
+                caseDetails: `This case was automatically generated for the "${campaignUpdateData.name}" campaign.`,
+            };
+            // Create a ref for the new lead doc to add to the batch
+            const newLeadRef = doc(db, "leads", `${beneficiary.userKey}_${Math.random().toString(36).substring(2, 7)}_${new Date().toISOString().split('T')[0]}`);
+            batch.set(newLeadRef, newLeadData);
+        }
+
+        await batch.commit();
+    }
+    // --- End linking logic ---
     
     const updatedCampaign = await getCampaign(campaignId);
     if(updatedCampaign) {
