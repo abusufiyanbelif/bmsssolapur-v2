@@ -49,6 +49,8 @@ const formSchema = z.object({
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
+  isHistoricalRecord: z.boolean().default(false),
+  collectedAmount: z.coerce.number().optional(),
   linkedLeadIds: z.array(z.string()).optional(),
   linkedDonationIds: z.array(z.string()).optional(),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
@@ -81,6 +83,8 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
         image: null,
         status: "Upcoming",
         acceptableDonationTypes: [],
+        isHistoricalRecord: false,
+        collectedAmount: 0,
         linkedLeadIds: [],
         linkedDonationIds: [],
         linkedCompletedCampaignIds: [],
@@ -91,6 +95,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
   const linkedLeadIds = watch('linkedLeadIds') || [];
   const linkedDonationIds = watch('linkedDonationIds') || [];
   const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
+  const isHistoricalRecord = watch('isHistoricalRecord');
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,6 +117,8 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
         status: "Upcoming",
         dates: undefined,
         acceptableDonationTypes: [],
+        isHistoricalRecord: false,
+        collectedAmount: 0,
         linkedLeadIds: [],
         linkedDonationIds: [],
         linkedCompletedCampaignIds: [],
@@ -137,6 +144,10 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
     values.linkedCompletedCampaignIds?.forEach(id => formData.append('linkedCompletedCampaignIds', id));
     if (values.image) {
       formData.append('image', values.image);
+    }
+    if (values.isHistoricalRecord) {
+        formData.append('isHistoricalRecord', 'on');
+        formData.append('collectedAmount', String(values.collectedAmount || 0));
     }
 
     const result = await handleCreateCampaign(formData);
@@ -247,6 +258,37 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                 )}
             />
         </div>
+        <FormField
+            control={form.control}
+            name="isHistoricalRecord"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10">
+                    <div className="space-y-0.5">
+                        <FormLabel className="text-base">This is a historical campaign record</FormLabel>
+                        <FormDescription>Enable this to enter data for a campaign that has already been completed.</FormDescription>
+                    </div>
+                    <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                </FormItem>
+            )}
+        />
+        {isHistoricalRecord && (
+            <FormField
+                control={form.control}
+                name="collectedAmount"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Amount Collected (for historical records)</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormDescription>Enter the total amount that was collected for this past campaign.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         <FormField
             control={form.control}
             name="dates"

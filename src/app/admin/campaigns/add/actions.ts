@@ -22,6 +22,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     const name = formData.get('name') as string;
     const campaignId = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     let imageUrl: string | undefined;
+    const isHistoricalRecord = formData.get("isHistoricalRecord") === 'on';
 
     const imageFile = formData.get('image') as File | null;
     if (imageFile && imageFile.size > 0) {
@@ -41,6 +42,8 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl: imageUrl,
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
+        collectedAmount: isHistoricalRecord ? parseFloat(formData.get("collectedAmount") as string) : 0,
+        isHistoricalRecord: isHistoricalRecord,
     });
     
     const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];

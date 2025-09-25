@@ -285,6 +285,7 @@ export interface Campaign {
     status: CampaignStatus;
     acceptableDonationTypes?: DonationType[];
     linkedCompletedCampaignIds?: string[];
+    isHistoricalRecord?: boolean;
     createdAt: Date;
     updatedAt: Date;
     source?: 'Seeded' | 'Manual Entry';
