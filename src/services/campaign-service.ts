@@ -44,12 +44,21 @@ export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'id' |
 
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
     
-    const newCampaignData = {
+    const newCampaignData: Partial<Campaign> = {
       ...campaignData,
       id: campaignRef.id,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
+
+    // Firestore does not accept 'undefined' values.
+    // We must clean the object before sending it.
+    Object.keys(newCampaignData).forEach(key => {
+        const typedKey = key as keyof Campaign;
+        if (newCampaignData[typedKey] === undefined) {
+            delete (newCampaignData as any)[typedKey];
+        }
+    });
     
     await setDoc(campaignRef, newCampaignData);
     
