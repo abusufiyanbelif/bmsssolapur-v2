@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -632,13 +633,16 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 
     // Seed Ramadan 2025 Campaign and its main leads
     const ramadanLeads = [
-        { phone: "4444444401", amount: 60000, isFunded: true, isLoan: true, purpose: 'Medical', category: 'Surgical Procedure', donationType: 'Zakat', details: 'Assistance for a major operation, as part of Ramadan drive.' },
+        // This is the 1 Lakh loan for Salim Baig
         { phone: "4444444402", amount: 100000, isFunded: true, isLoan: true, purpose: 'Loan', category: 'Business Loan', donationType: 'Any', details: 'Business expansion loan for Salim Baig.' },
+        // This is the medical operation for Salim Operation
+        { phone: "4444444401", amount: 60000, isFunded: true, isLoan: false, purpose: 'Medical', category: 'Surgical Procedure', donationType: 'Zakat', details: 'Assistance for a major operation, as part of Ramadan drive.' },
+        // These are the 10 ration kit leads
         ...ramadanCampaignUsers.slice(2, 12).map(u => ({ phone: u.phone, amount: 4000, isFunded: true, isLoan: false, purpose: 'Relief Fund', category: 'Ration Kit', donationType: 'Zakat', details: 'Ramadan ration kit for a family in need.' }))
     ];
     details.push(...await seedCampaignAndData(ramadan2025Campaign, ramadanCampaignUsers, ramadanLeads));
     
-    // Seed new relief leads and donations for Ramadan 2025 campaign
+    // Seed the 50k relief data (7 beneficiaries, 20 donors)
     details.push(...await seedRamadan2025ReliefData(superAdmin));
 
     // Seed Winter Campaign
@@ -783,3 +787,4 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
         details: details,
     };
 };
+
