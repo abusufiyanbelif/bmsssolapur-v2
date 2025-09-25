@@ -1,6 +1,6 @@
 
 
-import { getCampaign } from "@/services/campaign-service";
+import { getCampaign, getAllCampaigns } from "@/services/campaign-service";
 import { notFound } from "next/navigation";
 import { CampaignForm } from "./campaign-form";
 import Link from "next/link";
@@ -15,8 +15,9 @@ import { CampaignAuditTrail } from "./campaign-audit-trail";
 import { Separator } from "@/components/ui/separator";
 
 export default async function EditCampaignPage({ params }: { params: { id: string } }) {
-    const [campaign, linkedLeads, linkedDonations, activityLogs] = await Promise.all([
+    const [campaign, allCampaigns, linkedLeads, linkedDonations, activityLogs] = await Promise.all([
         getCampaign(params.id),
+        getAllCampaigns(),
         getLeadsByCampaignId(params.id),
         getDonationsByCampaignId(params.id),
         getCampaignActivity(params.id),
@@ -26,6 +27,8 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
         notFound();
     }
     
+    const completedCampaigns = allCampaigns.filter(c => c.status === 'Completed' && c.id !== campaign.id);
+
     return (
         <div className="flex-1 space-y-6">
              <Link href="/admin/campaigns" className="flex items-center text-sm text-muted-foreground hover:text-primary">
@@ -35,7 +38,7 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
             
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    <CampaignForm campaign={campaign} />
+                    <CampaignForm campaign={campaign} completedCampaigns={completedCampaigns} />
                     <LinkedLeadsCard leads={linkedLeads} />
                     <LinkedDonationsCard donations={linkedDonations} />
                 </div>

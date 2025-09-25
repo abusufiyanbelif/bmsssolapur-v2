@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Loader2, Save, X, Edit, Image as ImageIcon } from "lucide-react";
+import { CalendarIcon, Loader2, Save, X, Edit, Image as ImageIcon, ChevronsUpDown, Check, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +32,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const campaignStatuses = ['Upcoming', 'Active', 'Completed', 'Cancelled'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
@@ -49,21 +52,24 @@ const formSchema = z.object({
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
+  linkedCompletedCampaignIds: z.array(z.string()).optional(),
 });
 
 type CampaignFormValues = z.infer<typeof formSchema>;
 
 interface CampaignFormProps {
-    campaign: Campaign;
+    campaign: Campaign & { collectedAmount?: number };
+    completedCampaigns: Campaign[];
 }
 
-export function CampaignForm({ campaign }: CampaignFormProps) {
+export function CampaignForm({ campaign, completedCampaigns }: CampaignFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(campaign.imageUrl || null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [completedCampaignPopoverOpen, setCompletedCampaignPopoverOpen] = useState(false);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(formSchema),
@@ -78,24 +84,15 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
         },
         status: campaign.status,
         acceptableDonationTypes: campaign.acceptableDonationTypes || [],
+        linkedCompletedCampaignIds: campaign.linkedCompletedCampaignIds || [],
     },
   });
 
-  const { formState: { isDirty }, reset, handleSubmit, setValue } = form;
+  const { formState: { isDirty }, reset, handleSubmit, setValue, watch } = form;
+  const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
 
   const handleCancel = () => {
-    reset({
-        name: campaign.name,
-        description: campaign.description,
-        goal: campaign.goal,
-        image: null,
-        dates: {
-            from: campaign.startDate,
-            to: campaign.endDate,
-        },
-        status: campaign.status,
-        acceptableDonationTypes: campaign.acceptableDonationTypes || [],
-    });
+    reset(); // Resets to the initial default values
     setImagePreview(campaign.imageUrl || null);
     setIsEditing(false);
   }
@@ -103,10 +100,10 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        setValue('image', file);
+        setValue('image', file, { shouldDirty: true });
         setImagePreview(URL.createObjectURL(file));
     } else {
-        setValue('image', null);
+        setValue('image', null, { shouldDirty: true });
         setImagePreview(campaign.imageUrl || null);
     }
   };
@@ -122,6 +119,8 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
     formData.append('endDate', values.dates.to.toISOString());
     formData.append('status', values.status);
     values.acceptableDonationTypes.forEach(dt => formData.append('acceptableDonationTypes', dt));
+    values.linkedCompletedCampaignIds?.forEach(id => formData.append('linkedCompletedCampaignIds', id));
+
     if (values.image) {
       formData.append('image', values.image);
     }
@@ -137,7 +136,8 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
         title: "Campaign Updated",
         description: `Successfully updated the "${values.name}" campaign.`,
       });
-      router.push("/admin/campaigns");
+      setIsEditing(false);
+      router.refresh(); // Refresh to get latest data
     } else {
       toast({
         variant: "destructive",
@@ -146,6 +146,8 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
       });
     }
   }
+  
+  const progress = campaign.goal > 0 ? ((campaign.collectedAmount || 0) / campaign.goal) * 100 : 0;
 
   return (
      <Card>
@@ -166,6 +168,18 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
             </div>
         </CardHeader>
         <CardContent>
+            <div className="space-y-2 mb-6">
+                <h3 className="font-semibold">Funding Progress</h3>
+                    <Progress value={progress} className="w-full" />
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>
+                        <span className="font-bold text-foreground">₹{(campaign.collectedAmount || 0).toLocaleString()}</span> collected
+                    </span>
+                    <span>
+                        Goal: <span className="font-bold text-foreground">₹{campaign.goal.toLocaleString()}</span>
+                    </span>
+                    </div>
+            </div>
             <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
                 <FormField
@@ -353,6 +367,66 @@ export function CampaignForm({ campaign }: CampaignFormProps) {
                             />
                             ))}
                         </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="linkedCompletedCampaignIds"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Link Past Successes (Optional)</FormLabel>
+                        <Popover open={completedCampaignPopoverOpen} onOpenChange={setCompletedCampaignPopoverOpen}>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn("w-full justify-between min-h-10 h-auto", linkedCompletedCampaignIds.length === 0 && "text-muted-foreground")}
+                                disabled={!isEditing}
+                                >
+                                {linkedCompletedCampaignIds.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                    {linkedCompletedCampaignIds.map(id => {
+                                        const campaign = completedCampaigns.find(c => c.id === id);
+                                        return <Badge key={id} variant="secondary">{campaign?.name}</Badge>
+                                    })}
+                                    </div>
+                                ) : "Select completed campaigns..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Search campaign..." />
+                                <CommandList>
+                                <CommandEmpty>No completed campaigns found.</CommandEmpty>
+                                <CommandGroup>
+                                    {completedCampaigns.map((campaign) => (
+                                    <CommandItem
+                                        value={campaign.name}
+                                        key={campaign.id}
+                                        onSelect={() => {
+                                            const isSelected = linkedCompletedCampaignIds.includes(campaign.id!);
+                                            if (isSelected) {
+                                                setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(id => id !== campaign.id!));
+                                            } else {
+                                                setValue('linkedCompletedCampaignIds', [...linkedCompletedCampaignIds, campaign.id!]);
+                                            }
+                                        }}
+                                    >
+                                        <Check className={cn("mr-2 h-4 w-4", linkedCompletedCampaignIds.includes(campaign.id!) ? "opacity-100" : "opacity-0")} />
+                                        <span>{campaign.name} (Goal: ₹{campaign.goal})</span>
+                                    </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
                         <FormMessage />
                         </FormItem>
                     )}
