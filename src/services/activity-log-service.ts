@@ -193,6 +193,10 @@ export const getCampaignActivity = async (campaignId: string): Promise<ActivityL
 
         return activities;
     } catch (error) {
+        if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token'))) {
+             console.warn(`Permission Denied: The server environment lacks the 'Cloud Datastore User' role needed to read campaign activity. Returning empty array. Refer to TROUBLESHOOTING.md to fix this.`);
+             return [];
+        }
         console.error("Error fetching campaign activity:", error);
         return [];
     }
