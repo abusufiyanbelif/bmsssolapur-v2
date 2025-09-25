@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { deleteCampaign as deleteCampaignService, getCampaign } from "@/services/campaign-service";
@@ -23,11 +24,12 @@ export async function handleBulkDeleteCampaigns(campaignIds: string[]) {
             const campaignDocRef = doc(db, "campaigns", id);
             batch.delete(campaignDocRef);
             // Also delete from public collection
-            await updatePublicCampaign({ id, status: 'Cancelled' } as any);
+            await updatePublicCampaign({ id, status: 'Cancelled' } as any, true);
         }
         await batch.commit();
         
         revalidatePath("/admin/campaigns");
+        revalidatePath("/campaigns", 'layout');
         return { success: true };
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred during bulk deletion.";

@@ -1,6 +1,7 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAllCampaigns } from "./actions";
+import { getAllPublicCampaigns } from "./actions";
 import { CampaignList } from "./campaign-list";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -8,7 +9,7 @@ import { Suspense } from "react";
 
 async function CampaignsData() {
     try {
-        const campaigns = await getAllCampaigns();
+        const campaigns = await getAllPublicCampaigns();
         return <CampaignList campaigns={campaigns} />;
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown server error occurred.";

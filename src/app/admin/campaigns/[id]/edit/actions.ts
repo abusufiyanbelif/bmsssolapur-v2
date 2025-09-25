@@ -45,6 +45,7 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
     revalidatePath(`/admin/campaigns/${campaignId}/edit`);
     revalidatePath("/admin");
     revalidatePath("/");
+    revalidatePath("/campaigns", 'layout');
 
     return { success: true };
   } catch (e) {

@@ -20,7 +20,7 @@ interface FormState {
 export async function handleCreateCampaign(formData: FormData): Promise<FormState> {
   try {
     const name = formData.get('name') as string;
-    const campaignId = name.toLowerCase().replace(/\s+/g, '-');
+    const campaignId = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     let imageUrl: string | undefined;
 
     const imageFile = formData.get('image') as File | null;
@@ -80,6 +80,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     revalidatePath("/admin/donations");
     revalidatePath("/admin");
     revalidatePath("/");
+    revalidatePath("/campaigns", 'layout');
 
     return { success: true };
   } catch (e) {

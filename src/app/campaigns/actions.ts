@@ -2,27 +2,22 @@
 
 "use server";
 
-import type { Lead, User, Campaign } from "@/services/types";
+import type { Campaign } from "@/services/types";
 import { isConfigValid } from "@/services/firebase";
 import { getPublicCampaigns } from "@/services/public-data-service";
 
 
-export interface EnrichedLead extends Lead {
-    beneficiary?: User;
-}
-
-
 /**
- * Fetches all campaigns regardless of status and enriches them with stats.
+ * Fetches all publicly visible campaigns.
+ * This now fetches only active campaigns from the sanitized public collection.
  * @returns An array of Campaign objects with `raisedAmount` and `fundingProgress`.
  */
-export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> {
+export async function getAllPublicCampaigns(): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> {
     if (!isConfigValid) {
-        console.warn("Firebase not configured. Skipping fetching all campaigns.");
+        console.warn("Firebase not configured. Skipping fetching public campaigns.");
         return [];
     }
     try {
-        // This now correctly fetches all campaigns from the public, sanitized collection, including completed/cancelled ones.
         const publicCampaigns = await getPublicCampaigns();
         
         return publicCampaigns.map(c => ({
@@ -33,7 +28,7 @@ export async function getAllCampaigns(): Promise<(Campaign & { raisedAmount: num
             updatedAt: c.updatedAt || new Date(),
         }));
     } catch (error) {
-        console.error("Error fetching all campaigns with stats: ", error);
+        console.error("Error fetching all public campaigns with stats: ", error);
         return [];
     }
 }

@@ -25,19 +25,6 @@ export type { Campaign, CampaignStatus };
 
 const CAMPAIGNS_COLLECTION = 'campaigns';
 
-
-async function enrichCampaignWithStats(campaign: Campaign): Promise<Campaign & { raisedAmount: number; fundingProgress: number; }> {
-    const linkedLeads = await getLeadsByCampaignId(campaign.id!);
-    const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
-    const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
-    
-    return {
-        ...campaign,
-        raisedAmount,
-        fundingProgress,
-    };
-}
-
 /**
  * Creates a new campaign.
  * @param campaignData - The data for the new campaign.
@@ -45,7 +32,7 @@ async function enrichCampaignWithStats(campaign: Campaign): Promise<Campaign & {
  */
 export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 'updatedAt'>): Promise<Campaign> => {
   try {
-    const campaignId = campaignData.id || campaignData.name.toLowerCase().replace(/\s+/g, '-');
+    const campaignId = campaignData.id || campaignData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
     
     const newCampaignData = {
@@ -71,8 +58,6 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
         startDate: (data.startDate as Timestamp).toDate(),
         endDate: (data.endDate as Timestamp).toDate(),
     } as Campaign;
-
-    // The responsibility to update the public campaign is now on the server action that calls this.
 
     return finalCampaign;
 
@@ -174,7 +159,6 @@ export const updateCampaign = async (id: string, updates: Partial<Omit<Campaign,
       ...updates,
       updatedAt: serverTimestamp(),
     });
-    // The responsibility to update the public campaign is now on the server action that calls this.
   } catch (error) {
     console.error("Error updating campaign: ", error);
     throw new Error('Failed to update campaign.');
@@ -189,14 +173,8 @@ export const deleteCampaign = async (id: string): Promise<void> => {
   try {
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, id);
     await deleteDoc(campaignRef);
-    // The responsibility to update the public campaign is now on the server action that calls this.
   } catch (error) {
     console.error("Error deleting campaign: ", error);
     throw new Error('Failed to delete campaign.');
   }
 };
-
-// This function is still needed for public-facing components that need to read campaign stats.
-export const enrichCampaignWithPublicStats = async (campaign: Campaign): Promise<Campaign & { raisedAmount: number; fundingProgress: number; }> => {
-    return enrichCampaignWithStats(campaign);
-}
