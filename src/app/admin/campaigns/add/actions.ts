@@ -30,6 +30,12 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl = await uploadFile(imageFile, uploadPath);
     }
     
+    // Logic refinement: If it's a historical record, its status MUST be 'Completed'.
+    // The collected amount is what the user enters.
+    // If it's a new campaign, the collected amount starts at 0.
+    const status = isHistoricalRecord ? 'Completed' : (formData.get('status') as CampaignStatus);
+    const collectedAmount = isHistoricalRecord ? parseFloat(formData.get("collectedAmount") as string) : 0;
+
     // Create the campaign first
     const newCampaign = await createCampaign({
         id: campaignId,
@@ -38,11 +44,11 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         goal: parseFloat(formData.get('goal') as string),
         startDate: new Date(formData.get('startDate') as string),
         endDate: new Date(formData.get('endDate') as string),
-        status: formData.get('status') as CampaignStatus,
+        status: status,
         imageUrl: imageUrl,
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
-        collectedAmount: isHistoricalRecord ? parseFloat(formData.get("collectedAmount") as string) : 0,
+        collectedAmount: collectedAmount,
         isHistoricalRecord: isHistoricalRecord,
     });
     
