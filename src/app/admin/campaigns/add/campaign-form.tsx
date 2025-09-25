@@ -1,5 +1,3 @@
-
-
 // src/app/admin/campaigns/add/campaign-form.tsx
 
 "use client";
@@ -25,7 +23,7 @@ import { CalendarIcon, Loader2, X, Check, ChevronsUpDown, XCircle, Image as Imag
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { handleCreateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
 import { CampaignStatus, DonationType, Lead, Donation, Campaign, User } from "@/services/types";
@@ -37,7 +35,7 @@ import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const createCampaignStatuses = ['Upcoming', 'Active', 'Completed'] as const;
+const createCampaignStatuses = ['Upcoming', 'Active'] as const;
 const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
 
 const formSchema = z.object({
@@ -52,7 +50,8 @@ const formSchema = z.object({
     from: z.date({ required_error: "A start date is required."}),
     to: z.date({ required_error: "An end date is required."}),
   }),
-  status: z.enum(createCampaignStatuses),
+  isHistoricalRecord: z.boolean().default(false),
+  status: z.enum([...createCampaignStatuses, 'Completed']).optional(),
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
@@ -62,9 +61,9 @@ const formSchema = z.object({
   linkedBeneficiaryIds: z.array(z.string()).optional(),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
-    if (data.status === 'Completed') {
+    if (data.isHistoricalRecord) {
         if (data.collectedAmount === undefined || data.collectedAmount < 0) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required and must not be negative for 'Completed' campaigns.", path: ["collectedAmount"] });
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required for historical records.", path: ["collectedAmount"] });
         }
     }
     if (data.goalCalculationMethod === 'manual' && (!data.goal || data.goal <= 0)) {
@@ -117,6 +116,7 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
         fixedAmountPerBeneficiary: 0,
         targetBeneficiaries: 0,
         image: null,
+        isHistoricalRecord: false,
         status: "Upcoming",
         acceptableDonationTypes: [],
         collectedAmount: 0,
@@ -132,7 +132,7 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
   const linkedDonationIds = watch('linkedDonationIds') || [];
   const linkedBeneficiaryIds = watch('linkedBeneficiaryIds') || [];
   const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
-  const campaignStatus = watch('status');
+  const isHistoricalRecord = watch('isHistoricalRecord');
   const goalCalculationMethod = watch('goalCalculationMethod');
   const fixedAmount = watch('fixedAmountPerBeneficiary');
   const targetBeneficiaries = watch('targetBeneficiaries');
@@ -180,6 +180,8 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
             formData.append('endDate', value.to.toISOString());
         } else if (Array.isArray(value)) {
             value.forEach(v => formData.append(key, v));
+        } else if (typeof value === 'boolean') {
+            if (value) formData.append(key, 'on');
         } else {
             formData.append(key, String(value));
         }
@@ -312,44 +314,67 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
                     </FormItem>
                 )}
             />
-             <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {createCampaignStatuses.map(status => (
-                            <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+             {!isHistoricalRecord && (
+                 <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {createCampaignStatuses.map(status => (
+                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
         </div>
         
         <FormField
             control={form.control}
-            name="collectedAmount"
+            name="isHistoricalRecord"
             render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Amount Collected</FormLabel>
-                    <FormControl>
-                        <Input type="number" {...field} />
-                    </FormControl>
-                    <FormDescription>For historical campaigns, enter the total collected. For new campaigns, this can be used to record offline donations received before launch.</FormDescription>
-                    <FormMessage />
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10">
+                <div className="space-y-0.5">
+                    <FormLabel className="text-base">Create as a historical record of a past campaign.</FormLabel>
+                    <FormDescription>Check this to enter details for a campaign that has already been completed. This will allow you to select past dates and enter a final collected amount.</FormDescription>
+                </div>
+                <FormControl>
+                    <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
                 </FormItem>
             )}
         />
+        
+        {isHistoricalRecord && (
+            <FormField
+                control={form.control}
+                name="collectedAmount"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Amount Collected</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormDescription>Enter the total final amount that was collected for this historical campaign.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         <FormField
             control={form.control}
             name="dates"
@@ -391,7 +416,7 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 numberOfMonths={2}
-                                disabled={(date) => campaignStatus !== 'Completed' && date < new Date(new Date().setHours(0,0,0,0))}
+                                disabled={(date) => !isHistoricalRecord && date < new Date(new Date().setHours(0,0,0,0))}
                             />
                         </PopoverContent>
                     </Popover>

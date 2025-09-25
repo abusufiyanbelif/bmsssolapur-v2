@@ -1,5 +1,3 @@
-
-
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -37,7 +35,9 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     const campaignId = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     let imageUrl: string | undefined;
     
-    const status = formData.get('status') as CampaignStatus;
+    const isHistoricalRecord = formData.get('isHistoricalRecord') === 'on';
+    const status = isHistoricalRecord ? 'Completed' : (formData.get('status') as CampaignStatus);
+
     const goalCalculationMethod = formData.get('goalCalculationMethod') as 'manual' | 'auto';
     
     const imageFile = formData.get('image') as File | null;
@@ -69,11 +69,9 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         source: 'Manual Entry',
         fixedAmountPerBeneficiary: goalCalculationMethod === 'auto' ? fixedAmountPerBeneficiary : undefined,
         targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
-        collectedAmount: parseFloat(formData.get("collectedAmount") as string) || 0,
+        collectedAmount: isHistoricalRecord ? (parseFloat(formData.get("collectedAmount") as string) || 0) : 0,
+        isHistoricalRecord: isHistoricalRecord,
     };
-    
-    // Set isHistoricalRecord based on status.
-    newCampaignData.isHistoricalRecord = status === 'Completed';
 
     // Create the campaign first
     const newCampaign = await createCampaign(newCampaignData);
@@ -96,7 +94,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
               campaignName: newCampaign.name,
               purpose: newCampaign.acceptableDonationTypes?.[0] as any || 'Relief Fund',
               category: 'Campaign Default',
-              helpRequested: 0, // Set to 0, can be updated later
+              helpRequested: fixedAmountPerBeneficiary > 0 ? fixedAmountPerBeneficiary : 0,
               caseDetails: `This case was automatically generated for the "${newCampaign.name}" campaign.`,
           };
           const newLead = await createLead(leadData, adminUser);
@@ -149,7 +147,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     // Return the clean, specific error message from the service
     return {
       success: false,
-      error: error.message,
+      error: error,
     };
   }
 }
